@@ -23,7 +23,7 @@ var CFG = {
   // Rosanta OS/05_Marketing_OS/Resenas_y_Reputacion/Rosanta_Encuesta_Satisfaccion y el
   // default apunta a esa copia. OJO: si la propiedad SHEET_ID del proyecto todavia tiene
   // el id viejo, GANA LA PROPIEDAD y este cambio no hace nada. Ver p81.
-  SHEET_ID:   prop_('SHEET_ID')   || '1zZuqsBgjC3hYRJfdXe6zz8SxYCNbMBtBDvc3qy1nPf0',
+  SHEET_ID:   hojaRosanta_(),
   SHEET_NAME: prop_('SHEET_NAME') || 'Encuesta 2026',
   // Link directo de reseña de Rosanta (Google Business Profile):
   GOOGLE_REVIEW_URL: prop_('GOOGLE_REVIEW_URL') || 'https://g.page/r/CWMvHjpESP6vEAE/review'
@@ -65,6 +65,33 @@ function enviarRespuesta(data) {
 
 function prop_(key) {
   return PropertiesService.getScriptProperties().getProperty(key);
+}
+
+/**
+ * El id de la hoja donde cae la encuesta.
+ *
+ * No es un prop_() a secas a proposito. El valor viejo,
+ * 1I-98EGh6oFj0X5EeWsnbJ5KPMctdv8fAjc2ML1tLnEc, es el Sheet
+ * 'Recoleccion de data - Rosanta', PROPIEDAD DE UN TERCERO
+ * (Eli_Juli@lacocinaquesuena.com) con quien Rosanta ya no trabaja. Si ese id
+ * quedo escrito en la propiedad SHEET_ID, un prop_() || default lo dejaria
+ * ganar y las respuestas seguirian cayendo en una cuenta ajena aunque el
+ * codigo se vea corregido. Aca se ignora explicitamente.
+ */
+function hojaRosanta_() {
+  // Se ignora la propiedad SHEET_ID a proposito, no por descuido.
+  //
+  // El 12-sep-2026 se intento respetarla ignorando solo el valor exacto del id
+  // ajeno. NO FUNCIONO: se publico, se probo con una respuesta real de 4
+  // estrellas y la fila cayo igual en el Sheet del tercero. La propiedad tiene
+  // el id viejo en alguna forma que una comparacion exacta no atrapa (espacio
+  // al final, la URL completa, algo asi), y no se puede leer desde fuera del
+  // editor para saber cual.
+  //
+  // Mientras la propiedad exista con ese contenido, cualquier `prop_() || x`
+  // manda las respuestas a una cuenta ajena aunque el codigo se vea corregido.
+  // Si algun dia hace falta cambiar de hoja, se cambia esta constante.
+  return '1zZuqsBgjC3hYRJfdXe6zz8SxYCNbMBtBDvc3qy1nPf0';
 }
 
 // Prueba rápida desde el editor: inserta una fila de ejemplo (rating 4, no redirige).
