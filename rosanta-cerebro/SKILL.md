@@ -41,8 +41,15 @@ cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps S
 dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
 
 **Versión: v81 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
-nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). Con eso el CRM ya funciona para
-quien entra con Gmail y `?u=<token>`, que es el caso de Jeffry y Jose. Contra la v79 cambiaron
+nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). El token funciona de punta a punta,
+verificado con el enlace de Jeffry.
+
+> **Cuidado con cómo se leyó esa verificación.** Que el CRM le cargara a Jeffry probó el
+> token **y destapó un problema de permisos**: Jeffry es **jefe de cocina** y no tiene por
+> qué ver el CRM, que es del equipo de marketing. Su fila de `USUARIOS` trae el módulo `crm`
+> —y probablemente `marketing` o `contenido`—, así que hoy su enlace ve los **3.535
+> contactos**. La frase "el CRM ya funciona para Jeffry y Jose" es **falsa en la premisa**:
+> ninguno de los dos debería tenerlo. Contra la v79 cambiaron
 exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`, verificado
 bajando la versión con `clasp pull --versionNumber 80` a una carpeta aparte.
 
@@ -563,7 +570,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** La intranet es la única superficie del pilar 3; panel de 3 puertas. **Acceso por token verificado de punta a punta con Jeffry** (entra con Gmail, ve solo lo suyo, y el CRM le carga). Abierto: **Jose todavía no probó su acceso**, y hay marcadores con la URL vieja que lleva `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
+| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Acceso por token verificado con Jeffry. **ABIERTO N1: Jeffry tiene módulos que no le corresponden** —ve los 3.535 contactos del CRM siendo jefe de cocina— y hay que revisar a Jose. Más: marcadores con la URL vieja `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
