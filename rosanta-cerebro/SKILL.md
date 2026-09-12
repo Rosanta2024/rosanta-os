@@ -11,6 +11,91 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ---
 
+## Cierre del 12 sep 2026 · tarde (v13)
+
+Sesión de limpieza de pendientes. **De 35 activos a 23.** Lo que sigue no es el listado —
+ese vive en el tablero— sino lo que cambió de entender.
+
+### Lo que se cerró tocando producción
+
+- **La encuesta de satisfacción dejó de escribir en la hoja de un tercero.** Caía en
+  `Recolección de data - Rosanta`, propiedad de `Eli_Juli@lacocinaquesuena.com`, con quien
+  Rosanta ya no trabaja. Se copió a
+  `05_Marketing_OS/Resenas_y_Reputacion/Rosanta_Encuesta_Satisfaccion`
+  (`1zZuqsBgjC3hYRJfdXe6zz8SxYCNbMBtBDvc3qy1nPf0`) y se publicó en la **v5**.
+- **Las tres URLs de `Config.gs` de la intranet** perdieron el prefijo `/a/macros/rosanta.rest/`,
+  y hay una prueba nueva que falla si vuelven a torcerse. **Falta publicar.**
+- **La documentación del cargador** ya vive en `00_Instrucciones` del maestro, filas 77-97,
+  y esa hoja ahora dice **16 hojas**, no 14.
+- **6 diagnósticos de un solo uso** salieron de `rosanta-intranet` a `_archivo/`.
+
+### Reglas nuevas, cada una pagada con un error de hoy
+
+1. **`prop_('X') || defecto` significa que el defecto es el ÚLTIMO recurso, no el valor.**
+   El primer arreglo de la encuesta respetaba la propiedad `SHEET_ID` ignorando solo el id
+   ajeno exacto. Se publicó, se envió una respuesta real y la fila cayó **igual** en la hoja
+   del tercero: la propiedad tiene ese id en una variante que `===` no atrapa, y no se puede
+   leer desde fuera del editor. Cuando una propiedad de script puede pisar un valor crítico y
+   no se puede leer, **dejar de consultarla**.
+2. **Leer el código no prueba dónde cae el dato.** Lo único que lo probó fue mandar una
+   respuesta de verdad por el formulario y mirar el `modifiedTime` de las **dos** hojas.
+3. **Documentación que vive en el repo no existe para quien usa la herramienta.** Mismo
+   patrón dos veces hoy: el texto del cargador en `_informes/`, y un puntero `.gsheet` en
+   `CRM_y_Retencion` que seguía abriendo la hoja ajena aunque el código ya estaba corregido.
+   **Al corregir un destino, barrer también los punteros de Drive.**
+4. **Una guarda que vigila una instancia de un problema que tiene tres da la misma sensación
+   de cubierto que una que las vigila todas.** La prueba del `/a/` existía desde el 10-sep y
+   estaba bien escrita: miraba `INTRANET_URL` y no las otras dos URLs del mismo archivo.
+5. **El texto de un pendiente es una afirmación vieja, no una fuente.** Hoy fallaron cuatro:
+   `p143` llamaba "scripts de un solo uso" a 7 herramientas que el código vivo manda a correr;
+   `p80` decía que seguía expuesta una key que estaba en Propiedades desde el 31-ago; `p71`
+   proponía como palanca gratis algo que ya tenía su propio canal; `p110` apuntaba a una hoja
+   donde el dato no está.
+6. **Preguntar "quién es este proveedor" y cotejar contra la hoja vale más que cualquiera de
+   las dos cosas por separado.** De siete identificaciones que dio Juanma, cuatro cuadraban y
+   **tres no**, y ninguna de esas tres estaba marcada como pendiente.
+7. **Un `for` de zsh sobre una variable sin comillas no separa la lista.** Un chequeo de
+   seguridad devolvió "limpio" sin haber leído un solo archivo. Un verificador que no encuentra
+   nada porque no leyó nada da el mismo verde que uno que leyó todo.
+
+### Finanzas: lo que apareció y todavía no se escribió
+
+**Hay un lote de 33 reclasificaciones subido a `rosanta-maestro` y SIN CORRER.** Está en
+`reclasificar_sin_clasificar.js`. Empezó siendo 3 filas y creció a 33 al cotejar proveedores:
+
+| Qué | Filas | Monto |
+|---|---|---|
+| Migdalia Lico, `COCTELERIA` → `ALIMENTOS` | 23 | Q11,845.10 |
+| GRUPO ECO, `BEBIDAS` → `ALQUILER_EQUIPO` | 2 | Q2,717.14 |
+| Jonas Dobias (BAC), → `PERSONAL` | 2 | Q2,000.00 |
+| Las 3 originales de `p119` | 3 | Q7,611.25 |
+
+Para correrlo: `revisarSinClasificar()` **y leer el log**; solo si dice "Sin avisos",
+`reclasificarSinClasificar()` y después **`generarEspejo()`**.
+
+- **GRUPO AGMN, S.A. = Clínica de Fisioterapia Roca.** Se identificó desde el propio FEL, sin
+  pedirle nada al banco: 17 facturas cuyos pagos del BAC calzan el mismo día y por el mismo
+  monto. Estaba como `VIATICOS`/`Es_Personal=No` en el FEL y `PERSONAL`/`Sí` en el BAC — **el
+  mismo gasto con dos clasificaciones opuestas en dos pestañas.** Juanma ya lo corrigió.
+- **El desfase horario (`p120`) dejó de ser teórico.** `reclasificar_ECO.js` del 4-sep movió
+  8 de las 10 mensualidades del alquiler de la máquina de agua; la del **31/03 23:00**, que
+  Apps Script lee como 01/04, quedó fuera de la lista y sigue en `BEBIDAS`. El script reportó
+  éxito sobre las 8 que sí estaban en su lista.
+- **Los Q21,000 del 04/02 quedan sin explicación** (`p101` cerrado): el banco ve lo mismo que
+  nosotros. Ya están como `PERSONAL` y caen fuera de la ventana may-ago, así que no mueven la
+  extracción medida.
+
+### Verificado y que conviene no volver a dudar
+
+- **El activador de `latido()` existe y corre**: última corrida lunes 8 sep 09:30, 0% de error.
+  Se ve **solo** en la página de Activadores del editor — ni `clasp` ni la API los listan, y
+  buscar el correo de fallo no sirve porque `latido` avisa lanzando excepción: si nunca
+  encontró nada frío, nunca hubo correo.
+- **El QR manda a Google y los correos del día después mandan a TripAdvisor.** Son dos canales
+  distintos y no hay nada que reasignar (`p71` cerrado por decisión de Juanma).
+- **Solo Juanma tiene acceso a la hoja `Rosanta Marketing OS`**, así que el token de Meta en
+  `config!A1` queda como riesgo aceptado y entendido (`p80` cerrado).
+
 ## Cambios clave del 12 sep 2026 (v12)
 
 Dos frentes en paralelo: **la unificación del pilar 3 en la intranet** (hecha por las
