@@ -8,14 +8,22 @@
  * ============================================================
  *
  *  Configura en "Propiedades del script":
- *   - SHEET_ID           : ID del Google Sheet (ya viene el de Rosanta por defecto)
+ *   - SHEET_ID           : ID del Google Sheet. El default ya es la hoja propia de
+ *                          Rosanta; la propiedad, si existe, MANDA sobre el default.
  *   - SHEET_NAME         : nombre de la pestaña destino
  *   - GOOGLE_REVIEW_URL  : tu link directo "escribir reseña" de Google
  *  (Ver la guía para obtener el GOOGLE_REVIEW_URL.)
  */
 
 var CFG = {
-  SHEET_ID:   prop_('SHEET_ID')   || '1I-98EGh6oFj0X5EeWsnbJ5KPMctdv8fAjc2ML1tLnEc',
+  // 12-sep-2026: hasta hoy el default era 1I-98EGh6oFj0X5EeWsnbJ5KPMctdv8fAjc2ML1tLnEc,
+  // el Sheet 'Recoleccion de data - Rosanta', PROPIEDAD DE UN TERCERO
+  // (Eli_Juli@lacocinaquesuena.com). Rosanta ya no trabaja con ellos y toda respuesta
+  // caia en una cuenta ajena que podia revocar el acceso o borrarla. Se copio la hoja a
+  // Rosanta OS/05_Marketing_OS/Resenas_y_Reputacion/Rosanta_Encuesta_Satisfaccion y el
+  // default apunta a esa copia. OJO: si la propiedad SHEET_ID del proyecto todavia tiene
+  // el id viejo, GANA LA PROPIEDAD y este cambio no hace nada. Ver p81.
+  SHEET_ID:   prop_('SHEET_ID')   || '1zZuqsBgjC3hYRJfdXe6zz8SxYCNbMBtBDvc3qy1nPf0',
   SHEET_NAME: prop_('SHEET_NAME') || 'Encuesta 2026',
   // Link directo de reseña de Rosanta (Google Business Profile):
   GOOGLE_REVIEW_URL: prop_('GOOGLE_REVIEW_URL') || 'https://g.page/r/CWMvHjpESP6vEAE/review'
