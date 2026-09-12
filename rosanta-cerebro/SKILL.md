@@ -563,7 +563,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** La intranet es la única superficie del pilar 3; panel de 3 puertas, **verificado por Juanma en su Chrome**. Abierto: probar el CRM con el enlace de Jeffry, y una doble cabecera menor dentro del shell. | `references/proyectos.md` |
+| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** La intranet es la única superficie del pilar 3; panel de 3 puertas. **Acceso por token verificado de punta a punta con Jeffry** (entra con Gmail, ve solo lo suyo, y el CRM le carga). Abierto: **Jose todavía no probó su acceso**, y hay marcadores con la URL vieja que lleva `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
