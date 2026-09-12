@@ -240,3 +240,14 @@ ocho combinaciones se dibujan sin error y con datos:
 **Batería de la 81 contra HEAD:** "Intranet sana", 88 OK · 0 fallas · 0 avisos · 2 saltadas = 90,
 en 150,4 s. Es el mismo número que dio 0f antes del cambio: las cuatro barras no movieron nada.
 Listo para `create-version` 81 + `update-deployment`.
+
+## Versión 81 publicada (12 sep)
+
+**El equipo está en @81.** Se bajó con `clasp pull --versionNumber 81`: es idéntica, archivo por
+archivo, al HEAD que dio 90 · 88 OK · 0 fallas · 0 avisos. Contra la 80 cambian solo las cuatro vistas
+de Finanzas y las dos pruebas de la sesión 0f. Juanma confirmó en `/exec`, desde su Chrome, una
+sola barra verde dentro del shell. **La doble cabecera queda cerrada.**
+
+Con esto la unificación queda terminada: panel de tres puertas, Profit OS en parciales, shell de
+Finanzas con lateral y una sola cabecera, y el push destrabado. Lo abierto de la intranet ya no es
+de esta sesión: probar el CRM con el enlace de un usuario real (p138, pilar 03).

@@ -40,7 +40,7 @@ la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
 cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
 dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
 
-**Versión: v80 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
+**Versión: v81 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
 nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). Con eso el CRM ya funciona para
 quien entra con Gmail y `?u=<token>`, que es el caso de Jeffry y Jose. Contra la v79 cambiaron
 exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`, verificado
@@ -287,6 +287,11 @@ Día completo de trabajo en la **intranet** (Apps Script), ocho versiones public
 6septies. **Una vista partida en parciales tiene que tener sus parciales en las listas `VISTAS`
    de `Pruebas.js`**, o las llamadas de esos parciales quedan sin proteger y la prueba sigue
    en verde. Mismo punto ciego de siempre, por otra puerta.
+6decies. **La batería solo EVALÚA dos páginas: `Index` y `CosteoVista`** (vía `doGet`). Las
+   demás vistas las lee **crudas**, sin ejecutarlas. Un scriptlet mal cerrado en una vista de
+   Finanzas **pasa en verde**. Después de tocar una plantilla hay que **abrirla, directa y
+   embebida**; y antes de publicar, compilar cada plantilla a JavaScript y pasarla por
+   `node --check` con control negativo, que es lo que se hizo para la v81.
 6nonies. **Un iframe vacío visto desde la ventana de automatización NO prueba nada.** Esa
    ventana bloquea cookies de terceros, así que cualquier contenido embebido sale en blanco.
    Pasó el 12-sep: se dio por roto el shell de Finanzas —y de paso el de Marketing, que
@@ -319,9 +324,8 @@ Día completo de trabajo en la **intranet** (Apps Script), ocho versiones public
    cazando el bug original, que tenía un `withFailureHandler` multilínea.
    **La vieja se retiró por decisión de Juanma el 12-sep-2026** y ya está en HEAD — dos
    pruebas del mismo patrón conviviendo, una peor, es como se degrada una batería.
-   **Ojo con los dos números, que no son el mismo:** lo **publicado (v80)** corre 91 pruebas
-   con 89 OK; **HEAD** corre 90 con **88 OK · 0 fallas · 0 avisos · 2 saltadas**, y sale a
-   producción con la v81.
+   Ya salió con la **v81**, así que publicado y HEAD vuelven a coincidir: **90 pruebas ·
+   88 OK · 0 fallas · 0 avisos · 2 saltadas**.
 
    La regla general: **una prueba que busca por patrón de texto solo encuentra el patrón
    que conoce.**
@@ -559,7 +563,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v80 publicada (12 sep), batería 89 OK · 0 fallas · 0 avisos · 2 saltadas (91).** La intranet es la única superficie del pilar 3; panel de 3 puertas, **verificado por Juanma en su Chrome**. Abierto: probar el CRM con el enlace de Jeffry, y una doble cabecera menor dentro del shell. | `references/proyectos.md` |
+| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** La intranet es la única superficie del pilar 3; panel de 3 puertas, **verificado por Juanma en su Chrome**. Abierto: probar el CRM con el enlace de Jeffry, y una doble cabecera menor dentro del shell. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |

@@ -68,10 +68,11 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.
 
-**Estado al 12 sep 2026: v80 publicada. Batería 89 OK · 0 fallas · 0 avisos · 2 saltadas (91).**
-El número de versión envejece en horas (76 → 80 en una tarde): **verificar con `clasp list-deployments`**.
+**Estado al 12 sep 2026: v81 publicada (verificado con `clasp list-deployments`). Batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).**
+El número de versión envejece en horas (76 → 81 en una tarde): **verificar con `clasp list-deployments`**.
 - **v79 (12-sep, 13:07):** unificación de la intranet + Finanzas. Panel de 5 tarjetas → 3 puertas (Finanzas & Data · Profit OS · Sistema de Marketing), shell `SistemaFinanzas` con lateral, `CosteoVista.html` partido en 11 parciales, 3 `.gs` duplicados archivados (31 funciones globales duplicadas → 0), RAA creada. Batería 90 · 0 fallas.
 - **v80 (12-sep):** encima de la 79, **el CRM acepta token** y las pruebas nuevas del barrido. Contra la 79 cambiaron exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`.
+- **v81 (12-sep):** doble cabecera cerrada. Dentro del shell de Finanzas (`embed=1`) cada vista oculta su barra verde entera; abiertas directo no cambian. Cambian FinanzasVista, MetasVista, ComparativoVista y EscenariosVista, más el retiro de la prueba vieja de corchetes (Pruebas.js y PruebasFinanzas.js). Batería 90 · 88 OK · 0 fallas · 0 avisos. **Publicada y verificada: el equipo está en @81.** Ojo: la batería solo EVALÚA Index y CosteoVista; las vistas de Finanzas las lee crudas, así que después de tocar una plantilla hay que abrirla directa y embebida.
 - Detalle del día: `~/Dev/Rosanta/apps-script/_informes/2026-09-12_Unificacion_intranet.md` y `SKILL.md` v12.
 
 ~~Estado al 10 sep 2026: Versión 76 publicada. Batería de pruebas 71 OK · 0 fallas · 2 saltadas.~~ (obsoleto)
@@ -135,7 +136,7 @@ El número de versión envejece en horas (76 → 80 en una tarde): **verificar c
 - **Jose** (sala/barra) no ha probado su acceso por token.
 - ~~CRM y marketing usan `getUsuarioActual()` en sus guardas, así que NO aceptan token. Inofensivo hoy porque solo Juanma tiene esos módulos.~~ **FALSO desde el 12-sep-2026, en las dos mitades.** CRM: resuelto en la v80 (ver "CRM con token"). Marketing: sus guardas ya resolvían con `resolverUsuario_(auth)` desde antes; se verificó leyendo el cuerpo de las tres. Y el "inofensivo porque solo Juanma los tiene" dejaba de ser cierto en cuanto otra persona tuviera el módulo: es el tipo de frase que hace que nadie lo mire.
 - **Probar el CRM con un enlace real de Gmail.** La batería confirma que cada llamada lleva el token, pero corre con la cuenta de Juanma. Falta abrir el enlace `?u=` de Jeffry en incógnito → Sistema de Marketing → CRM y ver la cuenta de contactos (3.535 al 12-sep).
-- ~~ABIERTO: en producción el recuadro de los shells sale VACÍO.~~ **CERRADO el 12-sep-2026: era solo la ventana de automatización.** En el Chrome de Juanma el shell de Finanzas carga "La semana" con datos. La ventana que usa Claude en Chrome bloquea cookies de terceros y por eso el iframe salía en blanco, también el de Marketing. **Regla: un iframe vacío visto desde la automatización no prueba nada; se confirma en el Chrome de la persona.** Queda un detalle visual: dentro del shell la vista repite su propia barra verde debajo de la del shell (doble cabecera).
+- ~~ABIERTO: en producción el recuadro de los shells sale VACÍO.~~ **CERRADO el 12-sep-2026: era solo la ventana de automatización.** En el Chrome de Juanma el shell de Finanzas carga "La semana" con datos. La ventana que usa Claude en Chrome bloquea cookies de terceros y por eso el iframe salía en blanco, también el de Marketing. **Regla: un iframe vacío visto desde la automatización no prueba nada; se confirma en el Chrome de la persona.** La doble cabecera que quedaba (la vista repetía su barra verde dentro del shell) se cerró en la v81.
 - **Opcional (p134, N3):** que `srv()` de `Marketing.html` valide `fn` contra una lista blanca declarada en la vista. El riesgo de regresión ya lo cubre el barrido; esto sería defensa extra y toca `Marketing.html`. Decisión de Juanma.
 - **El latido corre los lunes y mira `pauta_semanal`, no si las ventas por producto están al día.** Ese hueco dejó los datos parados dos semanas sin avisar.
 
