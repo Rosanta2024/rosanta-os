@@ -47,17 +47,17 @@ cd ~/Dev/Rosanta/scripts/maestro-finanzas && python3 generar_finanzas.py \
   diferencia; lo aclaro porque el prime del año sale optimista mientras el mes en curso
   no tenga planilla.
 
-## Quién todavía lee los JSON
+## Quién lee los JSON: nadie, salvo el cotejo A/B
 
-Hasta que se actualicen, lo único que los lee:
+Desde la tarde del 12-sep no los consume ninguna tarea ni ningún prompt:
 
-1. La tarea de Cowork **`rosanta-reporte-mensual`**, en su versión vieja. Su reemplazo,
-   que ya no los usa, está en
-   `Rosanta OS/03_Finance_Data_OS/2026-09-12_Tarea_reporte_mensual_v2.md`.
-2. El prompt del **forecast de caja** (p94):
-   `~/Dev/Rosanta/apps-script/_informes/2026-09-11_PROMPT_forecast_de_caja.md`.
+1. La tarea de Cowork **`rosanta-reporte-mensual`** se reemplazó por una que verifica el
+   cierre del mes sin calcular números ni leer JSON. Se probó con *Run now*: *"Agosto 2026:
+   COMPLETO"*.
+2. El prompt del **forecast de caja** (p94) ahora construye la pestaña "Caja" de Finanzas
+   en la intranet, leyendo del motor (`_finDatos`), no de `pant.json`.
 
-Cuando los dos estén actualizados, los JSON quedan solo para el cotejo A/B.
+Los JSON quedan como salida del cotejo: se generan solo cuando alguien corre este script.
 
 ## Lo que se jubiló el 2026-09-12
 

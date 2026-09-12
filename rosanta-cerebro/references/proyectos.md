@@ -88,7 +88,7 @@ El número de versión envejece en horas (76 → 80 en una tarde): **verificar c
 - *Las llamadas de las vistas pasan el token*: cuenta también `srv('nombre', ...)` (auth último, aridad exacta, función existente) → **41/41**.
 - *Toda llamada de las vistas verifica identidad*: suma las de `srv` y falla con `srv(variable)` → **36/36**.
 - *Ninguna vista llama al servidor con el nombre en una variable* (nueva): 25 vistas, excepción explícita del dispatcher de Marketing reconocida por su texto; falla si ve menos de 10 llamadas `srv`. Hoy 36 `run` + 14 `srv`.
-- La prueba vieja *Ninguna vista llama al servidor con corchetes* (5 vistas de Finanzas) **se retira por decisión de Juanma, 12-sep**: está en disco, sube con el próximo push autorizado y la batería pasa de 91 a 90. Su regex sobre las 25 vistas daba falsos positivos (`conChat[k]` en `CrmVista`, `window.__POS_CACHE__[semanas]` en `CosteoJs_Pintar`).
+- La prueba vieja *Ninguna vista llama al servidor con corchetes* (5 vistas de Finanzas) **retirada por decisión de Juanma, 12-sep**: subido a HEAD (re-clonado, idéntico al disco) y verificado: **88 OK · 0 fallas · 0 avisos · 2 saltadas (90 pruebas)**. **Falta publicar**; la versión 81 (doble cabecera del shell de Finanzas) sale encima de esto. Su regex sobre las 25 vistas daba falsos positivos (`conChat[k]` en `CrmVista`, `window.__POS_CACHE__[semanas]` en `CosteoJs_Pintar`).
 
 - Código en **`~/Dev/Rosanta/apps-script/rosanta-intranet`** (la ruta vieja `~/Documents/Claude/Projects/Claude/rosanta-intranet` quedó obsoleta).
 - scriptId `1eVphVfUKVlwdoM7wRhN5rKo-FzksYSv3QNqjUSVDcFQTa22L4KToqh42`.

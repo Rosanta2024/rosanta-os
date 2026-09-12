@@ -123,6 +123,11 @@
 </style>
 </head>
 <body>
+  <!-- Dentro del shell de Finanzas (?embed=1) se oculta la barra ENTERA, no solo el
+       boton "Panel principal": el shell ya trae la suya con el nombre y la salida, y
+       repetirla apilaba dos barras verdes (12-sep-2026). Code.gs manda mostrarVolver en
+       false cuando la pagina viene embebida. Abierta directo, se ve igual que siempre. -->
+  <? if (mostrarVolver) { ?>
   <header class="app">
     <div class="marca">
       <span class="logo" role="img" aria-label="Rosanta"></span>
@@ -130,14 +135,10 @@
     </div>
     <div class="quien">
       <span><?= usuario.nombre || usuario.email ?></span>
-      <? if (mostrarVolver) { ?>
-        <!-- Dentro del shell de Finanzas este boton sobra y estorba: se saltaba el
-             lateral y sacaba al usuario de la seccion. Code.gs manda mostrarVolver
-             en false cuando la pagina viene con ?embed=1. -->
-        <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
-      <? } ?>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
     </div>
   </header>
+  <? } ?>
 
   <main class="met">
     <div class="met-barra-sup">

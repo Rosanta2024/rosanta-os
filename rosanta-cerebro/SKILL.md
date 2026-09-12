@@ -308,8 +308,11 @@ Día completo de trabajo en la **intranet** (Apps Script), ocho versiones public
    reemplazada** por un detector que recorre la cadena de handlers con paréntesis balanceados
    y solo marca si el corchete viene pegado al último `)`. Ese cubre las 25 vistas y sigue
    cazando el bug original, que tenía un `withFailureHandler` multilínea.
-   **La vieja se retiró por decisión de Juanma el 12-sep-2026** — dos pruebas del mismo
-   patrón conviviendo, una peor, es como se degrada una batería. Con eso pasa de 91 a 90.
+   **La vieja se retiró por decisión de Juanma el 12-sep-2026** y ya está en HEAD — dos
+   pruebas del mismo patrón conviviendo, una peor, es como se degrada una batería.
+   **Ojo con los dos números, que no son el mismo:** lo **publicado (v80)** corre 91 pruebas
+   con 89 OK; **HEAD** corre 90 con **88 OK · 0 fallas · 0 avisos · 2 saltadas**, y sale a
+   producción con la v81.
 
    La regla general: **una prueba que busca por patrón de texto solo encuentra el patrón
    que conoce.**

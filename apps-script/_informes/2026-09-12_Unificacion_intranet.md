@@ -192,3 +192,28 @@ Un iframe vacío visto desde la automatización no prueba nada; se confirma en e
 Queda un detalle visual en el shell: **doble cabecera.** La barra verde del shell ("FINANZAS & DATA")
 y, adentro del recuadro, la barra verde de la propia vista ("FINANZAS"). Con `embed=1` ya se oculta
 el botón "Panel principal" de la vista, pero no su barra entera.
+
+## Versión 81 — doble cabecera (en preparación)
+
+Aprobada por Juanma. Dentro del shell, cada vista de Finanzas oculta su barra `<header class="app">`
+ENTERA con `?embed=1`, no solo el botón "Panel principal". Cambian cuatro vistas: FinanzasVista,
+MetasVista, ComparativoVista y EscenariosVista. No se toca `Code.js`: `mostrarVolver` ya llegaba en
+los cuatro `render_`. Abiertas directo, las vistas se ven igual que antes.
+
+- Se preparó sobre copias en el scratchpad. En las cuatro queda igual la cantidad de `if`, cierres,
+  `header` y enlaces "volver".
+- Antes de copiar al repo se verificó que los cuatro archivos siguieran idénticos a las copias
+  tomadas, para no pisar a otra sesión. Después de copiar, disco contra HEAD = exactamente esos cuatro.
+- Mismo día: `CLAUDE.md` actualizado. La batería se corre en el navegador, más las reglas de clasp,
+  sesiones en paralelo, parciales e iframes. El respaldo del anterior quedó en `tools/`.
+
+Falta: el resultado de la batería de la sesión 0f (su cambio de pruebas ya está en HEAD). Después,
+push de Juanma, batería, `create-version` 81 y `update-deployment`.
+
+**Chequeo de plantillas antes del push.** La batería no detecta un scriptlet mal cerrado, porque
+lee el texto de las vistas y no las evalúa. En producción ese error rompe la vista entera. Para
+cubrirlo, cada plantilla se convirtió al JavaScript que arma HtmlTemplate (texto → salida literal,
+`<?= ?>` y `<?!= ?>` → expresión, `<? ?>` → código) y se pasó por `node --check`. Resultado: las
+cuatro vistas de Finanzas compilan antes y después del cambio, y también SistemaFinanzas, Index y
+CosteoVista. Control negativo sobre una copia: un `if` sin cerrar, un cierre de más y un
+`<?# ?>` los detecta los tres. El chequeo sí es capaz de fallar.
