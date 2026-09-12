@@ -50,33 +50,13 @@ sincroniza la carpeta**, nunca al revés. El respaldo de la v8 quedó en
 
 - Publicar = `clasp create-version` + `clasp update-deployment -V <n> <deploymentId>`.
   `clasp push` solo actualiza HEAD, no lo que ve la gente.
-- Correr la batería antes de publicar **en el navegador**, contra lo subido a HEAD:
-  `https://script.google.com/a/macros/rosanta.rest/s/AKfycbxw_iBKkb80hvTvZ7bMNyJKDeSn3AysJGzmypiVRCU/dev?page=pruebas`
-  (solo rol dueño, ~2–3 min). **`clasp run correrPruebasTexto` ya no sirve** desde el
-  12-sep-2026: con el login del cliente OAuth por defecto de clasp funcionan push, pull y
-  list-deployments, pero `scripts.run` contesta "Unable to run script function".
+- Correr la batería antes de publicar: `clasp run correrPruebasTexto`. Tarda ~170 s y la
+  API corta seguido (`ETIMEDOUT` / `ECONNRESET`); si pasa, correr un solo grupo.
 - **Mirar el conteo, no el color:** una batería en verde que revisó menos de lo que
   debía es un fallo, no un éxito.
 - Los activadores se crean a mano (Editor → Activadores): `ScriptApp.newTrigger()`
   necesita un scope que el manifiesto no declara.
 - Borrar los diagnósticos temporales antes de publicar.
-- **No creerle a clasp.** El 12-sep-2026 imprimió "You are logged in as
-  restaurante@rosanta.rest" con un token de la cuenta personal, y "Script is already up to
-  date" con un push que sí había subido 15 archivos. La cuenta se verifica con `tokeninfo`
-  del access_token de `~/.clasprc.json`; un push o una versión se verifican bajando el
-  proyecto (`clasp pull`, o `clasp pull --versionNumber N`) a una carpeta APARTE y comparando.
-- **Nunca `clasp pull` dentro del repo:** baja lo del servidor encima del disco y pisa el
-  trabajo sin subir de todas las sesiones.
-- **Varias sesiones en la misma carpeta:** avisar antes de tocar archivos compartidos y
-  hacer un solo push. `clasp push` sube el directorio ENTERO, con lo que cada una tenga a
-  medias. Si hay trabajo ajeno en disco sin probar, publicar con `create-version` +
-  `update-deployment` SIN push: `create-version` congela lo que está en el servidor.
-- **Parciales con JavaScript:** `include()` sanitiza (usa `createHtmlOutputFromFile`) y se
-  come código sin avisar; se pegan con `incluirCrudo_()`. Cada parcial nuevo va en las listas
-  `VISTAS` de `Pruebas.js`, o sus llamadas al servidor quedan sin revisar y la prueba sigue
-  en verde.
-- **Un iframe vacío visto desde Claude en Chrome no prueba nada:** esa ventana bloquea
-  cookies de terceros. Se confirma en el Chrome de la persona.
 
 ## Reglas que no cambian
 

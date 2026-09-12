@@ -107,7 +107,17 @@ que apunten a donde deben— y cualquiera de las tres sale como crítica.
 (466 archivos que npm reescribe seguido) y `~/Claude` toca ~19 archivos por día él solo. Un
 sincronizador encima de eso produce archivos `(1)` y carpetas corruptas.
 
-> **Corrección del 12-sep-2026, y es grave: `~/Dev/Rosanta` NO es un repositorio git.**
+> **RESUELTO el 12-sep-2026: `~/Dev/Rosanta` YA es un repositorio git.** Primer commit
+> `00eae34`, 465 archivos, rama `main`, identidad local al repo. Fuera del historial:
+> `node_modules/`, `_backups/`, **`clasp-creds.json`** (cliente OAuth con `client_secret`) y
+> `tools/ui-ux-pro-max-skill/` (repo de terceros). `_archivo/` sí entra: es historia de código.
+> **El `.gitignore` se escribió ANTES del primer `add`** — sacar un secreto del historial
+> después es mucho más trabajo que ignorarlo antes. **Desde ahora: `git status` antes de
+> escribir y `git diff` para ver qué tocó otra sesión.**
+>
+> El texto de abajo queda como registro de por qué hizo falta:
+>
+> **Hasta el 12-sep-2026 `~/Dev/Rosanta` NO era un repositorio git.**
 > `git rev-parse` contesta "not a git repository". El único `.git` en todo Dev está en
 > `tools/ui-ux-pro-max-skill/`, que es una skill de terceros y no cubre nada de Rosanta.
 > **Ningún código de Rosanta tiene control de versiones**: ni la intranet, ni el maestro, ni
