@@ -44,6 +44,38 @@ dos dan distinto, uno se desvió. Es la única comprobación independiente que h
 nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). El token funciona de punta a punta,
 verificado con el enlace de Jeffry.
 
+> **Qué está probado y qué no, al cierre del 12-sep.** Lo verificado es que **el token
+> funciona**: con el enlace de Jeffry en incógnito la intranet saluda "Hola Jeffry · rol:
+> chef" y le muestra **solo Profit OS**. Esa misma pantalla es evidencia de que Jeffry **no**
+> tiene `crm`, `marketing` ni `contenido` — si los tuviera, vería esas puertas.
+>
+> **Lo que NO está probado es el CRM con un Gmail real.** Hubo un reporte de que el CRM
+> cargaba con el enlace de Jeffry, pero contradice la captura y el código: `?page=crm` exige
+> `usuarioTieneModulo(usuario, 'crm')` (Code.js:165) y la puerta de Marketing exige
+> `marketing` o `contenido` (Code.js:92). Lo más probable es que esa prueba corriera sobre la
+> sesión de Juanma. **La prueba definitiva, pendiente:** enlace de Jeffry en incógnito
+> **sin ninguna sesión de Google**, con `&page=crm`.
+
+**Pantallas nuevas:** RAA (pestaña `RAA` en **`Rosanta_Intranet_Config`**, no en el maestro,
+creada con `instalarRAA()`) y **Escenarios**, que reemplaza al artefacto `rosanta-dre-mensual`.
+
+**El panel pasó de 5 tarjetas a 3 puertas** (Finanzas & Data · Profit OS · Sistema de
+Marketing), con el shell `SistemaFinanzas` y su lateral: La semana · Metas · 2026 contra 2025
+· Escenarios. `CosteoVista.html` se partió de 2.000 líneas en **11 parciales**, con la
+reconstrucción verificada byte a byte, y se archivaron **3 `.gs` duplicados** que tenían 31
+funciones globales repetidas — ahora 0. Detalle en
+`~/Dev/Rosanta/apps-script/_informes/2026-09-12_Unificacion_intranet.md`.
+
+**Jubilados el 12-sep:** `generar_dashboard.py` (a `_archivo/`), los `Rosanta_Dashboard*.html`,
+la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
+`rosanta-dashboard-semanal`. **`generar_finanzas.py` se queda como validador A/B**: es el mismo
+cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
+dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
+
+**Versión: v81 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
+nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). El token funciona de punta a punta,
+verificado con el enlace de Jeffry.
+
 > **Cuidado con cómo se leyó esa verificación.** Que el CRM le cargara a Jeffry probó el
 > token **y destapó un problema de permisos**: Jeffry es **jefe de cocina** y no tiene por
 > qué ver el CRM, que es del equipo de marketing. Su fila de `USUARIOS` trae el módulo `crm`
@@ -570,7 +602,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Acceso por token verificado con Jeffry. **ABIERTO N1: Jeffry tiene módulos que no le corresponden** —ve los 3.535 contactos del CRM siendo jefe de cocina— y hay que revisar a Jose. Más: marcadores con la URL vieja `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
+| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Token verificado con Jeffry (ve solo Profit OS, como corresponde a su rol). Abierto: **el CRM con un Gmail real sigue sin probarse**, Jose no probó su acceso, y hay marcadores con la URL vieja `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
