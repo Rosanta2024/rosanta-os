@@ -40,16 +40,9 @@ la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
 cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
 dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
 
-**Versión: v81 publicada el 12-sep-2026.** Batería **88 OK · 0 fallas · 0 avisos · 2 saltadas**
-(90 pruebas). Las tres versiones del día, para no confundirlas:
-
-| | Qué trajo | Batería |
-|---|---|---|
-| v79 | unificación: panel de 3 puertas, shell `SistemaFinanzas`, Finanzas con planilla y RAA | 90 · 0 fallas |
-| v80 | token en las tres funciones del CRM y las pruebas nuevas (srv, corchetes, grupo 8) | 91 · 89 OK |
-| **v81** | doble cabecera del shell y retiro de la prueba vieja de corchetes | **90 · 88 OK** |
-
-El token funciona de punta a punta, verificado con el enlace de Jeffry.
+**Versión: v81 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
+nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). El token funciona de punta a punta,
+verificado con el enlace de Jeffry.
 
 > **Qué está probado y qué no, al cierre del 12-sep.** Lo verificado es que **el token
 > funciona**: con el enlace de Jeffry en incógnito la intranet saluda "Hola Jeffry · rol:
@@ -72,6 +65,28 @@ Marketing), con el shell `SistemaFinanzas` y su lateral: La semana · Metas · 2
 reconstrucción verificada byte a byte, y se archivaron **3 `.gs` duplicados** que tenían 31
 funciones globales repetidas — ahora 0. Detalle en
 `~/Dev/Rosanta/apps-script/_informes/2026-09-12_Unificacion_intranet.md`.
+
+**Jubilados el 12-sep:** `generar_dashboard.py` (a `_archivo/`), los `Rosanta_Dashboard*.html`,
+la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
+`rosanta-dashboard-semanal`. **`generar_finanzas.py` se queda como validador A/B**: es el mismo
+cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
+dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
+
+**Versión: v81 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
+nuevas (srv, corchetes, grupo 8). Batería **89 OK · 0 fallas · 0 avisos · 2 saltadas** (91 en total). El token funciona de punta a punta,
+verificado con el enlace de Jeffry.
+
+> **Cuidado con cómo se leyó esa verificación.** Que el CRM le cargara a Jeffry probó el
+> token **y destapó un problema de permisos**: Jeffry es **jefe de cocina** y no tiene por
+> qué ver el CRM, que es del equipo de marketing. Su fila de `USUARIOS` trae el módulo `crm`
+> —y probablemente `marketing` o `contenido`—, así que hoy su enlace ve los **3.535
+> contactos**. La frase "el CRM ya funciona para Jeffry y Jose" es **falsa en la premisa**:
+> ninguno de los dos debería tenerlo. Contra la v79 cambiaron
+exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`, verificado
+bajando la versión con `clasp pull --versionNumber 80` a una carpeta aparte.
+
+El número de versión **envejece en horas**: el 12-sep pasó de 76 a 80 en una tarde.
+**Verificar siempre con `clasp list-deployments`, nunca de memoria.**
 
 ### 2. Reglas técnicas nuevas (cada una de un incidente del día)
 
@@ -332,21 +347,26 @@ Día completo de trabajo en la **intranet** (Apps Script), ocho versiones public
    `getFinanzasData` sin guarda — o sea con la puerta abierta al maestro entero.
    **Las llamadas a `google.script.run` se escriben SIEMPRE con el nombre literal**, nunca
    con corchetes. Si hay un dispatcher genérico, **cada nombre que pase por él necesita su
-   propio chequeo de guarda**, porque el barrido no lo va a ver. **La prueba vigente** se llama
-   *"Ninguna vista llama al servidor con el nombre en una variable"* (`Pruebas.js`) y se apoya
-   en el helper **`_prLlamadasConCorchetes`** de `PruebasFinanzas.js`: recorre la cadena de
-   handlers con **paréntesis balanceados** y marca solo si el corchete viene pegado al último
-   `)`. Cubre las 25 vistas, con el dispatcher de `Marketing.html` como excepción declarada.
+   propio chequeo de guarda**, porque el barrido no lo va a ver. La prueba que caza el patrón prohibido, textual:
 
-   **Citar las pruebas por NOMBRE, no por número de línea**: los números se mueven con cada
-   edición.
+   ```js
+   /google\.script\.run[\s\S]{0,400}?\[\s*[a-zA-Z_$]/
+   ```
 
-   Como antecedente, la primera versión fue una ventana fija:
-   `/google\.script\.run[\s\S]{0,400}?\[\s*[a-zA-Z_$]/`. Encontró el bug original, pero
-   sobre las 25 vistas daba **falsos positivos** —corchetes de array dentro del handler— y se
-   retiró en la v81. **No copiarla.**
+   Corre sobre `createTemplateFromFile(v).getRawContent()` de cada vista — `getRawContent`
+   y no `createHtmlOutputFromFile`, que sanitiza y se come contenido. El 400 es la ventana
+   donde cabe la cadena de `withSuccessHandler`/`withFailureHandler`. Se probó contra las **cinco vistas
+   del pilar** sin falsos positivos, pero **sobre las 25 del repo SÍ los da** — corchetes de
+   array dentro del handler, como `conChat[k]` o `window.__POS_CACHE__[semanas]`. **Quedó
+   reemplazada** por un detector que recorre la cadena de handlers con paréntesis balanceados
+   y solo marca si el corchete viene pegado al último `)`. Ese cubre las 25 vistas y sigue
+   cazando el bug original, que tenía un `withFailureHandler` multilínea.
+   **La vieja se retiró por decisión de Juanma el 12-sep-2026** y ya está en HEAD — dos
+   pruebas del mismo patrón conviviendo, una peor, es como se degrada una batería.
+   Ya salió con la **v81**, así que publicado y HEAD vuelven a coincidir: **90 pruebas ·
+   88 OK · 0 fallas · 0 avisos · 2 saltadas**.
 
-      La regla general: **una prueba que busca por patrón de texto solo encuentra el patrón
+   La regla general: **una prueba que busca por patrón de texto solo encuentra el patrón
    que conoce.**
 8bis. **`clasp push` sube TODO lo que hay en la carpeta si no existe `.claspignore`.** Y como
    todos los `.js` comparten un solo ámbito global, un respaldo de `Code.js` subido al lado de
@@ -582,7 +602,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Token verificado con Jeffry (ve solo Profit OS, como corresponde a su rol). Abierto: **el CRM con un Gmail real sigue sin probarse**, Jose no probó su acceso, y hay marcadores con la URL vieja `/a/macros/rosanta.rest/`. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
