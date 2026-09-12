@@ -440,6 +440,35 @@ function prCimientos_(res) {
     prAnotar_(g, 'Los enlaces internos apuntan al despliegue publicado', estado, detalle,
               url || '(vacia)', 'una URL /exec en INTRANET_URL');
   });
+  /* 12-sep-2026: la prueba de arriba vigila SOLO INTRANET_URL. CONSOLA_URL y
+     RESENAS_URL estan escritas a mano en Config.gs y Code.gs se las entrega al
+     navegador del usuario, y las dos tenian la forma con dominio. Un Gmail personal
+     que hiciera clic en Consola o en Resenas chocaba con el mismo login de
+     rosanta.rest, y ninguna prueba lo veia. Se corrigieron y esta prueba existe para
+     que no vuelvan a torcerse. */
+  prCorrer_(g, 'Las URLs escritas en Config apuntan fuera del dominio', function () {
+    var malas = [];
+    [['CONSOLA_URL', CONFIG.CONSOLA_URL], ['RESENAS_URL', CONFIG.RESENAS_URL]]
+      .forEach(function (par) {
+        var nombre = par[0], u = String(par[1] || '');
+        if (!u) { malas.push(nombre + ' esta vacia'); return; }
+        if (u.indexOf('script.google.com/a/') > -1) {
+          malas.push(nombre + ' lleva prefijo de dominio (/a/): rechaza los Gmail personales');
+        }
+        if (u.slice(-5) !== '/exec') {
+          malas.push(nombre + ' no termina en /exec');
+        }
+      });
+
+    prAnotar_(g, 'Las URLs escritas en Config apuntan fuera del dominio',
+              malas.length ? 'FALLA' : 'OK',
+              malas.length
+                ? malas.join(' · ') + '. La forma buena es ' +
+                  'https://script.google.com/macros/s/<ID>/exec, sin el /a/.'
+                : 'CONSOLA_URL y RESENAS_URL: /exec y sin /a/',
+              malas.length ? malas.length + ' con problema' : 'las 2 bien',
+              'CONSOLA_URL y RESENAS_URL sin /a/ y terminadas en /exec');
+  });
 }
 
 // ---------------------------------------------------------------- 2. recetario

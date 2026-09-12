@@ -10,8 +10,8 @@ const CONFIG = {
   // OJO: estas dos URLs venían cruzadas en el handoff. Verificado con
   // `clasp list-deployments` por proyecto y con el doGet de cada uno.
   // La consola es sólo para responder: la vista CRM ya muestra la conversación.
-  CONSOLA_URL: 'https://script.google.com/a/macros/rosanta.rest/s/AKfycbzzy8u-qu4uemXzgzPd1ylmDrTm5giV2qqpxYKUu88y28J1dZ3_yryBGaV97rQrU7BAzg/exec',
-  RESENAS_URL: 'https://script.google.com/a/macros/rosanta.rest/s/AKfycbygKOwpwfMUWzf4_E5ZyfIVtWf8XRhx6IvmCxkW5tIP3roFbf8wuyl0mqBn1Ie-K3xsMw/exec'
+  CONSOLA_URL: 'https://script.google.com/macros/s/AKfycbzzy8u-qu4uemXzgzPd1ylmDrTm5giV2qqpxYKUu88y28J1dZ3_yryBGaV97rQrU7BAzg/exec',
+  RESENAS_URL: 'https://script.google.com/macros/s/AKfycbygKOwpwfMUWzf4_E5ZyfIVtWf8XRhx6IvmCxkW5tIP3roFbf8wuyl0mqBn1Ie-K3xsMw/exec'
   // Recetario: dos hojas nativas (Barra y Cocina) convertidas de los xlsx v5.
   // IDs en Script Properties: RECETARIO_BARRA_SHEET_ID, RECETARIO_COCINA_SHEET_ID
   // (los guarda convertirRecetarios()). Estructura: BANCO DE DATOS + una pestana
@@ -42,7 +42,14 @@ function getSheetId_(clave) {
  *
  * La direccion buena vive en Script Properties, como todas las IDs del proyecto:
  *
- *   INTRANET_URL -> https://script.google.com/a/macros/rosanta.rest/s/<ID>/exec
+ *   INTRANET_URL -> https://script.google.com/macros/s/<ID>/exec
+ *
+ * SIN EL PREFIJO DE DOMINIO. La forma con /a/macros/rosanta.rest/ redirige al login
+ * EXCLUSIVO de rosanta.rest y le pide contrasena del dominio a quien entra con Gmail
+ * personal, que son justamente los que usan los enlaces con ?u=token. Vale para las
+ * TRES URLs de este archivo, no solo para INTRANET_URL: CONSOLA_URL y RESENAS_URL se
+ * le entregan al navegador del usuario desde Code.gs y tenian la misma forma rota
+ * hasta el 12-sep-2026.
  *
  * Se copia del dialogo Implementar > Administrar implementaciones, del despliegue
  * publicado, y termina en /exec. Si algun dia se cambia de despliegue, se cambia
