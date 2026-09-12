@@ -210,10 +210,18 @@ los cuatro `render_`. Abiertas directo, las vistas se ven igual que antes.
 Falta: el resultado de la batería de la sesión 0f (su cambio de pruebas ya está en HEAD). Después,
 push de Juanma, batería, `create-version` 81 y `update-deployment`.
 
-**Chequeo de plantillas antes del push.** La batería no detecta un scriptlet mal cerrado, porque
-lee el texto de las vistas y no las evalúa. En producción ese error rompe la vista entera. Para
+**Chequeo de plantillas antes del push.** La batería evalúa solo dos páginas: el panel
+(`Pruebas.js:226`, `Index.evaluate()`) y Profit OS (`Pruebas.js:270`, `doGet` con `page=costeo`).
+Esa segunda arma CosteoVista con sus once parciales, así que **las baterías de hoy ya dibujaron del
+lado del servidor el CosteoVista partido**. Las demás vistas, incluidas las cuatro de Finanzas y
+SistemaFinanzas, solo se leen con `getRawContent()`: ahí un scriptlet mal cerrado pasa en verde y
+en producción rompe la vista entera. Para
 cubrirlo, cada plantilla se convirtió al JavaScript que arma HtmlTemplate (texto → salida literal,
 `<?= ?>` y `<?!= ?>` → expresión, `<? ?>` → código) y se pasó por `node --check`. Resultado: las
 cuatro vistas de Finanzas compilan antes y después del cambio, y también SistemaFinanzas, Index y
 CosteoVista. Control negativo sobre una copia: un `if` sin cerrar, un cierre de más y un
 `<?# ?>` los detecta los tres. El chequeo sí es capaz de fallar.
+
+Sugerencia pendiente, de la sesión 6b, no hecha: una prueba que evalúe las cinco vistas de Finanzas
+(las cuatro más SistemaFinanzas) con `mostrarVolver` en true y en false, con usuario, urlBase y
+authToken de prueba, y confirme que no revientan. Cerraría ese hueco para siempre.
