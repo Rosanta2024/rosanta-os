@@ -225,3 +225,18 @@ CosteoVista. Control negativo sobre una copia: un `if` sin cerrar, un cierre de 
 Sugerencia pendiente, de la sesión 6b, no hecha: una prueba que evalúe las cinco vistas de Finanzas
 (las cuatro más SistemaFinanzas) con `mostrarVolver` en true y en false, con usuario, urlBase y
 authToken de prueba, y confirme que no revientan. Cerraría ese hueco para siempre.
+
+**Push de la 81 verificado.** Juanma subió; HEAD bajado aparte = disco (68 archivos + manifiesto), y
+las cuatro vistas en HEAD son byte a byte las preparadas. Abiertas en `/dev` (código subido), las
+ocho combinaciones se dibujan sin error y con datos:
+
+| vista | directa | `embed=1` |
+|---|---|---|
+| La semana (FinanzasVista) | barra + "Panel principal" | sin barra |
+| Metas | barra + "Panel principal" | sin barra |
+| 2026 contra 2025 | barra + "Panel principal" | sin barra |
+| Escenarios | barra + "Panel principal" + "Ir a Finanzas" | sin barra ni "Ir a Finanzas" |
+
+**Batería de la 81 contra HEAD:** "Intranet sana", 88 OK · 0 fallas · 0 avisos · 2 saltadas = 90,
+en 150,4 s. Es el mismo número que dio 0f antes del cambio: las cuatro barras no movieron nada.
+Listo para `create-version` 81 + `update-deployment`.

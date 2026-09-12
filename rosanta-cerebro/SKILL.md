@@ -51,6 +51,15 @@ El número de versión **envejece en horas**: el 12-sep pasó de 76 a 80 en una 
 
 ### 2. Reglas técnicas nuevas (cada una de un incidente del día)
 
+> **Todas son la misma regla vista por otra puerta: reconocer un patrón no es verificar.**
+> El 12-sep se cometió cuatro veces en un día. La batería pasaba en verde porque buscaba
+> `run.nombre(` y la llamada usaba corchetes. Un barrido dijo que el CRM estaba abierto
+> porque buscaba `exigirModulo_` y la convención del repo era `requiere*_`. Se dio por hecho
+> que Dev era un repo git por ver un `.git` sin mirar de quién era. Y se estuvo a punto de
+> rehacer el panel entero por un iframe que salía vacío **solo** en la ventana de
+> automatización. Cuando algo se da por bueno, **abrir el contenido**: el cuerpo de la guarda,
+> el destino del `.git`, el navegador de la persona.
+
 1. **Una guarda se verifica LEYENDO SU CUERPO, no reconociendo su nombre.** Los dos errores
    se cometieron el mismo día, uno en cada dirección. Método: (1) encontrar la llamada,
    (2) confirmar que se le pasa `auth`, (3) abrir el cuerpo y confirmar el `throw`.
@@ -357,7 +366,7 @@ El mapa viejo de "proyectos sueltos" quedó obsoleto. Todo se organiza ahora en 
 | **Finanzas & Data OS** | Maestro, DRE, P&L, prime cost, caja | Arrancó 2 sep. Vista v1 viva |
 | **Profit OS** | Recetario, costeo, inventarios, merma | En funcionamiento desde S35 |
 | **Marketing OS** | Pauta, CAC, ROAS, reseñas, carritos, encuesta | En funcionamiento |
-| **Back office / Operations Hub** | Drive, Apps Script, seguridad, artefactos | Activo |
+| **Back office / Operations Hub** | **12 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), una **centralita por proyecto** en `Documents/Claude/Projects/` con solo alias adentro, 0 código en Drive, guardián vivo y **`~/Dev/Rosanta` ya es repo git**. Abierto: 232 MB en duplicados chicos, 374 punteros, la key de Wix en texto plano | `references/ecosistema.md` |
 | **Web Rosanta** | rosanta.rest (Wix), SEO, multilingüe | Activo |
 | **Reservas / Ticketing (WIX)** | Reservas, webhooks, monitoreo | Activo, con fallo abierto |
 
@@ -424,6 +433,17 @@ cerraron o cambiaron de forma. No reproponer las cerradas.
    Q4,764/mes**, no pasándose. La pregunta del pilar no es cómo recortar la extracción
    sino cómo la operación llega a Q18,896 primero y a Q27,229 después. Un 5% de venta
    es una meta, no un milagro.
+
+   **Y la palanca ya está identificada, en el pilar 4.** La pantalla de Profit OS tiene medido
+   al 12-sep: **Q24,983/año recuperables contra meta** (33 productos por encima de su costo
+   objetivo — el Brisket en Salsa Bordelesa solo son Q9,838, con 44.8% contra 30%) y
+   **Q38,320/año de oportunidad en sala** (9 rompecabezas con venta al menos mensual). Son
+   **Q63,303/año = Q5,275/mes**, o sea el **87% del hueco contra el piso** y el 37% contra el
+   objetivo.
+
+   Eso cambia la conversación: el hueco **no se cierra solo vendiendo más**. Una parte grande
+   sale de costo, con trabajo que el pilar 4 ya hizo y que está con nombre y monto por
+   producto. **No hay que buscar la palanca: hay que ejecutarla.**
 
    **Documento de arranque, autocontenido:**
    `Rosanta OS/03_Finance_Data_OS/2026-09-12_Objetivo_Operacional.md`. Se trabaja en
@@ -528,7 +548,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 - **Firma de marca: coordenada 14·91.** Forma oficial **14° N · 91° W**; corta **14·91 / #1491**. Igual en cada plato como sello, sin sufijos por platillo.
 - Stack: todo interno con Google (Apps Script, Sheets, Drive) + Claude. Sin n8n, Make ni plataformas externas. GHL y SonTickets cerrados.
 
-## Mapa de proyectos (estado al 6 sep 2026)
+## Mapa de proyectos (estado al 12 sep 2026)
 
 | Pilar / proyecto | Estado | Detalle |
 |---|---|---|
