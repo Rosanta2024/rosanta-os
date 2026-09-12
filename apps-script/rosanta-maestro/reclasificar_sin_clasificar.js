@@ -131,6 +131,18 @@ var LOTE_SC_FEL = [
   ['487473840', '2026-04-01',  1467.14, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
   ['2357282728', '2026-09-01',  1250.00, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
   // 2 filas · Q2717.14
+
+  // --- 12-sep-2026 · ALQUIFIESTAS MEG (emisor Edi Joaquin Gaitan Garcia).
+  //     Proveedor de materiales para eventos, confirmado por Juanma. NO es nomina
+  //     ni mantenimiento: es costo variable que se mueve con los eventos, asi que
+  //     va a EVENTOS, donde ya vive Talishte Producciones.
+  ['1072775917', '2026-03-31',   860.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
+  ['3772924625', '2026-04-08',   410.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
+  ['628313632', '2026-05-06',   150.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
+  ['3991424570', '2026-07-08',   475.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
+  ['139152244', '2026-07-10',    96.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
+  ['1028669702', '2026-05-06',   250.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],  // 23:00, del bloque de p120
+  // 2 filas · Q2717.14
 ];
 
 // EL Q750 NO VA EN ESTE LOTE, y la historia vale la pena dejarla escrita.
