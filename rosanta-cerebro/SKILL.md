@@ -24,7 +24,10 @@ ese vive en el tablero— sino lo que cambió de entender.
   `05_Marketing_OS/Resenas_y_Reputacion/Rosanta_Encuesta_Satisfaccion`
   (`1zZuqsBgjC3hYRJfdXe6zz8SxYCNbMBtBDvc3qy1nPf0`) y se publicó en la **v5**.
 - **Las tres URLs de `Config.gs` de la intranet** perdieron el prefijo `/a/macros/rosanta.rest/`,
-  y hay una prueba nueva que falla si vuelven a torcerse. **Falta publicar.**
+  y hay una prueba nueva que falla si vuelven a torcerse. **Publicado en la v82.** El mismo push
+  sacó del proyecto vivo los 6 diagnósticos archivados: quedan 7 scripts sueltos, no 13.
+  *Al verificar un redeploy, releer `clasp list-deployments` hasta que confirme: el primero
+  después del redeploy todavía decía @81.*
 - **La documentación del cargador** ya vive en `00_Instrucciones` del maestro, filas 77-97,
   y esa hoja ahora dice **16 hojas**, no 14.
 - **6 diagnósticos de un solo uso** salieron de `rosanta-intranet` a `_archivo/`.
