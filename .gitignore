@@ -1,0 +1,20 @@
+# Dependencias: se reinstalan, no se versionan.
+node_modules/
+
+# Respaldos manuales. El historial de git los reemplaza.
+_backups/
+
+# SECRETO: cliente OAuth con client_secret. NUNCA versionar.
+clasp-creds.json
+
+# Ruido de macOS
+.DS_Store
+Icon?
+._*
+
+# Nota: _archivo/ SI se versiona a proposito. Es historia de codigo,
+# justo lo que git viene a cuidar.
+
+# Repo de terceros con su propio .git: tiene su historia aparte y git no
+# lo puede anidar sin convertirlo en submodulo. No es codigo de Rosanta.
+tools/ui-ux-pro-max-skill/

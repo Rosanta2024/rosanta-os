@@ -1,0 +1,30 @@
+// ─────────────────────────────────────────────────────────────────────
+//  Pegar en Code.gs. Es lo unico que hay que tocar del archivo existente.
+// ─────────────────────────────────────────────────────────────────────
+
+// 1) En doGet(), agregar la ruta del modulo:
+//
+//    if (pagina === 'costeo') {
+//      if (!usuarioTieneModulo(usuario, 'recetario')) return servir_('Denied');
+//      return servir_('CosteoVista', 'Rosanta · Recetario y Proveedores');
+//    }
+//
+//    (usar el mismo helper con el que ya sirves Index/Denied; si no existe,
+//     HtmlService.createTemplateFromFile('CosteoVista').evaluate()
+//       .setTitle('Rosanta · Recetario y Proveedores')
+//       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+//       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL))
+
+// 2) En Index.html, apuntar la tarjeta del Recetario a ?pagina=costeo
+//    (hoy apunta a "#").
+
+// 3) En USUARIOS, el rol "chef" necesita el modulo 'recetario'.
+//    El rol "contenido" NO debe tenerlo.
+
+// 4) Funciones que la vista llama por google.script.run. Todas ya existen
+//    en CosteoDatos.gs y Proveedores.gs, no hay que declarar nada extra:
+//       getCosteoData()        -> el modelo completo
+//       refrescarCosteo()      -> limpia cache y devuelve el modelo
+//       getHistorialPrecios(p) -> historial de un producto
+//       registrarPrecio(datos) -> escribe el precio y lo deja en PRECIOS
+//       getReporteHigiene()    -> el reporte de la pestana Higiene

@@ -1,0 +1,215 @@
+const D = window.__DATA__;
+const R = D.recetas, I = D.insumos, P = D.proveedores;
+const sim = new Map();
+/* El modulo abre en el tablero: contesta "como vamos". La ingenieria de menu, que
+   contesta "que hago esta semana", queda segunda. Las otras son de consulta. */
+let view = 'inicio', q = '', area = 'COCINA', filt = {rec:'carta', ins:'todos', prov:null};
+let imArea = 'COCINA', imSemanas = 13;   // el trimestre: ver IM_VENTANAS
+let dbSemanas = 13;                      // el tablero abre en la misma ventana
+
+/* EL AREA. Los permisos dicen QUE puede hacer cada uno; esto dice DONDE.
+   Jeffry es cocina y Jose es barra: sin este filtro la pantalla le ofrece a Jose
+   los botones de las fichas de cocina, el servidor se los rechaza uno por uno, y
+   el se queda mirando errores sin entender por que. Ofrecer algo que se va a negar
+   no es seguridad, es una trampa.
+
+   El candado DE VERDAD esta en exigirArea_(), del lado del servidor. Esto es
+   maquillaje: esconder un boton no protege nada.
+
+   Con el filtro en "Todo" el area viene vacia y se deja pasar: el servidor elige
+   la del rol. Y si window.PUEDE.areas no llego, no se ofrece nada. */
+const AREA_EDITABLE = a => {
+  const mias = (window.PUEDE && window.PUEDE.areas) || [];
+  if(!mias.length) return false;
+  const t = String(a || '').trim().toUpperCase();
+  return t ? mias.indexOf(t) !== -1 : true;
+};
+
+/* Cuando el area que se esta mirando no es la suya, decirlo. Sin esto la pantalla
+   se ve igual pero sin botones, y eso se lee como "esta roto" y no como "esto no
+   es tuyo". */
+const avisoArea = a => {
+  const mias = (window.PUEDE && window.PUEDE.areas) || [];
+  const t = String(a || '').trim().toUpperCase();
+  if(!t || !mias.length || mias.indexOf(t) !== -1) return '';
+  return `<p class="nota" style="border-left:3px solid var(--lila);padding-left:13px">
+    Estás viendo <strong>${t === 'BARRA' ? 'Barra' : 'Cocina'}</strong>, que no es tu área:
+    podés mirar todo, pero no editar. Lo tuyo es
+    <strong>${mias.map(x => x === 'BARRA' ? 'Barra' : 'Cocina').join(' y ')}</strong>.</p>`;
+};
+
+const Q  = n => 'Q' + (n==null ? '—' : n.toLocaleString('es-GT',{minimumFractionDigits:2,maximumFractionDigits:2}));
+const Q0 = n => n==null ? '—' : 'Q' + Math.round(n);
+const QU = n => n==null ? '—' : 'Q' + n.toLocaleString('es-GT',{minimumFractionDigits:n<1?4:2, maximumFractionDigits:n<1?5:2});
+const nrm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const MIN = new Set(['de','del','la','el','y','en','con','a','al','los','las','por','the']);
+/* Los nombres vienen del nombre de la pestana y estan en MAYUSCULAS. Se presentan en capital. */
+const Tt = s => { s = String(s||'').trim(); if(!s) return '';
+  if(s !== s.toUpperCase()) return s;
+  return s.toLowerCase().split(/\s+/).map((w,i)=> (i>0 && MIN.has(w)) ? w : w.charAt(0).toUpperCase()+w.slice(1)).join(' '); };
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- motor de costos ---------- */
+const memo = new Map();
+function precioEf(id, guard){
+  const ins = I[id]; if(!ins) return null;
+  if(sim.has(id)) return sim.get(id);
+  if(ins.sub != null && ins.pr){
+    const g = guard || new Set();
+    if(g.has('r'+ins.sub)) return ins.pr;
+    const r = R[ins.sub];
+    if(r && r.base > 0) return ins.pr * (batch(ins.sub, g) / r.base);
+  }
+  return ins.pr;
+}
+function batch(rid, guard){
+  const g = guard ? new Set(guard) : new Set();
+  if(g.has('r'+rid)) return R[rid].base;
+  g.add('r'+rid);
+  const key = rid + '|' + [...sim.entries()].sort().join(';');
+  if(memo.has(key)) return memo.get(key);
+  let s = 0;
+  for(const ln of R[rid].ing){
+    if(ln.i == null){ s += ln.t || 0; continue; }
+    const base = I[ln.i].pr, ef = precioEf(ln.i, g);
+    if(base && ln.t != null) s += ln.t * (ef / base);
+    else s += (ln.q || 0) * (ef || 0);
+  }
+  memo.set(key, s);
+  return s;
+}
+function costoAhora(r){
+  if(!r.ing.length) return null;
+  const b = batch(r.id);
+  if(r.t === 'plato') return b * (1 + (r.merma || 0)/100);
+  if(r.costoUnit != null && r.base > 0) return r.costoUnit * (b / r.base);
+  return r.rinde ? b / r.rinde : b;
+}
+function cmvAhora(r){
+  const c = costoAhora(r);
+  return (c != null && r.precio) ? c / r.precio * 100 : null;
+}
+/* La meta sale de la receta: 30% en cocina, 20% en barra. */
+function estadoDe(cmv, r){
+  if(!r.ing.length) return 'vacia';
+  if(r.t !== 'plato') return 'pre';
+  if(!r.precio) return 'sin_precio';
+  if(cmv == null) return 'vacia';
+  if(cmv > r.obj + 5) return 'alto';
+  if(cmv < r.obj * 0.6) return 'bajo';
+  return 'ok';
+}
+const ETIQ = {ok:'En meta', alto:'Sobre meta', bajo:'Muy bajo', vacia:'Ficha vacía', sin_precio:'Sin precio', pre:'Pre-elaborado'};
+
+/* ---------- filtros ---------- */
+const enArea = x => !area || x.area === area;
+function recetasVis(){
+  // BUSCAR PASA POR ENCIMA DE TODO. Si hay texto en el buscador se ignoran los
+  // filtros de tipo y de area, y se busca en el recetario entero.
+  //
+  // Antes no era asi y era un defecto real: la pestaña abre con el filtro "De carta"
+  // puesto, que muestra solo platos. Buscar un pre-elaborado no daba NINGUN resultado,
+  // aunque existiera. Y quien busca no tiene por que saber de antemano si lo que busca
+  // es un plato, un pre-elaborado, o si es de cocina o de barra. Justamente busca
+  // porque no lo sabe.
+  if(q){
+    const k = nrm(q);
+    return R.filter(r => nrm(r.n).includes(k) || nrm(r.cat).includes(k)
+      || r.ing.some(l => nrm(l.n).includes(k) || (l.i!=null && nrm(I[l.i].prov).includes(k))));
+  }
+  let list = R.filter(enArea);
+  if(filt.rec === 'carta') list = list.filter(r => r.t === 'plato');
+  else if(filt.rec === 'pre') list = list.filter(r => r.t === 'preelaborado');
+  else if(filt.rec === 'alerta') list = list.filter(r => ['alto','vacia'].includes(estadoDe(cmvAhora(r), r)));
+  else if(filt.rec === 'tocadas') list = list.filter(tocada);
+  return list;
+}
+function tocada(r){
+  if(!sim.size) return false;
+  const c1 = costoAhora(r);
+  return c1 != null && r.costo != null && Math.abs(c1 - r.costo) > 0.005;
+}
+function insumosVis(){
+  // Mismo criterio que en recetas: buscar ignora los filtros y el area.
+  if(q){
+    const k = nrm(q);
+    return I.filter(i => nrm(i.p).includes(k) || nrm(i.prov).includes(k) || nrm(i.c).includes(k));
+  }
+  let list = I.filter(enArea);
+  if(filt.prov) list = list.filter(i => i.prov === filt.prov);
+  if(filt.ins === 'usados') list = list.filter(i => i.usos.length);
+  else if(filt.ins === 'sinuso') list = list.filter(i => !i.usos.length);
+  else if(filt.ins === 'produccion') list = list.filter(i => i.sub != null || /PRODUCCION|PREELAB/i.test(i.c));
+  return list;
+}
+
+/* ---------- render ---------- */
+/* La tarjeta vacia que abre el formulario de receta nueva. Va primera en la grilla
+   y solo aparece si el servidor dijo que la persona puede crear fichas. Se esconde
+   mientras hay una busqueda: ahi la grilla son resultados, no un lugar donde crear. */
+function tarjetaNueva(){
+  return `<button class="card nueva" id="nueva">
+      <div class="mas">+</div>
+      <div class="nt">Nueva receta</div>
+      <div class="ns">Un plato de carta o un pre-elaborado</div>
+    </button>`;
+}
+
+/* El formulario. Se re-dibuja entero al cambiar el tipo, asi no hacen falta
+   listeners de 'change': todo pasa por el mismo manejador de clicks. */
+let nfTipo = 'plato';
+function fichaNuevaHTML(){
+  const cats = [...new Set(R.filter(r => r.t === 'plato' && r.cat).map(r => r.cat))].sort();
+  const esPlato = nfTipo === 'plato';
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">Receta nueva · Cocina</div>
+      <h2 id="dtitle" style="font-size:26px">Crear una ficha</h2>
+    </div>
+    <div class="dbody">
+      <div>
+        <div class="sec-t" style="margin-top:0">Que es</div>
+        <div class="simrow">
+          <button class="chip" data-nft="plato" aria-pressed="${esPlato}"
+            style="${esPlato?'background:var(--bosque);border-color:var(--bosque);color:var(--surface)':''}">Plato de carta</button>
+          <button class="chip" data-nft="preelaborado" aria-pressed="${!esPlato}"
+            style="${!esPlato?'background:var(--bosque);border-color:var(--bosque);color:var(--surface)':''}">Pre-elaborado</button>
+        </div>
+      </div>
+      <div>
+        <div class="sec-t">Nombre</div>
+        <div class="simrow">
+          <input id="nf-nombre" placeholder="${esPlato?'Ej: Coliflor con Romesco':'Ej: Salsa de Tomillo'}" style="width:100%;max-width:340px" autocomplete="off">
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">${esPlato
+          ? 'Los platos van en MAYUSCULAS en la pestaña. Se convierte solo.'
+          : 'El nombre de la pestaña queda tal cual lo escribas.'}</p>
+      </div>
+      ${esPlato ? `<div>
+        <div class="sec-t">Categoria y precio</div>
+        <div class="simrow">
+          <input id="nf-cat" list="nf-cats" placeholder="Categoria" style="width:200px" autocomplete="off">
+          <input id="nf-precio" type="number" step="1" min="0" placeholder="Precio de carta" style="width:130px">
+        </div>
+        <datalist id="nf-cats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      </div>` : `<div>
+        <div class="sec-t">Rinde</div>
+        <div class="simrow">
+          <input id="nf-rinde" type="number" step="any" min="0" placeholder="Porciones por batch" style="width:170px">
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">En cuantas porciones rinde un batch. Se puede corregir despues.</p>
+      </div>`}
+      <div>
+        <div class="sec-t">Nota (opcional)</div>
+        <div class="simrow">
+          <input id="nf-nota" placeholder="Contexto para quien lea la ficha" style="width:100%;max-width:340px" autocomplete="off">
+        </div>
+      </div>
+      <div class="simrow" style="background:transparent;padding:0">
+        <button class="chip" id="nf-crear" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface);padding:8px 20px">Crear la ficha</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0">La ficha se crea vacia, con las formulas puestas y lista para cargarle ingredientes.
+      ${esPlato ? 'Se agrega a RESUMEN CMV como <strong>por costear</strong>. <strong>El POS no se toca</strong>: el alta del producto en la caja se hace aparte.' : 'Para que los platos puedan usarlo, despues hay que darlo de alta en el Banco de Datos con su costo por porcion.'}</p>
+    </div>`;
+}
+

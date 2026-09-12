@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Intranet</span>
+    </div>
+  </header>
+  <main style="text-align:center; padding-top:3rem;">
+    <h1>Esta puerta esta cerrada</h1>
+<?
+  // motivo y correoSesion los manda doGet. Se leen con guardas porque esta misma
+  // plantilla se renderiza desde la bateria de pruebas sin pasarle nada.
+  var elMotivo = (typeof motivo !== 'undefined') ? motivo : '';
+  var elCorreo = (typeof correoSesion !== 'undefined' && correoSesion) ? correoSesion : '';
+?>
+    <p style="margin-top:0.75rem;">Tu cuenta no tiene acceso a la intranet.<br>
+    Si crees que deberias entrar, escribe a restaurante@rosanta.rest.</p>
+
+    <div style="margin:2rem auto 0; max-width:30rem; text-align:left; font-size:0.85rem;
+                line-height:1.5; opacity:0.75; border-top:1px solid rgba(0,0,0,0.12);
+                padding-top:1rem;">
+      <? if (elMotivo === 'sin-token') { ?>
+        <p><strong>El enlace que abriste no trae tu identificador personal.</strong>
+        Suele pasar cuando se abre un enlace viejo o cuando se copio a mano y quedo
+        cortado. Pedi el tuyo de nuevo y abrilo completo, sin recortar.</p>
+      <? } else if (elMotivo === 'token-desconocido') { ?>
+        <p><strong>El enlace trae un identificador que ya no reconocemos.</strong>
+        Puede haber sido dado de baja o cambiado. Pedi uno nuevo.</p>
+      <? } ?>
+      <? if (elCorreo) { ?>
+        <p style="margin-top:0.6rem;">Entraste con la cuenta de Google
+        <strong><?= elCorreo ?></strong>. Si no es la que esperabas, cerra sesion
+        o abri el enlace en una ventana de incognito.</p>
+      <? } else { ?>
+        <p style="margin-top:0.6rem;">No pudimos ver con que cuenta de Google entraste.</p>
+      <? } ?>
+      <p style="margin-top:0.6rem;">Cuando escribas, copia y pega esta linea:
+      <code style="font-family:ui-monospace,monospace;">motivo=<?= elMotivo || 'ninguno' ?></code></p>
+    </div>
+  </main>
+</body>
+</html>

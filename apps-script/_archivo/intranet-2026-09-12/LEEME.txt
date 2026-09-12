@@ -1,0 +1,16 @@
+Archivado el 12 sep 2026 desde apps-script/rosanta-intranet.
+
+Por que: `clasp status` respondia "Conflicting files found". Los tres .gs
+comparten nombre base con su .js y, como .clasp.json subia las dos extensiones,
+eran 31 funciones globales duplicadas en un solo ambito global.
+
+Verificado antes de mover: TODA funcion definida en cada .gs existe tambien en
+su .js, y el .js es mas nuevo y mas grande en los tres casos.
+  ConfigPOS           .gs 163 lineas (24 ago) -> .js 426 lineas (30 ago)
+  EdicionRecetario    .gs 511 lineas (24 ago) -> .js 689 lineas (30 ago)
+  SincronizarPrecios  .gs 253 lineas (24 ago) -> .js 608 lineas (10 sep)
+
+Recetario_Rosanta_v11_intranet.html: 107 KB que no referencia nadie. La vista
+vieja ?page=recetario se retiro el 21 ago 2026 (ver comentario en Code.js:71).
+
+Nada se borro. Si hiciera falta algo, esta aqui completo.

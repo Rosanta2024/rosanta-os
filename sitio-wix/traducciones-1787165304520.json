@@ -1,0 +1,35 @@
+{
+  "fecha": "2026-08-19T18:48:19.206Z",
+  "creados": [
+    {
+      "id": "0287978c-93a7-4c2a-b510-56d17040ed26",
+      "entityId": "comp-lhjc19kp"
+    },
+    {
+      "id": "58863fb8-5be2-4b5e-92c9-9b048e2c3660",
+      "entityId": "comp-lhjc19lr"
+    },
+    {
+      "id": "70cfd67f-ec6b-4271-97ae-18c89d8c4f66",
+      "entityId": "comp-lhjcmbpr"
+    },
+    {
+      "id": "851d3513-ad1e-4f31-b64f-bd786bffaaa8",
+      "entityId": "comp-lidavzjr"
+    },
+    {
+      "id": "cf6fd384-eec1-45b3-958f-15a664f22876",
+      "entityId": "comp-lidawv8i"
+    },
+    {
+      "id": "8039b699-d21b-43bd-aa9d-a5e95d97f976",
+      "entityId": "comp-lidaydb8"
+    },
+    {
+      "id": "117a166b-39d5-4a51-b521-ea75a2131976",
+      "entityId": "comp-lmihpanw"
+    }
+  ],
+  "saltados": [],
+  "noEncontrados": []
+}

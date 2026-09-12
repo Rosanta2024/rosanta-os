@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Metas de la semana · panel de ritmo.
+       Pocos numeros y grandes: lo mira el equipo, no solo direccion.
+       Solo lectura. La meta se cambia en la pestana METAS del Sheet de config. */
+    main.met { max-width: 1000px; }
+    .met-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .met-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+    .met-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
+      font-family: 'Lato', Arial, sans-serif; }
+    .met-boton:hover { background: rgba(69,107,80,0.07); }
+
+    /* --- el numero que manda --- */
+    .met-hero { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 22px; padding: 1.8rem 1.9rem; margin-top: 1.5rem; }
+    .met-hero .rot { font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.11em; opacity: 0.75; }
+    .met-hero .big { font-family: 'Playfair Display', Georgia, serif;
+      font-size: 3.3rem; line-height: 1.05; margin: 0.35rem 0 0.5rem; }
+    .met-hero .exp { font-size: 0.94rem; line-height: 1.55; opacity: 0.9; max-width: 62ch; }
+    .met-hero .exp strong { color: #C6E8D3; }
+
+    /* --- progreso del mes --- */
+    .met-prog { background: var(--blanco); border-radius: 20px; padding: 1.5rem 1.7rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 1.1rem; }
+    .met-prog .fila1 { display: flex; justify-content: space-between; align-items: baseline;
+      flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.9rem; }
+    .met-prog .acum { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem;
+      color: var(--verde-bosque); }
+    .met-prog .obj { font-size: 0.88rem; opacity: 0.72; text-align: right; }
+    .pista { position: relative; height: 26px; background: rgba(26,26,26,0.07);
+      border-radius: 999px; overflow: visible; margin-top: 1.6rem; }
+    .pista .real { position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+      background: var(--verde-medio); }
+    .pista.atras .real { background: #E0A93B; }
+    .pista.mal .real { background: #C4553B; }
+    .pista .ritmo { position: absolute; top: -6px; bottom: -6px; width: 2px;
+      background: var(--negro); opacity: 0.55; }
+    .pista .ritmo span { position: absolute; top: -1.25rem; left: 50%;
+      transform: translateX(-50%); font-size: 0.7rem; white-space: nowrap; opacity: 0.75; }
+    .met-prog .pie { display: flex; justify-content: space-between; flex-wrap: wrap;
+      gap: 0.5rem; margin-top: 1.1rem; font-size: 0.86rem; }
+    .met-prog .pie b { font-size: 1.05rem; }
+    .verde { color: #2E7D52; } .ambar { color: #A97514; } .rojo { color: #C4553B; }
+
+    /* --- tarjetas derivadas --- */
+    .met-cards { display: grid; gap: 1rem; margin-top: 1.1rem;
+      grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); }
+    .met-card { background: var(--blanco); border-radius: 18px; padding: 1.2rem 1.35rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-top: 5px solid var(--lila); }
+    .met-card h3 { font-size: 0.92rem; }
+    .met-card .n { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem;
+      margin: 0.4rem 0 0.2rem; }
+    .met-card .t { font-size: 0.81rem; opacity: 0.72; line-height: 1.5; }
+
+    .met-seccion { margin-top: 2.2rem; }
+    .met-seccion > h2 { font-size: 1.2rem; margin-bottom: 0.2rem; }
+    .met-nota { font-size: 0.84rem; opacity: 0.72; margin-bottom: 0.9rem; line-height: 1.55;
+      max-width: 78ch; }
+
+    table.met { width: 100%; border-collapse: collapse; background: var(--blanco);
+      border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
+      font-size: 0.87rem; }
+    table.met th, table.met td { padding: 0.6rem 0.75rem; text-align: right;
+      border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
+    table.met th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.met th:first-child, table.met td:first-child { text-align: left; }
+    table.met tr:last-child td { border-bottom: 0; }
+    .tabla-scroll { overflow-x: auto; }
+
+    .aviso { background: #FBF0D9; border-radius: 16px; padding: 1.1rem 1.3rem;
+      font-size: 0.9rem; line-height: 1.6; margin-top: 1.5rem; }
+    .aviso b { display: block; margin-bottom: 0.25rem; }
+    .met-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
+    .met-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+      font-size: 0.9rem; line-height: 1.5; }
+    @media (max-width: 620px) { .met-hero .big { font-size: 2.4rem; } }
+    .met-hero.chico { padding: 18px 22px; margin: 14px 0 18px; }
+  .met-hero.chico .big { font-size: 2.1rem; }
+  table.met tr.hoy { background: #FFF8E6; }
+  table.met tr.hoy td { font-weight: 600; }
+  table.met tr.fut td { opacity: .62; }
+  .tag { font-size: .7rem; background: #E5A50A; color: #fff; border-radius: 3px;
+         padding: 1px 6px; vertical-align: middle; margin-left: 4px; }
+  .met-areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 1rem; }
+  .met-area { background: var(--blanco); border-radius: 18px; padding: 1.25rem 1.35rem;
+    box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+  .met-area .cab { border-bottom: 1px solid rgba(26,26,26,0.1); padding-bottom: 0.6rem;
+    margin-bottom: 0.9rem; }
+  .met-area h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; margin: 0; }
+  .met-area .quien2 { font-size: 0.78rem; opacity: 0.65; }
+  .met-area .sem { background: rgba(69,107,80,0.07); border-radius: 12px;
+    padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; }
+  .met-area .sem .et { font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; opacity: 0.6; }
+  .met-area .sem .nn { font-family: 'Playfair Display', Georgia, serif; font-size: 1.9rem;
+    color: var(--verde-bosque); line-height: 1.1; }
+  .met-area .sem .tt { font-size: 0.78rem; opacity: 0.7; }
+  .met-area .fila { display: flex; justify-content: space-between; font-size: 0.85rem;
+    padding: 0.22rem 0; }
+  .pista2 { height: 8px; background: rgba(26,26,26,0.09); border-radius: 999px;
+    margin: 0.5rem 0; overflow: hidden; }
+  .real2 { height: 100%; background: var(--verde-bosque); border-radius: 999px; }
+  .real2.sobre { background: #B3261E; }
+  table.fam { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-top: 0.9rem; }
+  table.fam th, table.fam td { padding: 0.32rem 0.3rem; text-align: right;
+    border-bottom: 1px solid rgba(26,26,26,0.06); }
+  table.fam th:first-child, table.fam td:first-child { text-align: left; }
+  table.fam thead th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+    opacity: 0.55; }
+  table.fam tr.raro td { opacity: 0.6; font-style: italic; }
+  .ojo { font-size: 0.78rem; opacity: 0.75; margin: 0.7rem 0 0; line-height: 1.45; }
+</style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Metas</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <? if (mostrarVolver) { ?>
+        <!-- Dentro del shell de Finanzas este boton sobra y estorba: se saltaba el
+             lateral y sacaba al usuario de la seccion. Code.gs manda mostrarVolver
+             en false cuando la pagina viene con ?embed=1. -->
+        <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+      <? } ?>
+    </div>
+  </header>
+
+  <main class="met">
+    <div class="met-barra-sup">
+      <div>
+        <h1>Metas de la semana</h1>
+        <p class="met-sub" id="sub">Cargando…</p>
+      </div>
+      <button class="met-boton" id="btn-refrescar">Actualizar datos</button>
+    </div>
+
+    <div id="cargando" class="met-cargando">Leyendo el maestro…</div>
+    <div id="todo" style="display:none"></div>
+  </main>
+
+<script>
+/* EL TOKEN DEL ENLACE PERSONAL.
+   Toda llamada a google.script.run lo manda como primer argumento: doGet resolvio
+   la identidad al abrir, pero cada llamada al servidor es una peticion nueva y
+   llega sin nada. Sin el, quien entra con Gmail personal recibe "no pude
+   identificarte". Si agregas una llamada nueva, pasale AUTH. */
+var AUTH = '<?= authToken ?>';
+  function q(n, dec) {
+    var d = dec === undefined ? 0 : dec;
+    return 'Q' + Number(n || 0).toLocaleString('es-GT',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function pct(n) { return (n === null || n === undefined) ? '—' : Number(n).toFixed(1) + '%'; }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function pintar(d) {
+    var c = document.getElementById('cargando'), todo = document.getElementById('todo');
+    if (d.error) {
+      c.innerHTML = '<div class="met-error">' + esc(d.error) + '</div>';
+      return;
+    }
+    document.getElementById('sub').textContent =
+      d.mes + ' ' + d.anio + ' · día ' + d.dias.corridos + ' de ' + d.dias.total +
+      ' · último dato cargado ' + d.ultima_carga;
+
+    if (d.sin_meta) {
+      c.innerHTML = '<div class="aviso"><b>Todavía no hay meta para ' + esc(d.mes) + '.</b>' +
+        'El panel se enciende solo en cuanto haya una. Se pone en la pestaña ' +
+        '<strong>METAS</strong> del Sheet de configuración: una fila con el año, el mes, la ' +
+        'meta de venta y de dónde salió el número. Van ' + q(d.acumulado) +
+        ' vendidos en el mes.</div>';
+      return;
+    }
+
+    var m = d.meta;
+    // el ancho de la barra se corta en 100 para que no se salga de la pista
+    var anchoReal = Math.min(d.acumulado / m.venta * 100, 100);
+    var anchoRitmo = Math.min(d.esperado / m.venta * 100, 100);
+    var zona = d.brecha >= 0 ? '' : (d.brecha > -m.venta * 0.05 ? ' atras' : ' mal');
+    var claseBrecha = d.brecha >= 0 ? 'verde' : (zona === ' atras' ? 'ambar' : 'rojo');
+
+    var html = '';
+    if (d.sin_datos_del_mes) {
+      html += '<div class="aviso"><b>Todavía no hay ventas cargadas de ' + esc(d.mes) + '.</b>' +
+        'El último dato del maestro es del ' + esc(d.ultima_carga) + '. El panel ya está ' +
+        'midiendo contra la meta del mes, pero con cero vendido: lo que ves abajo es la meta ' +
+        'completa repartida en los días que quedan, no un mes que va mal.</div>';
+    }
+
+    html +=
+      // ---- 1. EL MES. La meta se lee primero completa; la semana es su desglose.
+      '<div class="met-hero">' +
+        '<div class="rot">Meta de ' + esc(d.mes) + '</div>' +
+        '<div class="big">' + q(m.venta) + '</div>' +
+        '<div class="exp">Van <strong>' + q(d.acumulado) + '</strong> vendidos, el ' +
+          pct(d.avance) + ' de la meta. Faltan <strong>' + q(d.falta) + '</strong> en ' +
+          '<strong>' + d.dias.restantes + ' días</strong>, que son ' + q(d.necesario_dia) +
+          ' al día. Al ritmo actual el mes cerraría en <strong>' + q(d.proyeccion) +
+          '</strong>, el ' + pct(d.proyeccion_pct) + ' de la meta.' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="met-prog">' +
+        '<div class="fila1">' +
+          '<div><div class="acum">' + q(d.acumulado) + '</div>' +
+            '<div style="font-size:.84rem;opacity:.7">vendidos en ' + esc(d.mes) +
+            ' · día ' + d.dias.corridos + ' de ' + d.dias.total + '</div></div>' +
+          '<div class="obj">De dónde sale la meta<br>' +
+            '<span style="opacity:.75">' + esc(m.origen || 'sin origen anotado') + '</span></div>' +
+        '</div>' +
+        '<div class="pista' + zona + '">' +
+          '<div class="real" style="width:' + anchoReal + '%"></div>' +
+          '<div class="ritmo" style="left:' + anchoRitmo + '%"><span>ritmo esperado hoy</span></div>' +
+        '</div>' +
+        '<div class="pie">' +
+          '<div>Avance <b>' + pct(d.avance) + '</b> de la meta</div>' +
+          '<div>A la fecha deberíamos llevar <b>' + q(d.esperado) + '</b></div>' +
+          '<div class="' + claseBrecha + '">' + (d.brecha >= 0 ? 'Arriba del ritmo por ' : 'Atrás del ritmo por ') +
+            '<b>' + q(Math.abs(d.brecha)) + '</b></div>' +
+        '</div>' +
+      '</div>';
+
+    // ---- 2. LA SEMANA, ya como desglose del mes
+    var enCurso = null;
+    d.semanas.forEach(function (s) { if (s.en_curso) enCurso = s; });
+
+    html += '<section class="met-seccion"><h2>Semana por semana</h2>' +
+      '<p class="met-nota">La meta del mes repartida entre sus semanas <strong>por días ' +
+      'reales</strong>, no en partes iguales: las semanas de orilla quedan partidas por el ' +
+      'cambio de mes y no se les puede pedir lo mismo que a una de siete días.</p>';
+
+    if (enCurso) {
+      var recupera = d.necesario_semana;
+      html += '<div class="met-hero chico">' +
+        '<div class="rot">Semana ' + enCurso.w + ', en curso · van ' + enCurso.dias_corridos +
+          ' de ' + enCurso.dias + ' días</div>' +
+        '<div class="big">' + q(enCurso.falta) + '</div>' +
+        '<div class="exp">Es lo que falta para cerrar la cuota de esta semana, que es ' +
+          q(enCurso.meta) + '. Lleva <strong>' + q(enCurso.ventas) + '</strong>' +
+          (enCurso.dif >= 0
+            ? ', <strong>' + q(enCurso.dif) + ' arriba</strong> de lo que tocaba a estas alturas.'
+            : ', <strong>' + q(Math.abs(enCurso.dif)) + ' abajo</strong> de lo que tocaba a estas alturas.') +
+          (recupera > enCurso.falta
+            ? ' Para recuperar el mes completo harían falta ' + q(recupera) + ' esta semana.'
+            : '') +
+        '</div></div>';
+    }
+
+    html += '<div class="tabla-scroll"><table class="met"><thead><tr>' +
+      '<th>Semana</th><th>Días</th><th>Meta</th><th>Vendido</th><th>Diferencia</th>' +
+      '<th>Acumulado</th><th>Meta acum.</th><th>Comensales</th><th>Ticket</th>' +
+      '</tr></thead><tbody>' +
+      d.semanas.map(function (s) {
+        var cls = s.en_curso ? ' class="hoy"' : (s.futura ? ' class="fut"' : '');
+        var celdaDif = s.futura
+          ? '<td style="opacity:.45">—</td>'
+          : '<td class="' + (s.dif >= 0 ? 'verde' : 'rojo') + '">' +
+            (s.dif >= 0 ? '+' : '−') + q(Math.abs(s.dif)) + '</td>';
+        return '<tr' + cls + '><td>S' + s.w + ' · ' + s.ini + ' al ' + s.fin +
+          (s.en_curso ? ' <span class="tag">en curso</span>' : '') + '</td>' +
+          '<td>' + s.dias + '</td>' +
+          '<td style="opacity:.6">' + q(s.meta) + '</td>' +
+          '<td>' + (s.futura ? '<span style="opacity:.45">—</span>' : q(s.ventas)) + '</td>' +
+          celdaDif +
+          '<td>' + (s.futura ? '<span style="opacity:.45">—</span>' : q(s.acum)) + '</td>' +
+          '<td style="opacity:.6">' + q(s.meta_acum) + '</td>' +
+          '<td>' + (s.com || '—') + '</td>' +
+          '<td>' + (s.com ? q(s.ventas / s.com, 2) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table></div></section>';
+
+    // ---- 3. EL TECHO DE COMPRA, uno por area
+    if (d.techo) {
+      html += '<section class="met-seccion"><h2>Qué se puede comprar</h2>' +
+        '<p class="met-nota">El techo de cada área sale de su parte de la venta por su meta de ' +
+        'food cost. <strong>El semanal es guía</strong> de qué llevar al mercado; ' +
+        '<strong>el que controla es el acumulado del mes</strong>, porque la compra va a saltos ' +
+        'y el consumo es parejo: una caja de vino se paga una semana y se toma en tres.</p>' +
+        '<div class="met-areas">';
+
+      [['cocina', 'Cocina', 'Jeffry'], ['barra', 'Barra', 'José']].forEach(function (par) {
+        var A = d.techo[par[0]];
+        if (!A) return;
+        var sobre = A.saldo_mes < 0;
+        var anchoG = Math.min(A.mes ? A.gastado_mes / A.mes * 100 : 0, 100);
+
+        html += '<div class="met-area">' +
+          '<div class="cab"><h3>' + par[1] + '</h3>' +
+            '<span class="quien2">' + par[2] + ' · ' + A.mix.toFixed(1) + '% de la venta · ' +
+            'meta ' + pct(A.meta) + '</span></div>' +
+
+          '<div class="sem"><div class="et">Esta semana</div>' +
+            '<div class="nn">' + q(A.semana) + '</div>' +
+            '<div class="tt">sobre ' + q(A.venta_semana) + ' de venta</div></div>' +
+
+          '<div class="mes">' +
+            '<div class="fila"><span>Techo del mes</span><b>' + q(A.mes) + '</b></div>' +
+            '<div class="fila"><span>Comprado hasta hoy</span><b>' + q(A.gastado_mes) + '</b></div>' +
+            '<div class="pista2"><div class="real2' + (sobre ? ' sobre' : '') +
+              '" style="width:' + anchoG + '%"></div></div>' +
+            '<div class="fila ' + (sobre ? 'rojo' : 'verde') + '"><span>' +
+              (sobre ? 'Pasado del techo por' : 'Queda del mes') + '</span><b>' +
+              q(Math.abs(A.saldo_mes)) + '</b></div>' +
+          '</div>';
+
+        if (A.familias.length) {
+          html += '<table class="fam"><thead><tr><th>Familia</th><th>Semana</th><th>Del año</th>' +
+            '</tr></thead><tbody>' +
+            A.familias.map(function (f) {
+              var raro = (f.k === 'REVISAR' || f.k === 'SIN_FACTURA');
+              return '<tr' + (raro ? ' class="raro"' : '') + '><td>' + esc(f.nombre) + '</td>' +
+                '<td>' + q(f.semana) + '</td>' +
+                '<td style="opacity:.6">' + f.pct.toFixed(1) + '%</td></tr>';
+            }).join('') + '</tbody></table>';
+          if (A.sin_clasificar > 0) {
+            html += '<p class="ojo">' + A.sin_clasificar.toFixed(1) + '% de la compra de esta ' +
+              'área todavía no tiene familia asignada. El reparto de arriba se lee con esa ' +
+              'reserva hasta que se corrija en <strong>00_Proveedores</strong>.</p>';
+          }
+        } else {
+          html += '<p class="ojo">Todavía no hay familias asignadas en ' +
+            '<strong>00_Proveedores</strong>. Cuando se llene la columna <strong>Familia</strong>, ' +
+            'este bloque se llena solo.</p>';
+        }
+        html += '</div>';
+      });
+      html += '</div></section>';
+    }
+
+    // ---- 4. lo que se deriva de la meta
+    html +=
+      '<div class="met-cards">' +
+        '<div class="met-card"><h3>Meta de food cost</h3>' +
+          '<div class="n">' + pct(d.meta_food) + '</div>' +
+          '<div class="t">Ponderada por el mix de cocina y barra. Se cambia en la misma ' +
+          'pestaña METAS, columna META_FOOD_PCT.</div></div>' +
+        (d.base_2025
+          ? '<div class="met-card"><h3>' + esc(d.mes) + ' del año pasado</h3>' +
+            '<div class="n">' + q(d.base_2025.ventas) + '</div>' +
+            '<div class="t">' + d.base_2025.tickets + ' tickets. Con +20% da ' +
+            q(d.por_anio_pasado) + (d.piso ? '; el piso de los últimos meses es ' +
+              q(d.piso) + ', y manda el mayor de los dos' : '') +
+            '. De 2025 el POS no exporta comensales, así que de ahí solo se puede ' +
+            'comparar la venta.</div></div>'
+          : '') +
+        '<div class="met-card"><h3>Comensales del mes</h3>' +
+          '<div class="n">' + d.comensales + '</div>' +
+          '<div class="t">Ticket promedio ' +
+          q(d.comensales ? d.acumulado / d.comensales : 0) + ' en lo que va del mes.</div></div>' +
+      '</div>';
+
+    if (m.automatica) {
+      html += '<div class="aviso" style="background:#E8F2EA"><b>La meta la calcula el sistema.</b>' +
+        esc(m.origen) + ' Son dos candidatos y gana el mayor: el +20% sobre el mismo mes ' +
+        'del año pasado, y un piso igual al promedio de los últimos meses cerrados. ' +
+        'El piso existe porque el negocio creció ~65% contra 2025: sin él, en varios meses ' +
+        'la meta quedaría por debajo de lo que ya se hace de rutina. ' +
+        'Si quieres fijar otra, escríbela en la pestaña METAS y esa manda.</div>';
+    } else if (m.provisional) {
+      html += '<div class="aviso"><b>La meta de este mes es provisional.</b>' +
+        'El objetivo es +20% contra el mismo mes del año pasado, pero 2025 todavía no está ' +
+        'cargado en el maestro: solo hay fragmentos de abril y junio, y de septiembre no hay ' +
+        'nada. Mientras tanto el número está puesto a mano. Cuando entre 2025, esta misma ' +
+        'pestaña se llena sola y la pantalla no cambia.</div>';
+    }
+
+    todo.innerHTML = html;
+    c.style.display = 'none';
+    todo.style.display = '';
+  }
+
+  function cargar(forzar) {
+    var todo = document.getElementById('todo'); todo.style.display = 'none';
+    var c = document.getElementById('cargando');
+    c.style.display = ''; c.textContent = 'Leyendo el maestro…';
+    google.script.run
+      .withSuccessHandler(pintar)
+      .withFailureHandler(function (e) {
+        c.innerHTML = '<div class="met-error">No se pudo leer el maestro.<br>' +
+          esc(e && e.message ? e.message : e) + '</div>';
+      })
+      .getMetasData(AUTH, !!forzar);
+  }
+
+  document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });
+  cargar(false);
+</script>
+</body>
+</html>

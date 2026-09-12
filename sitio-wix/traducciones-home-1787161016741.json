@@ -1,0 +1,36 @@
+{
+  "fecha": "2026-08-19T17:36:52.932Z",
+  "creados": [
+    {
+      "id": "c24017dc-a845-4659-9fc0-d7eefb48dec1",
+      "entityId": "comp-msvvw9tf",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b",
+      "es": "COCINA CON PROPÓSITO"
+    },
+    {
+      "id": "ba4e8847-2df9-4f1f-bf20-7da1f303d266",
+      "entityId": "comp-mszh0tv1",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b",
+      "es": "COCINA HONESTA:  DE TEMPORADA, LOCAL, CON INTENCIÓN."
+    },
+    {
+      "id": "924d0b69-b028-407f-af32-571a69a06dac",
+      "entityId": "comp-mszh26e7",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b",
+      "es": "Empieza en la tierra, a unos pasos de tu mesa."
+    },
+    {
+      "id": "72266c1f-422f-402c-8a84-553eb492a9fb",
+      "entityId": "comp-mszgr7vv",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b",
+      "es": "EL PLACER DE LA COCINA HONESTA"
+    },
+    {
+      "id": "f548fc21-847b-4f5a-b31c-0ae9962626fa",
+      "entityId": "comp-mszgtzji",
+      "schemaId": "f2f2ef5e-8cbd-4296-ade9-b38a49424ba4",
+      "es": "Reservaciones"
+    }
+  ],
+  "saltados": []
+}

@@ -1,0 +1,42 @@
+{
+  "_doc": "Mapeo aprobado por Juanma el 15-ago-2026: qué notas ❀ se convierten en labels de Wix y cuáles se quedan en la descripción del plato. Lo usa wix-menu-loader.js (extract/load). Claves SIEMPRE por nombre español del plato (es.n), aunque la carga sea en inglés. labelsEn traduce el nombre de cada label al inglés (derivado del copy EN de Rosanta); como el sitio tiene inglés de idioma principal, las labels se crean en inglés y el español entra por Translation Manager.",
+  "labelsEn": {
+    "Hecho en casa": "House-made",
+    "Producto local": "Locally sourced",
+    "Pesca responsable": "Responsibly caught seafood",
+    "Cocción lenta": "Slow-cooked",
+    "100% vegetal": "100% plant-based",
+    "Carne seleccionada": "Selected beef",
+    "Opción vegana": "Vegan option",
+    "Cultivo regenerativo": "Regeneratively grown",
+    "Rico en proteína": "Rich in protein",
+    "Fermentación lenta": "Slow fermentation"
+  },
+  "labels": {
+    "Ensalada Rosanta": ["Hecho en casa"],
+    "Coliflor a la Parrilla con Romesco": ["Opción vegana"],
+    "Queso Horneado": ["Producto local"],
+    "Pulpo a la Parrilla": ["Pesca responsable", "Cultivo regenerativo"],
+    "Tabla de Jamones y Quesos": ["Producto local", "Hecho en casa"],
+    "Bol Mediterráneo": ["100% vegetal", "Rico en proteína"],
+    "Vegetales Fermentados": ["Fermentación lenta", "Hecho en casa"],
+    "Portobello Asado": ["100% vegetal"],
+    "Pasta de la Casa": ["Hecho en casa", "Producto local"],
+    "Arroz Meloso": ["Hecho en casa", "Pesca responsable"],
+    "Costillas de Cerdo": ["Cocción lenta", "Producto local"],
+    "Lomito a la Parrilla": ["Carne seleccionada"],
+    "Brisket en Salsa Bordelesa": ["Cocción lenta"],
+    "Estofado de Rabo": ["Cocción lenta"],
+    "Mar & Tierra": ["Carne seleccionada", "Pesca responsable"]
+  },
+  "notasQuedan": [
+    "Brócoli con Nduja",
+    "Queso Horneado",
+    "Tartar de Hongos",
+    "Bok Choy a la Parrilla",
+    "Lomito en Tiras",
+    "Pollo en Salsa de Tamarindo",
+    "Pescado del Día",
+    "Camarones al Horno"
+  ]
+}

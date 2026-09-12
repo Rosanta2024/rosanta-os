@@ -1,0 +1,11 @@
+# Excepciones de la regla 4 (código en Drive) — Rosanta OS
+#
+# Una ruta por línea, relativa a `~/My Drive/Rosanta OS/`.
+# Lo que esté acá se sigue reportando, pero como aviso: `--fix` no lo toca.
+#
+# Solo va acá lo que de verdad tiene que vivir en Drive: herramientas que leen
+# datos guardados AL LADO suyo y que se rompen si se mueven. Todo lo demás va a
+# `~/Dev/Rosanta/`.
+
+# (Vacío. Los dos generadores del maestro estaban acá y el 2026-09-11 se
+#  mudaron a ~/Dev/Rosanta/scripts/maestro-finanzas/, que es su lugar.)

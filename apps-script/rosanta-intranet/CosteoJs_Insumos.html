@@ -1,0 +1,48 @@
+function vistaInsumos(){
+  const list = insumosVis();
+  const f = [['todos','Todos'],['usados','En uso'],['sinuso','Sin uso en fichas'],['produccion','Producción Rosanta']];
+  /* La barra de agregar va ARRIBA. Son 400 productos: al pie no la ve nadie. */
+  return `  ${(window.PUEDE && window.PUEDE.crearInsumo) ? (AREA_EDITABLE(area) ? `<div class="addrow">
+        <div class="sec-t" style="margin-top:0">Agregar un producto al Banco de Datos</div>
+        <div class="simrow" style="flex-wrap:wrap">
+          <input id="ni-prod" placeholder="Producto" style="width:210px" autocomplete="off">
+          <input id="ni-cat" list="lista-cats" placeholder="Categoría" style="width:150px" autocomplete="off">
+          <input id="ni-pc" type="number" step="0.01" min="0" placeholder="Precio compra" style="width:130px">
+          <input id="ni-uc" placeholder="Unidad de compra" style="width:150px" autocomplete="off">
+          <input id="ni-ur" placeholder="Unidad de receta" style="width:150px" autocomplete="off">
+          <input id="ni-cont" type="number" step="any" min="0" placeholder="Contenido (si aplica)" style="width:170px">
+          <input id="ni-prov" list="lista-provs-alta" placeholder="Proveedor" style="width:170px" autocomplete="off">
+          <button class="chip" id="ni-add" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Crear</button>
+        </div>
+        <datalist id="lista-cats">${[...new Set(I.map(x=>x.c))].filter(Boolean).map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+        <datalist id="lista-provs-alta">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Contenido</strong> solo hace falta cuando la unidad de compra es un envase: cuántas unidades de receta trae un manojo, una caja, un frasco. Un manojo va de 20 g a 75 g según la hierba, así que no se puede adivinar. Antes de crear se avisa si ya hay algo parecido en el Banco.</p>
+      </div>` : '') : ''}
+    <div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fi="${k}" aria-pressed="${filt.ins===k}">${l}</button>`).join('')}
+      ${filt.prov ? `<button class="chip" aria-pressed="true" data-fi="_prov">${esc(filt.prov)} ✕</button>` : ''}
+      <span class="count">${q ? `${list.length} resultado${list.length===1?'':'s'} en todo el recetario`
+                             : `${list.length} de ${I.filter(enArea).length}`}</span>
+    </div>
+    ${q ? `<p class="buscando">Buscando “${esc(q)}” en cocina y barra. Los filtros no se aplican mientras buscas.</p>` : ''}
+    ${avisoArea(area)}
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>Producto</th><th>Proveedor</th><th class="r">Precio compra</th>
+        <th class="r">Por unidad receta</th><th class="r">Recetas</th>
+      </tr></thead><tbody>
+      ${list.map(i => {
+        const ef = precioEf(i.id), ch = sim.has(i.id) || (i.pr && Math.abs(ef - i.pr) > 1e-6);
+        return `<tr>
+          <td><button class="rowbtn" data-i="${i.id}">${i.sub!=null?'<span class="dot" title="Tiene ficha de sub-receta"></span>':''}${esc(Tt(i.p))}</button>
+              <div style="color:var(--muted);font-size:11.5px">${esc(i.c)} · ${i.area==='BARRA'?'Barra':'Cocina'}</div></td>
+          <td>${esc(i.prov)}</td>
+          <td class="r">${i.pc!=null?Q(i.pc):'—'}<div style="color:var(--muted);font-size:11.5px">${esc(i.uc||'')}</div></td>
+          <td class="r">${ef!=null?QU(ef):'—'} <span style="color:var(--muted)">/${esc(i.u)}</span>
+              ${ch?`<div style="color:var(--alto);font-size:11.5px">antes ${QU(i.pr)}</div>`:''}</td>
+          <td class="r">${i.usos.length||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+      ${list.length?'':'<p class="empty">Sin resultados.</p>'}`;
+}

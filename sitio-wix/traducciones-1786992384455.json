@@ -1,0 +1,762 @@
+{
+  "fecha": "2026-08-17T18:46:02.430Z",
+  "creados": [
+    {
+      "id": "467e5b79-944c-45c8-968c-3881de80004c",
+      "tipo": "items",
+      "entityId": "e2eab816-85c3-4eac-a8a8-2aa21fb85fc5",
+      "nombreEn": "Boga"
+    },
+    {
+      "id": "6ccbac3e-f3d8-49dd-b270-902177e491a3",
+      "tipo": "items",
+      "entityId": "f796677f-dd18-4dd2-993f-875cd95776d1",
+      "nombreEn": "Grilled Bok Choy"
+    },
+    {
+      "id": "c66734cc-113e-41ed-9012-1a32c6e01600",
+      "tipo": "items",
+      "entityId": "188f1af4-8ff1-4070-b8a5-9148d2fd21fa",
+      "nombreEn": "Ginger-Lemongrass, 500 ml"
+    },
+    {
+      "id": "f03fbc83-1837-483f-be72-fdddaf1ddf3d",
+      "tipo": "items",
+      "entityId": "2b9470f5-18b8-411d-befc-862d5bf5aacc",
+      "nombreEn": "Grand Marnier"
+    },
+    {
+      "id": "cfe683f0-8b53-4ca7-90d4-22400455c365",
+      "tipo": "items",
+      "entityId": "3e54986d-e5c6-4c81-a372-cb115335b119",
+      "nombreEn": "Michelada Mix"
+    },
+    {
+      "id": "4777ce91-ceef-4215-91a3-d6106043ce0f",
+      "tipo": "items",
+      "entityId": "332ead23-9911-4f8c-87ff-82149d4cf84e",
+      "nombreEn": "Broccoli with Nduja"
+    },
+    {
+      "id": "25c1809b-2b23-47a6-a0d9-6149a2ec8b81",
+      "tipo": "items",
+      "entityId": "5b7ff89b-be44-4291-bb20-21926150abbf",
+      "nombreEn": "Mediterranean Bowl"
+    },
+    {
+      "id": "ab1457b8-b795-4dbc-a414-cd4384a185b1",
+      "tipo": "items",
+      "entityId": "1e145883-0e7c-4231-a57a-6e336169831f",
+      "nombreEn": "Cabro Reserva"
+    },
+    {
+      "id": "6c598019-48fb-4ec7-a6a9-ae0cea58f1f1",
+      "tipo": "items",
+      "entityId": "f1594ab5-b22f-40b5-a89c-4ffad5afd6f3",
+      "nombreEn": "Carajillo"
+    },
+    {
+      "id": "dc595a30-e226-42b6-9e1f-87c8e291abf7",
+      "tipo": "items",
+      "entityId": "997e8f6b-3f2a-4084-8f66-4a851ca61fc6",
+      "nombreEn": "Monte Carlo"
+    },
+    {
+      "id": "161dc072-14a0-4b52-b797-972ba0b3dc00",
+      "tipo": "items",
+      "entityId": "9a045178-5cdd-4f3c-a109-af165da306ac",
+      "nombreEn": "Lemon verbena-Mint, 500 ml"
+    },
+    {
+      "id": "5b10add5-e3de-4dd4-85f8-7f161f347d9c",
+      "tipo": "items",
+      "entityId": "dbdff544-2f7d-48c9-80ee-c6f340f58648",
+      "nombreEn": "House Pasta"
+    },
+    {
+      "id": "ff0bea26-3c2a-467e-a9b5-0524b7bef424",
+      "tipo": "items",
+      "entityId": "64992e8f-4829-461d-9b11-a6b77db47c18",
+      "nombreEn": "Chamomile, 500 ml"
+    },
+    {
+      "id": "59da4af8-f963-407f-9886-730b036e94dd",
+      "tipo": "items",
+      "entityId": "4e93cabc-5b51-450e-abf1-38e1366801ef",
+      "nombreEn": "Chicken in Tamarind Sauce"
+    },
+    {
+      "id": "3f13d08f-ae24-4949-8dfb-d7dc896b53ac",
+      "tipo": "items",
+      "entityId": "58107c58-a600-49b4-88a2-6fdf350910e6",
+      "nombreEn": "Don Luis"
+    },
+    {
+      "id": "5bf66f67-3154-442e-b605-e75abf672e7e",
+      "tipo": "items",
+      "entityId": "ce17a65b-5054-45b6-bba2-9224828709ec",
+      "nombreEn": "Roasted Portobello"
+    },
+    {
+      "id": "d96e2c89-4073-4928-9a08-676726718b4b",
+      "tipo": "items",
+      "entityId": "532625e5-ac10-419e-a041-66f8ab0e96fb",
+      "nombreEn": "Limoncello"
+    },
+    {
+      "id": "b8a12ed5-8e58-46c0-90be-2b454daf62fc",
+      "tipo": "items",
+      "entityId": "6011ddba-62b4-4268-9148-8819cd6674d6",
+      "nombreEn": "Braised Oxtail"
+    },
+    {
+      "id": "898db79b-a82b-4e38-a62d-044542cef69f",
+      "tipo": "items",
+      "entityId": "d3b1d0fb-b9d1-4281-9fc7-b671ce36e7b5",
+      "nombreEn": "Grilled Octopus"
+    },
+    {
+      "id": "c3189cc4-5169-4bff-bb94-985d13ff2053",
+      "tipo": "items",
+      "entityId": "f112af49-a493-4687-a764-e65f1876c85a",
+      "nombreEn": "Baked Cheese"
+    },
+    {
+      "id": "4bb58979-d9a3-40b1-8031-df1e27dfc275",
+      "tipo": "items",
+      "entityId": "50828e60-a628-47bc-b396-db1d44dfa5ba",
+      "nombreEn": "Catch of the Day"
+    },
+    {
+      "id": "ff669943-f4f1-4cf2-ba96-e2304c00aeb1",
+      "tipo": "items",
+      "entityId": "f05e56df-bb6f-4366-a9b4-f4467fdf467a",
+      "nombreEn": "Mixed fries (potato, sweet potato, malanga)"
+    },
+    {
+      "id": "9a93b52b-3bc4-4bfb-a4b4-24f2177085df",
+      "tipo": "items",
+      "entityId": "a3e88f16-301d-4247-8dcc-d8787ce165f7",
+      "nombreEn": "El Fufurufo"
+    },
+    {
+      "id": "e73a3753-445b-47a0-abf2-6893b5cd350b",
+      "tipo": "items",
+      "entityId": "33dd7bbe-2354-42cc-aec5-1a0783023cc0",
+      "nombreEn": "Orangeade with water or soda"
+    },
+    {
+      "id": "7c31c99e-94c7-485a-8f26-1031a7b7aec0",
+      "tipo": "items",
+      "entityId": "7ef45eb4-4a07-4055-87f5-a3ce80d0824c",
+      "nombreEn": "Surf & Turf"
+    },
+    {
+      "id": "6ae2a246-1fe4-4c66-90d3-57e7a54a66f8",
+      "tipo": "items",
+      "entityId": "37a9182f-4eea-4ec8-b626-b626d08393de",
+      "nombreEn": "Don Luis"
+    },
+    {
+      "id": "3073abca-e5ee-4068-80b9-2fc507d16f04",
+      "tipo": "items",
+      "entityId": "3721d777-1e11-4505-98ac-3a5f610d39b4",
+      "nombreEn": "Potato gratin"
+    },
+    {
+      "id": "4622f010-7a18-4096-97fc-e3a0ab9fa159",
+      "tipo": "items",
+      "entityId": "48d219e6-d64d-40ea-a2f2-5b81aa50568a",
+      "nombreEn": "Santiago Ruiz"
+    },
+    {
+      "id": "8c72cff9-c385-4022-9507-a7344b2bc57c",
+      "tipo": "items",
+      "entityId": "6d049bc2-2749-4b7c-b00f-4a4bcf5b3099",
+      "nombreEn": "Soda of the day"
+    },
+    {
+      "id": "ef4322bc-bc4d-4d2e-9b77-faa9686a22a0",
+      "tipo": "items",
+      "entityId": "e5f92f57-e0d3-41fc-a2d1-552ad9315813",
+      "nombreEn": "Gallo, bottle"
+    },
+    {
+      "id": "18fc1a77-5e5a-4205-8450-69385054edc5",
+      "tipo": "items",
+      "entityId": "de716403-eae2-4ab7-a845-8106b7a3651d",
+      "nombreEn": "La Chef"
+    },
+    {
+      "id": "45a2d6b4-c086-4bed-8c61-b760fc33a0db",
+      "tipo": "items",
+      "entityId": "549bdb09-90b9-4062-bd49-1dd721a54355",
+      "nombreEn": "Sliced Tenderloin"
+    },
+    {
+      "id": "40ea96ac-bde7-46d2-8370-1ea7383c4cae",
+      "tipo": "items",
+      "entityId": "fc295b16-fd23-483e-9cab-43121281d78a",
+      "nombreEn": "Coffee with milk"
+    },
+    {
+      "id": "e2054c57-d8ba-4f0b-8902-954eaa191f7e",
+      "tipo": "items",
+      "entityId": "820c758d-7844-4217-a9b9-16b421e20f88",
+      "nombreEn": "Antigua Sin Novia"
+    },
+    {
+      "id": "ac352804-1144-4110-bf03-1a28c20ae3de",
+      "tipo": "items",
+      "entityId": "40b53430-5a9e-4b37-820a-1ac71c8e7015",
+      "nombreEn": "Fermented Vegetables"
+    },
+    {
+      "id": "b82505ea-3aef-4b91-8c55-73836e2e0ba5",
+      "tipo": "items",
+      "entityId": "00d991c1-b272-4fae-95d1-a581f97f30db",
+      "nombreEn": "Mariluna Blanco"
+    },
+    {
+      "id": "addc3b6b-1326-4bbf-937d-31f69dedab54",
+      "tipo": "items",
+      "entityId": "6e0c1e2b-404a-4bf3-8543-610154120429",
+      "nombreEn": "Kombucha"
+    },
+    {
+      "id": "27748e43-fede-42a8-a946-26c0a9921826",
+      "tipo": "items",
+      "entityId": "294fcb26-3fe0-433a-8ee6-6db15ec94384",
+      "nombreEn": "El Colonial"
+    },
+    {
+      "id": "747e71b7-a4af-4618-9990-4879179868fc",
+      "tipo": "items",
+      "entityId": "c64c64c3-bd0e-4b15-946b-760002efae31",
+      "nombreEn": "Pulenta Estate, Red Blend V"
+    },
+    {
+      "id": "66a29455-5eb5-4ff1-bea5-4f8968191fdf",
+      "tipo": "items",
+      "entityId": "e1f050fb-7609-4004-bc6d-ed9e7208e66b",
+      "nombreEn": "La Lotería"
+    },
+    {
+      "id": "e1aad7f8-8193-4e3c-ab22-ed5d30825ac4",
+      "tipo": "items",
+      "entityId": "f3eaf5e3-16c9-43fd-bc27-ca57a2a151c3",
+      "nombreEn": "Americano"
+    },
+    {
+      "id": "ecf79952-b3d4-4e57-80a5-a69f931c94ba",
+      "tipo": "items",
+      "entityId": "9ef0f039-fbef-4d5d-8ab3-7b4cd581e429",
+      "nombreEn": "El Mero, Mero"
+    },
+    {
+      "id": "d191d391-3663-489c-8953-8c2cec8a56fa",
+      "tipo": "items",
+      "entityId": "e3e711f7-a761-45f6-a8e9-6d4eca544c3f",
+      "nombreEn": "Beetroot Negroni"
+    },
+    {
+      "id": "cb25d6f7-9c80-4a1c-a6e6-da3344c6f21f",
+      "tipo": "items",
+      "entityId": "84b1a8fb-0f92-47df-98f0-bd3a5577c050",
+      "nombreEn": "Sparkling water 1L"
+    },
+    {
+      "id": "9b893440-4c95-4a0e-af6c-db216b400c11",
+      "tipo": "items",
+      "entityId": "91c42417-813e-4640-b646-e568efd39c57",
+      "nombreEn": "Red Pepper"
+    },
+    {
+      "id": "e63752cd-d8a2-4a82-8b60-de2e9a0acf28",
+      "tipo": "items",
+      "entityId": "51ed44a3-6296-484a-a8c6-61cca0b1b114",
+      "nombreEn": "Los Penitentes"
+    },
+    {
+      "id": "33822b57-4a4a-4bcd-90d7-b791fb3f8eb9",
+      "tipo": "items",
+      "entityId": "f82b3fc6-1b06-4d14-ba83-d2119f530b3c",
+      "nombreEn": "Comal Borracho"
+    },
+    {
+      "id": "da01d672-b325-4e57-b47f-a585fcddd612",
+      "tipo": "items",
+      "entityId": "2d17b842-372b-4369-bb59-bee99bf73f08",
+      "nombreEn": "La Linda"
+    },
+    {
+      "id": "aa30161c-105b-49c3-8df9-576f57bbb549",
+      "tipo": "items",
+      "entityId": "9711cb50-c603-47d4-8fbf-d5d766e389dc",
+      "nombreEn": "El Canche"
+    },
+    {
+      "id": "37f49e23-0dc9-4e16-917e-2ec16b037bd5",
+      "tipo": "items",
+      "entityId": "2940cadb-bfb0-482d-bb09-cd52db17bd2d",
+      "nombreEn": "Cava Bohigas Brut Reserva"
+    },
+    {
+      "id": "be360bed-53ea-4c75-8d62-bf86c2a90be5",
+      "tipo": "items",
+      "entityId": "65caf561-d8a8-4aaf-b576-57df27adb4a5",
+      "nombreEn": "Grilled Cauliflower with Romesco"
+    },
+    {
+      "id": "3983412c-534e-4d2a-9651-903e8696e384",
+      "tipo": "items",
+      "entityId": "56445593-db26-4b6d-8051-1ad2f316d790",
+      "nombreEn": "Lan Reserva"
+    },
+    {
+      "id": "5cf9341f-f2ca-46c6-a1ca-b99d358dd426",
+      "tipo": "items",
+      "entityId": "5ea78c25-879d-4fde-b668-ddc2b3263ca5",
+      "nombreEn": "Brisket in Bordelaise Sauce"
+    },
+    {
+      "id": "663b20ef-235b-4a36-b083-233ed0c4fec4",
+      "tipo": "items",
+      "entityId": "e2bddaf2-d8ab-4d69-bcd2-4a0452d8beaa",
+      "nombreEn": "Antigua Muy Noble"
+    },
+    {
+      "id": "9fe78a71-4014-455f-aab6-adf8219e9494",
+      "tipo": "items",
+      "entityId": "4903f2ed-932b-4a84-9a2f-65d0054d7dcb",
+      "nombreEn": "Jade Negro"
+    },
+    {
+      "id": "eabe9a47-0a65-4322-bbb0-df8d642be18a",
+      "tipo": "items",
+      "entityId": "74222bf6-4955-4edd-bef3-c0b9fc107143",
+      "nombreEn": "Espresso Martini"
+    },
+    {
+      "id": "ed7e7141-4241-46ad-83bf-b84fb18c6232",
+      "tipo": "items",
+      "entityId": "d0e8c7e2-cadb-4a57-9457-f80cab5a8861",
+      "nombreEn": "Mezcal with Pineapple"
+    },
+    {
+      "id": "da3cb5ee-8cca-4ea1-ba27-402b73bdad3b",
+      "tipo": "items",
+      "entityId": "2e4bd461-dd9f-48b0-9eb1-329a686d438a",
+      "nombreEn": "Lemonade with water or soda"
+    },
+    {
+      "id": "fc392631-a174-4577-961f-81917b079fa3",
+      "tipo": "items",
+      "entityId": "fa715f7d-dcbb-4fd2-9836-b1ebe2be3ea9",
+      "nombreEn": "Charcuterie and Cheese Board"
+    },
+    {
+      "id": "e0886472-d4e3-41bb-9cc5-e72c1de686d5",
+      "tipo": "items",
+      "entityId": "dac70625-381e-44a6-ad70-780285110dc6",
+      "nombreEn": "Ginger Beer"
+    },
+    {
+      "id": "d4b75195-c3cf-4891-b1c5-9bc79beb8052",
+      "tipo": "items",
+      "entityId": "79278f75-c9a9-44d4-8aa7-f5ad5c9d5bbb",
+      "nombreEn": "House bread"
+    },
+    {
+      "id": "06d77c64-1c26-43a3-b805-979c2904aced",
+      "tipo": "items",
+      "entityId": "9b86de05-9a20-48f6-93fb-686ef837d788",
+      "nombreEn": "Rosanta Salad"
+    },
+    {
+      "id": "6bf2850e-7e79-4de3-8b3f-875270000d07",
+      "tipo": "items",
+      "entityId": "a51119a1-2bc8-4b82-9aae-cabcc41a6a73",
+      "nombreEn": "Creamy Rice"
+    },
+    {
+      "id": "440269ab-7bcd-4b11-958a-53da761db053",
+      "tipo": "items",
+      "entityId": "e28d7f22-9219-4a5f-8b45-f22cee92a04c",
+      "nombreEn": "Chaitenango"
+    },
+    {
+      "id": "cad6213f-2f3d-423b-a611-2ab436fa45b9",
+      "tipo": "items",
+      "entityId": "35208ba3-9aec-4e6d-bb4e-440d6b688f80",
+      "nombreEn": "La Val"
+    },
+    {
+      "id": "c9919b18-39d2-4257-9847-db6867e8af87",
+      "tipo": "items",
+      "entityId": "8d1d60da-c458-4ee7-a148-042ab5065c5c",
+      "nombreEn": "Bohigas Garnatxa Negra"
+    },
+    {
+      "id": "d7eedbc6-dfa5-41ee-a4c4-fe7038eedc15",
+      "tipo": "items",
+      "entityId": "4340b9aa-ee9f-4ef0-ae1a-a9e0d8b1dcee",
+      "nombreEn": "Pasión de Bodal"
+    },
+    {
+      "id": "2bd3d521-8ada-4a8e-99a9-b2431e499c83",
+      "tipo": "items",
+      "entityId": "5f622103-e773-45cd-9691-08d9ff23f81a",
+      "nombreEn": "Pork Ribs"
+    },
+    {
+      "id": "9d86f176-75fc-4b55-b190-8b31df3a791e",
+      "tipo": "items",
+      "entityId": "3c835736-5ad8-472e-b3f2-1ed5b2420ac1",
+      "nombreEn": "Grilled Tenderloin"
+    },
+    {
+      "id": "bb25e930-cda7-43b6-b1ee-2a190f389fcf",
+      "tipo": "items",
+      "entityId": "845a456d-126e-4f9d-8779-2b569a248393",
+      "nombreEn": "Mariluna Tinto"
+    },
+    {
+      "id": "a5da3900-58e7-426a-9b94-fef1e79c1d99",
+      "tipo": "items",
+      "entityId": "a777c84a-347d-4857-a698-1b40006a2309",
+      "nombreEn": "Mushroom Tartare"
+    },
+    {
+      "id": "7a83b794-21ba-4d33-90ba-ee1b253bd3f4",
+      "tipo": "items",
+      "entityId": "2b71696a-eb28-434f-9450-ac0e92360f06",
+      "nombreEn": "Salentein Killka"
+    },
+    {
+      "id": "d0685536-6ded-4766-a50c-853bfb00d55d",
+      "tipo": "items",
+      "entityId": "764a4826-33c6-4da0-b4f4-0a2ad52b7f28",
+      "nombreEn": "La Feria"
+    },
+    {
+      "id": "4d5583ba-f468-4c76-920e-cc3e4374c74d",
+      "tipo": "items",
+      "entityId": "ac2c254c-2ddc-48a0-9573-4d13469f29d5",
+      "nombreEn": "Pachamama Tropical"
+    },
+    {
+      "id": "10f1885d-9132-425b-928a-b7e1ab6c66e0",
+      "tipo": "items",
+      "entityId": "dbe3773e-e64d-4493-a281-d5b2f4ef6e95",
+      "nombreEn": "Lemongrass cooler"
+    },
+    {
+      "id": "3593745e-ca90-4161-b66e-913d4806436e",
+      "tipo": "items",
+      "entityId": "f3ba8ac0-9872-4353-8bcb-ce44401558f2",
+      "nombreEn": "Oven-Baked Shrimp"
+    },
+    {
+      "id": "b57c0583-5022-474a-8c5f-6f0eb76fb278",
+      "tipo": "items",
+      "entityId": "4d408d68-e7a7-4c52-bf20-3d0b5b2b7641",
+      "nombreEn": "Green beans in sesame oil and garlic"
+    },
+    {
+      "id": "f93110cb-401a-40c6-b753-634c7451c9d4",
+      "tipo": "secciones",
+      "entityId": "40a80738-20e8-4a58-b433-4327bda43037",
+      "nombreEn": "WINES · Red Wines"
+    },
+    {
+      "id": "7209e9b7-113d-4910-8e3f-15a3c49c5355",
+      "tipo": "secciones",
+      "entityId": "248ec914-eb45-46b7-9632-e2a87084d401",
+      "nombreEn": "DRINKS · Coffee from Guatemala"
+    },
+    {
+      "id": "2610fb6e-a617-4535-bfb4-8a7c1bccb54a",
+      "tipo": "secciones",
+      "entityId": "11d18a68-9a5d-48c7-ac37-445164cebe99",
+      "nombreEn": "DRINKS · Garden herb teas"
+    },
+    {
+      "id": "256bff43-7b7c-480a-a5aa-9b6d25c8bf9a",
+      "tipo": "secciones",
+      "entityId": "95aab484-08a7-400c-8bc9-34d5540c26fa",
+      "nombreEn": "TO START · Flavorful beginnings"
+    },
+    {
+      "id": "712a36c8-8ff5-4cc0-a79b-31d668ecc3f6",
+      "tipo": "secciones",
+      "entityId": "f0997196-c960-4ee7-9dd4-73ef9f2edf9d",
+      "nombreEn": "HEALTHY OPTIONS · Nourishing harvests"
+    },
+    {
+      "id": "291209b4-2ae1-4348-881b-4a3b1dfae6d8",
+      "tipo": "secciones",
+      "entityId": "76fcaa64-90ea-4db3-9b65-a83650b22a97",
+      "nombreEn": "SOMETHING STRONGER · Cooking with roots and fire"
+    },
+    {
+      "id": "3132ef8b-7fa7-410b-8e12-d03450d79fb3",
+      "tipo": "secciones",
+      "entityId": "6844bce9-774b-4986-845f-0ad4ce4ef464",
+      "nombreEn": "WINES · White Wine & Rose"
+    },
+    {
+      "id": "e250536e-b5e4-43f6-9436-0e839b290d79",
+      "tipo": "secciones",
+      "entityId": "deb34310-2965-4cdd-b651-b0fe79259b67",
+      "nombreEn": "DRINKS · Craft beers"
+    },
+    {
+      "id": "0d57b5f7-9faa-4831-a7d8-c6adaf3b141d",
+      "tipo": "secciones",
+      "entityId": "c4286d3e-20ee-4c9f-993d-a7dc982c1afd",
+      "nombreEn": "DRINKS · Artisan tea infusions"
+    },
+    {
+      "id": "95d9a3b2-9049-456e-b344-af802e65e52c",
+      "tipo": "secciones",
+      "entityId": "ac65229c-da97-493b-bdc3-24f0994a31ce",
+      "nombreEn": "DRINKS · House refreshments"
+    },
+    {
+      "id": "76fbc144-a08f-4e56-9ab8-b9e21a0fa4d5",
+      "tipo": "secciones",
+      "entityId": "d2350b05-9497-4236-9e01-7fe3a048be5b",
+      "nombreEn": "BURGERS · From the garden and the grill"
+    },
+    {
+      "id": "f0c6cc83-569a-4971-ac4d-b51cc6b5a696",
+      "tipo": "secciones",
+      "entityId": "1a941ab0-9442-49d7-9732-3d46d04baa11",
+      "nombreEn": "CAVA"
+    },
+    {
+      "id": "e66c9825-1e41-4252-9e7c-d8ad7a7c0b93",
+      "tipo": "secciones",
+      "entityId": "24316b6b-65da-44db-af9d-ef3f067de4f3",
+      "nombreEn": "COCKTAILS · The Essentials"
+    },
+    {
+      "id": "97f813fb-b72d-4d38-82e3-1fc382b5467d",
+      "tipo": "secciones",
+      "entityId": "ce5cc514-c0b6-4b7c-95ad-e58aa36da807",
+      "nombreEn": "COCKTAILS · Seasonal Harvest"
+    },
+    {
+      "id": "f06327f0-0f95-4184-a4cc-a26f1878f22e",
+      "tipo": "secciones",
+      "entityId": "532eb26f-aaa9-4bfb-b289-1f35e88b23cd",
+      "nombreEn": "DRINKS · Digestifs"
+    },
+    {
+      "id": "9fee200a-4f76-4294-94d6-ec9b5b8c4d7c",
+      "tipo": "secciones",
+      "entityId": "2e4612aa-5289-40b5-8f56-5f9fa94fbb32",
+      "nombreEn": "SOMETHING STRONGER · Side Dishes"
+    },
+    {
+      "id": "7b9a3424-7507-4acf-a127-ef2f9cefd04f",
+      "tipo": "secciones",
+      "entityId": "2bad077b-6569-48e3-ae7d-9b16e3b0b649",
+      "nombreEn": "COCKTAILS · House Roots"
+    },
+    {
+      "id": "db905f01-c307-4b51-bd56-2a417ed69d55",
+      "tipo": "secciones",
+      "entityId": "bc13a771-282c-4fc0-a6bb-a07aa3a51533",
+      "nombreEn": "DRINKS · Beers"
+    },
+    {
+      "id": "15fdef6c-d834-4323-a719-19e8e37be1dc",
+      "tipo": "variantes",
+      "entityId": "e7c52420-1904-437f-b980-4e1113151211",
+      "nombreEn": "Tenderloin"
+    },
+    {
+      "id": "9ad698e7-3d77-48df-aad4-53e1003a8165",
+      "tipo": "variantes",
+      "entityId": "d93ee5e8-3e4a-434b-aa63-cdb7d6378a23",
+      "nombreEn": "Regular"
+    },
+    {
+      "id": "670b1b3c-658a-441f-8821-d8954987be73",
+      "tipo": "variantes",
+      "entityId": "f9ae6b0d-78cc-41be-a79a-89b13a0b877d",
+      "nombreEn": "With tenderloin"
+    },
+    {
+      "id": "206588d8-b875-489d-ad52-42457855bca1",
+      "tipo": "variantes",
+      "entityId": "ed5a9d02-de04-410f-b1bd-9cfa78768258",
+      "nombreEn": "Shrimp"
+    },
+    {
+      "id": "f73d0677-a913-4f27-99a4-1135b1760faf",
+      "tipo": "variantes",
+      "entityId": "43c9a987-714b-49aa-bfc4-a2e47c7e133f",
+      "nombreEn": "Bottle"
+    },
+    {
+      "id": "3a4ca3bc-b770-4545-ab0e-5f324c7ea4f8",
+      "tipo": "labels",
+      "entityId": "75347e16-8122-49b8-9c9f-2af7aa322e80",
+      "nombreEn": "Responsibly caught seafood"
+    },
+    {
+      "id": "601b89dc-abac-45dc-988b-b6f3a799ef2d",
+      "tipo": "labels",
+      "entityId": "bb462af1-9056-41e6-b390-cfbb8e2bda92",
+      "nombreEn": "Slow-cooked"
+    },
+    {
+      "id": "b71f9b9f-43d2-4861-9861-2a3989a63b1d",
+      "tipo": "labels",
+      "entityId": "cd90f612-af65-4a3e-bc5f-84650be41b25",
+      "nombreEn": "Slow fermentation"
+    },
+    {
+      "id": "e378f060-6863-4cfa-81c1-34754e072e1d",
+      "tipo": "labels",
+      "entityId": "e8babef3-a97a-49ae-86d3-de79ae3e5fde",
+      "nombreEn": "100% plant-based"
+    },
+    {
+      "id": "abb01670-c201-4227-baee-35319eadf935",
+      "tipo": "labels",
+      "entityId": "7ec127ae-d01f-4a22-8b49-c82309795051",
+      "nombreEn": "Locally sourced"
+    },
+    {
+      "id": "0b63bde7-900f-4523-8975-1af38dca957a",
+      "tipo": "labels",
+      "entityId": "8f80072e-8788-482d-9934-88ce1d84871f",
+      "nombreEn": "Rich in protein"
+    },
+    {
+      "id": "d7fab9ad-1db5-4074-a102-65d9faa7e746",
+      "tipo": "labels",
+      "entityId": "96dfd2b4-4f78-4312-88bc-2bf862e2026f",
+      "nombreEn": "Regeneratively grown"
+    },
+    {
+      "id": "f7e60edc-e9c8-4047-b312-1c4ef5753bf5",
+      "tipo": "labels",
+      "entityId": "3f1cf34a-d165-4951-a859-5fa4d1b8be40",
+      "nombreEn": "Vegan option"
+    },
+    {
+      "id": "fa94ee91-7be2-48dc-af1b-d4a7e0edcb67",
+      "tipo": "labels",
+      "entityId": "2bc14ef3-c294-4e8b-8ac4-6ac71b8fbfaf",
+      "nombreEn": "House-made"
+    },
+    {
+      "id": "ce76b35e-87c4-4fd9-b25f-150ba0d1f6e5",
+      "tipo": "labels",
+      "entityId": "b52f898e-b426-4c09-a26f-cb12303f155c",
+      "nombreEn": "Selected beef"
+    },
+    {
+      "id": "bbbc88e3-1576-42c2-b5ea-29fb9c3269c8",
+      "tipo": "variantes",
+      "entityId": "b50f0dd7-40b3-47bb-bb6a-bbe9b6823a70",
+      "nombreEn": "Glass"
+    }
+  ],
+  "saltados": [
+    "labels:e2eab816-85c3-4eac-a8a8-2aa21fb85fc5",
+    "labels:f796677f-dd18-4dd2-993f-875cd95776d1",
+    "labels:188f1af4-8ff1-4070-b8a5-9148d2fd21fa",
+    "labels:2b9470f5-18b8-411d-befc-862d5bf5aacc",
+    "labels:3e54986d-e5c6-4c81-a372-cb115335b119",
+    "labels:332ead23-9911-4f8c-87ff-82149d4cf84e",
+    "labels:5b7ff89b-be44-4291-bb20-21926150abbf",
+    "labels:1e145883-0e7c-4231-a57a-6e336169831f",
+    "labels:f1594ab5-b22f-40b5-a89c-4ffad5afd6f3",
+    "labels:997e8f6b-3f2a-4084-8f66-4a851ca61fc6",
+    "labels:9a045178-5cdd-4f3c-a109-af165da306ac",
+    "labels:dbdff544-2f7d-48c9-80ee-c6f340f58648",
+    "labels:64992e8f-4829-461d-9b11-a6b77db47c18",
+    "labels:4e93cabc-5b51-450e-abf1-38e1366801ef",
+    "labels:58107c58-a600-49b4-88a2-6fdf350910e6",
+    "labels:ce17a65b-5054-45b6-bba2-9224828709ec",
+    "labels:532625e5-ac10-419e-a041-66f8ab0e96fb",
+    "labels:6011ddba-62b4-4268-9148-8819cd6674d6",
+    "labels:d3b1d0fb-b9d1-4281-9fc7-b671ce36e7b5",
+    "labels:f112af49-a493-4687-a764-e65f1876c85a",
+    "labels:50828e60-a628-47bc-b396-db1d44dfa5ba",
+    "labels:f05e56df-bb6f-4366-a9b4-f4467fdf467a",
+    "labels:a3e88f16-301d-4247-8dcc-d8787ce165f7",
+    "labels:33dd7bbe-2354-42cc-aec5-1a0783023cc0",
+    "labels:7ef45eb4-4a07-4055-87f5-a3ce80d0824c",
+    "labels:37a9182f-4eea-4ec8-b626-b626d08393de",
+    "labels:3721d777-1e11-4505-98ac-3a5f610d39b4",
+    "labels:48d219e6-d64d-40ea-a2f2-5b81aa50568a",
+    "labels:6d049bc2-2749-4b7c-b00f-4a4bcf5b3099",
+    "labels:e5f92f57-e0d3-41fc-a2d1-552ad9315813",
+    "labels:de716403-eae2-4ab7-a845-8106b7a3651d",
+    "labels:549bdb09-90b9-4062-bd49-1dd721a54355",
+    "labels:fc295b16-fd23-483e-9cab-43121281d78a",
+    "labels:820c758d-7844-4217-a9b9-16b421e20f88",
+    "labels:40b53430-5a9e-4b37-820a-1ac71c8e7015",
+    "labels:00d991c1-b272-4fae-95d1-a581f97f30db",
+    "labels:6e0c1e2b-404a-4bf3-8543-610154120429",
+    "labels:294fcb26-3fe0-433a-8ee6-6db15ec94384",
+    "labels:c64c64c3-bd0e-4b15-946b-760002efae31",
+    "labels:e1f050fb-7609-4004-bc6d-ed9e7208e66b",
+    "labels:f3eaf5e3-16c9-43fd-bc27-ca57a2a151c3",
+    "labels:9ef0f039-fbef-4d5d-8ab3-7b4cd581e429",
+    "labels:e3e711f7-a761-45f6-a8e9-6d4eca544c3f",
+    "labels:84b1a8fb-0f92-47df-98f0-bd3a5577c050",
+    "labels:91c42417-813e-4640-b646-e568efd39c57",
+    "labels:51ed44a3-6296-484a-a8c6-61cca0b1b114",
+    "labels:f82b3fc6-1b06-4d14-ba83-d2119f530b3c",
+    "labels:2d17b842-372b-4369-bb59-bee99bf73f08",
+    "labels:9711cb50-c603-47d4-8fbf-d5d766e389dc",
+    "labels:2940cadb-bfb0-482d-bb09-cd52db17bd2d",
+    "labels:65caf561-d8a8-4aaf-b576-57df27adb4a5",
+    "labels:56445593-db26-4b6d-8051-1ad2f316d790",
+    "labels:5ea78c25-879d-4fde-b668-ddc2b3263ca5",
+    "labels:e2bddaf2-d8ab-4d69-bcd2-4a0452d8beaa",
+    "labels:4903f2ed-932b-4a84-9a2f-65d0054d7dcb",
+    "labels:74222bf6-4955-4edd-bef3-c0b9fc107143",
+    "labels:d0e8c7e2-cadb-4a57-9457-f80cab5a8861",
+    "labels:2e4bd461-dd9f-48b0-9eb1-329a686d438a",
+    "labels:fa715f7d-dcbb-4fd2-9836-b1ebe2be3ea9",
+    "labels:dac70625-381e-44a6-ad70-780285110dc6",
+    "labels:79278f75-c9a9-44d4-8aa7-f5ad5c9d5bbb",
+    "labels:9b86de05-9a20-48f6-93fb-686ef837d788",
+    "labels:a51119a1-2bc8-4b82-9aae-cabcc41a6a73",
+    "labels:e28d7f22-9219-4a5f-8b45-f22cee92a04c",
+    "labels:35208ba3-9aec-4e6d-bb4e-440d6b688f80",
+    "labels:8d1d60da-c458-4ee7-a148-042ab5065c5c",
+    "labels:4340b9aa-ee9f-4ef0-ae1a-a9e0d8b1dcee",
+    "labels:5f622103-e773-45cd-9691-08d9ff23f81a",
+    "labels:3c835736-5ad8-472e-b3f2-1ed5b2420ac1",
+    "labels:845a456d-126e-4f9d-8779-2b569a248393",
+    "labels:a777c84a-347d-4857-a698-1b40006a2309",
+    "labels:2b71696a-eb28-434f-9450-ac0e92360f06",
+    "labels:764a4826-33c6-4da0-b4f4-0a2ad52b7f28",
+    "labels:ac2c254c-2ddc-48a0-9573-4d13469f29d5",
+    "labels:dbe3773e-e64d-4493-a281-d5b2f4ef6e95",
+    "labels:f3ba8ac0-9872-4353-8bcb-ce44401558f2",
+    "labels:4d408d68-e7a7-4c52-bf20-3d0b5b2b7641",
+    "variantes:b50f0dd7-40b3-47bb-bb6a-bbe9b6823a70"
+  ],
+  "sinFuente": [
+    "seccion: WINES  · Whites",
+    "variante: Medium",
+    "variante: Large",
+    "variante: Double serve",
+    "variante: Mushroom",
+    "variante: Beef",
+    "variante: Small",
+    "variante: Single serve",
+    "variante: Chicken"
+  ]
+}

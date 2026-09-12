@@ -1,0 +1,421 @@
+#!/usr/bin/env node
+/**
+ * Cargador del menú de Rosanta a la app Wix Restaurants Menus.
+ *
+ * Fuente de datos: el array MENU dentro de index.html del menú de GitHub.
+ * No se retipea nada. Si cambias un precio en GitHub, se vuelve a correr y listo.
+ *
+ * MODOS
+ *   node wix-menu-loader.js extract            Extrae el menú a menu-rosanta.json. Sin red, sin riesgo.
+ *   node wix-menu-loader.js probe              Crea UNA sección y UN plato de prueba y muestra la respuesta cruda.
+ *   node wix-menu-loader.js load               Carga el menú completo.
+ *   node wix-menu-loader.js asignar <archivo>  Asigna los items a sus secciones (Section.itemIds), usando el registro de `load`.
+ *   node wix-menu-loader.js rollback <archivo> Borra lo creado, usando el registro que deja `load`.
+ *
+ * ANTES DE `probe` O `load`:
+ *   export WIX_API_KEY="..."          API key de Wix (Dashboard - Settings - API Keys)
+ *   export WIX_SITE_ID="..."          Site ID del sitio de Rosanta
+ *
+ * POR QUÉ EXISTE `probe`:
+ *   La documentación de Wix confirma los endpoints y los campos del objeto Item,
+ *   pero no publica el cuerpo exacto de las peticiones bulk. `probe` lo averigua
+ *   contra la API real con dos registros desechables, en vez de asumirlo y
+ *   descubrir el error a mitad de una carga de 74 platos.
+ *
+ *   Además: Bulk Create Sections está marcado por Wix como Developer Preview,
+ *   o sea que puede cambiar sin aviso. Una razón más para probar antes.
+ */
+
+'use strict';
+
+const fs = require('fs');
+
+const FUENTE = 'https://raw.githubusercontent.com/rosanta2024/rosanta-menu/main/index.html';
+
+const API = {
+  menus:    'https://www.wixapis.com/restaurants/menus/v1/menus',
+  secBulk:  'https://www.wixapis.com/restaurants/menus-section/v1/bulk/sections/create',
+  itemBulk: 'https://www.wixapis.com/restaurants/menus-item/v1/bulk/items/create',
+  seccion:  'https://www.wixapis.com/restaurants/menus-section/v1/sections',
+  item:     'https://www.wixapis.com/restaurants/menus-item/v1/items',
+  variante: 'https://www.wixapis.com/restaurants/item-variants/v1/variants'
+};
+
+// Decisión de contenido pendiente de confirmar por Juanma.
+// Wix no tiene campo para maridaje ni para las notas con ❀.
+// Si esto queda en true, se anexan a la descripción. Si queda en false, se pierden.
+const INCLUIR_MARIDAJE = true;
+const INCLUIR_NOTAS    = true;
+
+/* ------------------------------------------------------------------ */
+/* 1 · Extracción                                                      */
+/* ------------------------------------------------------------------ */
+
+async function traerFuente() {
+  const r = await fetch(FUENTE);
+  if (!r.ok) throw new Error('No se pudo leer la fuente: HTTP ' + r.status);
+  return r.text();
+}
+
+function extraerMENU(html) {
+  const ini = html.indexOf('const MENU = [');
+  if (ini < 0) throw new Error('No se encontró "const MENU = [" en la fuente. ¿Cambió el archivo?');
+
+  // Recorre balanceando corchetes, respetando comillas, para hallar el cierre real.
+  const desde = html.indexOf('[', ini);
+  let prof = 0, comilla = null, fin = -1;
+  for (let i = desde; i < html.length; i++) {
+    const c = html[i], prev = html[i - 1];
+    if (comilla) { if (c === comilla && prev !== '\\') comilla = null; continue; }
+    if (c === "'" || c === '"' || c === '`') { comilla = c; continue; }
+    if (c === '[') prof++;
+    else if (c === ']') { prof--; if (prof === 0) { fin = i; break; } }
+  }
+  if (fin < 0) throw new Error('El array MENU quedó sin cerrar.');
+
+  const src = html.slice(desde, fin + 1);
+  return new Function('return ' + src)();
+}
+
+function precioDe(q) {
+  // Contrato verificado con `probe` el 15-ago-2026: la API espera un string
+  // decimal y toma la moneda del sitio. {value, currency} devuelve 400.
+  return { price: Number(q).toFixed(2) };
+}
+
+/** Convierte 'Normal: Q75 | Lomito: Q100' en variantes de precio de Wix. */
+function variantesDe(txt) {
+  return String(txt).split('|').map(p => {
+    const m = p.match(/^\s*(.+?)\s*:\s*Q\s*([\d.,]+)\s*$/);
+    if (!m) return null;
+    return { name: m[1].trim(), priceInfo: precioDe(m[2].replace(',', '')) };
+  }).filter(Boolean);
+}
+
+function descripcionDe(loc) {
+  const partes = [loc.d, loc.x].filter(Boolean);
+  if (INCLUIR_MARIDAJE && loc.m) partes.push('Maridaje sugerido: ' + loc.m);
+  if (INCLUIR_NOTAS && Array.isArray(loc.notas) && loc.notas.length) partes.push(loc.notas.join(' '));
+  if (loc.link && loc.link.t) partes.push(loc.link.t);
+  return partes.join(' ').trim().slice(0, 1500); // Wix: máximo 1500 caracteres.
+}
+
+/** Aplana MENU a { secciones: [ { id, nombre, intro, items:[...] } ] } por idioma. */
+function normalizar(MENU, idioma) {
+  const L = idioma; // 'es' | 'en'
+  const salida = [];
+
+  for (const sec of MENU) {
+    const meta = sec[L] || sec.es || {};
+    const items = [];
+
+    // a) Platos normales
+    for (const it of (sec.items || [])) {
+      const loc = it[L] || it.es || {};
+      if (!loc.n) continue;
+      const item = { name: loc.n, description: descripcionDe(loc), visible: true };
+      const vars = []
+        .concat(loc.p  ? variantesDe(loc.p)  : [])
+        .concat(loc.p2 ? variantesDe(loc.p2) : []);
+      if (it.q != null) item.priceInfo = precioDe(it.q);
+      if (vars.length) item.priceVariants = { variants: vars };
+      if (it.q == null && !vars.length) item._sinPrecio = true;
+      items.push(item);
+    }
+
+    // b) Bloques en rejilla: bebidas, y el anexo de "Algo más fuerte".
+    //    grid = { es?, en?, groups: [ { es, en, items: [ { q, es, en, d? } ] } ] }
+    for (const g of ((sec.grid && sec.grid.groups) || [])) {
+      const titulo = g[L] || g.es || '';
+      for (const li of (g.items || [])) {
+        const nombre = li[L] || li.es;
+        if (!nombre) continue;
+        items.push({
+          name: nombre,
+          description: [titulo, li.d || ''].filter(Boolean).join(' · ').slice(0, 1500),
+          priceInfo: li.q != null ? precioDe(li.q) : undefined,
+          visible: true,
+          _grupo: titulo
+        });
+      }
+    }
+
+    // c) Cócteles: subgrupos por precio.
+    //    subs = [ { q, es, en, items: [ { es:{n,d,m}, en:{...} } ] } ]
+    //    El precio vive en el subgrupo, no en el cóctel.
+    for (const sub of (sec.subs || [])) {
+      // sub.es / sub.en son objetos {t: título, n: nota}, no strings.
+      const titulo = ((sub[L] || sub.es || {}).t) || '';
+      for (const it of (sub.items || [])) {
+        const loc = it[L] || it.es || {};
+        if (!loc.n) continue;
+        items.push({
+          name: loc.n,
+          description: [descripcionDe(loc), titulo].filter(Boolean).join(' · ').slice(0, 1500),
+          priceInfo: sub.q != null ? precioDe(sub.q) : undefined,
+          visible: true,
+          _grupo: titulo,
+          _sinPrecio: sub.q == null
+        });
+      }
+    }
+
+    // d) Vinos: copa y botella entran como variantes de precio.
+    //    vinos = [ { es, en, items: [ { n, uva, zEs, zEn, copa?, bot? } ] } ]
+    for (const g of (sec.vinos || [])) {
+      const titulo = g[L] || g.es || '';
+      for (const w of (g.items || [])) {
+        const vars = [];
+        if (w.copa != null) vars.push({ name: L === 'en' ? 'Glass'  : 'Copa',    priceInfo: precioDe(w.copa) });
+        if (w.bot  != null) vars.push({ name: L === 'en' ? 'Bottle' : 'Botella', priceInfo: precioDe(w.bot) });
+        items.push({
+          name: w.n,
+          description: [w.uva, (L === 'en' ? w.zEn : w.zEs)].filter(Boolean).join(' · '),
+          priceVariants: vars.length ? { variants: vars } : undefined,
+          visible: true,
+          _grupo: titulo,
+          _sinPrecio: vars.length === 0
+        });
+      }
+    }
+
+    salida.push({
+      id: sec.id,
+      nombre: [meta.eyebrow, meta.title].filter(Boolean).join(' · '),
+      intro: meta.intro || '',
+      items
+    });
+  }
+  return salida;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2 · Cliente de la API                                               */
+/* ------------------------------------------------------------------ */
+
+function credenciales() {
+  const key = process.env.WIX_API_KEY, site = process.env.WIX_SITE_ID;
+  if (!key || !site) {
+    throw new Error('Faltan WIX_API_KEY y/o WIX_SITE_ID en el entorno. Ver el runbook.');
+  }
+  return { Authorization: key, 'wix-site-id': site, 'Content-Type': 'application/json' };
+}
+
+async function llamar(metodo, url, cuerpo) {
+  const r = await fetch(url, {
+    method: metodo,
+    headers: credenciales(),
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined
+  });
+  const texto = await r.text();
+  let json = null;
+  try { json = JSON.parse(texto); } catch (_) {}
+  return { ok: r.ok, status: r.status, json, texto };
+}
+
+/* ------------------------------------------------------------------ */
+/* 3 · Modos                                                           */
+/* ------------------------------------------------------------------ */
+
+async function modoExtract() {
+  const MENU = extraerMENU(await traerFuente());
+  const datos = { generado: new Date().toISOString(), fuente: FUENTE,
+                  es: normalizar(MENU, 'es'), en: normalizar(MENU, 'en') };
+
+  fs.writeFileSync('menu-rosanta.json', JSON.stringify(datos, null, 2), 'utf8');
+
+  for (const L of ['es', 'en']) {
+    const secs = datos[L];
+    const n = secs.reduce((a, s) => a + s.items.length, 0);
+    console.log(`${L.toUpperCase()}: ${secs.length} secciones, ${n} items`);
+    secs.forEach(s => console.log(`   · ${s.nombre} (${s.items.length})`));
+  }
+  const sinPrecio = datos.es.flatMap(s => s.items.filter(i => i._sinPrecio).map(i => i.name));
+  if (sinPrecio.length) console.log('\nOJO, sin precio detectado: ' + sinPrecio.join(', '));
+  console.log('\nEscrito: menu-rosanta.json');
+}
+
+async function modoProbe() {
+  console.log('Probando el contrato real de la API con registros desechables.\n');
+
+  console.log('1. Listando menús existentes...');
+  const menus = await llamar('GET', API.menus);
+  console.log('   HTTP ' + menus.status + ' · ' + menus.texto.slice(0, 400) + '\n');
+  if (!menus.ok) {
+    console.log('Si esto da 403, falta el permiso "Manage Restaurants" en la API key.');
+    console.log('Si da 404, falta instalar la app Wix Restaurants Menus.');
+    return;
+  }
+
+  console.log('2. Creando UNA sección de prueba (bulk)...');
+  const s = await llamar('POST', API.secBulk, {
+    sections: [{ name: 'ZZZ PRUEBA BORRAR', visible: false }], returnEntity: true
+  });
+  console.log('   HTTP ' + s.status + ' · ' + s.texto.slice(0, 600) + '\n');
+
+  console.log('3. Creando UN plato de prueba (bulk)...');
+  const i = await llamar('POST', API.itemBulk, {
+    items: [{ name: 'ZZZ PRUEBA BORRAR', description: 'Prueba de contrato.',
+              priceInfo: precioDe(1), visible: false }], returnEntity: true
+  });
+  console.log('   HTTP ' + i.status + ' · ' + i.texto.slice(0, 600) + '\n');
+
+  console.log('Revisa arriba el nombre real del campo raíz y de los IDs devueltos.');
+  console.log('Los dos registros quedaron ocultos y se llaman "ZZZ PRUEBA BORRAR". Bórralos.');
+}
+
+/**
+ * Las variantes de precio ("Copa", "Botella", "Normal"...) son entidades
+ * propias en Wix: se crean en el API de Item Variants y los items las
+ * referencian por variantId. Contrato verificado con `probe` el 15-ago-2026.
+ * Reusa las que ya existan con el mismo nombre y crea las que falten.
+ */
+async function resolverVariantes(secciones, registro) {
+  const nombres = new Set();
+  for (const sec of secciones)
+    for (const it of sec.items)
+      for (const v of ((it.priceVariants && it.priceVariants.variants) || []))
+        nombres.add(v.name);
+  if (!nombres.size) return;
+
+  const lista = await llamar('GET', API.variante);
+  if (!lista.ok) throw new Error('No se pudieron listar las variantes: HTTP ' + lista.status);
+  const mapa = {};
+  for (const v of ((lista.json && lista.json.variants) || [])) mapa[v.name] = v.id;
+
+  for (const n of nombres) {
+    if (mapa[n]) continue;
+    const r = await llamar('POST', API.variante, { variant: { name: n } });
+    if (!r.ok) throw new Error('No se pudo crear la variante "' + n + '": HTTP ' + r.status + ' ' + r.texto.slice(0, 200));
+    mapa[n] = r.json.variant.id;
+    registro.variantes.push({ id: mapa[n], nombre: n });
+    console.log('· variante nueva: ' + n + '  ->  ' + mapa[n]);
+  }
+
+  for (const sec of secciones)
+    for (const it of sec.items)
+      for (const v of ((it.priceVariants && it.priceVariants.variants) || [])) {
+        v.variantId = mapa[v.name];
+        delete v.name;
+      }
+}
+
+async function modoLoad() {
+  const MENU = extraerMENU(await traerFuente());
+  const secciones = normalizar(MENU, 'es');
+  const registro = { fecha: new Date().toISOString(), secciones: [], items: [], variantes: [] };
+
+  await resolverVariantes(secciones, registro);
+
+  console.log('Cargando ' + secciones.length + ' secciones...\n');
+
+  for (const sec of secciones) {
+    const r = await llamar('POST', API.secBulk, {
+      sections: [{ name: sec.nombre, description: sec.intro, visible: true }],
+      returnEntity: true
+    });
+    if (!r.ok) { console.log('FALLÓ la sección "' + sec.nombre + '": HTTP ' + r.status + ' ' + r.texto.slice(0, 300)); break; }
+
+    const secId = buscarId(r.json);
+    registro.secciones.push({ id: secId, nombre: sec.nombre });
+    console.log('· ' + sec.nombre + '  ->  ' + secId);
+
+    const limpios = sec.items.map(({ _grupo, _sinPrecio, ...x }) => x);
+    for (let k = 0; k < limpios.length; k += 20) {
+      const lote = limpios.slice(k, k + 20);
+      const ri = await llamar('POST', API.itemBulk, { items: lote, returnEntity: true });
+      if (!ri.ok) { console.log('  FALLÓ un lote: HTTP ' + ri.status + ' ' + ri.texto.slice(0, 300)); break; }
+      for (const res of ((ri.json && ri.json.results) || [])) {
+        const id = res.itemMetadata && res.itemMetadata.id;
+        if (id) registro.items.push({ id, seccion: sec.nombre });
+      }
+      console.log('  + ' + lote.length + ' items');
+    }
+  }
+
+  const arch = 'carga-' + Date.now() + '.json';
+  fs.writeFileSync(arch, JSON.stringify(registro, null, 2), 'utf8');
+  console.log('\nRegistro para deshacer: ' + arch);
+  console.log('Las secciones quedaron creadas pero los items NO están asignados a ellas todavía.');
+  console.log('Eso se termina en el dashboard, arrastrando, o con Update Section.');
+}
+
+function buscarId(json) {
+  if (!json) return null;
+  const j = JSON.stringify(json);
+  const m = j.match(/"id"\s*:\s*"([0-9a-f-]{36})"/);
+  return m ? m[1] : null;
+}
+
+/**
+ * Asigna los items a sus secciones vía Section.itemIds (máx 300 por sección).
+ * Contrato verificado el 15-ago-2026: PATCH /sections/{id} con
+ * {section:{id, revision, itemIds}}. La revision se lee en vivo, así que
+ * este modo es re-ejecutable sin conflicto.
+ */
+async function modoAsignar(archivo) {
+  if (!archivo || !fs.existsSync(archivo)) throw new Error('Pasa el archivo de registro que generó `load`.');
+  const reg = JSON.parse(fs.readFileSync(archivo, 'utf8'));
+
+  const lista = await llamar('GET', API.seccion + '?paging.limit=100');
+  if (!lista.ok) throw new Error('No se pudieron listar las secciones: HTTP ' + lista.status);
+  const revs = {};
+  for (const s of ((lista.json && lista.json.sections) || [])) revs[s.id] = s.revision;
+
+  for (const sec of reg.secciones) {
+    const ids = reg.items.filter(i => i.seccion === sec.nombre).map(i => i.id);
+    if (!revs[sec.id]) { console.log('OJO: la sección "' + sec.nombre + '" ya no existe en Wix, la salto.'); continue; }
+    const r = await llamar('PATCH', API.seccion + '/' + sec.id, {
+      section: { id: sec.id, revision: revs[sec.id], itemIds: ids }
+    });
+    console.log((r.ok ? '· ' : 'FALLÓ HTTP ' + r.status + '  ') + sec.nombre + '  ->  ' + ids.length + ' items');
+    if (!r.ok) console.log('  ' + r.texto.slice(0, 300));
+  }
+
+  const check = await llamar('GET', API.seccion + '?paging.limit=100');
+  let total = 0;
+  for (const sec of reg.secciones) {
+    const s = ((check.json && check.json.sections) || []).find(x => x.id === sec.id);
+    const n = s ? (s.itemIds || []).length : 0;
+    total += n;
+    console.log('verificado  ' + sec.nombre + ': ' + n);
+  }
+  console.log('Total asignado: ' + total);
+}
+
+async function modoRollback(archivo) {
+  if (!archivo || !fs.existsSync(archivo)) throw new Error('Pasa el archivo de registro que generó `load`.');
+  const reg = JSON.parse(fs.readFileSync(archivo, 'utf8'));
+  for (const it of (reg.items || [])) {
+    if (!it.id) continue;
+    const r = await llamar('DELETE', API.item + '/' + it.id);
+    console.log((r.ok ? 'borrado item  ' : 'FALLÓ ' + r.status + '  item ') + it.id + '  (' + (it.seccion || '') + ')');
+  }
+  for (const s of (reg.secciones || [])) {
+    if (!s.id) continue;
+    const r = await llamar('DELETE', API.seccion + '/' + s.id);
+    console.log((r.ok ? 'borrada seccion  ' : 'FALLÓ ' + r.status + '  seccion ') + s.nombre);
+  }
+  for (const v of (reg.variantes || [])) {
+    if (!v.id) continue;
+    const r = await llamar('DELETE', API.variante + '/' + v.id);
+    console.log((r.ok ? 'borrada variante  ' : 'FALLÓ ' + r.status + '  variante ') + v.nombre);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+
+(async () => {
+  const modo = process.argv[2] || 'extract';
+  try {
+    if (modo === 'extract')       await modoExtract();
+    else if (modo === 'probe')    await modoProbe();
+    else if (modo === 'load')     await modoLoad();
+    else if (modo === 'asignar')  await modoAsignar(process.argv[3]);
+    else if (modo === 'rollback') await modoRollback(process.argv[3]);
+    else console.log('Modos: extract | probe | load | asignar <archivo> | rollback <archivo>');
+  } catch (e) {
+    console.error('\nError: ' + e.message);
+    process.exit(1);
+  }
+})();

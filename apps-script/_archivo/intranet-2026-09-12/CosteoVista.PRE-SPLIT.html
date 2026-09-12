@@ -1,0 +1,1999 @@
+<!-- CosteoVista.html — Recetario + Proveedores para la intranet.
+     Revision 21 ago 2026:
+       · meta de CMV por area (antes toda la barra se medía contra 30%)
+       · filtro Cocina / Barra
+       · salto directo del ingrediente a la ficha de su sub-receta
+       · historial de precios visible en el panel del producto
+       · pestaña de higiene del recetario
+     Servida desde Code.gs con HtmlService.createTemplateFromFile('CosteoVista').
+     Depende de: ConfigCosteo.gs, CosteoDatos.gs, Proveedores.gs -->
+<!-- Google sirve toda web app dentro de un iframe suyo. Sin esto, el boton
+     "Panel principal" navega DENTRO de ese iframe en vez de en la ventana: en
+     /exec queda un marco anidado y en /dev Google directamente se niega a
+     servirse enmarcado y contesta "You need access". Todas las demas vistas de
+     la intranet ya lo traian; esta era la unica que no. -->
+<base target="_top">
+<title>Recetario 14·91</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap">
+<?!= include('Logo') ?>
+<style>
+:root{
+  /* Crema + Verde Bosque + Lila, la combinacion de marca. El --bg era #FBFAF7,
+     un blanco roto que no esta en la paleta. */
+  --bg:#F2EEEB; --surface:#FFFFFF; --panel:#EAE5DE; --panel-2:#E0DAD1;
+  --nav-txt:#DCE7DF;   /* texto de las pestanas sobre el header verde */
+  --ink:#14180F; --ink-2:#3E4438; --muted:#6E7268; --line:#E3DED6; --line-2:#D3CCC1;
+  --bosque:#4E6D5A; --verde:#57A77F; --lila:#AEAAE2;
+  --alto:#B4532F; --meta:#3F7F5E; --bajo:#40708F; --vacia:#9A968D; --pre:#7C7A93;
+  --shadow:0 1px 2px rgba(20,24,15,.05), 0 8px 24px -12px rgba(20,24,15,.18);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+    --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+    --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+    --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --nav-txt:#A8C7B2;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+  --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+  --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+  --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  --nav-txt:#A8C7B2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Lato","Avenir Next",Avenir,system-ui,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif; font-weight:700; text-wrap:balance; margin:0}
+button{font:inherit; color:inherit; cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+header.top{border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:40}
+/* Volver al panel. Mismo boton que en marketing —forma, flecha y texto— pero con
+   los tokens de esta vista: el header de aca es claro, no Verde Bosque. */
+/* Dos columnas para "Esta semana". Colapsa a una sola en pantallas angostas:
+   la pantalla tiene que caber en una pantalla, tambien en un telefono. */
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px}
+.volver{
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:var(--panel); color:var(--ink-2);
+  border:1px solid var(--line-2); border-radius:999px;
+  padding:.35rem .85rem; font-size:.82rem; text-decoration:none; white-space:nowrap;
+}
+.volver:hover{ background:var(--panel-2); color:var(--ink); }
+.volver:focus-visible{ outline:2px solid var(--verde); outline-offset:2px; }
+.topbar{display:flex; align-items:center; gap:18px; padding:14px 0; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:10px; margin-right:auto}
+.brand .mark{width:11px;height:11px;border-radius:50%;background:var(--bosque);display:inline-block;transform:translateY(-1px)}
+.brand h1{font-size:20px; letter-spacing:.01em}
+.coord{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.search{position:relative; flex:1 1 260px; max-width:380px}
+.search input{
+  width:100%; padding:9px 12px 9px 34px; border-radius:var(--r);
+  border:1px solid var(--line-2); background:var(--bg); color:var(--ink); font:inherit;
+}
+.search input:focus{outline:2px solid var(--verde); outline-offset:1px; border-color:transparent}
+.search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5}
+.nav{display:flex; gap:2px; padding:0 0 12px; flex-wrap:wrap}
+.nav button{border:none; background:none; padding:7px 14px; border-radius:99px; font-size:13px; letter-spacing:.02em; color:var(--muted)}
+.nav button[aria-selected="true"]{background:var(--bosque); color:var(--surface)}
+.nav button:hover:not([aria-selected="true"]){background:var(--panel); color:var(--ink)}
+.areas{display:flex; gap:2px; margin-left:auto; background:var(--panel); border-radius:99px; padding:3px}
+.areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:var(--muted)}
+.areas button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+
+.simbar{display:none; align-items:center; gap:14px; flex-wrap:wrap; background:var(--lila); color:#14180F; padding:9px 20px; font-size:13px}
+.simbar.on{display:flex}
+.simbar strong{font-weight:900}
+.simbar .sp{margin-left:auto; display:flex; gap:8px}
+.simbar button{border:1px solid rgba(20,24,15,.35); background:rgba(255,255,255,.4); color:#14180F; border-radius:99px; padding:4px 12px; font-size:12px}
+
+main{padding:24px 0 80px}
+.toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px}
+.chip{border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); border-radius:99px; padding:5px 13px; font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--bosque); border-color:var(--bosque); color:var(--surface)}
+.count{color:var(--muted); font-size:13px; margin-left:auto}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:14px}
+
+.card{
+  position:relative; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:15px 16px 14px 19px; text-align:left; width:100%;
+  display:flex; flex-direction:column; gap:9px; box-shadow:var(--shadow); overflow:hidden;
+}
+.card:hover{border-color:var(--line-2); transform:translateY(-1px)}
+.card:focus-visible{outline:2px solid var(--verde); outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){ .card{transition:transform .12s ease, border-color .12s ease} }
+.card .stripe{position:absolute; left:0; top:0; bottom:0; width:4px}
+.card .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+/* El NOMBRE de una cosa dentro de una tarjeta va en Lato, no en Playfair.
+   Pedido de Juanma el 30-ago-2026 viendo los cocteles de barra en produccion.
+   La familia va EXPLICITA porque estos h3 heredan la serif de la regla global
+   h1,h2,h3 de mas arriba, que NO se toca: los titulos de seccion siguen en
+   Playfair, y tambien el numero grande de CMV (.fig .val.big), los KPI y el
+   conteo de higiene, que son numeros de exhibicion y no nombres. */
+.card h3{font-size:17.5px; line-height:1.25; font-family:Lato,"Avenir Next",system-ui,sans-serif; font-weight:700}
+.card .figs{display:flex; gap:16px; align-items:flex-end; margin-top:auto; padding-top:6px}
+.fig{display:flex; flex-direction:column; gap:1px}
+.fig .lbl{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.fig .val{font-size:16px; font-weight:700}
+.fig .val.big{font-size:21px; font-family:"Playfair Display",Georgia,serif}
+.delta{font-size:12px; font-weight:700; padding-left:5px}
+.badge{align-self:flex-start; display:inline-flex; align-items:center; gap:5px; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid currentColor}
+.s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
+.s-vacia{color:var(--vacia)} .s-sin_precio{color:var(--vacia)} .s-pre{color:var(--pre)}
+.b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
+.b-vacia{background:var(--vacia)} .b-sin_precio{background:var(--vacia)} .b-pre{background:var(--pre)}
+.tagarea{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:1px 7px}
+
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+th{text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel)}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel)}
+td.r,th.r{text-align:right}
+.rowbtn{background:none;border:none;padding:0;font:inherit;color:var(--bosque);text-align:left;font-weight:700}
+.rowbtn:hover{text-decoration:underline}
+.subbtn{background:none;border:none;padding:0 0 0 6px;font:inherit;color:var(--lila);font-size:12px;font-weight:700}
+.subbtn:hover{text-decoration:underline}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lila);margin-right:6px;vertical-align:middle}
+
+.scrim{position:fixed; inset:0; background:rgba(20,24,15,.45); z-index:50; opacity:0; pointer-events:none; transition:opacity .18s}
+.scrim.on{opacity:1; pointer-events:auto}
+.drawer{position:fixed; top:0; right:0; bottom:0; width:min(560px,100%); background:var(--bg);
+  z-index:51; transform:translateX(102%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto; border-left:1px solid var(--line)}
+.drawer.on{transform:none}
+@media (prefers-reduced-motion:reduce){ .drawer,.scrim{transition:none} }
+.drawer .dhead{padding:22px 24px 16px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2}
+.drawer .dbody{padding:20px 24px 60px; display:flex; flex-direction:column; gap:22px}
+.close{position:absolute; top:16px; right:18px; border:1px solid var(--line-2); background:var(--bg); border-radius:99px; width:30px; height:30px; line-height:1; font-size:17px}
+.kv{display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0; text-align:right; font-weight:700}
+.kv .rule{grid-column:1/-1; border-top:1px solid var(--line); margin:4px 0}
+.note{border-left:3px solid var(--lila); padding:9px 0 9px 13px; font-size:13.5px; color:var(--ink-2); font-style:italic}
+.sec-t{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:9px}
+/* edicion en linea de la cantidad. Solo aparece si el servidor dijo que la persona puede. */
+.card.nueva{display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; min-height:150px; border:1.5px dashed var(--line-2); background:transparent;
+  color:var(--muted); cursor:pointer; text-align:center}
+.card.nueva:hover{border-color:var(--bosque); color:var(--bosque); background:var(--panel)}
+.card.nueva .mas{font-size:30px; line-height:1; font-weight:300}
+.card.nueva .nt{font-size:15px; color:var(--ink-2)}
+.card.nueva .ns{font-size:12px}
+.addrow{margin-top:16px}
+.qdel{border:1px solid var(--line-2); background:var(--surface); color:var(--alto);
+      border-radius:7px; padding:3px 8px; font-size:12px; line-height:1.2; cursor:pointer}
+.qdel[disabled]{opacity:.5; cursor:default}
+.buscando{font-size:12.5px; color:var(--muted); margin:0 0 12px; padding:8px 12px;
+          background:var(--panel); border-radius:8px}
+.qedit{display:inline-flex; gap:4px; align-items:center; vertical-align:middle}
+.qin{width:74px; padding:4px 7px; text-align:right; border-radius:7px; border:1px solid var(--line-2);
+     background:var(--surface); color:var(--ink); font:inherit; font-size:13px}
+.qin:focus{outline:2px solid var(--verde); outline-offset:1px}
+.qsave{border:1px solid var(--bosque); background:var(--bosque); color:var(--surface);
+       border-radius:7px; padding:4px 9px; font-size:12.5px; line-height:1.2; cursor:pointer}
+.qsave[disabled]{opacity:.55; cursor:default}
+.simrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel); border-radius:var(--r); padding:13px 15px}
+.simrow input{width:110px; padding:7px 10px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit}
+.simrow input:focus{outline:2px solid var(--verde); outline-offset:1px}
+.linkline{background:none;border:none;padding:2px 0;font:inherit;color:var(--bosque);text-align:left;display:block;font-size:13.5px}
+.linkline:hover{text-decoration:underline}
+.empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:14px}
+.lead{color:var(--ink-2); font-size:14.5px; max-width:62ch}
+.provgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px}
+.provcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 15px; text-align:left; display:flex; flex-direction:column; gap:3px}
+.provcard:hover{border-color:var(--verde)}
+.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif; font-size:17px; font-weight:700}
+.provcard .m{font-size:12.5px; color:var(--muted)}
+.hig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.hig h3{font-size:16px;margin-bottom:4px}
+.hig .n{font-size:26px;font-family:"Playfair Display",Georgia,serif}
+.hig ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);max-height:230px;overflow:auto}
+.guia{max-width:70ch}
+.guia h2{font-size:22px;margin:30px 0 6px}
+.guia h2:first-child{margin-top:0}
+.guia p{color:var(--ink-2);margin:0 0 12px}
+.guia ol,.guia ul{color:var(--ink-2);padding-left:20px;margin:0 0 14px}
+.guia li{margin-bottom:6px}
+.guia .caja{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin:0 0 14px}
+.guia .caja h3{font-size:15px;font-family:"Lato",sans-serif;font-weight:900;letter-spacing:.02em;margin-bottom:4px}
+.guia .llave{border-left:3px solid var(--lila);padding:10px 0 10px 14px;margin:0 0 14px;font-size:14px;color:var(--ink-2)}
+.leyenda{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.leyenda span{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}
+.leyenda i{width:11px;height:11px;border-radius:3px;display:inline-block}
+footer{border-top:1px solid var(--line); padding:22px 0 40px; color:var(--muted); font-size:12.5px}
+/* ===== EL HEADER. Verde Bosque como el resto de la intranet, con el wordmark
+   real —la O solida es el icono de la marca— y la coordenada 14.91. Antes era
+   un header claro con un punto verde dibujado a mano: el modulo se veia como
+   otro producto.
+
+   OJO CON EL MODO OSCURO: esta vista NO tiene interruptor de tema, nadie escribe
+   nunca data-theme. La unica rama oscura que corre es la del media query, asi que
+   cada regla de [data-theme="dark"] va DUPLICADA ahi. Si se escribe una sola, en
+   oscuro el header queda verde palido (--bosque se aclara) con texto blanco encima
+   y no se lee nada. ===== */
+header.top{background:var(--bosque);color:#fff;position:sticky;top:0;z-index:40;
+  box-shadow:0 1px 0 rgba(0,0,0,.12)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) header.top{background:#16201B} }
+:root[data-theme="dark"] header.top{background:#16201B}
+.topbar{display:flex;align-items:center;gap:18px;padding:14px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+/* El fondo del wordmark lo pone Logo.html, incluido arriba: el data URL vive en un
+   solo archivo para toda la intranet. Aca solo el tamano, que no es el mismo que el
+   del header del panel principal. */
+.brand .logo{display:block;height:26px;aspect-ratio:1058/148}
+/* El <h1> se queda por accesibilidad y por el buscador; el texto va oculto. */
+.oculto{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.brand .sec{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#fff;opacity:.72;white-space:nowrap}
+.search{position:relative;flex:1 1 240px;max-width:360px}
+.search input{width:100%;padding:9px 12px 9px 34px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font:inherit}
+.search input::placeholder{color:rgba(255,255,255,.7)}
+.search input:focus{outline:2px solid var(--verde);outline-offset:1px;border-color:transparent}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.8}
+.volver{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.14);
+  color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:.35rem .85rem;
+  font-size:.82rem;text-decoration:none;white-space:nowrap}
+.volver:hover{background:rgba(255,255,255,.24);color:#fff}
+/* background:none NO es de adorno: la regla vieja de mas arriba pinta la pestana
+   activa con una pildora var(--bosque) y la del hover con una var(--panel). Sobre
+   el header verde eso deja una pildora verde-sobre-verde y, en oscuro, una crema. */
+.nav{display:flex;gap:2px;padding:0;flex-wrap:wrap;align-items:stretch}
+.nav button{border:none;background:none;padding:11px 13px;font-size:13px;letter-spacing:.02em;
+  color:var(--nav-txt);border-radius:0;border-bottom:2px solid transparent}
+.nav button[aria-selected="true"]{background:none;color:#fff;font-weight:700;border-bottom-color:var(--verde)}
+.nav button:hover:not([aria-selected="true"]){background:none;color:#fff}
+.areas{display:flex;gap:2px;margin-left:auto;background:rgba(255,255,255,.12);border-radius:99px;padding:3px;align-self:center}
+.areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:rgba(255,255,255,.78)}
+.areas button[aria-pressed="true"]{background:#fff;color:var(--bosque);font-weight:700;box-shadow:none}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F} }
+:root[data-theme="dark"] .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F}
+main{padding:24px 0 40px}
+.lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch}
+.sec-t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+
+/* ===== LA BARRA DE AGREGAR VA ARRIBA. Al pie de 61 proveedores o de 400
+   productos, nadie la encuentra: hay que scrollear una pantalla y media para
+   crear algo. Arriba se ve, y de paso encabeza la lista que va a modificar. ===== */
+.addrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;margin:0 0 20px;box-shadow:var(--shadow)}
+.simrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+/* Adentro de la tarjeta blanca, el fondo de panel del .simrow deja una caja
+   dentro de otra caja. Solo ahi se apaga: suelto —el simulador, el cajon— el
+   panel es lo que lo hace visible. */
+.addrow .simrow{background:none;padding:0}
+.simrow input{width:110px;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);
+  background:var(--bg);color:var(--ink);font:inherit}
+.simrow input:focus{outline:2px solid var(--verde);outline-offset:1px}
+.btn-crear{border:1px solid var(--bosque);background:var(--bosque);color:#fff;
+  border-radius:999px;padding:6px 16px;font-size:13px}
+.btn-crear:hover{filter:brightness(1.08)}
+.nota{font-size:12.5px;color:var(--muted);margin:9px 0 0;line-height:1.5;max-width:78ch}
+.chip{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
+  border-radius:99px;padding:5px 13px;font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.count{color:var(--muted);font-size:13px;margin-left:auto}
+
+/* ===== PROVEEDORES. Antes: 61 cajas del mismo tamano, cada una con una pantalla
+   de aire adentro, "Produccion Rosanta" con 72 productos igual de grande que
+   "LOS 3 TIEMPOS" con 1. Ahora la altura la da el contenido y el peso lo da una
+   barra: se ve de un vistazo de quien depende la cocina. ===== */
+.provgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.provcard{position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px 14px 11px;text-align:left;width:100%;
+  display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow);overflow:hidden}
+.provcard:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif;font-size:15.5px;line-height:1.2;font-weight:700}
+.provcard .m{font-size:12px;color:var(--muted)}
+.provcard .peso{height:3px;border-radius:99px;background:var(--panel);overflow:hidden;margin-top:2px}
+.provcard .peso i{display:block;height:100%;background:var(--verde);border-radius:99px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:15px 16px 14px 19px;text-align:left;width:100%;display:flex;flex-direction:column;gap:9px;
+  box-shadow:var(--shadow);overflow:hidden}
+.card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.card h3{font-size:17.5px;line-height:1.25;font-family:Lato,"Avenir Next",system-ui,sans-serif;font-weight:700}
+.card .figs{display:flex;gap:16px;align-items:flex-end;margin-top:auto;padding-top:6px}
+.fig{display:flex;flex-direction:column;gap:1px}
+.fig .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fig .val{font-size:16px;font-weight:700}
+.fig .val.big{font-size:21px;font-family:"Playfair Display",Georgia,serif}
+.badge{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
+.b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+
+/* ===== EL PIE. La flor y la coordenada son elementos firma de la marca y no
+   estaban en ninguna pantalla del modulo. ===== */
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:16px 0 40px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-size:12.5px;color:var(--muted)}
+footer.pie .marca-pie{white-space:nowrap}
+footer.pie .flor{color:var(--lila)}
+
+/* ===== Ingenieria de menu ==========================================
+   Todo cuelga de #im y todas las clases llevan prefijo im-. Ninguna
+   regla de aca puede tocar el resto de la vista, y ninguna regla de la
+   vista puede entrar aca sin perder por especificidad.
+   Los tokens de abajo son alias de los que ya existen arriba: si algun
+   dia cambia la paleta de CosteoVista, esta pestana cambia con ella.
+   ------------------------------------------------------------------ */
+#im{
+  --im-medio:var(--verde);          /* estrella  */
+  --im-bosque:var(--bosque);        /* caballo   */
+  --im-lila:var(--lila);            /* rompecabezas y punto ciego */
+  --im-gris:var(--muted);           /* perro     */
+  --im-alerta:var(--alto);          /* fuera de meta */
+  --im-sup:var(--surface);
+  --im-tinta:var(--ink); --im-tinta-2:var(--ink-2); --im-tinta-3:var(--muted);
+  --im-linea:var(--line);
+  --im-linea-2:color-mix(in srgb, var(--line) 55%, var(--surface));
+  --im-wash:color-mix(in srgb, var(--verde) 8%, transparent);
+  --im-chip:var(--panel);
+}
+/* En oscuro, --bosque se aclara tanto que caballo y estrella quedan del mismo
+   verde y la matriz deja de leerse. Caballo baja de valor a proposito. */
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #im{ --im-bosque:#4E8A6A } }
+:root[data-theme="dark"] #im{ --im-bosque:#4E8A6A }
+
+/* La barra: dos segmentados y el sello del periodo empujado a la derecha.
+   El periodo tiene que estar arriba y visible: sin el, en tres meses nadie
+   sabe si esta viendo ocho meses o tres semanas. */
+#im .im-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
+#im .im-grp{display:flex;flex-direction:column;gap:6px}
+#im .im-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);font-weight:700}
+#im .im-seg{display:inline-flex;background:var(--im-chip);border:1px solid var(--im-linea);border-radius:99px;overflow:hidden;padding:0}
+#im .im-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;color:var(--im-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
+#im .im-seg button[aria-pressed="true"]{background:var(--bosque);color:var(--im-sup);font-weight:700}
+#im .im-seg button:not([aria-pressed="true"]):hover{color:var(--im-tinta)}
+#im .im-seg button:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
+#im .im-stamp{margin-left:auto;text-align:right;font-size:12px;color:var(--im-tinta-3);line-height:1.45}
+#im .im-stamp b{display:block;color:var(--im-tinta);font-size:14px;font-weight:700}
+@media(max-width:720px){#im .im-stamp{margin-left:0;text-align:left}}
+#im .im-lead{font-size:13.5px;color:var(--im-tinta-2);margin:0 0 18px}
+#im .im-lead strong{color:var(--im-tinta)}
+
+/* Los cinco contadores. Cada uno lleva su accion en una linea: el numero
+   solo no le dice a nadie que hacer el lunes. */
+#im .im-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+#im .im-k{background:var(--im-sup);border:1px solid var(--im-linea);border-top:3px solid var(--im-kc,var(--im-linea));border-radius:var(--r);padding:14px 15px 13px}
+#im .im-k b{display:block;font-size:30px;line-height:1;font-family:"Playfair Display",Georgia,serif;font-weight:500;color:var(--im-kc,var(--im-tinta))}
+#im .im-k span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--im-tinta-3);margin-top:8px;font-weight:700}
+#im .im-k em{display:block;font-style:normal;font-size:12px;color:var(--im-tinta-2);margin-top:5px;line-height:1.35}
+
+/* La matriz y las dos listas de accion, lado a lado. Colapsa a una columna en
+   angosto: la pantalla tiene que caber en una pantalla, tambien en un telefono. */
+#im .im-cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px;margin-bottom:14px;align-items:start}
+@media(max-width:980px){#im .im-cols{grid-template-columns:1fr}}
+#im .im-stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+#im .im-panel{background:var(--im-sup);border:1px solid var(--im-linea);border-radius:var(--r);padding:16px 18px 18px;box-shadow:var(--shadow)}
+#im .im-panel>h3{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);margin:0;font-weight:700;font-family:"Lato",sans-serif}
+#im .im-panel>p.im-h{font-size:12.5px;color:var(--im-tinta-2);margin:6px 0 14px;line-height:1.45}
+
+#im svg{width:100%;height:auto;display:block;overflow:visible}
+#im .im-axl{font-size:8.5px;fill:var(--im-tinta-3);letter-spacing:.06em}
+#im .im-axt{font-size:8px;fill:var(--im-tinta-3);letter-spacing:.11em;text-transform:uppercase}
+#im .im-cross{stroke:var(--im-linea);stroke-width:1;stroke-dasharray:3 3}
+/* El halo del color del panel: aunque una etiqueta quede rozando un punto,
+   el nombre se sigue leyendo. paint-order dibuja el contorno debajo del texto. */
+#im .im-lab{font-size:9px;fill:var(--im-tinta-2);paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+#im .im-qz{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.6;
+  paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+/* Mismo halo para los rotulos de los ejes: se dibujan al final, encima de los
+   circulos, y sin el contorno un punto pegado al borde los volveria ilegibles. */
+#im .im-axl,#im .im-axt{paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+
+/* Las dos listas de accion. Nombre + por que, y el numero a la derecha con
+   su unidad debajo: el numero es la razon para moverse. */
+#im .im-acc{list-style:none;margin:0;padding:0}
+#im .im-acc li{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--im-linea-2)}
+#im .im-acc li:last-child{border-bottom:0}
+#im .im-acc .im-nm{flex:1;font-size:13px;color:var(--im-tinta);line-height:1.3}
+#im .im-acc small{display:block;color:var(--im-tinta-3);font-size:11.5px;margin-top:2px;line-height:1.35}
+#im .im-acc .im-vv{font-size:13px;font-weight:700;white-space:nowrap;text-align:right}
+#im .im-acc .im-vv small{font-weight:400;color:var(--im-tinta-3)}
+
+/* El punto ciego, en columnas. Es una lista para leer de un vistazo, no una
+   tabla para auditar: la tabla completa ya esta en el Excel. */
+#im .im-ciego{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 26px;margin-top:6px}
+#im .im-cg{padding:7px 0;border-bottom:1px solid var(--im-linea-2)}
+#im .im-cr{display:flex;align-items:baseline;gap:12px}
+#im .im-cn{flex:1;font-size:13px;color:var(--im-tinta);line-height:1.25}
+#im .im-cm{display:block;font-size:11.5px;color:var(--im-tinta-3);margin-top:2px}
+#im .im-cv{font-size:12.5px;font-weight:700;color:var(--im-lila);white-space:nowrap}
+#im .im-cg.im-resto .im-cn{color:var(--im-tinta-3);font-style:italic}
+#im .im-vacio{color:var(--im-tinta-3);font-size:13px;margin:6px 0 0}
+
+/* ===== Dashboard Operativo de Profit OS ============================
+   Todo cuelga de #db y todas las clases llevan prefijo db-, misma regla
+   que #im. Los tokens son alias de los de arriba: si cambia la paleta,
+   esta pestana cambia con ella.
+   ------------------------------------------------------------------ */
+#db{--db-sup:var(--surface); --db-tinta:var(--ink); --db-tinta-2:var(--ink-2);
+    --db-tinta-3:var(--muted); --db-linea:var(--line); --db-chip:var(--panel)}
+#db .db-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
+#db .db-grp{display:flex;flex-direction:column;gap:6px}
+#db .db-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-seg{display:inline-flex;background:var(--db-chip);border:1px solid var(--db-linea);border-radius:99px;overflow:hidden}
+#db .db-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;
+  color:var(--db-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
+#db .db-seg button[aria-pressed="true"]{background:var(--bosque);color:var(--db-sup);font-weight:700}
+#db .db-seg button:not([aria-pressed="true"]):hover{color:var(--db-tinta)}
+#db .db-seg button:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
+#db .db-stamp{margin-left:auto;text-align:right;font-size:12px;color:var(--db-tinta-3);line-height:1.45}
+#db .db-stamp b{display:block;color:var(--db-tinta);font-size:14px;font-weight:700}
+@media(max-width:720px){#db .db-stamp{margin-left:0;text-align:left}}
+
+/* Seis tiles. La franja de color arriba es el veredicto: verde en meta,
+   naranja arriba de meta, gris el que todavia no existe. */
+#db .db-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
+#db .db-t{background:var(--db-sup);border:1px solid var(--db-linea);border-top:3px solid var(--db-c);
+  border-radius:var(--r);padding:16px 17px 15px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+#db .db-lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-n{font-family:"Playfair Display",Georgia,serif;font-weight:500;font-size:36px;line-height:1.05;
+  margin-top:9px;color:var(--db-c)}
+#db .db-n small{font-family:"Lato",sans-serif;font-size:14px;font-weight:400;color:var(--db-tinta-3)}
+#db .db-falta{font-size:26px;color:var(--db-tinta-3);font-style:italic}
+#db .db-sub{font-size:12.5px;color:var(--db-tinta-2);margin-top:5px}
+#db .db-pie{font-size:11.5px;color:var(--db-tinta-3);line-height:1.45;margin-top:auto;padding-top:12px}
+
+#db .db-filas{margin-top:12px;border-top:1px solid var(--db-linea);padding-top:8px}
+#db .db-f{display:flex;align-items:baseline;gap:9px;padding:4px 0}
+#db .db-f>span{flex:1;font-size:12.5px;color:var(--db-tinta-2)}
+#db .db-f>b{font-size:14px;font-weight:700}
+#db .db-f>small{font-size:11px;color:var(--db-tinta-3);white-space:nowrap}
+
+#db .db-l{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--db-linea)}
+#db .db-l li{display:flex;gap:10px;align-items:baseline;padding:4px 0}
+#db .db-l-n{flex:1;font-size:12.5px;color:var(--db-tinta);line-height:1.25}
+#db .db-l-n small{display:block;font-size:11px;color:var(--db-tinta-3);margin-top:1px}
+#db .db-l-v{font-size:12.5px;font-weight:700;color:var(--db-c);white-space:nowrap}
+
+/* La franja de avisos. NO son indicadores: son cosas que hay que atender esta
+   semana, y solo aparecen si hay algo. Un aviso que siempre esta se deja de mirar. */
+#db .db-avisos{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+#db .db-cargando{margin-top:22px;font-size:12.5px;color:var(--db-tinta-3)}
+#db .db-a{background:var(--db-sup);border:1px solid var(--db-linea);border-left:3px solid var(--db-tinta-3);
+  border-radius:var(--r);padding:12px 15px}
+#db .db-a-alerta{border-left-color:var(--alto)}
+#db .db-a-accion{border-left-color:var(--bosque)}
+#db .db-a-info{border-left-color:var(--lila)}
+#db .db-a-error{border-left-color:var(--alto)}
+#db .db-a-t{display:block;font-size:13.5px;color:var(--db-tinta)}
+#db .db-a-n{display:block;font-size:11.5px;color:var(--db-tinta-3);margin-top:3px;line-height:1.45}
+#db .db-a-d{margin:7px 0 0;padding-left:17px;font-size:11.5px;color:var(--db-tinta-3);line-height:1.55}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1 class="logo"><span class="oculto">Rosanta · Recetario</span></h1>
+        <span class="sec">Recetario · 14° N · 91° W</span>
+      </div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar plato, ingrediente o proveedor…" autocomplete="off" aria-label="Buscar">
+      </div>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
+    <nav class="nav" role="tablist" aria-label="Secciones">
+      <button role="tab" data-view="inicio" aria-selected="true">Inicio</button>
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
+      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
+      <span class="areas" role="group" aria-label="Área">
+        <button data-area="COCINA" aria-pressed="true">Cocina</button>
+        <button data-area="BARRA" aria-pressed="false">Barra</button>
+        <button data-area="" aria-pressed="false">Todo</button>
+      </span>
+    </nav>
+  </div>
+  <div class="simbar" id="simbar" role="status">
+    <span id="simtext"></span>
+    <span class="sp"><button id="simreset">Volver a los precios reales</button></span>
+  </div>
+</header>
+
+<div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
+  <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+  <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
+</div>
+<main class="wrap">
+  <section id="v-inicio"></section>
+  <section id="v-menu" hidden></section>
+  <section id="v-recetas" hidden></section>
+  <section id="v-insumos" hidden></section>
+  <section id="v-proveedores" hidden></section>
+  <section id="v-higiene" hidden></section>
+  <section id="v-guia" hidden></section>
+</main>
+
+<footer class="wrap pie">
+  <span id="foot"></span>
+  <span class="marca-pie">Rosanta · Cocina con Carisma &nbsp;<span class="flor">❀</span>&nbsp; 14° N · 91° W</span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" tabindex="-1"></aside>
+
+<script>
+/* EL TOKEN DEL ENLACE PERSONAL (10-sep-2026)
+   Toda llamada a google.script.run tiene que mandarlo como primer argumento. La
+   pagina se abre porque doGet ya resolvio la identidad, pero cada llamada al
+   servidor es una peticion nueva y llega sin nada: sin el token cae en la sesion
+   de dominio y a quien entra con Gmail personal le contesta "Sin acceso al
+   recetario". Asi le paso a Jeffry, que fue el primero en entrar de verdad al
+   modulo. Si agregas una llamada nueva, pasale AUTH. */
+var AUTH = '<?= authToken ?>';
+
+function iniciarApp(){
+const D = window.__DATA__;
+const R = D.recetas, I = D.insumos, P = D.proveedores;
+const sim = new Map();
+/* El modulo abre en el tablero: contesta "como vamos". La ingenieria de menu, que
+   contesta "que hago esta semana", queda segunda. Las otras son de consulta. */
+let view = 'inicio', q = '', area = 'COCINA', filt = {rec:'carta', ins:'todos', prov:null};
+let imArea = 'COCINA', imSemanas = 13;   // el trimestre: ver IM_VENTANAS
+let dbSemanas = 13;                      // el tablero abre en la misma ventana
+
+/* EL AREA. Los permisos dicen QUE puede hacer cada uno; esto dice DONDE.
+   Jeffry es cocina y Jose es barra: sin este filtro la pantalla le ofrece a Jose
+   los botones de las fichas de cocina, el servidor se los rechaza uno por uno, y
+   el se queda mirando errores sin entender por que. Ofrecer algo que se va a negar
+   no es seguridad, es una trampa.
+
+   El candado DE VERDAD esta en exigirArea_(), del lado del servidor. Esto es
+   maquillaje: esconder un boton no protege nada.
+
+   Con el filtro en "Todo" el area viene vacia y se deja pasar: el servidor elige
+   la del rol. Y si window.PUEDE.areas no llego, no se ofrece nada. */
+const AREA_EDITABLE = a => {
+  const mias = (window.PUEDE && window.PUEDE.areas) || [];
+  if(!mias.length) return false;
+  const t = String(a || '').trim().toUpperCase();
+  return t ? mias.indexOf(t) !== -1 : true;
+};
+
+/* Cuando el area que se esta mirando no es la suya, decirlo. Sin esto la pantalla
+   se ve igual pero sin botones, y eso se lee como "esta roto" y no como "esto no
+   es tuyo". */
+const avisoArea = a => {
+  const mias = (window.PUEDE && window.PUEDE.areas) || [];
+  const t = String(a || '').trim().toUpperCase();
+  if(!t || !mias.length || mias.indexOf(t) !== -1) return '';
+  return `<p class="nota" style="border-left:3px solid var(--lila);padding-left:13px">
+    Estás viendo <strong>${t === 'BARRA' ? 'Barra' : 'Cocina'}</strong>, que no es tu área:
+    podés mirar todo, pero no editar. Lo tuyo es
+    <strong>${mias.map(x => x === 'BARRA' ? 'Barra' : 'Cocina').join(' y ')}</strong>.</p>`;
+};
+
+const Q  = n => 'Q' + (n==null ? '—' : n.toLocaleString('es-GT',{minimumFractionDigits:2,maximumFractionDigits:2}));
+const Q0 = n => n==null ? '—' : 'Q' + Math.round(n);
+const QU = n => n==null ? '—' : 'Q' + n.toLocaleString('es-GT',{minimumFractionDigits:n<1?4:2, maximumFractionDigits:n<1?5:2});
+const nrm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const MIN = new Set(['de','del','la','el','y','en','con','a','al','los','las','por','the']);
+/* Los nombres vienen del nombre de la pestana y estan en MAYUSCULAS. Se presentan en capital. */
+const Tt = s => { s = String(s||'').trim(); if(!s) return '';
+  if(s !== s.toUpperCase()) return s;
+  return s.toLowerCase().split(/\s+/).map((w,i)=> (i>0 && MIN.has(w)) ? w : w.charAt(0).toUpperCase()+w.slice(1)).join(' '); };
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- motor de costos ---------- */
+const memo = new Map();
+function precioEf(id, guard){
+  const ins = I[id]; if(!ins) return null;
+  if(sim.has(id)) return sim.get(id);
+  if(ins.sub != null && ins.pr){
+    const g = guard || new Set();
+    if(g.has('r'+ins.sub)) return ins.pr;
+    const r = R[ins.sub];
+    if(r && r.base > 0) return ins.pr * (batch(ins.sub, g) / r.base);
+  }
+  return ins.pr;
+}
+function batch(rid, guard){
+  const g = guard ? new Set(guard) : new Set();
+  if(g.has('r'+rid)) return R[rid].base;
+  g.add('r'+rid);
+  const key = rid + '|' + [...sim.entries()].sort().join(';');
+  if(memo.has(key)) return memo.get(key);
+  let s = 0;
+  for(const ln of R[rid].ing){
+    if(ln.i == null){ s += ln.t || 0; continue; }
+    const base = I[ln.i].pr, ef = precioEf(ln.i, g);
+    if(base && ln.t != null) s += ln.t * (ef / base);
+    else s += (ln.q || 0) * (ef || 0);
+  }
+  memo.set(key, s);
+  return s;
+}
+function costoAhora(r){
+  if(!r.ing.length) return null;
+  const b = batch(r.id);
+  if(r.t === 'plato') return b * (1 + (r.merma || 0)/100);
+  if(r.costoUnit != null && r.base > 0) return r.costoUnit * (b / r.base);
+  return r.rinde ? b / r.rinde : b;
+}
+function cmvAhora(r){
+  const c = costoAhora(r);
+  return (c != null && r.precio) ? c / r.precio * 100 : null;
+}
+/* La meta sale de la receta: 30% en cocina, 20% en barra. */
+function estadoDe(cmv, r){
+  if(!r.ing.length) return 'vacia';
+  if(r.t !== 'plato') return 'pre';
+  if(!r.precio) return 'sin_precio';
+  if(cmv == null) return 'vacia';
+  if(cmv > r.obj + 5) return 'alto';
+  if(cmv < r.obj * 0.6) return 'bajo';
+  return 'ok';
+}
+const ETIQ = {ok:'En meta', alto:'Sobre meta', bajo:'Muy bajo', vacia:'Ficha vacía', sin_precio:'Sin precio', pre:'Pre-elaborado'};
+
+/* ---------- filtros ---------- */
+const enArea = x => !area || x.area === area;
+function recetasVis(){
+  // BUSCAR PASA POR ENCIMA DE TODO. Si hay texto en el buscador se ignoran los
+  // filtros de tipo y de area, y se busca en el recetario entero.
+  //
+  // Antes no era asi y era un defecto real: la pestaña abre con el filtro "De carta"
+  // puesto, que muestra solo platos. Buscar un pre-elaborado no daba NINGUN resultado,
+  // aunque existiera. Y quien busca no tiene por que saber de antemano si lo que busca
+  // es un plato, un pre-elaborado, o si es de cocina o de barra. Justamente busca
+  // porque no lo sabe.
+  if(q){
+    const k = nrm(q);
+    return R.filter(r => nrm(r.n).includes(k) || nrm(r.cat).includes(k)
+      || r.ing.some(l => nrm(l.n).includes(k) || (l.i!=null && nrm(I[l.i].prov).includes(k))));
+  }
+  let list = R.filter(enArea);
+  if(filt.rec === 'carta') list = list.filter(r => r.t === 'plato');
+  else if(filt.rec === 'pre') list = list.filter(r => r.t === 'preelaborado');
+  else if(filt.rec === 'alerta') list = list.filter(r => ['alto','vacia'].includes(estadoDe(cmvAhora(r), r)));
+  else if(filt.rec === 'tocadas') list = list.filter(tocada);
+  return list;
+}
+function tocada(r){
+  if(!sim.size) return false;
+  const c1 = costoAhora(r);
+  return c1 != null && r.costo != null && Math.abs(c1 - r.costo) > 0.005;
+}
+function insumosVis(){
+  // Mismo criterio que en recetas: buscar ignora los filtros y el area.
+  if(q){
+    const k = nrm(q);
+    return I.filter(i => nrm(i.p).includes(k) || nrm(i.prov).includes(k) || nrm(i.c).includes(k));
+  }
+  let list = I.filter(enArea);
+  if(filt.prov) list = list.filter(i => i.prov === filt.prov);
+  if(filt.ins === 'usados') list = list.filter(i => i.usos.length);
+  else if(filt.ins === 'sinuso') list = list.filter(i => !i.usos.length);
+  else if(filt.ins === 'produccion') list = list.filter(i => i.sub != null || /PRODUCCION|PREELAB/i.test(i.c));
+  return list;
+}
+
+/* ---------- render ---------- */
+/* La tarjeta vacia que abre el formulario de receta nueva. Va primera en la grilla
+   y solo aparece si el servidor dijo que la persona puede crear fichas. Se esconde
+   mientras hay una busqueda: ahi la grilla son resultados, no un lugar donde crear. */
+function tarjetaNueva(){
+  return `<button class="card nueva" id="nueva">
+      <div class="mas">+</div>
+      <div class="nt">Nueva receta</div>
+      <div class="ns">Un plato de carta o un pre-elaborado</div>
+    </button>`;
+}
+
+/* El formulario. Se re-dibuja entero al cambiar el tipo, asi no hacen falta
+   listeners de 'change': todo pasa por el mismo manejador de clicks. */
+let nfTipo = 'plato';
+function fichaNuevaHTML(){
+  const cats = [...new Set(R.filter(r => r.t === 'plato' && r.cat).map(r => r.cat))].sort();
+  const esPlato = nfTipo === 'plato';
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">Receta nueva · Cocina</div>
+      <h2 id="dtitle" style="font-size:26px">Crear una ficha</h2>
+    </div>
+    <div class="dbody">
+      <div>
+        <div class="sec-t" style="margin-top:0">Que es</div>
+        <div class="simrow">
+          <button class="chip" data-nft="plato" aria-pressed="${esPlato}"
+            style="${esPlato?'background:var(--bosque);border-color:var(--bosque);color:var(--surface)':''}">Plato de carta</button>
+          <button class="chip" data-nft="preelaborado" aria-pressed="${!esPlato}"
+            style="${!esPlato?'background:var(--bosque);border-color:var(--bosque);color:var(--surface)':''}">Pre-elaborado</button>
+        </div>
+      </div>
+      <div>
+        <div class="sec-t">Nombre</div>
+        <div class="simrow">
+          <input id="nf-nombre" placeholder="${esPlato?'Ej: Coliflor con Romesco':'Ej: Salsa de Tomillo'}" style="width:100%;max-width:340px" autocomplete="off">
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">${esPlato
+          ? 'Los platos van en MAYUSCULAS en la pestaña. Se convierte solo.'
+          : 'El nombre de la pestaña queda tal cual lo escribas.'}</p>
+      </div>
+      ${esPlato ? `<div>
+        <div class="sec-t">Categoria y precio</div>
+        <div class="simrow">
+          <input id="nf-cat" list="nf-cats" placeholder="Categoria" style="width:200px" autocomplete="off">
+          <input id="nf-precio" type="number" step="1" min="0" placeholder="Precio de carta" style="width:130px">
+        </div>
+        <datalist id="nf-cats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      </div>` : `<div>
+        <div class="sec-t">Rinde</div>
+        <div class="simrow">
+          <input id="nf-rinde" type="number" step="any" min="0" placeholder="Porciones por batch" style="width:170px">
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">En cuantas porciones rinde un batch. Se puede corregir despues.</p>
+      </div>`}
+      <div>
+        <div class="sec-t">Nota (opcional)</div>
+        <div class="simrow">
+          <input id="nf-nota" placeholder="Contexto para quien lea la ficha" style="width:100%;max-width:340px" autocomplete="off">
+        </div>
+      </div>
+      <div class="simrow" style="background:transparent;padding:0">
+        <button class="chip" id="nf-crear" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface);padding:8px 20px">Crear la ficha</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0">La ficha se crea vacia, con las formulas puestas y lista para cargarle ingredientes.
+      ${esPlato ? 'Se agrega a RESUMEN CMV como <strong>por costear</strong>. <strong>El POS no se toca</strong>: el alta del producto en la caja se hace aparte.' : 'Para que los platos puedan usarlo, despues hay que darlo de alta en el Banco de Datos con su costo por porcion.'}</p>
+    </div>`;
+}
+
+function tarjeta(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv, r);
+  const base = r.cmv;
+  let d = '';
+  if(sim.size && base != null && cmv != null && Math.abs(cmv - base) > 0.05){
+    const up = cmv > base;
+    d = `<span class="delta" style="color:var(--${up?'alto':'meta'})">${up?'▲':'▼'} ${Math.abs(cmv-base).toFixed(1)} pts</span>`;
+  }
+  const tercera = r.t === 'plato'
+    ? `<span class="fig"><span class="lbl">CMV · meta ${r.obj}%</span><span class="val big s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</span>${d}</span>`
+    : `<span class="fig"><span class="lbl">Por ${esc(r.unidadCosto||'porción')}</span><span class="val big">${QU(c)}</span></span>`;
+  return `<button class="card" data-r="${r.id}">
+    <span class="stripe b-${st}"></span>
+    <span class="eyebrow">${esc(r.cat || (r.t==='plato'?'Sin categoría':'Producción Rosanta'))} · ${r.area==='BARRA'?'Barra':'Cocina'}</span>
+    <h3>${esc(Tt(r.n))}</h3>
+    <span class="badge s-${st}">${ETIQ[st]}</span>
+    <span class="figs">
+      <span class="fig"><span class="lbl">${r.t==='plato'?'Precio':'Batch'}</span><span class="val">${r.t==='plato'?(r.precio?Q0(r.precio):'—'):Q(batch(r.id))}</span></span>
+      ${r.t==='plato'?`<span class="fig"><span class="lbl">Costo</span><span class="val">${c!=null?Q(c):'—'}</span></span>`:`<span class="fig"><span class="lbl">Rinde</span><span class="val" style="font-size:13px">${esc(r.rindeTexto||r.rinde||'—')}</span></span>`}
+      ${tercera}
+    </span>
+  </button>`;
+}
+function vistaRecetas(){
+  const list = recetasVis();
+  const f = [['carta','De carta'],['pre','Pre-elaborados'],['alerta','Necesitan atención'],['tocadas','Afectadas por la simulación'],['todas','Todas']];
+  return `<div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fr="${k}" aria-pressed="${filt.rec===k}">${l}</button>`).join('')}
+      <span class="count">${q ? `${list.length} resultado${list.length===1?'':'s'} en todo el recetario`
+                             : `${list.length} de ${R.filter(enArea).length}`}</span>
+    </div>
+    ${q ? `<p class="buscando">Buscando “${esc(q)}” en cocina y barra, platos y pre-elaborados. Los filtros no se aplican mientras buscas.</p>` : ''}
+    ${avisoArea(area)}
+    ${(list.length || (window.PUEDE && window.PUEDE.crearFicha && !q))
+      ? `<div class="grid">${(window.PUEDE && window.PUEDE.crearFicha && !q && AREA_EDITABLE(area)) ? tarjetaNueva() : ''}${list.map(tarjeta).join('')}</div>`
+      : `<p class="empty">Nada coincide con “${esc(q)}”.</p>`}`;
+}
+function vistaInsumos(){
+  const list = insumosVis();
+  const f = [['todos','Todos'],['usados','En uso'],['sinuso','Sin uso en fichas'],['produccion','Producción Rosanta']];
+  /* La barra de agregar va ARRIBA. Son 400 productos: al pie no la ve nadie. */
+  return `  ${(window.PUEDE && window.PUEDE.crearInsumo) ? (AREA_EDITABLE(area) ? `<div class="addrow">
+        <div class="sec-t" style="margin-top:0">Agregar un producto al Banco de Datos</div>
+        <div class="simrow" style="flex-wrap:wrap">
+          <input id="ni-prod" placeholder="Producto" style="width:210px" autocomplete="off">
+          <input id="ni-cat" list="lista-cats" placeholder="Categoría" style="width:150px" autocomplete="off">
+          <input id="ni-pc" type="number" step="0.01" min="0" placeholder="Precio compra" style="width:130px">
+          <input id="ni-uc" placeholder="Unidad de compra" style="width:150px" autocomplete="off">
+          <input id="ni-ur" placeholder="Unidad de receta" style="width:150px" autocomplete="off">
+          <input id="ni-cont" type="number" step="any" min="0" placeholder="Contenido (si aplica)" style="width:170px">
+          <input id="ni-prov" list="lista-provs-alta" placeholder="Proveedor" style="width:170px" autocomplete="off">
+          <button class="chip" id="ni-add" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Crear</button>
+        </div>
+        <datalist id="lista-cats">${[...new Set(I.map(x=>x.c))].filter(Boolean).map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+        <datalist id="lista-provs-alta">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Contenido</strong> solo hace falta cuando la unidad de compra es un envase: cuántas unidades de receta trae un manojo, una caja, un frasco. Un manojo va de 20 g a 75 g según la hierba, así que no se puede adivinar. Antes de crear se avisa si ya hay algo parecido en el Banco.</p>
+      </div>` : '') : ''}
+    <div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fi="${k}" aria-pressed="${filt.ins===k}">${l}</button>`).join('')}
+      ${filt.prov ? `<button class="chip" aria-pressed="true" data-fi="_prov">${esc(filt.prov)} ✕</button>` : ''}
+      <span class="count">${q ? `${list.length} resultado${list.length===1?'':'s'} en todo el recetario`
+                             : `${list.length} de ${I.filter(enArea).length}`}</span>
+    </div>
+    ${q ? `<p class="buscando">Buscando “${esc(q)}” en cocina y barra. Los filtros no se aplican mientras buscas.</p>` : ''}
+    ${avisoArea(area)}
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>Producto</th><th>Proveedor</th><th class="r">Precio compra</th>
+        <th class="r">Por unidad receta</th><th class="r">Recetas</th>
+      </tr></thead><tbody>
+      ${list.map(i => {
+        const ef = precioEf(i.id), ch = sim.has(i.id) || (i.pr && Math.abs(ef - i.pr) > 1e-6);
+        return `<tr>
+          <td><button class="rowbtn" data-i="${i.id}">${i.sub!=null?'<span class="dot" title="Tiene ficha de sub-receta"></span>':''}${esc(Tt(i.p))}</button>
+              <div style="color:var(--muted);font-size:11.5px">${esc(i.c)} · ${i.area==='BARRA'?'Barra':'Cocina'}</div></td>
+          <td>${esc(i.prov)}</td>
+          <td class="r">${i.pc!=null?Q(i.pc):'—'}<div style="color:var(--muted);font-size:11.5px">${esc(i.uc||'')}</div></td>
+          <td class="r">${ef!=null?QU(ef):'—'} <span style="color:var(--muted)">/${esc(i.u)}</span>
+              ${ch?`<div style="color:var(--alto);font-size:11.5px">antes ${QU(i.pr)}</div>`:''}</td>
+          <td class="r">${i.usos.length||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+      ${list.length?'':'<p class="empty">Sin resultados.</p>'}`;
+}
+function vistaProveedores(){
+  const k = nrm(q);
+  const list = P.filter(p => !q || nrm(p.nombre).includes(k));
+  /* La barra de peso se mide contra TODOS los proveedores, no contra los filtrados:
+     si se midiera contra la busqueda, el mas grande de tres resultados se veria
+     lleno y parecerian todos iguales. */
+  const maxProd = Math.max(1, ...P.map(x => x.productos || 0));
+  /* La barra de agregar va ARRIBA. Al pie de 61 proveedores nadie la encuentra:
+     hay que scrollear una pantalla y media para crear uno. */
+  return `  ${(window.PUEDE && window.PUEDE.crearProveedor) ? `<div class="addrow">
+      <div class="sec-t" style="margin-top:0">Agregar un proveedor</div>
+      <div class="simrow" style="flex-wrap:wrap">
+        <input id="npr-nom" placeholder="Nombre" style="width:220px" autocomplete="off">
+        <input id="npr-nit" placeholder="NIT (opcional)" style="width:150px" autocomplete="off">
+        <input id="npr-con" placeholder="Contacto (opcional)" style="width:180px" autocomplete="off">
+        <input id="npr-tel" placeholder="Teléfono (opcional)" style="width:160px" autocomplete="off">
+        <button class="chip" id="npr-add" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Crear</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Crear el proveedor no le asigna ningún producto. Para eso, abrí el producto en la pestaña Insumos y cambiale el proveedor ahí. Antes de crear se avisa si ya hay uno parecido: “Mercado” y “mercado pro activo” son distintos, pero “La Torre” y “La Torre S.A.” casi nunca.</p>
+    </div>` : ''}
+    <p class="lead">Cada proveedor con los productos que le compramos y cuántas recetas dependen de él. Tocá uno para ver su lista.</p>
+    <div class="provgrid">${list.map(p => `
+      <button class="provcard" data-p="${esc(p.nombre)}">
+        <span class="n">${esc(p.nombre)}</span>
+        <span class="m">${p.productos} producto${p.productos===1?'':'s'} · ${p.recetas} receta${p.recetas===1?'':'s'}</span>
+        <span class="peso" aria-hidden="true"><i style="width:${Math.max(2, Math.round(p.productos / maxProd * 100))}%"></i></span>
+      </button>`).join('')}</div>`;
+}
+
+/* ===== Ingenieria de menu ==========================================
+   La pantalla contesta "que hago esta semana", no "cual es la tabla".
+   Orden: periodo -> cinco contadores -> una sola matriz -> las dos listas
+   de accion -> el punto ciego. Sin tabla de detalle: esa ya esta en el
+   Excel y en la pestana de Costeo, y empuja hacia abajo lo unico que pide
+   una decision. Decision de Juanma, 26-ago-2026.
+   Lee el payload de getIngenieriaMenu() tal como viene. No toca el .gs.
+   ------------------------------------------------------------------ */
+const IM_CLASES = {
+  ESTRELLA:     ['Estrella',     'Protegela: no le toques el precio ni la receta'],
+  CABALLO:      ['Caballo',      'Vende mucho y deja poco: bajale el costo'],
+  ROMPECABEZAS: ['Rompecabezas', 'Deja bien y no se vende: empujala en sala'],
+  PERRO:        ['Perro',        'Ni vende ni deja: sacala o rehacela']
+};
+/* El color es el argumento. Estrella en verde claro, caballo en verde bosque,
+   rompecabezas en lila —el mismo lila del punto ciego y de "empujar en sala"—
+   y perro en gris. Cambiar esto rompe la lectura de la matriz. */
+const IM_COLOR = {
+  ESTRELLA:'var(--im-medio)', CABALLO:'var(--im-bosque)',
+  ROMPECABEZAS:'var(--im-lila)', PERRO:'var(--im-gris)'
+};
+/* Las ventanas son MULTIPLOS ENTEROS DE SEMANA, no meses de calendario. La venta
+   de un restaurante depende del dia de la semana: un mes de 31 dias con 5 sabados
+   contra uno de 28 con 4 no son comparables, y la popularidad es una razon de
+   unidades —basta un fin de semana de mas para mover el mix y con el la
+   clasificacion—. 4, 13 y 52 semanas siempre traen la misma cantidad de fines de
+   semana, y calzan con el ritual del lunes. El sello de arriba dice el rango y los
+   dias exactos, asi que el nombre corto nunca engana.
+   "Ano" es un ano CORRIDO de 52 semanas, no "todo lo cargado": cuando entren datos
+   de 2027, "todo" seria 14 meses y nadie lo notaria. */
+const IM_VENTANAS = [
+  [4,  'Mes',       'Últimas 4 semanas — el mes corrido'],
+  [13, 'Trimestre', 'Últimas 13 semanas — el trimestre corrido. Es la ventana por defecto'],
+  [52, 'Año',       'Últimas 52 semanas — el año corrido, o todo lo que haya si hay menos']
+];
+const imQ  = n => 'Q' + Math.round(n||0).toLocaleString('es-GT');
+/* LA FECHA DEL CATALOGO DEL POS, en el sello y a la vista.
+   Esta es la mitad del valor de resolver el catalogo solo: el problema nunca fue que
+   el dato estuviera viejo, fue que NO HABIA FORMA DE DARSE CUENTA. Arriba de dos
+   semanas se pone en rojo y pide exportar; si se leyo el respaldo en vez de la
+   carpeta, tambien lo dice. */
+const IM_CAT_DIAS = 14;
+const IM_MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+                  'septiembre','octubre','noviembre','diciembre'];
+function imCatalogo(c){
+  if(!c) return '';
+  if(!c.fecha) return `<span style="color:var(--im-alerta)">Catálogo del POS: sin fecha reconocible</span>`;
+  const f = new Date(c.fecha);
+  const txt = `${f.getDate()} de ${IM_MESES[f.getMonth()]} de ${f.getFullYear()}`;
+  const dias = Math.floor((Date.now() - c.fecha) / 86400000);
+  const viejo = dias > IM_CAT_DIAS;
+  const extra = c.respaldo ? ' · leído del respaldo, no de la carpeta'
+              : (c.aviso ? ' · ' + esc(c.aviso) : '');
+  return `<span style="color:${viejo||c.respaldo||c.aviso ? 'var(--im-alerta)' : 'inherit'}">
+    Catálogo del POS: ${txt}${viejo ? ' — hay que exportar de nuevo' : ''}${extra}</span>`;
+}
+
+const imFe = s => { const m = String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2] : String(s||'—'); };
+
+/* Nombres cortos, solo para las etiquetas dentro de la matriz. En las listas
+   y en los tooltips siempre va el nombre completo. */
+function imCorto(n){
+  return String(n)
+    .replace(/^(Whiskey|Ron|Tequila|Single Malts|Ginebra|Irlandes|Infusiones|Tes|Tés) - /,'')
+    .replace(/ \/\/ Casa/,'')
+    .replace('Ensalada Rosanta con','Ens.')
+    .replace('Pasta de la Casa con','Pasta')
+    .replace('Costillas de Cerdo con Cafe y Cardamomo','Costillas')
+    .replace('Pollo en Salsa de Tamarindo','Pollo Tamarindo')
+    .replace('Camarones al Horno','Camarones')
+    .replace('Pulpo a la Parrilla','Pulpo')
+    .replace('Brisket en Salsa Bordelesa','Brisket')
+    .replace('Coliflor a la Parrilla con Romesco','Coliflor')
+    .replace('Tabla de Jamones y Quesos','Tabla Jamones')
+    .replace('Ejotes al Aceite de Ajonjoli y Ajo','Ejotes')
+    .replace('Agua Natural de la casa 1L','Agua natural')
+    .replace(/^Pan de la Casa$/,'Pan');
+}
+
+/* La matriz. Una sola, no una por categoria: cada punto ya viene normalizado
+   contra el umbral y el margen promedio DE SU PROPIA CATEGORIA, asi que el
+   cruce cae siempre en 1x1 y caben todas las categorias en un plano sin
+   romper la regla de comparar solo dentro de la categoria.
+   El tamano es la contribucion en quetzales. */
+function imMatriz(pts, sin){
+  const W=560, H=340, L=44, R=16, T=18, B=56;
+  const rx = pts.map(p=>p.popNorm), ry = pts.map(p=>p.mcNorm);
+  /* Topamos el eje en el percentil 92 para que un solo producto altisimo no
+     aplaste a los demas contra el origen. Lo que se sale se dibuja en el borde. */
+  const pc = (a,q)=>{ const s=a.slice().sort((x,y)=>x-y); return s.length ? s[Math.min(s.length-1, Math.floor(s.length*q))] : 1; };
+  const mx = Math.min(Math.max(2.2,...rx,0)*1.06, Math.max(2.2, pc(rx,.92)*1.35));
+  const my = Math.min(Math.max(1.7,...ry,0)*1.08, Math.max(1.7, pc(ry,.92)*1.30));
+  const X = v => L + Math.min(v,mx)/mx*(W-L-R);
+  const Y = v => H-B - Math.min(v,my)/my*(H-T-B);
+  const maxC = Math.max(1, ...pts.map(p=>Math.abs(p.contrib)||0));
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Matriz de ingeniería de menú">`;
+  s += `<rect x="${X(1)}" y="${T}" width="${W-R-X(1)}" height="${Y(1)-T}" fill="var(--im-wash)"/>`;
+  s += `<line class="im-cross" x1="${X(1)}" y1="${T}" x2="${X(1)}" y2="${H-B}"/>`;
+  s += `<line class="im-cross" x1="${L}" y1="${Y(1)}" x2="${W-R}" y2="${Y(1)}"/>`;
+  /* Los rotulos fijos se guardan y se dibujan AL FINAL, encima de todo. Iban
+     primero, y entonces cualquier punto que cayera cerca del origen les pasaba el
+     circulo por encima: con datos reales de cocina, dos platos tapaban "perro" y la
+     leyenda del cuadrante se perdia. Los nombres de producto ya esquivan estas
+     cajas; lo que faltaba era protegerlas de los circulos, que se dibujan donde
+     manda el dato y no esquivan nada. El halo del CSS hace el resto. */
+  const fijos =
+      `<text class="im-qz" x="${W-R-4}" y="${T+11}" text-anchor="end" fill="var(--im-medio)">estrella</text>`
+    + `<text class="im-qz" x="${L+4}" y="${T+11}" fill="var(--im-lila)">rompecabezas</text>`
+    + `<text class="im-qz" x="${W-R-4}" y="${H-B-5}" text-anchor="end" fill="var(--im-bosque)">caballo</text>`
+    + `<text class="im-qz" x="${L+4}" y="${H-B-5}" fill="var(--im-gris)">perro</text>`
+    + `<text class="im-axl" x="${X(1)}" y="${H-B+13}" text-anchor="middle">umbral de su categoría</text>`
+    + `<text class="im-axl" x="${L-6}" y="${Y(1)+3}" text-anchor="end">MC prom.</text>`
+    + `<text class="im-axt" x="${W-R}" y="${H-4}" text-anchor="end">popularidad relativa →</text>`
+    + `<text class="im-axt" x="${L-6}" y="${T+2}" text-anchor="end" transform="rotate(-90 ${L-6} ${T+2})">margen relativo →</text>`;
+
+  /* LOS NOMBRES. Antes solo se etiquetaban los siete de mayor contribucion y
+     las etiquetas se pisaban con los puntos: en barra, con 50 circulos, la
+     mitad de los nombres caia encima de un dato. Ahora se intenta etiquetar
+     TODOS, en orden de contribucion —el que mas pesa escoge lugar primero— y
+     cada nombre se prueba en ocho posiciones alrededor de su punto. Si ninguna
+     queda libre de otros nombres y de otros circulos, ese punto se queda sin
+     etiqueta y se lee con el mouse. Asi la matriz nunca miente por encimarse.  */
+  const orden = pts.slice().sort((a,b)=>(Math.abs(b.contrib)||0)-(Math.abs(a.contrib)||0));
+  const circ = [], textos = [];
+  /* Los rotulos fijos del plano —los cuatro cuadrantes, los ejes y el titulo
+     vertical— entran como cajas ocupadas antes que ningun nombre, para que
+     ningun producto se les monte encima. */
+  const cajas = [[L-2,T,L+78,T+13],[W-R-58,T,W-R,T+13],
+                 [L-2,H-B-14,L+40,H-B-2],[W-R-46,H-B-14,W-R,H-B-2],
+                 [L-40,Y(1)-8,L+1,Y(1)+3],[L-2,T,L+11,H-B-2]];
+
+  orden.forEach(p=>{
+    const x = X(p.popNorm), y = Y(p.mcNorm);
+    const rad = 4 + Math.sqrt(Math.max(Math.abs(p.contrib)||0,0)/maxC)*8;
+    circ.push([x,y,rad]);
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}" fill="${IM_COLOR[p.clase]}" opacity=".8"><title>${esc(p.n)} — ${esc(p.cat)}
+${p.uds} uds · margen ${imQ(p.mc)} · contribución ${imQ(p.contrib)}
+Precio de carta ${imQ(p.precio)} · neto ${imQ(p.precioNeto)} · costo ${imQ(p.costo)} · CMV ${(p.cmv*100).toFixed(1)}%</title></circle>`;
+  });
+
+  const choca = (b, saltar) => {
+    if(b[0] < 2 || b[2] > W-2 || b[1] < T-6 || b[3] > H-B-2) return true;
+    for(let i=0;i<cajas.length;i++){ const c=cajas[i];
+      if(b[0] < c[2]+3 && b[2] > c[0]-3 && b[1] < c[3]+2 && b[3] > c[1]-2) return true; }
+    for(let i=0;i<circ.length;i++){ if(i===saltar) continue;
+      const [cx,cy,cr]=circ[i];
+      const dx = Math.max(b[0]-cx, 0, cx-b[2]), dy = Math.max(b[1]-cy, 0, cy-b[3]);
+      if(dx*dx+dy*dy < (cr+1.5)*(cr+1.5)) return true; }
+    return false;
+  };
+
+  orden.forEach((p,i)=>{
+    const [x,y,rad] = circ[i];
+    const txt = imCorto(p.n), an = 4.55*txt.length + 2, alt = 9;   /* ancho aproximado a 9px */
+    /* Derecha e izquierda primero —es donde se lee mejor—, despues arriba y
+       abajo, y por ultimo las diagonales. */
+    const cand = [[rad+4,3.2,'start'],[-(rad+4),3.2,'end'],[0,-(rad+5),'middle'],[0,rad+11,'middle'],
+                  [rad+4,-(rad+2),'start'],[-(rad+4),-(rad+2),'end'],[rad+4,rad+8,'start'],[-(rad+4),rad+8,'end']];
+    for(const [dx,dy,anc] of cand){
+      const lx = x+dx, ly = y+dy;
+      const x0 = anc==='start' ? lx : anc==='end' ? lx-an : lx-an/2;
+      const caja = [x0, ly-alt+1.5, x0+an, ly+2];
+      if(choca(caja, i)) continue;
+      cajas.push(caja);
+      textos.push(`<text class="im-lab" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anc}">${esc(txt)}</text>`);
+      return;
+    }
+  });
+  s += textos.join('');
+
+  /* Repartidos parejo a lo ancho, no por popularidad: aca lo que importa es
+     cuantos son, no donde caerian. Amontonados no se cuentan. */
+  const b0 = L+54, b1 = W-R, paso = sin.length>1 ? (b1-b0)/(sin.length-1) : 0;
+  sin.forEach((p,i)=>{
+    const x = sin.length>1 ? b0 + i*paso : (b0+b1)/2;
+    s += `<circle cx="${x.toFixed(1)}" cy="${H-B+32}" r="3.5" fill="none" stroke="var(--im-lila)" stroke-width="1.4" stroke-dasharray="2.5 2"><title>${esc(p.n)} — sin costo confiable · ${p.uds} uds</title></circle>`;
+  });
+  if(sin.length) s += `<text class="im-axl" x="${L-6}" y="${H-B+35}" text-anchor="end" fill="var(--im-lila)">sin costo</text>`;
+  return s + fijos + '</svg>';
+}
+
+function vistaMenu(){
+  const d = window.__IM__;
+  const bar = `<div class="im-bar">
+      <div class="im-grp"><b>Área</b><div class="im-seg" role="group" aria-label="Área">
+        ${['COCINA','BARRA'].map(a=>`<button data-ima="${a}" aria-pressed="${imArea===a}">${a==='COCINA'?'Cocina':'Barra'}</button>`).join('')}
+      </div></div>
+      <div class="im-grp"><b>Ventana</b><div class="im-seg" role="group" aria-label="Ventana">
+        ${IM_VENTANAS.map(([n,l,t])=>`<button data-ims="${n}" title="${t}" aria-pressed="${imSemanas===n}">${l}</button>`).join('')}
+      </div></div>
+      <div class="im-stamp" id="imStamp"><b>${d&&d.ok?imFe(d.desde)+' – '+imFe(d.hasta)+' · '+d.dias+' días':'—'}</b>
+        <span>${d&&d.ok?d.tickets.toLocaleString('es-GT')+' tickets · '+imQ(d.venta)+(d.cargadoEl?' · cargado el '+esc(d.cargadoEl):''):'—'}</span>
+        ${d&&d.ok?imCatalogo(d.catalogo):''}</div>
+    </div>`;
+  if(!d)    return `<div id="im">${bar}<p class="empty">Leyendo las ventas…</p></div>`;
+  if(!d.ok) return `<div id="im">${bar}<p class="empty">${esc(d.error||'No se pudo leer')}</p></div>`;
+
+  const a = d.areas[imArea], c = a.conteo;
+  const lead = `<p class="im-lead">${a.productos} productos con venta · ${a.firmes} con costo firme ·
+    CMV ponderado <strong>${(a.cmv*100).toFixed(1)}%</strong> ·
+    contribución <strong>${imQ(a.contribucion)}</strong> ·
+    recuperable contra meta <strong>${imQ(a.recuperable)}/año</strong></p>`;
+
+  const kpis = `<div class="im-kpis">
+    ${Object.keys(IM_CLASES).map(k=>`<div class="im-k" style="--im-kc:${IM_COLOR[k]}">
+      <b>${c[k]}</b><span>${IM_CLASES[k][0]}</span><em>${IM_CLASES[k][1]}</em></div>`).join('')}
+    <div class="im-k" style="--im-kc:var(--im-lila)"><b>${c['SIN CLASIFICAR']}</b><span>Sin costo</span>
+      <em>${a.sinCostoUds.toLocaleString('es-GT')} uds · ${imQ(a.sinCostoVenta)} sin poder medir</em></div>
+  </div>`;
+
+  /* "Empujar en sala" solo trae productos con al menos una venta al mes. Sin ese
+     piso la barra proponia empujar el Macallan 12: una copa en ocho meses. Eso no
+     es una decision, es una corazonada. El filtro ya viene hecho del .gs. */
+  const push = a.empujar.slice(0,5).map(p=>{
+    const mp = p.mcNorm ? p.mc/p.mcNorm : 0;
+    return `<li><span class="im-nm">${esc(p.n)}<small>${esc(p.cat)} · ${Math.round(p.udsMes)} al mes · margen ${imQ(p.mc)} contra ${imQ(mp)} de su categoría</small></span>
+      <span class="im-vv" style="color:var(--im-lila)">+${imQ(p.mc*5*12)}<small>por 5 más al mes</small></span></li>`;
+  }).join('') || `<li><span class="im-nm im-vacio">Nada que empujar con el piso de una venta al mes.</span></li>`;
+
+  const meta = a.fueraDeMeta.slice(0,5).map(p=>
+    `<li><span class="im-nm">${esc(p.n)}<small>${(p.cmv*100).toFixed(1)}% contra meta de ${(p.meta*100).toFixed(0)}% · ${p.uds} uds</small></span>
+      <span class="im-vv" style="color:var(--im-alerta)">${imQ(p.vsMeta)}<small>al año</small></span></li>`
+  ).join('') || `<li><span class="im-nm im-vacio">Todo dentro de meta.</span></li>`;
+
+  /* CUATRO SECCIONES, cada tema en su propio panel con su titulo: la matriz,
+     empujar en sala, fuera de meta, y el punto ciego. Antes las dos listas de
+     accion compartian caja y se leian como una sola cosa; son dos decisiones
+     distintas —una es de sala y la otra es de costo— y cada una tiene su
+     propio numero. Decision de Juanma, 29-ago-2026. */
+  const secMatriz = `<div class="im-panel">
+      <h3>Dónde está cada producto</h3>
+      <p class="im-h">Todas las categorías en un solo plano. Cada punto está medido contra el umbral y el
+        margen promedio <strong>de su propia categoría</strong>, así que el cruce siempre cae en 1&nbsp;×&nbsp;1.
+        El tamaño es la contribución. Pasá el mouse para el detalle.</p>
+      ${imMatriz(a.puntos, a.sinCosto)}
+    </div>`;
+
+  const secPush = `<div class="im-panel">
+      <h3 style="color:var(--im-lila)">Empujar en sala</h3>
+      <p class="im-h">Dejan buen margen y se venden poco. Solo entran los que venden al menos una vez
+        al mes: empujar algo que nadie pide no es una decisión, es una corazonada.</p>
+      <ul class="im-acc">${push}</ul>
+    </div>`;
+
+  const secMeta = `<div class="im-panel">
+      <h3 style="color:var(--im-alerta)">Fuera de meta</h3>
+      <p class="im-h">Lo que cuesta al año no llegar al objetivo de CMV de su categoría.
+        Acá la palanca es el costo o la receta, no la sala.</p>
+      <ul class="im-acc">${meta}</ul>
+    </div>`;
+
+  const cols = `<div class="im-cols">${secMatriz}<div class="im-stack">${secPush}${secMeta}</div></div>`;
+
+  /* El punto ciego. Tope de 12 y una linea de resumen para el resto: la lista
+     completa no cabe y tampoco hace falta. */
+  const TOP = 12, vis = a.sinCosto.slice(0,TOP), resto = a.sinCosto.slice(TOP);
+  const ciego = !a.sinCosto.length ? '' : `<div class="im-panel">
+    <h3 style="color:var(--im-lila)">Lo que no se puede medir</h3>
+    <p class="im-h">${a.sinCosto.length} productos se venden sin un costo en el que se pueda confiar —
+      ${a.sinCostoUds.toLocaleString('es-GT')} unidades y ${imQ(a.sinCostoVenta)} en esta ventana.
+      Ninguno entra a la matriz: clasificarlos sería inventar.</p>
+    <div class="im-ciego">
+      ${vis.map(p=>`<div class="im-cg"><div class="im-cr"><span class="im-cn">${esc(p.n)}</span>
+        <span class="im-cv">${imQ(p.venta)}</span></div><span class="im-cm">${esc(p.cat)} · ${p.uds} uds</span></div>`).join('')}
+      ${resto.length?`<div class="im-cg im-resto"><div class="im-cr"><span class="im-cn">y ${resto.length} más</span>
+        <span class="im-cv">${imQ(resto.reduce((s,p)=>s+p.venta,0))}</span></div>
+        <span class="im-cm">${resto.reduce((s,p)=>s+p.uds,0)} uds entre todos</span></div>`:''}
+    </div></div>`;
+
+  return `<div id="im">${bar}${lead}${kpis}${cols}${ciego}</div>`;
+}
+
+/* ===== DASHBOARD OPERATIVO DE PROFIT OS ============================
+   La primera pantalla del modulo. Contesta "como vamos", no "que hago con
+   este plato" —eso es la pestana de al lado—.
+
+   Seis indicadores. Cinco salen de lo que getIngenieriaMenu ya calcula,
+   reagrupado; el sexto —CMV real contra teorico— todavia no existe y la
+   pantalla LO DICE en vez de disimularlo: un tablero al que le falta el
+   indicador que lo justifica tiene que declararlo.
+
+   TODO PORCENTAJE VA SOBRE VENTA NETA (bruta / 1.12). El costo va tal como
+   se paga. Ver COSTEO.iva: buena parte de la compra es informal y ya viene
+   sin IVA, asi que corregir el denominador es el extremo conservador.
+
+   Todo cuelga de #db y todas las clases llevan prefijo db-, misma regla que
+   #im: ninguna regla de aca puede tocar el resto de la vista.
+   ------------------------------------------------------------------ */
+const DB_VENTANAS = IM_VENTANAS;   // la misma ventana y por la misma razon
+
+/* Verde si esta en meta o abajo, naranja si esta arriba. El color es el
+   veredicto: un numero sin veredicto obliga a recordar cual era la meta. */
+const dbSemaforo = (valor, meta) => valor <= meta ? 'var(--meta)' : 'var(--alto)';
+const dbPct = n => (n * 100).toFixed(1) + '%';
+
+function dbTile(o){
+  return `<div class="db-t" style="--db-c:${o.color || 'var(--muted)'}">
+    <span class="db-lbl">${o.titulo}</span>
+    <b class="db-n">${o.valor}</b>
+    ${o.sub ? `<span class="db-sub">${o.sub}</span>` : ''}
+    ${o.cuerpo || ''}
+    ${o.pie ? `<span class="db-pie">${o.pie}</span>` : ''}
+  </div>`;
+}
+
+function vistaInicio(){
+  const d = window.__DB__;
+  const bar = `<div class="db-bar">
+      <div class="db-grp"><b>Ventana</b><div class="db-seg" role="group" aria-label="Ventana">
+        ${DB_VENTANAS.map(([n,l,t])=>`<button data-dbs="${n}" title="${t}" aria-pressed="${dbSemanas===n}">${l}</button>`).join('')}
+      </div></div>
+      <div class="db-stamp"><b>${d&&d.ok?imFe(d.desde)+' – '+imFe(d.hasta)+' · '+d.dias+' días':'—'}</b>
+        <span>${d&&d.ok?d.tickets.toLocaleString('es-GT')+' tickets · venta neta '+imQ(d.ventaNeta):'—'}</span></div>
+    </div>`;
+  if(!d)    return `<div id="db">${bar}<p class="empty">Leyendo las ventas…</p></div>`;
+  if(!d.ok) return `<div id="db">${bar}<p class="empty">${esc(d.error||'No se pudo leer')}</p></div>`;
+
+  const c = d.cmv;
+  /* 1. CMV teorico. Las DOS AREAS QUEDAN SIEMPRE VISIBLES: un global de 28.5%
+     que se ve sano esconde que barra esta cuatro puntos arriba de su meta. */
+  const tCmv = dbTile({
+    titulo:'CMV teórico', color: dbSemaforo(c.global, c.metaGlobal),
+    valor: dbPct(c.global), sub:`meta ponderada ${dbPct(c.metaGlobal)}`,
+    cuerpo: `<div class="db-filas">
+      ${[['Cocina',c.cocina],['Barra',c.barra]].map(([n,a])=>`
+        <div class="db-f"><span>${n}</span>
+          <b style="color:${dbSemaforo(a.cmv,a.meta)}">${dbPct(a.cmv)}</b>
+          <small>meta ${dbPct(a.meta)}</small></div>`).join('')}
+    </div>`,
+    pie:'Sobre venta neta. El global va ponderado por la venta de cada área, no promediado.'
+  });
+
+  /* 2. El que falta, y se declara. */
+  const tReal = dbTile({
+    titulo:'CMV real contra teórico', color:'var(--muted)',
+    valor:'<span class="db-falta">Falta</span>',
+    sub:'el indicador que justifica el pilar',
+    pie:`Mientras no exista, el ${dbPct(c.global)} es una hipótesis bien construida, no un hecho.
+         La diferencia contra el real es merma, porción, robo y precios viejos, todo junto.
+         ${esc(d.real.falta)}`
+  });
+
+  const tContrib = dbTile({
+    titulo:'Contribución del período', color:'var(--bosque)',
+    valor: imQ(d.contribucion.total),
+    sub:`cocina ${imQ(d.contribucion.cocina)} · barra ${imQ(d.contribucion.barra)}`,
+    pie:'Venta neta menos materia prima, sobre todo lo que tiene costo firme. Es el tamaño del premio.'
+  });
+
+  const tRecup = dbTile({
+    titulo:'Recuperable contra meta', color:'var(--alto)',
+    valor: imQ(d.recuperable.total) + '<small>/año</small>',
+    sub:`${d.recuperable.productos} productos arriba de su meta`,
+    cuerpo: dbLista(d.recuperable.top, p=>`${(p.cmv*100).toFixed(1)}% contra ${(p.meta*100).toFixed(0)}%`),
+    pie:'La lista de trabajo, en quetzales. Acá la palanca es el costo o la receta.'
+  });
+
+  /* 5. Va al lado del 4 A PROPOSITO: la palanca de sala pesa casi lo mismo que
+     toda la de costo junta, y un tablero que solo muestra costos empuja a la
+     gerencia hacia el lado equivocado. */
+  const tSala = dbTile({
+    titulo:'Oportunidad en sala', color:'var(--lila)',
+    valor: imQ(d.sala.total) + '<small>/año</small>',
+    sub:`${d.sala.productos} rompecabezas con venta al menos mensual`,
+    cuerpo: dbLista(d.sala.top, p=>`${Math.round(p.udsMes)} al mes · margen ${imQ(p.mc)}`),
+    pie:'Valuados a cinco unidades más al mes cada uno. Acá la palanca es la sala, no el costo.'
+  });
+
+  /* 6. VALIDA A LOS OTROS CINCO. Con 18% a ciegas, el CMV es "29.7% de lo que
+     si sabemos medir". Por eso el color se pone en rojo solo arriba del umbral. */
+  const ciego = d.ciego, ciegoAlto = ciego.pctVenta > ciego.tolerable;
+  const dias = d.diasDesdeCarga;
+  const tCiego = dbTile({
+    titulo:'Punto ciego', color: ciegoAlto ? 'var(--alto)' : 'var(--meta)',
+    valor: dbPct(ciego.pctVenta),
+    sub:`de la venta · ${ciego.productos} productos · ${imQ(ciego.venta)} bruto`,
+    cuerpo:`<div class="db-filas"><div class="db-f"><span>Última carga del POS</span>
+        <b style="color:${dias!=null && dias>7 ? 'var(--alto)' : 'var(--meta)'}">${
+          dias==null ? '—' : (dias===0 ? 'hoy' : 'hace '+dias+' día'+(dias===1?'':'s'))}</b>
+        <small>${esc(d.cargadoEl||'nunca')}</small></div></div>`,
+    pie: ciegoAlto
+      ? `Los otros cinco indicadores miden solo lo que sí se puede costear. Debajo de ${dbPct(ciego.tolerable)} pasan de indicativos a confiables.`
+      : 'Debajo del umbral: los otros cinco indicadores son confiables.'
+  });
+
+  const avisos = window.__DBAV__;
+  const franja = !avisos ? `<p class="db-cargando">Buscando avisos…</p>`
+    : !avisos.length ? ''
+    : `<div class="db-avisos">${avisos.map(a=>`
+        <div class="db-a db-a-${a.nivel}">
+          <span class="db-a-t">${esc(a.texto)}</span>
+          ${a.nota ? `<span class="db-a-n">${esc(a.nota)}</span>` : ''}
+          ${a.detalle && a.detalle.length ? `<ul class="db-a-d">${a.detalle.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        </div>`).join('')}</div>`;
+
+  return `<div id="db">${bar}
+    <div class="db-grid">${tCmv}${tReal}${tContrib}${tRecup}${tSala}${tCiego}</div>
+    ${franja}</div>`;
+}
+
+/* Las listas cortas de los tiles. Tres nombres, no diez: el tile dice cuanto
+   pesa y por donde empezar, la pestana de al lado tiene el detalle. */
+function dbLista(items, porque){
+  if(!items || !items.length) return '';
+  return `<ul class="db-l">${items.map(p=>`<li>
+    <span class="db-l-n">${esc(p.n)}<small>${esc(porque(p))}</small></span>
+    <span class="db-l-v">${imQ(p.valor)}</span></li>`).join('')}</ul>`;
+}
+
+function vistaHigiene(){
+  const h = window.__HIG__;
+  if(!h) return `<p class="empty">Leyendo el recetario…</p>`;
+  const B = [
+    ['Líneas fuera del Banco de Datos','lineasFueraDelBanco','El nombre que escribió cocina no coincide con ningún producto. Esas líneas cuestan Q0.'],
+    ['Fichas vacías','fichasVacias','Sin ingredientes cargados. No tienen costo.'],
+    ['Platos sobre meta','platosSobreMeta','Comparados contra la meta de su área.'],
+    ['Insumos sin precio de compra','insumosSinPrecioDeCompra','No se les puede registrar un precio nuevo hasta corregirlos a mano una vez.'],
+    ['Insumos sin proveedor','insumosSinProveedor','Quedan fuera de la vista de proveedores.'],
+    ['Insumos sin uso en ninguna ficha','insumosSinUso','O sobran en el Banco, o el nombre no coincide.']
+  ];
+  return B.map(([t,k,d]) => `<div class="hig">
+      <h3>${t}</h3><div class="n">${h[k].length}</div>
+      <p style="margin:2px 0 0;font-size:13px;color:var(--muted)">${d}</p>
+      ${h[k].length?`<ul>${h[k].slice(0,60).map(x=>`<li>${esc(x)}</li>`).join('')}${h[k].length>60?`<li style="color:var(--muted)">…y ${h[k].length-60} más</li>`:''}</ul>`:''}
+    </div>`).join('');
+}
+function vistaGuia(){
+  const metas = (D.meta.areas||[]).map(a => (a.area==='BARRA'?'Barra':'Cocina') + ' ' + a.cmvObjetivo + '%').join(' · ');
+  return `<div class="guia">
+    <h2>De dónde salen estos números</h2>
+    <p>Nada de lo que ves acá se escribe a mano. La página lee las hojas del recetario —las mismas
+    que edita cocina— y las vuelve a leer cada quince minutos. Si alguien corrige una ficha en
+    Sheets, acá se ve solo.</p>
+    <p>Eso también quiere decir que <strong>el recetario sigue siendo la fuente de verdad</strong>.
+    Si un dato está mal, se corrige allá, no acá.</p>
+
+    <h2>Cómo leer una ficha</h2>
+    <p>Cada plato trae tres cifras: lo que cuesta hacerlo, lo que se cobra y el CMV, que es el
+    porcentaje del precio que se va en materia prima. La meta no es la misma en todas partes:
+    <strong>${metas}</strong>. Un cóctel al 18% está bien; un plato al 18% está bajo.</p>
+    <div class="leyenda">
+      <span><i style="background:var(--meta)"></i> En meta</span>
+      <span><i style="background:var(--alto)"></i> Sobre meta · el plato cuesta de más</span>
+      <span><i style="background:var(--bajo)"></i> Muy bajo · puede que falte cargar algo</span>
+      <span><i style="background:var(--vacia)"></i> Ficha vacía · sin receta</span>
+      <span><i style="background:var(--pre)"></i> Pre-elaborado</span>
+    </div>
+    <p>Un punto lila junto a un ingrediente quiere decir que ese ingrediente tiene su propia receta.
+    El botón <em>ver receta ›</em> te lleva directo: desde el Lomito podés abrir la gremolata sin
+    salir de la ficha.</p>
+
+    <h2>Buscar</h2>
+    <p>El buscador de arriba no busca solo por nombre de plato. También busca por ingrediente y por
+    proveedor. Escribí <em>ajo confitado</em> y salen todos los platos que lo llevan; escribí
+    <em>Marroquín</em> y salen los que dependen de ese proveedor.</p>
+
+    <h2>Cambiar un precio</h2>
+    <p>Entrá a <strong>Productos</strong>, tocá el producto y escribí el precio de compra nuevo.
+    Ahí hay dos botones y hacen cosas distintas:</p>
+    <div class="caja">
+      <h3>Simular</h3>
+      <p style="margin:0">No guarda nada. Recalcula todas las recetas que usan ese producto y te
+      muestra arriba cuántos platos se salen de meta. Sirve para ver el golpe de una subida
+      <em>antes</em> de aceptarla. Se deshace con "Volver a los precios reales".</p>
+    </div>
+    <div class="caja">
+      <h3>Registrar precio</h3>
+      <p style="margin:0">Guarda de verdad. Escribe el precio en el Banco de Datos, deja la fila en
+      el histórico con fecha, factura y tu nombre, y todas las fichas se recalculan solas. Te pide
+      el número de factura: ponelo siempre que lo tengas, es lo que hace auditable el costeo.</p>
+    </div>
+    <div class="llave">Si el producto no tiene precio de compra cargado, no se puede registrar:
+    falta el dato con el que se calcula la conversión. Esos productos están listados en la pestaña
+    <strong>Higiene</strong> y hay que corregirlos a mano una sola vez.</div>
+
+    <h2>Cuando algo no cuadra</h2>
+    <ul>
+      <li><strong>Un ingrediente dice "fuera del banco".</strong> El nombre que escribió cocina en la
+      ficha no coincide con ningún producto del Banco de Datos. Esa línea cuesta Q0 y el plato sale
+      más barato de lo que es. Se arregla igualando el nombre en la ficha.</li>
+      <li><strong>Un plato marca "Muy bajo".</strong> Casi siempre falta un ingrediente, no es que el
+      plato sea una ganga.</li>
+      <li><strong>Una ficha aparece vacía.</strong> Cocina todavía no dictó la receta.</li>
+      <li><strong>Un pre-elaborado no tiene costo por unidad.</strong> Le falta el rinde: cuántos
+      gramos o mililitros salen del batch.</li>
+    </ul>
+    <p>La pestaña <strong>Higiene</strong> junta todo eso en una lista. Vale revisarla una vez por mes.</p>
+
+    <h2>Qué falta hoy</h2>
+    <p>Siete platos de la carta 2027 no tienen receta cargada: Coliflor con Romesco, Brócoli con
+    Nduja, Bok Choy, Vegetales Fermentados, Arroz Meloso, Lomito de la Casa y Estofado de Rabo.
+    Aparecen como fichas vacías a propósito, para que no se olviden.</p>
+    <p>Y en las tres pastas, el fetuccini está costeado con una receta estándar de pasta fresca
+    mientras cocina entrega la real. La salsa sí es la de cocina.</p>
+
+    <h2>Quién toca qué</h2>
+    <ul>
+      <li><strong>Cocina y barra</strong> corrigen recetas y cantidades en las hojas del recetario.</li>
+      <li><strong>Administración</strong> registra los precios de compra desde acá, con factura.</li>
+      <li><strong>Dirección</strong> decide precios de carta mirando el CMV.</li>
+    </ul>
+    <p style="color:var(--muted);font-size:13px">Si algo se ve raro, lo más probable es que sea un
+    dato del recetario y no la página. Revisá la ficha en Sheets antes de dar por buena una cifra.</p>
+  </div>`;
+}
+/* UNA SOLA LLAMADA PARA LAS DOS PANTALLAS.
+   El tablero y la ingenieria de menu miran los mismos numeros desde angulos
+   distintos, y cada uno se los pedia por su cuenta: el servidor leia la hoja de
+   9.500 filas y clasificaba los 130 productos DOS VECES. Medido el 30-ago-2026:
+   10.5 s cada llamada. Ahora getProfitOS calcula una vez y devuelve las dos, asi
+   que abrir el modulo cuesta una pasada y la segunda pestana abre al instante.
+
+   Las dos ventanas son independientes —se puede mirar el tablero en Trimestre y la
+   matriz en Ano—, asi que se guarda por ventana. Cambiar una trae las dos de esa
+   ventana: es una llamada igual, y deja la otra pestana lista. */
+window.__POS_CACHE__ = window.__POS_CACHE__ || {};   // el arranque ya pudo llenarlo
+/* El gancho que usa el arranque: si el prefetch aterriza DESPUES de iniciarApp,
+   entra por aca. Si aterrizo antes, pedirProfitOS lo encuentra en el cache. */
+window.__profitListo = function(semanas){
+  var r = window.__POS_CACHE__[semanas];
+  if(r) aplicarProfitOS(semanas, r);
+};
+function pedirProfitOS(semanas){
+  const guardado = window.__POS_CACHE__[semanas];
+  if(guardado){ aplicarProfitOS(semanas, guardado); return; }
+  if(window.__POSCARGANDO__ === semanas) return;
+  window.__POSCARGANDO__ = semanas;
+  google.script.run
+    .withSuccessHandler(function(r){
+      window.__POSCARGANDO__ = null;
+      window.__POS_CACHE__[semanas] = r;
+      aplicarProfitOS(semanas, r);
+      pedirAvisos();
+    })
+    .withFailureHandler(function(e){
+      window.__POSCARGANDO__ = null;
+      const err = {ok:false, error:e.message};
+      aplicarProfitOS(semanas, {tablero:err, menu:err});
+      pedirAvisos();
+    })
+    .getProfitOS(AUTH, semanas);
+}
+/* Cada payload entra solo si su selector sigue en esa ventana: si alguien cambio
+   de ventana mientras la llamada viajaba, lo que llega ya no es lo que se pidio. */
+function aplicarProfitOS(semanas, r){
+  if(dbSemanas === semanas) window.__DB__ = r.tablero;
+  if(imSemanas === semanas) window.__IM__ = r.menu;
+  pintar();
+}
+
+/* LOS AVISOS SALEN DESPUES DE LOS NUMEROS, no a la par.
+   Tocan Drive, el catalogo del POS y el semaforo del cierre: son lo mas lento de
+   la pantalla y ademas son lo menos urgente. Lanzados junto con getDashboard, las
+   dos llamadas compiten por los mismos documentos y el tablero entero espera a que
+   Drive conteste. Encadenados, los seis numeros se pintan primero y los avisos
+   aparecen solos cuando esten. */
+function pedirAvisos(){
+  if(window.__DBAV__ || window.__DBAVCARGANDO__) return;
+  window.__DBAVCARGANDO__ = true;
+  google.script.run
+    .withSuccessHandler(function(r){ window.__DBAV__ = (r && r.avisos) || [];
+                                     if(view==='inicio') pintar(); })
+    .withFailureHandler(function(){ window.__DBAV__ = []; window.__DBAVCARGANDO__ = false; })
+    .getAvisosDashboard(AUTH);
+}
+
+function pintar(){
+  memo.clear();
+  // Se derivan del DOM y NO de una lista a mano: el 29-ago-2026 se agrego la seccion
+  // v-menu, se cableo el ruteo y la vista se calculaba entera... pero quedaba oculta,
+  // porque el nombre faltaba en el arreglo. Un modo de falla mudo — la pestana se veia
+  // vacia sin un solo error en consola. Asi, una seccion nueva funciona sola.
+  document.querySelectorAll('main > section[id^="v-"]').forEach(s => s.hidden = s.id !== 'v-' + view);
+  if(view==='recetas')     document.getElementById('v-recetas').innerHTML = vistaRecetas();
+  if(view==='insumos')     document.getElementById('v-insumos').innerHTML = vistaInsumos();
+  if(view==='proveedores') document.getElementById('v-proveedores').innerHTML = vistaProveedores();
+  if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
+  if(view==='inicio'){
+    document.getElementById('v-inicio').innerHTML = vistaInicio();
+    if(!window.__DB__) pedirProfitOS(dbSemanas);
+  }
+  if(view==='menu'){
+    document.getElementById('v-menu').innerHTML = vistaMenu();
+    if(!window.__IM__) pedirProfitOS(imSemanas);
+  }
+  if(view==='higiene'){
+    document.getElementById('v-higiene').innerHTML = vistaHigiene();
+    if(!window.__HIG__ && !window.__HIGCARGANDO__){
+      window.__HIGCARGANDO__ = true;
+      google.script.run.withSuccessHandler(function(h){ window.__HIG__ = h; if(view==='higiene') pintar(); })
+        .withFailureHandler(function(e){ document.getElementById('v-higiene').innerHTML = '<p class="empty">'+e.message+'</p>'; })
+        .getReporteHigiene(AUTH);
+    }
+  }
+  document.querySelectorAll('.nav button[data-view]').forEach(b => b.setAttribute('aria-selected', b.dataset.view===view));
+  document.querySelectorAll('.areas button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.area||'')===area));
+  simbar();
+}
+function simbar(){
+  const bar = document.getElementById('simbar');
+  bar.classList.toggle('on', sim.size>0);
+  if(!sim.size) return;
+  const af = R.filter(tocada);
+  const platos = af.filter(r => r.t==='plato' && r.precio);
+  const fuera = platos.filter(r => { const c = cmvAhora(r); return c!=null && c > r.obj+5; }).length;
+  const antes = platos.filter(r => r.cmv!=null && r.cmv > r.obj+5).length;
+  document.getElementById('simtext').innerHTML =
+    `<strong>${sim.size} precio${sim.size===1?'':'s'} simulado${sim.size===1?'':'s'}</strong> · ${af.length} receta${af.length===1?'':'s'} afectada${af.length===1?'':'s'} · platos sobre meta: ${antes} → <strong>${fuera}</strong>`;
+}
+
+/* ---------- drawer ---------- */
+const dr = document.getElementById('drawer'), sc = document.getElementById('scrim');
+let lastFocus = null;
+function abrir(html){ lastFocus = document.activeElement; dr.innerHTML = html; dr.classList.add('on'); sc.classList.add('on'); dr.focus(); }
+function cerrar(){ dr.classList.remove('on'); sc.classList.remove('on'); if(lastFocus) lastFocus.focus(); }
+sc.addEventListener('click', cerrar);
+document.addEventListener('keydown', e => { if(e.key==='Escape' && dr.classList.contains('on')) cerrar(); });
+
+function fichaHTML(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv,r), sub = batch(r.id);
+  const filas = r.ing.map(ln => {
+    const ins = ln.i!=null ? I[ln.i] : null;
+    const ef = ins ? precioEf(ln.i) : null;
+    const tot = (ins && ins.pr && ln.t!=null) ? ln.t*(ef/ins.pr) : (ln.t!=null?ln.t:(ln.q*(ef||0)));
+    // salto directo a la ficha de la sub-receta, sin pasar por el panel del producto
+    const salto = ln.r != null ? `<button class="subbtn" data-r="${ln.r}" title="Ver la receta">ver receta ›</button>` : '';
+    return `<tr>
+      <td>${ln.r!=null?'<span class="dot"></span>':''}${
+        ins ? `<button class="rowbtn" data-i="${ins.id}">${esc(Tt(ln.n))}</button>` : `${esc(Tt(ln.n))} <span style="color:var(--alto);font-size:11px">· fuera del banco</span>`}${salto}
+        <div style="color:var(--muted);font-size:11.5px">${ins?esc(ins.prov):'sin proveedor'}</div></td>
+      <td class="r">${(window.PUEDE && window.PUEDE.editarCantidad && ln.f && AREA_EDITABLE(r.area))
+        ? `<span class="qedit"><input class="qin" type="number" step="any" min="0" value="${ln.q}" data-f="${ln.f}" aria-label="Cantidad de ${esc(Tt(ln.n))}"><button class="qsave" data-f="${ln.f}" data-rid="${r.id}" title="Guardar esta cantidad">\u2713</button></span> <span style="color:var(--muted)">${esc(ln.u||'')}</span>`
+        : `${ln.q} <span style="color:var(--muted)">${esc(ln.u||'')}</span>`}</td>
+      <td class="r">${tot!=null?Q(tot):'—'}</td>
+      ${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))
+        ? `<td class="r">${ln.f ? `<button class="qdel" data-f="${ln.f}" data-rid="${r.id}" title="Quitar esta linea">\u2715</button>` : ''}</td>`
+        : ''}
+    </tr>`;
+  }).join('');
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(r.cat || (r.t==='plato'?'Ficha de receta':'Pre-elaborado'))} · ${r.area==='BARRA'?'Barra':'Cocina'}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(Tt(r.n))}</h2>
+      <div style="margin-top:9px"><span class="badge s-${st}">${ETIQ[st]}</span></div>
+    </div>
+    <div class="dbody">
+      ${r.nota?`<p class="note">${esc(r.nota)}</p>`:''}
+      ${r.ing.length ? `<div>
+        <div class="sec-t">Ingredientes · ${r.ing.length} línea${r.ing.length===1?'':'s'}</div>
+        <div class="tablewrap"><table style="min-width:0">
+          <thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th>${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))?'<th></th>':''}</tr></thead>
+          <tbody>${filas}</tbody></table></div></div>`
+        : `<p class="empty" style="padding:26px 0">Esta ficha está vacía. Cocina tiene que cargar la receta.</p>`}
+      ${(window.PUEDE && window.PUEDE.agregarLinea && AREA_EDITABLE(r.area)) ? `<div class="addrow">
+        <div class="sec-t" style="margin-top:0">Agregar un ingrediente</div>
+        <div class="simrow">
+          <input id="np-prod" list="banco-prods" placeholder="Producto del Banco" style="width:240px" autocomplete="off">
+          <input id="np-cant" type="number" step="any" min="0" placeholder="Cantidad" style="width:110px">
+          <button class="chip" id="np-add" data-rid="${r.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Agregar</button>
+        </div>
+        <datalist id="banco-prods">${I.filter(x => x.area === r.area).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">El producto tiene que existir ya en el Banco de Datos. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.</p>
+      </div>` : ''}
+      ${r.ing.length ? `<dl class="kv">
+        <dt>Subtotal materia prima</dt><dd>${Q(sub)}</dd>
+        ${r.t==='plato' && r.merma ? `<dt>Variación / merma (${r.merma}%)</dt><dd>${Q(sub*r.merma/100)}</dd>`:''}
+        ${r.t!=='plato' && (r.rindeTexto||r.rinde) ? `<dt>Rinde</dt><dd>${esc(r.rindeTexto||r.rinde)}</dd>`:''}
+        <div class="rule"></div>
+        <dt>${r.t==='plato'?'Costo del plato':'Costo por '+esc(r.unidadCosto||'porción')}</dt><dd>${r.t==='plato'?Q(c):QU(c)}</dd>
+        ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area))
+          ? `<span class="qedit"><input class="qin" id="np-menu" type="number" step="1" min="0" value="${r.precio}" style="width:92px" aria-label="Precio de carta"><button class="qsave" id="np-menu-save" data-rid="${r.id}" title="Guardar el precio de carta">\u2713</button></span>`
+          : Q0(r.precio)}</dd>
+        <dt>CMV actual</dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
+        <dt>Meta del área</dt><dd style="font-weight:400;color:var(--muted)">${r.obj}%</dd>
+        <dt>Precio para llegar a ${r.obj}%</dt><dd>${c!=null?Q0(c/(r.obj/100)):'—'}</dd>`:''}
+      </dl>`:''}
+    </div>`;
+}
+function insumoHTML(i, hist){
+  const ef = precioEf(i.id), usos = i.usos.map(id=>R[id]);
+  const platos = usos.filter(r=>r.t==='plato'), pre = usos.filter(r=>r.t!=='plato');
+  const histHTML = hist === undefined
+    ? `<p style="color:var(--muted);font-size:13px;margin:0">Leyendo el historial…</p>`
+    : (!hist.length
+      ? `<p style="color:var(--muted);font-size:13px;margin:0">Todavía no hay precios registrados para este producto. El primero que registres queda con fecha y factura.</p>`
+      : `<div class="tablewrap"><table style="min-width:0;font-size:13px">
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th class="r">Precio</th><th>Factura</th></tr></thead>
+          <tbody>${hist.slice(0,12).map(h=>`<tr><td>${esc(h.fecha)}</td><td>${esc(h.proveedor)}</td>
+            <td class="r">${Q(h.precioCompra)}</td><td>${esc(h.factura||'—')}</td></tr>`).join('')}</tbody></table></div>`);
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(i.c)} · ${i.area==='BARRA'?'Barra':'Cocina'}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(Tt(i.p))}</h2>
+      <div style="margin-top:6px;color:var(--muted);font-size:13.5px">${esc(i.prov)}</div>
+    </div>
+    <div class="dbody">
+      <dl class="kv">
+        <dt>Precio de compra</dt><dd>${i.pc!=null?Q(i.pc):'—'} ${esc(i.uc?'/ '+i.uc:'')}</dd>
+        <dt>Conversión aplicada</dt><dd style="font-weight:400;color:var(--muted);font-size:12.5px">${esc(i.cv||'—')}</dd>
+        <div class="rule"></div>
+        <dt>Precio por ${esc(i.u)}</dt><dd>${QU(ef)}</dd>
+      </dl>
+      ${i.sub!=null?`<div><button class="chip" data-r="${i.sub}" style="background:var(--lila);border-color:var(--lila);color:#14180F">Ver la receta de este pre-elaborado ›</button></div>`:''}
+      <div>
+        <div class="sec-t">Cambiar el precio</div>
+        <div class="simrow">
+          <label for="np" style="font-size:13.5px">Precio de compra${i.uc?' por '+esc(i.uc):''}</label>
+          <input id="np" type="number" step="0.01" min="0" value="${(sim.has(i.id) && i.pc && i.pr) ? (sim.get(i.id)/i.pr*i.pc).toFixed(2) : (i.pc!=null?i.pc:'')}" data-i="${i.id}">
+          <button class="chip" id="aplicar" data-i="${i.id}">Simular</button>
+          ${(window.PUEDE && window.PUEDE.cambiarPrecio && AREA_EDITABLE(i.area))
+            ? `<button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>` : ''}
+          ${sim.has(i.id)?`<button class="chip" id="quitar" data-i="${i.id}">Quitar</button>`:''}
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Simular</strong> no guarda nada: sirve para ver el impacto antes de aceptarlo.${(window.PUEDE && window.PUEDE.cambiarPrecio) ? ` <strong>Registrar</strong> escribe el precio en el Banco de Datos y lo deja en el histórico con fecha y factura.` : ` Para registrar el precio hace falta un permiso que tu rol no tiene; simular podés siempre.`}</p>
+      </div>
+      ${(window.PUEDE && window.PUEDE.crearProveedor && AREA_EDITABLE(i.area)) ? `<div>
+        <div class="sec-t">Proveedor</div>
+        <div class="simrow">
+          <input id="np-prov" list="lista-provs" value="${esc(i.prov==='—'?'':i.prov)}" placeholder="Proveedor" style="width:240px" autocomplete="off">
+          <button class="chip" id="np-prov-save" data-prod="${esc(i.p)}" data-area="${esc(i.area||'COCINA')}">Guardar</button>
+        </div>
+        <datalist id="lista-provs">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Cambia a quién le compramos este producto. <strong>No toca el precio.</strong> Si el proveedor todavía no existe, creálo primero en la pestaña Proveedores.</p>
+      </div>` : ''}
+      <div><div class="sec-t">Historial de precios</div>${histHTML}</div>
+      <div>
+        <div class="sec-t">Se usa en ${usos.length} receta${usos.length===1?'':'s'}</div>
+        ${usos.length ? [
+          platos.length?`<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Platos y cócteles</div>${platos.map(linea).join('')}</div>`:'',
+          pre.length?`<div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Pre-elaborados</div>${pre.map(linea).join('')}</div>`:''
+        ].join('') : `<p style="color:var(--muted);font-size:13.5px;margin:0">Ninguna ficha lo usa hoy. O sobra en el Banco, o el nombre no coincide con el que escribió cocina.</p>`}
+      </div>
+    </div>`;
+}
+function abrirInsumo(id){
+  const i = I[id];
+  abrir(insumoHTML(i, undefined));
+  google.script.run
+    .withSuccessHandler(function(h){ if(dr.classList.contains('on')) abrir(insumoHTML(i, h)); })
+    .withFailureHandler(function(){ if(dr.classList.contains('on')) abrir(insumoHTML(i, [])); })
+    .getHistorialPrecios(AUTH, i.p);
+}
+function linea(r){
+  const cmv = cmvAhora(r), st = estadoDe(cmv,r);
+  return `<button class="linkline" data-r="${r.id}">${esc(Tt(r.n))} <span style="color:var(--muted)">· ${cmv!=null?cmv.toFixed(1)+'% de '+r.obj+'%':'sin CMV'}</span></button>`;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.classList.contains('close')) return cerrar();
+  if(t.dataset.ima){ imArea = t.dataset.ima; pintar(); return; }
+  if(t.dataset.dbs !== undefined){
+    dbSemanas = +t.dataset.dbs; window.__DB__ = null; pintar(); return;
+  }
+  if(t.dataset.ims !== undefined){
+    imSemanas = +t.dataset.ims; window.__IM__ = null; pintar(); return;
+  }
+  if(t.dataset.view){ view = t.dataset.view; pintar(); return; }
+  if(t.dataset.area !== undefined && t.closest('.areas')){ area = t.dataset.area || ''; filt.prov=null; pintar(); return; }
+  if(t.dataset.fr){ filt.rec = t.dataset.fr; pintar(); return; }
+  if(t.dataset.fi){ if(t.dataset.fi==='_prov'){filt.prov=null;} else filt.ins = t.dataset.fi; pintar(); return; }
+  if(t.dataset.p){ filt.prov = t.dataset.p; filt.ins='todos'; view='insumos'; area=''; pintar(); return; }
+  if(t.dataset.r != null && t.dataset.r !== ''){ abrir(fichaHTML(R[+t.dataset.r])); return; }
+  if(t.id === 'aplicar'){
+    const id = +t.dataset.i, ins = I[id], v = parseFloat(document.getElementById('np').value);
+    if(!isNaN(v) && ins.pc) sim.set(id, ins.pr * (v / ins.pc));
+    else if(!isNaN(v)) sim.set(id, v);
+    memo.clear(); abrirInsumo(id); pintar(); return;
+  }
+  if(t.id === 'quitar'){ const id=+t.dataset.i; sim.delete(id); memo.clear(); abrirInsumo(id); pintar(); return; }
+  if(t.id === 'registrar'){
+    const id = +t.dataset.i, ins = I[id];
+    const v = parseFloat(document.getElementById('np').value);
+    if(isNaN(v) || v <= 0){ alert('Escribí un precio de compra válido.'); return; }
+    const fac = prompt('Número de factura o boleta (podés dejarlo vacío):', '');
+    if(fac === null) return;
+    t.disabled = true; t.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        sim.delete(id);
+        alert('Guardado. ' + res.producto + ': Q' + res.antes + ' → Q' + res.ahora +
+              (res.variacion!=null ? ' (' + (res.variacion>0?'+':'') + res.variacion.toFixed(1) + '%)' : '') +
+              '\n' + res.recetasAfectadas.length + ' receta(s) recalculada(s).');
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Registrar precio'; alert('No se pudo guardar: ' + e.message); })
+      .registrarPrecio(AUTH, {producto: ins.p, proveedor: ins.prov, precioCompra: v, factura: fac});
+    return;
+  }
+  // --- abrir el formulario de receta nueva
+  if(t.id === 'nueva'){ nfTipo = 'plato'; abrir(fichaNuevaHTML()); return; }
+  if(t.dataset.nft){ nfTipo = t.dataset.nft; abrir(fichaNuevaHTML()); return; }
+
+  // --- crear la ficha
+  if(t.id === 'nf-crear'){
+    const esPlato = nfTipo === 'plato';
+    const datos = {
+      tipo: nfTipo,
+      nombre: (document.getElementById('nf-nombre').value || '').trim(),
+      nota: (document.getElementById('nf-nota').value || '').trim()
+    };
+    if(!datos.nombre){ alert('Escribi el nombre de la receta.'); return; }
+    if(esPlato){
+      datos.categoria = (document.getElementById('nf-cat').value || '').trim();
+      datos.precio = parseFloat(document.getElementById('nf-precio').value);
+      if(!datos.categoria){ alert('Elegi o escribi una categoria.'); return; }
+      if(isNaN(datos.precio) || datos.precio <= 0){ alert('El precio de carta tiene que ser mayor que cero.'); return; }
+    } else {
+      datos.rinde = parseFloat(document.getElementById('nf-rinde').value);
+      if(isNaN(datos.rinde) || datos.rinde <= 0){ alert('El rinde tiene que ser mayor que cero.'); return; }
+    }
+    t.disabled = true; t.textContent = 'Creando\u2026';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Crear la ficha';
+          alert('No se creo: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        alert('Listo. Se creo la pestaña "' + res.resultado.pestana + '".' +
+              (res.resultado.filaResumen ? '\nRESUMEN CMV, fila ' + res.resultado.filaResumen + ', marcada por costear.' : ''));
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear la ficha'; alert('No se pudo crear: ' + e.message); })
+      .webCrearFicha(AUTH, datos, area || 'COCINA');
+    return;
+  }
+
+  // --- quitar una linea de la ficha
+  if(t.classList.contains('qdel')){
+    const fila = +t.dataset.f, r = R[+t.dataset.rid];
+    const ln = r.ing.filter(function(x){ return x.f === fila; })[0];
+    if(!confirm('Quitar "' + (ln ? ln.n : 'esta linea') + '" de ' + r.n + '?\n\nLa linea queda vacia y el costo del plato baja. Se puede volver a agregar despues.')) return;
+    t.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se quito: ' + ((res && res.error) || 'sin respuesta')); return; }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; alert('No se pudo quitar: ' + e.message); })
+      .webQuitarLinea(AUTH, r.n, fila, r.area);
+    return;
+  }
+
+  // --- cambiar el proveedor de un insumo. NO toca el precio.
+  if(t.id === 'np-prov-save'){
+    const prod = t.dataset.prod;
+    const prov = (document.getElementById('np-prov').value || '').trim();
+    if(!prov){ alert('Escribi un proveedor.'); return; }
+    t.disabled = true; t.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Guardar';
+          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + e.message); })
+      .webAsignarProveedor(AUTH, prod, prov, t.dataset.area);
+    return;
+  }
+
+  // --- alta de insumo en el Banco.
+  // El servidor contesta {ok:false, motivo:'posible duplicado', similares:[...]} cuando
+  // encuentra parecidos. Eso NO es un error: es la pregunta. Se muestra y se reintenta
+  // con confirmar=true. Si se tratara como error, el candado anti-duplicados seria un
+  // muro en vez de un aviso, y el Banco ya tiene un "Perejil" y un "Prejil" que
+  // demuestran lo caro que sale no preguntar.
+  if(t.id === 'ni-add'){
+    const val = id => (document.getElementById(id).value || '').trim();
+    const datos = {
+      producto: val('ni-prod'), categoria: val('ni-cat'),
+      precioCompra: parseFloat(val('ni-pc')),
+      unidadCompra: val('ni-uc'), unidadReceta: val('ni-ur'),
+      contenido: val('ni-cont') ? parseFloat(val('ni-cont')) : null,
+      proveedor: val('ni-prov')
+    };
+    if(!datos.producto){ alert('Falta el nombre del producto.'); return; }
+    if(isNaN(datos.precioCompra) || datos.precioCompra <= 0){ alert('El precio de compra tiene que ser mayor que cero.'); return; }
+    if(!datos.unidadCompra || !datos.unidadReceta){ alert('Faltan la unidad de compra y la de receta.'); return; }
+
+    const mandar = function(confirmar){
+      t.disabled = true; t.textContent = 'Creando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Crear';
+          if(res && res.ok){ location.reload(); return; }
+          if(res && res.motivo === 'posible duplicado'){
+            const lista = res.similares.map(s => '  · ' + s.producto + '  (' + s.similitud + '% ' + s.motivo + ', Q' + s.precio + ' / ' + s.unidad + ')').join('\n');
+            if(confirm('Ya hay algo parecido en el Banco:\n\n' + lista +
+                       '\n\n¿Crear "' + datos.producto + '" igual?\n\nSi es el mismo producto, cancelá y cambiale el precio al que ya existe.')){
+              mandar(true);
+            }
+            return;
+          }
+          if(res && res.requiereContenido){
+            alert('Falta el contenido.\n\n' + (res.motivo || '') +
+                  '\n\nUn envase (manojo, caja, frasco) necesita saber cuántas ' + datos.unidadReceta + ' trae.');
+            return;
+          }
+          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
+        })
+        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
+        .webCrearInsumo(AUTH, datos, confirmar, area || 'COCINA');
+    };
+    mandar(false);
+    return;
+  }
+
+  // --- alta de proveedor. Mismo flujo de confirmacion que el insumo.
+  if(t.id === 'npr-add'){
+    const val = id => (document.getElementById(id).value || '').trim();
+    const datos = { nombre: val('npr-nom'), nit: val('npr-nit'),
+                    contacto: val('npr-con'), telefono: val('npr-tel') };
+    if(!datos.nombre){ alert('Falta el nombre del proveedor.'); return; }
+
+    const mandar = function(confirmar){
+      t.disabled = true; t.textContent = 'Creando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Crear';
+          if(res && res.ok){ location.reload(); return; }
+          if(res && res.motivo === 'posible duplicado'){
+            const lista = res.similares.map(s => '  · ' + s.nombre + '  (' + s.similitud + '%)').join('\n');
+            if(confirm('Ya hay un proveedor parecido:\n\n' + lista +
+                       '\n\n¿Crear "' + datos.nombre + '" igual?')){
+              mandar(true);
+            }
+            return;
+          }
+          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
+        })
+        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
+        .webCrearProveedor(AUTH, datos, confirmar);
+    };
+    mandar(false);
+    return;
+  }
+
+  // --- agregar una linea. La unidad NO se pide: la pone el Banco.
+  if(t.id === 'np-add'){
+    const r = R[+t.dataset.rid];
+    const prod = (document.getElementById('np-prod').value || '').trim();
+    const cant = parseFloat(document.getElementById('np-cant').value);
+    if(!prod){ alert('Elegi un producto del Banco de Datos.'); return; }
+    if(isNaN(cant) || cant <= 0){ alert('La cantidad tiene que ser mayor que cero.'); return; }
+    t.disabled = true; t.textContent = 'Agregando\u2026';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Agregar';
+          alert('No se agrego: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + e.message); })
+      .webAgregarLinea(AUTH, r.n, prod, cant, '', r.area);   // unidad vacia: manda el Banco
+    return;
+  }
+
+  // --- precio de carta
+  if(t.id === 'np-menu-save'){
+    const r = R[+t.dataset.rid];
+    const v = parseFloat(document.getElementById('np-menu').value);
+    if(isNaN(v) || v <= 0){ alert('El precio tiene que ser mayor que cero.'); return; }
+    if(v === r.precio){ alert('Es el mismo precio que ya tenia.'); return; }
+    const motivo = prompt('Por que cambia el precio? (queda en la bitacora, podes dejarlo vacio)', '');
+    if(motivo === null) return;
+    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; t.textContent = '\u2713'; alert('No se guardo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = '\u2713'; alert('No se pudo guardar: ' + e.message); })
+      .webCambiarPrecioMenu(AUTH, r.n, v, motivo, r.area);
+    return;
+  }
+
+  if(t.classList.contains('qsave')){
+    const fila = +t.dataset.f, r = R[+t.dataset.rid];
+    const inp = dr.querySelector('.qin[data-f="' + fila + '"]');
+    const v = parseFloat(inp && inp.value);
+    // El servidor exige cantidad > 0. Se avisa aca con el mismo criterio, para que la
+    // persona no mande algo que va a volver rechazado.
+    if(isNaN(v) || v <= 0){
+      alert(v === 0
+        ? 'La cantidad tiene que ser mayor que cero. Para sacar el ingrediente hay que quitar la linea, no ponerla en 0.'
+        : 'Escribi una cantidad valida.');
+      return;
+    }
+    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = '\u2713';
+          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta del servidor'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){
+        t.disabled = false; t.textContent = '\u2713';
+        alert('No se pudo guardar: ' + e.message);
+      })
+      .webEditarCantidad(AUTH, r.n, fila, v, r.area);   // r.n es el nombre de la pestana
+    return;
+  }
+  if(t.id === 'simreset'){ sim.clear(); memo.clear(); cerrar(); pintar(); return; }
+  if(t.dataset.i != null && t.dataset.i !== ''){ abrirInsumo(+t.dataset.i); return; }
+});
+let td;
+document.getElementById('q').addEventListener('input', e => {
+  clearTimeout(td); td = setTimeout(() => { q = e.target.value.trim(); pintar(); }, 120);
+});
+
+const porArea = a => R.filter(r => r.area===a && r.t==='plato');
+document.getElementById('foot').textContent =
+  `Cocina: ${porArea('COCINA').length} fichas de plato, ${porArea('COCINA').filter(r=>cmvAhora(r)!=null).length} con CMV, meta 30%. ` +
+  `Barra: ${porArea('BARRA').length} cócteles y bebidas, meta 20%. ` +
+  `${R.length - porArea('COCINA').length - porArea('BARRA').length} pre-elaborados · ${I.length} productos · ${P.length} proveedores. ` +
+  `Fuente: ${D.meta.fuente}, leído el ${D.meta.fecha}.`;
+pintar();
+
+/* Que puede hacer quien entro. Va ACA ADENTRO y no en arrancar(), porque pintar()
+   es local a iniciarApp(): desde afuera no se la puede llamar.
+   Eso fue justamente el bug de la tarjeta "Nueva receta": la grilla se dibuja al
+   arrancar, con PUEDE todavia vacio, y sin volver a pintar la tarjeta no aparecia
+   nunca. Editar cantidades si funcionaba, porque ese panel se dibuja al abrir una
+   ficha, o sea despues de que llego la respuesta.
+
+   Si esto falla o tarda, PUEDE queda vacio y la pagina se comporta como antes:
+   solo lectura. Nada de lo que ya funcionaba depende de que responda.
+
+   OJO: esto es para la INTERFAZ. El candado de verdad esta en el servidor y se
+   vuelve a verificar en cada operacion. Esconder un boton no protege nada. */
+window.PUEDE = {};
+google.script.run
+  .withSuccessHandler(function(r){
+    if(r && r.ok && r.resultado){
+      window.PUEDE = r.resultado.puede || {};
+      // Donde puede ESCRIBIR esta persona. Lo lee AREA_EDITABLE. Si el servidor no
+      // lo manda —una version vieja—, queda undefined y AREA_EDITABLE devuelve
+      // false: la pantalla se va a solo lectura en vez de ofrecer lo que no puede.
+      window.PUEDE.areas = r.resultado.areas;
+      window.YO = r.resultado;
+      pintar();                       // <- sin esto, la grilla se queda en solo lectura
+    }
+  })
+  .withFailureHandler(function(){ /* silencio: se queda en solo lectura */ })
+  .webEstadoEdicion(AUTH);
+}
+</script>
+
+<script>
+/* Adapta el modelo de CosteoDatos.gs a la forma compacta que usa la vista.
+   Lo importante: area y cmvObjetivo viajan por receta, y cada linea lleva su sub-receta. */
+function adaptar(m){
+  return {
+    meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas},
+    proveedores:m.proveedores,
+    insumos:m.insumos.map(function(i){
+      return {id:i.id, p:i.producto, c:i.categoria, pr:i.precio, u:i.unidad, pc:i.precioCompra,
+              uc:i.unidadCompra, cv:i.conversion, prov:i.proveedor, area:i.area, sub:i.sub, usos:i.usos};
+    }),
+    recetas:m.recetas.map(function(r){
+      return {id:r.id, n:r.nombre, t:r.tipo, cat:r.categoria, area:r.area, obj:r.cmvObjetivo,
+              precio:r.precio, costo:r.costo, costoUnit:r.costoUnit, unidadCosto:r.unidadCosto,
+              cmv:r.cmv==null?null:Math.round(r.cmv*10)/10, merma:r.merma,
+              rinde:r.rinde, rindeTexto:r.rindeTexto, nota:r.nota, sug:r.sugerido, est:r.estado, base:r.base,
+              ing:r.ingredientes.map(function(g){
+                return {i:g.insumo, r:g.receta, n:g.nombre, q:g.cantidad, u:g.unidad, t:g.total, f:g.fila};
+              })};
+    })
+  };
+}
+function arrancar(m){
+  window.__DATA__ = adaptar(m);
+  document.getElementById('cargando').remove();
+  iniciarApp();
+}
+function fallar(e){
+  document.getElementById('cargando').innerHTML =
+    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">' +
+    (e && e.message ? e.message : e) + '</p>';
+}
+/* LAS DOS LLAMADAS SALEN JUNTAS, no una despues de la otra.
+   getCosteoData tarda lo suyo (es el recetario entero) y getProfitOS tambien, y
+   hasta ahora la segunda no arrancaba hasta que la primera volvia: el usuario
+   esperaba la SUMA. El tablero no necesita nada del recetario, asi que se pide en
+   paralelo y lo que se espera es la mas lenta de las dos.
+
+   El resultado se guarda y no se pinta: pintar() necesita __DATA__, que todavia
+   puede no haber llegado. Cuando iniciarApp arranca, pedirProfitOS lo encuentra ya
+   servido en el cache y no vuelve a pedirlo. */
+window.__POS_CACHE__ = {};
+window.__POSCARGANDO__ = 13;
+google.script.run
+  .withSuccessHandler(function(r){
+    window.__POSCARGANDO__ = null;
+    window.__POS_CACHE__[13] = r;
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .withFailureHandler(function(e){
+    window.__POSCARGANDO__ = null;
+    var err = {ok:false, error:(e && e.message) || 'No se pudo leer'};
+    window.__POS_CACHE__[13] = {tablero:err, menu:err};
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .getProfitOS(AUTH, 13);
+
+google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData(AUTH);
+</script>

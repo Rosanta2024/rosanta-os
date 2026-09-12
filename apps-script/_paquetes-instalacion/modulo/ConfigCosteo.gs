@@ -1,0 +1,136 @@
+/**
+ * ConfigCosteo.gs — Configuracion del modulo Recetario + Proveedores.
+ * Revision 21 ago 2026: metas por area, exclusiones actualizadas a la v9, alias de sub-recetas.
+ *
+ * Todas las IDs viven en Script Properties (Proyecto > Configuracion del proyecto >
+ * Propiedades de la secuencia de comandos). Nunca escribirlas aqui.
+ *
+ *   RECETARIO_COCINA_SHEET_ID   -> hoja NATIVA del recetario de cocina
+ *   RECETARIO_BARRA_SHEET_ID    -> hoja NATIVA del recetario de barra (NO el .xlsx)
+ *   COSTEO_SHEET_ID             -> la crea crearHojaCosteo(), no ponerla a mano
+ *   RECETARIO_FOTOS_FOLDER_ID   -> carpeta de Drive con fotos de plato (opcional)
+ *
+ * OJO (10-sep-2026): este paquete es una foto del 21 de agosto. Nombraba el recetario de
+ * cocina "v9" y el de barra "v5"; el de cocina vivo ya va en la v16. Las exclusiones de
+ * tabsNoReceta de aqui abajo tambien quedaron congeladas en los nombres de pestana de la
+ * v9: si una hoja de control se renombro despues, va a aparecer como receta basura en la
+ * grilla. El codigo vigente es el de rosanta-intranet/. Antes de instalar desde aqui,
+ * comparar tabsNoReceta contra el ConfigCosteo.js de ese proyecto.
+ */
+
+var COSTEO = {
+  areas: [
+    { clave: 'RECETARIO_COCINA_SHEET_ID', area: 'COCINA', cmvObjetivo: 30, merma: 10 },
+    { clave: 'RECETARIO_BARRA_SHEET_ID',  area: 'BARRA',  cmvObjetivo: 20, merma: 3  }
+  ],
+
+  /**
+   * Pestanas que NO son fichas de receta. Se comparan normalizadas y por PREFIJO.
+   * Actualizado a los nombres de la v9. Si se renombra una hoja de control, agregarla aqui
+   * o va a aparecer como una receta basura en la grilla.
+   */
+  tabsNoReceta: [
+    // comunes
+    'banco de datos', 'indice', 'indice antiguo',
+    // cocina v9
+    'resumen cmv', 'pendientes', 'respuestas de cocina', 'carta 2027', 'fuera de carta',
+    'revision vs carta', 'pre-elaborados q x g', 'conversion en fichas', 'limpieza del banco',
+    // nombres viejos que pueden seguir vivos en copias
+    'resumen de cmv', 'que falta', 'platos fuera de la carta',
+    'la ficha contra lo que dice la carta', 'lineas de ficha corregidas',
+    'limpieza de nombres y unidades',
+    // barra
+    'ventas 2026', 'escenario precios 2026'
+  ],
+
+  /** Prefijo de las fichas archivadas. Nunca se muestran como recetas activas. */
+  prefijoArchivo: 'zz archivo',
+
+  /**
+   * Alias para enlazar el nombre que usa el Banco de Datos con el nombre de la pestana
+   * de la sub-receta, cuando no coinciden. Clave = nombre en el Banco, valor = pestana.
+   * Sin esto el ingrediente no ofrece el salto a su ficha.
+   */
+  aliasSubReceta: {
+    'pure de arveja'            : 'Pure de Alverja',
+    'pure de camote'            : 'Pure de Camote y Zanahoria',
+    'pure de platano'           : 'Pure de Platanos',
+    'pure de yuca'              : 'Pure de Yuca',
+    'ketchup'                   : 'Ketchup con Toque de Menta',
+    'mayoneza de hierba luisa'  : 'Mayonesa de Hierbaluisa',
+    'cebollitas azadas'         : 'Cebollitas Asadas',
+    'fresas maceradas'          : 'Fresas Maceradas',
+    'tomates rostizados'        : 'Tomates Rostizados',
+    'compota de tomate'         : 'Compota de Tomate',
+    'mermelada de cebolla'      : 'Mermelada de Cebolla',
+    'crema de zanahorias'       : 'Crema de Zanahoria',
+    'chips de malanga'          : 'Chips de Malanga',
+    'chips de camote'           : 'Camotes Fritos',
+    'pan de la casa'            : 'Pan de la Casa1',
+    'gratin de papa'            : 'Gratin de Papa',
+    'melocotones macerados'     : 'Melocoton Macerado',
+    'pepinillos encurtidos'     : 'Pepinillos Encurtidos',
+    'salsa tamarindo'           : 'Salsa de Tamarindo',
+    'salsa pasta'               : 'Salsa Pasta del Dia',
+    'salsa bordolesa'           : 'Salsa Bordolesa',
+    'fetuccini de la casa'      : 'Fetuccini de la Casa',
+    'salsa de chile cobanero'   : 'Salsa de Chile Cobanero'
+  },
+
+  bancoCols: ['CATEGORIA', 'PRODUCTO', 'PRECIO_UNIDAD_RECETA', 'UNIDAD_RECETA',
+              'PRECIO_COMPRA', 'UNIDAD_COMPRA', 'CONVERSION', 'PROVEEDOR'],
+
+  hojas: {
+    proveedores: 'PROVEEDORES',
+    precios:     'PRECIOS',
+    indice:      'INDICE_INSUMO_RECETA'
+  },
+
+  cacheKey: 'costeo_indice_v2',
+  cacheSegs: 900
+};
+
+/** Normaliza para comparar nombres: sin acentos, sin dobles espacios, minuscula. */
+function normalizar_(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** true si la pestana no es una ficha de receta. */
+function esHojaDeControl_(nombreHoja) {
+  var t = normalizar_(nombreHoja);
+  if (t.indexOf(COSTEO.prefijoArchivo) === 0) return true;
+  for (var i = 0; i < COSTEO.tabsNoReceta.length; i++) {
+    if (t.indexOf(COSTEO.tabsNoReceta[i]) === 0) return true;
+  }
+  return false;
+}
+
+/** Primer numero de una fila a partir de una columna. */
+function primerNumero_(fila, desde) {
+  for (var k = desde; k < fila.length; k++) {
+    if (typeof fila[k] === 'number' && !isNaN(fila[k])) return fila[k];
+  }
+  return null;
+}
+
+/** Primer texto no vacio de una fila a partir de una columna. */
+function primerTexto_(fila, desde) {
+  for (var k = desde; k < fila.length; k++) {
+    var v = fila[k];
+    if (v !== '' && v != null && typeof v !== 'number') return String(v).trim();
+  }
+  return '';
+}
+
+function abrirPorClave_(clave) {
+  var id = PropertiesService.getScriptProperties().getProperty(clave);
+  return id ? SpreadsheetApp.openById(id) : null;
+}
+
+function hojaCosteo_() {
+  var ss = abrirPorClave_('COSTEO_SHEET_ID');
+  if (!ss) throw new Error('Falta la propiedad COSTEO_SHEET_ID. Corre crearHojaCosteo() una vez.');
+  return ss;
+}

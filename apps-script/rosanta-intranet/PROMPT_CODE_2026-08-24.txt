@@ -1,0 +1,177 @@
+Continuamos el modulo Recetario + Proveedores de la intranet de Rosanta.
+Ya lo instalaste el 21 de agosto y quedo leyendo la v11. Hoy hay que
+actualizarlo a la v15 y agregarle dos archivos nuevos.
+
+NO reescribas el modulo. Ya funciona. Esto es actualizacion.
+
+El recetario sigue en revision. El modulo se actualiza y se prueba, pero
+no se abre al equipo todavia.
+
+=============================================================
+ACCESO DE USUARIOS — NO TOCAR
+=============================================================
+Jeffry y Jose siguen sin acceso, y asi se queda por ahora. Es decision
+de direccion: el recetario todavia tiene ajustes pendientes y no se abre
+al equipo hasta que esten resueltos.
+
+NO cablees el token de getUsuarioActual(). NO agregues usuarios. NO
+cambies roles ni permisos. Dejalo tal como esta.
+
+=============================================================
+ARCHIVOS
+=============================================================
+Todo esta en:
+    ~/Documents/Claude/Projects/Rosanta (1)/modulo-recetario-intranet/
+
+    Rosanta_Recetario_Cocina_2027_v15.xlsx    <- el recetario nuevo. ESTE, no otro
+    ConfigPOS.gs                              <- NUEVO
+    SincronizarPrecios.gs                     <- NUEVO
+    2026-08-24_Alineacion_POS_Recetario.md    <- contexto
+    2026-08-24_Profit_OS_Tres_Chequeos.md     <- contexto
+    2026-08-21_Recetario_Cocina_Historial_de_Cambios_v2_a_v11.md
+
+=============================================================
+TAREA 1 — migrar a v15
+=============================================================
+Convertir Rosanta_Recetario_Cocina_2027_v15.xlsx a hoja NATIVA de Google
+y apuntar RECETARIO_COCINA_SHEET_ID ahi.
+
+Verificar ANTES de seguir que los VLOOKUP sobrevivieron la conversion:
+abri dos o tres fichas y confirma que la columna PRECIO UNIT. sigue
+calculando contra 'BANCO DE DATOS'. Si se rompieron, PARA y avisa.
+
+POR QUE ESTO ES URGENTE
+La intranet HOY muestra numeros que no son de ninguna version valida: mezcla
+fichas de la v9 con precios de julio a medio aplicar. El Queso Horneado sale
+51.4% cuando el real es 30.4%. No se puede decidir nada con eso.
+
+Lo verifique linea por linea contra la captura del 24-ago:
+  Camembert 1 Unidad Q49       -> es de la v9. Desde la v10 son 0.5 unidad
+  Compota de tomate Q7.92      -> es de la v9. En v15 son Q6.87
+  Pepitoria Q2.31              -> ESA si es de julio (Q35/libra)
+  Costo total Q71.95           -> no coincide con ninguna version
+
+El Banco tiene los precios de julio en materias primas (Lomito Q69, Brisket Q40)
+pero los pre-elaborados NO se recalcularon: chips de malanga sigue en Q180.17 el
+batch cuando ahora son Q45. Los costos de batch en el Banco son numeros fijos,
+no formulas, asi que actualizar la materia prima no los mueve. Por eso hace falta
+migrar el libro completo, no parchar precios.
+
+Que cambio de v11 a v15:
+  v12  RESUMEN CMV columnas H e I: nombre en el POS y llave
+  v13  Postres a Q65. Se reactivaron PERAS HORNEADAS y MOUSSE DE CHOCOLATE
+       (estaban como ZZ ARCHIVO) y se crearon CHARLOTTA y PANACOTTA MARACUYA
+       RESUMEN CMV columna J: ESTADO DEL COSTEO
+       Las 3 pastas quedaron marcadas POR COSTEAR: muestran CMV pero NO es real
+  v14  Hoja nueva MAPA POS
+  v15  Lomito de la Casa Q180 (lo confirmo direccion contra el menu ES 2027 VF).
+       OJO: el POS tiene Q190 en la llave 394 y hay que corregirlo ALLA, no aca.
+       Los 4 postres van por un unico boton de Q65, sin producto propio en el POS.
+       Cinco platos mas pasaron a retirados.
+
+HOJAS NUEVAS QUE HAY QUE AGREGAR A COSTEO.tabsNoReceta en ConfigCosteo.gs:
+    'mapa pos'
+    'cambios v11'
+Si no las agregas, el lector las va a leer como fichas de receta.
+
+=============================================================
+TAREA 2 — instalar ConfigPOS.gs
+=============================================================
+Es el puente entre el recetario y el POS: el recetario dice "Pasta de la
+Casa" y el POS dice "Pasta del Chef". Sin eso ningun cruce de ventas
+contra costos funciona.
+
+NO tiene datos adentro a proposito. Lee todo de dos hojas:
+    RESUMEN CMV  columna B = plato, H = nombre POS, I = llave
+    MAPA POS     el resto, y para de leer en la fila marcada FIN
+
+Se edita en el Excel, nunca en el codigo. Si alguien mete la lista al .gs
+otra vez, se desincroniza.
+
+Despues de copiarlo, correr refrescarMapaPOS(). Tiene que dar:
+
+    platos mapeados: 35 | ignorar: 7 | retirar: 10 | sin ficha: 2 | notas: 3
+
+Si da otra cosa, revisa que la fila FIN de MAPA POS siga en su lugar.
+
+=============================================================
+TAREA 3 — instalar SincronizarPrecios.gs
+=============================================================
+Sincroniza el Banco de Datos con el cierre mensual de inventario.
+NO escribe solo: sincronizarPreciosDeCierre() propone y
+aplicarSincronizacion() escribe lo aprobado.
+
+  1. Copiar el archivo
+  2. Activar el servicio avanzado de Drive (usa Drive.Files.copy)
+  3. convertirCierreANativa_('<id del xlsx del cierre de julio>')
+     Eso guarda solo INVENTARIO_CIERRE_SHEET_ID
+  4. Correr probarSincronizacion() y LEER el Log. No apliques nada todavia.
+  5. Agregar 'sync_precios' a COSTEO.tabsNoReceta (la hoja de log vive en
+     el libro de costeo)
+
+Tiene dos candados que NO hay que quitar:
+  - si la unidad no coincide entre el Banco y el cierre, no toca nada
+    (asi se caza el caso del camote: Q20/unidad contra Q8/libra)
+  - relee cada fila antes de escribirla por si se movio
+
+=============================================================
+TAREA 4 — actualizar los controles de probarCosteo()
+=============================================================
+Los valores viejos eran de la v9 y ya no aplican. Los de la v15 son:
+
+    COCINA -> 35 fichas de plato | 40 pre-elaborados | 26 con CMV
+    CONTROL ensalada rosanta:          15.9
+    CONTROL queso horneado:            30.4     <- el que hoy sale 51.4
+    CONTROL tabla de jamones y quesos: 22.6
+    CONTROL gratin de papas:           19.8
+    CONTROL mix de fritas:             23.6     <- el que hoy sale 67.9
+    CONTROL peras horneadas:           19.7
+    fichas sin ingredientes y sin precio: 0
+
+Si el Queso Horneado no da 30.4 y el Mix de Fritas no da 23.6, la migracion
+NO quedo. Son los dos que delatan si se quedo leyendo el libro viejo.
+
+Las 9 fichas de plato que SI deben salir vacias, y no son error:
+    Coliflor con Romesco, Brocoli con Nduja, Bok Choy, Vegetales
+    Fermentados, Arroz Meloso, Lomito de la Casa, Estofado de Rabo,
+    Charlotta, Panacotta Maracuya
+
+Mix de Fritas paso de 67.9% a 23.6% porque se corrigio la malanga
+(Q45 por unidad, no por libra) y el camote (Q9.50 la libra). No es un bug.
+El Queso Horneado paso de 51.4% a 30.4% porque lleva MEDIA unidad de camembert,
+no una. Se corrigio el 21 de agosto en la v10. Tampoco es un bug.
+
+=============================================================
+COSAS QUE NO HAY QUE HACER
+=============================================================
+- No tocar el precio del Lomito de la Casa. Quedo en Q180, que es lo que dice
+  el menu ES 2027 VF y lo confirmo direccion. El POS tiene Q190 en la llave 394:
+  eso se corrige en el POS, no en el recetario.
+- No "arreglar" el CMV de las pastas. Marcan 9.5%, 18.3% y 20.5% porque
+  el fetuccini esta costeado provisionalmente. Falta la receta de cocina.
+- No renombrar nada para que coincida con el POS. El POS manda en
+  nomenclatura y la traduccion la resuelve ConfigPOS.gs. Cada sistema se
+  queda con el nombre que le sirve.
+- No meter datos dentro de ConfigPOS.gs.
+- No habilitar el acceso de Jeffry ni de Jose. Ver la seccion de arriba.
+- Antes de nombrar una funcion nueva, verifica que no exista ya en el
+  proyecto. En Apps Script todos los .gs comparten ambito global. Ya paso
+  con leerFicha_ y primerNumero_.
+
+=============================================================
+LO QUE NO ENTRA EN ESTE PROMPT
+=============================================================
+Hay un quinto archivo en la carpeta, EdicionRecetario.gs, que agrega la capa de
+escritura: editar recetas, agregar productos y agregar proveedores. NO lo
+instales todavia. Va en una entrega aparte, despues de que la migracion a v15
+este verificada y de limpiar cinco duplicados que tiene el Banco.
+
+=============================================================
+AL TERMINAR
+=============================================================
+Deci que dieron refrescarMapaPOS(), probarCosteo() y probarSincronizacion(),
+y si algo del paso de verificacion de VLOOKUP fallo.
+
+Agrega los pendientes que queden al tracker maestro, que es el artefacto
+Cowork rosanta-seguimiento-semanal, en
+    ~/Claude/Artifacts/rosanta-seguimiento-semanal/index.html

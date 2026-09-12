@@ -1,0 +1,462 @@
+:root{
+  /* Crema + Verde Bosque + Lila, la combinacion de marca. El --bg era #FBFAF7,
+     un blanco roto que no esta en la paleta. */
+  --bg:#F2EEEB; --surface:#FFFFFF; --panel:#EAE5DE; --panel-2:#E0DAD1;
+  --nav-txt:#DCE7DF;   /* texto de las pestanas sobre el header verde */
+  --ink:#14180F; --ink-2:#3E4438; --muted:#6E7268; --line:#E3DED6; --line-2:#D3CCC1;
+  --bosque:#4E6D5A; --verde:#57A77F; --lila:#AEAAE2;
+  --alto:#B4532F; --meta:#3F7F5E; --bajo:#40708F; --vacia:#9A968D; --pre:#7C7A93;
+  --shadow:0 1px 2px rgba(20,24,15,.05), 0 8px 24px -12px rgba(20,24,15,.18);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+    --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+    --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+    --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --nav-txt:#A8C7B2;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+  --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+  --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+  --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  --nav-txt:#A8C7B2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Lato","Avenir Next",Avenir,system-ui,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif; font-weight:700; text-wrap:balance; margin:0}
+button{font:inherit; color:inherit; cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+header.top{border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:40}
+/* Volver al panel. Mismo boton que en marketing —forma, flecha y texto— pero con
+   los tokens de esta vista: el header de aca es claro, no Verde Bosque. */
+/* Dos columnas para "Esta semana". Colapsa a una sola en pantallas angostas:
+   la pantalla tiene que caber en una pantalla, tambien en un telefono. */
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px}
+.volver{
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:var(--panel); color:var(--ink-2);
+  border:1px solid var(--line-2); border-radius:999px;
+  padding:.35rem .85rem; font-size:.82rem; text-decoration:none; white-space:nowrap;
+}
+.volver:hover{ background:var(--panel-2); color:var(--ink); }
+.volver:focus-visible{ outline:2px solid var(--verde); outline-offset:2px; }
+.topbar{display:flex; align-items:center; gap:18px; padding:14px 0; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:10px; margin-right:auto}
+.brand .mark{width:11px;height:11px;border-radius:50%;background:var(--bosque);display:inline-block;transform:translateY(-1px)}
+.brand h1{font-size:20px; letter-spacing:.01em}
+.coord{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.search{position:relative; flex:1 1 260px; max-width:380px}
+.search input{
+  width:100%; padding:9px 12px 9px 34px; border-radius:var(--r);
+  border:1px solid var(--line-2); background:var(--bg); color:var(--ink); font:inherit;
+}
+.search input:focus{outline:2px solid var(--verde); outline-offset:1px; border-color:transparent}
+.search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5}
+.nav{display:flex; gap:2px; padding:0 0 12px; flex-wrap:wrap}
+.nav button{border:none; background:none; padding:7px 14px; border-radius:99px; font-size:13px; letter-spacing:.02em; color:var(--muted)}
+.nav button[aria-selected="true"]{background:var(--bosque); color:var(--surface)}
+.nav button:hover:not([aria-selected="true"]){background:var(--panel); color:var(--ink)}
+.areas{display:flex; gap:2px; margin-left:auto; background:var(--panel); border-radius:99px; padding:3px}
+.areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:var(--muted)}
+.areas button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+
+.simbar{display:none; align-items:center; gap:14px; flex-wrap:wrap; background:var(--lila); color:#14180F; padding:9px 20px; font-size:13px}
+.simbar.on{display:flex}
+.simbar strong{font-weight:900}
+.simbar .sp{margin-left:auto; display:flex; gap:8px}
+.simbar button{border:1px solid rgba(20,24,15,.35); background:rgba(255,255,255,.4); color:#14180F; border-radius:99px; padding:4px 12px; font-size:12px}
+
+main{padding:24px 0 80px}
+.toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px}
+.chip{border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); border-radius:99px; padding:5px 13px; font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--bosque); border-color:var(--bosque); color:var(--surface)}
+.count{color:var(--muted); font-size:13px; margin-left:auto}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:14px}
+
+.card{
+  position:relative; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:15px 16px 14px 19px; text-align:left; width:100%;
+  display:flex; flex-direction:column; gap:9px; box-shadow:var(--shadow); overflow:hidden;
+}
+.card:hover{border-color:var(--line-2); transform:translateY(-1px)}
+.card:focus-visible{outline:2px solid var(--verde); outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){ .card{transition:transform .12s ease, border-color .12s ease} }
+.card .stripe{position:absolute; left:0; top:0; bottom:0; width:4px}
+.card .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+/* El NOMBRE de una cosa dentro de una tarjeta va en Lato, no en Playfair.
+   Pedido de Juanma el 30-ago-2026 viendo los cocteles de barra en produccion.
+   La familia va EXPLICITA porque estos h3 heredan la serif de la regla global
+   h1,h2,h3 de mas arriba, que NO se toca: los titulos de seccion siguen en
+   Playfair, y tambien el numero grande de CMV (.fig .val.big), los KPI y el
+   conteo de higiene, que son numeros de exhibicion y no nombres. */
+.card h3{font-size:17.5px; line-height:1.25; font-family:Lato,"Avenir Next",system-ui,sans-serif; font-weight:700}
+.card .figs{display:flex; gap:16px; align-items:flex-end; margin-top:auto; padding-top:6px}
+.fig{display:flex; flex-direction:column; gap:1px}
+.fig .lbl{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.fig .val{font-size:16px; font-weight:700}
+.fig .val.big{font-size:21px; font-family:"Playfair Display",Georgia,serif}
+.delta{font-size:12px; font-weight:700; padding-left:5px}
+.badge{align-self:flex-start; display:inline-flex; align-items:center; gap:5px; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid currentColor}
+.s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
+.s-vacia{color:var(--vacia)} .s-sin_precio{color:var(--vacia)} .s-pre{color:var(--pre)}
+.b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
+.b-vacia{background:var(--vacia)} .b-sin_precio{background:var(--vacia)} .b-pre{background:var(--pre)}
+.tagarea{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:1px 7px}
+
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+th{text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel)}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel)}
+td.r,th.r{text-align:right}
+.rowbtn{background:none;border:none;padding:0;font:inherit;color:var(--bosque);text-align:left;font-weight:700}
+.rowbtn:hover{text-decoration:underline}
+.subbtn{background:none;border:none;padding:0 0 0 6px;font:inherit;color:var(--lila);font-size:12px;font-weight:700}
+.subbtn:hover{text-decoration:underline}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lila);margin-right:6px;vertical-align:middle}
+
+.scrim{position:fixed; inset:0; background:rgba(20,24,15,.45); z-index:50; opacity:0; pointer-events:none; transition:opacity .18s}
+.scrim.on{opacity:1; pointer-events:auto}
+.drawer{position:fixed; top:0; right:0; bottom:0; width:min(560px,100%); background:var(--bg);
+  z-index:51; transform:translateX(102%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto; border-left:1px solid var(--line)}
+.drawer.on{transform:none}
+@media (prefers-reduced-motion:reduce){ .drawer,.scrim{transition:none} }
+.drawer .dhead{padding:22px 24px 16px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2}
+.drawer .dbody{padding:20px 24px 60px; display:flex; flex-direction:column; gap:22px}
+.close{position:absolute; top:16px; right:18px; border:1px solid var(--line-2); background:var(--bg); border-radius:99px; width:30px; height:30px; line-height:1; font-size:17px}
+.kv{display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0; text-align:right; font-weight:700}
+.kv .rule{grid-column:1/-1; border-top:1px solid var(--line); margin:4px 0}
+.note{border-left:3px solid var(--lila); padding:9px 0 9px 13px; font-size:13.5px; color:var(--ink-2); font-style:italic}
+.sec-t{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:9px}
+/* edicion en linea de la cantidad. Solo aparece si el servidor dijo que la persona puede. */
+.card.nueva{display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; min-height:150px; border:1.5px dashed var(--line-2); background:transparent;
+  color:var(--muted); cursor:pointer; text-align:center}
+.card.nueva:hover{border-color:var(--bosque); color:var(--bosque); background:var(--panel)}
+.card.nueva .mas{font-size:30px; line-height:1; font-weight:300}
+.card.nueva .nt{font-size:15px; color:var(--ink-2)}
+.card.nueva .ns{font-size:12px}
+.addrow{margin-top:16px}
+.qdel{border:1px solid var(--line-2); background:var(--surface); color:var(--alto);
+      border-radius:7px; padding:3px 8px; font-size:12px; line-height:1.2; cursor:pointer}
+.qdel[disabled]{opacity:.5; cursor:default}
+.buscando{font-size:12.5px; color:var(--muted); margin:0 0 12px; padding:8px 12px;
+          background:var(--panel); border-radius:8px}
+.qedit{display:inline-flex; gap:4px; align-items:center; vertical-align:middle}
+.qin{width:74px; padding:4px 7px; text-align:right; border-radius:7px; border:1px solid var(--line-2);
+     background:var(--surface); color:var(--ink); font:inherit; font-size:13px}
+.qin:focus{outline:2px solid var(--verde); outline-offset:1px}
+.qsave{border:1px solid var(--bosque); background:var(--bosque); color:var(--surface);
+       border-radius:7px; padding:4px 9px; font-size:12.5px; line-height:1.2; cursor:pointer}
+.qsave[disabled]{opacity:.55; cursor:default}
+.simrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel); border-radius:var(--r); padding:13px 15px}
+.simrow input{width:110px; padding:7px 10px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit}
+.simrow input:focus{outline:2px solid var(--verde); outline-offset:1px}
+.linkline{background:none;border:none;padding:2px 0;font:inherit;color:var(--bosque);text-align:left;display:block;font-size:13.5px}
+.linkline:hover{text-decoration:underline}
+.empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:14px}
+.lead{color:var(--ink-2); font-size:14.5px; max-width:62ch}
+.provgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px}
+.provcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 15px; text-align:left; display:flex; flex-direction:column; gap:3px}
+.provcard:hover{border-color:var(--verde)}
+.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif; font-size:17px; font-weight:700}
+.provcard .m{font-size:12.5px; color:var(--muted)}
+.hig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.hig h3{font-size:16px;margin-bottom:4px}
+.hig .n{font-size:26px;font-family:"Playfair Display",Georgia,serif}
+.hig ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);max-height:230px;overflow:auto}
+.guia{max-width:70ch}
+.guia h2{font-size:22px;margin:30px 0 6px}
+.guia h2:first-child{margin-top:0}
+.guia p{color:var(--ink-2);margin:0 0 12px}
+.guia ol,.guia ul{color:var(--ink-2);padding-left:20px;margin:0 0 14px}
+.guia li{margin-bottom:6px}
+.guia .caja{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin:0 0 14px}
+.guia .caja h3{font-size:15px;font-family:"Lato",sans-serif;font-weight:900;letter-spacing:.02em;margin-bottom:4px}
+.guia .llave{border-left:3px solid var(--lila);padding:10px 0 10px 14px;margin:0 0 14px;font-size:14px;color:var(--ink-2)}
+.leyenda{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.leyenda span{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}
+.leyenda i{width:11px;height:11px;border-radius:3px;display:inline-block}
+footer{border-top:1px solid var(--line); padding:22px 0 40px; color:var(--muted); font-size:12.5px}
+/* ===== EL HEADER. Verde Bosque como el resto de la intranet, con el wordmark
+   real —la O solida es el icono de la marca— y la coordenada 14.91. Antes era
+   un header claro con un punto verde dibujado a mano: el modulo se veia como
+   otro producto.
+
+   OJO CON EL MODO OSCURO: esta vista NO tiene interruptor de tema, nadie escribe
+   nunca data-theme. La unica rama oscura que corre es la del media query, asi que
+   cada regla de [data-theme="dark"] va DUPLICADA ahi. Si se escribe una sola, en
+   oscuro el header queda verde palido (--bosque se aclara) con texto blanco encima
+   y no se lee nada. ===== */
+header.top{background:var(--bosque);color:#fff;position:sticky;top:0;z-index:40;
+  box-shadow:0 1px 0 rgba(0,0,0,.12)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) header.top{background:#16201B} }
+:root[data-theme="dark"] header.top{background:#16201B}
+.topbar{display:flex;align-items:center;gap:18px;padding:14px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+/* El fondo del wordmark lo pone Logo.html, incluido arriba: el data URL vive en un
+   solo archivo para toda la intranet. Aca solo el tamano, que no es el mismo que el
+   del header del panel principal. */
+.brand .logo{display:block;height:26px;aspect-ratio:1058/148}
+/* El <h1> se queda por accesibilidad y por el buscador; el texto va oculto. */
+.oculto{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.brand .sec{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#fff;opacity:.72;white-space:nowrap}
+.search{position:relative;flex:1 1 240px;max-width:360px}
+.search input{width:100%;padding:9px 12px 9px 34px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font:inherit}
+.search input::placeholder{color:rgba(255,255,255,.7)}
+.search input:focus{outline:2px solid var(--verde);outline-offset:1px;border-color:transparent}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.8}
+.volver{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.14);
+  color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:.35rem .85rem;
+  font-size:.82rem;text-decoration:none;white-space:nowrap}
+.volver:hover{background:rgba(255,255,255,.24);color:#fff}
+/* background:none NO es de adorno: la regla vieja de mas arriba pinta la pestana
+   activa con una pildora var(--bosque) y la del hover con una var(--panel). Sobre
+   el header verde eso deja una pildora verde-sobre-verde y, en oscuro, una crema. */
+.nav{display:flex;gap:2px;padding:0;flex-wrap:wrap;align-items:stretch}
+.nav button{border:none;background:none;padding:11px 13px;font-size:13px;letter-spacing:.02em;
+  color:var(--nav-txt);border-radius:0;border-bottom:2px solid transparent}
+.nav button[aria-selected="true"]{background:none;color:#fff;font-weight:700;border-bottom-color:var(--verde)}
+.nav button:hover:not([aria-selected="true"]){background:none;color:#fff}
+.areas{display:flex;gap:2px;margin-left:auto;background:rgba(255,255,255,.12);border-radius:99px;padding:3px;align-self:center}
+.areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:rgba(255,255,255,.78)}
+.areas button[aria-pressed="true"]{background:#fff;color:var(--bosque);font-weight:700;box-shadow:none}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F} }
+:root[data-theme="dark"] .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F}
+main{padding:24px 0 40px}
+.lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch}
+.sec-t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+
+/* ===== LA BARRA DE AGREGAR VA ARRIBA. Al pie de 61 proveedores o de 400
+   productos, nadie la encuentra: hay que scrollear una pantalla y media para
+   crear algo. Arriba se ve, y de paso encabeza la lista que va a modificar. ===== */
+.addrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 16px;margin:0 0 20px;box-shadow:var(--shadow)}
+.simrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+/* Adentro de la tarjeta blanca, el fondo de panel del .simrow deja una caja
+   dentro de otra caja. Solo ahi se apaga: suelto —el simulador, el cajon— el
+   panel es lo que lo hace visible. */
+.addrow .simrow{background:none;padding:0}
+.simrow input{width:110px;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);
+  background:var(--bg);color:var(--ink);font:inherit}
+.simrow input:focus{outline:2px solid var(--verde);outline-offset:1px}
+.btn-crear{border:1px solid var(--bosque);background:var(--bosque);color:#fff;
+  border-radius:999px;padding:6px 16px;font-size:13px}
+.btn-crear:hover{filter:brightness(1.08)}
+.nota{font-size:12.5px;color:var(--muted);margin:9px 0 0;line-height:1.5;max-width:78ch}
+.chip{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
+  border-radius:99px;padding:5px 13px;font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.count{color:var(--muted);font-size:13px;margin-left:auto}
+
+/* ===== PROVEEDORES. Antes: 61 cajas del mismo tamano, cada una con una pantalla
+   de aire adentro, "Produccion Rosanta" con 72 productos igual de grande que
+   "LOS 3 TIEMPOS" con 1. Ahora la altura la da el contenido y el peso lo da una
+   barra: se ve de un vistazo de quien depende la cocina. ===== */
+.provgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+.provcard{position:relative;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px 14px 11px;text-align:left;width:100%;
+  display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow);overflow:hidden}
+.provcard:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif;font-size:15.5px;line-height:1.2;font-weight:700}
+.provcard .m{font-size:12px;color:var(--muted)}
+.provcard .peso{height:3px;border-radius:99px;background:var(--panel);overflow:hidden;margin-top:2px}
+.provcard .peso i{display:block;height:100%;background:var(--verde);border-radius:99px}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:15px 16px 14px 19px;text-align:left;width:100%;display:flex;flex-direction:column;gap:9px;
+  box-shadow:var(--shadow);overflow:hidden}
+.card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.card h3{font-size:17.5px;line-height:1.25;font-family:Lato,"Avenir Next",system-ui,sans-serif;font-weight:700}
+.card .figs{display:flex;gap:16px;align-items:flex-end;margin-top:auto;padding-top:6px}
+.fig{display:flex;flex-direction:column;gap:1px}
+.fig .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fig .val{font-size:16px;font-weight:700}
+.fig .val.big{font-size:21px;font-family:"Playfair Display",Georgia,serif}
+.badge{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
+.b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+
+/* ===== EL PIE. La flor y la coordenada son elementos firma de la marca y no
+   estaban en ninguna pantalla del modulo. ===== */
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:16px 0 40px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-size:12.5px;color:var(--muted)}
+footer.pie .marca-pie{white-space:nowrap}
+footer.pie .flor{color:var(--lila)}
+
+/* ===== Ingenieria de menu ==========================================
+   Todo cuelga de #im y todas las clases llevan prefijo im-. Ninguna
+   regla de aca puede tocar el resto de la vista, y ninguna regla de la
+   vista puede entrar aca sin perder por especificidad.
+   Los tokens de abajo son alias de los que ya existen arriba: si algun
+   dia cambia la paleta de CosteoVista, esta pestana cambia con ella.
+   ------------------------------------------------------------------ */
+#im{
+  --im-medio:var(--verde);          /* estrella  */
+  --im-bosque:var(--bosque);        /* caballo   */
+  --im-lila:var(--lila);            /* rompecabezas y punto ciego */
+  --im-gris:var(--muted);           /* perro     */
+  --im-alerta:var(--alto);          /* fuera de meta */
+  --im-sup:var(--surface);
+  --im-tinta:var(--ink); --im-tinta-2:var(--ink-2); --im-tinta-3:var(--muted);
+  --im-linea:var(--line);
+  --im-linea-2:color-mix(in srgb, var(--line) 55%, var(--surface));
+  --im-wash:color-mix(in srgb, var(--verde) 8%, transparent);
+  --im-chip:var(--panel);
+}
+/* En oscuro, --bosque se aclara tanto que caballo y estrella quedan del mismo
+   verde y la matriz deja de leerse. Caballo baja de valor a proposito. */
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #im{ --im-bosque:#4E8A6A } }
+:root[data-theme="dark"] #im{ --im-bosque:#4E8A6A }
+
+/* La barra: dos segmentados y el sello del periodo empujado a la derecha.
+   El periodo tiene que estar arriba y visible: sin el, en tres meses nadie
+   sabe si esta viendo ocho meses o tres semanas. */
+#im .im-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
+#im .im-grp{display:flex;flex-direction:column;gap:6px}
+#im .im-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);font-weight:700}
+#im .im-seg{display:inline-flex;background:var(--im-chip);border:1px solid var(--im-linea);border-radius:99px;overflow:hidden;padding:0}
+#im .im-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;color:var(--im-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
+#im .im-seg button[aria-pressed="true"]{background:var(--bosque);color:var(--im-sup);font-weight:700}
+#im .im-seg button:not([aria-pressed="true"]):hover{color:var(--im-tinta)}
+#im .im-seg button:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
+#im .im-stamp{margin-left:auto;text-align:right;font-size:12px;color:var(--im-tinta-3);line-height:1.45}
+#im .im-stamp b{display:block;color:var(--im-tinta);font-size:14px;font-weight:700}
+@media(max-width:720px){#im .im-stamp{margin-left:0;text-align:left}}
+#im .im-lead{font-size:13.5px;color:var(--im-tinta-2);margin:0 0 18px}
+#im .im-lead strong{color:var(--im-tinta)}
+
+/* Los cinco contadores. Cada uno lleva su accion en una linea: el numero
+   solo no le dice a nadie que hacer el lunes. */
+#im .im-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+#im .im-k{background:var(--im-sup);border:1px solid var(--im-linea);border-top:3px solid var(--im-kc,var(--im-linea));border-radius:var(--r);padding:14px 15px 13px}
+#im .im-k b{display:block;font-size:30px;line-height:1;font-family:"Playfair Display",Georgia,serif;font-weight:500;color:var(--im-kc,var(--im-tinta))}
+#im .im-k span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--im-tinta-3);margin-top:8px;font-weight:700}
+#im .im-k em{display:block;font-style:normal;font-size:12px;color:var(--im-tinta-2);margin-top:5px;line-height:1.35}
+
+/* La matriz y las dos listas de accion, lado a lado. Colapsa a una columna en
+   angosto: la pantalla tiene que caber en una pantalla, tambien en un telefono. */
+#im .im-cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px;margin-bottom:14px;align-items:start}
+@media(max-width:980px){#im .im-cols{grid-template-columns:1fr}}
+#im .im-stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+#im .im-panel{background:var(--im-sup);border:1px solid var(--im-linea);border-radius:var(--r);padding:16px 18px 18px;box-shadow:var(--shadow)}
+#im .im-panel>h3{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);margin:0;font-weight:700;font-family:"Lato",sans-serif}
+#im .im-panel>p.im-h{font-size:12.5px;color:var(--im-tinta-2);margin:6px 0 14px;line-height:1.45}
+
+#im svg{width:100%;height:auto;display:block;overflow:visible}
+#im .im-axl{font-size:8.5px;fill:var(--im-tinta-3);letter-spacing:.06em}
+#im .im-axt{font-size:8px;fill:var(--im-tinta-3);letter-spacing:.11em;text-transform:uppercase}
+#im .im-cross{stroke:var(--im-linea);stroke-width:1;stroke-dasharray:3 3}
+/* El halo del color del panel: aunque una etiqueta quede rozando un punto,
+   el nombre se sigue leyendo. paint-order dibuja el contorno debajo del texto. */
+#im .im-lab{font-size:9px;fill:var(--im-tinta-2);paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+#im .im-qz{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.6;
+  paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+/* Mismo halo para los rotulos de los ejes: se dibujan al final, encima de los
+   circulos, y sin el contorno un punto pegado al borde los volveria ilegibles. */
+#im .im-axl,#im .im-axt{paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+
+/* Las dos listas de accion. Nombre + por que, y el numero a la derecha con
+   su unidad debajo: el numero es la razon para moverse. */
+#im .im-acc{list-style:none;margin:0;padding:0}
+#im .im-acc li{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--im-linea-2)}
+#im .im-acc li:last-child{border-bottom:0}
+#im .im-acc .im-nm{flex:1;font-size:13px;color:var(--im-tinta);line-height:1.3}
+#im .im-acc small{display:block;color:var(--im-tinta-3);font-size:11.5px;margin-top:2px;line-height:1.35}
+#im .im-acc .im-vv{font-size:13px;font-weight:700;white-space:nowrap;text-align:right}
+#im .im-acc .im-vv small{font-weight:400;color:var(--im-tinta-3)}
+
+/* El punto ciego, en columnas. Es una lista para leer de un vistazo, no una
+   tabla para auditar: la tabla completa ya esta en el Excel. */
+#im .im-ciego{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 26px;margin-top:6px}
+#im .im-cg{padding:7px 0;border-bottom:1px solid var(--im-linea-2)}
+#im .im-cr{display:flex;align-items:baseline;gap:12px}
+#im .im-cn{flex:1;font-size:13px;color:var(--im-tinta);line-height:1.25}
+#im .im-cm{display:block;font-size:11.5px;color:var(--im-tinta-3);margin-top:2px}
+#im .im-cv{font-size:12.5px;font-weight:700;color:var(--im-lila);white-space:nowrap}
+#im .im-cg.im-resto .im-cn{color:var(--im-tinta-3);font-style:italic}
+#im .im-vacio{color:var(--im-tinta-3);font-size:13px;margin:6px 0 0}
+
+/* ===== Dashboard Operativo de Profit OS ============================
+   Todo cuelga de #db y todas las clases llevan prefijo db-, misma regla
+   que #im. Los tokens son alias de los de arriba: si cambia la paleta,
+   esta pestana cambia con ella.
+   ------------------------------------------------------------------ */
+#db{--db-sup:var(--surface); --db-tinta:var(--ink); --db-tinta-2:var(--ink-2);
+    --db-tinta-3:var(--muted); --db-linea:var(--line); --db-chip:var(--panel)}
+#db .db-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
+#db .db-grp{display:flex;flex-direction:column;gap:6px}
+#db .db-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-seg{display:inline-flex;background:var(--db-chip);border:1px solid var(--db-linea);border-radius:99px;overflow:hidden}
+#db .db-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;
+  color:var(--db-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
+#db .db-seg button[aria-pressed="true"]{background:var(--bosque);color:var(--db-sup);font-weight:700}
+#db .db-seg button:not([aria-pressed="true"]):hover{color:var(--db-tinta)}
+#db .db-seg button:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
+#db .db-stamp{margin-left:auto;text-align:right;font-size:12px;color:var(--db-tinta-3);line-height:1.45}
+#db .db-stamp b{display:block;color:var(--db-tinta);font-size:14px;font-weight:700}
+@media(max-width:720px){#db .db-stamp{margin-left:0;text-align:left}}
+
+/* Seis tiles. La franja de color arriba es el veredicto: verde en meta,
+   naranja arriba de meta, gris el que todavia no existe. */
+#db .db-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
+#db .db-t{background:var(--db-sup);border:1px solid var(--db-linea);border-top:3px solid var(--db-c);
+  border-radius:var(--r);padding:16px 17px 15px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+#db .db-lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-n{font-family:"Playfair Display",Georgia,serif;font-weight:500;font-size:36px;line-height:1.05;
+  margin-top:9px;color:var(--db-c)}
+#db .db-n small{font-family:"Lato",sans-serif;font-size:14px;font-weight:400;color:var(--db-tinta-3)}
+#db .db-falta{font-size:26px;color:var(--db-tinta-3);font-style:italic}
+#db .db-sub{font-size:12.5px;color:var(--db-tinta-2);margin-top:5px}
+#db .db-pie{font-size:11.5px;color:var(--db-tinta-3);line-height:1.45;margin-top:auto;padding-top:12px}
+
+#db .db-filas{margin-top:12px;border-top:1px solid var(--db-linea);padding-top:8px}
+#db .db-f{display:flex;align-items:baseline;gap:9px;padding:4px 0}
+#db .db-f>span{flex:1;font-size:12.5px;color:var(--db-tinta-2)}
+#db .db-f>b{font-size:14px;font-weight:700}
+#db .db-f>small{font-size:11px;color:var(--db-tinta-3);white-space:nowrap}
+
+#db .db-l{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--db-linea)}
+#db .db-l li{display:flex;gap:10px;align-items:baseline;padding:4px 0}
+#db .db-l-n{flex:1;font-size:12.5px;color:var(--db-tinta);line-height:1.25}
+#db .db-l-n small{display:block;font-size:11px;color:var(--db-tinta-3);margin-top:1px}
+#db .db-l-v{font-size:12.5px;font-weight:700;color:var(--db-c);white-space:nowrap}
+
+/* La franja de avisos. NO son indicadores: son cosas que hay que atender esta
+   semana, y solo aparecen si hay algo. Un aviso que siempre esta se deja de mirar. */
+#db .db-avisos{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+#db .db-cargando{margin-top:22px;font-size:12.5px;color:var(--db-tinta-3)}
+#db .db-a{background:var(--db-sup);border:1px solid var(--db-linea);border-left:3px solid var(--db-tinta-3);
+  border-radius:var(--r);padding:12px 15px}
+#db .db-a-alerta{border-left-color:var(--alto)}
+#db .db-a-accion{border-left-color:var(--bosque)}
+#db .db-a-info{border-left-color:var(--lila)}
+#db .db-a-error{border-left-color:var(--alto)}
+#db .db-a-t{display:block;font-size:13.5px;color:var(--db-tinta)}
+#db .db-a-n{display:block;font-size:11.5px;color:var(--db-tinta-3);margin-top:3px;line-height:1.45}
+#db .db-a-d{margin:7px 0 0;padding-left:17px;font-size:11.5px;color:var(--db-tinta-3);line-height:1.55}

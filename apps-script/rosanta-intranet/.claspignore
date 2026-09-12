@@ -1,0 +1,14 @@
+# Lo que NO sube a Apps Script.
+# Sin este archivo, clasp push sube TODO lo que hay en la carpeta, y en Apps
+# Script todos los .js comparten UN solo ambito global: un respaldo de Code.js
+# subido al lado de Code.js redefine cada funcion y gana el que cargue ultimo.
+# Es la regla 9 del cerebro, pero en su version silenciosa.
+
+_backups/**
+**/*.bak
+**/*.respaldo
+.claspignore
+.git/**
+node_modules/**
+*.md
+.DS_Store

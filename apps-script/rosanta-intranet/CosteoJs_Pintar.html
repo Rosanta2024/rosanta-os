@@ -1,0 +1,113 @@
+/* UNA SOLA LLAMADA PARA LAS DOS PANTALLAS.
+   El tablero y la ingenieria de menu miran los mismos numeros desde angulos
+   distintos, y cada uno se los pedia por su cuenta: el servidor leia la hoja de
+   9.500 filas y clasificaba los 130 productos DOS VECES. Medido el 30-ago-2026:
+   10.5 s cada llamada. Ahora getProfitOS calcula una vez y devuelve las dos, asi
+   que abrir el modulo cuesta una pasada y la segunda pestana abre al instante.
+
+   Las dos ventanas son independientes —se puede mirar el tablero en Trimestre y la
+   matriz en Ano—, asi que se guarda por ventana. Cambiar una trae las dos de esa
+   ventana: es una llamada igual, y deja la otra pestana lista. */
+window.__POS_CACHE__ = window.__POS_CACHE__ || {};   // el arranque ya pudo llenarlo
+/* El gancho que usa el arranque: si el prefetch aterriza DESPUES de iniciarApp,
+   entra por aca. Si aterrizo antes, pedirProfitOS lo encuentra en el cache. */
+window.__profitListo = function(semanas){
+  var r = window.__POS_CACHE__[semanas];
+  if(r) aplicarProfitOS(semanas, r);
+};
+function pedirProfitOS(semanas){
+  const guardado = window.__POS_CACHE__[semanas];
+  if(guardado){ aplicarProfitOS(semanas, guardado); return; }
+  if(window.__POSCARGANDO__ === semanas) return;
+  window.__POSCARGANDO__ = semanas;
+  google.script.run
+    .withSuccessHandler(function(r){
+      window.__POSCARGANDO__ = null;
+      window.__POS_CACHE__[semanas] = r;
+      aplicarProfitOS(semanas, r);
+      pedirAvisos();
+    })
+    .withFailureHandler(function(e){
+      window.__POSCARGANDO__ = null;
+      const err = {ok:false, error:e.message};
+      aplicarProfitOS(semanas, {tablero:err, menu:err});
+      pedirAvisos();
+    })
+    .getProfitOS(AUTH, semanas);
+}
+/* Cada payload entra solo si su selector sigue en esa ventana: si alguien cambio
+   de ventana mientras la llamada viajaba, lo que llega ya no es lo que se pidio. */
+function aplicarProfitOS(semanas, r){
+  if(dbSemanas === semanas) window.__DB__ = r.tablero;
+  if(imSemanas === semanas) window.__IM__ = r.menu;
+  pintar();
+}
+
+/* LOS AVISOS SALEN DESPUES DE LOS NUMEROS, no a la par.
+   Tocan Drive, el catalogo del POS y el semaforo del cierre: son lo mas lento de
+   la pantalla y ademas son lo menos urgente. Lanzados junto con getDashboard, las
+   dos llamadas compiten por los mismos documentos y el tablero entero espera a que
+   Drive conteste. Encadenados, los seis numeros se pintan primero y los avisos
+   aparecen solos cuando esten. */
+function pedirAvisos(){
+  if(window.__DBAV__ || window.__DBAVCARGANDO__) return;
+  window.__DBAVCARGANDO__ = true;
+  google.script.run
+    .withSuccessHandler(function(r){ window.__DBAV__ = (r && r.avisos) || [];
+                                     if(view==='inicio') pintar(); })
+    .withFailureHandler(function(){ window.__DBAV__ = []; window.__DBAVCARGANDO__ = false; })
+    .getAvisosDashboard(AUTH);
+}
+
+function pintar(){
+  memo.clear();
+  // Se derivan del DOM y NO de una lista a mano: el 29-ago-2026 se agrego la seccion
+  // v-menu, se cableo el ruteo y la vista se calculaba entera... pero quedaba oculta,
+  // porque el nombre faltaba en el arreglo. Un modo de falla mudo — la pestana se veia
+  // vacia sin un solo error en consola. Asi, una seccion nueva funciona sola.
+  document.querySelectorAll('main > section[id^="v-"]').forEach(s => s.hidden = s.id !== 'v-' + view);
+  if(view==='recetas')     document.getElementById('v-recetas').innerHTML = vistaRecetas();
+  if(view==='insumos')     document.getElementById('v-insumos').innerHTML = vistaInsumos();
+  if(view==='proveedores') document.getElementById('v-proveedores').innerHTML = vistaProveedores();
+  if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
+  if(view==='inicio'){
+    document.getElementById('v-inicio').innerHTML = vistaInicio();
+    if(!window.__DB__) pedirProfitOS(dbSemanas);
+  }
+  if(view==='menu'){
+    document.getElementById('v-menu').innerHTML = vistaMenu();
+    if(!window.__IM__) pedirProfitOS(imSemanas);
+  }
+  if(view==='higiene'){
+    document.getElementById('v-higiene').innerHTML = vistaHigiene();
+    if(!window.__HIG__ && !window.__HIGCARGANDO__){
+      window.__HIGCARGANDO__ = true;
+      google.script.run.withSuccessHandler(function(h){ window.__HIG__ = h; if(view==='higiene') pintar(); })
+        .withFailureHandler(function(e){ document.getElementById('v-higiene').innerHTML = '<p class="empty">'+e.message+'</p>'; })
+        .getReporteHigiene(AUTH);
+    }
+  }
+  document.querySelectorAll('.nav button[data-view]').forEach(b => b.setAttribute('aria-selected', b.dataset.view===view));
+  document.querySelectorAll('.areas button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.area||'')===area));
+  simbar();
+}
+function simbar(){
+  const bar = document.getElementById('simbar');
+  bar.classList.toggle('on', sim.size>0);
+  if(!sim.size) return;
+  const af = R.filter(tocada);
+  const platos = af.filter(r => r.t==='plato' && r.precio);
+  const fuera = platos.filter(r => { const c = cmvAhora(r); return c!=null && c > r.obj+5; }).length;
+  const antes = platos.filter(r => r.cmv!=null && r.cmv > r.obj+5).length;
+  document.getElementById('simtext').innerHTML =
+    `<strong>${sim.size} precio${sim.size===1?'':'s'} simulado${sim.size===1?'':'s'}</strong> · ${af.length} receta${af.length===1?'':'s'} afectada${af.length===1?'':'s'} · platos sobre meta: ${antes} → <strong>${fuera}</strong>`;
+}
+
+/* ---------- drawer ---------- */
+const dr = document.getElementById('drawer'), sc = document.getElementById('scrim');
+let lastFocus = null;
+function abrir(html){ lastFocus = document.activeElement; dr.innerHTML = html; dr.classList.add('on'); sc.classList.add('on'); dr.focus(); }
+function cerrar(){ dr.classList.remove('on'); sc.classList.remove('on'); if(lastFocus) lastFocus.focus(); }
+sc.addEventListener('click', cerrar);
+document.addEventListener('keydown', e => { if(e.key==='Escape' && dr.classList.contains('on')) cerrar(); });
+

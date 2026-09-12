@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rosanta · Menú</title>
+<meta name="description" content="Menú de Rosanta, gastronomía sostenible en Antigua Guatemala. Cocina que nace de la tierra y se sirve con propósito.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Lato:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde:#4E6D5A;        /* Verde Bosque, bandas y titulares */
+    --verde-texto:#2F4438;  /* verde profundo para lectura, contraste 9:1 */
+    --crema:#F2EEEB;
+    --lila:#AEAAE2;         /* chispa, solo acento */
+    --linea:rgba(47,68,56,.22);
+    --linea-suave:rgba(47,68,56,.12);
+    --serif:'Italiana', Georgia, serif;           /* sustituto legal de PESKIA */
+    --sans:'Lato', Arial, sans-serif;             /* fallback de Avenir */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--crema);color:var(--verde-texto);font-family:var(--sans);
+       font-weight:400;-webkit-font-smoothing:antialiased;line-height:1.55;font-size:17px}
+  a{color:inherit}
+  .inner{max-width:820px;margin:0 auto;padding:0 22px}
+
+  /* ================= barra fija ================= */
+  .top{position:sticky;top:0;z-index:20}
+  .bar{background:var(--verde);color:var(--crema)}
+  .bar .inner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:14px;padding-bottom:14px}
+  .mark{font-family:var(--serif);font-weight:400;letter-spacing:.3em;font-size:19px;text-transform:uppercase}
+  .lang{display:flex;border:1px solid rgba(242,238,235,.55);border-radius:999px;overflow:hidden}
+  .lang button{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:9px 15px;border:0;background:transparent;color:var(--crema);cursor:pointer;min-height:44px}
+  .lang button[aria-pressed="true"]{background:var(--crema);color:var(--verde)}
+
+  .bar2{background:var(--verde);border-top:1px solid rgba(242,238,235,.25)}
+  .bar2 .inner{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding-top:10px;padding-bottom:10px;color:var(--crema)}
+  .bar2 .aqui{font-size:15px;letter-spacing:.16em;text-transform:uppercase;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .btn-sec{display:flex;align-items:center;gap:9px;background:var(--crema);color:var(--verde);
+    border:0;border-radius:999px;padding:11px 18px;font-family:var(--sans);font-weight:700;
+    font-size:14px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;min-height:44px;white-space:nowrap}
+  .btn-sec svg{width:15px;height:15px}
+
+  /* ================= índice de secciones ================= */
+  .idx{position:fixed;inset:0;z-index:40;background:var(--crema);display:none;overflow-y:auto}
+  .idx.abierto{display:block}
+  .idx .cab{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;
+    background:var(--verde);color:var(--crema)}
+  .idx .cab span{font-family:var(--serif);font-weight:400;font-size:19px;letter-spacing:.18em;text-transform:uppercase}
+  .idx .cerrar{background:transparent;border:1px solid rgba(242,238,235,.55);color:var(--crema);
+    border-radius:999px;width:44px;height:44px;font-size:20px;line-height:1;cursor:pointer}
+  .idx ol{list-style:none;margin:0;padding:8px 22px 40px;max-width:820px;margin:0 auto}
+  .idx li{border-bottom:1px solid var(--linea-suave)}
+  .idx a{display:flex;align-items:baseline;gap:14px;padding:20px 4px;text-decoration:none;color:var(--verde-texto)}
+  .idx .num{font-size:13px;letter-spacing:.14em;color:var(--verde);opacity:.7;min-width:26px}
+  .idx .tit{font-family:var(--serif);font-weight:400;font-size:25px;text-transform:uppercase;letter-spacing:.06em;line-height:1.25}
+
+  /* ================= portada / intro ================= */
+  .intro{padding:40px 0 8px}
+  .eyebrow{font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:var(--verde);margin:0 0 14px}
+  .lead{font-family:var(--sans);font-size:25px;line-height:1.4;font-weight:400;
+    color:var(--verde);margin:0 0 22px;max-width:26ch}
+  .intro p{font-size:17px;line-height:1.7;margin:0 0 15px;max-width:60ch}
+  details{margin:6px 0 26px}
+  summary{cursor:pointer;font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    list-style:none;display:inline-block;padding:13px 22px;border:1.5px solid var(--verde);
+    border-radius:999px;color:var(--verde);min-height:44px}
+  summary::-webkit-details-marker{display:none}
+  details[open] summary{margin-bottom:18px}
+  .coord{display:flex;gap:16px;align-items:flex-start;padding:18px 0 34px;border-top:1px solid var(--linea-suave)}
+  .coord b{font-family:var(--serif);font-weight:400;letter-spacing:.16em;white-space:nowrap;
+    font-size:17px;color:var(--verde);padding-top:2px}
+  .coord span{font-size:15.5px;font-style:italic;line-height:1.55}
+
+  /* ================= banda verde de sección ================= */
+  section{scroll-margin-top:132px}
+  .banda{background:var(--verde);color:var(--crema);position:relative;overflow:hidden}
+  .banda .inner{padding-top:42px;padding-bottom:42px;position:relative;z-index:2}
+  .banda .eyebrow{color:rgba(242,238,235,.8);margin-bottom:12px}
+  .banda h2{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:.06em;
+    font-size:41px;line-height:1.08;margin:0;max-width:14ch}
+
+  /* ================= platos ================= */
+  section .cuerpo{padding:30px 0 10px}
+  .sec-intro{font-size:16.5px;line-height:1.65;font-style:italic;margin:0 0 30px;max-width:58ch}
+  .item{padding:24px 0;border-bottom:1px solid var(--linea-suave)}
+  .row{display:flex;align-items:baseline;gap:12px}
+  .name{font-family:var(--serif);font-size:23px;font-weight:400;text-transform:uppercase;
+    letter-spacing:.04em;line-height:1.25;color:var(--verde-texto)}
+  .dots{flex:1;border-bottom:1px dotted var(--linea);transform:translateY(-5px);min-width:16px}
+  .price{font-size:19px;font-weight:700;letter-spacing:.02em;white-space:nowrap;color:var(--verde)}
+  .price2{font-size:14.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--verde);margin:9px 0 0}
+  .desc{font-size:16.5px;line-height:1.62;margin:10px 0 0;max-width:58ch}
+  .x{font-size:15.5px;font-style:italic;margin:8px 0 0}
+  .mar{font-size:15.5px;line-height:1.6;margin:11px 0 0;max-width:58ch;
+    padding-left:14px;border-left:2px solid var(--lila)}
+  .mar b{font-weight:700;font-style:normal;letter-spacing:.04em;text-transform:uppercase;font-size:13px;
+    display:block;margin-bottom:2px;color:var(--verde)}
+  .nota{font-size:14.5px;line-height:1.5;margin:9px 0 0;max-width:58ch;display:flex;gap:9px}
+  .nota .mk{color:var(--lila);flex:0 0 auto}
+  .nota a{color:var(--verde);font-weight:700}
+
+  /* ================= bloques de lista ================= */
+  .grid-block{margin-top:38px;padding-top:30px;border-top:2px solid var(--linea)}
+  .grid-title{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:.1em;font-size:25px;
+    margin:0 0 8px;color:var(--verde)}
+  .grid-intro{font-size:16px;font-style:italic;margin:0 0 22px}
+  .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px}
+  .group{margin-bottom:28px}
+  .group h4{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--verde);
+    margin:0 0 10px;font-weight:700;padding-bottom:7px;border-bottom:1px solid var(--linea-suave)}
+  .line{display:flex;align-items:baseline;gap:10px;padding:9px 0}
+  .line .n{font-size:16.5px;line-height:1.35}
+  .line .d2{flex:1;border-bottom:1px dotted var(--linea);transform:translateY(-5px);min-width:10px}
+  .line .p{font-size:16.5px;font-weight:700;white-space:nowrap;color:var(--verde)}
+  .line-desc{font-size:14.5px;margin:0 0 8px;line-height:1.5;max-width:38ch;font-style:italic}
+
+
+  /* ================= subsecciones de cocteles ================= */
+  .sub{margin-top:34px}
+  .sub:first-of-type{margin-top:6px}
+  .sub-cab{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--linea);padding-bottom:9px}
+  .sub-cab h3{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:.1em;
+    font-size:25px;margin:0;color:var(--verde);line-height:1.2}
+  .sub-cab .pq{margin-left:auto;font-size:18px;font-weight:700;color:var(--verde);white-space:nowrap}
+  .sub-nota{font-size:15.5px;font-style:italic;margin:11px 0 4px}
+  .cierre{margin-top:30px;padding:16px 18px;border:1px dashed var(--linea);
+    font-size:15.5px;font-style:italic;text-align:center;border-radius:3px}
+
+  /* ================= vinos ================= */
+  .vg{margin-top:34px}
+  .vg:first-of-type{margin-top:4px}
+  .vg > h3{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:.1em;
+    font-size:25px;margin:0 0 12px;color:var(--verde);border-bottom:2px solid var(--linea);padding-bottom:9px}
+  .vino{padding:18px 0;border-bottom:1px solid var(--linea-suave)}
+  .vino .n{font-family:var(--serif);font-weight:400;font-size:22px;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--verde-texto);line-height:1.25}
+  .vino .uva{font-size:16px;font-style:italic;margin:5px 0 0}
+  .vino .zona{font-size:14.5px;margin:3px 0 0}
+  .vino .pr{font-size:16.5px;font-weight:700;color:var(--verde);margin:9px 0 0}
+  .vino .pr span{font-weight:400;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase}
+
+  /* ================= pie ================= */
+  footer{background:var(--verde);color:var(--crema);margin-top:50px}
+  footer .inner{padding-top:34px;padding-bottom:40px;text-align:center}
+  footer .brand{font-family:var(--serif);font-weight:400;letter-spacing:.2em;text-transform:uppercase;font-size:17px;display:block}
+  footer .prop{font-size:15px;margin:12px 0 0}
+  footer .cd{font-family:var(--serif);font-weight:400;letter-spacing:.22em;font-size:15px;margin:18px 0 0;
+    padding-top:16px;border-top:1px solid rgba(242,238,235,.3);display:inline-block}
+
+  @media (min-width:760px){
+    body{font-size:18px}
+    .banda h2{font-size:56px}
+    .lead{font-size:36px}
+    .name{font-size:25px}
+  }
+  @media (max-width:560px){
+    .inner{padding:0 18px}
+    .cols{grid-template-columns:1fr;gap:0}
+    .banda h2{font-size:35px}
+    .mark{font-size:17px;letter-spacing:.22em}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+<div class="bar">
+  <div class="inner">
+    <div class="mark">Rosanta</div>
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button data-lang="es" aria-pressed="true">Español</button>
+      <button data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </div>
+</div>
+<div class="bar2">
+  <div class="inner">
+    <div class="aqui" id="aqui"></div>
+    <button class="btn-sec" id="btnSec">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14M1 8h14M1 13h14" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+      <span id="btnSecTxt">Secciones</span>
+    </button>
+  </div>
+</div>
+</div>
+
+<nav class="idx" id="idx" aria-hidden="true">
+  <div class="cab"><span id="idxTit">Secciones</span>
+    <button class="cerrar" id="cerrar" aria-label="Cerrar">&times;</button></div>
+  <ol id="idxList"></ol>
+</nav>
+
+<div class="intro"><div class="inner" id="intro"></div></div>
+<main id="menu"></main>
+<footer><div class="inner" id="foot"></div></footer>
+
+<script>
+/* ==========================================================================
+   ROSANTA · DATOS DEL MENÚ  ·  temporada 2026-2027
+   ESTE ES EL ÚNICO ARCHIVO QUE SE EDITA PARA CAMBIAR LA CARTA.
+   Subir un precio   -> cambiar el número en q
+   Quitar un plato   -> borrar su bloque { ... }
+   Agregar un plato  -> copiar un bloque y cambiar los textos
+   ========================================================================== */
+
+const INTRO = {
+  es: {
+    kicker: 'Cocina con propósito',
+    lead: 'La cocina que nace de la tierra y se sirve con propósito.',
+    body: [
+      'Cada detalle que encuentras aquí tiene una razón de ser. Desde los ingredientes frescos, locales y de temporada que usamos, hasta los sabores que buscan reconectarte con lo natural. Cocinamos con respeto: por la tierra, por quienes cultivan, por lo que crece cerca y por ti.',
+      'Muchos de los ingredientes que saboreas vienen directamente del jardín, un espacio vivo cultivado con prácticas regenerativas que cuidan la tierra y la llenan de vida. Lo demás llega de productores locales que comparten esa forma de ver el mundo: cosechar sin prisa, respetar la estación, fortalecer a la comunidad.',
+      'Aquí cocinamos con principios que nos importan y que nos representan. Preferimos lo sencillo y verdadero. Cada plato, cada cóctel, cada rincón de este lugar está pensado para que puedas sentirte bien, conectar con los tuyos, con el entorno y contigo mismo.',
+      'Así se hace aquí la gastronomía sostenible: honesta, creativa y consciente. Gracias por formar parte de este espacio. Disfruta, celebra y crea recuerdos que valgan la pena.'
+    ],
+    coordNote: 'Las coordenadas de Antigua. El punto exacto donde crece casi todo lo que llega a tu mesa.'
+  },
+  en: {
+    kicker: 'Cooking with purpose',
+    lead: 'Cooking that is born from the land and served with purpose.',
+    body: [
+      'Every detail you find here has a reason to be. From the fresh, local, seasonal ingredients we use, to flavors meant to reconnect you with what is natural. We cook with respect: for the land, for those who farm it, for what grows nearby, and for you.',
+      'Many of the ingredients you taste come straight from the garden, a living space grown with regenerative practices that care for the soil and fill it with life. The rest comes from local producers who share that way of seeing the world: harvest without rushing, respect the season, strengthen the community.',
+      'We cook by principles that matter to us and that represent us. We prefer what is simple and true. Every dish, every cocktail, every corner of this place is meant for you to feel good, to connect with your people, with your surroundings and with yourself.',
+      'This is how sustainable gastronomy is done here: honest, creative and conscious. Thank you for being part of this space. Enjoy, celebrate and make memories worth keeping.'
+    ],
+    coordNote: 'The coordinates of Antigua. The exact point where almost everything that reaches your table grows.'
+  }
+};
+
+const MENU = [
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'empezar',
+    es: {
+      eyebrow: 'Para Empezar',
+      title: 'Comienzos con sabor',
+      intro: 'Entrantes pensados para darte la bienvenida a la mesa con intención y cuidado. Preparados con ingredientes frescos que resaltan la riqueza de la temporada y de la tierra.'
+    },
+    en: {
+      eyebrow: 'To Start',
+      title: 'Flavorful beginnings',
+      intro: 'Starters made to welcome you to the table with intention and care. Prepared with fresh ingredients that bring out the richness of the season and the land.'
+    },
+    items: [
+      {
+        es: {
+          n: 'Ensalada Rosanta',
+          p: 'Normal: Q75 | Lomito: Q100 | Camarones: Q135',
+          d: 'Lechugas mixtas, tomates rostizados, naranja, cremoso aguacate, melocotón macerado con un toque de picante y encurtidos de la casa, con vinagreta de fresa y hierbabuena.',
+          m: 'El Fufurufo · Gin, cordial de pepino, jarabe simple, limón.',
+          notas: ['Encurtidos hechos en casa.']
+        },
+        en: {
+          n: 'Rosanta Salad',
+          p: 'Regular: Q75 | Tenderloin: Q100 | Shrimp: Q135',
+          d: 'Mixed greens, roasted tomatoes, orange, creamy avocado, peach macerated with a touch of heat, house pickles, and a strawberry and spearmint vinaigrette.',
+          m: 'El Fufurufo · Gin, cucumber cordial, simple syrup, lime.',
+          notas: ['House-made pickles.']
+        }
+      },
+      {
+        q: 115,
+        es: {
+          n: 'Coliflor a la Parrilla con Romesco',
+          d: 'Coliflor a la parrilla, dorada por fuera y tierna por dentro, sobre una salsa romesco de pimiento asado y almendra, terminada con hierbas del jardín.',
+          notas: ['Disponible también en versión vegana.']
+        },
+        en: {
+          n: 'Grilled Cauliflower with Romesco',
+          d: 'Grilled cauliflower, golden outside and tender inside, over a romesco sauce of roasted pepper and almond, finished with herbs from the garden.',
+          notas: ['Also available in a vegan version.']
+        }
+      },
+      {
+        q: 115,
+        es: {
+          n: 'Brócoli con Nduja',
+          d: 'Brócoli asado con nduja de Sal Charcutería, embutido calabrés curado aquí en Guatemala. Suave, untable y lleno de carácter.',
+          notas: ['Creado con Sal Charcutería · Al pedirlo apoyas a Niños de Guatemala y los estudios de niños de la zona.'],
+          link: { t: 'Conoce el proyecto en ninosdeguatemala.org', u: 'https://ninosdeguatemala.org' }
+        },
+        en: {
+          n: 'Broccoli with Nduja',
+          d: 'Roasted broccoli with nduja from Sal Charcutería, a Calabrian cured sausage made here in Guatemala. Soft, spreadable and full of character.',
+          notas: ['Created with Sal Charcutería · Ordering it supports Niños de Guatemala and the schooling of children in the area.'],
+          link: { t: 'Learn about the project at ninosdeguatemala.org', u: 'https://ninosdeguatemala.org' }
+        }
+      },
+      {
+        q: 140,
+        es: {
+          n: 'Queso Horneado',
+          d: 'Queso al horno incrustado en pepitoria, acompañado de fresas maceradas en vino tinto, una compota de tomate y cebollas caramelizadas, servido junto a un pan tostado hecho en casa con hierbas del jardín.',
+          m: 'Alboroto Negroni · Gin, shrub de remolacha clarificado y completado con Campari.',
+          notas: ['Queso de cooperativa de pequeños productores de Quetzaltenango.']
+        },
+        en: {
+          n: 'Baked Cheese',
+          d: 'Oven-baked cheese crusted in pepitoria, with strawberries macerated in red wine, a tomato compote and caramelized onions, served with house-made toast with garden herbs.',
+          m: 'Alboroto Negroni · Gin, clarified beet shrub, finished with Campari.',
+          notas: ["Cheese from a cooperative of small producers in Quetzaltenango."]
+        }
+      },
+      {
+        q: 150,
+        es: {
+          n: 'Pulpo a la Parrilla',
+          d: 'Pulpo del Pacífico a la parrilla, con papas al pimentón, un suave puré de alverjas, mayonesa de hierbabuena, suprema de naranja y tomates rostizados.',
+          m: 'Mezcal a la Piña · Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas.',
+          notas: ['Pesca responsable · Hierbas cultivadas regenerativamente.']
+        },
+        en: {
+          n: 'Grilled Octopus',
+          d: 'Pacific octopus from the grill, with paprika potatoes, a smooth pea purée, spearmint mayonnaise, orange supremes and roasted tomatoes.',
+          m: 'Mezcal a la Piña · Espadín mezcal, pineapple jam smoked with rosemary and scented with herbs.',
+          notas: ['Responsibly caught seafood · Regeneratively grown herbs.']
+        }
+      },
+      {
+        q: 210,
+        es: {
+          n: 'Tabla de Jamones y Quesos',
+          d: 'Quesos maduros y jamones curados para compartir, servidos con encurtidos de la casa y frutas frescas.',
+          m: 'Para disfrutar en el jardín, un Rosé Pasión Spritz.',
+          notas: ['Quesos y embutidos de productores locales · Encurtidos hechos en casa.']
+        },
+        en: {
+          n: 'Charcuterie and Cheese Board',
+          d: 'Aged cheeses and cured meats to share, served with house pickles and fresh fruit.',
+          m: 'To enjoy in the garden, a Rosé Pasión Spritz.',
+          notas: ['Cheese and charcuterie from local producers · House-made pickles.']
+        }
+      }
+    ]
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'saludables',
+    es: {
+      eyebrow: 'Opciones Saludables',
+      title: 'Cosechas nutritivas',
+      intro: 'Cocinar de forma consciente también es nutrir con intención. Elaborados con ingredientes frescos, vegetales de temporada y aderezos caseros. Cada combinación está pensada para cuidarte y reconectar con sabores naturales. Todos los platos pueden personalizarse con tofu, atún o pollo a la plancha como fuente de proteína.'
+    },
+    en: {
+      eyebrow: 'Healthy Options',
+      title: 'Nourishing harvests',
+      intro: 'Cooking consciously also means nourishing with intention. Made with fresh ingredients, seasonal vegetables and house dressings. Every combination is meant to take care of you and reconnect you with natural flavors. All dishes can be customized with tofu, tuna or grilled chicken as your protein.'
+    },
+    items: [
+      {
+        q: 100,
+        es: {
+          n: 'Tartar de Hongos',
+          d: 'Fusión de hongos frescos, rábanos encurtidos, melocotón macerado en whiskey irlandés con un toque picante y grillado, servido con mantequilla de maní y chips crujientes de malanga.',
+          x: 'Plato vegano, sin proteína personalizada.',
+          m: 'La Lotería · Mezcal Espadín, cordial de rábano, limón, jarabe.',
+          notas: ['Hongos silvestres y encurtidos de la casa.']
+        },
+        en: {
+          n: 'Mushroom Tartare',
+          d: 'A fusion of fresh mushrooms, pickled radish, peach macerated in Irish whiskey with a touch of heat and grilled, served with peanut butter and crisp malanga chips.',
+          x: 'Vegan dish, no protein customization.',
+          m: 'La Lotería · Espadín mezcal, radish cordial, lime, syrup.',
+          notas: ['Wild mushrooms and house pickles.']
+        }
+      },
+      {
+        q: 100,
+        es: {
+          n: 'Bok Choy a la Parrilla',
+          d: 'Bok choy a la parrilla, sobre una cama de yogur de eneldo hecho en casa, acompañado de tomates rostizados y aceite de albahaca.',
+          notas: ['Yogur de eneldo hecho en casa.']
+        },
+        en: {
+          n: 'Grilled Bok Choy',
+          d: 'Grilled bok choy over a bed of house-made dill yogurt, with roasted tomatoes and basil oil.',
+          notas: ['House-made dill yogurt.']
+        }
+      },
+      {
+        q: 105,
+        es: {
+          n: 'Bol Mediterráneo',
+          d: 'Una base de lechuga o cuscús, con una colorida mezcla de vegetales frescos, aceitunas, garbanzos, pepitoria y aguacate, todo armonizado con un aderezo de chile pimiento asado.',
+          notas: ['100% vegetal · Naturalmente rico en proteína.']
+        },
+        en: {
+          n: 'Mediterranean Bowl',
+          d: 'A base of lettuce or couscous with a colorful mix of fresh vegetables, olives, chickpeas, pumpkin seed and avocado, brought together with a roasted red pepper dressing.',
+          notas: ['100% plant-based · Naturally rich in protein.']
+        }
+      },
+      {
+        q: 115,
+        es: {
+          n: 'Vegetales Fermentados',
+          d: 'Bol de vegetales en fermentación natural y lenta, bañados en salsa tai de maní con un toque de miel.',
+          m: 'Rose Collins · Gin de frutos rojos, jugo de limón, jarabe.',
+          notas: ['Fermentación lenta, hecha en casa.']
+        },
+        en: {
+          n: 'Fermented Vegetables',
+          d: 'A bowl of naturally slow-fermented vegetables in a Thai peanut sauce with a touch of honey.',
+          m: 'Rose Collins · Red berry gin, lime juice, syrup.',
+          notas: ['Slow fermentation, made in house.']
+        }
+      }
+    ]
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'hamburguesas',
+    es: {
+      eyebrow: 'Hamburguesas',
+      title: 'Del huerto y la parrilla',
+      intro: 'Comer bien es simple cuando se eligen ingredientes frescos y técnicas que respetan el producto. Estas combinaciones están pensadas para disfrutarse con sencillez, sabor y cuidado. Cada hamburguesa va en pan brioche de cúrcuma, con mozzarella derretida, pepinillos y mayonesa de aguacate y apio. Acompañada de papas y camotes fritos crujientes.'
+    },
+    en: {
+      eyebrow: 'Burgers',
+      title: 'From the garden and the grill',
+      intro: 'Eating well is simple when you choose fresh ingredients and techniques that respect the product. These combinations are meant to be enjoyed simply, with flavor and care. Every burger comes on a turmeric brioche bun with melted mozzarella, pickles and avocado and celery mayonnaise. Served with crispy potato and sweet potato fries.'
+    },
+    items: [
+      {
+        q: 105,
+        es: {
+          n: 'Portobello Asado',
+          d: 'Jugoso hongo portobello horneado con mantequilla de hierbas del jardín.',
+          m: 'La Feria · Mezcal Espadín, mermelada de piña con especias y vino.',
+          notas: ['Hamburguesa vegetal, sabrosa y sin pretensiones.']
+        },
+        en: {
+          n: 'Roasted Portobello',
+          d: 'Juicy portobello mushroom roasted with garden herb butter.',
+          m: 'La Feria · Espadín mezcal, spiced pineapple jam and wine.',
+          notas: ['A plant-based burger, tasty and unpretentious.']
+        }
+      },
+      {
+        q: 130,
+        es: {
+          n: 'Lomito en Tiras',
+          d: 'Con cebollines tiernos asados y fresca gremolata de hierbas del jardín.',
+          m: 'El Colonial · Ron Colonial Antigüeño, sirope de especias con Jamaica.',
+          notas: ['Corte local, gremolata cortada al momento.']
+        },
+        en: {
+          n: 'Sliced Tenderloin',
+          d: 'With tender grilled spring onions and a fresh gremolata of garden herbs.',
+          m: 'El Colonial · Colonial Antigüeño rum, spiced syrup with hibiscus.',
+          notas: ['Local cut, gremolata chopped to order.']
+        }
+      }
+    ]
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'fuertes',
+    es: {
+      eyebrow: 'Algo más fuerte',
+      title: 'Cocina con raíz y fuego',
+      intro: 'Platos fuertes pensados para honrar lo que da la tierra. Cada preparación combina técnicas que respetan el ingrediente, cocción lenta cuando se necesita y un equilibrio entre intensidad y frescura. Aquí se celebra el producto local, las recetas con historia y el sabor bien trabajado.'
+    },
+    en: {
+      eyebrow: 'Something Stronger',
+      title: 'Cooking with roots and fire',
+      intro: 'Main courses meant to honor what the land gives. Each preparation combines techniques that respect the ingredient, slow cooking when it is needed, and a balance between intensity and freshness. Here we celebrate local product, recipes with history and flavor that is properly worked.'
+    },
+    items: [
+      {
+        q: 155,
+        es: {
+          n: 'Pasta de la Casa',
+          p2: 'Con lomito: Q185 | Camarones: Q195',
+          d: 'Fetuccini hecho en casa, en salsa roja, tomates confitados, ajo, cebolla, salpimentado con un toque de vino y champiñones.',
+          notas: ['Hecha en casa · Ingredientes frescos y locales.']
+        },
+        en: {
+          n: 'House Pasta',
+          p2: 'With tenderloin: Q185 | Shrimp: Q195',
+          d: 'House-made fettuccine in red sauce with confit tomatoes, garlic, onion, mushrooms and a touch of wine.',
+          notas: ['Made in house · Fresh, local ingredients.']
+        }
+      },
+      {
+        q: 165,
+        es: {
+          n: 'Arroz Meloso',
+          d: 'Arroz cocido despacio hasta quedar meloso y cremoso, con lo que el mar y el jardín dieron esta semana.',
+          notas: ['Caldo hecho en casa · Mariscos de pesca responsable.']
+        },
+        en: {
+          n: 'Creamy Rice',
+          d: 'Rice cooked slowly until creamy, with whatever the sea and the garden gave this week.',
+          notas: ['House-made stock · Responsibly caught seafood.']
+        }
+      },
+      {
+        q: 165,
+        es: {
+          n: 'Pollo en Salsa de Tamarindo',
+          d: 'Pechuga de pollo con salsa de tamarindo y morrón con toque de jengibre y flameado en ron. Crema de zanahoria, hongos almendrados y remolachas rostizadas.',
+          notas: ['Cítrico, ahumado y lleno de textura.']
+        },
+        en: {
+          n: 'Chicken in Tamarind Sauce',
+          d: 'Chicken breast in a tamarind and red pepper sauce with a touch of ginger, flambéed in rum. Carrot cream, almond mushrooms and roasted beets.',
+          notas: ['Citrusy, smoky and full of texture.']
+        }
+      },
+      {
+        q: 180,
+        es: {
+          n: 'Costillas de Cerdo',
+          d: 'Costillas al horno en una deliciosa mezcla de café y cardamomo, acompañadas de cebollas asadas, cremoso puré de yuca y brócoli escabechado.',
+          m: 'La Chef · Whiskey americano en fatwash.',
+          notas: ['Sabor profundo · Cocción lenta · Especias locales.']
+        },
+        en: {
+          n: 'Pork Ribs',
+          d: 'Oven-baked ribs in a delicious coffee and cardamom rub, with roasted onions, creamy yuca purée and pickled broccoli.',
+          m: 'La Chef · Fat-washed American whiskey.',
+          notas: ['Deep flavor · Slow cooking · Local spices.']
+        }
+      },
+      {
+        q: 180,
+        es: {
+          n: 'Lomito a la Parrilla',
+          d: 'Medallón de lomito al término de tu preferencia, acompañado de puré de espinaca y romero, sobre una salsa de ajo negro complementado con zanahorias fermentadas.',
+          m: 'Red Pepper, Colonial Fashioned.',
+          notas: ['Carne seleccionada · Preparación honesta.']
+        },
+        en: {
+          n: 'Grilled Tenderloin',
+          d: 'Tenderloin medallion cooked to your liking, with a spinach and rosemary purée over black garlic sauce, finished with fermented carrots.',
+          m: 'Red Pepper, Colonial Fashioned.',
+          notas: ['Selected beef · Honest preparation.']
+        }
+      },
+      {
+        q: 180,
+        es: {
+          n: 'Brisket en Salsa Bordelesa',
+          d: 'Con puré de plátano asado y ajo confitado. Lingote de yuca, uvas maceradas en vermut rosé y hojas de bok choy.',
+          notas: ['Cocción lenta · Sabores intensos · Dulzor natural.']
+        },
+        en: {
+          n: 'Brisket in Bordelaise Sauce',
+          d: 'With roasted plantain purée and confit garlic. Yuca terrine, grapes macerated in rosé vermouth and bok choy leaves.',
+          notas: ['Slow cooking · Intense flavors · Natural sweetness.']
+        }
+      },
+      {
+        q: 180,
+        es: {
+          n: 'Estofado de Rabo',
+          d: 'Rabo de res en versión de estofado tradicional, con puré de coliflor horneada, salsa demi-glace y rábanos macerados.',
+          notas: ['Cocción lenta de la casa, como se hacía siempre.']
+        },
+        en: {
+          n: 'Braised Oxtail',
+          d: 'Oxtail in a traditional stew, with roasted cauliflower purée, demi-glace and macerated radish.',
+          notas: ['Slow-cooked in house, the way it has always been done.']
+        }
+      },
+      {
+        q: 185,
+        es: {
+          n: 'Pescado del Día',
+          d: 'Pesca del día, servida con una salsa de vino blanco aromatizada con salvia, puré de camote y zanahorias horneadas, ejotes tiernos y bok choy asado.',
+          notas: ['Producto del día · Preparación suave y herbal.']
+        },
+        en: {
+          n: 'Catch of the Day',
+          d: "The day's catch, served with a white wine sauce scented with sage, sweet potato purée and roasted carrots, tender green beans and grilled bok choy.",
+          notas: ['Product of the day · Gentle, herbal preparation.']
+        }
+      },
+      {
+        q: 190,
+        es: {
+          n: 'Camarones al Horno',
+          d: 'Camarones al horno con hierbas del jardín, acompañados de tomates cherry, aceite de oliva, aceite de sésamo, ajo y cebolla.',
+          notas: ['Sencillo, aromático y lleno de frescura.']
+        },
+        en: {
+          n: 'Oven-Baked Shrimp',
+          d: 'Shrimp baked with garden herbs, with cherry tomatoes, olive oil, sesame oil, garlic and onion.',
+          notas: ['Simple, aromatic and full of freshness.']
+        }
+      },
+      {
+        q: 325,
+        es: {
+          n: 'Mar & Tierra',
+          d: 'Lomito a la parrilla, camarones al ajo, cebollines asados, fresca ensalada y papas fritas crujientes.',
+          notas: ['Carne seleccionada y mariscos de pesca responsable.']
+        },
+        en: {
+          n: 'Surf & Turf',
+          d: 'Grilled tenderloin, garlic shrimp, grilled spring onions, fresh salad and crispy fries.',
+          notas: ['Selected beef and responsibly caught seafood.']
+        }
+      }
+    ],
+    grid: {
+      es: { title: 'Guarniciones', intro: 'Para compartir al centro y redondear la mesa.' },
+      en: { title: 'Sides', intro: 'To share at the center of the table.' },
+      groups: [
+        {
+          items: [
+            { q: 20, es: 'Pan de la casa', en: 'House bread' },
+            { q: 35, es: 'Gratín de papas', en: 'Potato gratin' },
+            { q: 40, es: 'Ejotes al aceite de ajonjolí y ajo', en: 'Green beans in sesame oil and garlic' },
+            { q: 45, es: 'Mix de fritas (papas, camote, malanga)', en: 'Mixed fries (potato, sweet potato, malanga)' }
+          ]
+        }
+      ]
+    }
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'bebidas',
+    es: {
+      eyebrow: 'Bebidas',
+      title: 'Bebidas de la casa',
+      intro: 'Todas las bebidas están pensadas para acompañar tu momento. Ingredientes reales, fruta fresca, hierbas del jardín y recetas propias.'
+    },
+    en: {
+      eyebrow: 'Drinks',
+      title: 'House drinks',
+      intro: 'Every drink is meant to accompany your moment. Real ingredients, fresh fruit, garden herbs and our own recipes.'
+    },
+    items: [],
+    grid: {
+      groups: [
+        {
+          es: 'Café de Guatemala', en: 'Coffee from Guatemala',
+          items: [
+            { q: 25, es: 'Café Americano', en: 'Americano' },
+            { q: 25, es: 'Café con leche', en: 'Coffee with milk' }
+          ]
+        },
+        {
+          es: 'Refrescos de la casa', en: 'House refreshments',
+          items: [
+            { q: 35, es: 'Agua con gas 1L', en: 'Sparkling water 1L' },
+            { q: 40, es: 'Ginger Beer', en: 'Ginger Beer' },
+            { q: 40, es: 'Kombucha', en: 'Kombucha' },
+            { q: 40, es: 'Limonada con agua o soda', en: 'Lemonade with water or soda' },
+            { q: 40, es: 'Naranjada con agua o soda', en: 'Orangeade with water or soda' },
+            { q: 40, es: 'Refresco de citronela', en: 'Lemongrass cooler' },
+            { q: 40, es: 'Soda del día', en: 'Soda of the day' }
+          ]
+        },
+        {
+          es: 'Tés especias del jardín', en: 'Garden herb teas',
+          items: [
+            { q: 35, es: 'Manzanilla, 500 ml', en: 'Chamomile, 500 ml' },
+            { q: 35, es: 'Gengibre-Lemongrass, 500 ml', en: 'Ginger-Lemongrass, 500 ml' },
+            { q: 35, es: 'Hierbaluisa-Menta, 500 ml', en: 'Lemon verbena-Mint, 500 ml' }
+          ]
+        },
+        {
+          es: 'Infusiones de té artesanal', en: 'Artisan tea infusions',
+          items: [
+            { q: 45, es: 'Pachamama Tropical', en: 'Pachamama Tropical',
+              dEs: 'Regaliz, jengibre, papaya, coco, piña y mango.',
+              dEn: 'Licorice, ginger, papaya, coconut, pineapple and mango.' },
+            { q: 45, es: 'Jade Negro', en: 'Jade Negro',
+              dEs: 'Cacao oscuro, canela, vainilla, cardamomo.',
+              dEn: 'Dark cacao, cinnamon, vanilla, cardamom.' }
+          ]
+        },
+        {
+          es: 'Digestivos', en: 'Digestifs',
+          items: [
+            { q: 60, es: 'Limoncello', en: 'Limoncello' },
+            { q: 60, es: 'Grand Marnier', en: 'Grand Marnier' },
+            { q: 70, es: 'Carajillo', en: 'Carajillo' },
+            { q: 70, es: 'Expresso Martini', en: 'Espresso Martini' }
+          ]
+        },
+        {
+          es: 'Cervezas', en: 'Beers',
+          items: [
+            { q: 25, es: 'Mix Michelada', en: 'Michelada Mix' },
+            { q: 35, es: 'Gallo Botella', en: 'Gallo, bottle' },
+            { q: 40, es: 'Cabro Reserva', en: 'Cabro Reserva' },
+            { q: 40, es: 'Monte Carlo', en: 'Monte Carlo' }
+          ]
+        },
+        {
+          es: 'Cervezas artesanales', en: 'Craft beers',
+          items: [
+            { q: 45, es: 'Antigua Sin Novia', en: 'Antigua Sin Novia' },
+            { q: 45, es: 'Antigua Muy Noble', en: 'Antigua Muy Noble' }
+          ]
+        }
+      ]
+    }
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'cocteles',
+    es: {
+      eyebrow: 'Cócteles',
+      title: 'Carta de cócteles',
+      intro: 'Nuestra barra también refleja la filosofía de sostenibilidad. Trabajamos con macerados, jarabes naturales, tés artesanales y productos frescos. Pregunta por nuestras creaciones de temporada.'
+    },
+    en: {
+      eyebrow: 'Cocktails',
+      title: 'Cocktail menu',
+      intro: 'Our bar reflects the same philosophy of sustainability. We work with macerations, natural syrups, artisan teas and fresh product. Ask about our seasonal creations.'
+    },
+    items: [],
+    subs: [
+      {
+        q: 80,
+        es: { t: 'Los Imperdibles', n: 'Los que no se van nunca. Si es tu primera vez, empieza aquí.' },
+        en: { t: 'Los Imperdibles', n: "The ones that never leave. If it's your first time, start here." },
+        items: [
+          { es: { n: 'Mezcal a la Piña',
+                  d: 'Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas del jardín, jarabe simple, jugo de limón y borde de sal de rosa de jamaica.',
+                  m: 'Pulpo a la Parrilla.' },
+            en: { n: 'Mezcal with Pineapple',
+                  d: 'Espadín mezcal, smoked pineapple jam with rosemary and garden herbs, simple syrup, lime juice and a hibiscus salt rim.',
+                  m: 'Grilled Octopus.' } },
+          { es: { n: 'El Fufurufo',
+                  d: 'Gin, cordial de pepino con Samat, jarabe simple, jugo de limón y un toque de kombucha saborizada con romero.',
+                  m: 'Ensalada Rosanta.' },
+            en: { n: 'El Fufurufo',
+                  d: 'Gin, cucumber cordial with Samat, simple syrup, lime juice and a touch of rosemary-infused kombucha.',
+                  m: 'Rosanta Salad.' } },
+          { es: { n: 'Red Pepper',
+                  d: 'Ron Colonial Antigüeño macerado en chiles morrones horneados, bitter de tabaco, un toque de jarabe y ahumado con tabaco de vainilla.',
+                  m: 'Lomito a la Parrilla.' },
+            en: { n: 'Red Pepper',
+                  d: 'Colonial Antigüeño rum infused with roasted red bell peppers, tobacco bitters, a touch of syrup, smoked with vanilla tobacco.',
+                  m: 'Grilled Beef Tenderloin.' } },
+          { es: { n: 'Negroni de Remolacha',
+                  d: 'Gin, shrub de remolacha, terminado con Campari.',
+                  m: 'Queso Horneado.' },
+            en: { n: 'Beetroot Negroni',
+                  d: 'Gin, beetroot shrub, finished with Campari.',
+                  m: 'Baked Cheese.' } },
+          { es: { n: 'El Colonial',
+                  d: 'Ron Colonial Antigüeño, sirope de especias con jamaica, jugo de mandarina y terminado con soda del día.',
+                  m: 'Hamburguesa de Lomito en Tiras.' },
+            en: { n: 'El Colonial',
+                  d: 'Colonial Antigüeño rum, spiced hibiscus syrup, mandarin juice, finished with house soda.',
+                  m: 'Beef Tenderloin Strips Burger.' } }
+        ]
+      },
+      {
+        q: 80,
+        es: { t: 'Cosecha de Temporada', n: 'Lo que el jardín dio esta temporada. Cambian cuando cambia la cosecha.' },
+        en: { t: 'Cosecha de Temporada', n: 'What the garden gave this season. They change when the harvest does.' },
+        items: [
+          { es: { n: 'El Canche',
+                  d: 'Gin, Campari, jugo de toronja, lavanda y terminado con soda.',
+                  m: 'Camarones al Horno.' },
+            en: { n: 'El Canche',
+                  d: 'Gin, Campari, grapefruit juice, lavender, finished with soda.',
+                  m: 'Oven-Baked Shrimp.' } },
+          { es: { n: 'La Lotería',
+                  d: 'Gin, cordial de rábano, jugo de limón, jarabe simple y jugo de piña asada, ahumada y especiada.',
+                  m: 'Tartar de Hongos.' },
+            en: { n: 'La Lotería',
+                  d: 'Gin, radish cordial, lime juice, simple syrup and roasted, smoked and spiced pineapple juice.',
+                  m: 'Mushroom Tartare.' } },
+          { es: { n: 'La Chef',
+                  d: 'Whiskey americano macerado con la extracción de sabor de las costillas de cerdo en fatwash, rodajas de pepino, sirope de lavanda y jugo de mandarina.',
+                  m: 'Costillas de Cerdo.' },
+            en: { n: 'La Chef',
+                  d: 'American whiskey fat-washed with pork rib flavor extraction, cucumber slices, lavender syrup and mandarin juice.',
+                  m: 'Pork Ribs.' } },
+          { es: { n: 'La Feria',
+                  d: 'Mezcal Espadín, mermelada de piña con especias y vino, jugo de limón, jarabe simple y un borde de azúcar de hierbabuena.',
+                  m: 'Hamburguesa de Portobello Asado.' },
+            en: { n: 'La Feria',
+                  d: 'Espadín mezcal, pineapple jam with spices and wine, lime juice, simple syrup, finished with a mint sugar rim.',
+                  m: 'Roasted Portobello Burger.' } },
+          { es: { n: 'Chaitenango',
+                  d: 'Ron Zacapa 23, infusión de chai guatemalteco, jugo de limón y miel.' },
+            en: { n: 'Chaitenango',
+                  d: 'Zacapa 23 rum, Guatemalan chai infusion, lime juice and honey.' } },
+          { es: { n: 'Boga',
+                  d: 'Wild Turkey 81, jugo de limón, jarabe de lavanda y soda de piña con lemongrass.' },
+            en: { n: 'Boga',
+                  d: 'Wild Turkey 81, lime juice, lavender syrup and pineapple soda with lemongrass.' } }
+        ]
+      },
+      {
+        q: 75,
+        es: { t: 'Raíces de la Casa', n: 'Los de siempre, los que la casa hace desde el principio.' },
+        en: { t: 'Raíces de la Casa', n: 'The originals. What the house has been making from the start.' },
+        items: [
+          { es: { n: 'El Mero, Mero',
+                  d: 'Vermouth Bianco, Ron Colonial, mango, maracuyá e infusión de hierbas del jardín.' },
+            en: { n: 'El Mero, Mero',
+                  d: 'Bianco vermouth, Colonial rum, mango, passion fruit and garden herb infusion.' } },
+          { es: { n: 'Los Penitentes',
+                  d: 'Ron Botran 12, Ron Botran Reserva Blanca, maracuyá, infusión de romero, jugo de mandarina y jarabe simple.' },
+            en: { n: 'Los Penitentes',
+                  d: 'Botran 12 rum, Botran White Reserve rum, passion fruit, rosemary infusion, mandarin juice and simple syrup.' } },
+          { es: { n: 'El Cuaje',
+                  d: 'Gin infusionado en albahaca, vino rosado macerado en salvia y bitter de cardamomo.' },
+            en: { n: 'El Cuaje',
+                  d: 'Gin infused with basil, rosé wine macerated with sage and cardamom bitters.' } },
+          { es: { n: 'Comal Borracho',
+                  d: 'Tequila, dilución de remolacha, jugo de limón, sal y jarabe simple.' },
+            en: { n: 'Comal Borracho',
+                  d: 'Tequila, beetroot dilution, lime juice, salt and simple syrup.' } }
+        ]
+      }
+    ],
+    cierre: {
+      es: 'Muchos más cócteles si preguntas al equipo.',
+      en: 'Many more cocktails if you ask our team.'
+    }
+  },
+
+  /* ------------------------------------------------------------------ */
+  {
+    id: 'vinos',
+    es: { eyebrow: 'Vinos', title: 'Carta de vinos' },
+    en: { eyebrow: 'Wines', title: 'Wine menu' },
+    items: [],
+    vinos: [
+      {
+        es: 'Tintos', en: 'Reds',
+        items: [
+          { n: 'Don Luis', uva: 'Cabernet Sauvignon', zEs: 'Valle del Maipo, Chile', zEn: 'Maipo Valley, Chile', copa: 70, bot: 350 },
+          { n: 'La Linda', uva: 'Malbec', zEs: 'Luján de Cuyo, Mendoza, Argentina', zEn: 'Luján de Cuyo, Mendoza, Argentina', copa: 70, bot: 350 },
+          { n: 'Mariluna Tinto', uva: 'Tempranillo, Bobal', zEs: 'Valencia, España', zEn: 'Valencia, Spain', copa: 70, bot: 350 },
+          { n: 'Bohigas Garnatxa Negra', uva: 'Garnacha Tinta', zEs: 'Valle de Anoia, Catalunya, España', zEn: 'Anoia Valley, Catalunya, Spain', bot: 375 },
+          { n: 'Lan Reserva', uva: 'Tempranillo, Mazuelo', zEs: 'Rioja Alta, España', zEn: 'Rioja Alta, Spain', bot: 455 },
+          { n: 'Pulenta Estate, Red Blend V', uva: 'Malbec, Cabernet Sauvignon, Merlot', zEs: 'Luján de Cuyo, Mendoza, Argentina', zEn: 'Luján de Cuyo, Mendoza, Argentina', bot: 535 }
+        ]
+      },
+      {
+        es: 'Blancos', en: 'Whites',
+        items: [
+          { n: 'Don Luis', uva: 'Chardonnay', zEs: 'Valle del Maipo, Chile', zEn: 'Maipo Valley, Chile', copa: 70, bot: 350 },
+          { n: 'Mariluna Blanco', uva: 'Verdejo, Macabeo', zEs: 'Valencia, España', zEn: 'Valencia, Spain', copa: 70, bot: 350 },
+          { n: 'La Val', uva: 'Albariño', zEs: 'Pontevedra, Galicia, España', zEn: 'Pontevedra, Galicia, Spain', copa: 70, bot: 350 },
+          { n: 'Salentein Killka', uva: 'Malbec Blanco', zEs: 'Valle de Uco, Mendoza, Argentina', zEn: 'Uco Valley, Mendoza, Argentina', bot: 375 },
+          { n: 'Santiago Ruiz', uva: 'Albariño', zEs: 'DO Rías Baixas, Galicia, España', zEn: 'DO Rías Baixas, Galicia, Spain', bot: 510 }
+        ]
+      },
+      {
+        es: 'Rosados', en: 'Rosé',
+        items: [
+          { n: 'Pasión de Bodal', uva: 'Bodal', zEs: 'Valencia, España', zEn: 'Valencia, Spain', bot: 405 }
+        ]
+      },
+      {
+        es: 'Cavas', en: 'Cava',
+        items: [
+          { n: 'Cava Bohigas Brut Reserva', uva: 'Xarel·lo, Macabeo, Perellada', zEs: 'Valle de Anoia, Catalunya, España', zEn: 'Anoia Valley, Catalunya, Spain', bot: 375 }
+        ]
+      }
+    ]
+  }
+];
+
+const FOOT = {
+  es: { line1: 'Rosanta · Gastronomía Sostenible', line2: 'Se agrega 10% de propina sugerida a tu cuenta.' },
+  en: { line1: 'Rosanta · Sustainable Gastronomy', line2: 'A 10% suggested gratuity is added to your check.' }
+};
+
+const UI = {
+  es: { menu: 'Menú', intro: 'Cocina con propósito' },
+  en: { menu: 'Menu', intro: 'Cooking with purpose' }
+};
+
+
+let lang = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'es';
+
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+
+function itemHTML(it){
+  const t = it[lang];
+  let h = '<div class="item"><div class="row"><span class="name">' + esc(t.n) + '</span>';
+  if(it.q) h += '<span class="dots"></span><span class="price">Q' + it.q + '</span>';
+  h += '</div>';
+  if(t.p)  h += '<p class="price2">' + esc(t.p) + '</p>';
+  if(t.p2) h += '<p class="price2">' + esc(t.p2) + '</p>';
+  if(t.d)  h += '<p class="desc">' + esc(t.d) + '</p>';
+  if(t.x)  h += '<p class="x">' + esc(t.x) + '</p>';
+  if(t.m)  h += '<p class="mar"><b>' + (lang==='es'?'Maridaje':'Pairing') + '</b>' + esc(t.m) + '</p>';
+  (t.notas||[]).forEach(n => { h += '<p class="nota"><span class="mk">&#10048;</span><span>' + esc(n) + '</span></p>'; });
+  if(t.link) h += '<p class="nota"><span class="mk">&#10048;</span><span><a href="' + t.link.u + '" target="_blank" rel="noopener">' + esc(t.link.t) + '</a></span></p>';
+  return h + '</div>';
+}
+
+function subHTML(sub){
+  const t = sub[lang];
+  return '<div class="sub"><div class="sub-cab"><h3>' + esc(t.t) + '</h3>'
+    + '<span class="pq">Q' + sub.q + '</span></div>'
+    + (t.n ? '<p class="sub-nota">' + esc(t.n) + '</p>' : '')
+    + sub.items.map(itemHTML).join('') + '</div>';
+}
+
+function vinoGrupoHTML(g){
+  let h = '<div class="vg"><h3>' + esc(g[lang]) + '</h3>';
+  g.items.forEach(v => {
+    const copa = lang === 'es' ? 'Copa' : 'Glass';
+    const bot  = lang === 'es' ? 'Botella' : 'Bottle';
+    let pr = '';
+    if(v.copa) pr += '<span>' + copa + '</span> Q' + v.copa + '&nbsp;&nbsp;&middot;&nbsp;&nbsp;';
+    pr += '<span>' + bot + '</span> Q' + v.bot;
+    h += '<div class="vino"><div class="n">' + esc(v.n) + '</div>'
+       + '<p class="uva">' + esc(v.uva) + '</p>'
+       + '<p class="zona">' + esc(lang === 'es' ? v.zEs : v.zEn) + '</p>'
+       + '<p class="pr">' + pr + '</p></div>';
+  });
+  return h + '</div>';
+}
+
+function gridHTML(g){
+  let h = '<div class="grid-block">';
+  if(g[lang] && g[lang].title) h += '<h3 class="grid-title">' + esc(g[lang].title) + '</h3>';
+  if(g[lang] && g[lang].intro) h += '<p class="grid-intro">' + esc(g[lang].intro) + '</p>';
+  h += '<div class="cols">';
+  g.groups.forEach(gr => {
+    h += '<div class="group">';
+    if(gr[lang]) h += '<h4>' + esc(gr[lang]) + '</h4>';
+    gr.items.forEach(i => {
+      h += '<div class="line"><span class="n">' + esc(i[lang]) + '</span><span class="d2"></span><span class="p">Q' + i.q + '</span></div>';
+      const d = lang === 'es' ? i.dEs : i.dEn;
+      if(d) h += '<p class="line-desc">' + esc(d) + '</p>';
+    });
+    h += '</div>';
+  });
+  return h + '</div></div>';
+}
+
+function render(){
+  document.documentElement.lang = lang;
+  const t = INTRO[lang];
+
+  document.getElementById('btnSecTxt').textContent = lang==='es' ? 'Secciones' : 'Sections';
+  document.getElementById('idxTit').textContent    = lang==='es' ? 'Secciones' : 'Sections';
+  document.getElementById('aqui').textContent      = t.kicker;
+
+  document.getElementById('idxList').innerHTML =
+    '<li><a href="#top"><span class="num">00</span><span class="tit">' + esc(t.kicker) + '</span></a></li>' +
+    MENU.map((s,i) => '<li><a href="#' + s.id + '"><span class="num">' +
+      String(i+1).padStart(2,'0') + '</span><span class="tit">' + esc(s[lang].eyebrow) + '</span></a></li>').join('');
+
+  document.getElementById('intro').innerHTML =
+    '<span id="top"></span>' +
+    '<p class="eyebrow">' + esc(t.kicker) + '</p>' +
+    '<p class="lead">' + esc(t.lead) + '</p>' +
+    '<p>' + esc(t.body[0]) + '</p>' +
+    '<details><summary>' + (lang==='es'?'Seguir leyendo':'Keep reading') + '</summary>' +
+      t.body.slice(1).map(p => '<p>' + esc(p) + '</p>').join('') +
+    '</details>' +
+    '<div class="coord"><b>14&deg; N &middot; 91&deg; W</b><span>' + esc(t.coordNote) + '</span></div>';
+
+  document.getElementById('menu').innerHTML = MENU.map(s => {
+    let h = '<section id="' + s.id + '">' +
+      '<div class="banda"><div class="inner">' +
+        '<p class="eyebrow">' + esc(s[lang].eyebrow) + '</p>' +
+        '<h2>' + esc(s[lang].title) + '</h2>' +
+      '</div></div>' +
+      '<div class="cuerpo"><div class="inner">' +
+        (s[lang].intro ? '<p class="sec-intro">' + esc(s[lang].intro) + '</p>' : '') +
+        s.items.map(itemHTML).join('') +
+        (s.subs  ? s.subs.map(subHTML).join('') : '') +
+        (s.vinos ? s.vinos.map(vinoGrupoHTML).join('') : '') +
+        (s.grid  ? gridHTML(s.grid) : '') +
+        (s.cierre ? '<p class="cierre">' + esc(s.cierre[lang]) + '</p>' : '') +
+      '</div></div></section>';
+    return h;
+  }).join('');
+
+  document.getElementById('foot').innerHTML =
+    '<span class="brand">' + esc(FOOT[lang].line1) + '</span>' +
+    '<p class="prop">' + esc(FOOT[lang].line2) + '</p>' +
+    '<p class="cd">14&deg; N &middot; 91&deg; W</p>';
+
+  document.querySelectorAll('.lang button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  sendHeight();
+}
+
+/* ---- idioma ---- */
+document.querySelectorAll('.lang button').forEach(b => {
+  b.addEventListener('click', () => { lang = b.dataset.lang; render(); window.scrollTo(0,0); });
+});
+
+/* ---- índice de secciones ---- */
+const idx = document.getElementById('idx');
+function abrir(v){ idx.classList.toggle('abierto', v); idx.setAttribute('aria-hidden', String(!v)); }
+document.getElementById('btnSec').addEventListener('click', () => abrir(true));
+document.getElementById('cerrar').addEventListener('click', () => abrir(false));
+idx.addEventListener('click', e => { if(e.target.closest('a')) abrir(false); });
+
+/* ---- dónde estoy ---- */
+addEventListener('scroll', () => {
+  let cur = null;
+  document.querySelectorAll('section').forEach(s => {
+    if(s.getBoundingClientRect().top <= 140) cur = s;
+  });
+  const el = document.getElementById('aqui');
+  el.textContent = cur ? cur.querySelector('.eyebrow').textContent : INTRO[lang].kicker;
+}, {passive:true});
+
+/* ---- alto automático para el componente HTML de Wix ---- */
+function sendHeight(){
+  try{ parent.postMessage({rosantaMenuHeight: document.body.scrollHeight}, '*'); }catch(e){}
+}
+addEventListener('load', sendHeight);
+addEventListener('resize', sendHeight);
+document.addEventListener('toggle', sendHeight, true);
+
+render();
+</script>
+</body>
+</html>

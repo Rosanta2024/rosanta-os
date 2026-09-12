@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Intranet</span>
+    </div>
+    <div class="quien">
+      Hola <?= usuario.nombre || usuario.email ?> · rol: <?= usuario.rol ?>
+    </div>
+  </header>
+  <?
+    // qs se imprime con el scriptlet SIN escapar. Con el normal, el escapado
+    // contextual dentro de un href codifica el ampersand y el igual: el
+    // 10-sep-2026 las tarjetas repartian page=costeo%26u%3d<token>, o sea
+    // UN solo parametro "page" con todo el texto adentro. Sin el parametro u,
+    // doGet caia en getUsuarioActual() y a quien entra con Gmail personal le
+    // servia "Esta puerta esta cerrada". El boton "Panel principal" no lo tenia
+    // porque su token va precedido de signo de pregunta, que el escapador respeta.
+    var qs = authToken ? ('&u=' + authToken) : '';
+  ?>
+  <main>
+    <h1>Panel principal</h1>
+    <p>Elige un modulo para empezar.</p>
+    <div class="tarjetas">
+      <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=finanzas<?!= qs ?>">
+          <h3>Finanzas &amp; Data</h3>
+          <p>La semana con sus semaforos de margen y food cost, las metas del mes y la
+             comparacion contra 2025. Las tres adentro, en el panel lateral.</p>
+          <span class="chip">solo lectura</span>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'recetario')) { ?>
+        <a class="tarjeta lila" href="<?= urlBase ?>?page=costeo<?!= qs ?>">
+          <h3>Profit OS</h3>
+          <p>El tablero de la operacion y la ingenieria de menu, mas el recetario con su
+             costo por platillo, los productos y los proveedores.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'marketing')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=marketing<?!= qs ?>">
+          <h3>Sistema de Marketing</h3>
+          <p>Marketing OS, resenas y CRM. Adentro: estrategia, pauta con ROAS, espia, calendario, creador Kaprica y carritos.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } else if (usuarioTieneModulo(usuario, 'contenido')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=marketing<?!= qs ?>">
+          <h3>Contenido</h3>
+          <p>Calendario del mes, creador Kaprica y checklist de piezas. Tu mesa de trabajo de contenido.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } ?>
+    </div>
+  </main>
+</body>
+</html>

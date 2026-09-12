@@ -1,0 +1,415 @@
+{
+  "fecha": "2026-08-15T22:20:24.215Z",
+  "secciones": [
+    {
+      "id": "891f79fb-c9a9-404f-947b-e295d53454ad",
+      "nombre": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "371be5f5-085d-4196-bf48-d8a293e6fbe3",
+      "nombre": "Healthy Options · Nourishing harvests"
+    },
+    {
+      "id": "75620513-6c94-42d2-a246-3075c0442955",
+      "nombre": "Burgers · From the garden and the grill"
+    },
+    {
+      "id": "c160d824-e8e6-4dac-9d65-b569d4860217",
+      "nombre": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "ee650eff-6bcf-405c-a57c-a985a23b1481",
+      "nombre": "Drinks · House drinks"
+    },
+    {
+      "id": "0cf3a5ec-2b75-4509-ba2a-6abdb7ca9687",
+      "nombre": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "198b4321-3f5a-4ac2-9f34-cc0e25e5e6f7",
+      "nombre": "Wines · Wine menu"
+    }
+  ],
+  "items": [
+    {
+      "id": "ec3fc86b-7933-4ebc-8514-2d12738aa043",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "7a125469-ffc6-4bdf-95ae-fee285fea990",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "c1415393-f4d2-4e55-aac7-7bf5bf35b358",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "6b6fbc9b-2db5-41cf-8f9d-c9a44efb673c",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "77e5e838-4911-43e8-b8fe-8c7a400a4c71",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "678d85db-77ad-4e6c-bc38-b0ae434b62fc",
+      "seccion": "To Start · Flavorful beginnings"
+    },
+    {
+      "id": "cf0ebc2b-adb3-4663-9043-9676d0ca4bc7",
+      "seccion": "Healthy Options · Nourishing harvests"
+    },
+    {
+      "id": "e443544b-5ced-492a-9c1e-36e6e646449c",
+      "seccion": "Healthy Options · Nourishing harvests"
+    },
+    {
+      "id": "8e319e8a-428f-4956-a9e8-28f586321d2a",
+      "seccion": "Healthy Options · Nourishing harvests"
+    },
+    {
+      "id": "8d972cec-a385-4b62-ba08-4ecbef10896b",
+      "seccion": "Healthy Options · Nourishing harvests"
+    },
+    {
+      "id": "93ad4dd2-77a5-4101-944e-8758df782249",
+      "seccion": "Burgers · From the garden and the grill"
+    },
+    {
+      "id": "3a358fcc-d733-4575-85f1-208906d5653b",
+      "seccion": "Burgers · From the garden and the grill"
+    },
+    {
+      "id": "821ec52b-d284-4651-9f3b-937183f8e991",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "fbaa4212-a211-4224-a555-cd127f9ccee3",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "213f1066-988d-41b0-949c-63a3052fea34",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "bbb25218-f73a-43cb-b6fb-b691c5dde4df",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "2a330a65-cdbc-466a-a3a8-db3bf1aec525",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "8a0706b8-95a2-44e6-ad3e-138f8652c0e0",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "85e8606b-f3fa-41b9-aa83-d94e1c1752af",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "5421fc40-47b3-4857-a522-f5b0da17aba7",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "06ff9f9c-34f7-4707-8bf9-f0c4d076da18",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "743cb5ec-d5fe-4cd8-be8b-4eeab43a2603",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "8b476a9f-c6e8-41ec-a8ed-5819a8be6ce2",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "c020170f-feba-49e0-8b9f-bd9de2306780",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "7ab714af-eefd-4656-851f-cfe46dca8dd5",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "a9f09e05-aa23-4388-a614-eb9d7797c211",
+      "seccion": "Something Stronger · Cooking with roots and fire"
+    },
+    {
+      "id": "3e392e26-6ed8-4fbc-b8a7-cb9e789aa153",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "523090d0-a299-4df6-a222-54c85857f43b",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "944bbab7-189e-4cb0-b83b-fc461e98ac90",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "fa8003c8-58e1-4438-963f-471e9f8d6bab",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "9c8b0df5-7693-463c-87e7-eb86c4e8f3b0",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "c717645b-d824-400c-9683-8b80887b9268",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "af14e7fe-93da-47fc-824a-fe93b1c2816c",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "93b81d3f-bc0c-466a-9cd2-2ee37f2e26f7",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "bc24d045-fe70-47ff-b374-bea8ffeed38b",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "be26db16-24a3-4f48-be9c-ef4ca55bd191",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "6a2551d6-bf63-4884-a995-20b74ce46395",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "f14def56-11b4-4276-8568-e0b0ece4ea4a",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "eba5e08e-6f65-43c3-bb28-efa7fe01f82b",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "c50bb4d6-30fb-47d7-af6b-349051f5e1a3",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "29bdc661-71d4-4cf4-872a-d5a2c28eb420",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "755bbc0f-4d11-488a-b751-9d5a6bfd8591",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "5e3400f3-8520-40c5-af0b-2e297bf5112c",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "39521f6c-93b1-4c70-9c5c-81c4aedbd71d",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "065a9bd3-502f-4584-a685-017fd79514c1",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "716ce691-7fda-41a7-a3d1-aa055a408e3e",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "6ebb36e9-224f-4deb-bd8f-4031c12956e4",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "b7fc214b-6e1c-47f9-b5b4-afb33ba7de91",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "4460ebca-393c-49a2-b4ff-be926b43fb7e",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "e8dc5c46-cd6b-44ba-8fd7-a6ca365fdc9d",
+      "seccion": "Drinks · House drinks"
+    },
+    {
+      "id": "1c35a368-7270-40b9-8f7f-60b4f47709f8",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "672908a4-fdf3-4d62-9aa7-7a795efcc52a",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "a9e34da0-eee8-445f-a68e-10049dfe0c9d",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "1121a10b-01b2-4556-a061-e33f01b45124",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "1ec1057a-3177-4c37-aa82-755eb8372a61",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "ac8f74f5-9aed-4d4a-9e96-a1c991d95482",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "1c6d9f73-a56a-42fd-886a-1759021f743c",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "74bd7145-7320-4668-b8b6-46ace33bfb10",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "1f2a676c-c7c1-4e5e-9845-e599549682a1",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "7edc3820-2f4d-43cd-ab3d-a6cd742aed7b",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "e6034754-c393-464a-a946-ce956a9d941c",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "7255efab-ea2a-4738-a41a-eccbd5cc58ab",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "023fa5f8-7795-402c-95a7-5656e7c64d6b",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "be2f5b26-a8b0-4d36-b0bc-319b9e3fdd7a",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "8013f494-6a68-4587-abde-8b2740c58392",
+      "seccion": "Cocktails · Cocktail menu"
+    },
+    {
+      "id": "c8faa4fc-baf1-4de5-81a5-88c2983d6c26",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "5bdd9fc2-38e2-4804-be4c-4ce979df5611",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "f474ca7b-6f32-427e-9305-5c6e4af893b2",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "0db0a1fc-2716-4272-8117-ac7ee0b509f8",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "6ef21538-b897-49c6-b8dd-90dd7028ca5b",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "68c9ab10-fd8f-4bf2-b97c-baf81541ac0a",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "ad8f1015-8870-4428-bf4f-ae9e6ae8ea19",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "0c5a6807-0c6c-4149-b95e-a349aa729b65",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "fd9e4dd0-5543-41ba-a6e6-393c91bfdbc6",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "f762222d-4acc-4de8-8b63-40dddfbe9f55",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "ab03e78b-8412-4013-a986-644ee4ccb12a",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "44609bd3-5c3d-496d-a618-f9a4073da911",
+      "seccion": "Wines · Wine menu"
+    },
+    {
+      "id": "8569452e-7623-4b36-8996-da12d8223966",
+      "seccion": "Wines · Wine menu"
+    }
+  ],
+  "variantes": [
+    {
+      "id": "25090109-2074-480d-9b7a-6b66bc967d28",
+      "nombre": "Regular"
+    },
+    {
+      "id": "c6f4a891-e0d6-4dd2-be26-a358e969bcb0",
+      "nombre": "Tenderloin"
+    },
+    {
+      "id": "4dfd910d-6c1a-4745-90b2-9a55a9e08182",
+      "nombre": "Shrimp"
+    },
+    {
+      "id": "5c8e96d5-cc0f-4fba-b347-a55b03e567ac",
+      "nombre": "With tenderloin"
+    },
+    {
+      "id": "16c56a38-86d0-4a78-9fbe-1a89df5bf768",
+      "nombre": "Glass"
+    },
+    {
+      "id": "e92afe1c-1c16-4e33-afcf-9cc23dbccb8f",
+      "nombre": "Bottle"
+    }
+  ],
+  "labels": [
+    {
+      "id": "13bf12cd-b40b-491c-b471-010cb265ef97",
+      "nombre": "House-made"
+    },
+    {
+      "id": "05916a09-3a04-4e35-888c-d144fca30bce",
+      "nombre": "Vegan option"
+    },
+    {
+      "id": "652d56d9-0b2a-47ef-ae5e-5fb2eb8f18ef",
+      "nombre": "Locally sourced"
+    },
+    {
+      "id": "6c827851-fe0b-45f3-8fd3-01b3a30be6f9",
+      "nombre": "Responsibly caught seafood"
+    },
+    {
+      "id": "7147ba75-da75-4fd7-a52d-32f9b00b0901",
+      "nombre": "Regeneratively grown"
+    },
+    {
+      "id": "ace35c4b-e35c-4a6f-a52c-f2e6c1ab0edf",
+      "nombre": "100% plant-based"
+    },
+    {
+      "id": "3e321ef8-d4cb-4332-b23a-6acd4a904f74",
+      "nombre": "Rich in protein"
+    },
+    {
+      "id": "4ae474fc-a2fe-4632-a7fb-99e26003f9d6",
+      "nombre": "Slow fermentation"
+    },
+    {
+      "id": "3c4a08f1-fb8e-4586-bdf2-388942aacda7",
+      "nombre": "Slow-cooked"
+    },
+    {
+      "id": "9d23dc48-835e-43ee-9531-3377a1136eaa",
+      "nombre": "Selected beef"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+/* Rosanta · Design System — Design tokens (La Segunda Cosecha) */
+
+@font-face { font-family: 'Peskia';  src: url('./assets/fonts/Peskia-ES.ttf'); }
+@font-face { font-family: 'Playfair Display'; src: url('./assets/fonts/PlayfairDisplay-Regular.ttf'); font-weight: 400 900; }
+@font-face { font-family: 'Playfair Display'; src: url('./assets/fonts/PlayfairDisplay-Italic.ttf'); font-style: italic; font-weight: 400 900; }
+
+:root {
+  /* Color — official palette */
+  --rosanta-verde: #4E6D5A;        /* Verde Bosque — brand anchor */
+  --rosanta-verde-medio: #57A77F;  /* Verde Medio — accent / CTA */
+  --rosanta-lila: #AEAAE2;         /* Lila — the ONLY spark, always small */
+  --rosanta-crema: #F2EEEB;        /* Crema — most-used light bg */
+  --rosanta-negro: #000000;        /* Negro — statements / impact */
+  --rosanta-blanco: #FFFFFF;       /* Blanco — print */
+
+  /* Support tints */
+  --rosanta-verde-tint: #EEF4EF;
+  --rosanta-lila-tint: #F2F0F8;
+  --rosanta-panel: #141414;        /* dark card panel */
+  --rosanta-line: #2A2A2A;         /* dark hairline */
+  --rosanta-mut: #B7B5AD;          /* muted text on dark */
+
+  /* Typography */
+  --rosanta-font-hero: 'Peskia', 'Playfair Display', serif;   /* HERO ONLY, uppercase, huge */
+  --rosanta-font-title: 'Playfair Display', serif;            /* all other titles */
+  --rosanta-font-body: 'Avenir', 'Lato', system-ui, sans-serif;
+  --rosanta-font-label: 'Poppins', system-ui, sans-serif;     /* eyebrows / pills */
+
+  /* Radii — flat design, no shadows */
+  --rosanta-radius-card: 14px;
+  --rosanta-radius-pill: 20px;
+  --rosanta-radius-chip: 9px;
+
+  /* Spacing scale */
+  --rosanta-space-1: 4px;
+  --rosanta-space-2: 8px;
+  --rosanta-space-3: 12px;
+  --rosanta-space-4: 16px;
+  --rosanta-space-6: 24px;
+  --rosanta-space-8: 32px;
+}
+
+/* NOTE: never use shadows. Never use mustard (#FABF52). Lila only as a small spark. */

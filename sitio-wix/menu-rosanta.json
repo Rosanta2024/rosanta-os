@@ -1,0 +1,1972 @@
+{
+  "generado": "2026-08-17T19:09:41.060Z",
+  "fuente": "https://raw.githubusercontent.com/rosanta2024/rosanta-menu/main/index.html",
+  "es": [
+    {
+      "id": "empezar",
+      "nombre": "PARA EMPEZAR · Comienzos con sabor",
+      "intro": "Entrantes pensados para darte la bienvenida a la mesa con intención y cuidado. Preparados con ingredientes frescos que resaltan la riqueza de la temporada y de la tierra.",
+      "items": [
+        {
+          "name": "Ensalada Rosanta",
+          "description": "Lechugas mixtas, tomates rostizados, naranja, cremoso aguacate, melocotón macerado con un toque de picante y encurtidos de la casa, con vinagreta de fresa y hierbabuena. Maridaje sugerido: El Fufurufo · Gin, cordial de pepino, jarabe simple, limón.",
+          "visible": true,
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Normal",
+                "priceInfo": {
+                  "price": "75.00"
+                }
+              },
+              {
+                "name": "Lomito",
+                "priceInfo": {
+                  "price": "100.00"
+                }
+              },
+              {
+                "name": "Camarones",
+                "priceInfo": {
+                  "price": "135.00"
+                }
+              }
+            ]
+          },
+          "_labels": [
+            "Hecho en casa"
+          ]
+        },
+        {
+          "name": "Coliflor a la Parrilla con Romesco",
+          "description": "Coliflor a la parrilla, dorada por fuera y tierna por dentro, sobre una salsa romesco de pimiento asado y almendra, terminada con hierbas del jardín.",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          },
+          "_labels": [
+            "Opción vegana"
+          ]
+        },
+        {
+          "name": "Brócoli con Nduja",
+          "description": "Brócoli asado con nduja de Sal Charcutería, embutido calabrés curado aquí en Guatemala. Suave, untable y lleno de carácter. Creado con Sal Charcutería · Al pedirlo apoyas a Niños de Guatemala y los estudios de niños de la zona. Conoce el proyecto en ninosdeguatemala.org",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          }
+        },
+        {
+          "name": "Queso Horneado",
+          "description": "Queso al horno incrustado en pepitoria, acompañado de fresas maceradas en vino tinto, una compota de tomate y cebollas caramelizadas, servido junto a un pan tostado hecho en casa con hierbas del jardín. Maridaje sugerido: Negroni de Remolacha · Gin, shrub de remolacha clarificado y completado con Campari. Queso de cooperativa de pequeños productores de Quetzaltenango.",
+          "visible": true,
+          "priceInfo": {
+            "price": "140.00"
+          },
+          "_labels": [
+            "Producto local"
+          ]
+        },
+        {
+          "name": "Pulpo a la Parrilla",
+          "description": "Pulpo del Pacífico a la parrilla, con papas al pimentón, un suave puré de alverjas, mayonesa de hierbabuena, suprema de naranja y tomates rostizados. Maridaje sugerido: Mezcal a la Piña · Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas.",
+          "visible": true,
+          "priceInfo": {
+            "price": "150.00"
+          },
+          "_labels": [
+            "Pesca responsable",
+            "Cultivo regenerativo"
+          ]
+        },
+        {
+          "name": "Tabla de Jamones y Quesos",
+          "description": "Quesos maduros y jamones curados para compartir, servidos con encurtidos de la casa y frutas frescas. Maridaje sugerido: Para disfrutar en el jardín, un Rosé Pasión Spritz.",
+          "visible": true,
+          "priceInfo": {
+            "price": "210.00"
+          },
+          "_labels": [
+            "Producto local",
+            "Hecho en casa"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "saludables",
+      "nombre": "OPCIONES SALUDABLES · Cosechas nutritivas",
+      "intro": "Cocinar de forma consciente también es nutrir con intención. Elaborados con ingredientes frescos, vegetales de temporada y aderezos caseros. Cada combinación está pensada para cuidarte y reconectar con sabores naturales. Todos los platos pueden personalizarse con tofu, atún o pollo a la plancha como fuente de proteína.",
+      "items": [
+        {
+          "name": "Tartar de Hongos",
+          "description": "Fusión de hongos frescos, rábanos encurtidos, melocotón macerado en whiskey irlandés con un toque picante y grillado, servido con mantequilla de maní y chips crujientes de malanga. Plato vegano, sin proteína personalizada. Maridaje sugerido: La Lotería · Mezcal Espadín, cordial de rábano, limón, jarabe. Hongos silvestres y encurtidos de la casa.",
+          "visible": true,
+          "priceInfo": {
+            "price": "100.00"
+          }
+        },
+        {
+          "name": "Bok Choy a la Parrilla",
+          "description": "Bok choy a la parrilla, sobre una cama de yogur de eneldo hecho en casa, acompañado de tomates rostizados y aceite de albahaca. Yogur de eneldo hecho en casa.",
+          "visible": true,
+          "priceInfo": {
+            "price": "100.00"
+          }
+        },
+        {
+          "name": "Bol Mediterráneo",
+          "description": "Una base de lechuga o cuscús, con una colorida mezcla de vegetales frescos, aceitunas, garbanzos, pepitoria y aguacate, todo armonizado con un aderezo de chile pimiento asado y un huevo cocido encima.",
+          "visible": true,
+          "priceInfo": {
+            "price": "105.00"
+          },
+          "_labels": [
+            "100% vegetal",
+            "Rico en proteína"
+          ]
+        },
+        {
+          "name": "Vegetales Fermentados",
+          "description": "Bol de vegetales en fermentación natural y lenta, bañados en salsa tai de maní con un toque de miel. Maridaje sugerido: Rose Collins · Gin de frutos rojos, jugo de limón, jarabe.",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          },
+          "_labels": [
+            "Fermentación lenta",
+            "Hecho en casa"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas",
+      "nombre": "HAMBURGUESAS · Del huerto y la parrilla",
+      "intro": "Comer bien es simple cuando se eligen ingredientes frescos y técnicas que respetan el producto. Estas combinaciones están pensadas para disfrutarse con sencillez, sabor y cuidado. Cada hamburguesa va en pan brioche de cúrcuma, con mozzarella derretida, pepinillos y mayonesa de aguacate y apio. Acompañada de papas y camotes fritos crujientes.",
+      "items": [
+        {
+          "name": "Portobello Asado",
+          "description": "Jugoso hongo portobello horneado con mantequilla de hierbas del jardín. Maridaje sugerido: La Feria · Mezcal Espadín, mermelada de piña con especias y vino.",
+          "visible": true,
+          "priceInfo": {
+            "price": "105.00"
+          },
+          "_labels": [
+            "100% vegetal"
+          ]
+        },
+        {
+          "name": "Lomito en Tiras",
+          "description": "Con cebollines tiernos asados y fresca gremolata de hierbas del jardín. Maridaje sugerido: El Colonial · Ron Colonial Antigüeño, sirope de especias con Jamaica. Corte local, gremolata cortada al momento.",
+          "visible": true,
+          "priceInfo": {
+            "price": "130.00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fuertes",
+      "nombre": "ALGO MÁS FUERTE · Cocina con raíz y fuego",
+      "intro": "Platos fuertes pensados para honrar lo que da la tierra. Cada preparación combina técnicas que respetan el ingrediente, cocción lenta cuando se necesita y un equilibrio entre intensidad y frescura. Aquí se celebra el producto local, las recetas con historia y el sabor bien trabajado.",
+      "items": [
+        {
+          "name": "Pasta de la Casa",
+          "description": "Fetuccini hecho en casa, en salsa roja, tomates confitados, ajo, cebolla, salpimentado con un toque de vino y champiñones.",
+          "visible": true,
+          "priceInfo": {
+            "price": "155.00"
+          },
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Con lomito",
+                "priceInfo": {
+                  "price": "185.00"
+                }
+              },
+              {
+                "name": "Camarones",
+                "priceInfo": {
+                  "price": "195.00"
+                }
+              }
+            ]
+          },
+          "_labels": [
+            "Hecho en casa",
+            "Producto local"
+          ]
+        },
+        {
+          "name": "Arroz Meloso",
+          "description": "Arroz cocido despacio hasta quedar meloso y cremoso, con lo que el mar y el jardín dieron esta semana.",
+          "visible": true,
+          "priceInfo": {
+            "price": "165.00"
+          },
+          "_labels": [
+            "Hecho en casa",
+            "Pesca responsable"
+          ]
+        },
+        {
+          "name": "Pollo en Salsa de Tamarindo",
+          "description": "Pechuga de pollo con salsa de tamarindo y morrón con toque de jengibre y flameado en ron. Crema de zanahoria, hongos almendrados y remolachas rostizadas. Cítrico, ahumado y lleno de textura.",
+          "visible": true,
+          "priceInfo": {
+            "price": "165.00"
+          }
+        },
+        {
+          "name": "Costillas de Cerdo",
+          "description": "Costillas al horno en una deliciosa mezcla de café y cardamomo, acompañadas de cebollas asadas, cremoso puré de yuca y brócoli escabechado. Maridaje sugerido: La Chef · Whiskey americano en fatwash.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Cocción lenta",
+            "Producto local"
+          ]
+        },
+        {
+          "name": "Lomito a la Parrilla",
+          "description": "Medallón de lomito al término de tu preferencia, acompañado de puré de espinaca y romero, sobre una salsa de ajo negro complementado con zanahorias fermentadas. Maridaje sugerido: Red Pepper, Colonial Fashioned.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Carne seleccionada"
+          ]
+        },
+        {
+          "name": "Brisket en Salsa Bordelesa",
+          "description": "Con puré de plátano asado y ajo confitado. Lingote de yuca, uvas maceradas en vermut rosé y hojas de bok choy.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Cocción lenta"
+          ]
+        },
+        {
+          "name": "Estofado de Rabo",
+          "description": "Rabo de res en versión de estofado tradicional, con puré de coliflor horneada, salsa demi-glace y rábanos macerados.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Cocción lenta"
+          ]
+        },
+        {
+          "name": "Pescado del Día",
+          "description": "Pesca del día, servida con una salsa de vino blanco aromatizada con salvia, puré de camote y zanahorias horneadas, ejotes tiernos y bok choy asado. Producto del día · Preparación suave y herbal.",
+          "visible": true,
+          "priceInfo": {
+            "price": "185.00"
+          }
+        },
+        {
+          "name": "Camarones al Horno",
+          "description": "Camarones al horno con hierbas del jardín, acompañados de tomates cherry, aceite de oliva, aceite de sésamo, ajo y cebolla. Sencillo, aromático y lleno de frescura.",
+          "visible": true,
+          "priceInfo": {
+            "price": "190.00"
+          }
+        },
+        {
+          "name": "Mar & Tierra",
+          "description": "Lomito a la parrilla, camarones al ajo, cebollines asados, fresca ensalada y papas fritas crujientes.",
+          "visible": true,
+          "priceInfo": {
+            "price": "325.00"
+          },
+          "_labels": [
+            "Carne seleccionada",
+            "Pesca responsable"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fuertes-sides",
+      "nombre": "ALGO MÁS FUERTE · Para Acompañar",
+      "intro": "",
+      "items": [
+        {
+          "name": "Pan de la casa",
+          "description": "",
+          "priceInfo": {
+            "price": "20.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Gratín de papas",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Ejotes al aceite de ajonjolí y ajo",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Mix de fritas (papas, camote, malanga)",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g1",
+      "nombre": "BEBIDAS · Refrescos de la casa",
+      "intro": "Todas las bebidas están pensadas para acompañar tu momento. Ingredientes reales, fruta fresca, hierbas del jardín y recetas propias.",
+      "items": [
+        {
+          "name": "Agua con gas 1L",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Ginger Beer",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Kombucha",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Limonada con agua o soda",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Naranjada con agua o soda",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Refresco de citronela",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Soda del día",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g2",
+      "nombre": "BEBIDAS · Café de Guatemala",
+      "intro": "",
+      "items": [
+        {
+          "name": "Café Americano",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Café con leche",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g3",
+      "nombre": "BEBIDAS · Tés especiales del jardín",
+      "intro": "",
+      "items": [
+        {
+          "name": "Manzanilla, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Jengibre-Lemongrass, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Hierbaluisa-Menta, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g4",
+      "nombre": "BEBIDAS · Infusiones de té artesanal",
+      "intro": "",
+      "items": [
+        {
+          "name": "Pachamama Tropical",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Jade Negro",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g5",
+      "nombre": "BEBIDAS · Cervezas",
+      "intro": "",
+      "items": [
+        {
+          "name": "Mix Michelada",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Gallo Botella",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Cabro Reserva",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Monte Carlo",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g6",
+      "nombre": "BEBIDAS · Cervezas artesanales",
+      "intro": "",
+      "items": [
+        {
+          "name": "Antigua Sin Novia",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Antigua Muy Noble",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g7",
+      "nombre": "BEBIDAS · Digestivos",
+      "intro": "",
+      "items": [
+        {
+          "name": "Limoncello",
+          "description": "",
+          "priceInfo": {
+            "price": "60.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Grand Marnier",
+          "description": "",
+          "priceInfo": {
+            "price": "60.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Carajillo",
+          "description": "",
+          "priceInfo": {
+            "price": "70.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Expresso Martini",
+          "description": "",
+          "priceInfo": {
+            "price": "70.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "cocteles-1",
+      "nombre": "CÓCTELES · Los Imperdibles",
+      "intro": "Nuestra barra también refleja la filosofía de sostenibilidad. Trabajamos con macerados, jarabes naturales, tés artesanales y productos frescos. Pregunta por nuestras creaciones de temporada.",
+      "items": [
+        {
+          "name": "Mezcal a la Piña",
+          "description": "Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas del jardín, jarabe simple, jugo de limón y borde de sal de rosa de jamaica. Maridaje sugerido: Pulpo a la Parrilla.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "El Fufurufo",
+          "description": "Gin, cordial de pepino con Samat, jarabe simple, jugo de limón y un toque de kombucha saborizada con romero. Maridaje sugerido: Ensalada Rosanta.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Red Pepper",
+          "description": "Ron Colonial Antigüeño macerado en chiles morrones horneados, bitter de tabaco, un toque de jarabe y ahumado con tabaco de vainilla. Maridaje sugerido: Lomito a la Parrilla.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Negroni de Remolacha",
+          "description": "Gin, shrub de remolacha, terminado con Campari. Maridaje sugerido: Queso Horneado.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "El Colonial",
+          "description": "Ron Colonial Antigüeño, sirope de especias con jamaica, jugo de mandarina y terminado con soda del día. Maridaje sugerido: Hamburguesa de Lomito en Tiras.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "cocteles-2",
+      "nombre": "CÓCTELES · Cosecha de Temporada",
+      "intro": "",
+      "items": [
+        {
+          "name": "El Canche",
+          "description": "Gin, Campari, jugo de toronja, lavanda y terminado con soda. Maridaje sugerido: Camarones al Horno.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Lotería",
+          "description": "Gin, cordial de rábano, jugo de limón, jarabe simple y jugo de piña asada, ahumada y especiada. Maridaje sugerido: Tartar de Hongos.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Chef",
+          "description": "Whiskey americano macerado con la extracción de sabor de las costillas de cerdo en fatwash, rodajas de pepino, sirope de lavanda y jugo de mandarina. Maridaje sugerido: Costillas de Cerdo.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Feria",
+          "description": "Mezcal Espadín, mermelada de piña con especias y vino, jugo de limón, jarabe simple y un borde de azúcar de hierbabuena. Maridaje sugerido: Hamburguesa de Portobello Asado.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Chaitenango",
+          "description": "Ron Zacapa 23, infusión de chai guatemalteco, jugo de limón y miel.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Boga",
+          "description": "Wild Turkey 81, jugo de limón, jarabe de lavanda y soda de piña con lemongrass.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "cocteles-3",
+      "nombre": "CÓCTELES · Raíces de la Casa",
+      "intro": "",
+      "items": [
+        {
+          "name": "El Mero, Mero",
+          "description": "Vermouth Bianco, Ron Colonial, mango, maracuyá e infusión de hierbas del jardín.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Los Penitentes",
+          "description": "Ron Botran 12, Ron Botran Reserva Blanca, maracuyá, infusión de romero, jugo de mandarina y jarabe simple.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Comal Borracho",
+          "description": "Tequila, dilución de remolacha, jugo de limón, sal y jarabe simple.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v1",
+      "nombre": "VINOS · Tintos",
+      "intro": "",
+      "items": [
+        {
+          "name": "Don Luis",
+          "description": "Cabernet Sauvignon · Valle del Maipo, Chile",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Copa",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Linda",
+          "description": "Malbec · Luján de Cuyo, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Copa",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Mariluna Tinto",
+          "description": "Tempranillo, Bobal · Valencia, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Copa",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Bohigas Garnatxa Negra",
+          "description": "Garnacha Tinta · Valle de Anoia, Catalunya, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Lan Reserva",
+          "description": "Tempranillo, Mazuelo · Rioja Alta, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "455.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Pulenta Estate, Red Blend V",
+          "description": "Malbec, Cabernet Sauvignon, Merlot · Luján de Cuyo, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "535.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v2",
+      "nombre": "VINOS · Blancos y Rosados",
+      "intro": "",
+      "items": [
+        {
+          "name": "Don Luis",
+          "description": "Chardonnay · Valle del Maipo, Chile",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Copa",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Mariluna Blanco",
+          "description": "Verdejo, Macabeo · Valencia, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Copa",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Val",
+          "description": "Albariño · Pontevedra, Galicia, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Salentein Killka",
+          "description": "Malbec Blanco · Valle de Uco, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Santiago Ruiz",
+          "description": "Albariño · DO Rías Baixas, Galicia, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "510.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Pasión de Bodal",
+          "description": "Bodal · Valencia, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "405.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v3",
+      "nombre": "CAVA",
+      "intro": "",
+      "items": [
+        {
+          "name": "Cava Bohigas Brut Reserva",
+          "description": "Xarel·lo, Macabeo, Perellada · Valle de Anoia, Catalunya, España",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Botella",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    }
+  ],
+  "en": [
+    {
+      "id": "empezar",
+      "nombre": "TO START · Flavorful beginnings",
+      "intro": "Starters made to welcome you to the table with intention and care. Prepared with fresh ingredients that bring out the richness of the season and the land.",
+      "items": [
+        {
+          "name": "Rosanta Salad",
+          "description": "Mixed greens, roasted tomatoes, orange, creamy avocado, peach macerated with a touch of heat, house pickles, and a strawberry and spearmint vinaigrette. Suggested pairing: El Fufurufo · Gin, cucumber cordial, simple syrup, lime.",
+          "visible": true,
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Regular",
+                "priceInfo": {
+                  "price": "75.00"
+                }
+              },
+              {
+                "name": "Tenderloin",
+                "priceInfo": {
+                  "price": "100.00"
+                }
+              },
+              {
+                "name": "Shrimp",
+                "priceInfo": {
+                  "price": "135.00"
+                }
+              }
+            ]
+          },
+          "_labels": [
+            "House-made"
+          ]
+        },
+        {
+          "name": "Grilled Cauliflower with Romesco",
+          "description": "Grilled cauliflower, golden outside and tender inside, over a romesco sauce of roasted pepper and almond, finished with herbs from the garden.",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          },
+          "_labels": [
+            "Vegan option"
+          ]
+        },
+        {
+          "name": "Broccoli with Nduja",
+          "description": "Roasted broccoli with nduja from Sal Charcutería, a Calabrian cured sausage made here in Guatemala. Soft, spreadable and full of character. Created with Sal Charcutería · Ordering it supports Niños de Guatemala and the schooling of children in the area. Learn about the project at ninosdeguatemala.org",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          }
+        },
+        {
+          "name": "Baked Cheese",
+          "description": "Oven-baked cheese crusted in pepitoria, with strawberries macerated in red wine, a tomato compote and caramelized onions, served with house-made toast with garden herbs. Suggested pairing: Beetroot Negroni · Gin, clarified beet shrub, finished with Campari. Cheese from a cooperative of small producers in Quetzaltenango.",
+          "visible": true,
+          "priceInfo": {
+            "price": "140.00"
+          },
+          "_labels": [
+            "Locally sourced"
+          ]
+        },
+        {
+          "name": "Grilled Octopus",
+          "description": "Pacific octopus from the grill, with paprika potatoes, a smooth pea purée, spearmint mayonnaise, orange supremes and roasted tomatoes. Suggested pairing: Mezcal a la Piña · Espadín mezcal, pineapple jam smoked with rosemary and scented with herbs.",
+          "visible": true,
+          "priceInfo": {
+            "price": "150.00"
+          },
+          "_labels": [
+            "Responsibly caught seafood",
+            "Regeneratively grown"
+          ]
+        },
+        {
+          "name": "Charcuterie and Cheese Board",
+          "description": "Aged cheeses and cured meats to share, served with house pickles and fresh fruit. Suggested pairing: To enjoy in the garden, a Rosé Pasión Spritz.",
+          "visible": true,
+          "priceInfo": {
+            "price": "210.00"
+          },
+          "_labels": [
+            "Locally sourced",
+            "House-made"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "saludables",
+      "nombre": "HEALTHY OPTIONS · Nourishing harvests",
+      "intro": "Cooking consciously also means nourishing with intention. Made with fresh ingredients, seasonal vegetables and house dressings. Every combination is meant to take care of you and reconnect you with natural flavors. All dishes can be customized with tofu, tuna or grilled chicken as your protein.",
+      "items": [
+        {
+          "name": "Mushroom Tartare",
+          "description": "A fusion of fresh mushrooms, pickled radish, peach macerated in Irish whiskey with a touch of heat and grilled, served with peanut butter and crisp malanga chips. Vegan dish, no protein customization. Suggested pairing: La Lotería · Espadín mezcal, radish cordial, lime, syrup. Wild mushrooms and house pickles.",
+          "visible": true,
+          "priceInfo": {
+            "price": "100.00"
+          }
+        },
+        {
+          "name": "Grilled Bok Choy",
+          "description": "Grilled bok choy over a bed of house-made dill yogurt, with roasted tomatoes and basil oil. House-made dill yogurt.",
+          "visible": true,
+          "priceInfo": {
+            "price": "100.00"
+          }
+        },
+        {
+          "name": "Mediterranean Bowl",
+          "description": "A base of lettuce or couscous with a colorful mix of fresh vegetables, olives, chickpeas, pumpkin seed and avocado, brought together with a roasted red pepper dressing and a boiled egg on top.",
+          "visible": true,
+          "priceInfo": {
+            "price": "105.00"
+          },
+          "_labels": [
+            "100% plant-based",
+            "Rich in protein"
+          ]
+        },
+        {
+          "name": "Fermented Vegetables",
+          "description": "A bowl of naturally slow-fermented vegetables in a Thai peanut sauce with a touch of honey. Suggested pairing: Rose Collins · Red berry gin, lime juice, syrup.",
+          "visible": true,
+          "priceInfo": {
+            "price": "115.00"
+          },
+          "_labels": [
+            "Slow fermentation",
+            "House-made"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas",
+      "nombre": "BURGERS · From the garden and the grill",
+      "intro": "Eating well is simple when you choose fresh ingredients and techniques that respect the product. These combinations are meant to be enjoyed simply, with flavor and care. Every burger comes on a turmeric brioche bun with melted mozzarella, pickles and avocado and celery mayonnaise. Served with crispy potato and sweet potato fries.",
+      "items": [
+        {
+          "name": "Roasted Portobello",
+          "description": "Juicy portobello mushroom roasted with garden herb butter. Suggested pairing: La Feria · Espadín mezcal, spiced pineapple jam and wine.",
+          "visible": true,
+          "priceInfo": {
+            "price": "105.00"
+          },
+          "_labels": [
+            "100% plant-based"
+          ]
+        },
+        {
+          "name": "Sliced Tenderloin",
+          "description": "With tender grilled spring onions and a fresh gremolata of garden herbs. Suggested pairing: El Colonial · Colonial Antigüeño rum, spiced syrup with hibiscus. Local cut, gremolata chopped to order.",
+          "visible": true,
+          "priceInfo": {
+            "price": "130.00"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fuertes",
+      "nombre": "SOMETHING STRONGER · Cooking with roots and fire",
+      "intro": "Main courses meant to honor what the land gives. Each preparation combines techniques that respect the ingredient, slow cooking when it is needed, and a balance between intensity and freshness. Here we celebrate local product, recipes with history and flavor that is properly worked.",
+      "items": [
+        {
+          "name": "House Pasta",
+          "description": "House-made fettuccine in red sauce with confit tomatoes, garlic, onion, mushrooms and a touch of wine.",
+          "visible": true,
+          "priceInfo": {
+            "price": "155.00"
+          },
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "With tenderloin",
+                "priceInfo": {
+                  "price": "185.00"
+                }
+              },
+              {
+                "name": "Shrimp",
+                "priceInfo": {
+                  "price": "195.00"
+                }
+              }
+            ]
+          },
+          "_labels": [
+            "House-made",
+            "Locally sourced"
+          ]
+        },
+        {
+          "name": "Creamy Rice",
+          "description": "Rice cooked slowly until creamy, with whatever the sea and the garden gave this week.",
+          "visible": true,
+          "priceInfo": {
+            "price": "165.00"
+          },
+          "_labels": [
+            "House-made",
+            "Responsibly caught seafood"
+          ]
+        },
+        {
+          "name": "Chicken in Tamarind Sauce",
+          "description": "Chicken breast in a tamarind and red pepper sauce with a touch of ginger, flambéed in rum. Carrot cream, almond mushrooms and roasted beets. Citrusy, smoky and full of texture.",
+          "visible": true,
+          "priceInfo": {
+            "price": "165.00"
+          }
+        },
+        {
+          "name": "Pork Ribs",
+          "description": "Oven-baked ribs in a delicious coffee and cardamom rub, with roasted onions, creamy yuca purée and pickled broccoli. Suggested pairing: La Chef · Fat-washed American whiskey.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Slow-cooked",
+            "Locally sourced"
+          ]
+        },
+        {
+          "name": "Grilled Tenderloin",
+          "description": "Tenderloin medallion cooked to your liking, with a spinach and rosemary purée over black garlic sauce, finished with fermented carrots. Suggested pairing: Red Pepper, Colonial Fashioned.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Selected beef"
+          ]
+        },
+        {
+          "name": "Brisket in Bordelaise Sauce",
+          "description": "With roasted plantain purée and confit garlic. Yuca terrine, grapes macerated in rosé vermouth and bok choy leaves.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Slow-cooked"
+          ]
+        },
+        {
+          "name": "Braised Oxtail",
+          "description": "Oxtail in a traditional stew, with roasted cauliflower purée, demi-glace and macerated radish.",
+          "visible": true,
+          "priceInfo": {
+            "price": "180.00"
+          },
+          "_labels": [
+            "Slow-cooked"
+          ]
+        },
+        {
+          "name": "Catch of the Day",
+          "description": "The day's catch, served with a white wine sauce scented with sage, sweet potato purée and roasted carrots, tender green beans and grilled bok choy. Product of the day · Gentle, herbal preparation.",
+          "visible": true,
+          "priceInfo": {
+            "price": "185.00"
+          }
+        },
+        {
+          "name": "Oven-Baked Shrimp",
+          "description": "Shrimp baked with garden herbs, with cherry tomatoes, olive oil, sesame oil, garlic and onion. Simple, aromatic and full of freshness.",
+          "visible": true,
+          "priceInfo": {
+            "price": "190.00"
+          }
+        },
+        {
+          "name": "Surf & Turf",
+          "description": "Grilled tenderloin, garlic shrimp, grilled spring onions, fresh salad and crispy fries.",
+          "visible": true,
+          "priceInfo": {
+            "price": "325.00"
+          },
+          "_labels": [
+            "Selected beef",
+            "Responsibly caught seafood"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fuertes-sides",
+      "nombre": "SOMETHING STRONGER · Side Dishes",
+      "intro": "",
+      "items": [
+        {
+          "name": "House bread",
+          "description": "",
+          "priceInfo": {
+            "price": "20.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Potato gratin",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Green beans in sesame oil and garlic",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        },
+        {
+          "name": "Mixed fries (potato, sweet potato, malanga)",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true,
+          "_grupo": ""
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g1",
+      "nombre": "DRINKS · House refreshments",
+      "intro": "Every drink is meant to accompany your moment. Real ingredients, fresh fruit, garden herbs and our own recipes.",
+      "items": [
+        {
+          "name": "Sparkling water 1L",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Ginger Beer",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Kombucha",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Lemonade with water or soda",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Orangeade with water or soda",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Lemongrass cooler",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Soda of the day",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g2",
+      "nombre": "DRINKS · Coffee from Guatemala",
+      "intro": "",
+      "items": [
+        {
+          "name": "Americano",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Coffee with milk",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g3",
+      "nombre": "DRINKS · Garden herb teas",
+      "intro": "",
+      "items": [
+        {
+          "name": "Chamomile, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Ginger-Lemongrass, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Lemon verbena-Mint, 500 ml",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g4",
+      "nombre": "DRINKS · Artisan tea infusions",
+      "intro": "",
+      "items": [
+        {
+          "name": "Pachamama Tropical",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Jade Negro",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g5",
+      "nombre": "DRINKS · Beers",
+      "intro": "",
+      "items": [
+        {
+          "name": "Michelada Mix",
+          "description": "",
+          "priceInfo": {
+            "price": "25.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Gallo, bottle",
+          "description": "",
+          "priceInfo": {
+            "price": "35.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Cabro Reserva",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Monte Carlo",
+          "description": "",
+          "priceInfo": {
+            "price": "40.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g6",
+      "nombre": "DRINKS · Craft beers",
+      "intro": "",
+      "items": [
+        {
+          "name": "Antigua Sin Novia",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Antigua Muy Noble",
+          "description": "",
+          "priceInfo": {
+            "price": "45.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "bebidas-g7",
+      "nombre": "DRINKS · Digestifs",
+      "intro": "",
+      "items": [
+        {
+          "name": "Limoncello",
+          "description": "",
+          "priceInfo": {
+            "price": "60.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Grand Marnier",
+          "description": "",
+          "priceInfo": {
+            "price": "60.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Carajillo",
+          "description": "",
+          "priceInfo": {
+            "price": "70.00"
+          },
+          "visible": true
+        },
+        {
+          "name": "Espresso Martini",
+          "description": "",
+          "priceInfo": {
+            "price": "70.00"
+          },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "cocteles-1",
+      "nombre": "COCKTAILS · The Essentials",
+      "intro": "Our bar reflects the same philosophy of sustainability. We work with macerations, natural syrups, artisan teas and fresh product. Ask about our seasonal creations.",
+      "items": [
+        {
+          "name": "Mezcal with Pineapple",
+          "description": "Espadín mezcal, smoked pineapple jam with rosemary and garden herbs, simple syrup, lime juice and a hibiscus salt rim. Suggested pairing: Grilled Octopus.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "El Fufurufo",
+          "description": "Gin, cucumber cordial with Samat, simple syrup, lime juice and a touch of rosemary-infused kombucha. Suggested pairing: Rosanta Salad.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Red Pepper",
+          "description": "Colonial Antigüeño rum infused with roasted red bell peppers, tobacco bitters, a touch of syrup, smoked with vanilla tobacco. Suggested pairing: Grilled Tenderloin.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Beetroot Negroni",
+          "description": "Gin, beetroot shrub, finished with Campari. Suggested pairing: Baked Cheese.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "El Colonial",
+          "description": "Colonial Antigüeño rum, spiced hibiscus syrup, mandarin juice, finished with house soda. Suggested pairing: Sliced Tenderloin Burger.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "cocteles-2",
+      "nombre": "COCKTAILS · Seasonal Harvest",
+      "intro": "",
+      "items": [
+        {
+          "name": "El Canche",
+          "description": "Gin, Campari, grapefruit juice, lavender, finished with soda. Suggested pairing: Oven-Baked Shrimp.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Lotería",
+          "description": "Gin, radish cordial, lime juice, simple syrup and roasted, smoked and spiced pineapple juice. Suggested pairing: Mushroom Tartare.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Chef",
+          "description": "American whiskey fat-washed with pork rib flavor extraction, cucumber slices, lavender syrup and mandarin juice. Suggested pairing: Pork Ribs.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Feria",
+          "description": "Espadín mezcal, pineapple jam with spices and wine, lime juice, simple syrup, finished with a mint sugar rim. Suggested pairing: Roasted Portobello Burger.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Chaitenango",
+          "description": "Zacapa 23 rum, Guatemalan chai infusion, lime juice and honey.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Boga",
+          "description": "Wild Turkey 81, lime juice, lavender syrup and pineapple soda with lemongrass.",
+          "priceInfo": {
+            "price": "80.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "cocteles-3",
+      "nombre": "COCKTAILS · House Roots",
+      "intro": "",
+      "items": [
+        {
+          "name": "El Mero, Mero",
+          "description": "Bianco vermouth, Colonial rum, mango, passion fruit and garden herb infusion.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Los Penitentes",
+          "description": "Botran 12 rum, Botran White Reserve rum, passion fruit, rosemary infusion, mandarin juice and simple syrup.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Comal Borracho",
+          "description": "Tequila, beetroot dilution, lime juice, salt and simple syrup.",
+          "priceInfo": {
+            "price": "75.00"
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v1",
+      "nombre": "WINES · Red Wines",
+      "intro": "",
+      "items": [
+        {
+          "name": "Don Luis",
+          "description": "Cabernet Sauvignon · Maipo Valley, Chile",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Glass",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Linda",
+          "description": "Malbec · Luján de Cuyo, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Glass",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Mariluna Tinto",
+          "description": "Tempranillo, Bobal · Valencia, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Glass",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Bohigas Garnatxa Negra",
+          "description": "Garnacha Tinta · Anoia Valley, Catalunya, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Lan Reserva",
+          "description": "Tempranillo, Mazuelo · Rioja Alta, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "455.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Pulenta Estate, Red Blend V",
+          "description": "Malbec, Cabernet Sauvignon, Merlot · Luján de Cuyo, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "535.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v2",
+      "nombre": "WINES · White Wine & Rose",
+      "intro": "",
+      "items": [
+        {
+          "name": "Don Luis",
+          "description": "Chardonnay · Maipo Valley, Chile",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Glass",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Mariluna Blanco",
+          "description": "Verdejo, Macabeo · Valencia, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Glass",
+                "priceInfo": {
+                  "price": "70.00"
+                }
+              },
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "La Val",
+          "description": "Albariño · Pontevedra, Galicia, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "350.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Salentein Killka",
+          "description": "Malbec Blanco · Uco Valley, Mendoza, Argentina",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Santiago Ruiz",
+          "description": "Albariño · DO Rías Baixas, Galicia, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "510.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        },
+        {
+          "name": "Pasión de Bodal",
+          "description": "Bodal · Valencia, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "405.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    },
+    {
+      "id": "vinos-v3",
+      "nombre": "CAVA",
+      "intro": "",
+      "items": [
+        {
+          "name": "Cava Bohigas Brut Reserva",
+          "description": "Xarel·lo, Macabeo, Perellada · Anoia Valley, Catalunya, Spain",
+          "priceVariants": {
+            "variants": [
+              {
+                "name": "Bottle",
+                "priceInfo": {
+                  "price": "375.00"
+                }
+              }
+            ]
+          },
+          "visible": true,
+          "_sinPrecio": false
+        }
+      ]
+    }
+  ]
+}

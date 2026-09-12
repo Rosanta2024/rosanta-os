@@ -1,0 +1,578 @@
+<!-- CosteoVista.html — vista de Recetario + Proveedores para la intranet.
+     Servida desde Code.gs con HtmlService.createTemplateFromFile('CosteoVista').
+     Depende de: ConfigCosteo.gs, CosteoDatos.gs, Proveedores.gs -->
+<title>Recetario 14·91</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap">
+<style>
+:root{
+  --bg:#FBFAF7; --surface:#FFFFFF; --panel:#F2EEEB; --panel-2:#EAE5DE;
+  --ink:#14180F; --ink-2:#3E4438; --muted:#6E7268; --line:#E3DED6; --line-2:#D3CCC1;
+  --bosque:#4E6D5A; --verde:#57A77F; --lila:#AEAAE2;
+  --alto:#B4532F; --meta:#3F7F5E; --bajo:#40708F; --vacia:#9A968D;
+  --shadow:0 1px 2px rgba(20,24,15,.05), 0 8px 24px -12px rgba(20,24,15,.18);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+    --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+    --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+    --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
+  --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
+  --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
+  --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Lato","Avenir Next",Avenir,system-ui,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif; font-weight:700; text-wrap:balance; margin:0}
+button{font:inherit; color:inherit; cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+header.top{border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:40}
+.topbar{display:flex; align-items:center; gap:18px; padding:14px 0; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:10px; margin-right:auto}
+.brand .mark{width:11px;height:11px;border-radius:50%;background:var(--bosque);display:inline-block;transform:translateY(-1px)}
+.brand h1{font-size:20px; letter-spacing:.01em}
+.coord{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.search{position:relative; flex:1 1 260px; max-width:380px}
+.search input{
+  width:100%; padding:9px 12px 9px 34px; border-radius:var(--r);
+  border:1px solid var(--line-2); background:var(--bg); color:var(--ink); font:inherit;
+}
+.search input:focus{outline:2px solid var(--verde); outline-offset:1px; border-color:transparent}
+.search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5}
+.nav{display:flex; gap:2px; padding:0 0 12px}
+.nav button{
+  border:none; background:none; padding:7px 14px; border-radius:99px;
+  font-size:13px; letter-spacing:.02em; color:var(--muted);
+}
+.nav button[aria-selected="true"]{background:var(--bosque); color:var(--surface)}
+.nav button:hover:not([aria-selected="true"]){background:var(--panel); color:var(--ink)}
+
+/* ---------- sim bar ---------- */
+.simbar{
+  display:none; align-items:center; gap:14px; flex-wrap:wrap;
+  background:var(--lila); color:#14180F; padding:9px 20px; font-size:13px;
+}
+.simbar.on{display:flex}
+.simbar strong{font-weight:900}
+.simbar .sp{margin-left:auto; display:flex; gap:8px}
+.simbar button{border:1px solid rgba(20,24,15,.35); background:rgba(255,255,255,.4); color:#14180F; border-radius:99px; padding:4px 12px; font-size:12px}
+
+/* ---------- layout ---------- */
+main{padding:24px 0 80px}
+.toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px}
+.chip{
+  border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
+  border-radius:99px; padding:5px 13px; font-size:12.5px;
+}
+.chip[aria-pressed="true"]{background:var(--bosque); border-color:var(--bosque); color:var(--surface)}
+.count{color:var(--muted); font-size:13px; margin-left:auto}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:14px}
+
+/* ---------- recipe card ---------- */
+.card{
+  position:relative; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r); padding:15px 16px 14px 19px; text-align:left; width:100%;
+  display:flex; flex-direction:column; gap:9px; box-shadow:var(--shadow); overflow:hidden;
+}
+.card:hover{border-color:var(--line-2); transform:translateY(-1px)}
+.card:focus-visible{outline:2px solid var(--verde); outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){ .card{transition:transform .12s ease, border-color .12s ease} }
+.card .stripe{position:absolute; left:0; top:0; bottom:0; width:4px}
+.card .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.card h3{font-size:17.5px; line-height:1.25}
+.card .figs{display:flex; gap:16px; align-items:flex-end; margin-top:auto; padding-top:6px}
+.fig{display:flex; flex-direction:column; gap:1px}
+.fig .lbl{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.fig .val{font-size:16px; font-weight:700}
+.fig .val.big{font-size:21px; font-family:"Playfair Display",Georgia,serif}
+.delta{font-size:12px; font-weight:700; padding-left:5px}
+.badge{
+  align-self:flex-start; display:inline-flex; align-items:center; gap:5px; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid currentColor;
+}
+.s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
+.s-vacia{color:var(--vacia)} .s-sin_precio{color:var(--vacia)}
+.b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
+.b-vacia{background:var(--vacia)} .b-sin_precio{background:var(--vacia)}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+th{
+  text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line);
+  background:var(--panel); position:sticky; top:0;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel)}
+td.r,th.r{text-align:right}
+.rowbtn{background:none;border:none;padding:0;font:inherit;color:var(--bosque);text-align:left;font-weight:700}
+.rowbtn:hover{text-decoration:underline}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lila);margin-right:6px;vertical-align:middle}
+
+/* ---------- detail drawer ---------- */
+.scrim{position:fixed; inset:0; background:rgba(20,24,15,.45); z-index:50; opacity:0; pointer-events:none; transition:opacity .18s}
+.scrim.on{opacity:1; pointer-events:auto}
+.drawer{
+  position:fixed; top:0; right:0; bottom:0; width:min(560px,100%); background:var(--bg);
+  z-index:51; transform:translateX(102%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto; border-left:1px solid var(--line);
+}
+.drawer.on{transform:none}
+@media (prefers-reduced-motion:reduce){ .drawer,.scrim{transition:none} }
+.drawer .dhead{padding:22px 24px 16px; border-bottom:1px solid var(--line); background:var(--surface); position:sticky; top:0; z-index:2}
+.drawer .dbody{padding:20px 24px 60px; display:flex; flex-direction:column; gap:22px}
+.close{position:absolute; top:16px; right:18px; border:1px solid var(--line-2); background:var(--bg); border-radius:99px; width:30px; height:30px; line-height:1; font-size:17px}
+.kv{display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0; text-align:right; font-weight:700}
+.kv .rule{grid-column:1/-1; border-top:1px solid var(--line); margin:4px 0}
+.note{
+  border-left:3px solid var(--lila); padding:9px 0 9px 13px; font-size:13.5px;
+  color:var(--ink-2); font-style:italic;
+}
+.sec-t{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:9px}
+.simrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel); border-radius:var(--r); padding:13px 15px}
+.simrow input{width:110px; padding:7px 10px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit}
+.simrow input:focus{outline:2px solid var(--verde); outline-offset:1px}
+.linkline{background:none;border:none;padding:2px 0;font:inherit;color:var(--bosque);text-align:left;display:block;font-size:13.5px}
+.linkline:hover{text-decoration:underline}
+.empty{padding:44px 20px; text-align:center; color:var(--muted); font-size:14px}
+.lead{color:var(--ink-2); font-size:14.5px; max-width:62ch}
+.provgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px}
+.provcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 15px; text-align:left; display:flex; flex-direction:column; gap:3px}
+.provcard:hover{border-color:var(--verde)}
+.provcard .n{font-family:"Playfair Display",Georgia,serif; font-size:17px; font-weight:700}
+.provcard .m{font-size:12.5px; color:var(--muted)}
+footer{border-top:1px solid var(--line); padding:22px 0 40px; color:var(--muted); font-size:12.5px}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <h1>Recetario</h1>
+        <span class="coord">14° N · 91° W</span>
+      </div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar plato, producto o proveedor…" autocomplete="off" aria-label="Buscar">
+      </div>
+    </div>
+    <nav class="nav" role="tablist" aria-label="Secciones">
+      <button role="tab" data-view="recetas" aria-selected="true">Recetas</button>
+      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+    </nav>
+  </div>
+  <div class="simbar" id="simbar" role="status">
+    <span id="simtext"></span>
+    <span class="sp"><button id="simreset">Volver a los precios reales</button></span>
+  </div>
+</header>
+
+
+<div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
+  <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+  <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
+</div>
+<main class="wrap">
+  <section id="v-recetas"></section>
+  <section id="v-insumos" hidden></section>
+  <section id="v-proveedores" hidden></section>
+</main>
+
+<footer class="wrap">
+  <p id="foot"></p>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" tabindex="-1"></aside>
+
+<script>
+function iniciarApp(){
+const D = window.__DATA__;
+const R = D.recetas, I = D.insumos, P = D.proveedores, OBJ = D.meta.cmv_objetivo;
+const sim = new Map();            // insumoId -> precio simulado
+let view = 'recetas', q = '', filt = {rec:'carta', ins:'todos', prov:null};
+
+const Q = n => 'Q' + (n==null ? '—' : n.toLocaleString('es-GT',{minimumFractionDigits:2,maximumFractionDigits:2}));
+const Q0 = n => n==null ? '—' : 'Q' + Math.round(n);
+const nrm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const el = (h) => { const t=document.createElement('template'); t.innerHTML=h.trim(); return t.content.firstElementChild; };
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- motor de costos ---------- */
+const memo = new Map();
+function precioEf(id, guard){
+  const ins = I[id]; if(!ins) return null;
+  if(sim.has(id)) return sim.get(id);
+  if(ins.sub != null && ins.pr){
+    const g = guard || new Set();
+    if(g.has('r'+ins.sub)) return ins.pr;
+    const r = R[ins.sub];
+    if(r && r.base > 0){
+      const ahora = batch(ins.sub, g);
+      return ins.pr * (ahora / r.base);
+    }
+  }
+  return ins.pr;
+}
+function batch(rid, guard){
+  const g = guard ? new Set(guard) : new Set();
+  if(g.has('r'+rid)) return R[rid].base;
+  g.add('r'+rid);
+  const key = rid + '|' + [...sim.entries()].sort().join(';');
+  if(memo.has(key)) return memo.get(key);
+  let s = 0;
+  for(const ln of R[rid].ing){
+    if(ln.i == null){ s += ln.t || 0; continue; }
+    const base = I[ln.i].pr, ef = precioEf(ln.i, g);
+    if(base && ln.t != null) s += ln.t * (ef / base);
+    else s += (ln.q || 0) * (ef || 0);
+  }
+  memo.set(key, s);
+  return s;
+}
+function costoAhora(r){
+  if(!r.ing.length) return null;
+  const b = batch(r.id);
+  if(r.t === 'plato') return b * (1 + (r.merma || 0)/100);
+  return r.rinde ? b / r.rinde : b;
+}
+function cmvAhora(r){
+  const c = costoAhora(r);
+  return (c != null && r.precio) ? c / r.precio * 100 : null;
+}
+function estadoDe(cmv, r){
+  if(!r.ing.length) return 'vacia';
+  if(!r.precio) return 'sin_precio';
+  if(cmv == null) return 'vacia';
+  if(cmv > OBJ + 5) return 'alto';
+  if(cmv < OBJ - 10) return 'bajo';
+  return 'ok';
+}
+const ETIQ = {ok:'En meta', alto:'Sobre meta', bajo:'Muy bajo', vacia:'Ficha vacía', sin_precio:'Sin precio'};
+
+/* ---------- filtros ---------- */
+function recetasVis(){
+  let list = R.slice();
+  if(filt.rec === 'carta') list = list.filter(r => r.t === 'plato');
+  else if(filt.rec === 'pre') list = list.filter(r => r.t === 'preelaborado');
+  else if(filt.rec === 'alerta') list = list.filter(r => ['alto','vacia'].includes(estadoDe(cmvAhora(r), r)));
+  else if(filt.rec === 'tocadas') list = list.filter(r => tocada(r));
+  if(q){
+    const k = nrm(q);
+    list = list.filter(r => nrm(r.n).includes(k) || nrm(r.cat).includes(k)
+      || r.ing.some(l => nrm(l.n).includes(k) || (l.i!=null && nrm(I[l.i].prov).includes(k))));
+  }
+  return list;
+}
+function tocada(r){
+  if(!sim.size) return false;
+  const c0 = r.t==='plato' ? r.costo : r.costo, c1 = costoAhora(r);
+  return c1 != null && c0 != null && Math.abs(c1 - c0) > 0.005;
+}
+function insumosVis(){
+  let list = I.slice();
+  if(filt.prov) list = list.filter(i => i.prov === filt.prov);
+  if(filt.ins === 'usados') list = list.filter(i => i.usos.length);
+  else if(filt.ins === 'sinuso') list = list.filter(i => !i.usos.length);
+  else if(filt.ins === 'produccion') list = list.filter(i => i.sub != null || /PRODUCCION/i.test(i.c));
+  if(q){
+    const k = nrm(q);
+    list = list.filter(i => nrm(i.p).includes(k) || nrm(i.prov).includes(k) || nrm(i.c).includes(k));
+  }
+  return list;
+}
+
+/* ---------- render ---------- */
+function tarjeta(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv, r);
+  const base = r.cmv;
+  let d = '';
+  if(sim.size && base != null && cmv != null && Math.abs(cmv - base) > 0.05){
+    const up = cmv > base;
+    d = `<span class="delta" style="color:var(--${up?'alto':'meta'})">${up?'▲':'▼'} ${Math.abs(cmv-base).toFixed(1)} pts</span>`;
+  }
+  return `<button class="card" data-r="${r.id}">
+    <span class="stripe b-${st}"></span>
+    <span class="eyebrow">${esc(r.cat || (r.t==='plato'?'Sin categoría':'Producción Rosanta'))}</span>
+    <h3>${esc(r.n)}</h3>
+    <span class="badge s-${st}">${ETIQ[st]}</span>
+    <span class="figs">
+      <span class="fig"><span class="lbl">Precio</span><span class="val">${r.precio?Q0(r.precio):'—'}</span></span>
+      <span class="fig"><span class="lbl">Costo</span><span class="val">${c!=null?Q(c):'—'}</span></span>
+      <span class="fig"><span class="lbl">CMV</span><span class="val big s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</span>${d}</span>
+    </span>
+  </button>`;
+}
+function vistaRecetas(){
+  const list = recetasVis();
+  const f = [['carta','Carta 2027'],['pre','Pre-elaborados'],['alerta','Necesitan atención'],['tocadas','Afectadas por la simulación'],['todas','Todas']];
+  return `<div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fr="${k}" aria-pressed="${filt.rec===k}">${l}</button>`).join('')}
+      <span class="count">${list.length} de ${R.length}</span>
+    </div>
+    ${list.length ? `<div class="grid">${list.map(tarjeta).join('')}</div>`
+      : `<p class="empty">Nada coincide con “${esc(q)}”.</p>`}`;
+}
+function vistaInsumos(){
+  const list = insumosVis();
+  const f = [['todos','Todos'],['usados','En uso'],['sinuso','Sin uso en fichas'],['produccion','Producción Rosanta']];
+  return `<div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fi="${k}" aria-pressed="${filt.ins===k}">${l}</button>`).join('')}
+      ${filt.prov ? `<button class="chip" aria-pressed="true" data-fi="_prov">${esc(filt.prov)} ✕</button>` : ''}
+      <span class="count">${list.length} de ${I.length}</span>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>Producto</th><th>Proveedor</th><th class="r">Precio compra</th>
+        <th class="r">Por unidad receta</th><th class="r">Recetas</th>
+      </tr></thead><tbody>
+      ${list.map(i => {
+        const ef = precioEf(i.id), ch = sim.has(i.id) || (i.pr && Math.abs(ef - i.pr) > 1e-6);
+        return `<tr>
+          <td><button class="rowbtn" data-i="${i.id}">${i.sub!=null?'<span class="dot"></span>':''}${esc(i.p)}</button>
+              <div style="color:var(--muted);font-size:11.5px">${esc(i.c)}</div></td>
+          <td>${esc(i.prov)}</td>
+          <td class="r">${i.pc!=null?Q(i.pc):'—'}<div style="color:var(--muted);font-size:11.5px">${esc(i.uc||'')}</div></td>
+          <td class="r">${ef!=null?'Q'+ef.toFixed(5):'—'} <span style="color:var(--muted)">/${esc(i.u)}</span>
+              ${ch?`<div style="color:var(--alto);font-size:11.5px">antes Q${(i.pr||0).toFixed(5)}</div>`:''}</td>
+          <td class="r">${i.usos.length||'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>
+      ${list.length?'':'<p class="empty">Sin resultados.</p>'}`;
+}
+function vistaProveedores(){
+  const k = nrm(q);
+  const list = P.filter(p => !q || nrm(p.nombre).includes(k));
+  return `<p class="lead" style="margin:0 0 18px">Cada proveedor con los productos que le compramos y cuántas recetas dependen de él. Tocá uno para ver su lista de precios.</p>
+    <div class="provgrid">${list.map(p => `
+      <button class="provcard" data-p="${esc(p.nombre)}">
+        <span class="n">${esc(p.nombre)}</span>
+        <span class="m">${p.productos} producto${p.productos===1?'':'s'} · ${p.recetas} receta${p.recetas===1?'':'s'}</span>
+      </button>`).join('')}</div>`;
+}
+function pintar(){
+  memo.clear();
+  document.getElementById('v-recetas').hidden = view!=='recetas';
+  document.getElementById('v-insumos').hidden = view!=='insumos';
+  document.getElementById('v-proveedores').hidden = view!=='proveedores';
+  if(view==='recetas') document.getElementById('v-recetas').innerHTML = vistaRecetas();
+  if(view==='insumos') document.getElementById('v-insumos').innerHTML = vistaInsumos();
+  if(view==='proveedores') document.getElementById('v-proveedores').innerHTML = vistaProveedores();
+  document.querySelectorAll('.nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.view===view));
+  simbar();
+}
+function simbar(){
+  const bar = document.getElementById('simbar');
+  bar.classList.toggle('on', sim.size>0);
+  if(!sim.size) return;
+  const af = R.filter(tocada);
+  const platos = af.filter(r => r.t==='plato' && r.precio);
+  const fuera = platos.filter(r => { const c = cmvAhora(r); return c!=null && c > OBJ+5; }).length;
+  const antes = platos.filter(r => r.cmv!=null && r.cmv > OBJ+5).length;
+  document.getElementById('simtext').innerHTML =
+    `<strong>${sim.size} precio${sim.size===1?'':'s'} simulado${sim.size===1?'':'s'}</strong> · ${af.length} receta${af.length===1?'':'s'} afectada${af.length===1?'':'s'} · platos sobre meta: ${antes} → <strong>${fuera}</strong>`;
+}
+
+/* ---------- drawer ---------- */
+const dr = document.getElementById('drawer'), sc = document.getElementById('scrim');
+let lastFocus = null;
+function abrir(html){
+  lastFocus = document.activeElement;
+  dr.innerHTML = html; dr.classList.add('on'); sc.classList.add('on'); dr.focus();
+}
+function cerrar(){ dr.classList.remove('on'); sc.classList.remove('on'); if(lastFocus) lastFocus.focus(); }
+sc.addEventListener('click', cerrar);
+document.addEventListener('keydown', e => { if(e.key==='Escape' && dr.classList.contains('on')) cerrar(); });
+
+function fichaHTML(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv,r), sub = batch(r.id);
+  const filas = r.ing.map(ln => {
+    const ins = ln.i!=null ? I[ln.i] : null;
+    const ef = ins ? precioEf(ln.i) : null;
+    const tot = (ins && ins.pr && ln.t!=null) ? ln.t*(ef/ins.pr) : (ln.t!=null?ln.t:(ln.q*(ef||0)));
+    return `<tr>
+      <td>${ins && ins.sub!=null?'<span class="dot" title="Sub-receta"></span>':''}${
+        ins ? `<button class="rowbtn" data-i="${ins.id}">${esc(ln.n)}</button>` : `${esc(ln.n)} <span style="color:var(--alto);font-size:11px">· fuera del banco</span>`}
+        <div style="color:var(--muted);font-size:11.5px">${ins?esc(ins.prov):'sin proveedor'}</div></td>
+      <td class="r">${ln.q} <span style="color:var(--muted)">${esc(ln.u||'')}</span></td>
+      <td class="r">${tot!=null?Q(tot):'—'}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(r.cat || (r.t==='plato'?'Ficha de receta':'Pre-elaborado'))}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(r.n)}</h2>
+      <div style="margin-top:9px"><span class="badge s-${st}">${ETIQ[st]}</span></div>
+    </div>
+    <div class="dbody">
+      ${r.nota?`<p class="note">${esc(r.nota)}</p>`:''}
+      ${r.ing.length ? `<div>
+        <div class="sec-t">Ingredientes · ${r.ing.length} línea${r.ing.length===1?'':'s'}</div>
+        <div class="tablewrap"><table style="min-width:0">
+          <thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th></tr></thead>
+          <tbody>${filas}</tbody></table></div></div>`
+        : `<p class="empty" style="padding:26px 0">Esta ficha está vacía. Cocina tiene que cargar la receta.</p>`}
+      ${r.ing.length ? `<dl class="kv">
+        <dt>Subtotal materia prima</dt><dd>${Q(sub)}</dd>
+        ${r.t==='plato' && r.merma ? `<dt>Variación / merma (${r.merma}%)</dt><dd>${Q(sub*r.merma/100)}</dd>`:''}
+        ${r.t!=='plato' && r.rinde ? `<dt>Rinde</dt><dd>${r.rinde}</dd>`:''}
+        <div class="rule"></div>
+        <dt>${r.t==='plato'?'Costo del plato':'Costo por porción'}</dt><dd>${c!=null?Q(c):'—'}</dd>
+        ${r.precio?`<dt>Precio de carta</dt><dd>${Q0(r.precio)}</dd>
+        <dt>CMV actual</dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
+        <dt>Precio para llegar a ${OBJ}%</dt><dd>${c!=null?Q0(c/(OBJ/100)):'—'}</dd>`:''}
+      </dl>`:''}
+    </div>`;
+}
+function insumoHTML(i){
+  const ef = precioEf(i.id), usos = i.usos.map(id=>R[id]);
+  const platos = usos.filter(r=>r.t==='plato'), pre = usos.filter(r=>r.t!=='plato');
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(i.c)}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(i.p)}</h2>
+      <div style="margin-top:6px;color:var(--muted);font-size:13.5px">${esc(i.prov)}</div>
+    </div>
+    <div class="dbody">
+      <dl class="kv">
+        <dt>Precio de compra</dt><dd>${i.pc!=null?Q(i.pc):'—'} ${esc(i.uc?'/ '+i.uc:'')}</dd>
+        <dt>Conversión aplicada</dt><dd style="font-weight:400;color:var(--muted);font-size:12.5px">${esc(i.cv||'—')}</dd>
+        <div class="rule"></div>
+        <dt>Precio por ${esc(i.u)}</dt><dd>Q${ef!=null?ef.toFixed(5):'—'}</dd>
+      </dl>
+      <div>
+        <div class="sec-t">Simular un cambio de precio</div>
+        <div class="simrow">
+          <label for="np" style="font-size:13.5px">Nuevo precio de compra${i.uc?' por '+esc(i.uc):''}</label>
+          <input id="np" type="number" step="0.01" min="0" value="${(sim.has(i.id) && i.pc && i.pr) ? (sim.get(i.id)/i.pr*i.pc).toFixed(2) : (i.pc!=null?i.pc:'')}" data-i="${i.id}">
+          <button class="chip" id="aplicar" data-i="${i.id}">Simular</button>
+          <button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>
+          ${sim.has(i.id)?`<button class="chip" id="quitar" data-i="${i.id}">Quitar</button>`:''}
+        </div>
+      </div>
+      <div>
+        <div class="sec-t">Se usa en ${usos.length} receta${usos.length===1?'':'s'}</div>
+        ${usos.length ? [
+          platos.length?`<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Platos de carta</div>${platos.map(r=>linea(r)).join('')}</div>`:'',
+          pre.length?`<div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Pre-elaborados</div>${pre.map(r=>linea(r)).join('')}</div>`:''
+        ].join('') : `<p style="color:var(--muted);font-size:13.5px;margin:0">Ninguna ficha lo usa hoy. O es de barra, o el nombre no coincide con el que escribió cocina.</p>`}
+      </div>
+    </div>`;
+}
+function linea(r){
+  const cmv = cmvAhora(r), st = estadoDe(cmv,r);
+  return `<button class="linkline" data-r="${r.id}">${esc(r.n)} <span style="color:var(--muted)">· ${cmv!=null?cmv.toFixed(1)+'% CMV':'sin CMV'}</span></button>`;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.classList.contains('close')) return cerrar();
+  if(t.dataset.view){ view = t.dataset.view; pintar(); return; }
+  if(t.dataset.fr){ filt.rec = t.dataset.fr; pintar(); return; }
+  if(t.dataset.fi){ if(t.dataset.fi==='_prov'){filt.prov=null;} else filt.ins = t.dataset.fi; pintar(); return; }
+  if(t.dataset.p){ filt.prov = t.dataset.p; filt.ins='todos'; view='insumos'; pintar(); return; }
+  if(t.dataset.r != null && t.dataset.r !== ''){ abrir(fichaHTML(R[+t.dataset.r])); return; }
+  if(t.id === 'aplicar'){
+    const id = +t.dataset.i, ins = I[id], v = parseFloat(document.getElementById('np').value);
+    if(!isNaN(v) && ins.pc){ sim.set(id, ins.pr * (v / ins.pc)); }
+    else if(!isNaN(v)) sim.set(id, v);
+    memo.clear(); abrir(insumoHTML(ins)); pintar(); return;
+  }
+  if(t.id === 'quitar'){ const id=+t.dataset.i; sim.delete(id); memo.clear(); abrir(insumoHTML(I[id])); pintar(); return; }
+  if(t.id === 'registrar'){
+    const id = +t.dataset.i, ins = I[id];
+    const v = parseFloat(document.getElementById('np').value);
+    if(isNaN(v) || v <= 0){ alert('Escribí un precio de compra válido.'); return; }
+    const fac = prompt('Número de factura o boleta (podés dejarlo vacío):', '') ;
+    if(fac === null) return;
+    t.disabled = true; t.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        sim.delete(id);
+        alert('Guardado. ' + res.producto + ': Q' + res.antes + ' → Q' + res.ahora +
+              (res.variacion!=null ? ' (' + (res.variacion>0?'+':'') + res.variacion.toFixed(1) + '%)' : '') +
+              '\n' + res.recetasAfectadas.length + ' receta(s) recalculada(s).');
+        google.script.run.withSuccessHandler(function(m){ window.__DATA__ = adaptar(m); location.reload(); }).refrescarCosteo();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Registrar precio'; alert('No se pudo guardar: ' + e.message); })
+      .registrarPrecio({producto: ins.p, proveedor: ins.prov, precioCompra: v, factura: fac});
+    return;
+  }
+  if(t.id === 'simreset'){ sim.clear(); memo.clear(); cerrar(); pintar(); return; }
+  if(t.dataset.i != null && t.dataset.i !== ''){ abrir(insumoHTML(I[+t.dataset.i])); return; }
+});
+let td;
+document.getElementById('q').addEventListener('input', e => {
+  clearTimeout(td); td = setTimeout(() => { q = e.target.value.trim(); pintar(); }, 120);
+});
+
+const nPlatos = R.filter(r=>r.t==='plato').length, nPre = R.length - nPlatos;
+const conCMV = R.filter(r=>r.t==='plato' && cmvAhora(r)!=null).length;
+document.getElementById('foot').textContent =
+  `${nPlatos} fichas de plato · ${nPre} pre-elaborados · ${I.length} productos · ${P.length} proveedores · ${conCMV} platos con CMV calculable. ` +
+  `Fuente: ${D.meta.fuente}, leído el ${D.meta.fecha}. Meta de CMV en cocina: ${OBJ}%.`;
+pintar();
+window.__pintar = pintar; window.__abrirInsumo = function(id){abrir(insumoHTML(I[id]));};
+}
+
+</script>
+
+<script>
+/* Adapta el modelo que devuelve CosteoDatos.gs a la forma compacta que usa la vista. */
+function adaptar(m){
+  var obj = (m.meta.areas.filter(function(a){return a.area==='COCINA';})[0]||{cmvObjetivo:30}).cmvObjetivo;
+  return {
+    meta:{cmv_objetivo:obj, fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10)},
+    proveedores:m.proveedores,
+    insumos:m.insumos.map(function(i){
+      return {id:i.id,p:i.producto,c:i.categoria,pr:i.precio,u:i.unidad,pc:i.precioCompra,
+              uc:i.unidadCompra,cv:i.conversion,prov:i.proveedor,sub:i.sub,usos:i.usos};
+    }),
+    recetas:m.recetas.map(function(r){
+      return {id:r.id,n:r.nombre,t:r.tipo,cat:r.categoria,precio:r.precio,costo:r.costo,
+              cmv:r.cmv==null?null:Math.round(r.cmv*10)/10,merma:r.merma,rinde:r.rinde,
+              nota:r.nota,sug:r.sugerido,est:r.estado,base:r.base,
+              ing:r.ingredientes.map(function(g){
+                return {i:g.insumo,n:g.nombre,q:g.cantidad,u:g.unidad,t:g.total};
+              })};
+    })
+  };
+}
+function arrancar(m){
+  window.__DATA__ = adaptar(m);
+  document.getElementById('cargando').remove();
+  iniciarApp();
+}
+function fallar(e){
+  document.getElementById('cargando').innerHTML =
+    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">' +
+    (e && e.message ? e.message : e) + '</p>';
+}
+google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData();
+</script>

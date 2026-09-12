@@ -1,0 +1,100 @@
+Vas a instalar el modulo "Recetario + Proveedores" en la intranet de Rosanta.
+El codigo ya esta escrito, revisado y probado. NO lo reescribas: instalalo.
+
+CONTEXTO
+--------
+La intranet es un proyecto de Google Apps Script en:
+    ~/Documents/Claude/Projects/Claude/rosanta-intranet/
+Ya tiene Code.gs, Index.html, un sistema de usuarios con roles y el helper
+usuarioTieneModulo(usuario, modulo).
+
+Los archivos nuevos del modulo estan en:
+    ~/Documents/Claude/Projects/Rosanta (1)/modulo-recetario-intranet/
+
+    ConfigCosteo.gs      metas de CMV por area, exclusiones, alias de sub-recetas
+    CosteoDatos.gs       lee el Banco de Datos y las fichas, arma el modelo
+    Proveedores.gs       hoja de proveedores, registro de precios, indice inverso
+    CosteoVista.html     la interfaz (recetas, productos, proveedores, higiene, guia)
+    CodeGs_agregar.txt   lo que hay que pegar en Code.gs e Index.html
+    INSTALAR.md          la guia completa, leela primero
+    Rosanta_Recetario_Cocina_2027_v9.xlsx   el recetario vigente
+
+El modulo NO modifica ninguna ficha de receta. Solo lee las hojas del recetario y
+escribe en dos lugares: la fila de precio del Banco de Datos y una hoja nueva de
+costeo que se crea sola.
+
+TAREAS, EN ESTE ORDEN
+---------------------
+
+1) Convertir el recetario de cocina a hoja NATIVA de Google.
+   SpreadsheetApp.openById solo abre hojas nativas; el recetario hoy es .xlsx y
+   por eso el modulo no lo puede leer.
+   Subi Rosanta_Recetario_Cocina_2027_v9.xlsx a Drive y convertilo (Archivo >
+   Guardar como hoja de calculo de Google, o por la Drive API con
+   mimeType application/vnd.google-apps.spreadsheet). Guarda el ID.
+   Despues borra de Drive las copias .xlsx viejas del recetario de cocina: hoy
+   hay varias con nombres parecidos y ya causaron que se trabajara sobre
+   versiones distintas.
+
+2) Verificar la conversion antes de seguir.
+   Abri dos o tres pestanas de ficha y confirma que la columna PRECIO UNIT.
+   sigue calculando con VLOOKUP contra 'BANCO DE DATOS'. Si los VLOOKUP se
+   rompieron en la conversion, PARA y avisame: todo el mecanismo de registrar
+   precios depende de eso.
+
+3) Copiar los 4 archivos (.gs y .html) al proyecto rosanta-intranet y hacer
+   clasp push.
+
+4) Propiedades del script (Proyecto > Configuracion del proyecto >
+   Propiedades de la secuencia de comandos):
+       RECETARIO_COCINA_SHEET_ID = el ID del paso 1
+       RECETARIO_BARRA_SHEET_ID  = 1LeoX3xpemoYEj130qnTTMzn4OCgLsZx1PvPRW-2LRnk
+   El de barra ya es hoja nativa, no hay que convertirlo. Pero es del 12 de
+   julio de 2026: confirma que este al dia antes de darlo por bueno.
+   NO pongas COSTEO_SHEET_ID a mano, lo crea el paso 5.
+
+5) Desde el editor de Apps Script, correr en este orden:
+       crearHojaCosteo()
+       probarCosteo()
+
+   probarCosteo() TIENE que dejar esto en el Log. Si no cuadra, no sigas:
+
+       COCINA -> 31 platos | 40 pre-elaborados | 24 con CMV
+       BARRA  -> 27 platos | 29 pre-elaborados
+       CONTROL mix de fritas: leido 67.9 esperado 67.9 -> OK
+       CONTROL tabla de jamones y quesos: leido 23.0 esperado 23.0 -> OK
+       CONTROL gratin de papas: leido 19.8 esperado 19.8 -> OK
+       fichas sin ingredientes y sin precio: 0
+
+   Si aparecen "fichas sin ingredientes y sin precio", una hoja de control se
+   esta leyendo como receta: agregala a COSTEO.tabsNoReceta en ConfigCosteo.gs.
+   Las 7 fichas de plato vacias que SI deben aparecer son los platos nuevos de
+   la carta 2027 que cocina todavia no dicto (Coliflor con Romesco, Brocoli con
+   Nduja, Bok Choy, Vegetales Fermentados, Arroz Meloso, Lomito de la Casa,
+   Estofado de Rabo).
+
+6) Pegar en Code.gs e Index.html lo que dice CodeGs_agregar.txt:
+   la ruta ?pagina=costeo protegida por usuarioTieneModulo(usuario,'recetario'),
+   y apuntar la tarjeta del Recetario del Index a esa ruta.
+   En USUARIOS, darle el modulo 'recetario' al rol chef. El rol contenido NO
+   debe tenerlo.
+
+7) Abrir la vista y comprobar a mano:
+   - el toggle Cocina / Barra cambia la lista y la meta (30% vs 20%)
+   - abrir Ensalada Rosanta: 9 lineas, subtotal Q11.86, costo Q13.04
+   - en esa ficha, los pre-elaborados traen el boton "ver receta >" y funciona
+   - la pestana "Como funciona" carga
+   - la pestana "Higiene" carga sin error
+
+COSAS QUE NO HAY QUE HACER
+--------------------------
+- No reescribir el modulo. Ya se corrigieron seis defectos de una version
+  anterior: meta por area, filtro cocina/barra, exclusion de hojas de control
+  y fichas ZZ ARCHIVO, lectura de "costo por ml" en barra, historial de precios
+  visible, y el salto del ingrediente a su sub-receta. Si algo se ve raro,
+  preguntame antes de cambiarlo.
+- No tocar las pestanas de receta ni el Banco de Datos a mano.
+- No apuntar a Rosanta_Recetario_Cocina_2027_v2 ni a versiones anteriores.
+  Entre la v2 y la v9 hubo cuatro rondas de correcciones con cocina.
+
+Cuando termines, decime que dio probarCosteo() y si algo del paso 7 fallo.

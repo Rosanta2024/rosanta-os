@@ -1,0 +1,124 @@
+function fichaHTML(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv,r), sub = batch(r.id);
+  const filas = r.ing.map(ln => {
+    const ins = ln.i!=null ? I[ln.i] : null;
+    const ef = ins ? precioEf(ln.i) : null;
+    const tot = (ins && ins.pr && ln.t!=null) ? ln.t*(ef/ins.pr) : (ln.t!=null?ln.t:(ln.q*(ef||0)));
+    // salto directo a la ficha de la sub-receta, sin pasar por el panel del producto
+    const salto = ln.r != null ? `<button class="subbtn" data-r="${ln.r}" title="Ver la receta">ver receta ›</button>` : '';
+    return `<tr>
+      <td>${ln.r!=null?'<span class="dot"></span>':''}${
+        ins ? `<button class="rowbtn" data-i="${ins.id}">${esc(Tt(ln.n))}</button>` : `${esc(Tt(ln.n))} <span style="color:var(--alto);font-size:11px">· fuera del banco</span>`}${salto}
+        <div style="color:var(--muted);font-size:11.5px">${ins?esc(ins.prov):'sin proveedor'}</div></td>
+      <td class="r">${(window.PUEDE && window.PUEDE.editarCantidad && ln.f && AREA_EDITABLE(r.area))
+        ? `<span class="qedit"><input class="qin" type="number" step="any" min="0" value="${ln.q}" data-f="${ln.f}" aria-label="Cantidad de ${esc(Tt(ln.n))}"><button class="qsave" data-f="${ln.f}" data-rid="${r.id}" title="Guardar esta cantidad">\u2713</button></span> <span style="color:var(--muted)">${esc(ln.u||'')}</span>`
+        : `${ln.q} <span style="color:var(--muted)">${esc(ln.u||'')}</span>`}</td>
+      <td class="r">${tot!=null?Q(tot):'—'}</td>
+      ${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))
+        ? `<td class="r">${ln.f ? `<button class="qdel" data-f="${ln.f}" data-rid="${r.id}" title="Quitar esta linea">\u2715</button>` : ''}</td>`
+        : ''}
+    </tr>`;
+  }).join('');
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(r.cat || (r.t==='plato'?'Ficha de receta':'Pre-elaborado'))} · ${r.area==='BARRA'?'Barra':'Cocina'}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(Tt(r.n))}</h2>
+      <div style="margin-top:9px"><span class="badge s-${st}">${ETIQ[st]}</span></div>
+    </div>
+    <div class="dbody">
+      ${r.nota?`<p class="note">${esc(r.nota)}</p>`:''}
+      ${r.ing.length ? `<div>
+        <div class="sec-t">Ingredientes · ${r.ing.length} línea${r.ing.length===1?'':'s'}</div>
+        <div class="tablewrap"><table style="min-width:0">
+          <thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th>${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))?'<th></th>':''}</tr></thead>
+          <tbody>${filas}</tbody></table></div></div>`
+        : `<p class="empty" style="padding:26px 0">Esta ficha está vacía. Cocina tiene que cargar la receta.</p>`}
+      ${(window.PUEDE && window.PUEDE.agregarLinea && AREA_EDITABLE(r.area)) ? `<div class="addrow">
+        <div class="sec-t" style="margin-top:0">Agregar un ingrediente</div>
+        <div class="simrow">
+          <input id="np-prod" list="banco-prods" placeholder="Producto del Banco" style="width:240px" autocomplete="off">
+          <input id="np-cant" type="number" step="any" min="0" placeholder="Cantidad" style="width:110px">
+          <button class="chip" id="np-add" data-rid="${r.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Agregar</button>
+        </div>
+        <datalist id="banco-prods">${I.filter(x => x.area === r.area).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">El producto tiene que existir ya en el Banco de Datos. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.</p>
+      </div>` : ''}
+      ${r.ing.length ? `<dl class="kv">
+        <dt>Subtotal materia prima</dt><dd>${Q(sub)}</dd>
+        ${r.t==='plato' && r.merma ? `<dt>Variación / merma (${r.merma}%)</dt><dd>${Q(sub*r.merma/100)}</dd>`:''}
+        ${r.t!=='plato' && (r.rindeTexto||r.rinde) ? `<dt>Rinde</dt><dd>${esc(r.rindeTexto||r.rinde)}</dd>`:''}
+        <div class="rule"></div>
+        <dt>${r.t==='plato'?'Costo del plato':'Costo por '+esc(r.unidadCosto||'porción')}</dt><dd>${r.t==='plato'?Q(c):QU(c)}</dd>
+        ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area))
+          ? `<span class="qedit"><input class="qin" id="np-menu" type="number" step="1" min="0" value="${r.precio}" style="width:92px" aria-label="Precio de carta"><button class="qsave" id="np-menu-save" data-rid="${r.id}" title="Guardar el precio de carta">\u2713</button></span>`
+          : Q0(r.precio)}</dd>
+        <dt>CMV actual</dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
+        <dt>Meta del área</dt><dd style="font-weight:400;color:var(--muted)">${r.obj}%</dd>
+        <dt>Precio para llegar a ${r.obj}%</dt><dd>${c!=null?Q0(c/(r.obj/100)):'—'}</dd>`:''}
+      </dl>`:''}
+    </div>`;
+}
+function insumoHTML(i, hist){
+  const ef = precioEf(i.id), usos = i.usos.map(id=>R[id]);
+  const platos = usos.filter(r=>r.t==='plato'), pre = usos.filter(r=>r.t!=='plato');
+  const histHTML = hist === undefined
+    ? `<p style="color:var(--muted);font-size:13px;margin:0">Leyendo el historial…</p>`
+    : (!hist.length
+      ? `<p style="color:var(--muted);font-size:13px;margin:0">Todavía no hay precios registrados para este producto. El primero que registres queda con fecha y factura.</p>`
+      : `<div class="tablewrap"><table style="min-width:0;font-size:13px">
+          <thead><tr><th>Fecha</th><th>Proveedor</th><th class="r">Precio</th><th>Factura</th></tr></thead>
+          <tbody>${hist.slice(0,12).map(h=>`<tr><td>${esc(h.fecha)}</td><td>${esc(h.proveedor)}</td>
+            <td class="r">${Q(h.precioCompra)}</td><td>${esc(h.factura||'—')}</td></tr>`).join('')}</tbody></table></div>`);
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">${esc(i.c)} · ${i.area==='BARRA'?'Barra':'Cocina'}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(Tt(i.p))}</h2>
+      <div style="margin-top:6px;color:var(--muted);font-size:13.5px">${esc(i.prov)}</div>
+    </div>
+    <div class="dbody">
+      <dl class="kv">
+        <dt>Precio de compra</dt><dd>${i.pc!=null?Q(i.pc):'—'} ${esc(i.uc?'/ '+i.uc:'')}</dd>
+        <dt>Conversión aplicada</dt><dd style="font-weight:400;color:var(--muted);font-size:12.5px">${esc(i.cv||'—')}</dd>
+        <div class="rule"></div>
+        <dt>Precio por ${esc(i.u)}</dt><dd>${QU(ef)}</dd>
+      </dl>
+      ${i.sub!=null?`<div><button class="chip" data-r="${i.sub}" style="background:var(--lila);border-color:var(--lila);color:#14180F">Ver la receta de este pre-elaborado ›</button></div>`:''}
+      <div>
+        <div class="sec-t">Cambiar el precio</div>
+        <div class="simrow">
+          <label for="np" style="font-size:13.5px">Precio de compra${i.uc?' por '+esc(i.uc):''}</label>
+          <input id="np" type="number" step="0.01" min="0" value="${(sim.has(i.id) && i.pc && i.pr) ? (sim.get(i.id)/i.pr*i.pc).toFixed(2) : (i.pc!=null?i.pc:'')}" data-i="${i.id}">
+          <button class="chip" id="aplicar" data-i="${i.id}">Simular</button>
+          ${(window.PUEDE && window.PUEDE.cambiarPrecio && AREA_EDITABLE(i.area))
+            ? `<button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>` : ''}
+          ${sim.has(i.id)?`<button class="chip" id="quitar" data-i="${i.id}">Quitar</button>`:''}
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Simular</strong> no guarda nada: sirve para ver el impacto antes de aceptarlo.${(window.PUEDE && window.PUEDE.cambiarPrecio) ? ` <strong>Registrar</strong> escribe el precio en el Banco de Datos y lo deja en el histórico con fecha y factura.` : ` Para registrar el precio hace falta un permiso que tu rol no tiene; simular podés siempre.`}</p>
+      </div>
+      ${(window.PUEDE && window.PUEDE.crearProveedor && AREA_EDITABLE(i.area)) ? `<div>
+        <div class="sec-t">Proveedor</div>
+        <div class="simrow">
+          <input id="np-prov" list="lista-provs" value="${esc(i.prov==='—'?'':i.prov)}" placeholder="Proveedor" style="width:240px" autocomplete="off">
+          <button class="chip" id="np-prov-save" data-prod="${esc(i.p)}" data-area="${esc(i.area||'COCINA')}">Guardar</button>
+        </div>
+        <datalist id="lista-provs">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Cambia a quién le compramos este producto. <strong>No toca el precio.</strong> Si el proveedor todavía no existe, creálo primero en la pestaña Proveedores.</p>
+      </div>` : ''}
+      <div><div class="sec-t">Historial de precios</div>${histHTML}</div>
+      <div>
+        <div class="sec-t">Se usa en ${usos.length} receta${usos.length===1?'':'s'}</div>
+        ${usos.length ? [
+          platos.length?`<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Platos y cócteles</div>${platos.map(linea).join('')}</div>`:'',
+          pre.length?`<div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Pre-elaborados</div>${pre.map(linea).join('')}</div>`:''
+        ].join('') : `<p style="color:var(--muted);font-size:13.5px;margin:0">Ninguna ficha lo usa hoy. O sobra en el Banco, o el nombre no coincide con el que escribió cocina.</p>`}
+      </div>
+    </div>`;
+}
+function abrirInsumo(id){
+  const i = I[id];
+  abrir(insumoHTML(i, undefined));
+  google.script.run
+    .withSuccessHandler(function(h){ if(dr.classList.contains('on')) abrir(insumoHTML(i, h)); })
+    .withFailureHandler(function(){ if(dr.classList.contains('on')) abrir(insumoHTML(i, [])); })
+    .getHistorialPrecios(AUTH, i.p);
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Comparativo 2026 contra 2025, mes a mes. Solo lectura.
+       Se compara TICKET contra TICKET: de 2025 el POS no exporta comensales. */
+    main.cmp { max-width: 1080px; }
+    .cmp-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .cmp-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+    .cmp-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
+      font-family: 'Lato', Arial, sans-serif; }
+    .cmp-boton:hover { background: rgba(69,107,80,0.07); }
+
+    .cmp-hero { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 22px; padding: 1.8rem 1.9rem; margin-top: 1.5rem; }
+    .cmp-hero .rot { font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.11em; opacity: 0.75; }
+    .cmp-hero .big { font-family: 'Playfair Display', Georgia, serif;
+      font-size: 3.1rem; line-height: 1.05; margin: 0.35rem 0 0.5rem; }
+    .cmp-hero .exp { font-size: 0.94rem; line-height: 1.55; opacity: 0.9; max-width: 66ch; }
+    .cmp-hero .exp strong { color: #C6E8D3; }
+
+    /* --- el gráfico: dos barras por mes, misma escala --- */
+    .cmp-graf { background: var(--blanco); border-radius: 20px; padding: 1.5rem 1.7rem 1.2rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 1.1rem; overflow-x: auto; }
+    .cmp-leyenda { display: flex; gap: 1.2rem; font-size: 0.82rem; margin-bottom: 1.1rem;
+      flex-wrap: wrap; align-items: center; }
+    .cmp-leyenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+      margin-right: 0.4rem; vertical-align: -1px; }
+    .cmp-cols { display: flex; align-items: flex-end; gap: 0.55rem; min-width: 640px;
+      height: 210px; border-bottom: 1px solid rgba(26,26,26,0.12); padding-bottom: 2px; }
+    .cmp-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+      align-items: center; height: 100%; }
+    .cmp-par { display: flex; align-items: flex-end; gap: 3px; width: 100%;
+      height: 100%; justify-content: center; }
+    .cmp-b { width: 42%; border-radius: 4px 4px 0 0; min-height: 2px; position: relative; }
+    .cmp-b.a25 { background: rgba(26,26,26,0.18); }
+    .cmp-b.a26 { background: var(--verde-bosque); }
+    .cmp-b.a26.parcial { background: repeating-linear-gradient(45deg,
+      var(--verde-bosque), var(--verde-bosque) 5px, #7FA98C 5px, #7FA98C 10px); }
+    .cmp-eje { display: flex; gap: 0.55rem; min-width: 640px; margin-top: 0.4rem; }
+    .cmp-eje div { flex: 1; text-align: center; font-size: 0.72rem; opacity: 0.7; }
+
+    table.cmp { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    table.cmp th, table.cmp td { padding: 0.5rem 0.55rem; text-align: right;
+      border-bottom: 1px solid rgba(26,26,26,0.07); white-space: nowrap; }
+    table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+    table.cmp thead th { font-size: 0.74rem; text-transform: uppercase;
+      letter-spacing: 0.06em; opacity: 0.6; border-bottom: 1px solid rgba(26,26,26,0.18); }
+    table.cmp tr.tot td { border-top: 2px solid rgba(26,26,26,0.25); font-weight: 700;
+      border-bottom: none; padding-top: 0.7rem; }
+    table.cmp tr.curso { background: #FFF8E6; }
+    table.cmp tr.vacio td { opacity: 0.45; }
+    .verde { color: #2E7D4F; } .rojo { color: #B3261E; }
+    .cmp-seccion { margin-top: 2rem; }
+    .cmp-seccion h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem;
+      margin: 0 0 0.3rem; }
+    .cmp-nota { font-size: 0.86rem; opacity: 0.75; margin: 0 0 0.9rem; max-width: 78ch;
+      line-height: 1.5; }
+    .aviso { background: #FDF6E3; border-radius: 14px; padding: 1rem 1.2rem;
+      font-size: 0.88rem; line-height: 1.55; margin-top: 1.1rem; }
+    .aviso b { display: block; margin-bottom: 0.25rem; }
+    .tag { font-size: 0.7rem; background: #E5A50A; color: #fff; border-radius: 3px;
+      padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+    .cmp-cargando { padding: 2.5rem 0; opacity: 0.65; }
+    .cmp-error { background: #FBEAE9; color: #8C1D18; border-radius: 14px;
+      padding: 1rem 1.2rem; font-size: 0.9rem; }
+    .tabla-scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Comparativo</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <? if (mostrarVolver) { ?>
+        <!-- Dentro del shell de Finanzas este boton sobra y estorba: se saltaba el
+             lateral y sacaba al usuario de la seccion. Code.gs manda mostrarVolver
+             en false cuando la pagina viene con ?embed=1. -->
+        <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+      <? } ?>
+    </div>
+  </header>
+
+  <main class="cmp">
+    <div class="cmp-barra-sup">
+      <div>
+        <h1>2026 contra 2025</h1>
+        <p class="cmp-sub" id="sub">Cargando…</p>
+      </div>
+      <button class="cmp-boton" id="btn-refrescar">Actualizar datos</button>
+    </div>
+
+    <div id="cargando" class="cmp-cargando">Leyendo el maestro…</div>
+    <div id="todo" style="display:none"></div>
+  </main>
+
+<script>
+/* EL TOKEN DEL ENLACE PERSONAL.
+   Toda llamada a google.script.run lo manda como primer argumento: doGet resolvio
+   la identidad al abrir, pero cada llamada al servidor es una peticion nueva y
+   llega sin nada. Sin el, quien entra con Gmail personal recibe "no pude
+   identificarte". Si agregas una llamada nueva, pasale AUTH. */
+var AUTH = '<?= authToken ?>';
+  function q(n, dec) {
+    var d = dec === undefined ? 0 : dec;
+    if (n === null || n === undefined) return '—';
+    return 'Q' + Number(n).toLocaleString('es-GT',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function pct(n) {
+    if (n === null || n === undefined) return '—';
+    return (n >= 0 ? '+' : '−') + Math.abs(Number(n)).toFixed(1) + '%';
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function pintar(d) {
+    var c = document.getElementById('cargando'), todo = document.getElementById('todo');
+    if (d.error) { c.innerHTML = '<div class="cmp-error">' + esc(d.error) + '</div>'; return; }
+
+    var T = d.total;
+    document.getElementById('sub').textContent =
+      T.meses + ' meses completos comparables · actualizado ' + d.gen;
+
+    var claseT = T.dif >= 0 ? 'verde' : 'rojo';
+
+    var html =
+      '<div class="cmp-hero">' +
+        '<div class="rot">Los ' + T.meses + ' meses cerrados de 2026, contra los mismos de 2025</div>' +
+        '<div class="big">' + pct(T.pct) + '</div>' +
+        '<div class="exp">' + q(T.v26) + ' contra ' + q(T.v25) + '. Son ' +
+          '<strong>' + q(Math.abs(T.dif)) + '</strong> ' + (T.dif >= 0 ? 'más' : 'menos') +
+          ' de venta neta. Los tickets pasaron de <strong>' + T.t25 + '</strong> a ' +
+          '<strong>' + T.t26 + '</strong> y el ticket promedio de ' + q(T.tp25, 2) +
+          ' a <strong>' + q(T.tp26, 2) + '</strong>.' +
+          ' El mes en curso no entra en este total: todavía no está completo y compararlo ' +
+          'contra un mes entero del año pasado inventaría una caída.' +
+        '</div>' +
+      '</div>';
+
+    // ---- gráfico
+    html += '<div class="cmp-graf">' +
+      '<div class="cmp-leyenda">' +
+        '<span><i style="background:rgba(26,26,26,0.18)"></i>2025</span>' +
+        '<span><i style="background:var(--verde-bosque)"></i>2026</span>' +
+        '<span style="opacity:.7">Barra rayada = mes en curso, todavía incompleto</span>' +
+      '</div><div class="cmp-cols">';
+    d.filas.forEach(function (f) {
+      var h25 = d.tope ? (f.v25 || 0) / d.tope * 100 : 0;
+      var h26 = d.tope ? (f.v26 || 0) / d.tope * 100 : 0;
+      html += '<div class="cmp-col"><div class="cmp-par">' +
+        '<div class="cmp-b a25" style="height:' + h25 + '%" title="' + f.mes + ' 2025: ' + q(f.v25) + '"></div>' +
+        '<div class="cmp-b a26' + (f.parcial ? ' parcial' : '') + '" style="height:' + h26 +
+          '%" title="' + f.mes + ' 2026: ' + q(f.v26) + '"></div>' +
+        '</div></div>';
+    });
+    html += '</div><div class="cmp-eje">' +
+      d.filas.map(function (f) { return '<div>' + f.mes.slice(0, 3) + '</div>'; }).join('') +
+      '</div></div>';
+
+    // ---- tabla
+    html += '<section class="cmp-seccion"><h2>Mes a mes</h2>' +
+      '<p class="cmp-nota">Venta neta, sin IVA y sin eventos, igual que en el resto del ' +
+      'sistema. La comparación es <strong>ticket contra ticket</strong>: de 2025 el POS no ' +
+      'exporta comensales, así que el ticket promedio de esta tabla es por cuenta, no por ' +
+      'persona.</p><div class="tabla-scroll"><table class="cmp"><thead><tr>' +
+      '<th>Mes</th><th>2025</th><th>2026</th><th>Diferencia</th><th>Var.</th>' +
+      '<th>Tickets 25</th><th>Tickets 26</th><th>Ticket prom. 25</th><th>Ticket prom. 26</th>' +
+      '</tr></thead><tbody>';
+
+    d.filas.forEach(function (f) {
+      var cls = f.parcial ? ' class="curso"' : (f.v26 === null ? ' class="vacio"' : '');
+      html += '<tr' + cls + '><td>' + esc(f.mes) +
+        (f.parcial ? ' <span class="tag">en curso</span>' : '') + '</td>' +
+        '<td>' + q(f.v25) + '</td><td>' + q(f.v26) + '</td>' +
+        (f.dif === undefined || f.dif === null
+          ? '<td>—</td><td>—</td>'
+          : '<td class="' + (f.dif >= 0 ? 'verde' : 'rojo') + '">' +
+            (f.dif >= 0 ? '+' : '−') + q(Math.abs(f.dif)) + '</td>' +
+            '<td class="' + (f.pct >= 0 ? 'verde' : 'rojo') + '">' + pct(f.pct) + '</td>') +
+        '<td>' + (f.t25 === null ? '—' : f.t25) + '</td>' +
+        '<td>' + (f.t26 === null ? '—' : f.t26) + '</td>' +
+        '<td>' + q(f.tp25, 2) + '</td><td>' + q(f.tp26, 2) + '</td></tr>';
+    });
+
+    html += '<tr class="tot"><td>Total comparable</td>' +
+      '<td>' + q(T.v25) + '</td><td>' + q(T.v26) + '</td>' +
+      '<td class="' + claseT + '">' + (T.dif >= 0 ? '+' : '−') + q(Math.abs(T.dif)) + '</td>' +
+      '<td class="' + claseT + '">' + pct(T.pct) + '</td>' +
+      '<td>' + T.t25 + '</td><td>' + T.t26 + '</td>' +
+      '<td>' + q(T.tp25, 2) + '</td><td>' + q(T.tp26, 2) + '</td></tr>' +
+      '</tbody></table></div></section>';
+
+    // ---- los meses que no se pueden leer como crecimiento
+    var notas = d.filas.filter(function (f) { return f.nota; });
+    notas.forEach(function (f) {
+      html += '<div class="aviso"><b>' + esc(f.mes) + ' no se puede leer como crecimiento.</b>' +
+        esc(f.nota) + '</div>';
+    });
+
+    todo.innerHTML = html;
+    c.style.display = 'none';
+    todo.style.display = '';
+  }
+
+  function cargar(forzar) {
+    var todo = document.getElementById('todo'); todo.style.display = 'none';
+    var c = document.getElementById('cargando');
+    c.style.display = ''; c.textContent = 'Leyendo el maestro…';
+    google.script.run
+      .withSuccessHandler(pintar)
+      .withFailureHandler(function (e) {
+        c.innerHTML = '<div class="cmp-error">No se pudo leer el maestro: ' +
+          esc(e && e.message ? e.message : e) + '</div>';
+      })
+      .getComparativoData(AUTH, !!forzar);
+  }
+
+  document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });
+  cargar(false);
+</script>
+</body>
+</html>

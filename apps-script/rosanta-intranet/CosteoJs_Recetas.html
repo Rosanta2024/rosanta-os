@@ -1,0 +1,37 @@
+function tarjeta(r){
+  const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv, r);
+  const base = r.cmv;
+  let d = '';
+  if(sim.size && base != null && cmv != null && Math.abs(cmv - base) > 0.05){
+    const up = cmv > base;
+    d = `<span class="delta" style="color:var(--${up?'alto':'meta'})">${up?'▲':'▼'} ${Math.abs(cmv-base).toFixed(1)} pts</span>`;
+  }
+  const tercera = r.t === 'plato'
+    ? `<span class="fig"><span class="lbl">CMV · meta ${r.obj}%</span><span class="val big s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</span>${d}</span>`
+    : `<span class="fig"><span class="lbl">Por ${esc(r.unidadCosto||'porción')}</span><span class="val big">${QU(c)}</span></span>`;
+  return `<button class="card" data-r="${r.id}">
+    <span class="stripe b-${st}"></span>
+    <span class="eyebrow">${esc(r.cat || (r.t==='plato'?'Sin categoría':'Producción Rosanta'))} · ${r.area==='BARRA'?'Barra':'Cocina'}</span>
+    <h3>${esc(Tt(r.n))}</h3>
+    <span class="badge s-${st}">${ETIQ[st]}</span>
+    <span class="figs">
+      <span class="fig"><span class="lbl">${r.t==='plato'?'Precio':'Batch'}</span><span class="val">${r.t==='plato'?(r.precio?Q0(r.precio):'—'):Q(batch(r.id))}</span></span>
+      ${r.t==='plato'?`<span class="fig"><span class="lbl">Costo</span><span class="val">${c!=null?Q(c):'—'}</span></span>`:`<span class="fig"><span class="lbl">Rinde</span><span class="val" style="font-size:13px">${esc(r.rindeTexto||r.rinde||'—')}</span></span>`}
+      ${tercera}
+    </span>
+  </button>`;
+}
+function vistaRecetas(){
+  const list = recetasVis();
+  const f = [['carta','De carta'],['pre','Pre-elaborados'],['alerta','Necesitan atención'],['tocadas','Afectadas por la simulación'],['todas','Todas']];
+  return `<div class="toolbar">
+      ${f.map(([k,l])=>`<button class="chip" data-fr="${k}" aria-pressed="${filt.rec===k}">${l}</button>`).join('')}
+      <span class="count">${q ? `${list.length} resultado${list.length===1?'':'s'} en todo el recetario`
+                             : `${list.length} de ${R.filter(enArea).length}`}</span>
+    </div>
+    ${q ? `<p class="buscando">Buscando “${esc(q)}” en cocina y barra, platos y pre-elaborados. Los filtros no se aplican mientras buscas.</p>` : ''}
+    ${avisoArea(area)}
+    ${(list.length || (window.PUEDE && window.PUEDE.crearFicha && !q))
+      ? `<div class="grid">${(window.PUEDE && window.PUEDE.crearFicha && !q && AREA_EDITABLE(area)) ? tarjetaNueva() : ''}${list.map(tarjeta).join('')}</div>`
+      : `<p class="empty">Nada coincide con “${esc(q)}”.</p>`}`;
+}

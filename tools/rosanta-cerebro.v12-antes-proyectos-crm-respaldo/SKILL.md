@@ -1,0 +1,520 @@
+---
+name: rosanta-cerebro
+description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "Cocina con Carisma" en Antigua Guatemala) y de todos los proyectos de Juanma. Cargar SIEMPRE al inicio de cualquier conversación sobre Rosanta o sus proyectos — Rosanta OS de 6 pilares (Marketing OS, Profit OS, Finanzas & Data OS, Back office, Web, Reservas), bot de WhatsApp/IG, intranet/ERP, recetario/costeo, maestro financiero, DRE, dashboards, marketing, ads, CRM, sitio web rosanta.rest — aunque el usuario no mencione "Rosanta" explícitamente. Disparadores: Rosanta, bot, intranet, ERP, recetario, costeo, leads, Apps Script, clasp, maestro, DRE, prime cost, food cost, Marketing OS, Profit OS, "¿en qué íbamos?", "retomemos", "continúa con", o cualquier tarea que dependa del contexto de proyectos anteriores. Si hay duda entre cargarla o no, cargarla.'
+---
+
+# Cerebro Rosanta
+
+Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
+
+**Última actualización: 12 sep 2026 (v12).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cambios clave del 12 sep 2026 (v12)
+
+Dos frentes en paralelo: **la unificación del pilar 3 en la intranet** (hecha por las
+sesiones de Finanzas y Profit) y el cierre de la arquitectura de archivos. Detalle completo
+en `Rosanta OS/03_Finance_Data_OS/2026-09-12_Unificacion_Intranet.md`.
+
+### 1. La intranet es la ÚNICA superficie del pilar 3
+
+Motor único: **`FinanzasDatos.gs`**, que lee el Sheet nativo del maestro **en vivo**. Toma la
+meta de food cost y el tipo de cambio de `PARAMETROS`, y la planilla devengada del Sheet de
+planilla (una pestaña `AAAA-MM` por mes). Con eso quedan **resueltas** dos alertas viejas: la
+meta de 27.8 mal puesta en la intranet y la planilla escrita en dos lugares.
+
+**Pantallas nuevas:** RAA (pestaña `RAA` en el Sheet de config) y **Escenarios**, que
+reemplaza al artefacto `rosanta-dre-mensual`.
+
+**Jubilados el 12-sep:** `generar_dashboard.py` (a `_archivo/`), los `Rosanta_Dashboard*.html`,
+la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
+`rosanta-dashboard-semanal`. **`generar_finanzas.py` se queda como validador A/B**: es el mismo
+cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
+dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
+
+**Versión: v80 publicada el 12-sep-2026** — token en las tres funciones del CRM y las pruebas
+nuevas (srv, corchetes, grupo 8). Batería **91 OK · 0 fallas**. Con eso el CRM ya funciona para
+quien entra con Gmail y `?u=<token>`, que es el caso de Jeffry y Jose. Contra la v79 cambiaron
+exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`, verificado
+bajando la versión con `clasp pull --versionNumber 80` a una carpeta aparte.
+
+El número de versión **envejece en horas**: el 12-sep pasó de 76 a 80 en una tarde.
+**Verificar siempre con `clasp list-deployments`, nunca de memoria.**
+
+### 2. Reglas técnicas nuevas (cada una de un incidente del día)
+
+1. **Una guarda se verifica LEYENDO SU CUERPO, no reconociendo su nombre.** Los dos errores
+   se cometieron el mismo día, uno en cada dirección. Método: (1) encontrar la llamada,
+   (2) confirmar que se le pasa `auth`, (3) abrir el cuerpo y confirmar el `throw`.
+2. **Una prueba que compara tiene que saltarse o fallar cuando no hay nada que comparar.**
+   Una comparación sin datos que devuelve "igual" es una prueba en verde que no probó nada.
+3. **Publicar = `create-version` + `update-deployment`, sin `push`**, y con HEAD verificado
+   bajándolo aparte y comparando.
+4. **Las carpetas de `~/Claude/Scheduled/` NO reflejan qué tareas existen.** Manda la app: una
+   tarea borrada deja su carpeta en disco. No inventariar tareas leyendo esa carpeta.
+
+### 3. Pendientes que deja el pilar 3
+
+- Pegar en Cowork la tarea mensual nueva, que **verifica el cierre y avisa, sin calcular
+  números** (`03_Finance_Data_OS/2026-09-12_Tarea_reporte_mensual_v2.md`).
+- Actualizar el prompt del forecast de caja (p94), que todavía apunta a los JSON viejos.
+
+### 4. Dos números de food cost que NO son el mismo, y conviven a propósito
+
+Decidido por Juanma el 12-sep-2026. **No reproponer unificarlos.**
+
+| | Valor | Qué es |
+|---|---|---|
+| **Meta global de food cost** | **30% fijo** | el **semáforo**: contra qué se mide el resultado. Vive en `PARAMETROS!food_cost_objetivo_pct` |
+| **Techo de compra por área** | **cocina 30 · barra 20** | la **herramienta de compra**: cuánto se puede comprar esta semana. Vive en `FIN_META_AREA` de `FinanzasDatos.gs` |
+
+El primero mide lo que pasó; el segundo limita lo que se va a gastar. Que la barra tenga un
+techo más bajo que la meta global no es una inconsistencia: es que la barra deja más margen y
+su compra se aprieta más. No hubo que tocar código — `FIN_META_AREA.barra` ya valía 20.
+
+---
+
+## Cambios clave del 11 sep 2026 (v11)
+
+Día de **arquitectura de archivos**, no de negocio. Ningún número del DRE cambió. Lo que
+cambió es dónde vive cada cosa y qué lo vigila. Reportes en
+`Rosanta OS/00_Admin/Auditorias/` (carpeta nueva): `2026-09-11_Guardian.md`,
+`_Duplicados.md`, `_Inspeccion_carpeta_Claude.md`, `_Conversion_punteros.log`,
+`_Rescate_Documents.log`, `_Sesion_Code.log`.
+
+### 1. Rosanta OS es la puerta única (regla 0 nueva del README)
+
+Se agregaron dos **alias** en la raíz de `~/My Drive/Rosanta OS/`:
+
+- `_Codigo` → `~/Dev/Rosanta`
+- `_App` → `~/Claude`
+
+Abrir `Rosanta OS` ahora muestra todo: los 6 pilares, el código y la carpeta de la app.
+**Son symlinks a propósito y tienen que seguir siéndolo.** Si alguna se convierte en
+carpeta real, Drive Desktop empieza a sincronizar los `.git` y `node_modules` de adentro
+y corrompe los repos. El guardián revisa las tres cosas —que existan, que sean alias y
+que apunten a donde deben— y cualquiera de las tres sale como crítica.
+
+**Por qué NO se movieron Dev ni ~/Claude adentro de Drive:** `Dev` tiene dos `node_modules`
+(466 archivos que npm reescribe seguido) y `~/Claude` toca ~19 archivos por día él solo. Un
+sincronizador encima de eso produce archivos `(1)` y carpetas corruptas.
+
+> **Corrección del 12-sep-2026, y es grave: `~/Dev/Rosanta` NO es un repositorio git.**
+> `git rev-parse` contesta "not a git repository". El único `.git` en todo Dev está en
+> `tools/ui-ux-pro-max-skill/`, que es una skill de terceros y no cubre nada de Rosanta.
+> **Ningún código de Rosanta tiene control de versiones**: ni la intranet, ni el maestro, ni
+> el sitio. La única red son los respaldos manuales de `_backups/`, que son voluntarios —
+> el 12-sep se modificó `SistemaFinanzas.html` sin dejar uno.
+> Eso importó ese día: **cinco sesiones escribían `rosanta-intranet` a la vez.** Si dos tocan
+> el mismo archivo, gana el último que guarda y no queda rastro. Ver el pendiente abierto.
+
+### 2. Cero código ejecutable en Drive
+
+Se archivaron **73 archivos** `.gs/.js/.ts/.py/.sh` a `_Archive/Guardian_2026-09-11/`,
+conservando la ruta relativa. Nada se borró. Hoy quedan **0** fuera de `_Archive/`.
+
+Los **dos generadores del maestro se mudaron** a `~/Dev/Rosanta/scripts/maestro-finanzas/`:
+`generar_finanzas.py` y `generar_dashboard.py`, más un `rutas.py` que es lo único que sabe
+dónde están los datos (`--datos RUTA` > `ROSANTA_MAESTRO_DIR` > el default en Drive).
+**El espejo, `_datos_finanzas/` y los dos `Rosanta_Dashboard*.html` siguen en Drive**: son
+datos y entregables. Verificado A/B contra el mismo espejo: las seis salidas, byte a byte
+idénticas.
+
+### 3. Tres herramientas nuevas en `~/Dev/Rosanta/tools/`
+
+| Herramienta | Qué hace |
+|---|---|
+| `guardian-estructura/` | valida las 7 reglas del README en <1 s sobre los ~6.800 archivos. Solo reporta; `--fix` mueve a `_Archive/` o `_Inbox/` y `--realias` repara los alias rotos. **Ninguno borra.** Los dos tienen su `--dry-run-*` |
+| `duplicados/` | hashea por contenido (md5) y agrupa; solo reporta |
+| `convertir-punteros/` | `.gdoc/.gsheet/.gslides` → `.docx/.xlsx/.pptx` al lado del puntero, sin borrarlo |
+
+### 4. Los punteros de Google
+
+En Rosanta OS hay **426 punteros** (131 `.gdoc`, 291 `.gsheet`, 3 `.gslides`, 1 `.gform`).
+Un `.gdoc` es un JSON de ~180 bytes con el ID: **Cowork y Claude no lo pueden leer.**
+
+Se convirtieron **12** (los que Cowork necesitaba, venían del knowledge de claude.ai).
+Quedan **374 sin archivo real al lado**, listados por pilar en el reporte del guardián.
+**No convertirlos en bloque:** muchos `.gsheet` son hojas vivas que Juanma edita en Google,
+y una copia `.xlsx` al lado se desactualiza el mismo día. Se convierte por demanda.
+`.gform` no se puede exportar a Office (403).
+
+**Un alias no guarda información.** `Documents/Claude/Projects/Rosanta Pauta` son 70 bytes
+que apuntan a `05_Marketing_OS/Workspace_Pauta` (143 archivos, 19 MB). No hay copia ni
+duplicado: es la misma carpeta vista por otra puerta. Borrar el alias no libera nada y
+desvincula el proyecto de Cowork — si un proyecto ya no se usa, se elimina **desde la app**,
+que se lleva el alias con él.
+
+**Auth:** `clasp-creds.json` es solo un cliente OAuth — no trae tokens ni scopes — y el
+token de clasp (`~/.clasprc.json`) no incluye `drive.readonly`. Los 12 se exportaron con el
+**conector de Google Drive de Claude**. El conversor propio lleva su OAuth con scope
+`drive.readonly` y guarda el token en `~/.rosanta-drive-token.json`.
+
+### 5. `~/Documents` pasó de 11 MB a 268 KB, y se ocultó
+
+**No se puede borrar**, por dos razones: está sincronizada con **iCloud** (Escritorio y
+Documentos activado), y adentro viven los **9 alias** de `Claude/Projects/` que son la
+vinculación de cada proyecto de Cowork con su carpeta. Eso no es información: es un enlace,
+y no hay copia en ningún lado.
+
+Lo que sí se hizo: de los 23 archivos reales que había, **8 estaban repetidos** en Drive
+(fueron a `_Archive/Duplicados_Documents_2026-09-11/`) y **8 eran únicos** y se repartieron
+a su pilar. Quedan los 9 alias, los 6 `.md` de `_migracion_nube/` y el LEEME de la
+centralita. La carpeta se ocultó del Finder con `chflags hidden ~/Documents` (revertir con
+`chflags nohidden`).
+
+### 6. `~/Claude` está sana
+
+15 MB, 267 archivos: 23 artefactos con su historial, 17 tareas programadas y 2 alias.
+**Cero archivos duplican contenido de Drive o de Dev**, comparado por md5. Es el caché de
+la app, no una cuarta capa; no se toca ni se renombra. Lo único que sobra son
+`Finanzas_preview.html` y `Metas_preview.html` en la raíz — del 4-sep, con la **paleta
+vieja** incrustada.
+
+### 7. Duplicados: 1,0 GB recuperable
+
+**396 grupos** idénticos por contenido, **520 archivos sobrantes**. El 70% del peso son
+videos de marca copiados 3 y 4 veces en `05_Marketing_OS`. El reporte recomienda cuál
+conservar pero **no mueve nada**: es decisión a ojo.
+
+### Reglas nuevas (cada una salió de algo que pasó hoy)
+
+1. **Apps Script busca las carpetas de Drive por ID, no por ruta** (`getFolderById`). Mover
+   carpetas en Drive **no rompe nada** del código. Las dos únicas excepciones se buscan por
+   **nombre** y por eso no se pueden renombrar: la hoja `Rosanta Leads` y
+   `Rosanta_Maestro_ESPEJO.xlsx`. Lo único que sí se rompe al mover una carpeta son los
+   **alias**, y en silencio: la app sigue listando el proyecto pero no ve nada. Por eso el
+   ritual después de reorganizar es **correr el guardián** y, si aparece alguna crítica,
+   **`--realias`**, que busca la carpeta por nombre y reconecta. Si hay varias con el mismo
+   nombre no adivina: las lista.
+2. **Antes de archivar un script, mirar si lee datos de al lado.** `generar_finanzas.py`
+   (tocado el día anterior) resolvía `BASE = dirname(__file__)`: archivarlo lo rompía. Se
+   devolvió en el acto y después se mudó bien.
+3. **Una carpeta vacía en `Documents/Claude/Projects/` no se mueve.** Suele ser un proyecto
+   que la app acaba de crear; moverla lo desvincula. El guardián solo la reporta.
+4. **El `birthtime` en Drive Desktop sí conserva la fecha real** — sirve para la regla de
+   nombres. Pero en archivos rescatados o vueltos a descargar se pierde y quedan todos con
+   la fecha de hoy.
+5. **Los symlinks dentro de una carpeta de Drive sobreviven:** Drive Desktop no los sube ni
+   los rompe. Es lo que hace posible la regla 0.
+6. **claude.ai queda FUERA del stack (11 sep 2026).** Juanma borró los tres proyectos de la
+   nube y decidió no volver a usarlo para nada. **No proponer guardar nada ahí, ni el
+   knowledge de un proyecto.** Todo vive en las tres capas: Drive (datos), Dev (código) y
+   Projects (alias). Esto termina la duplicidad entre "proyectos de la nube" y "proyectos
+   locales con carpeta conectada", que era la causa del falso diagnóstico de proyectos
+   idénticos. Costo del cierre, medido: se perdieron 3 PDFs de lectura de terceros y 3 notas
+   de trabajo de la intranet, todas cubiertas por otra vía. **Ningún dato de negocio.**
+7. **Hay DOS almacenes de artefactos y son distintos.** `~/Claude/Artifacts/` tiene los **23**
+   de Cowork, que se actualizan con `update_artifact` por id — **ahí vive
+   `rosanta-seguimiento-semanal`**. La galería `claude.ai/code/artifact/…` tiene los **10**
+   publicados desde una sesión, y el tablero **nunca estuvo ahí**. El 11 sep una sesión buscó
+   en la galería, no lo encontró y concluyó que se había borrado; estuvo a un paso de
+   reconstruirlo desde cero sobre 62 versiones de historial. **Antes de dar por perdido un
+   artefacto, mirar el archivo en `~/Claude/Artifacts/<id>/index.html`.**
+
+---
+
+## Cambios clave del 10 sep 2026 (v10)
+
+Día completo de trabajo en la **intranet** (Apps Script), ocho versiones publicadas (69 → **76**). Batería de pruebas: **71 OK · 0 fallas · 2 saltadas**. Detalle en `references/proyectos.md` §3.
+
+- **El código de la intranet se movió** a `~/Dev/Rosanta/apps-script/rosanta-intranet`. La ruta vieja (`~/Documents/Claude/Projects/Claude/rosanta-intranet`) queda obsoleta. Deployment publicado: `AKfycby814wYbLt784xWEZThfi0SgRn_afPV3KlLAecu7g9iKqgKINqlH5MqcM77PhT38oYb`. **Al 12-sep-2026 ese deployment está en la v80, no en la 76:** se publicaron dos versiones más. Verificarlo con `clasp list-deployments` antes de dar por buena una versión de memoria.
+- **Acceso por token resuelto.** El equipo con Gmail personal (fuera del dominio rosanta.rest) entra con `?u=<token>`. Jeffry (chef) fue el primero en recorrer el camino completo. Eran **tres bugs encadenados**, cada uno tapando al siguiente.
+- **El recetario en frío pasó de 46,7 s a 0,44 s.** La causa no era cómputo sino llamadas a servicio dentro de bucles.
+- **Agujero de permisos cerrado:** `doGet` protege la PÁGINA, no la FUNCIÓN. Cuatro funciones no verificaban a quien las llamaba — dos de ellas leían el maestro financiero entero. Se corrigió con `exigirModulo_(auth, modulo)`.
+- **Desde S36 los reportes del POS se suben ya convertidos a hoja de Google** y el cargador lee el nativo directo. El camino del `.xlsx` se mantiene porque S35 y anteriores lo necesitan.
+- **Ventas por producto al día:** de terminar el 23 ago a terminar el 6 sep (9.502 → 10.068 filas).
+
+### Reglas técnicas de Apps Script (cada una salió de un bug real, no repetirlas)
+
+1. **El token va como PRIMER argumento.** Servidor: `resolverUsuario_(auth)` o `exigirModulo_(auth, modulo)`, nunca `getUsuarioActual()` a secas. Vista: `var AUTH = '<?= authToken ?>';` declarado una vez y pasado en TODAS las llamadas a `google.script.run`. `doGet` resuelve la identidad UNA vez al abrir; cada `google.script.run` es una petición nueva.
+2. **Dentro de un `href` la query va SIN escapar:** `<?!= qs ?>`, no `<?= qs ?>` — el escapado contextual convierte `&u=` en `%26u%3d`. **Apps Script NO tiene sintaxis de comentario `<?# ?>`**: se parsea como scriptlet y tira SyntaxError.
+3. **Nada de `Utilities.*`, `SpreadsheetApp.*` ni `DriveApp.*` dentro de un bucle.** Son llamadas a servicio, no JavaScript. Si un tramo mide 10 s en una corrida y 97 s en otra del mismo día, es latencia de servicio, no cómputo.
+4. **Para leer el contenido de una vista:** `createTemplateFromFile(v).getRawContent()`. `createHtmlOutputFromFile` **sanitiza** (devolvía 108.722 de 121.691 caracteres y rechaza Marketing con "Malformed HTML content").
+5. **Un cache sin su invalidación es otra regresión.** Al cachear algo accionable, borrar ese cache donde se ejecuta la acción que lo resuelve.
+6. **Un corte de red NO significa que la escritura no ocurrió.** `clasp run` devolvió ECONNRESET y la carga sí se había completado. Verificar estado antes de reintentar: reintentar habría duplicado dos semanas de ventas.
+6bis. **`clasp` falla de DOS formas distintas y las dos terminan igual: no podés publicar.**
+   Pasó el 12-sep-2026 en una hora. (a) `~/.clasprc.json` con un token de la **cuenta
+   personal**: la API contesta *"The caller does not have permission"* y **nunca dice que el
+   problema es la cuenta**. (b) El archivo **vacío** (`{"tokens": {}}`, 18 bytes): contesta
+   *"No credentials found"*. Distinto síntoma, misma parálisis. El arreglo de las dos es
+   `clasp login` con **restaurante@rosanta.rest**, pero si no distinguís el síntoma buscás
+   en el lugar equivocado. Confirmado también: **clasp 3.3.0 sigue usando `~/.clasprc.json`**
+   — no hay `~/.config/clasp`.
+7. **Los activadores se crean A MANO** (Editor › Activadores): `ScriptApp.newTrigger()` necesita el scope `script.scriptapp`, que el manifiesto no declara. Y que un activador esté guardado no prueba que corra.
+8. **Mirar el conteo, no el color.** La prueba de permisos pasó en VERDE habiendo revisado 2 de 21 llamadas.
+   **Segundo caso, 12-sep-2026, peor que el primero:** el barrido de `Pruebas.js` solo reconoce
+   llamadas con la forma `run.nombre(`, y la vista llamaba con `run['getFinanzasData']()`.
+   La llamada era **invisible para la prueba**, así que el grupo pasaba en verde con
+   `getFinanzasData` sin guarda — o sea con la puerta abierta al maestro entero.
+   **Las llamadas a `google.script.run` se escriben SIEMPRE con el nombre literal**, nunca
+   con corchetes. Si hay un dispatcher genérico, **cada nombre que pase por él necesita su
+   propio chequeo de guarda**, porque el barrido no lo va a ver. La prueba que caza el patrón prohibido, textual:
+
+   ```js
+   /google\.script\.run[\s\S]{0,400}?\[\s*[a-zA-Z_$]/
+   ```
+
+   Corre sobre `createTemplateFromFile(v).getRawContent()` de cada vista — `getRawContent`
+   y no `createHtmlOutputFromFile`, que sanitiza y se come contenido. El 400 es la ventana
+   donde cabe la cadena de `withSuccessHandler`/`withFailureHandler`. Probada contra las
+   cinco vistas del pilar sin falsos positivos.
+
+   La regla general: **una prueba que busca por patrón de texto solo encuentra el patrón
+   que conoce.**
+8bis. **`clasp push` sube TODO lo que hay en la carpeta si no existe `.claspignore`.** Y como
+   todos los `.js` comparten un solo ámbito global, un respaldo de `Code.js` subido al lado de
+   `Code.js` redefine cada función y gana el que cargue último — sin un solo error. El
+   `.claspignore` de `rosanta-intranet` (creado el 12-sep-2026) excluye `_backups/**`, `*.bak`,
+   `.git/**`, `node_modules/**` y `*.md`. **Cualquier repo de Apps Script nuevo necesita el
+   suyo antes del primer push.**
+8ter. **Una guarda se verifica LEYENDO SU CUERPO, no reconociendo su nombre.** Los dos
+   errores posibles se cometieron el 12-sep, uno en cada dirección: un barrido que busca
+   `exigirModulo_` no ve `requiereCrm_` y reporta abierto lo que está cerrado —hace perder
+   tiempo—; y un barrido que ve `requiereAlgo_()` y concluye "cerrado" sin abrirla puede
+   estar bendiciendo una guarda que no niega nada —eso es un incidente—. El método correcto
+   son tres pasos: **(1)** encontrar la llamada a la guarda, **(2)** confirmar que se le pasa
+   `auth`, **(3)** abrir el cuerpo de la guarda y confirmar que hay un `throw` ante usuario
+   inexistente o sin módulo.
+9. **Antes de nombrar una función nueva, verificar que no exista.** Los `.gs` comparten un solo ámbito global y un nombre repetido pisa al otro en silencio.
+
+### Cómo se trabaja la intranet (reglas de Juanma)
+
+- **No reescribir módulos que funcionan.** Los cambios son incrementales.
+- **No cambiar roles ni permisos de la hoja USUARIOS sin pedirlo.**
+- Publicar = `clasp create-version` + `clasp update-deployment -V <n> <deploymentId>`. `clasp push` solo actualiza HEAD.
+- Verificar = `clasp run correrPruebasTexto` (~170 s; la API corta seguido con ETIMEDOUT/ECONNRESET).
+
+---
+
+## Cambios clave del 6 sep 2026 (v9)
+
+Esta versión cierra una brecha de tres semanas: la v8 quedó al 14 ago y las referencias al 26 jul. Se integran las semanas S35 (24–30 ago) y S36 (31 ago–3 sep) y el bloque de POS/sitio del 10–20 ago.
+
+### 1. Estructura nueva: Rosanta OS de 6 pilares
+
+El mapa viejo de "proyectos sueltos" quedó obsoleto. Todo se organiza ahora en **6 pilares**, y Drive está reorganizado igual:
+
+| Pilar | Qué cubre | Estado |
+|---|---|---|
+| **Finanzas & Data OS** | Maestro, DRE, P&L, prime cost, caja | Arrancó 2 sep. Vista v1 viva |
+| **Profit OS** | Recetario, costeo, inventarios, merma | En funcionamiento desde S35 |
+| **Marketing OS** | Pauta, CAC, ROAS, reseñas, carritos, encuesta | En funcionamiento |
+| **Back office / Operations Hub** | Drive, Apps Script, seguridad, artefactos | Activo |
+| **Web Rosanta** | rosanta.rest (Wix), SEO, multilingüe | Activo |
+| **Reservas / Ticketing (WIX)** | Reservas, webhooks, monitoreo | Activo, con fallo abierto |
+
+Auditoría de artefactos cerrada bajo esta estructura: **10 vivos, 9 borrados, 3 pasan a referencia**. Hallazgo de producto: **la app no permite renombrar artefactos** (solo Pop out, Unpin, Move down, Delete), así que el mapa oficial pasa a ser el archivo `_Indice_Artefactos.md`.
+
+### 2. Finanzas & Data OS — el pilar nuevo (arrancó 2 sep 2026)
+
+- **El maestro migró a Google Sheet NATIVO** `1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk`. Decisión de Juanma de alejarse del xlsx. **El .xlsx ya NO es la fuente**; existe un espejo `Rosanta_Maestro_ESPEJO.xlsx` que Apps Script exporta cada semana para que las herramientas locales de Python lo lean vía Drive Desktop. Se encontraron y desactivaron **tres archivos distintos** llamados `Rosanta_Reporte_Maestro_v2_2026`; los sobrantes quedaron como `ZZ_ARCHIVO_`.
+- **Cargador automático** en Apps Script: Juanma deja los archivos en la carpeta de la semana y el sistema los identifica **por contenido, no por nombre** (POS / FEL emitidas / FEL recibidas), convierte los .xls y lleva registro de lo procesado. Código en `Maestro/AppsScript_cargador.gs`.
+- **Los ocho meses del año validados al centavo** contra los PDF originales: 8/8 en Banco Industrial y 8/8 en BAC.
+- **DRE anual construido:** ventas Q1,220,487 · COGS Q450,227 (36.9%) · gasto operativo Q858,465 (70.3%) · **resultado −Q88,205 (−7.2%)**. Equilibrio en Q90,612/mes contra Q152,561 de venta real. Lectura: **el problema no es vender, es la estructura de costo.**
+- **Prime cost** calculado por primera vez: 56.9% en el año (bajo el límite de 60%), pero **julio 66.0% y agosto 67.5%** se rompieron contra 49–59% de enero a junio.
+- **Hallazgo de método (importante):** el maestro es **base caja**, y eso rompía el prime cost mensual (saltaba de 40% a 76% sin que la operación cambiara). Se conectó la **planilla devengada** como fuente de nómina y el rango se volvió señal real.
+- **Reporte del contador DESCONTINUADO** → reemplazado por un **reporte interno mensual**, que arrancó con el cierre de agosto. Carpeta: `1Dfkg52IphK3V1hWCaDQ2MAqqxzMQxmju`.
+- Artefacto: **`rosanta-dre-mensual`** (vista Finanzas v1: los 5 números del P&L con semáforo contra benchmark del sector, prime cost mensual, gasto operativo contra rango, punto de equilibrio y simulador de escenarios).
+
+### 3. Alertas rojas abiertas (N1) — leer antes de proponer cualquier cosa
+
+**Revisadas el 11 sep 2026 contra el tablero.** Cuatro de las seis que traía la v9 se
+cerraron o cambiaron de forma. No reproponer las cerradas.
+
+1. **La caja: el problema es la extracción, no la operación.** Medido el 11 sep sobre ocho
+   meses y una semana: la operación **genera Q188,547** (cobrado Q1,337,332 − salidas de
+   operación Q1,148,786). Lo que descuadra es la extracción: **Q136,546 de gasto personal
+   por las cuentas de la empresa + Q100,325 de retiros del socio = Q236,871**, el **126%**
+   de lo que el negocio produce. Resultado de caja del año: **−Q48,325**. En promedio la
+   operación deja Q22,993/mes y se extraen Q28,887.
+   El saldo bajo no es un mal mes: estuvo bajo una semana de gasto **230 de 244 días** con
+   movimiento (94% del año), tocó **Q0.00 exactos el 31 de julio** y su máximo anual fueron
+   Q56,772, que duraron once días. Junio (−Q8,725) y julio (−Q3,023) son los dos únicos
+   meses en que la operación misma quemó caja, y son los del food cost más alto.
+   **Pendiente vivo (p122, N1):** definir un nivel de extracción sostenible. Es una decisión
+   de Juanma, no un análisis. El forecast a 30/60/90 es p94, con diagnóstico completo y
+   prompt de arranque ya entregado.
+
+2. **Devoluciones de inversión: eran tres acreedores, queda uno.** Kristinsa
+   (Q32,535) y Manuel Lemus (Q6,000) **ya están pagados en su totalidad**. Queda
+   **Raúl, el socio**, a quien en 2026 se le pagaron Q50,000 (la fila del 18-feb).
+   **Para 2027 el objetivo es Q100,000**, una vez al año y en el primer trimestre.
+   La categoría `DEVOLUCION_INVERSION` estaba bien puesta: los Q100,325 de 2026 son
+   los tres acreedores. **La carga no sube en 2027** — es el mismo total, concentrado
+   en una sola persona.
+
+   **Raúl puede recibir menos**, pero Q100,000 es el número que se intenta entregar.
+   Eso lo hace distinto del retiro y del alquiler, que salen sí o sí.
+
+3. **La vara de la caja son DOS umbrales, no uno** (Juanma, 12 sep 2026):
+
+   | | Por mes | Naturaleza |
+   |---|---:|---|
+   | Retiro de Juanma | Q5,000 | fijo |
+   | Alquiler de su casa, US$1,800 | ~Q13,896 | fijo |
+   | **PISO** | **Q18,896** | **sale sí o sí** |
+   | Devolución a Raúl, Q100,000/año | Q8,333 | objetivo, flexible |
+   | **OBJETIVO** | **Q27,229** | |
+
+   Contra los **Q12,845/mes** que dejó la operación en may–ago:
+
+   - cubrir el **piso** pide **+Q6,051/mes** → **+5.4% de venta** (~Q8,600/mes más)
+   - cubrir el **objetivo** pide **+Q14,384/mes** → **+12.8% de venta** (~Q20,500/mes)
+
+   **No hay sobregasto: hay un problema de tamaño.** En may–ago se extrajo Q14,132/mes
+   de personal contra Q18,896 de necesidad real — Juanma se está quedando **corto en
+   Q4,764/mes**, no pasándose. La pregunta del pilar no es cómo recortar la extracción
+   sino cómo la operación llega a Q18,896 primero y a Q27,229 después. Un 5% de venta
+   es una meta, no un milagro.
+
+   **Documento de arranque, autocontenido:**
+   `Rosanta OS/03_Finance_Data_OS/2026-09-12_Objetivo_Operacional.md`. Se trabaja en
+   **sesión dedicada** del pilar, amarrado al forecast de caja (p94). Trae también lo que
+   tiene margen: el tipo de cambio de los cargos en dólares (73% del gasto personal), y
+   cuánto del histórico se marcó con la regla de clasificación vieja.
+
+4. **Meta de food cost: 30% fijo.** Decisión de Juanma del 10 sep. **Queda descartada** la
+   fórmula del mix y el 27.8% ponderado que traía la v9 — eso es **obsoleto, no repetirlo**.
+   Ya está aplicado en los tres lugares donde vivía: intranet (`PARAMETROS!B3`, de 32 a 30),
+   `generar_finanzas.py` (de la fórmula a 30.0 fijo, con el razonamiento escrito en el
+   código) y el recetario, que ya estaba bien. El mix se sigue publicando como información,
+   pero deja de definir la meta.
+
+5. **Alquiler: CERRADO como palanca.** Juanma confirma que ya se negoció a la baja y no hay
+   más margen. Pasa de pendiente a **restricción conocida** de la estructura de costo. No
+   reproponer bajarlo.
+
+6. **Reservas: CERRADO.** El canal se rehízo en Claude Code: el cliente reserva desde el chat
+   del bot, la reserva se crea en Wix y el bot confirma; por el mismo camino cancela. Cierra
+   el N1 de los webhooks mudos que venía del 6 de agosto. Abierto menor: confirmar que el
+   activador de `latido()` existe (p107), y borrar los deployments v2 y v3 del Marketing OS,
+   que siguen siendo dos URLs vivas que se tragan tráfico (p82, N3).
+
+7. **Credenciales: matizado.** El **token de Meta en `config!A1` NO es un descuido** — lo lee
+   un Google Ads Script, que corre fuera de Apps Script y no tiene `PropertiesService`, así
+   que la celda es la única alternativa a hardcodearlo. La mitigación real es **restringir el
+   acceso a la hoja y rotar**, no mudarlo. Lo que sigue siendo exposición real es la API
+   key/JWT de Wix y el site id en esa misma pestaña.
+
+8. **Nómina de febrero: CERRADO.** Las 73 filas se reclasificaron el 7 sep y las seis
+   transferencias del 16/02 ya dicen NOMINA; el maestro y el espejo se regeneraron.
+
+**Del 10-11 sep, para no volver a asustarse:** el recetario de barra nativo estuvo en la
+**papelera de Drive** con borrado a 30 días mientras la intranet lo leía todos los días.
+Se restauró el mismo día que se descubrió (27 fichas, 29 sub-recetas, Banco de 200 insumos).
+Causa raíz: vivía en `Downloads`. Ya está en `04_Profit_OS/Recetario`, al lado del de cocina.
+
+### 4. Profit OS (S35)
+
+Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes arrastrados desde el 22 ago. Recetario migrado a **v14 en hoja nativa** `1oxVJIaplR7Ofk4_lYgvIsOMBonUGrcoDa0J099vnlxg` (33 platos mapeados, VLOOKUP contra el Banco de Datos sobrevivieron). Banco de Datos limpiado. Inventarios integrados a Profit OS (dejan de ser sistema aparte). MAPA POS ejecutado: 5 productos retirados, 7 activos sin ficha resueltos, 2 altas (~Q1,145/semana que se cobraban a mano).
+
+**Diferidos por Juanma el 3 sep — no reproponerlos hasta que él lo decida:** SPLH (ventas por hora-hombre, imposible hoy porque no se registran horas por turno) y **merma** (no existe ningún dato).
+
+### 5. Web, sitio y POS (10–20 ago)
+
+- **Sitio multilingüe ES/EN completo y verificado en vivo.** Menú en español terminado: 18 descripciones de sección, 77 platos, etiquetas y variantes.
+- **Brunch eliminado de la web** — no se sirve desde hace más de un año. (Coherente con "Rosanta NO vende brunch", v8.)
+- Decisión de marca: **"Farm to Table" se queda en inglés** porque es el término que buscan los turistas; el jardín vive en el cuerpo de la página.
+- **Reglas operativas de Wix (no repetir errores):** (a) editar el texto en inglés en la app de menús **borra su traducción al español** → primero se cierra el inglés, después se carga el español; (b) cargar la traducción no basta, **solo publicar** invalida el caché de render; (c) el SEO por idioma se edita **en el Editor con el selector en Spanish**, no en el Translation Manager.
+- **hreflang:** Wix no lo emite en 8 de 9 páginas pese a prometerlo por escrito. Corre un parche por Custom Code en 5 páginas (`RUNBOOK_hreflang_parche.md`); Wix **nunca respondió** al escalamiento. Quitar el parche cuando lo arreglen o quedan etiquetas duplicadas.
+- **POS y carta 2026-2027:** 187 productos fuera de carta dados de baja, 71 cambios de precio, precios de los 212 productos actualizados, carta de vinos 2027 cargada, etiqueta de carta 2027 marcada (144 de 212). **La carta nueva ya corre en el restaurante con el POS sincronizado.**
+- **Google Ads reactivado** el 10 ago (método de pago actualizado, riesgo de suspensión resuelto).
+
+### 6. Marketing y reputación
+
+- **TripAdvisor sube en las tres métricas** contra el baseline del 17 jun: 9 → 12 reseñas, 4.1 → 4.4 estrellas, #204 de 418 → **#146 de 463** (58 posiciones, con la lista creciendo).
+- **La encuesta de satisfacción manda el 100% de las 5★ a Google**, que ya tiene volumen. Re-apuntarla a TripAdvisor es cambiar UNA propiedad del script y es la palanca más barata. **Ojo:** el Sheet donde cae la encuesta es propiedad de un tercero (`Eli_Juli@lacocinaquesuena.com`), no de Rosanta — resolver antes.
+- **ROAS:** en el denominador solo entra inversión en medios (FACEBK, GOOGLE*ADS). **Los honorarios de gestión de pauta cuentan en el bloque Marketing del DRE pero NO en el ROAS.**
+- **El COGS semanal no es señal, es ruido** (desviación 13.9 puntos). Usar **media móvil de 4 semanas** como número principal; la semana cruda solo como contexto.
+
+### 7. Reglas nuevas de trabajo
+
+- **Las reseñas de Google se responden automáticamente** por la plataforma de reservas. Nunca listarlas como pendiente.
+- **Comando "Consolidar tablero":** al cerrar una sesión, los cierres se escriben en el acto en `rosanta-seguimiento-semanal`. El tablero es un archivo local: `~/Claude/Artifacts/rosanta-seguimiento-semanal/index.html`, con los datos en el `<script id="seguimiento-data">`. **Desde Claude Code se edita ese JSON directo y se deja copia en `versions/`** — el cierre dominical automático solo lee sesiones de Cowork, así que todo lo que pasa en Claude Code hay que escribirlo a mano o se pierde. Formato: `cerrado: …` / `pendiente-1: … — N# — proyecto`. La skill `cierre` maneja el ritual.
+- **Los consumos en restaurantes NO se clasifican por el nombre del comercio.** El mismo lugar puede ser comida personal de Juanma o comida con el equipo.
+
+---
+
+## Cambios clave anteriores (vigentes)
+
+### 14 ago 2026
+- **PROHIBIDO decir "leña de café". No existe.** La leña de la parrilla es de **gravilea**, el árbol que da sombra a los cafetales. Se compra a fincas de café con prácticas regenerativas; no se nombran fincas ni certificaciones en público sin consentimiento escrito. Sirve como prueba de origen del farm to table.
+- **Vocabulario prohibido:** "coctel de autor" y "cocina de autor". Aquí se dice **gastrococtelería**. La lista dura vive en `rosanta-brand-guidelines`, que hay que cargar antes de escribir cualquier texto de Rosanta.
+- **Rosanta NO vende brunch** y **NO trabaja con OpenTable.** Existe una ficha en OpenTable que dice que no acepta reservas y ChatGPT la cita; reclamarla o darla de baja.
+- **Menú web:** carta 2026-2027 (7 secciones plegables, ES/EN) servida desde GitHub Pages (`Rosanta2024/rosanta-menu`) en un iframe en `rosanta.rest/menu-completo`. Cambiar precios = editar `index.html` en GitHub, sin tocar Wix. **La altura del Embed HTML de Wix no se controla por Velo**: fija, 1019px escritorio / 832px móvil, con scroll interno.
+- **SEO:** datos estructurados Restaurant + Menu en `/menu-completo`; se eliminó el `aggregateRating` auto-declarado (Google lo prohíbe); Bing Webmaster verificado; `llms.txt` editado a mano.
+
+### 30 jul 2026
+- **La identidad se llama "LA SEGUNDA COSECHA"**, no "La Segunda Floración" (obsoleto).
+- **Documentos: fondo BLANCO y CERO cajas de texto.** El Crema sigue siendo fondo en redes/menús/flyers, pero en briefings, reportes, propuestas y guiones el fondo de color y las tarjetas redondeadas delatan "hecho por IA". Estándar editorial: tipografía, jerarquía y aire.
+- **Meta (Andromeda): las variantes de un mismo video se tratan como duplicado.** Diversificar = videos conceptualmente distintos sobre UN mismo concepto, jamás el mismo material con otro gancho.
+- **Panel de Asesores:** expertos reales verificables con link a su contenido, jamás personas inventadas, y nunca atribuirles citas (siempre "Lente X").
+- **Rol "contenido" en la intranet:** ve solo Calendario, Creador Kaprica, Checklist y Manual, con permisos también del lado del servidor.
+
+### 26 jul 2026
+- **Anti-brand INTEGRADO a `rosanta-brand-guidelines`**: 5 pilares, el enemigo (trampa para turistas + barra de licuadora), los 4 filos, la flor, Fresco & Fuego · Urban Garden, arquetipo Cuidador/Explorador, frases firma, reglas de emojis. **Paleta HEX vigente:** Verde Bosque #4E6D5A, Verde Medio #57A77F, Lila #AEAAE2, Crema #F2EEEB, Negro #000000. (La pre-sprint #456B50/#4CAF7D/#A89DC8/#F0EDE6/#1A1A1A está obsoleta.)
+- Desinstaladas: `xlsx-pro`, `pdf-pro`, `internal-comms`, `rosanta-recetario-costeo`. **`rosanta-eventos` DESCARTADA — no se creará. No reproponerla.**
+- **SonTickets y GHL: cerrados.** Migración a WIX **ejecutada el 10 ago 2026**.
+
+### 17 jul 2026
+- **Bot WhatsApp/IG: COMPLETO.** WhatsApp vivo con token permanente (+502 3082-6935 en la API). Plantillas post-24h activadas. Messenger cerrado.
+- **Notas de voz del bot: DESCARTADO** hasta que exista transcripción de audio nativa en Claude. No reproponerlo antes de eso.
+
+---
+
+## Quién es Juanma y qué es Rosanta
+
+- Juanma Lemus, dueño de **Rosanta** ("Cocina con Carisma"), restaurante en Antigua Guatemala. Empresa: CORSAGA, S.A. Correo: restaurante@rosanta.rest. Sitio: rosanta.rest.
+- Está en Plaza/Parque Santa Rosa ("Santa Rosa" vale solo como nombre del lugar físico y su parqueo).
+- **PROHIBIDO usar "Jardín Santa Rosa"** — sub-marca descontinuada (jun 2026). Regla dura: nunca usarla.
+- **Firma de marca: coordenada 14·91.** Forma oficial **14° N · 91° W**; corta **14·91 / #1491**. Igual en cada plato como sello, sin sufijos por platillo.
+- Stack: todo interno con Google (Apps Script, Sheets, Drive) + Claude. Sin n8n, Make ni plataformas externas. GHL y SonTickets cerrados.
+
+## Mapa de proyectos (estado al 6 sep 2026)
+
+| Pilar / proyecto | Estado | Detalle |
+|---|---|---|
+| **Finanzas & Data OS** | ARRANCADO 2 sep. DRE v1 vivo, maestro nativo validado 8/8 meses. Falta: forecast de caja (N1), RAA, panel de integridad | `references/negocio.md`, `references/proyectos.md` §5 |
+| **Profit OS** | En funcionamiento (S35). Recetario v14 nativo, inventarios integrados. Merma y SPLH diferidos | `references/proyectos.md` §2 |
+| **Marketing OS** | En funcionamiento. Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
+| **Back office / Operations Hub** | **11 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), 0 código en Drive, guardián vivo. Abierto: 1,0 GB en duplicados, 374 punteros, credenciales en texto plano | `references/ecosistema.md` |
+| **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
+| **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
+| Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
+| Intranet/ERP | **v80 publicada (12 sep), batería 71 OK / 0 fallas.** Acceso por token, rendimiento y permisos resueltos. Abierto: meta de food cost mal puesta; pantalla semanal de finanzas aprobada 3 sep | `references/proyectos.md` §3 |
+| Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
+| Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
+| Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
+| Personal: UTG 42K | Plan de 15 semanas para la Ultramaratón Guatemala 42K (21 nov 2026). Artefacto `plan-utg-42k` | fuera de Rosanta |
+
+Antes de trabajar en cualquiera, lee la sección correspondiente de `references/proyectos.md`.
+
+## Datos maestros del negocio
+
+`references/negocio.md`: mapa del "corazón de Rosanta" en Drive, menú, equipo y roles, SOPs, proveedores, **el DRE y los números vigentes**, y el CRM. `references/marketing.md`: audiencias (80% turista angloparlante / foodie local), estacionalidad (alta nov–dic), campaña activa, reputación y reglas de voz. Leerlos antes de cualquier tarea de negocio, contenido o análisis.
+
+## Ecosistema: skills, artefactos y conexiones
+
+`references/ecosistema.md` tiene el mapa de skills instaladas, herramientas locales, artefactos vivos, tareas programadas y el flujo que los conecta. Leerlo antes de crear contenido, paneles o documentos, para reutilizar en vez de duplicar.
+
+## Reglas de trabajo con Juanma (siempre aplican)
+
+1. **Confirmar la fuente de datos ANTES de construir.** Si un análisis depende de una pestaña/Sheet/export, preguntar primero si es la fuente vigente y cómo tratar huecos. Hoy la fuente financiera es el **Sheet nativo del maestro**, no el xlsx.
+2. **NO mencionar la rotación de la API key de Anthropic.** Juanma pidió explícitamente que no se le vuelva a preguntar.
+3. **Marca (FORMATO OBLIGATORIO de TODO diseño Rosanta):** anti-branding + storytelling, sin excepción. Toda salida pasa por `rosanta-brand-guidelines` (identidad) COMBINADA con `visual-storytelling-docs` (estructura). En documentos: **fondo blanco y cero cajas de texto**. Para copy: `rosanta-kaprica`. Cotizaciones: `rosanta-cotizador`. Finanzas: `rosanta-maestro`.
+4. **Abogado del diablo:** cuando Juanma pida crítica sin filtros, aplicar el método completo de `abogado-del-diablo` — brutal con la idea, nunca con la persona.
+5. **Rosanta NO hace delivery y NO vende brunch.** Nunca ofrecerlos.
+6. **Calibrar el detalle:** explicaciones y diagnósticos cortos y directos; instrucciones técnicas que Juanma va a ejecutar, completas y paso a paso (skill `calibrar-respuestas`).
+7. Respuestas concisas y en español.
+
+## Cómo mantener vivo este cerebro
+
+**Claude Code lo actualiza solo. No se le pide a Juanma que instale nada** — orden explícita del 11-sep-2026. La skill instalada es escribible desde la sesión; el procedimiento completo, con la ruta, está en `~/Dev/Rosanta/CLAUDE.md`, sección "Al CERRAR la sesión".
+
+- Cuando Juanma diga "actualiza el cerebro", "guarda esto en el cerebro" o al cerrar una sesión con avances importantes: regenerar partiendo de la **instalada**, subir versión y fecha, escribir encima, verificar leyendo desde la ruta instalada, y sincronizar la copia de `~/Dev/Rosanta/rosanta-cerebro/` más el `.skill` de respaldo en `tools/`.
+- Lo hace también la tarea programada **`rosanta-cerebro-mantenimiento`** (día 1 de cada mes, 9:00).
+- Integrar lo nuevo de la memoria automática y del tablero `rosanta-seguimiento-semanal`.
+- Marcar lo obsoleto como obsoleto en vez de borrarlo, para que Juanma vea qué cambió.
+- Si el cerebro contradice algo que Juanma dice hoy, **gana Juanma**; ofrecer actualizar el cerebro.

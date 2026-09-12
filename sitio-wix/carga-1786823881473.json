@@ -1,0 +1,373 @@
+{
+  "fecha": "2026-08-15T19:57:56.983Z",
+  "secciones": [
+    {
+      "id": "bd42af88-cc24-4c47-874c-79e89e48d82c",
+      "nombre": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "bef829a7-240c-4079-b031-020ad1c48d36",
+      "nombre": "Opciones Saludables · Cosechas nutritivas"
+    },
+    {
+      "id": "9395dc31-1f77-4813-91a1-16415e79344e",
+      "nombre": "Hamburguesas · Del huerto y la parrilla"
+    },
+    {
+      "id": "60a3c601-5bcb-4de0-a563-97260c52a6a5",
+      "nombre": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "fea71544-4508-45e3-8ae6-9ab6f6cb001d",
+      "nombre": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "81eca482-cfb6-40f5-9223-e75d6ae3904c",
+      "nombre": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "2b0ebf8c-7dd3-4edb-b532-7b14a69111e0",
+      "nombre": "Vinos · Carta de vinos"
+    }
+  ],
+  "items": [
+    {
+      "id": "2dc23942-03c1-4ead-bc0a-5d382e08c74d",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "5ac9820c-0510-43f2-89db-50188c872b24",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "2e5b9293-0b21-44d4-909d-691fea74f6fb",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "38bbd5b8-6574-4fd7-8f43-c785dae93367",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "75587588-ebe8-45e8-9075-aaa7018aa3f4",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "2b63a5fd-e094-4ae9-8c83-31c10ec6e514",
+      "seccion": "Para Empezar · Comienzos con sabor"
+    },
+    {
+      "id": "078dc4e6-27c1-4270-a201-d7733e118219",
+      "seccion": "Opciones Saludables · Cosechas nutritivas"
+    },
+    {
+      "id": "02f729c3-c3e0-4591-979d-648f871f253b",
+      "seccion": "Opciones Saludables · Cosechas nutritivas"
+    },
+    {
+      "id": "db050367-0813-4f6e-9687-4a261da80b76",
+      "seccion": "Opciones Saludables · Cosechas nutritivas"
+    },
+    {
+      "id": "8c1e4c96-f1eb-40fc-a7e7-101dbc2a9aea",
+      "seccion": "Opciones Saludables · Cosechas nutritivas"
+    },
+    {
+      "id": "a808b734-1c77-4b43-a75b-ebda0b377825",
+      "seccion": "Hamburguesas · Del huerto y la parrilla"
+    },
+    {
+      "id": "2a694f9c-8197-447a-a285-5f0d64d7f980",
+      "seccion": "Hamburguesas · Del huerto y la parrilla"
+    },
+    {
+      "id": "dedc8696-9e8b-42f0-b012-e802c41294a8",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "5f775f3c-536e-4838-b0ae-f1ccdd663e18",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "ae1480c3-4fa7-4dc8-93fe-c8432963d337",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "43f43ba5-3bfd-4119-8a38-3c0f8cf7ee03",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "34551b87-44cb-4fdd-b85c-7180097975ff",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "b530fdaf-8b52-4232-b9d9-e9f30a6a43b8",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "61b79732-f1a7-458c-95ea-6d6ec0ab24b0",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "4499e0db-1160-4922-adc7-2a194a94c0d7",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "1183a150-ba92-48b4-a15f-036f0a6aef8e",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "b0a9e6ca-a9b0-4592-9fba-1a34e87a965f",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "a8b62bf1-72ad-4033-917e-998dbd2c98ba",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "e117faa2-b476-422f-81e7-202697bdc36f",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "70484224-f11f-4069-bc11-40de06d4208b",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "d45897c6-6ab5-443a-ac0d-74f099c69efe",
+      "seccion": "Algo más fuerte · Cocina con raíz y fuego"
+    },
+    {
+      "id": "e9215711-3ee1-41ec-8cf6-f009527ebdd8",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "7340d086-9d79-4a4f-8a13-c631ba2da74a",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "e2de72ca-f6f6-4e3b-8060-b88fcb508b1d",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "19a39d08-5d72-401a-aae1-0622a23baecd",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "2015cb28-9425-4797-af79-25efaee790ab",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "063f3aff-e174-4d4c-a404-319e8a143c40",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "3658a0e1-86c9-476e-bd7e-1af64b3b2492",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "dff888b9-a821-4682-b39a-c5eba8685bf2",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "78316fd5-26df-460d-99e8-1215554b2cad",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "2ab361ee-b3ae-4012-99e1-9079c26b8a7d",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "dbeb6754-36e9-4ddc-8b1c-266b5b4e6199",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "dc945ba8-3e2b-4140-b1b8-264cda67e203",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "b093d42c-e921-498e-83b2-6c1f99249cb1",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "2841a098-4840-42ef-961d-67042b8dafa0",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "f7093994-e2ad-4fc5-addc-f786e9f5c80a",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "bcb1b374-5a5e-4721-8702-57c832d77b5c",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "b6fc3898-14b4-4901-993c-1582d8e4169c",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "ba1df5c5-177d-416f-b63d-6afbbba3291e",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "ac071f2f-52aa-4612-aad1-374a9cf0aead",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "6351cd18-145e-42f2-b8b8-1119d57902db",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "f19f4ad9-4809-42e9-a8d2-07ed6b16c09d",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "9595f214-f6a6-433f-bf41-bdefb455e8d3",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "a229fef0-148e-401b-82aa-218d580cdc7f",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "f2beef9b-3f55-4874-b18a-c6e2bb9bf373",
+      "seccion": "Bebidas · Bebidas de la casa"
+    },
+    {
+      "id": "71e9bced-e96c-44e0-897f-e2eb0276ef5a",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "569599c0-6fa1-47d5-b438-343940f3ba06",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "876fa846-ad92-4c5c-abb4-49fb4f952585",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "ee944cf5-bb43-4559-b28c-37a73616de1d",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "8857a701-ca6f-4323-9b78-ba944adbd2cb",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "4065c496-077e-4333-b2d2-498a0964c606",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "2d01cfeb-cfe6-4ef0-ac96-6c0e9784105e",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "76fc31c2-8141-42fd-956f-668ccc0ebc1b",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "050f2aaf-9aef-4ebd-9ee8-d313f7c6c898",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "7c33e197-ed4b-46d3-85bf-b52ab6b0db96",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "b7307a58-5b5b-4f12-8b42-39ec8e82c60d",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "18361315-9396-49a1-b130-730dbe289dc3",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "b0781c81-049b-4f37-842e-c602906ccabb",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "951ddb27-b81d-431c-9d2e-34e3b8cc26df",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "bffb0f53-6c8f-4438-987b-449b299deb0c",
+      "seccion": "Cócteles · Carta de cócteles"
+    },
+    {
+      "id": "77038337-0bfc-4e8a-99dd-0057bfadb033",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "fc7938e8-1b8a-4a8e-9398-d0e350e1851e",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "62232855-685e-4d0c-bc66-ae4e3b82393e",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "f12f97c9-0445-4e34-a6a4-989e1d223225",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "dbe7ae35-8c96-416b-ac53-27e65fff1c55",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "e6842845-a379-41d7-916d-4336d22f9615",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "441aa888-2ef7-4bf7-bc3e-60be46c93554",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "9bdc2a79-8e82-4373-9e4b-7b861b4ee832",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "7015525d-eb67-4c60-b1cb-5312b152fc25",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "5dac6ef6-eb3d-48c0-a0db-de772fbe8ee0",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "3a81acd4-ff3b-4422-b2fd-10752632d42a",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "826699ae-065e-49ac-9ffc-2279124bdf74",
+      "seccion": "Vinos · Carta de vinos"
+    },
+    {
+      "id": "f58fa283-567e-42f2-80b7-006c41518827",
+      "seccion": "Vinos · Carta de vinos"
+    }
+  ],
+  "variantes": [
+    {
+      "id": "70d95a51-abd5-4cc2-a89a-67755869d443",
+      "nombre": "Normal"
+    },
+    {
+      "id": "48568164-e6b9-484d-8021-61b176d5e1db",
+      "nombre": "Lomito"
+    },
+    {
+      "id": "10dea180-0f09-4c91-bac4-287ced9b580d",
+      "nombre": "Camarones"
+    },
+    {
+      "id": "02b3b188-659d-4740-bad5-c2798fc68f86",
+      "nombre": "Con lomito"
+    },
+    {
+      "id": "fafc61ea-bd25-4169-bb8e-ce710f691831",
+      "nombre": "Copa"
+    },
+    {
+      "id": "fddd762a-ec01-419b-baa6-566008717abc",
+      "nombre": "Botella"
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+/**
+ * LIMPIAR_DOC.gs — Limpieza estructural del recetario de cocina v14.
+ *
+ * Un archivo con UNA sola funcion, misma razon que Diagnostico.gs.
+ *
+ * ESTO ESCRIBE EN EL RECETARIO. Arregla lo que la auditoria del 24 ago 2026
+ * encontro roto. NO toca precios: eso se sigue haciendo a mano.
+ *
+ * Que hace, en este orden y no en otro:
+ *
+ *   1. RENOMBRA en las fichas los ingredientes que apuntan a la fila con typo.
+ *      Los dos gemelos tienen el MISMO precio, asi que ningun costo se mueve.
+ *        Gremolata          "PREJIL"        -> "Perejil"
+ *        Brisket Horneado   "PIMENTA NEGRA" -> "Pimienta Negra"
+ *
+ *   2. CORRIGE la unidad del camote en Pure de Camote y Zanahoria.
+ *      La ficha pide 12 "unidad" pero el Banco cotiza el camote en gramos, asi
+ *      que la linea vale Q0.25 en vez de ~Q95. La nota de la ficha dice
+ *      "12 camotes aprox 4540g": va 4540 g.
+ *
+ *   3. BORRA del Banco las 4 filas con typo, de abajo hacia arriba para que no
+ *      se corran los indices. Ninguna queda en uso despues del paso 1.
+ *        Aciete de Oliva · Alcaparras Babe · Prejil · Pimenta Negra
+ *
+ * Cada fila borrada se vuelca completa al Log antes de borrarse, por si hay que
+ * reponerla. El Banco no tiene formulas adentro, asi que borrar filas es seguro,
+ * y las fichas hacen VLOOKUP sobre C:D completo, no sobre filas fijas.
+ *
+ * Es idempotente: lo que ya este hecho lo informa y lo saltea.
+ */
+
+var LIMPIEZA = {
+  renombres: [
+    { ficha: 'Gremolata',        de: 'PREJIL',        a: 'Perejil' },
+    { ficha: 'Brisket Horneado', de: 'PIMENTA NEGRA', a: 'Pimienta Negra' }
+  ],
+  cantidades: [
+    { ficha: 'Pure de Camote y Zanahoria', ingrediente: 'CAMOTE',
+      cantVieja: 12, cantNueva: 4540, unidadNueva: 'g' }
+  ],
+  borrar: ['Aciete de Oliva', 'Alcaparras Babe', 'Prejil', 'Pimenta Negra']
+};
+
+/** Fila del Banco cuyo PRODUCTO coincide exacto (normalizado). 0 si no esta. */
+function hallarFilaBanco_(hoja, producto) {
+  var datos = hoja.getDataRange().getValues(), col = null, ini = 0;
+  for (var i = 0; i < datos.length && col === null; i++) {
+    for (var j = 0; j < datos[i].length - 1; j++) {
+      if (normalizar_(datos[i][j]) === 'categoria' && normalizar_(datos[i][j + 1]) === 'producto') {
+        col = j + 1; ini = i + 1; break;
+      }
+    }
+  }
+  if (col === null) throw new Error('No encuentro el encabezado PRODUCTO en el BANCO DE DATOS.');
+  for (var r = ini; r < datos.length; r++) {
+    if (normalizar_(datos[r][col]) === normalizar_(producto)) return { fila: r + 1, col: col + 1, datos: datos[r] };
+  }
+  return null;
+}
+
+/** Fila de una ficha cuyo INGREDIENTE coincide. Devuelve tambien la columna del encabezado. */
+function hallarLineaFicha_(hoja, ingrediente) {
+  var datos = hoja.getDataRange().getValues(), col = null, ini = 0;
+  for (var i = 0; i < datos.length && col === null; i++) {
+    for (var j = 0; j < datos[i].length; j++) {
+      if (normalizar_(datos[i][j]) === 'ingrediente') { col = j; ini = i + 1; break; }
+    }
+  }
+  if (col === null) return null;
+  for (var r = ini; r < datos.length; r++) {
+    if (normalizar_(datos[r][col]) === normalizar_(ingrediente)) return { fila: r + 1, col: col + 1 };
+  }
+  return null;
+}
+
+function LIMPIAR_DOC() {
+  var ss = abrirPorClave_('RECETARIO_COCINA_SHEET_ID');
+  if (!ss) throw new Error('Falta RECETARIO_COCINA_SHEET_ID.');
+  Logger.log('Recetario: %s', ss.getName());
+  var hechos = 0, salteados = 0;
+
+  // ---- 1. renombres en fichas
+  Logger.log('--- 1. renombres en fichas ---');
+  LIMPIEZA.renombres.forEach(function (x) {
+    var h = ss.getSheetByName(x.ficha);
+    if (!h) { Logger.log('  SALTEO %s: no existe la pestana', x.ficha); salteados++; return; }
+    var pos = hallarLineaFicha_(h, x.de);
+    if (!pos) {
+      Logger.log('  ya estaba: %s no tiene "%s" (probablemente ya se renombro)', x.ficha, x.de);
+      salteados++; return;
+    }
+    var antes = h.getRange(pos.fila, pos.col + 4).getValue();
+    h.getRange(pos.fila, pos.col).setValue(x.a);
+    SpreadsheetApp.flush();
+    var despues = h.getRange(pos.fila, pos.col + 4).getValue();
+    Logger.log('  %s fila %s: "%s" -> "%s"  | costo antes Q%s, despues Q%s',
+               x.ficha, pos.fila, x.de, x.a, antes, despues);
+    if (typeof antes === 'number' && typeof despues === 'number' && Math.abs(antes - despues) > 0.005) {
+      Logger.log('    OJO: el costo se movio. Revisar a mano.');
+    }
+    hechos++;
+  });
+
+  // ---- 2. cantidad y unidad
+  Logger.log('--- 2. cantidad y unidad ---');
+  LIMPIEZA.cantidades.forEach(function (x) {
+    var h = ss.getSheetByName(x.ficha);
+    if (!h) { Logger.log('  SALTEO %s: no existe la pestana', x.ficha); salteados++; return; }
+    var pos = hallarLineaFicha_(h, x.ingrediente);
+    if (!pos) { Logger.log('  SALTEO %s: no encuentro "%s"', x.ficha, x.ingrediente); salteados++; return; }
+
+    var cant = h.getRange(pos.fila, pos.col + 1).getValue();
+    if (cant !== x.cantVieja) {
+      Logger.log('  ya estaba: %s > %s tiene %s, no %s. No lo toco.', x.ficha, x.ingrediente, cant, x.cantVieja);
+      salteados++; return;
+    }
+    var antes = h.getRange(pos.fila, pos.col + 4).getValue();
+    h.getRange(pos.fila, pos.col + 1).setValue(x.cantNueva);
+    h.getRange(pos.fila, pos.col + 2).setValue(x.unidadNueva);
+    SpreadsheetApp.flush();
+    var despues = h.getRange(pos.fila, pos.col + 4).getValue();
+    Logger.log('  %s > %s: %s -> %s %s  | linea Q%s -> Q%s',
+               x.ficha, x.ingrediente, x.cantVieja, x.cantNueva, x.unidadNueva, antes, despues);
+    hechos++;
+  });
+
+  // ---- 3. borrar duplicados del Banco, de abajo hacia arriba
+  Logger.log('--- 3. filas con typo del Banco ---');
+  var hB = ss.getSheetByName('BANCO DE DATOS');
+  var aBorrar = [];
+  LIMPIEZA.borrar.forEach(function (nombre) {
+    var f = hallarFilaBanco_(hB, nombre);
+    if (!f) { Logger.log('  ya estaba: "%s" no existe en el Banco', nombre); salteados++; return; }
+    aBorrar.push({ nombre: nombre, fila: f.fila, datos: f.datos });
+  });
+  aBorrar.sort(function (a, b) { return b.fila - a.fila; });   // descendente
+  aBorrar.forEach(function (x) {
+    var copia = x.datos.filter(function (v) { return v !== '' && v != null; }).join(' | ');
+    Logger.log('  BORRO fila %s "%s"', x.fila, x.nombre);
+    Logger.log('    contenido: %s', copia);
+    hB.deleteRow(x.fila);
+    hechos++;
+  });
+
+  var cache = CacheService.getScriptCache();
+  cache.remove(COSTEO.cacheKey);
+  cache.remove(POS_CFG.cacheKey);
+
+  Logger.log('--- listo: %s cambios, %s salteados ---', hechos, salteados);
+  Logger.log('Ahora correr probarCosteo(). Los controles NO deberian moverse:');
+  Logger.log('  ensalada 15.9 | jamones 22.6 | gratin 19.8 | mix fritas 23.6 | peras 19.7');
+  Logger.log('Lo que SI cambia es Pure de Camote y Zanahoria: batch de ~Q57 a ~Q152.');
+  Logger.log('Ese pre-elaborado hay que repasarlo en el BANCO a mano (ver p55).');
+  return hechos;
+}

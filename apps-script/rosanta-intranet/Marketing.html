@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Marketing · Rosanta</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root{
+  color-scheme: light;
+  --verde:#4A6741; --tierra:#A0785A; --crema:#F5EFE0; --cobre:#C9923F; --marron:#3D2B1F;
+  --blanco:#FFFDF8; --borde:#E4DCC8; --rojo:#B54A35; --ok:#4A6741;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--crema);color:var(--marron);font-size:14px;}
+header{background:var(--verde);color:#fff;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;font-weight:700;letter-spacing:.3px}
+header .sub{font-size:12px;opacity:.85}
+header .volver-panel{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;text-decoration:none;white-space:nowrap}
+header .volver-panel:hover{background:rgba(255,255,255,.24)}
+nav{display:flex;gap:4px;background:var(--blanco);border-bottom:1px solid var(--borde);padding:0 16px;overflow-x:auto}
+nav button{border:none;background:none;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--tierra);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.act{color:var(--verde);border-bottom-color:var(--cobre)}
+main{padding:18px;max-width:1200px;margin:0 auto}
+.tab{display:none}.tab.act{display:block}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.card{background:var(--blanco);border:1px solid var(--borde);border-radius:12px;padding:16px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--tierra);margin-bottom:6px}
+.kpi .val{font-size:26px;font-weight:800;color:var(--verde)}
+.kpi .det{font-size:11px;color:var(--tierra);margin-top:4px}
+h2{font-size:15px;margin-bottom:10px;color:var(--verde)}
+h3{font-size:13px;margin-bottom:8px;color:var(--marron)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.row{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:8px 10px;background:var(--crema);color:var(--tierra);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+td{padding:8px 10px;border-top:1px solid var(--borde)}
+tr:hover td{background:#faf6ea}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.chip.on{background:#E4EDE0;color:var(--verde)}
+.chip.off{background:#F0E6DA;color:var(--tierra)}
+.chip.warn{background:#F6E3DE;color:var(--rojo)}
+.btn{background:var(--verde);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.btn.sec{background:var(--blanco);color:var(--verde);border:1.5px solid var(--verde)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.danger{background:none;color:var(--rojo);border:none;font-size:16px;padding:2px 6px}
+select,input,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;color:var(--marron);font-family:inherit}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.muted{color:var(--tierra);font-size:12px}
+.bench{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bench span{background:var(--crema);border:1px solid var(--borde);border-radius:8px;padding:6px 10px;font-size:11.5px}
+.bench b{color:var(--cobre)}
+.chartbox{position:relative;height:280px}
+.loading{text-align:center;padding:40px;color:var(--tierra)}
+.spin{width:26px;height:26px;border:3px solid var(--borde);border-top-color:var(--cobre);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 10px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Calendario */
+.calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.calhead .mes{font-size:16px;font-weight:800;color:var(--verde);text-transform:capitalize}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{text-align:center;font-size:11px;color:var(--tierra);font-weight:700;padding:4px 0;text-transform:uppercase}
+.day{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;min-height:86px;padding:5px;cursor:pointer;position:relative;font-size:11px}
+.day:hover{border-color:var(--cobre)}
+.day.out{opacity:.35}
+.day.hoy{border:2px solid var(--cobre);background:#FDF8EC}
+.day.ancla{background:#F1F4EE}
+.day .num{font-weight:700;font-size:12px}
+.day .anctag{position:absolute;top:5px;right:6px;font-size:9px;color:var(--verde);font-weight:700}
+.post{border-radius:5px;padding:2px 5px;margin-top:3px;font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leyenda{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11.5px}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+/* Panel modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(61,43,31,.45);z-index:50}
+.overlay.act{display:flex;align-items:center;justify-content:center}
+.panel{background:var(--blanco);border-radius:14px;padding:20px;width:min(430px,92vw);max-height:88vh;overflow:auto}
+.panel h3{font-size:15px;color:var(--verde);margin-bottom:12px}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:11.5px;font-weight:700;color:var(--tierra);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.fld input,.fld select,.fld textarea{width:100%}
+/* Checklist */
+.lint li{padding:7px 10px;border-radius:8px;margin-bottom:5px;list-style:none;font-size:12.5px}
+.lint li.ok{background:#E9EFE5}
+.lint li.bad{background:#F6E3DE}
+.ckitem{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px dashed var(--borde);font-size:13px}
+.ckitem input{width:16px;height:16px;accent-color:var(--verde)}
+.score{font-size:22px;font-weight:800}
+.progress{height:8px;background:var(--crema);border-radius:6px;overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;background:var(--cobre);transition:width .3s}
+.pill-note{background:#FDF6E8;border:1px solid #EAD9B0;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:12px}
+a{color:var(--verde)}
+#printArea{display:none}
+@media print{
+  body>*{display:none !important}
+  #printArea{display:block !important}
+  #printArea .pieza{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🌿 Sistema de Marketing · Rosanta</h1>
+    <div class="sub">Pauta · Contenido · Checklist · Recuperación — Antigua Guatemala</div>
+  </div>
+  <!-- target="_top" para que salga del iframe del shell y no anide la intranet
+       dentro de sí misma. Funciona igual si se abre la página suelta. -->
+  <? if (mostrarVolver) { ?>
+  <a class="volver-panel" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>" target="_top">← Panel principal</a>
+  <? } ?>
+</header>
+<nav>
+<? if (esFull) { ?>
+  <button data-tab="estrategia">🎯 Estrategia</button>
+  <button data-tab="panel">🧠 Panel de Asesores</button>
+  <button class="act" data-tab="pauta">📊 Dashboard de Pauta</button>
+  <button data-tab="espia">🕵️ Espía</button>
+  <button data-tab="utm">🔗 UTMs</button>
+<? } ?>
+  <button<?!= esFull ? '' : ' class="act"' ?> data-tab="cal">📅 Calendario</button>
+  <button data-tab="gen">✍️ Creador de Contenido</button>
+  <button data-tab="check">✅ Checklist de Piezas</button>
+<? if (esFull) { ?>
+  <button data-tab="carr">🛒 Carritos</button>
+<? } ?>
+  <button data-tab="manual">📖 Manual</button>
+<? if (esDatos) { ?>
+  <button data-tab="datos">⚙️ Datos</button>
+<? } ?>
+</nav>
+<main>
+
+<? if (esFull) { ?>
+<!-- ============ PAUTA ============ -->
+<section id="tab-pauta" class="tab act">
+  <div class="toolbar">
+    <select id="rango">
+      <option value="last_7d">Últimos 7 días</option>
+      <option value="last_30d" selected>Últimos 30 días</option>
+      <option value="last_90d">Últimos 90 días</option>
+    </select>
+    <button class="btn sm" onclick="loadMeta()">Actualizar</button>
+    <span class="muted" id="metaStatus"></span>
+  </div>
+  <div class="bench">
+    <span>Hook Rate mín <b>40%</b></span>
+    <span>Retención mín <b>10%</b></span>
+    <span>CPE bajo <b>Q0.05</b></span>
+    <span>Insight: VisitasIG supera transaccionales <b>20–100x</b></span>
+  </div>
+  <div style="height:12px"></div>
+  <div id="metaKpis" class="grid kpis"></div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">Retorno estimado (ROAS / ROI / CAC)</h2>
+      <span class="muted">Ticket por comensal Q</span><input id="roTicket" type="number" value="259" style="width:80px">
+      <span class="muted">Comensales atribuidos</span><input id="roRes" type="number" placeholder="0" style="width:80px">
+      <button class="btn sm" onclick="computeRoas()">Calcular</button>
+    </div>
+    <div id="roasKpis" class="grid kpis"></div>
+    <p class="muted" style="margin-top:8px">Todo este bloque se calcula sobre la <b>última semana ISO</b> de pauta_semanal, no sobre el selector de rango de arriba. ROAS = (comensales × ticket por comensal) ÷ inversión en medios de esa semana, y la inversión son <b>solo medios</b>: Google + Meta, lo que se le paga a las plataformas por audiencia. Los honorarios de gestión de pauta, el contenido y las herramientas cuentan en el bloque Marketing del DRE, pero jamás entran en este denominador. ROI = (ingreso − inversión) ÷ inversión. El <b>ticket por comensal se toma del POS</b> (columna ticket de pauta_semanal) y los comensales atribuidos se prellenan con los de las reservas de esa semana (Wix); ajusta "comensales atribuidos" si quieres el ROAS solo de pauta en vez del blended. Cuando el Pixel envíe el valor real por reserva, será exacto por campaña. <b>CAC</b> = la misma inversión en medios ÷ clientes nuevos (primeras reservas de Wix); si la semana aún no registra clientes nuevos, se muestra "—". Si a una plataforma le falta el dato de la semana, la tarjeta de inversión lo avisa: el ROAS saldría alto.</p>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">Pauta semanal · Google + Meta (desde la Sheet Marketing OS)</h2>
+      <button class="btn sm" onclick="loadGads()">Actualizar</button>
+      <span class="muted" id="gadsStatus"></span>
+    </div>
+    <p class="muted" style="margin-bottom:10px">Serie tomada de la pestaña <b>pauta_semanal</b> de la Sheet Marketing OS, que el loop de los lunes alimenta.</p>
+    <div class="grid kpis" id="gadsKpis"></div>
+    <div style="height:10px"></div>
+    <div id="gadsTable" class="loading"><div class="spin"></div>Leyendo pauta_semanal de la Sheet…</div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="row">
+    <div class="card"><h2>Inversión por campaña (Meta)</h2><div class="chartbox"><canvas id="chSpend"></canvas></div></div>
+    <div class="card"><h2>CTR por campaña</h2><div class="chartbox"><canvas id="chCtr"></canvas></div></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">Campañas Meta · rosanta.rest</h2>
+      <button class="btn sm" onclick="diagIA()">🧠 Diagnóstico IA</button>
+    </div>
+    <div id="metaTable" class="loading"><div class="spin"></div>Cargando data de Meta Ads…</div>
+    <div id="diagOut"></div>
+  </div>
+</section>
+
+<!-- ============ ESTRATEGIA ANUAL (AI CMO) ============ -->
+<section id="tab-estrategia" class="tab">
+  <div class="toolbar">
+    <h2 style="margin:0;flex:1">Estrategia Anual · AI CMO</h2>
+    <button class="btn sm" onclick="estRegen()">🔄 Regenerar con aprendizajes</button>
+    <button class="btn sec sm" onclick="estPDF()">📄 Descargar PDF</button>
+  </div>
+  <div class="pill-note">Estrategia maestra de <b>Agosto 2026 a Julio 2027</b>. Ordena todo el sistema en una sola dirección, por fases y meses, con KPIs. Se regenera cuando se acumulan aprendizajes: el plan de cada mes baja de aquí, y lo que aprendes cada semana vuelve a subir.</div>
+  <div class="card" id="estBody" style="font-size:13px;line-height:1.65">
+
+    <h2>🌟 North Star</h2>
+    <p>Construir una base amplia de gente que conoce y recuerda a Rosanta, y convertirla en <b>reservas medibles</b> de las dos audiencias reales: turistas angloparlantes y foodies locales. El indicador que manda: <b>reservas atribuidas por mes</b> (SonTickets con UTM), sostenidas por alcance de calidad.</p>
+
+    <h2 style="margin-top:14px">⚙️ Los 3 motores financieros</h2>
+    <p>Toda pieza alimenta uno de estos tres motores; si no mueve ninguno, no entra al calendario. <b>Eventos</b> (ocupación y flujo con experiencias temáticas de alta conversión), <b>Ventas</b> (ticket promedio más alto con paquetes plato + cóctel + postre en sala) y <b>Crecimiento</b> (clientes nuevos y autoridad de marca que sostiene la demanda).</p>
+
+    <h2 style="margin-top:14px">👥 Audiencias (según datos, no supuestos)</h2>
+    <p>De ~430 reservas, la mitad llegó con teléfono de EE. UU. o Canadá. <b>Turista angloparlante:</b> entra por Google y en inglés, decide por reseñas y por lo que las IAs recomiendan. <b>Foodie local:</b> entra por Instagram y en español, decide por antojo y comunidad. Núcleo demográfico 25–54 (pico 25–44), 57% mujeres, Antigua y Ciudad de Guatemala. Cada pieza define su idioma y canal según a quién le habla.</p>
+
+    <h2 style="margin-top:14px">💰 Presupuesto e inversión</h2>
+    <p>Base $440/mes (Opción 2): awareness $240 (~$8/día, el mínimo que el algoritmo necesita), evento puntual del mes y eventos permanentes activos. La estructura se mantiene estable para no frenar el aprendizaje del algoritmo; el creativo se renueva de forma progresiva. Revisión de presupuesto al cerrar cada fase.</p>
+
+    <h2 style="margin-top:16px">🗓️ Las 4 fases del año</h2>
+
+    <h3 style="margin-top:10px;color:var(--verde)">Fase 1 · Ago–Sep 2026 — Awareness sostenido</h3>
+    <p>Cierre de la fase de awareness. Ampliar alcance y recuerdo en las dos audiencias con la campaña de VisitasIG (rinde 20–100x la transaccional) más creativo Kaprica nuevo. Temporada de lluvia: fogata, chimenea y platos de temporada como protagonistas.<br>
+    <b>KPIs:</b> alcance mensual creciente · Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &lt;3.</p>
+
+    <h3 style="margin-top:10px;color:var(--verde)">Fase 2 · Oct–Dic 2026 — Giro a conversión + temporada alta</h3>
+    <p>Con la audiencia caliente y la data más limpia, la optimización gira a reservas. Temporada alta de Antigua y fin de año: eventos, cenas de fin de año, regalos de experiencia. Se enciende la recuperación de carritos como palanca comercial y el retargeting con Custom Audience hasheada.<br>
+    <b>KPIs:</b> reservas atribuidas por mes · tasa de recuperación de carritos · reducción del ~43% de tráfico directo (UTMs propios) · match quality (email/teléfono hasheado + click ID).</p>
+
+    <h3 style="margin-top:10px;color:var(--verde)">Fase 3 · Ene–Mar 2027 — Retención y camino a Semana Santa</h3>
+    <p>Enero–febrero: re-enganchar la base del CRM tras las fiestas (segmentos B y C) y sostener ocupación en temporada baja. Marzo culmina en <b>Semana Santa</b> (Pascua 28 de marzo 2027), la semana más fuerte de Antigua: reservas anticipadas, experiencias para turistas y prueba social. Todo el año construye hacia este pico.<br>
+    <b>KPIs:</b> reservas recuperadas del CRM · reservas anticipadas de Semana Santa · ticket promedio · ocupación entre semana.</p>
+
+    <h3 style="margin-top:10px;color:var(--verde)">Fase 4 · Abr–Jul 2027 — Consolidación y aprendizaje</h3>
+    <p>Post-Semana Santa: capitalizar la base nueva de turistas, consolidar reseñas y autoridad (SEO local y AI-SEO), y estabilizar reservas de fin de semana. Cierre del ciclo anual: leer todo lo aprendido y regenerar la estrategia del siguiente año.<br>
+    <b>KPIs:</b> volumen de reseñas nuevas · posición en búsquedas de turista ("best restaurant antigua") · LTV / recurrencia · reservas de fin de semana sostenidas.</p>
+
+    <h2 style="margin-top:16px">🧩 Cómo cada sistema ejecuta la estrategia</h2>
+    <p><b>Creador de Contenido (Kaprica)</b> produce las piezas del mes en la voz de marca. <b>Calendario + Plan del mes</b> baja la estrategia a martes y viernes (video primero), rotando ejes y respetando la fase. <b>Checklist</b> es el filtro de calidad: sin 8/8 no se publica. <b>Dashboard de Pauta + Diagnóstico IA</b> mide contra los benchmarks y ajusta inversión. <b>Espía</b> abre ángulos libres antes de cada campaña. <b>Carritos</b> recupera los ~184/mes. Las <b>skills de agencia</b> (reseñas, SEO local, retención) cubren reputación, descubrimiento y CRM. La <b>capa de datos (Marketing OS)</b> es la fuente única, y el <b>círculo de aprendizaje</b> hace que la estrategia mejore mes a mes.</p>
+
+    <h2 style="margin-top:14px">📈 KPIs maestros (revisión mensual)</h2>
+    <p>North Star: <b>reservas atribuidas/mes</b>. Por motor: Eventos → ocupación en fechas ancla; Ventas → ticket promedio; Crecimiento → alcance de calidad y seguidores. Salud de pauta: Hook Rate, retención, CPE, CTR, frecuencia. Palancas: tasa de recuperación de carritos, % tráfico directo, match quality. Cada lunes el analista de pauta reporta y deja su hallazgo en aprendizajes.</p>
+
+    <h2 style="margin-top:14px">🔄 Cómo aprende e itera</h2>
+    <p>Cada semana, los hallazgos entran a la pestaña <b>Aprendizajes</b> (manual y por el loop de los lunes). Cada mes, el <b>Plan del mes</b> los lee antes de proponer piezas: repite lo que funciona, evita lo que no. Al cerrar cada fase (trimestral), se regenera esta estrategia incorporando lo aprendido. Así el año no se ejecuta a ciegas: se corrige solo con evidencia.</p>
+  </div>
+  <div id="estRegenOut"></div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">📥 Propuestas del equipo</h2>
+      <button class="btn sm" onclick="openProp()">+ Cargar propuesta</button>
+    </div>
+    <p class="muted" style="margin-bottom:8px">Documentos de estrategia que entrega el equipo (Vanessa, agencia, asesores externos). Cada propuesta se debate en el <b>🧠 Panel de Asesores</b> antes de aprobar presupuesto, y el botón "Regenerar con aprendizajes" toma en cuenta las que siguen sobre la mesa.</p>
+    <div id="propList"></div>
+  </div>
+</section>
+
+<!-- ============ PANEL DE ASESORES ============ -->
+<section id="tab-panel" class="tab">
+  <div class="pill-note">Consejo de marketing digital de Rosanta: seis lentes basadas en el <b>marco publicado de expertos reales</b> (el link de cada tarjeta lleva a su contenido, para corroborar y aprender de la fuente) debaten cada ruta antes de invertir. Cada lente aplica su metodología por nombre (Value Equation, See-Think-Do-Care, hook rate, 60/40...) para que puedas verificarla contra la fuente. Es una simulación de su criterio público; la persona real está fuera de esto. El <b>AI CMO</b> modera y cierra con veredicto. Tú tienes la última palabra: contra-argumenta y el panel te responde.</div>
+  <div class="grid kpis" id="asesorCards"></div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">🎙️ Mesa de debate</h2>
+      <span class="muted" id="debStatus"></span>
+    </div>
+    <div class="fld"><label>Qué debate el panel</label><select id="debSel" style="width:100%"></select></div>
+    <div class="fld"><label>Tema libre o contexto adicional (opcional si elegiste una propuesta)</label><textarea id="debLibre" rows="2" placeholder="Ej: ¿duplicamos el retargeting a Q16/día en septiembre o esperamos los datos de agosto?"></textarea></div>
+    <button class="btn" onclick="debatir()">🎙️ Iniciar debate</button>
+    <div id="debOut"></div>
+    <div id="debReplicaBox" style="display:none;margin-top:12px">
+      <div class="fld"><label>Tu respuesta al panel (contra-argumento, duda o decisión)</label><textarea id="debCom" rows="2" placeholder="Ej: el presupuesto extra de octubre me incomoda, ¿qué recortarían?"></textarea></div>
+      <button class="btn sec sm" onclick="debReplica()">↩️ Responder al panel</button>
+    </div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>📚 Historial de debates</h2>
+    <p class="muted" style="margin-bottom:6px">Cada debate queda guardado aquí y en la pestaña <b>debates</b> de la Sheet.</p>
+    <div id="debHist"></div>
+  </div>
+</section>
+
+<!-- ============ ESPÍA ============ -->
+<section id="tab-espia" class="tab">
+  <div class="pill-note">Biblioteca de Anuncios de Meta en vivo: qué está pautando la competencia de Antigua ahora mismo. Busca por palabra clave (ej. "restaurante antigua") o nombre de página.</div>
+  <div class="card">
+    <div class="toolbar">
+      <input id="espTerm" placeholder="restaurante antigua guatemala" style="flex:1;min-width:200px" value="restaurante antigua guatemala">
+      <select id="espPais"><option value="GT" selected>Guatemala</option><option value="US">Estados Unidos</option></select>
+      <button class="btn sm" onclick="loadEspia()">Buscar</button>
+      <span class="muted" id="espStatus"></span>
+    </div>
+    <div id="espTable"><p class="muted">Haz una búsqueda para ver los anuncios activos.</p></div>
+    <div style="margin-top:10px"><button class="btn sec sm" id="espIABtn" style="display:none" onclick="espiaIA()">🧠 Analizar patrones con IA</button></div>
+    <div id="espIAOut"></div>
+  </div>
+</section>
+
+<!-- ============ UTMs ============ -->
+<section id="tab-utm" class="tab">
+  <div class="pill-note">Convención Rosanta: <b>minúsculas, sin tildes ni ñ; espacios y guiones se vuelven guión bajo</b>. El <b>utm_campaign es el mismo en Meta y Google</b> para la misma campaña (así se suma completa en la atribución); el <b>utm_content cambia por creativo</b> (un nombre por video o pieza).</div>
+  <div class="card">
+    <h2>🔗 Creador de UTMs</h2>
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label>URL base</label><select id="utmBase" onchange="utmBaseChange()">
+        <option value="https://rosanta.rest/reservas">rosanta.rest/reservas (ES)</option>
+        <option value="https://rosanta.rest/reservations">rosanta.rest/reservations (EN)</option>
+        <option value="otra">Otra URL…</option>
+      </select></div>
+      <div class="fld" id="utmBaseOtraFld" style="display:none"><label>URL personalizada</label><input id="utmBaseOtra" placeholder="https://rosanta.rest/eventos"></div>
+    </div>
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label>utm_source (de dónde viene el clic)</label><input id="utmSource" list="utmSourceList" value="meta" placeholder="meta">
+        <datalist id="utmSourceList"><option>meta</option><option>instagram</option><option>facebook</option><option>google</option><option>whatsapp</option><option>email</option><option>gbp</option></datalist></div>
+      <div class="fld"><label>utm_medium (tipo de tráfico)</label><select id="utmMedium">
+        <option>cpc</option><option>paid_social</option><option>organic_social</option><option>organic_gbp</option><option>crm</option><option>email</option>
+      </select></div>
+    </div>
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label>utm_campaign (mismo en Meta y Google)</label><input id="utmCampaign" placeholder="Ej: 311_agosto2026"></div>
+      <div class="fld"><label>utm_content (uno por creativo)</label><input id="utmContent" placeholder="Ej: llegar_hook_curiosidad"></div>
+    </div>
+    <div class="fld"><label>utm_term (opcional, keywords de Google)</label><input id="utmTerm" placeholder="Ej: restaurante antigua"></div>
+    <button class="btn" onclick="utmGen()">Generar URL</button>
+    <div id="utmOut" style="margin-top:12px"></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>📚 Últimas 20 generadas</h2>
+    <div id="utmHist"></div>
+  </div>
+</section>
+<? } ?>
+
+<!-- ============ CALENDARIO ============ -->
+<section id="tab-cal" class="tab<?!= esFull ? '' : ' act' ?>">
+  <div class="pill-note">Cadencia mínima: <b>2 posts por semana</b>, anclados <b>martes y viernes</b> (marcados en verde). Rota los 5 ejes y piensa cada pieza en triple uso: orgánico, pauta y retención.</div>
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn sm" onclick="genPlan()">🪄 Generar plan del mes</button>
+      <button class="btn sm" onclick="genContenido()">✍️ Generar contenido</button>
+      <button class="btn sec sm" onclick="briefMes()">📄 Brief de producción (PDF)</button>
+      <span class="muted" id="planStatus">El Creador propone las piezas de martes y viernes (video primero) y puebla el calendario.</span>
+    </div>
+    <div class="calhead">
+      <button class="btn sec sm" onclick="mvMes(-1)">← Anterior</button>
+      <div class="mes" id="mesLbl"></div>
+      <button class="btn sec sm" onclick="mvMes(1)">Siguiente →</button>
+    </div>
+    <div class="calgrid" id="calDow"></div>
+    <div class="calgrid" id="calDays" style="margin-top:5px"></div>
+    <div class="leyenda" id="leyenda"></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>🧠 Aprendizajes (alimentan el plan del mes)</h2>
+    <p class="muted" style="margin-bottom:8px">Lo que funcionó y lo que no. El botón "Generar plan del mes" lee estos aprendizajes para repetir lo que pega y evitar lo que no. El loop de pauta de los lunes también deja aquí su hallazgo principal.</p>
+    <div class="toolbar">
+      <input id="aprIn" placeholder="Ej: los reels de barra con Maco duplican el alcance vs fotos de plato" style="flex:1;min-width:220px">
+      <select id="aprTipo"><option>funciona</option><option>evitar</option><option>idea</option></select>
+      <button class="btn sm" onclick="addApr()">Agregar</button>
+    </div>
+    <div id="aprList" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- ============ GUIONES Y CARRUSELES ============ -->
+<section id="tab-gen" class="tab">
+  <div class="pill-note">Cerebro creativo: <b>formato Kaprica</b> (micro-historias donde el cliente es el protagonista y Rosanta aparece dentro de la vida real) + reglas de voz de Rosanta. Todo borrador pasa por el <b>Checklist de Piezas</b> antes de entrar al calendario.</div>
+  <div class="row">
+    <div class="card">
+      <h2>🎬 Guiones de video (Kaprica)</h2>
+      <div class="fld"><label>Tema / plato / situación</label><input id="guTema" placeholder="Ej: maridaje de mezcal con tiradito"></div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="fld"><label>Eje</label><select id="guEje"></select></div>
+        <div class="fld"><label>Formato Kaprica</label><select id="guFmt">
+          <option>Sorpréndeme (elige el mejor)</option>
+          <option>Frase constante (visual)</option>
+          <option>Llamada al restaurante</option>
+          <option>Voicemail / buzón</option>
+          <option>Diálogo en la mesa</option>
+          <option>Narración "así va la historia"</option>
+          <option>Llamada a programa de radio</option>
+          <option>Discurso (boda, brindis, reunión)</option>
+        </select></div>
+      </div>
+      <button class="btn" onclick="genGuion()">Generar guión</button>
+      <div id="guOut" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>📝 Posts de feed</h2>
+      <div class="fld"><label>Tema del post</label><input id="poTema" placeholder="Ej: llegó la temporada de jocote al huerto"></div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="fld"><label>Eje</label><select id="poEje"></select></div>
+        <div class="fld"><label>Objetivo</label><select id="poObj">
+          <option>Alcance / comunidad</option><option>Retargeting / antojo</option><option>Reserva directa</option>
+        </select></div>
+      </div>
+      <button class="btn" onclick="genPost()">Generar post</button>
+      <div id="poOut" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>🎠 Creador de carruseles</h2>
+      <div class="fld"><label>Tema del carrusel</label><input id="caTema" placeholder="Ej: 5 ingredientes del huerto esta temporada"></div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="fld"><label>Eje</label><select id="caEje"></select></div>
+        <div class="fld"><label>Filminas</label><select id="caN">
+          <option>5</option><option selected>6</option><option>7</option><option>8</option>
+        </select></div>
+      </div>
+      <button class="btn" onclick="genCarrusel()">Generar carrusel</button>
+      <div id="caOut" style="margin-top:12px"></div>
+    </div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>📚 Biblioteca de borradores</h2>
+    <div id="genLib"></div>
+  </div>
+</section>
+
+<!-- ============ CHECKLIST ============ -->
+<section id="tab-check" class="tab">
+  <div class="row">
+    <div class="card">
+      <h2>Revisor de copy</h2>
+      <p class="muted" style="margin-bottom:8px">Pega el copy del post. Se valida contra las reglas de voz de marca.</p>
+      <textarea id="copyIn" rows="9" style="width:100%" placeholder="Pega aquí el copy…"></textarea>
+      <div style="margin-top:10px"><button class="btn" onclick="lint()">Revisar copy</button></div>
+      <ul class="lint" id="lintOut" style="margin-top:12px"></ul>
+    </div>
+    <div class="card">
+      <h2>Checklist de pieza de video</h2>
+      <div class="fld"><label>Nombre de la pieza</label><input id="pzName" placeholder="Ej: Reel maridaje mezcal"></div>
+      <div id="ckList"></div>
+      <div class="progress"><i id="ckBar" style="width:0%"></i></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="score" id="ckScore">0/8</span>
+        <button class="btn" onclick="savePieza()">Guardar pieza</button>
+      </div>
+      <div style="height:14px"></div>
+      <h3>Piezas guardadas</h3>
+      <div id="pzTable"></div>
+    </div>
+  </div>
+</section>
+
+<? if (esFull) { ?>
+<!-- ============ CARRITOS ============ -->
+<section id="tab-carr" class="tab">
+  <div class="pill-note">El formulario de reservas envía aquí cada abandono con su contacto y su <b>permiso de contacto</b>. Recupera a mano con el botón 💬 Mensaje (toque 1 en 24h, 2 a las 72h, 3 al día 7). El día que se automatice por WhatsApp, solo saldrán los que dieron permiso.</div>
+  <div class="grid kpis" id="carrKpis"></div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0;flex:1">Seguimiento de carritos</h2>
+      <button class="btn" onclick="openCarr()">+ Registrar carrito</button>
+    </div>
+    <div id="carrTable"></div>
+  </div>
+</section>
+<? } ?>
+<!-- ============ MANUAL ============ -->
+<section id="tab-manual" class="tab">
+  <div class="toolbar">
+    <h2 style="margin:0;flex:1">Manual del Sistema de Marketing</h2>
+    <button class="btn sm" onclick="printManual()">📄 Descargar PDF</button>
+  </div>
+  <div class="card" id="manualBody" style="font-size:13px;line-height:1.65">
+    <h2>🌿 Qué es este sistema</h2>
+    <p>Una sola herramienta para operar todo el marketing de Rosanta: planear el contenido del mes, desarrollarlo con IA en la voz de la marca, validarlo, medir la pauta y recuperar reservas. El <b>Creador de Contenido</b> es la herramienta principal; el calendario y el checklist trabajan encadenados a él.</p>
+
+    <h2 style="margin-top:14px">🧠 El cerebro creativo: formato Kaprica</h2>
+    <p>Todo el contenido (guiones, posts, carruseles) nace de un mismo principio: <b>micro-historias donde el cliente es el protagonista</b>. El restaurante jamás habla de sí mismo; los platos y espacios aparecen dentro de la historia y el giro final aterriza en una reserva. Prohibido: promos genéricas, capturas de reseñas, anuncios de horario y mencionar delivery.</p>
+
+    <h2 style="margin-top:14px">🎬 Los 3 formatos de video de la casa</h2>
+    <p><b>1 · Kaprica narrativo.</b> La micro-historia dialogada con giro final. Es la identidad de Rosanta y se mantiene siempre: una pieza ancla por semana, la que escala a pauta.</p>
+    <p><b>2 · Frase constante (visual).</b> Escenas reales del lugar con una frase que se repite o evoluciona en pantalla, sin actuación. Producción ligera: es la cadencia, los cortos que sostienen la semana. En el Creador es una opción propia del desplegable de Formato Kaprica.</p>
+    <p><b>3 · Ambiente y temporada.</b> Chimenea, lluvia, fogata, refugio. Se graba en banco y se publica cuando el clima acompaña: <b>lo dispara el clima real, jamás el calendario</b>.</p>
+    <p><b>Estándar de cámara para los tres:</b> tomas lentas y transiciones suaves. Vertical 9:16, subtítulos siempre, branding en los primeros 3 segundos y CTA en los últimos 2-3.</p>
+
+    <h2 style="margin-top:14px">🔄 Flujo mensual (el ciclo completo)</h2>
+    <p><b>Paso 1 · Planear.</b> En <b>📅 Calendario</b>, navega al mes y presiona <b>🪄 Generar plan del mes</b>. El sistema propone una pieza para cada martes y viernes: mínimo la mitad videos, ejes rotados, cada una con título y gancho. Entran como estado <span class="chip off">Idea</span> (se ven atenuadas).</p>
+    <p><b>Paso 2 · Desarrollar.</b> Abre cada pieza y presiona <b>✍️ Desarrollar</b>: te lleva al generador correcto (🎬 guión, 📝 post o 🎠 carrusel) con el tema pre-llenado. Genera, ajusta si hace falta, y presiona <b>📌 Guardar en la pieza</b>: el copy completo queda dentro de la pieza y pasa a <span class="chip off">Producción</span>.</p>
+    <p><b>Paso 3 · Validar.</b> Desde la pieza, presiona <b>✅ Validar</b>: se abre el Checklist con el nombre pre-llenado. Revisa los 8 puntos (gancho, branding 3s, subtítulos, CTA final, UTM, triple uso). Con 8/8 la pieza pasa sola a <span class="chip on">Listo</span>. Una pieza con menos de 8/8 queda fuera del calendario.</p>
+    <p><b>Paso 4 · Producir y publicar.</b> Presiona <b>📄 Brief de producción (PDF)</b> en el Calendario: genera el documento del mes con las instrucciones obligatorias y todas las piezas con su copy, listo para el equipo de producción. Al publicar cada pieza, cámbiala a <span class="chip on">Publicado</span>.</p>
+
+    <h2 style="margin-top:14px">📊 Dashboard de Pauta (uso semanal)</h2>
+    <p>Data en vivo de Meta Ads (cuenta rosanta.rest). Elige el rango, presiona Actualizar y revisa contra los benchmarks propios: <b>Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &gt;3 = fatiga</b>. El botón <b>🧠 Diagnóstico IA</b> entrega veredicto por campaña (escalar/mantener/ajustar/apagar) y 3 acciones con presupuesto sugerido. El panel inferior arma la serie semanal Google + Meta leyendo los reportes que se suben a Drive cada lunes.</p>
+    <p><b>Regla de creativos (verificada julio 2026):</b> el sistema de entrega de Meta agrupa como duplicados los videos casi idénticos y ahoga todos menos uno. Por eso <b>jamás se prueba el mismo video con distintos ganchos</b>: para comparar ángulos se producen videos conceptualmente distintos (otras tomas, otro ritmo) sobre un mismo concepto, cada uno con su utm_content.</p>
+
+    <h2 style="margin-top:14px">🕵️ Espía (antes de cada campaña)</h2>
+    <p>Busca en la Biblioteca de Anuncios de Meta qué está pautando la competencia de Antigua ahora mismo. <b>Analizar patrones</b> resume quién invierte más y qué ángulos quedan libres para Rosanta. Úsalo antes de lanzar una campaña nueva para diferenciarla.</p>
+
+    <h2 style="margin-top:14px">🧠 Panel de Asesores (antes de decidir rutas)</h2>
+    <p>Seis lentes basadas en el marco publicado de expertos reales debaten cualquier ruta antes de aprobar presupuesto: <b>Jon Loomer</b> (media buying Meta), <b>Savannah Sanchez</b> (creativo de pauta), <b>Rev Ciancio</b> (marketing de restaurantes), <b>Avinash Kaushik</b> (datos y medición), <b>Mark Ritson</b> (estrategia y abogado del diablo) y <b>Alex Hormozi</b> (ofertas y monetización, entra fuerte en paquetes, precios y eventos); el <b>AI CMO</b> de Rosanta modera y cierra con veredicto y decisiones. Cada lente aplica su metodología por nombre (Value Equation, See-Think-Do-Care, hook rate, 60/40 marca/activación), citable contra la fuente. Cada tarjeta enlaza al contenido real del experto para corroborar y aprender de la fuente; el debate es una simulación de su criterio público. Las propuestas del equipo (por ejemplo el plan de medios de Vanessa) se cargan en <b>🎯 Estrategia → Propuestas del equipo</b> y desde ahí se mandan al panel. Puedes contra-argumentar y el panel responde. Cada debate queda en el historial y en la Sheet, y "Regenerar con aprendizajes" toma en cuenta las propuestas sobre la mesa.</p>
+
+    <h2 style="margin-top:14px">🛒 Carritos (uso diario/semanal)</h2>
+    <p>El formulario de reservas de rosanta.rest detecta solo a quien escribió su nombre y contacto y se fue sin completar: a los 4 minutos (o al cerrar la página) el carrito llega aquí con su valor estimado, su teléfono y su <b>permiso de contacto</b>. Ese mismo abandono viaja a Meta como evento AddToCart con los datos hasheados, así que alimenta el retargeting sin trabajo extra.</p>
+    <p>Para recuperar: el botón <b>💬 Mensaje</b> genera el WhatsApp según los días transcurridos (toque 1 en 24h, toque 2 a las 72h, toque 3 al día 7; máximo 3 toques). Copia, envía desde el WhatsApp del restaurante y actualiza el estado (Contactado → Recuperado/Perdido). Los KPIs calculan la tasa y los Q recuperados del mes. <b>Escribe únicamente a quien tenga permiso "Sí"</b>: es la regla de WhatsApp y protege el número del bot.</p>
+
+    <h2 style="margin-top:14px">👥 Quién hace qué</h2>
+    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard y diagnóstico IA semanal, espía antes de cada campaña, ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
+
+    <h2 style="margin-top:14px">✍️ Reglas de voz (resumen para todos)</h2>
+    <p>Afirmativa siempre (sin la palabra "no") · segunda persona: tu mesa, tu experiencia · prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "cocina/coctelería de autor" y em dashes · conceptos centrales: cocina natural y gastronomía sostenible · emojis estratégicos · hashtags al final sin puntos separadores · personalización solo con el nombre de pila.</p>
+
+    <h2 style="margin-top:14px">⚙️ Notas técnicas</h2>
+    <p>El sistema vive dentro de la intranet de Rosanta y la fuente única de verdad es la Google Sheet "Rosanta Marketing OS" (calendario, piezas, carritos, aprendizajes, propuestas y debates). La data de Meta y del Espía llega en vivo; la serie semanal de Google Ads se lee de los reportes que se suben a Drive cada lunes. Los carritos entran solos desde el formulario de reservas.</p>
+    <p>Los textos generados con IA son borradores de primera pasada: revísalos siempre contra el checklist. El Panel de Asesores investiga en la web antes de cada debate y marca con ⚠️ lo que dependa de mecánica actual de plataforma: eso se verifica antes de ejecutar, jamás se da por cierto.</p>
+    <p>Cada quien entra con su enlace personal. Lo que ves depende de tu rol en la hoja USUARIOS; si necesitas una pestaña que no aparece, pídesela a Juanma.</p>
+  </div>
+</section>
+<? if (esDatos) { ?>
+<!-- ============ DATOS ============ -->
+<section id="tab-datos" class="tab">
+  <div class="pill-note">Fuente única de verdad: <b>Google Sheet "Rosanta Marketing OS"</b>. Este panel conecta el sistema con esa Sheet vía el Web App de Apps Script. Sin conexión, todo funciona local en este dispositivo; con conexión, calendario, piezas y carritos viven en la Sheet y quedan listos para la intranet.</div>
+  <div class="row">
+    <div class="card">
+      <h2>Conexión a la Sheet</h2>
+      <p class="muted" style="margin-bottom:10px">El sistema ya vive dentro de la intranet de Rosanta y habla con la Sheet por tu sesión de Google. Sin URL ni token que configurar: entras con tu correo de rosanta.rest y quedas conectado.</p>
+      <button class="btn sec" onclick="osTest()">Probar conexión</button>
+      <div class="muted" id="osStatus" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>Sincronización</h2>
+      <p class="muted" style="margin-bottom:10px">Calendario, piezas y carritos.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="osPushAll()">⬆️ Enviar todo a la Sheet</button>
+        <button class="btn sec" onclick="osPullAll()">⬇️ Traer de la Sheet</button>
+        <button class="btn sec" onclick="osExport()">💾 Exportar JSON (respaldo)</button>
+      </div>
+      <div class="muted" id="osSyncStatus" style="margin-top:10px"></div>
+      <div style="margin-top:12px;font-size:12px">
+        <b>Estado:</b> <span id="osConn" class="chip off">Local (sin Sheet)</span><br>
+        <span class="muted">Con conexión activa, cada cambio se envía a la Sheet automáticamente.</span>
+      </div>
+    </div>
+  </div>
+</section>
+<? } ?>
+</main>
+
+<!-- Modal post calendario -->
+<div class="overlay" id="ovPost">
+  <div class="panel">
+    <h3 id="ovPostTitle">Nueva publicación</h3>
+    <div class="fld"><label>Fecha</label><input type="date" id="pDate"></div>
+    <div class="fld"><label>Título / idea</label><input id="pTitle" placeholder="Ej: Maridaje plato + cóctel de temporada"></div>
+    <div class="fld"><label>Tipo (categoría 3-1-1)</label><select id="pTipo" onchange="pTipoChange()">
+      <option>VALOR</option><option>COMUNIDAD</option><option>VENTA</option>
+    </select></div>
+    <div class="fld"><label>Formato</label><select id="pFormato">
+      <option>Video</option><option>Foto</option><option>Carrusel</option>
+    </select></div>
+    <div class="fld"><label>Eje de contenido</label><select id="pEje"></select></div>
+    <div class="fld"><label>Estado</label><select id="pEstado">
+      <option>Idea</option><option>Aprobada</option><option>Generada</option>
+      <option>Lista</option><option>Publicado</option>
+    </select></div>
+    <div class="fld"><label>Canal</label><select id="pCanal">
+      <option>Instagram + Facebook</option><option>Instagram</option><option>Facebook</option><option>Google Business</option>
+    </select></div>
+    <div class="fld"><label>Notas</label><textarea id="pNotas" rows="2"></textarea></div>
+    <div class="fld"><label>Gancho (primer segundo literal)</label><textarea id="pHook" rows="2"></textarea></div>
+    <div class="fld"><label>STDC</label><select id="pStdc"><option>See</option><option>Think</option><option>Do</option><option>Care</option></select></div>
+    <div class="fld"><label>Métrica de éxito</label><input id="pMetrica"></div>
+    <div class="fld"><label>UTM (solo VENTA)</label><input id="pUtm" placeholder="https://rosanta.rest/reservas?utm_..."></div>
+    <div class="fld"><label>Embudo</label><select id="pEmbudo"><option>TOF</option><option>MOF</option><option>BOF</option></select></div>
+    <div class="fld"><label>Triple uso (orgánico · pauta · retención)</label><input id="pUso" placeholder="orgánico + pauta + retención"></div>
+    <div id="pContenido"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn danger" id="pDel" style="margin-right:auto;display:none" onclick="delPost()">Eliminar</button>
+      <button class="btn sec" onclick="devPieza()">✍️ Desarrollar</button>
+      <button class="btn sec" onclick="valPieza()">✅ Validar</button>
+      <button class="btn sec" onclick="closeOv('ovPost')">Cancelar</button>
+      <button class="btn" onclick="savePost()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal carrito -->
+<div class="overlay" id="ovCarr">
+  <div class="panel">
+    <h3>Registrar carrito abandonado</h3>
+    <div class="fld"><label>Fecha</label><input type="date" id="cDate"></div>
+    <div class="fld"><label>Nombre del contacto</label><input id="cNombre"></div>
+    <div class="fld"><label>Canal de contacto</label><select id="cCanal">
+      <option>WhatsApp</option><option>Email</option><option>Llamada</option><option>Instagram DM</option>
+    </select></div>
+    <div class="fld"><label>Valor estimado (Q)</label><input type="number" id="cValor" min="0" step="10"></div>
+    <div class="fld"><label>Estado</label><select id="cEstado">
+      <option>Pendiente</option><option>Contactado</option><option>Recuperado</option><option>Perdido</option>
+    </select></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn sec" onclick="closeOv('ovCarr')">Cancelar</button>
+      <button class="btn" onclick="saveCarr()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal propuesta del equipo -->
+<div class="overlay" id="ovProp">
+  <div class="panel">
+    <h3>Cargar propuesta del equipo</h3>
+    <div class="fld"><label>Autor</label><input id="prAutor" placeholder="Ej: Vanessa (jefa de Pauta)"></div>
+    <div class="fld"><label>Título</label><input id="prTitulo" placeholder="Ej: Plan de medios Nov–Ene"></div>
+    <div class="fld"><label>Contenido (pega el texto o resumen del documento)</label><textarea id="prCont" rows="9"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn sec" onclick="closeOv('ovProp')">Cancelar</button>
+      <button class="btn" onclick="saveProp()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= util ================= */
+const $=id=>document.getElementById(id);
+/* Rol de acceso: true = módulo marketing completo; false = módulo "contenido"
+   (equipo de producción: Calendario, Creador, Checklist y Manual). Con false,
+   las funciones que tocan secciones ocultas se saltan en el init. */
+const FULL=<?!= JSON.stringify(!!esFull) ?>;
+/* Identidad para google.script.run cuando se entra con enlace personal
+   (?u=<token>, Gmail sin dominio). Vacío = sesión de Google del dominio. */
+const AUTH=<?!= JSON.stringify(authToken || '') ?>;
+const AD_ACCOUNT='780001897477414';
+const TOOL_ENTITIES='mcp__1479a68e-b2cd-48a5-8467-6d02eb005b0e__ads_get_ad_entities';
+const store=(k,v)=>{localStorage.setItem(k,JSON.stringify(v));osAutoPush(k,v)};
+const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+/* ===== Capa de datos: Sheet "Rosanta Marketing OS" vía google.script.run =====
+   Antes: fetch al /exec con token en la URL. El sandbox de Cowork bloqueaba esa
+   llamada externa y por eso el sync no pegaba. Ahora el sistema lo sirve el
+   propio Apps Script, así que hablamos con la Sheet por google.script.run:
+   misma sesión de Google, sin token, sin CORS, sin salir del origen.
+   osGet/osPost conservan su firma y su forma de respuesta ({rows} / {ok}),
+   así que ningún módulo de arriba cambia. */
+/* calendario NO va aquí a propósito: se sincroniza fila por fila (calUpsertRemoto/
+   calBorrarRemoto), nunca por replace masivo. El replace de un localStorage viejo
+   sobre la Sheet fue lo que borró el plan aprobado el 4-ago-2026. */
+const OS_MAP={rosanta_pz:'piezas',rosanta_carr:'carritos',rosanta_apr:'aprendizajes',rosanta_prop:'propuestas',rosanta_deb:'debates'};
+function osConnected(){return true}  // servido por Apps Script: siempre conectado
+function srv(fn,...args){
+  return new Promise((res,rej)=>{
+    /* El token viaja como último argumento; los guardas del servidor lo leen.
+       Sin token (usuario del dominio) llega '' y manda la sesión de Google. */
+    google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args, AUTH);
+  });
+}
+/* Los errores se propagan (igual que hacía fetch): osPushAll/osTest ya los
+   atrapan y los muestran. Tragárselos aquí haría que un fallo de escritura
+   se reportara como éxito. */
+async function osGet(tab){
+  return {tab,rows:await srv('mktRead',tab)};
+}
+async function osPost(body){
+  if(body.action==='replace')return {ok:true,result:await srv('mktReplace',body.tab,body.rows||[])};
+  if(body.action==='delete') return {ok:true,result:await srv('mktDelete',body.tab,body.id)};
+  return {ok:true,result:await srv('mktUpsert',body.tab,body.row||{})};
+}
+let _osTimers={};
+function osAutoPush(k,v){
+  if(!OS_MAP[k]||!osConnected())return;
+  clearTimeout(_osTimers[k]);
+  _osTimers[k]=setTimeout(()=>{osPost({tab:OS_MAP[k],action:'replace',rows:v}).catch(()=>{})},1200);
+}
+/* ===== Calendario: fuente de verdad = la Sheet, escritura fila por fila =====
+   El schema tiene 13 columnas fijas. El FORMATO (Video/Post/Carrusel) no tiene
+   columna propia, así que viaja como etiqueta [fmt:X] al inicio de notas. */
+const CAL_TIPOS=['VALOR','COMUNIDAD','VENTA'];
+const CAL_FORMATOS=['Video','Foto','Carrusel'];
+/* Embudo por eje (spec): TOF alcance, MOF retargeting, BOF reserva directa.
+   VENTA siempre BOF; Educativo entra como TOF (educar = alcance). */
+const EMBUDO_POR_EJE={'Cocina con corazón':'TOF','Comunidad':'TOF','Educativo':'TOF','Gastrococtelería':'MOF','Ambientes':'MOF','Eventos':'BOF'};
+function embudoDe(tipo,eje){ return tipo==='VENTA'?'BOF':(EMBUDO_POR_EJE[eje]||'MOF'); }
+const USO_DEFECTO='orgánico + pauta + retención';
+const NOTA_VIDEO='Video: branding en los primeros 3 s · subtítulos siempre · CTA en los últimos 2-3 s.';
+/* Hashtags base de marca. #JardinSantaRosa queda FUERA: submarca descontinuada
+   desde jun-2026 (venía arrastrada de la plantilla de julio). */
+const HASHTAGS_BASE='#Rosanta #CocinaConCarisma #GastronomiaSostenible #CocinaNatural #AntiguaGuatemala #Gastrococteleria';
+const STDC_POR_TIPO={VALOR:'See',COMUNIDAD:'Think',VENTA:'Do'};
+const METRICA_POR_TIPO={
+  VALOR:'Hook rate ≥40% · retención ≥10%',
+  COMUNIDAD:'Guardados + compartidos por alcance ≥ promedio del mes',
+  VENTA:'Clics al link UTM · reservas atribuidas'
+};
+function fmtParse(notas){
+  var m=String(notas||'').match(/^\[fmt:(Video|Post|Carrusel)\]\s?/);
+  return {formato:m?m[1]:'',notas:m?String(notas).slice(m[0].length):String(notas||'')};
+}
+function fmtJoin(formato,notas){ return (formato?('[fmt:'+formato+'] '):'')+String(notas||''); }
+function calUpsertRemoto(row){ return srv('mktUpsert','calendario',row); }
+function calBorrarRemoto(id){ return srv('mktDelete','calendario',id); }
+async function calPull(){
+  var r=await osGet('calendario');
+  if(r&&r.rows) localStorage.setItem('rosanta_cal',JSON.stringify(r.rows));
+  return (r&&r.rows)?r.rows:[];
+}
+/* ===== Puente window.cowork -> Apps Script =====
+   En Cowork, Meta / Drive / Ad Library / Claude llegaban por window.cowork.
+   Ese puente no existe aquí, así que lo reimplementamos contra Servicios.gs
+   conservando la forma de respuesta MCP ({structuredContent} / {isError}).
+   Así ningún módulo de arriba cambia una línea. */
+window.cowork={
+  async callMcpTool(tool,params){
+    try{
+      if(tool===TOOL_ENTITIES)     return {structuredContent:await srv('metaEntities',params.date_preset)};
+      if(tool===TOOL_DRIVE_SEARCH) return {structuredContent:await srv('driveBuscarReportes')};
+      if(tool===TOOL_DRIVE_DL)     return {structuredContent:await srv('driveDescargar',params.fileId)};
+      if(tool===TOOL_ADLIB)        return {structuredContent:await srv('adLibrarySearch',params)};
+      return {isError:true,content:[{text:'Herramienta no disponible en el portal: '+tool}]};
+    }catch(e){
+      return {isError:true,content:[{text:(e&&e.message)||String(e)}]};
+    }
+  },
+  askClaude(prompt){return srv('askClaudeSrv',prompt)}
+};
+const fmtQ=n=>'Q'+(n??0).toLocaleString('es-GT',{maximumFractionDigits:2});
+const fmtN=n=>(n??0).toLocaleString('es-GT');
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+/* Numeros de la API de Meta: decimales crudos con punto ("454.83", "0.341721").
+   Antes esto pasaba por un parseQ escrito para formato es-GT, donde el punto es
+   separador de MILES y se borraba: 454.83 se volvia 45483 y 0.341721 se volvia
+   341721. El Dashboard mostraba cifras infladas x100 o x1,000,000 con toda
+   naturalidad. parseQ venia del artefacto Cowork, cuyo MCP si devolvia strings
+   ya formateados ("Q4,51 GTQ"); Graph no. Quedo sin usarse y se elimino. */
+const numG=v=>{ if(v==null||v==='')return null; const n=parseFloat(String(v)); return isNaN(n)?null:n; };
+/* tabs */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('act'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act'));
+  b.classList.add('act');$('tab-'+b.dataset.tab).classList.add('act');
+  if(b.dataset.tab==='cal')renderCal();
+  if(b.dataset.tab==='carr')renderCarr();
+  if(b.dataset.tab==='panel')renderPanel();
+});
+function closeOv(id){$(id).classList.remove('act')}
+
+/* ================= DASHBOARD PAUTA ================= */
+let chSpend=null,chCtr=null;
+async function loadMeta(){
+  $('metaStatus').textContent='Cargando…';
+  $('metaTable').innerHTML='<div class="loading"><div class="spin"></div>Cargando data de Meta Ads…</div>';
+  try{
+    const r=await window.cowork.callMcpTool(TOOL_ENTITIES,{
+      ad_account_id:AD_ACCOUNT,level:'campaign',
+      fields:['id','name','status','objective','spend','impressions','reach','clicks','ctr','cpm','cpc','frequency'],
+      date_preset:$('rango').value,
+      advertiser_request:'dashboard de pauta para el equipo'
+    });
+    if(r.isError)throw new Error(r.content?.[0]?.text||'Error de Meta');
+    let payload=r.structuredContent??JSON.parse(r.content[0].text);
+    let ents=payload.ad_entities;
+    if(typeof ents==='string')ents=JSON.parse(ents);
+    const rows=ents.map(e=>({
+      name:e.name,status:e.status,objective:e.objective,
+      spend:numG(e.amount_spent??e.spend),imp:numG(e.impressions),reach:numG(e.reach),
+      clicks:numG(e.clicks),ctr:numG(e.ctr),cpm:numG(e.cpm),cpc:numG(e.cpc),freq:numG(e.frequency)
+    }));
+    const live=rows.filter(x=>x.spend!=null&&x.spend>0).sort((a,b)=>b.spend-a.spend);
+    window._metaRows=live;
+    renderKpis(live);renderTable(rows);renderCharts(live);
+    /* El bloque de retorno ya NO se recalcula aqui: vive de pauta_semanal
+       (semana ISO), no del rango vivo de Meta. Lo actualiza loadGads(). */
+    $('metaStatus').textContent='Actualizado '+new Date().toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'});
+  }catch(err){
+    $('metaTable').innerHTML='<p class="muted">Sin datos: '+err.message+'. Presiona Actualizar para reintentar.</p>';
+    $('metaStatus').textContent='';
+  }
+}
+function renderKpis(live){
+  const spend=live.reduce((a,x)=>a+(x.spend||0),0);
+  const imp=live.reduce((a,x)=>a+(x.imp||0),0);
+  const reach=live.reduce((a,x)=>a+(x.reach||0),0);
+  const clicks=live.reduce((a,x)=>a+(x.clicks||0),0);
+  const ctr=imp?clicks/imp*100:0;
+  const cpc=clicks?spend/clicks:0;
+  const k=[
+    ['Inversión',fmtQ(spend),live.length+' campañas con gasto'],
+    ['Impresiones',fmtN(imp),'CPM prom '+fmtQ(imp?spend/imp*1000:0)],
+    ['Alcance',fmtN(reach),'Frecuencia '+(reach?(imp/reach).toFixed(2):'—')],
+    ['Clics',fmtN(clicks),'CPC prom '+fmtQ(cpc)],
+    ['CTR global',ctr.toFixed(2)+'%',ctr>=1?'Sano (≥1%)':'Bajo benchmark']
+  ];
+  $('metaKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
+}
+function renderTable(rows){
+  const objMap={OUTCOME_ENGAGEMENT:'Interacción',OUTCOME_AWARENESS:'Alcance',LINK_CLICKS:'Clics / VisitasIG',MESSAGES:'Mensajes'};
+  const html='<div style="overflow-x:auto"><table><thead><tr><th>Campaña</th><th>Estado</th><th>Objetivo</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th></tr></thead><tbody>'+
+  rows.sort((a,b)=>(b.spend||0)-(a.spend||0)).map(x=>'<tr><td><b>'+x.name+'</b></td>'+
+    '<td><span class="chip '+(x.status==='ACTIVE'?'on':'off')+'">'+(x.status==='ACTIVE'?'Activa':'Pausada')+'</span></td>'+
+    '<td>'+(objMap[x.objective]||x.objective)+'</td>'+
+    '<td>'+(x.spend!=null?fmtQ(x.spend):'—')+'</td><td>'+(x.imp!=null?fmtN(x.imp):'—')+'</td>'+
+    '<td>'+(x.clicks!=null?fmtN(x.clicks):'—')+'</td><td>'+(x.ctr!=null?x.ctr.toFixed(2)+'%':'—')+'</td>'+
+    '<td>'+(x.cpc!=null?fmtQ(x.cpc):'—')+'</td><td>'+(x.cpm!=null?fmtQ(x.cpm):'—')+'</td></tr>').join('')+'</tbody></table></div>';
+  $('metaTable').innerHTML=html;
+}
+function renderCharts(live){
+  const top=live.slice(0,8);
+  const labels=top.map(x=>x.name.length>28?x.name.slice(0,28)+'…':x.name);
+  if(chSpend)chSpend.destroy();
+  chSpend=new Chart($('chSpend'),{type:'bar',data:{labels,datasets:[{label:'Gasto (Q)',data:top.map(x=>x.spend),backgroundColor:'#4A6741',borderRadius:6}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EDE6D4'}},y:{grid:{display:false}}}}});
+  if(chCtr)chCtr.destroy();
+  chCtr=new Chart($('chCtr'),{type:'bar',data:{labels,datasets:[{label:'CTR %',data:top.map(x=>x.ctr),backgroundColor:'#C9923F',borderRadius:6}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EDE6D4'}},y:{grid:{display:false}}}}});
+}
+
+/* ================= CALENDARIO ================= */
+const EJES=[
+  ['Gastrococtelería','#4A6741'],['Cocina con corazón','#A0785A'],
+  ['Ambientes','#C9923F'],['Comunidad','#7A8B6F'],['Eventos','#B54A35'],
+  ['Educativo','#6B7FA8']
+];
+let calRef=new Date();let editId=null;
+$('pEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
+$('leyenda').innerHTML=EJES.map(e=>'<span><i style="background:'+e[1]+'"></i>'+e[0]+'</span>').join('');
+$('calDow').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d=>'<div class="dow">'+d+'</div>').join('');
+function ejeColor(n){const f=EJES.find(e=>e[0]===n);return f?f[1]:'#888'}
+function mvMes(d){calRef.setMonth(calRef.getMonth()+d);renderCal()}
+function renderCal(){
+  const y=calRef.getFullYear(),m=calRef.getMonth();
+  $('mesLbl').textContent=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
+  const posts=read('rosanta_cal',[]);
+  const first=new Date(y,m,1);const start=(first.getDay()+6)%7; // lunes=0
+  const dim=new Date(y,m+1,0).getDate();
+  const hoy=todayISO();
+  let cells='';
+  for(let i=0;i<start;i++){cells+='<div class="day out"></div>'}
+  for(let d=1;d<=dim;d++){
+    const iso=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dow=new Date(y,m,d).getDay();
+    const ancla=(dow===2||dow===5);
+    const dp=posts.filter(p=>p.date===iso);
+    cells+='<div class="day'+(iso===hoy?' hoy':'')+(ancla?' ancla':'')+'" onclick="openPost(\''+iso+'\')">'+
+      '<span class="num">'+d+'</span>'+(ancla?'<span class="anctag">ancla</span>':'')+
+      dp.map(p=>'<div class="post" style="background:'+ejeColor(p.eje)+(p.estado==='Idea'?';opacity:.65':'')+'" onclick="event.stopPropagation();editPost(\''+p.id+'\')" title="'+p.title+' · '+(p.tipo||'')+((p.formato||fmtParse(p.notas).formato)?' · '+(p.formato||fmtParse(p.notas).formato):'')+' · '+p.estado+'">'+(p.estado==='Publicado'?'✓ ':'')+fmtIcon(p.formato||fmtParse(p.notas).formato)+' '+p.title+'</div>').join('')+'</div>';
+  }
+  $('calDays').innerHTML=cells;
+}
+function openPost(iso){editId=null;$('ovPostTitle').textContent='Nueva publicación';$('pDel').style.display='none';
+  $('pDate').value=iso;$('pTitle').value='';$('pTipo').value='VALOR';$('pFormato').value='Video';$('pEje').selectedIndex=0;$('pEstado').value='Idea';$('pCanal').selectedIndex=0;$('pNotas').value='';$('pHook').value='';$('pStdc').value='See';$('pMetrica').value=METRICA_POR_TIPO.VALOR;$('pUtm').value='';$('pEmbudo').value=embudoDe('VALOR',EJES[0][0]);$('pUso').value=USO_DEFECTO;$('pContenido').innerHTML='';
+  $('ovPost').classList.add('act')}
+function editPost(id){const p=read('rosanta_cal',[]).find(x=>x.id===id);if(!p)return;
+  editId=id;$('ovPostTitle').textContent='Editar publicación';$('pDel').style.display='block';
+  var _f=fmtParse(p.notas);var _fmt=p.formato||_f.formato;$('pDate').value=p.date;$('pTitle').value=p.title;$('pTipo').value=CAL_TIPOS.indexOf(p.tipo)>-1?p.tipo:'VALOR';$('pFormato').value=CAL_FORMATOS.indexOf(_fmt)>-1?_fmt:'Video';$('pEje').value=p.eje;$('pEstado').value=p.estado;$('pCanal').value=p.canal;$('pNotas').value=_f.notas;$('pHook').value=p.hook||'';$('pStdc').value=p.stdc||STDC_POR_TIPO[p.tipo]||'See';$('pMetrica').value=p.metrica||'';$('pUtm').value=p.utm||'';$('pEmbudo').value=p.embudo||embudoDe(p.tipo,p.eje);$('pUso').value=p.uso||USO_DEFECTO;
+  $('pContenido').innerHTML=p.contenido?'<div class="fld"><label>Contenido desarrollado ✓</label><div style="font-size:12px;background:var(--crema);border-radius:8px;padding:10px;max-height:200px;overflow:auto">'+md2html(p.contenido)+'</div><button class="btn sec sm" style="margin-top:6px" onclick="navigator.clipboard.writeText(read(\'rosanta_cal\',[]).find(x=>x.id===editId).contenido);alert(\'Copiado\')">Copiar contenido</button></div>':'<p class="muted" style="margin-bottom:10px">Sin contenido desarrollado aún. Usa ✍️ Desarrollar.</p>';
+  $('ovPost').classList.add('act')}
+async function savePost(){
+  if(!$('pTitle').value.trim()){alert('Agrega un título');return}
+  let posts=read('rosanta_cal',[]);
+  const prev=editId?posts.find(x=>x.id===editId):null;
+  const obj=Object.assign({},prev||{},{
+    id:editId||('cal-'+($('pDate').value||todayISO()).replace(/-/g,'')+'-'+Math.floor(Math.random()*1000)),
+    date:$('pDate').value,title:$('pTitle').value.trim(),tipo:$('pTipo').value,eje:$('pEje').value,
+    estado:$('pEstado').value,canal:$('pCanal').value,notas:$('pNotas').value,
+    hook:$('pHook').value.trim(),stdc:$('pStdc').value,metrica:$('pMetrica').value.trim(),utm:$('pUtm').value.trim(),
+    embudo:$('pEmbudo').value,formato:$('pFormato').value,uso:($('pUso').value.trim()||USO_DEFECTO)
+  });
+  posts=posts.filter(x=>x.id!==obj.id);posts.push(obj);
+  localStorage.setItem('rosanta_cal',JSON.stringify(posts));
+  try{await calUpsertRemoto(obj);}catch(e){alert('Guardado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));}
+  closeOv('ovPost');renderCal()}
+function goTab(t){document.querySelector('nav button[data-tab="'+t+'"]').click()}
+function tipoIcon(t){return t==='Video'?'🎬':(t==='Carrusel'?'🎠':'📝')}
+function fmtIcon(f){return f==='Video'?'🎬':(f==='Carrusel'?'🎠':((f==='Foto'||f==='Post')?'📷':'•'))}
+function pTipoChange(){var t=$('pTipo').value;$('pStdc').value=STDC_POR_TIPO[t]||'See';var cur=($('pMetrica').value||'').trim();var d=Object.keys(METRICA_POR_TIPO).map(function(k){return METRICA_POR_TIPO[k]});if(!cur||d.indexOf(cur)>-1)$('pMetrica').value=METRICA_POR_TIPO[t]||'';if($('pEmbudo'))$('pEmbudo').value=embudoDe(t,$('pEje').value);}
+function devPieza(){
+  const titulo=$('pTitle').value.trim();if(!titulo){alert('La pieza necesita título');return}
+  const formato=$('pFormato').value,eje=$('pEje').value,notas=$('pNotas').value;
+  const tema=titulo+(notas?' ('+notas+')':'');
+  window._devPieza=editId;
+  closeOv('ovPost');goTab('gen');
+  if(formato==='Video'){$('guTema').value=tema;$('guEje').value=eje}
+  else if(formato==='Carrusel'){$('caTema').value=tema;$('caEje').value=eje}
+  else{$('poTema').value=tema;$('poEje').value=eje}
+}
+function piezaBtn(v){return window._devPieza?' <button class="btn sec sm" onclick="saveToPieza(window._'+v+')">📌 Guardar en la pieza</button>':''}
+function saveToPieza(txt){
+  const cal=read('rosanta_cal',[]);const p=cal.find(x=>x.id===window._devPieza);
+  if(!p){alert('La pieza del calendario ya no existe');return}
+  p.contenido=txt;if(p.estado==='Idea')p.estado='Producción';
+  localStorage.setItem('rosanta_cal',JSON.stringify(cal));
+  calUpsertRemoto(p).catch(function(){});
+  alert('Contenido guardado en "'+p.title+'" ('+p.date+'). Estado: '+p.estado+'. Siguiente paso: ✅ Validar.');
+}
+function briefMes(){
+  const y=calRef.getFullYear(),m=calRef.getMonth();
+  const pref=y+'-'+String(m+1).padStart(2,'0');
+  const piezas=read('rosanta_cal',[]).filter(p=>p.date&&p.date.startsWith(pref)).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!piezas.length){alert('Este mes aún no tiene piezas en el calendario. Genera el plan primero.');return}
+  const mesNombre=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
+  let pa=$('printArea');
+  if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
+  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
+    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Brief de producción</h1><div style="font-size:13px;opacity:.9;text-transform:capitalize">'+mesNombre+' · '+piezas.length+' piezas · Equipo de contenido y pauta</div></div>'+
+    '<h2 style="color:#4A6741;font-size:15px;margin:16px 0 6px">Instrucciones generales (obligatorias en toda pieza)</h2>'+
+    '<ul style="font-size:12px;line-height:1.6;margin-left:18px">'+
+    '<li><b>Formato Kaprica:</b> la pieza cuenta una micro-historia con personas; los platos y espacios aparecen dentro de la historia, jamás como anuncio. Giro final que aterriza en reserva (rosanta.rest/reservas).</li>'+
+    '<li><b>Video:</b> branding visible en los primeros 3 segundos · subtítulos siempre · CTA en los últimos 2-3 segundos. Sin esto, la pieza queda fuera del calendario.</li>'+
+    '<li><b>Voz:</b> afirmativa (sin la palabra "no"), segunda persona (tu mesa, tu experiencia), prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "de autor" y em dashes. Emojis estratégicos. Hashtags al final sin puntos separadores.</li>'+
+    '<li><b>Visual:</b> personas y momento por encima de producto solo. Colores de marca: Verde Jardín #4A6741, Tierra Cálida #A0785A, Crema Natural #F5EFE0, Cobre Dorado #C9923F, Marrón Profundo #3D2B1F.</li>'+
+    '<li><b>Validación:</b> toda pieza pasa el checklist de 8 puntos antes de publicarse. Publicación anclada martes y viernes.</li>'+
+    '<li><b>Prohibido:</b> promos genéricas, capturas de reseñas, anuncios de horario, mencionar delivery.</li></ul>'+
+    '<h2 style="color:#4A6741;font-size:15px;margin:16px 0 8px">Piezas del mes</h2>'+
+    piezas.map(p=>{
+      const f=new Date(p.date+'T12:00:00').toLocaleDateString('es-GT',{weekday:'long',day:'numeric',month:'long'});
+      return '<div class="pieza"><div style="font-size:13px"><b>'+fmtIcon(p.formato||fmtParse(p.notas).formato)+' '+p.title+'</b> · <span style="text-transform:capitalize">'+f+'</span></div>'+
+      '<div style="font-size:11.5px;color:#A0785A;margin:3px 0">Tipo: '+(p.tipo||'Post')+' · Eje: '+p.eje+' · Canal: '+p.canal+' · Estado: '+p.estado+'</div>'+
+      (p.notas?'<div style="font-size:12px;margin:4px 0"><b>Concepto:</b> '+p.notas+'</div>':'')+
+      (p.contenido?'<div style="font-size:11.5px;background:#F5EFE0;border-radius:6px;padding:8px;margin-top:6px">'+md2html(p.contenido)+'</div>':'<div style="font-size:11.5px;color:#B54A35;margin-top:4px">⚠ Contenido pendiente de desarrollo en el Creador.</div>')+
+      '</div>';
+    }).join('')+
+    '<div style="font-size:10.5px;color:#A0785A;text-align:center;margin-top:14px">Generado desde el Sistema de Marketing Rosanta · '+new Date().toLocaleDateString('es-GT')+'</div></div>';
+  window.print();
+}
+function valPieza(){
+  const titulo=$('pTitle').value.trim();if(!titulo){alert('La pieza necesita título');return}
+  closeOv('ovPost');goTab('check');$('pzName').value=titulo;
+}
+/* ===== Aprendizajes (paso 4: círculo de aprendizaje) ===== */
+function aprIcon(t){return t==='funciona'?'✅':(t==='evitar'?'🚫':'💡')}
+function addApr(){
+  const txt=$('aprIn').value.trim();if(!txt){return}
+  const a=read('rosanta_apr',[]);
+  a.unshift({id:'a'+Date.now(),fecha:todayISO(),fuente:$('aprTipo').value,hallazgo:txt,accion:''});
+  store('rosanta_apr',a.slice(0,60));$('aprIn').value='';renderApr();
+}
+function delApr(id){store('rosanta_apr',read('rosanta_apr',[]).filter(x=>x.id!==id));renderApr()}
+function renderApr(){
+  const a=read('rosanta_apr',[]);
+  $('aprList').innerHTML=a.length?a.slice(0,15).map(x=>'<div class="ckitem"><span style="flex:1">'+aprIcon(x.fuente)+' '+x.hallazgo+' <span class="muted">· '+x.fecha+'</span></span><button class="btn danger" onclick="delApr(\''+x.id+'\')">✕</button></div>').join(''):'<p class="muted">Sin aprendizajes aún. Agrega el primero o espera el reporte del lunes.</p>';
+}
+async function genPlan(){
+  const y=calRef.getFullYear(),m=calRef.getMonth();
+  const dim=new Date(y,m+1,0).getDate();
+  const pref=y+'-'+String(m+1).padStart(2,'0');
+  const mesNombre=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
+  $('planStatus').textContent='Leyendo el plan actual de la Sheet…';
+  let cal;
+  try{ cal=await calPull(); }
+  catch(e){ $('planStatus').textContent='No pude leer la Sheet: '+e.message; return; }
+  try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));renderApr();}catch(e){}
+
+  // Regenerables = solo Idea/Aprobada. Todo lo demás (Generada, Lista, Publicado,
+  // legadas) es intocable: se conserva y su fecha queda ocupada.
+  const REGEN={Idea:1,Aprobada:1};
+  const delMes=cal.filter(p=>p.date&&p.date.indexOf(pref)===0);
+  if(delMes.length){
+    const nombre=prompt('Este mes ya tiene '+delMes.length+' piezas. Se respaldan antes de regenerar.\n\nNombre de la versión a guardar:', mesNombre+' · v'+(new Date().getMonth()+1));
+    if(nombre===null){$('planStatus').textContent='Cancelado. No se tocó nada.';return}
+    try{ await srv('calGuardarVersion', nombre, delMes); }
+    catch(e){ $('planStatus').textContent='No pude respaldar la versión: '+e.message; return; }
+    // Liberar solo las regenerables; Generada/legadas se quedan.
+    const aBorrar=delMes.filter(p=>REGEN[p.estado]);
+    for(const p of aBorrar){ try{ await calBorrarRemoto(p.id); }catch(e){} }
+    const borradas={}; aBorrar.forEach(p=>borradas[p.id]=1);
+    cal=cal.filter(p=>!borradas[p.id]);
+    localStorage.setItem('rosanta_cal',JSON.stringify(cal));
+  }
+
+  // Anclas (martes/viernes) libres tras respetar lo intocable.
+  const ocup={}; cal.forEach(p=>{if(p.date)ocup[p.date]=1;});
+  const anclas=[];
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(y,m,d).getDay();
+    if(dow===2||dow===5){
+      const iso=pref+'-'+String(d).padStart(2,'0');
+      if(!ocup[iso])anclas.push({iso,dia:dow===2?'martes':'viernes'});
+    }
+  }
+  if(!anclas.length){$('planStatus').textContent='No hay fechas ancla libres este mes. Lo aprobado/generado se conserva intacto.';return}
+
+  // 3-1-1 por ciclos de 5: VALOR,VALOR,COMUNIDAD,VALOR,VENTA (6/2/2 en 10 piezas).
+  const PATRON=['VALOR','VALOR','COMUNIDAD','VALOR','VENTA'];
+  const EJES_ROT=EJES.map(e=>e[0]);
+  const plan=anclas.map((a,i)=>({iso:a.iso,dia:a.dia,tipo:PATRON[i%5],eje:EJES_ROT[i%EJES_ROT.length]}));
+  // Los viernes anclan BOF siempre que se pueda: mover cada VENTA a un viernes.
+  for(let i=0;i<plan.length;i++){
+    if(plan[i].tipo==='VENTA' && plan[i].dia!=='viernes'){
+      const j=plan.findIndex((q,k)=>k!==i && q.dia==='viernes' && q.tipo==='VALOR');
+      if(j>-1){const t=plan[i].tipo;plan[i].tipo=plan[j].tipo;plan[j].tipo=t;}
+    }
+  }
+  // Ningún eje dos veces seguidas.
+  for(let i=1;i<plan.length;i++){
+    if(plan[i].eje===plan[i-1].eje){
+      const alt=EJES_ROT.find(e=>e!==plan[i-1].eje&&e!==(plan[i+1]?plan[i+1].eje:''));
+      if(alt)plan[i].eje=alt;
+    }
+  }
+  const campaign='311_'+mesNombre.toLowerCase().replace(/\s+/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const utmBase='https://rosanta.rest/reservas?utm_source=instagram&utm_medium=organic_social&utm_campaign='+campaign+'&utm_content=';
+
+  $('planStatus').textContent='Generando propuesta ('+plan.length+' piezas, 3-1-1)…';
+  try{
+    const apr=read('rosanta_apr',[]).slice(0,12);
+    const aprBlock=apr.length?('\n\nAPRENDIZAJES (respétalos):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'';
+    const t=await askIA(KAPRICA+'\n\n'+VOZ+aprBlock+`\n\nEres el director de contenido de Rosanta. Para ${mesNombre}, propon una pieza por fecha (traen categoría 3-1-1 y eje ya asignados: respétalos):\n${plan.map(pp=>pp.iso+' ('+pp.dia+') · '+pp.tipo+' · '+pp.eje).join('\n')}\n\nReglas:\n- VALOR = enseña o muestra algo de valor. COMUNIDAD = conversación, pregunta abierta. VENTA = invita a reservar.\n- Espíritu Kaprica: micro-historia o momento concreto, jamás anuncio genérico.\n- Considera la temporada en Antigua Guatemala.\n\nResponde SOLO un array JSON, mismo orden y cantidad, sin markdown:\n[{"titulo":"título corto","gancho":"Se ve: ... Subtítulo literal: \\"...\\"","notas":"1-2 líneas de dirección para producción"}]`);
+    let clean=t.trim().replace(/^```json?\s*/i,'').replace(/```\s*$/,'');
+    const arr=JSON.parse(clean.slice(clean.indexOf('['),clean.lastIndexOf(']')+1));
+
+    let n=0,errores=0;
+    for(let i=0;i<plan.length;i++){
+      const pp=plan[i],ia=arr[i]||{},tipo=pp.tipo;
+      const id='cal-'+pp.iso.replace(/-/g,'');
+      const notasBase=String(ia.notas||'').trim();
+      const row={
+        id, date:pp.iso, title:String(ia.titulo||('Pieza '+pp.iso)).slice(0,120),
+        tipo, eje:pp.eje, estado:'Idea', canal:'Instagram + Facebook',
+        notas:(notasBase?notasBase+' · ':'')+NOTA_VIDEO, contenido:'',
+        hook:ia.gancho||'', stdc:STDC_POR_TIPO[tipo], metrica:METRICA_POR_TIPO[tipo],
+        utm: tipo==='VENTA' ? (utmBase+id) : '',
+        embudo:embudoDe(tipo,pp.eje), formato:'Video', uso:USO_DEFECTO
+      };
+      try{ await calUpsertRemoto(row); cal.push(row); n++; }catch(e){ errores++; }
+    }
+    localStorage.setItem('rosanta_cal',JSON.stringify(cal));
+    renderCal();
+    $('planStatus').textContent='✅ '+n+' piezas propuestas como Idea'+(errores?(' · '+errores+' con error'):'')+'. Apruébalas en el Panel y luego usa ✍️ Generar contenido.';
+  }catch(e){$('planStatus').textContent='Error generando el plan: '+(e&&e.message?e.message:e)}
+}
+
+/* ===== Generar contenido: escribe el copy Kaprica SOLO de las Aprobadas ===== */
+async function genContenido(){
+  const y=calRef.getFullYear(),m=calRef.getMonth();
+  const pref=y+'-'+String(m+1).padStart(2,'0');
+  $('planStatus').textContent='Leyendo las piezas aprobadas…';
+  let cal;
+  try{ cal=await calPull(); }
+  catch(e){ $('planStatus').textContent='No pude leer la Sheet: '+e.message; return; }
+  const aprobadas=cal.filter(p=>p.date&&p.date.indexOf(pref)===0&&p.estado==='Aprobada');
+  if(!aprobadas.length){$('planStatus').textContent='No hay piezas en estado Aprobada este mes. Apruébalas en el Panel de Asesores primero (solo esas reciben copy).';return}
+
+  const REGLAS='REGLAS DE ESCRITURA (obligatorias):\n- Segunda persona, el cliente protagonista, tono conversacional.\n- Prohibido empezar con "En Rosanta".\n- Prohibidos los posesivos de marca: nunca "nuestro/a/os".\n- Prohibidos los em dash (—) y el vocabulario de IA (sumérgete, descubre un mundo de, elevar la experiencia, deleita tu paladar).\n- Máximo 1-2 emojis, al final.\n- Estructura: gancho, cuerpo, CTA (reservar en rosanta.rest), y al final los hashtags tras un salto de línea, sin puntos separadores.\n- Hashtags: usa la base '+HASHTAGS_BASE+' más 3-5 relevantes al eje. Nunca #JardinSantaRosa.';
+
+  let n=0,errores=0;
+  for(const p of aprobadas){
+    $('planStatus').textContent='Escribiendo copy… ('+(n+1)+'/'+aprobadas.length+')';
+    try{
+      const prompt=KAPRICA+'\n\n'+VOZ+'\n\n'+REGLAS+`\n\nEscribe el copy final de esta pieza:\n- Título: ${p.title}\n- Tipo: ${p.tipo} · Eje: ${p.eje} · Embudo: ${p.embudo||''}\n- Gancho/primer segundo: ${p.hook||''}\n- Notas de producción: ${(p.notas||'').replace(/\s+/g,' ').slice(0,300)}\n\nDevuelve SOLO el caption listo para publicar (gancho + cuerpo + CTA + salto de línea + hashtags). Sin comillas envolventes ni markdown.`;
+      const t=await askIA(prompt);
+      const copy=String(t||'').trim().replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim();
+      if(!copy){errores++;continue}
+      p.contenido=copy; p.estado='Generada';
+      await calUpsertRemoto(p); n++;
+    }catch(e){ errores++; }
+  }
+  localStorage.setItem('rosanta_cal',JSON.stringify(cal));
+  renderCal();
+  $('planStatus').textContent='✅ '+n+' piezas con copy (estado Generada)'+(errores?(' · '+errores+' con error'):'')+'. Revisa cada una en el calendario.';
+}
+async function delPost(){if(!editId)return;
+  const id=editId;
+  localStorage.setItem('rosanta_cal',JSON.stringify(read('rosanta_cal',[]).filter(x=>x.id!==id)));
+  try{await calBorrarRemoto(id);}catch(e){alert('Borrado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));}
+  closeOv('ovPost');renderCal()}
+
+/* ================= CHECKLIST ================= */
+const REGLAS=[
+  [/\bnuestr[oa]s?\b/i,'Evita "nuestro/a": el cliente es el protagonista. Usa "tu mesa", "tu experiencia".'],
+  [/^\s*en rosanta/i,'Evita abrir con "En Rosanta".'],
+  [/^\s*hola\b/i,'Evita abrir con "Hola".'],
+  [/—/,'Sin em dashes (—).'],
+  [/\belev(a|an|ar|ando|amos)\b/i,'Evita "elevar" y derivados pretenciosos.'],
+  [/(cocina|coctelería|cocteleria) de autor/i,'Evita "cocina/coctelería de autor". Usa "cocina natural" o "gastronomía sostenible".'],
+  [/\bno\b/i,'Voz afirmativa: revisa si puedes reformular sin "no".'],
+  [/\.\s*\.\s*\./,'Hashtags sin puntos separadores (. . .).']
+];
+const DESEABLES=[
+  [/#\w/,'Incluye hashtags al final del copy.'],
+  [/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u,'Incluye emojis estratégicos.'],
+  [/\btu\b|\btus\b|\bte\b/i,'Habla en segunda persona (tu/te).']
+];
+function lint(){
+  const t=$('copyIn').value;
+  if(!t.trim()){$('lintOut').innerHTML='<li class="bad">Pega un copy primero.</li>';return}
+  let out=[];
+  REGLAS.forEach(([re,msg])=>{out.push(re.test(t)?'<li class="bad">⚠️ '+msg+'</li>':null)});
+  DESEABLES.forEach(([re,msg])=>{out.push(re.test(t)?'<li class="ok">✓ '+msg+'</li>':'<li class="bad">✗ Falta: '+msg+'</li>')});
+  const issues=out.filter(Boolean);
+  const fails=issues.filter(x=>x.includes('bad')).length;
+  $('lintOut').innerHTML='<li class="'+(fails===0?'ok':'bad')+'" style="font-weight:700">'+(fails===0?'✅ Copy apto para publicar':'❌ '+fails+' punto(s) por corregir')+'</li>'+issues.join('');
+}
+const CK=[
+  'Gancho que despierta curiosidad','Resolución del gancho','Branding en los primeros 3 segundos',
+  'Subtítulos en todo el video','CTA en los últimos 2–3 segundos','Cierre con elemento de conversación',
+  'UTM correcto (lowercase + guión bajo, sin tildes)','Pensada en triple uso: orgánico + pauta + retención'
+];
+$('ckList').innerHTML=CK.map((c,i)=>'<label class="ckitem"><input type="checkbox" data-ck="'+i+'" onchange="ckUpd()"> '+c+'</label>').join('');
+function ckUpd(){
+  const done=document.querySelectorAll('#ckList input:checked').length;
+  $('ckScore').textContent=done+'/'+CK.length;
+  $('ckBar').style.width=(done/CK.length*100)+'%';
+}
+function savePieza(){
+  const name=$('pzName').value.trim();if(!name){alert('Nombre de la pieza');return}
+  const done=document.querySelectorAll('#ckList input:checked').length;
+  const pz=read('rosanta_pz',[]);
+  pz.unshift({name,score:done,total:CK.length,fecha:todayISO()});
+  store('rosanta_pz',pz.slice(0,30));
+  // Sincronizar con calendario: si la pieza existe y pasó 8/8, queda Lista
+  if(done===CK.length){
+    const cal=read('rosanta_cal',[]);
+    const p=cal.find(x=>x.title.toLowerCase()===name.toLowerCase()&&x.estado!=='Publicado');
+    if(p){p.estado='Listo';localStorage.setItem('rosanta_cal',JSON.stringify(cal));calUpsertRemoto(p).catch(function(){});alert('Pieza validada 8/8: marcada como "Listo" en el calendario ('+p.date+')')}
+  }
+  $('pzName').value='';document.querySelectorAll('#ckList input').forEach(i=>i.checked=false);ckUpd();renderPz();
+}
+function renderPz(){
+  const pz=read('rosanta_pz',[]);
+  $('pzTable').innerHTML=pz.length?'<table><thead><tr><th>Pieza</th><th>Fecha</th><th>Score</th><th>Estado</th></tr></thead><tbody>'+
+    pz.map(p=>'<tr><td>'+p.name+'</td><td>'+p.fecha+'</td><td>'+p.score+'/'+p.total+'</td><td><span class="chip '+(p.score===p.total?'on':'warn')+'">'+(p.score===p.total?'Apta para calendario':'Fuera del calendario')+'</span></td></tr>').join('')+'</tbody></table>':'<p class="muted">Sin piezas evaluadas aún.</p>';
+}
+/* ================= CARRITOS ================= */
+function openCarr(){$('cDate').value=todayISO();$('cNombre').value='';$('cValor').value='';$('cEstado').value='Pendiente';$('ovCarr').classList.add('act')}
+function saveCarr(){
+  if(!$('cNombre').value.trim()){alert('Nombre del contacto');return}
+  const c=read('rosanta_carr',[]);
+  c.unshift({id:'c'+Date.now(),fecha:$('cDate').value,nombre:$('cNombre').value.trim(),canal:$('cCanal').value,valor:parseFloat($('cValor').value)||0,estado:$('cEstado').value,consentimiento:'',contacto:''});
+  store('rosanta_carr',c);closeOv('ovCarr');renderCarr();
+}
+function carrEstado(id,val){const c=read('rosanta_carr',[]);const x=c.find(y=>y.id===id);if(x){x.estado=val;store('rosanta_carr',c);renderCarr()}}
+function delCarr(id){store('rosanta_carr',read('rosanta_carr',[]).filter(x=>x.id!==id));renderCarr()}
+function renderCarr(){
+  const c=read('rosanta_carr',[]);
+  const mes=todayISO().slice(0,7);
+  const delMes=c.filter(x=>x.fecha&&x.fecha.startsWith(mes));
+  const rec=delMes.filter(x=>x.estado==='Recuperado');
+  const cont=delMes.filter(x=>x.estado!=='Pendiente');
+  const qRec=rec.reduce((a,x)=>a+x.valor,0);
+  const k=[
+    ['Registrados (mes)',delMes.length,'de ~184 abandonos/mes'],
+    ['Contactados',cont.length,delMes.length?Math.round(cont.length/delMes.length*100)+'% del total':'—'],
+    ['Recuperados',rec.length,delMes.length?Math.round(rec.length/delMes.length*100)+'% de recuperación':'—'],
+    ['Q recuperados',fmtQ(qRec),'ingresos rescatados este mes']
+  ];
+  $('carrKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
+  const opts=['Pendiente','Contactado','Recuperado','Perdido'];
+  $('carrTable').innerHTML=c.length?'<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Contacto</th><th>Canal</th><th>Permiso</th><th>Valor</th><th>Estado</th><th></th><th></th></tr></thead><tbody>'+
+    c.map(x=>'<tr><td>'+x.fecha+'</td><td><b>'+x.nombre+'</b>'+(x.contacto?'<br><span class="muted" style="font-size:11px">'+x.contacto+'</span>':'')+'</td><td>'+x.canal+'</td>'+
+    '<td><span class="chip '+(String(x.consentimiento).toUpperCase()==='SI'?'on':'off')+'">'+(String(x.consentimiento).toUpperCase()==='SI'?'Sí':'—')+'</span></td>'+
+    '<td>'+fmtQ(x.valor)+'</td>'+
+    '<td><select onchange="carrEstado(\''+x.id+'\',this.value)">'+opts.map(o=>'<option'+(o===x.estado?' selected':'')+'>'+o+'</option>').join('')+'</select></td>'+
+    '<td><button class="btn sec sm" onclick="msgCarr(\''+x.id+'\')">💬 Mensaje</button></td>'+
+    '<td><button class="btn danger" onclick="delCarr(\''+x.id+'\')">✕</button></td></tr>'+
+    '<tr><td colspan="8" style="padding:0;border:none"><div id="msg_'+x.id+'"></div></td></tr>').join('')+'</tbody></table></div>':'<p class="muted">Sin registros. Empieza con los abandonos de esta semana desde SonTickets.</p>';
+}
+/* ================= PAUTA SEMANAL desde la Sheet Marketing OS =================
+   (parseReporte/b64utf8/numloc quedan del lector de reportes de Drive, hoy sin
+   uso en esta sección; se conservan hasta decidir si se retiran.) */
+const TOOL_DRIVE_SEARCH='mcp__d3eabd4b-f002-4490-819a-a85cd434281f__search_files';
+const TOOL_DRIVE_DL='mcp__d3eabd4b-f002-4490-819a-a85cd434281f__download_file_content';
+const unwrap=r=>r.structuredContent??JSON.parse(r.content[0].text);
+const b64utf8=b=>new TextDecoder().decode(Uint8Array.from(atob(b),c=>c.charCodeAt(0)));
+const numloc=s=>s==null?null:parseFloat(String(s).replace(/,/g,''));
+function parseReporte(html,wk){
+  const grab=(label)=>{
+    const re=new RegExp('<div class="l">'+label+'[^<]*<\\/div><div class="v">([^<]+)<\\/div><div class="s">([^<]*)<\\/div>');
+    const m=html.match(re);return m?{v:m[1],s:m[2]}:null;
+  };
+  const g=grab('Google Ads'),mta=grab('Meta Ads'),res=grab('Reservas');
+  const tk=grab('Ticket promedio'),vt=grab('Ventas');
+  const row={wk};
+  if(tk){row.ticket=numloc((String(tk.v).match(/Q([\d,\.]+)/)||[])[1]);}
+  if(vt){row.ventas=numloc((String(vt.v).match(/Q([\d,\.]+)/)||[])[1]);}
+  if(g){row.gCosto=numloc((g.v.match(/Q([\d,\.]+)/)||[])[1]);
+    row.gClics=numloc((g.s.match(/([\d,]+)\s*clicks?/i)||[])[1]);
+    row.gImp=numloc((g.s.match(/([\d,]+)\s*impr/i)||[])[1]);}
+  if(mta){row.mCosto=numloc((mta.v.match(/Q([\d,\.]+)/)||[])[1]);
+    row.mAlcance=numloc((mta.s.match(/alcance\s*([\d,]+)/i)||[])[1]);}
+  if(res){row.reservas=numloc(res.v);}
+  return (row.gCosto!=null||row.mCosto!=null)?row:null;
+}
+async function loadGads(){
+  $('gadsStatus').textContent='Cargando…';
+  $('gadsTable').innerHTML='<div class="loading"><div class="spin"></div>Leyendo pauta_semanal de la Sheet…</div>';
+  try{
+    /* Fuente: pestaña pauta_semanal de la Sheet Marketing OS (el loop de los
+       lunes la alimenta). Los reportes Rosanta_Reporte_Sxx.html de Drive
+       quedaron obsoletos como fuente de esta serie. */
+    const crudas=await srv('mktRead','pauta_semanal');
+    /* wk puede venir como 31 o "S31"; el resto son números de la Sheet, que
+       igual pasan por numG por si alguna celda quedó como texto. */
+    const porWk={};
+    (crudas||[]).forEach(r=>{
+      const wk=parseInt(String(r.wk).replace(/\D/g,''),10);
+      if(isNaN(wk))return;
+      porWk[wk]={wk,gCosto:numG(r.gCosto),gClics:numG(r.gClics),gImp:numG(r.gImp),
+        mCosto:numG(r.mCosto),mAlcance:numG(r.mAlcance),reservas:numG(r.reservas),
+        comensales:numG(r.comensales),comensalesReserva:numG(r.comensalesReserva),ticket:numG(r.ticket),
+        clientes_nuevos:numG(r.clientes_nuevos)};
+    });
+    const rows=Object.values(porWk)
+      .filter(x=>x.gCosto!=null||x.mCosto!=null)
+      .sort((a,b)=>b.wk-a.wk).slice(0,10);
+    if(!rows.length)throw new Error('La pestaña pauta_semanal de la Sheet Marketing OS está vacía');
+    window._pautaRows=rows; // el CAC del bloque ROAS lee la última semana de aquí
+    const last=rows[0];
+    const gTot=rows.reduce((a,x)=>a+(x.gCosto||0),0),mTot=rows.reduce((a,x)=>a+(x.mCosto||0),0);
+    const k=[
+      ['Google · S'+last.wk,fmtQ(last.gCosto),fmtN(last.gClics)+' clics · '+fmtN(last.gImp)+' impr'],
+      ['Meta · S'+last.wk,fmtQ(last.mCosto),'alcance '+fmtN(last.mAlcance)],
+      ['Reservas · S'+last.wk,last.reservas!=null?fmtN(last.reservas):'—',(last.comensalesReserva!=null?fmtN(last.comensalesReserva)+' comensales · ':'')+'Wix'],
+      ['Total '+rows.length+' semanas',fmtQ(gTot+mTot),'Google '+fmtQ(gTot)+' + Meta '+fmtQ(mTot)]
+    ];
+    $('gadsKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val" style="font-size:20px">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
+    $('gadsTable').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Semana</th><th>Google (Q)</th><th>Clics</th><th>Impresiones</th><th>CTR</th><th>Meta (Q)</th><th>Alcance</th><th>Reservas</th><th>Comens. reserva</th><th>Comensales</th><th>Ticket (Q)</th></tr></thead><tbody>'+
+      rows.map(x=>'<tr><td><b>S'+x.wk+'</b></td><td>'+(x.gCosto!=null?fmtQ(x.gCosto):'—')+'</td><td>'+fmtN(x.gClics)+'</td><td>'+fmtN(x.gImp)+'</td>'+
+      '<td>'+((x.gImp&&x.gClics)?(x.gClics/x.gImp*100).toFixed(2)+'%':'—')+'</td>'+
+      '<td>'+(x.mCosto!=null?fmtQ(x.mCosto):'—')+'</td><td>'+fmtN(x.mAlcance)+'</td><td>'+(x.reservas!=null?x.reservas:'—')+'</td>'+
+      '<td>'+(x.comensalesReserva!=null?fmtN(x.comensalesReserva):'—')+'</td><td>'+(x.comensales!=null?fmtN(x.comensales):'—')+'</td><td>'+(x.ticket!=null?fmtQ(x.ticket):'—')+'</td></tr>').join('')+'</tbody></table></div>';
+    $('gadsStatus').textContent=rows.length+' semanas cargadas';
+    // ROAS: ticket por comensal (POS) y comensales de las reservas (Wix) de la
+    // última semana; si la semana aún no trae comensales, caen las reservas.
+    if(last.ticket)$('roTicket').value=Math.round(last.ticket);
+    const atrib=last.comensalesReserva!=null?last.comensalesReserva:last.reservas;
+    if(atrib!=null)$('roRes').value=atrib;
+    computeRoas(); // el bloque de retorno vive de estas filas, no de la data viva de Meta
+  }catch(err){
+    $('gadsKpis').innerHTML='';
+    $('gadsTable').innerHTML='<p class="muted">'+err.message+'. Presiona Actualizar para reintentar.</p>';
+    $('gadsStatus').textContent='';
+  }
+}
+/* ================= GUIONES Y CARRUSELES (IA) ================= */
+$('guEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
+$('caEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
+const VOZ=`Reglas de voz de Rosanta (restaurante de gastrococtelería en Antigua Guatemala, cocina natural y gastronomía sostenible, jardín propio):
+- Voz afirmativa siempre; evita construcciones negativas y la palabra "no".
+- Segunda persona, el cliente es el protagonista: "tu mesa", "tu experiencia".
+- Prohibido: "nuestro/a", abrir con "En Rosanta" o "Hola", "elevar" y derivados, "cocina de autor", "coctelería de autor", em dashes.
+- Usa "cocina natural" y "gastronomía sostenible" como conceptos centrales.
+- Tono humano, cálido, simple. Frases cortas. Emojis estratégicos.
+- Estructura: gancho que despierta curiosidad, resolución del gancho, CTA (reservar en rosanta.rest), cierre con elemento de conversación ligera.`;
+const KAPRICA=`FORMATO KAPRICA (el cerebro creativo de todo el contenido de Rosanta):
+Micro-historias de ficción donde el restaurante NUNCA habla de sí mismo. Personas reales en situaciones cotidianas, con humor ligero y absurdo entrañable, donde Rosanta aparece dentro de sus vidas.
+Principios:
+1. La historia primero: el espectador ve una escena de la vida real (una llamada, una discusión de pareja por pedir lo mismo, un voicemail a las 3am, un brindis de boda que se desvía al menú).
+2. Los platos y espacios se mencionan de forma natural DENTRO del diálogo (el pulpo, el cóctel de temporada, la chimenea, el jardín, la cava), nunca como anuncio.
+3. Giro final: la historia aterriza en una intención real (reservar una mesa, volver, llevar a alguien). El "anti-anuncio": hasta una queja termina en reserva.
+4. Referencias locales de Antigua Guatemala (calles, el arco, el volcán, la vida antigüeña) para pertenencia.
+5. Lo que se evita: promos genéricas, "happy hour Q8", capturas de reseñas, anuncios de horario. Eso la gente lo salta. Historias con personas es lo que la gente comparte.
+Formatos probados: llamada al restaurante, voicemail/buzón, diálogo en la mesa, narración "así va la historia...", llamada a programa de radio, discurso de boda/brindis, repetición cómica ("¿dónde queda?").`;
+async function askIA(prompt){
+  const r=await window.cowork.askClaude(prompt);
+  if(typeof r==='string')return r;
+  return r?.text??r?.content?.[0]?.text??JSON.stringify(r);
+}
+function md2html(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^- (.+)$/gm,'• $1').replace(/\n/g,'<br>');
+}
+function libSave(tipo,tema,texto){
+  const l=read('rosanta_lib',[]);
+  l.unshift({id:'l'+Date.now(),tipo,tema,texto,fecha:todayISO()});
+  store('rosanta_lib',l.slice(0,40));renderLib();
+}
+function libDel(id){store('rosanta_lib',read('rosanta_lib',[]).filter(x=>x.id!==id));renderLib()}
+function libCopy(id){const x=read('rosanta_lib',[]).find(y=>y.id===id);if(x){navigator.clipboard.writeText(x.texto);alert('Copiado al portapapeles')}}
+function renderLib(){
+  const l=read('rosanta_lib',[]);
+  $('genLib').innerHTML=l.length?l.map(x=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
+    '<summary style="cursor:pointer;font-weight:700">'+(x.tipo==='guion'?'🎬':(x.tipo==='post'?'📝':'🎠'))+' '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
+    '<div style="padding:10px;font-size:12.5px">'+md2html(x.texto)+'</div>'+
+    '<button class="btn sec sm" onclick="libCopy(\''+x.id+'\')">Copiar</button> '+
+    '<button class="btn danger" onclick="libDel(\''+x.id+'\')">✕</button></details>').join('')
+    :'<p class="muted">Sin borradores guardados. Genera un guión o carrusel arriba.</p>';
+}
+async function genGuion(){
+  const tema=$('guTema').value.trim();if(!tema){alert('Escribe el tema');return}
+  $('guOut').innerHTML='<div class="loading"><div class="spin"></div>Generando guión…</div>';
+  try{
+    const fmt=$('guFmt').value;
+    let t;
+    if(fmt==='Frase constante (visual)'){
+      /* Formato 2 de la casa de contenido: escenas + frase constante (referentes
+         packardtavern / fattorest). Entrega pensada para test de ganchos en pauta. */
+      t=await askIA(KAPRICA+'\n\n'+VOZ+`\n\nEscribe la pieza en el FORMATO VISUAL DE FRASE CONSTANTE de Rosanta (referentes: packardtavern, fattorest): escenas reales del lugar sin actuación, tomas lentas y transiciones suaves, una sola frase en pantalla que se repite o evoluciona. Cero anuncio, la historia la cuenta la cámara. Duración 15-20 segundos, vertical 9:16, subtítulos siempre, funciona en silencio. Branding visible en los primeros 3 segundos (wordmark ROSANTA discreto) y CTA de reserva (rosanta.rest/reservas) en los últimos 2-3 segundos.\nTema/situación: ${tema}\nEje de contenido: ${$('guEje').value}\n\nEntrega en español, exactamente con estas secciones:\n**Shot list** 5 a 7 tomas numeradas con duración en segundos, movimiento de cámara (lento, transiciones suaves) y qué se ve en cada una; marca en qué toma entra el branding y en cuál el CTA.\n**3 ganchos (segundo 0-1)** un gancho por ángulo (curiosidad, problema directo, complicidad local), cada uno con su versión en inglés. Regla Andromeda: en pauta cada gancho es la semilla de un VIDEO HERMANO conceptualmente distinto (otras tomas, otro ritmo), jamás el mismo material con otro texto; agrega una línea de cómo cambia el video en cada caso.\n**Frase constante** la frase que acompaña el resto del video (puede evolucionar en 2-3 pasos), en español y en inglés, con giro final a la reserva.\n**CTA final** texto de los últimos 2-3 segundos, en español y en inglés.\n**Copy del post** un caption en español (foodie local) y uno en inglés (turista): gancho, resolución, CTA a rosanta.rest/reservas, cierre con pregunta ligera. Emojis estratégicos. Hashtags al final tras un salto de línea, sin puntos separadores.\n**utm_content** nombre por variante en minúsculas con guión bajo (ej: llegar_hook_curiosidad).\n**Nota de producción** 3 líneas: luz, hora ideal de grabación y ritmo de edición.`);
+    }else{
+      t=await askIA(KAPRICA+'\n\n'+VOZ+`\n\nEscribe un guión de video estilo Kaprica para Rosanta (15-45 segundos).\nTema/plato/situación: ${tema}\nEje de contenido: ${$('guEje').value}\nFormato Kaprica: ${fmt==='Sorpréndeme (elige el mejor)'?'elige tú el formato que mejor sirva a la historia':fmt}\n\nEntrega en español, exactamente con estas secciones:\n**Formato elegido** una línea.\n**Guión (diálogo completo)** el diálogo o monólogo palabra por palabra, natural y con humor ligero; los platos/espacios de Rosanta mencionados dentro de la conversación; giro final que aterriza en reserva o visita. Branding visual en los primeros 3 segundos (nota entre corchetes).\n**Notas de producción** locación, personajes, tono (2-3 líneas).\n**Copy del post** caption corto con emojis y hashtags al final (#antigua #antiguaguatemala #foodie + relevantes).\nRecuerda: todo video lleva subtítulos.`);
+    }
+    window._lastGu=t;
+    $('guOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div><div style="margin-top:8px"><button class="btn sm" onclick="libSave(\'guion\',$(\'guTema\').value.trim(),window._lastGu)">Guardar en biblioteca</button>'+piezaBtn('lastGu')+'</div>';
+  }catch(e){$('guOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
+}
+async function genCarrusel(){
+  const tema=$('caTema').value.trim();if(!tema){alert('Escribe el tema');return}
+  $('caOut').innerHTML='<div class="loading"><div class="spin"></div>Generando carrusel…</div>';
+  try{
+    const n=$('caN').value;
+    const t=await askIA(KAPRICA+'\n\n'+VOZ+`\n\nEscribe un carrusel de Instagram para Rosanta con ${n} filminas, con espíritu Kaprica: cuenta una micro-historia o una idea con personalidad, jamás un anuncio genérico.\nTema: ${tema}\nEje de contenido: ${$('caEje').value}\n\nEntrega en español, exactamente así:\n**Filmina 1 (gancho)** texto grande y corto que despierta curiosidad.\n**Filmina 2..${n-1}** una idea por filmina, texto breve listo para diseño, que avanza la historia.\n**Filmina ${n} (cierre)** giro final + CTA de reserva en rosanta.rest.\n**Copy del post** caption con emojis, pregunta de conversación y hashtags al final.`);
+    window._lastCa=t;
+    $('caOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div><div style="margin-top:8px"><button class="btn sm" onclick="libSave(\'carrusel\',$(\'caTema\').value.trim(),window._lastCa)">Guardar en biblioteca</button>'+piezaBtn('lastCa')+'</div>';
+  }catch(e){$('caOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
+}
+/* ================= ROAS / ROI ================= */
+/* REGLA DEL DENOMINADOR — no la cambies sin leer esto (02-sep-2026).
+ *
+ *   ROAS = ventas atribuidas a la campana / inversion en MEDIOS
+ *
+ * En el denominador entra SOLO la compra de audiencia en plataforma: Meta Ads
+ * y Google Ads. Queda fuera todo lo demas que se paga en marketing —
+ * honorarios de quien gestiona la pauta, produccion de contenido,
+ * suscripciones de herramientas.
+ *
+ * Por que: el ROAS mide que devuelve cada quetzal puesto en medios. Si el
+ * honorario de gestion entra al denominador, el ROAS baja artificialmente y la
+ * pauta parece rendir menos de lo que rinde; escalar o apagar campanas se
+ * decide entonces con un numero equivocado.
+ *
+ * Esos honorarios SI cuentan en el bloque Marketing del DRE — el rango de
+ * referencia del sector (4-8% de la venta) se mide sobre el gasto total de
+ * marketing, gestion incluida. No se borran de ningun lado: simplemente no
+ * entran aqui.
+ *
+ * Si alguna vez hace falta un indicador que incluya la gestion, va aparte y
+ * con otro nombre (por ejemplo "costo total de adquisicion"). Nunca
+ * sobrescribiendo el ROAS.
+ *
+ * DE DONDE SALE EL GASTO HOY — las dos fuentes son de plataforma, no del
+ * maestro financiero, y por eso ya cumplen la regla:
+ *   - spend  : Meta Graph API (campanas con gasto de la cuenta de anuncios).
+ *   - gCosto : Google Ads Script, metrics.cost_micros.
+ *   - mCosto : Meta Graph API, escrito por el mismo Google Ads Script.
+ * Ninguna suma la categoria MARKETING_DIGITAL del maestro. NO la uses: ahi
+ * conviven los medios con los honorarios y las herramientas. Si algun dia hay
+ * que leer el gasto desde el maestro, el criterio de identificacion de MEDIOS
+ * en la descripcion del movimiento es: Meta trae "FACEBK" y Google trae
+ * "GOOGLE*ADS". Todo lo demas de esa categoria es gestion, contenido o
+ * herramientas y se queda fuera. Ojo tambien con la moneda: los cargos de
+ * Google Ads vienen en dolares (columna Dolares de la tarjeta) y los de Meta
+ * en quetzales.
+ *
+ * PERIODO: semana ISO. El denominador es gCosto + mCosto de la ultima semana de
+ * pauta_semanal — las dos plataformas, no solo Meta — y el ingreso sale del
+ * ticket y los comensales de esa misma semana. NO uses el gasto vivo de Meta
+ * del selector de arriba: ese responde al rango de 7/30/90 dias y mezclaria un
+ * mes de inversion contra una semana de ingreso.
+ */
+function computeRoas(){
+  /* Todo el bloque se para sobre la ultima semana ISO de pauta_semanal: de ahi
+     salen los dos medios, el ticket, los comensales y los clientes nuevos. Asi
+     ROAS, ROI y CAC comparten periodo y denominador. Antes el ROAS tomaba el
+     gasto vivo de Meta del selector de arriba (30 dias por defecto) contra un
+     ingreso de una sola semana, y sin el gasto de Google: dos errores en
+     direcciones opuestas que nadie podia leer por separado. */
+  const pw=(window._pautaRows||[])[0];
+  if(!pw){
+    $('roasKpis').innerHTML='<p class="muted">Todavia sin semanas con gasto en pauta_semanal. '+
+      'Presiona Actualizar en el panel de pauta semanal de abajo.</p>';
+    return;
+  }
+  const g=pw.gCosto||0, m=pw.mCosto||0, spend=g+m;
+  /* Una plataforma sin dato NO es una plataforma sin gasto: si el Google Ads
+     Script no escribio la semana, el denominador queda corto y el ROAS sale
+     alto. Se avisa en la tarjeta en vez de dejarlo pasar callado. */
+  const faltan=[];
+  if(pw.gCosto==null)faltan.push('Google');
+  if(pw.mCosto==null)faltan.push('Meta');
+  const ticket=parseFloat($('roTicket').value)||0;
+  const res=parseFloat($('roRes').value)||0;
+  const ingreso=res*ticket;
+  const roas=spend?ingreso/spend:0;
+  const roi=spend?(ingreso-spend)/spend*100:0;
+  /* Sin inversion o sin comensales atribuidos NO hay ratio que mostrar. Un
+     "0.00x · En perdida" por falta de dato se lee como mal rendimiento y es
+     justo la lectura que hace apagar una campana que va bien. */
+  const hay=spend>0&&ingreso>0;
+  const porque=!spend?'Sin inversión registrada esa semana':'Sin comensales atribuidos esa semana';
+  const k=[
+    ['Inversión medios · S'+pw.wk,fmtQ(spend),
+      'Google '+fmtQ(g)+' + Meta '+fmtQ(m)+(faltan.length?' · ⚠ falta el dato de '+faltan.join(' y '):'')],
+    ['Ingreso estimado',fmtQ(ingreso),fmtN(res)+' comensales × '+fmtQ(ticket)],
+    ['ROAS',hay?roas.toFixed(2)+'x':'—',hay?(roas>=1?'Recupera la inversión':'Bajo 1x'):porque],
+    ['ROI',hay?((roi>=0?'+':'')+roi.toFixed(0)+'%'):'—',hay?(roi>=0?'Retorno positivo':'En pérdida'):porque]
+  ];
+  /* CAC = la MISMA inversión en medios de la semana ÷ clientes_nuevos (primeras
+     reservas de Wix). Con clientes_nuevos en 0 o vacío se muestra "—": jamás
+     división por cero. */
+  const cn=pw.clientes_nuevos;
+  k.push(['CAC · S'+pw.wk,(cn&&spend)?fmtQ(spend/cn):'—',
+    cn?fmtN(cn)+' clientes nuevos':'Sin clientes nuevos registrados esa semana']);
+  $('roasKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val" style="font-size:22px">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
+}
+/* ================= CREADOR DE UTMs (Vanessa) ================= */
+/* Convención Rosanta: minúsculas, sin tildes ni ñ, espacios y guiones → guión
+   bajo. Se aplica a TODO parámetro antes de armar la URL; el historial vive en
+   localStorage de este dispositivo (últimas 20), sin tocar la Sheet. */
+function utmNorm(s){
+  return String(s||'').trim().toLowerCase()
+    .replace(/ñ/g,'n')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[\s\-–—]+/g,'_')
+    .replace(/[^a-z0-9_.]/g,'')
+    .replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+function utmBaseChange(){$('utmBaseOtraFld').style.display=$('utmBase').value==='otra'?'block':'none'}
+function utmGen(){
+  let base=$('utmBase').value==='otra'?$('utmBaseOtra').value.trim():$('utmBase').value;
+  if(!base){alert('Escribe la URL base');return}
+  if(!/^https?:\/\//i.test(base))base='https://'+base;
+  const src=utmNorm($('utmSource').value),med=utmNorm($('utmMedium').value),
+        cam=utmNorm($('utmCampaign').value),con=utmNorm($('utmContent').value),
+        ter=utmNorm($('utmTerm').value);
+  if(!src||!med||!cam){alert('utm_source, utm_medium y utm_campaign son obligatorios');return}
+  const url=base.replace(/\?+$/,'')+'?utm_source='+src+'&utm_medium='+med+'&utm_campaign='+cam+
+    (con?'&utm_content='+con:'')+(ter?'&utm_term='+ter:'');
+  window._lastUtm=url;
+  $('utmOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;word-break:break-all"><b>'+url+'</b></div>'+
+    '<div style="margin-top:8px"><button class="btn sm" onclick="navigator.clipboard.writeText(window._lastUtm);alert(\'Copiada al portapapeles\')">📋 Copiar URL</button></div>'+
+    '<p class="muted" style="margin-top:8px">Recuerda: el <b>utm_campaign</b> se repite igual en Meta y Google para toda la campaña; el <b>utm_content</b> cambia por creativo.</p>';
+  const h=read('rosanta_utm',[]);
+  h.unshift({id:'u'+Date.now(),fecha:todayISO(),url,campaign:cam,source:src,medium:med,content:con,term:ter});
+  localStorage.setItem('rosanta_utm',JSON.stringify(h.slice(0,20)));
+  renderUtmHist();
+}
+function utmCopy(id){const x=read('rosanta_utm',[]).find(y=>y.id===id);if(x){navigator.clipboard.writeText(x.url);alert('Copiada al portapapeles')}}
+function renderUtmHist(){
+  const h=read('rosanta_utm',[]);
+  $('utmHist').innerHTML=h.length?'<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Campaña</th><th>Source / Medium</th><th>Content</th><th>URL</th><th></th></tr></thead><tbody>'+
+    h.map(x=>'<tr><td>'+x.fecha+'</td><td><b>'+x.campaign+'</b></td><td>'+x.source+' / '+x.medium+'</td><td>'+(x.content||'—')+'</td>'+
+    '<td style="max-width:280px;word-break:break-all;font-size:11px">'+x.url+'</td>'+
+    '<td><button class="btn sec sm" onclick="utmCopy(\''+x.id+'\')">Copiar</button></td></tr>').join('')+'</tbody></table></div>'
+  :'<p class="muted">Sin UTMs generadas aún. Arma la primera arriba.</p>';
+}
+/* ================= DIAGNÓSTICO IA (analista de pauta) ================= */
+async function diagIA(){
+  const rows=window._metaRows;
+  if(!rows||!rows.length){alert('Primero carga la data de Meta (Actualizar)');return}
+  $('diagOut').innerHTML='<div class="loading"><div class="spin"></div>Analizando campañas…</div>';
+  try{
+    const data=rows.map(x=>`${x.name} [${x.status}] obj:${x.objective} gasto:Q${x.spend} impr:${x.imp} clics:${x.clicks} ctr:${x.ctr}% cpc:Q${x.cpc} cpm:Q${x.cpm} freq:${x.freq}`).join('\n');
+    const t=await askIA(`Eres el analista de pauta de Rosanta (restaurante en Antigua Guatemala, moneda GTQ). Fase actual: awareness; el objetivo de conversión inicia en el mes 4.
+Benchmarks propios: Hook Rate mín 40%, Retención mín 10%, CPE bajo Q0.05, CTR sano ≥1%, frecuencia >3 = fatiga. Insight validado: campañas de VisitasIG superan a transaccionales por 20-100x.
+Campañas (último periodo):
+${data}
+
+Entrega en español, máximo 15 líneas:
+**Resumen** (2 líneas)
+**Por campaña**: nombre → escalar / mantener / ajustar creativo / apagar + porqué en una línea.
+**3 acciones para esta semana** con presupuesto sugerido en Q.`);
+    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-top:10px">'+md2html(t)+'</div>';
+  }catch(e){$('diagOut').innerHTML='<p class="muted">Error: '+e.message+'</p>'}
+}
+/* ================= ESPÍA (Ad Library) ================= */
+/* La Ad Library API de Meta no se abre con solo tener token: exige que la app
+   tenga acceso concedido, y eso pasa por confirmar identidad y ubicacion en
+   facebook.com/ID. Mientras eso no este, Graph responde 400 "does not have
+   permission". No es un fallo del sistema, asi que no se muestra como tal. */
+function espMsgError(err){
+  const m=String((err&&err.message)||err||'');
+  const esPermiso=/permission|#10|not have access|ad library/i.test(m);
+  if(!esPermiso) return '<p class="muted">'+m+'</p>';
+  return '<div style="background:var(--crema);border:1px solid var(--borde);border-radius:12px;padding:16px;font-size:13px;line-height:1.6">'
+    +'<b>El Espía necesita acceso a la Ad Library API de Meta</b>'
+    +'<p style="margin:8px 0;color:var(--tierra)">Meta no entrega la Biblioteca de Anuncios por API hasta que confirmes tu identidad y ubicación. Es un trámite de Meta, una sola vez: no hay nada roto en el sistema.</p>'
+    +'<p style="margin:8px 0"><b>Para habilitarlo:</b> confirma tu identidad en '
+    +'<a href="https://www.facebook.com/ID" target="_blank" rel="noopener">facebook.com/ID</a>'
+    +' y, cuando Meta lo apruebe, el Espía empieza a responder solo.</p>'
+    +'<p style="margin:8px 0">Mientras tanto, la competencia se consulta a mano en la '
+    +'<a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=GT" target="_blank" rel="noopener">Biblioteca de Anuncios</a>'
+    +' (filtra por Guatemala).</p>'
+    +'<p class="muted" style="margin-top:10px;font-size:11.5px">Detalle técnico: '+m+'</p>'
+    +'</div>';
+}
+const TOOL_ADLIB='mcp__1479a68e-b2cd-48a5-8467-6d02eb005b0e__ads_library_search';
+async function loadEspia(){
+  $('espStatus').textContent='Buscando…';
+  $('espTable').innerHTML='<div class="loading"><div class="spin"></div>Consultando Biblioteca de Anuncios…</div>';
+  $('espIAOut').innerHTML='';$('espIABtn').style.display='none';
+  try{
+    const r=await window.cowork.callMcpTool(TOOL_ADLIB,{
+      search_terms:$('espTerm').value.trim()||'restaurante antigua guatemala',
+      countries:[$('espPais').value],ad_active_status:'ACTIVE',limit:25,
+      advertiser_request:'qué está pautando la competencia'});
+    if(r.isError)throw new Error(r.content?.[0]?.text||'Error de Ad Library');
+    let payload=unwrap(r);let res=payload.results;
+    if(typeof res==='string')res=JSON.parse(res);
+    const ads=res.ads||[];
+    window._espAds=ads;
+    if(!ads.length){$('espTable').innerHTML='<p class="muted">Sin anuncios activos para esa búsqueda.</p>';$('espStatus').textContent='';return}
+    const byPage={};ads.forEach(a=>{byPage[a.page_name]=(byPage[a.page_name]||0)+1});
+    $('espTable').innerHTML='<p class="muted" style="margin-bottom:8px">~'+(res.estimated_total_count??ads.length)+' anuncios activos en total · mostrando '+ads.length+'</p>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Página</th><th>Título del ad</th><th>Creado</th><th>Ver</th></tr></thead><tbody>'+
+      ads.map(a=>'<tr><td><b>'+a.page_name+'</b> <span class="muted">('+byPage[a.page_name]+' ads)</span></td>'+
+      '<td>'+(a.ad_creative_link_title||'—')+'</td>'+
+      '<td>'+new Date(a.ad_creation_time*1000).toLocaleDateString('es-GT')+'</td>'+
+      '<td><a href="'+a.ad_snapshot_url+'" target="_blank">Abrir ↗</a></td></tr>').join('')+'</tbody></table></div>';
+    $('espIABtn').style.display='inline-block';
+    $('espStatus').textContent=Object.keys(byPage).length+' páginas activas';
+  }catch(err){$('espTable').innerHTML=espMsgError(err);$('espStatus').textContent='';$('espIABtn').style.display='none'}
+}
+async function espiaIA(){
+  const ads=window._espAds;if(!ads)return;
+  $('espIAOut').innerHTML='<div class="loading"><div class="spin"></div>Analizando patrones…</div>';
+  try{
+    const data=ads.map(a=>`${a.page_name} | ${a.ad_creative_link_title||'sin título'} | creado ${new Date(a.ad_creation_time*1000).toISOString().slice(0,10)}`).join('\n');
+    const t=await askIA(`Eres el espía de pauta de Rosanta (gastrococtelería en Antigua Guatemala: cocina natural, jardín, maridaje plato+cóctel, sin delivery). Anuncios activos de la competencia en la Biblioteca de Anuncios de Meta:
+${data}
+
+Entrega en español, máximo 12 líneas:
+**Quién pauta más fuerte** (páginas con más ads)
+**Patrones** (2-3 líneas)
+**3 ángulos libres que Rosanta puede ocupar** y que nadie está usando, alineados a: Gastrococtelería, Cocina con corazón, Ambientes, Comunidad, Eventos.`);
+    $('espIAOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-top:10px">'+md2html(t)+'</div>';
+  }catch(e){$('espIAOut').innerHTML='<p class="muted">Error: '+e.message+'</p>'}
+}
+/* ================= MENSAJE DE RECUPERACIÓN (retención) ================= */
+async function msgCarr(id){
+  const x=read('rosanta_carr',[]).find(y=>y.id===id);if(!x)return;
+  const dias=Math.max(0,Math.round((new Date(todayISO())-new Date(x.fecha))/86400000));
+  const toque=dias<=1?1:(dias<=4?2:3);
+  const box=$('msg_'+id);box.innerHTML='<div class="loading"><div class="spin"></div>Generando toque '+toque+'…</div>';
+  try{
+    const t=await askIA(`Eres el responsable de retención de Rosanta (restaurante de gastrococtelería en Antigua Guatemala; reservas en rosanta.rest/reservas; sin delivery, nunca lo menciones).
+Reglas de voz: afirmativa siempre, evita la palabra "no"; segunda persona (tu mesa, tu experiencia); prohibido "nuestro", abrir con "Hola", em dashes; cálido, humano, frases cortas, 1-2 emojis.
+Cliente: ${x.nombre.split(' ')[0]}. Abandonó una reserva hace ${dias} días. Canal: ${x.canal}.
+Escribe SOLO el mensaje de WhatsApp (máximo 4 líneas) para el toque ${toque} de 3:
+- Toque 1: retomar cálidamente su intención de reservar + link rosanta.rest/reservas.
+- Toque 2: valor añadido (algo de temporada o un espacio: cava, fogata, jardín) + link.
+- Toque 3: última invitación ligera con pregunta de conversación.`);
+    box.innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:10px;margin-top:6px">'+md2html(t)+'</div>'+
+      '<button class="btn sec sm" style="margin-top:6px" onclick="navigator.clipboard.writeText(this.previousElementSibling.innerText);alert(\'Copiado\')">Copiar</button>';
+  }catch(e){box.innerHTML='<p class="muted">Error: '+e.message+'</p>'}
+}
+async function genPost(){
+  const tema=$('poTema').value.trim();if(!tema){alert('Escribe el tema');return}
+  $('poOut').innerHTML='<div class="loading"><div class="spin"></div>Generando post…</div>';
+  try{
+    const obj=$('poObj').value;
+    const t=await askIA(KAPRICA+'\n\n'+VOZ+`\n\nEscribe un post de feed (Instagram + Facebook) para Rosanta.\nTema: ${tema}\nEje de contenido: ${$('poEje').value}\nObjetivo de embudo: ${obj}\n\nEl copy sigue el formato de storytelling de Rosanta con espíritu Kaprica: nada de anuncio genérico; una mini-historia, observación o momento con el que el lector se identifica.\nEntrega en español, exactamente así:\n**Copy del post** gancho que frena el scroll (primera línea corta), resolución del gancho, CTA (${obj==='Reserva directa'?'reservar en rosanta.rest/reservas':'suave, visitar o antojar'}), cierre con pregunta o controversia ligera que invite a comentar. Con emojis estratégicos. Hashtags directo después del último renglón, sin puntos separadores.\n**Sugerencia visual** qué foto o imagen acompaña (1-2 líneas, priorizando personas y momento sobre producto solo).\n**Idea de historia (story)** cómo reciclar este post en una historia con sticker interactivo (1-2 líneas).`);
+    window._lastPo=t;
+    $('poOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div><div style="margin-top:8px"><button class="btn sm" onclick="libSave(\'post\',$(\'poTema\').value.trim(),window._lastPo)">Guardar en biblioteca</button>'+piezaBtn('lastPo')+'</div>';
+  }catch(e){$('poOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
+}
+/* ===== Estrategia Anual (AI CMO) ===== */
+const EST_CONTEXT=`Rosanta: restaurante de gastrococtelería en Antigua Guatemala (cocina natural, gastronomía sostenible, jardín, sin delivery). 3 años en operación. 3 motores financieros: Eventos, Ventas, Crecimiento. Audiencias reales por datos: turista angloparlante (Google/inglés, decide por reseñas y por lo que recomiendan las IAs) y foodie local (Instagram/español, antojo y comunidad); de ~430 reservas la mitad con teléfono EE.UU./Canadá; núcleo 25-54, 57% mujeres. Presupuesto base $440/mes (awareness $240 ~$8/día + evento del mes + eventos permanentes), estructura estable para no frenar el algoritmo. Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia <3; VisitasIG rinde 20-100x la transaccional. Palancas: recuperar ~184 carritos/mes, bajar ~43% de tráfico directo con UTMs, subir match quality con email/teléfono hasheado. Semana Santa en Antigua (Pascua 28-mar-2027) es el pico anual. Sistemas propios ya montados: Creador de Contenido con formato Kaprica, Calendario con Plan del mes, Checklist de piezas, Dashboard de pauta Meta, Espía de Ad Library, Tracker de carritos, skills de reseñas/SEO local/retención, capa de datos Marketing OS en Google Sheet, círculo de aprendizaje y loop de pauta semanal.`;
+async function estRegen(){
+  $('estRegenOut').innerHTML='<div class="loading"><div class="spin"></div>Regenerando la estrategia con los aprendizajes…</div>';
+  try{
+    if(osConnected()){try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));}catch(e){}}
+    const apr=read('rosanta_apr',[]).slice(0,15);
+    const aprBlock=apr.length?('\nAPRENDIZAJES ACUMULADOS (incorpóralos, son evidencia real):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'\n(Aún sin aprendizajes registrados; usa la estrategia base.)';
+    const props=read('rosanta_prop',[]).filter(p=>p.estado!=='Descartada').slice(0,5);
+    const propBlock=props.length?('\n\nPROPUESTAS DEL EQUIPO SOBRE LA MESA (evalúalas: integra lo que suma a la estrategia, señala qué descartas y por qué):\n'+props.map(p=>'--- '+p.titulo+' · '+p.autor+' · estado: '+p.estado+'\n'+String(p.contenido||'').slice(0,1600)).join('\n')):'';
+    const t=await askIA(EST_CONTEXT+'\n'+aprBlock+propBlock+`\n\nEres el AI Chief Marketing Officer de Rosanta. Regenera la ESTRATEGIA ANUAL (Agosto 2026 a Julio 2027) incorporando los aprendizajes acumulados y las propuestas del equipo sobre la mesa. Mantén coherencia con los 3 motores, las 2 audiencias, el presupuesto y las 4 fases (Ago-Sep awareness; Oct-Dic conversión + temporada alta; Ene-Mar retención + Semana Santa; Abr-Jul consolidación). Entrega en español, conciso y accionable:\n**Qué cambia este ciclo** (2-3 líneas según aprendizajes y propuestas)\n**Sobre las propuestas del equipo** (si las hay: qué integras, qué ajustas y qué descartas, con porqué en una línea)\n**Ajustes por fase** (una línea por fase con su foco y KPI principal)\n**3 apuestas del año** (las jugadas de mayor ROI)\n**Riesgos y qué vigilar**\nVoz afirmativa, sin delivery.`);
+    $('estRegenOut').innerHTML='<div class="card" style="margin-top:12px"><h2>🔄 Estrategia regenerada · '+todayISO()+'</h2><div style="font-size:12.5px">'+md2html(t)+'</div></div>';
+  }catch(e){$('estRegenOut').innerHTML='<p class="muted">Error al regenerar: '+e.message+'</p>'}
+}
+function estPDF(){
+  let pa=$('printArea');
+  if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
+  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
+    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Estrategia Anual de Marketing</h1><div style="font-size:13px;opacity:.9">Agosto 2026 – Julio 2027 · AI CMO · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
+    '<div style="font-size:12px;line-height:1.6">'+$('estBody').innerHTML+'</div>'+
+    ($('estRegenOut').innerHTML?('<div style="font-size:12px;line-height:1.6;margin-top:10px">'+$('estRegenOut').innerHTML+'</div>'):'')+
+    '</div>';
+  window.print();
+}
+function printManual(){
+  let pa=$('printArea');
+  if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
+  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
+    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Manual del Sistema de Marketing</h1><div style="font-size:13px;opacity:.9">Equipo de contenido y pauta · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
+    '<div style="font-size:12px;line-height:1.6">'+$('manualBody').innerHTML+'</div></div>';
+  window.print();
+}
+/* ===== Propuestas del equipo (Estrategia) ===== */
+const PROP_VANESA={id:'prop_vanessa_ago_oct_2026',fecha:'2026-07-30',autor:'Vanessa (jefa de Pauta)',titulo:'Plan de Medios Ago–Oct 2026 + serie "Llegar a Rosanta"',estado:'Nueva',contenido:`PROPUESTA DE CAMPAÑAS · Trimestre Agosto-Octubre 2026 (Meta Ads Manager). Continúa awareness y visitas a Instagram, e incorpora retargeting en dos fases para quienes abandonaron el flujo de reserva en la web.
+
+PRESUPUESTOS DIARIOS:
+- Awareness (alcance): $3.90/día (se mantiene del trimestre anterior).
+- Visitas IG: $5.90/día (+$2.00 vs trimestre anterior).
+- Retargeting (NUEVO): Q8.00/día (~$1.04).
+Inversión mensual estimada: agosto ~$336.10 (~Q2,584), septiembre ~$325.20 (~Q2,501), octubre ~$335.90 (~Q2,580). Tipo de cambio de referencia Q7.69/USD.
+
+CALENDARIO:
+- AGOSTO · Retargeting Fase 1 (Page View): Awareness $3.90/día alcance (Antigua + expats/turistas, gastronomía sostenible); Visitas IG $5.90/día tráfico al perfil; Retargeting F1 Q8/día tráfico/consideración a visitantes web (30-60 días) sin reserva completada.
+- SEPTIEMBRE · Retargeting Fase 2 (Reserva Directa): Awareness y Visitas IG igual que agosto rotando creativos; Retargeting F2 Q8/día en conversiones (reservas) a interacción con Fase 1 + visitantes del flujo de reserva.
+- OCTUBRE · Cierre de trimestre: awareness se retira; 50% Visitas IG (audiencia amplia + intereses afines) y 50% Reservas General (conversiones, audiencia general + retargeting acumulado).
+
+PROPUESTA DE CONTENIDO · Serie de video "Llegar a Rosanta" (awareness, 3 videos de 15-20 seg como una sola narrativa, para resolver la fricción de ubicación y llegada):
+1. "Cómo llegar": trayecto por calles empedradas de Antigua hacia la entrada. Texto en pantalla: "El camino también sabe a jardín".
+2. "Dónde estamos ubicados": fachada y entrada con detalle distintivo. Texto: "Así nos vas a reconocer".
+3. "Dirección + CTA": interior, mesa servida, dirección sobreimpresa. Texto: dirección completa + "Te esperamos".
+Los 3 rotan dentro de la misma campaña de Awareness durante agosto y septiembre; invitan sin presionar, sin descuentos ni urgencia.`};
+function seedProps(){
+  const props=read('rosanta_prop',[]);
+  if(!props.some(p=>p.id===PROP_VANESA.id)){props.unshift(PROP_VANESA);store('rosanta_prop',props)}
+}
+function openProp(){$('prAutor').value='';$('prTitulo').value='';$('prCont').value='';$('ovProp').classList.add('act')}
+function saveProp(){
+  const titulo=$('prTitulo').value.trim();if(!titulo){alert('La propuesta necesita título');return}
+  const props=read('rosanta_prop',[]);
+  props.unshift({id:'pr'+Date.now(),fecha:todayISO(),autor:$('prAutor').value.trim()||'Equipo',titulo,estado:'Nueva',contenido:$('prCont').value.trim()});
+  store('rosanta_prop',props.slice(0,30));closeOv('ovProp');renderProps();
+}
+function delProp(id){if(!confirm('¿Eliminar esta propuesta?'))return;store('rosanta_prop',read('rosanta_prop',[]).filter(x=>x.id!==id));renderProps()}
+function propEstado(id,val){const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);if(x){x.estado=val;store('rosanta_prop',p);renderProps()}}
+function renderProps(){
+  const props=read('rosanta_prop',[]);
+  const opts=['Nueva','En debate','Aprobada','Descartada'];
+  $('propList').innerHTML=props.length?props.map(p=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
+    '<summary style="cursor:pointer;font-weight:700">📄 '+p.titulo+' <span class="muted">· '+p.autor+' · '+p.fecha+'</span> <span class="chip '+(p.estado==='Aprobada'?'on':(p.estado==='Descartada'?'off':'warn'))+'">'+p.estado+'</span></summary>'+
+    '<div style="padding:10px;font-size:12.5px;background:var(--crema);border-radius:8px;margin:6px 0;max-height:280px;overflow:auto">'+md2html(p.contenido||'')+'</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+    '<select onchange="propEstado(\''+p.id+'\',this.value)">'+opts.map(o=>'<option'+(o===p.estado?' selected':'')+'>'+o+'</option>').join('')+'</select>'+
+    '<button class="btn sec sm" onclick="debatirProp(\''+p.id+'\')">🧠 Debatir en el panel</button>'+
+    '<button class="btn danger" onclick="delProp(\''+p.id+'\')">✕</button></div></details>').join('')
+  :'<p class="muted">Sin propuestas cargadas. Usa "+ Cargar propuesta" cuando el equipo entregue un documento.</p>';
+}
+/* ===== 🧠 Panel de Asesores ===== */
+/* Cada silla razona desde el MARCO PUBLICADO de un experto real con presencia
+   digital (link en su tarjeta, para corroborar y aprender de su contenido).
+   Es una simulación de su criterio público: la persona real está fuera de esto
+   y jamás se le atribuyen citas. El moderador es el AI CMO propio de Rosanta. */
+const ASESORES=[
+  ['📊','Lente Jon Loomer','Media buying · Meta Ads','Referente mundial de Meta Ads (jonloomer.com). Estructura simple, fases de aprendizaje del algoritmo, presupuestos mínimos viables, retargeting bien secuenciado, cero métricas de vanidad.','https://www.jonloomer.com/'],
+  ['🎬','Lente Savannah Sanchez','Creativo de pauta','Experta en creativo de paid social (thesocialsavannah.com). El creativo es el targeting: hook en los primeros 3 segundos, video nativo, variaciones constantes contra la fatiga.','https://thesocialsavannah.com/'],
+  ['🍔','Lente Rev Ciancio','Marketing de restaurantes','Estratega de hospitality y restaurantes (revdavidciancio.com). Reseñas y prueba social, ocupación entre semana, eventos y ticket promedio: el marketing se mide en sillas llenas.','https://revdavidciancio.com/'],
+  ['📈','Lente Avinash Kaushik','Datos y medición','Autor de Occam\'s Razor (kaushik.net). Modelo See-Think-Do-Care, atribución honesta, UTM/CAPI, medir outcomes (reservas) y jamás outputs (likes).','https://www.kaushik.net/avinash/'],
+  ['🥊','Lente Mark Ritson','Estrategia y efectividad · abogado del diablo','Columnista de Marketing Week y creador del Mini MBA. Diagnóstico antes que táctica, balance largo/corto plazo, foco brutal: demuele propuestas débiles antes de gastar.','https://www.marketingweek.com/mark-ritson/'],
+  ['💥','Lente Alex Hormozi','Ofertas y monetización','Autor de $100M Offers y $100M Leads (acquisition.com). Value Equation, ofertas con garantía que invierte el riesgo, precio por valor: entra fuerte en paquetes, precios y eventos.','https://www.acquisition.com/'],
+  ['🎯','AI CMO Rosanta','Moderador · síntesis','El estratega propio del sistema. Alinea el debate al North Star (reservas atribuidas por mes), cierra con veredicto y decisiones concretas.','']
+];
+const PANEL_PROMPT=`Simula el PANEL DE ASESORES de marketing digital de Rosanta. Cada silla razona ESTRICTAMENTE desde el marco publicado de un experto real, usando la METODOLOGÍA escrita abajo (viene de sus libros, blogs y cursos públicos). Preséntalas siempre como "Lente X": son simulaciones de su criterio público, jamás citas ni palabras de la persona real. Cuando una lente aplique uno de sus marcos, nómbralo (ej: "aplicando la Value Equation..."), para que el dueño pueda verificarlo en la fuente. Los desacuerdos son deseables y deben ser específicos, con números cuando aplique.
+
+📊 LENTE JON LOOMER (media buying en Meta). Metodología:
+- Simplicidad de estructura: pocas campañas con presupuesto consolidado; fragmentar presupuestos pequeños mata el aprendizaje del algoritmo.
+- Respetar la fase de aprendizaje: cambios significativos (presupuesto, audiencia, creativo) la reinician; medir en ventanas, sin reaccionar al día a día.
+- Segmentación amplia + creativo como targeting antes que hipersegmentar; el sistema optimiza mejor con señal suficiente.
+- Métricas de negocio (costo por resultado real) sobre métricas de vanidad (CPM, likes); vigilar frecuencia como señal de fatiga.
+- Retargeting: secuencias con ventanas y exclusiones correctas para evitar pagar dos veces por la misma persona.
+- Diversificación creativa real (regla Andromeda, verificada jul-2026): Meta agrupa creativos casi idénticos como duplicados y los ahoga en retrieval; variar = conceptos de video distintos, jamás el mismo material con otro gancho.
+
+🎬 LENTE SAVANNAH SANCHEZ (creativo de pauta). Metodología:
+- El hook de los primeros 1-3 segundos decide el resultado: medir hook rate (3s vistas/impresiones) y hold rate.
+- Video nativo estilo orgánico/UGC vence a la producción pulida de anuncio; vertical 9:16, subtítulos, funciona sin sonido.
+- Iterar sobre ganadores: variar hooks de un creativo que funciona antes de apostar a conceptos nuevos; refrescar creativos contra la fatiga.
+- El creativo es el targeting: cada pieza le habla a una audiencia y un ángulo específicos.
+
+🍔 LENTE REV CIANCIO (marketing de restaurantes). Metodología:
+- El marketing de restaurante se mide en sillas llenas, ticket promedio y visitas repetidas, jamás en likes.
+- Reseñas y prueba social son el motor #1 de decisión: pedirlas, responderlas todas, exhibirlas.
+- Base de datos propia (email/WhatsApp/CRM) sobre audiencias alquiladas; el dinero está en la lista y en la recurrencia.
+- Ocupación entre semana se construye con eventos, experiencias y alianzas locales; la hospitalidad es la retención.
+
+📈 LENTE AVINASH KAUSHIK (datos y medición). Metodología:
+- See-Think-Do-Care: cada campaña declara su intención de audiencia y su métrica de éxito ANTES de lanzarse; awareness se mide distinto que conversión.
+- Outcomes (reservas, ingresos) sobre outputs (alcance, impresiones): la actividad es distinta del logro.
+- Disciplina de UTM + Pixel/CAPI: sin atribución confiable el debate es opinión; exigir el plan de medición de toda propuesta.
+- Segmentar siempre: el promedio miente; comparar por audiencia, canal e idioma.
+
+🥊 LENTE MARK RITSON (estrategia y efectividad, abogado del diablo). Metodología:
+- Orden sagrado: diagnóstico → estrategia → táctica; toda propuesta que arranca en táctica sin diagnóstico queda bajo sospecha.
+- Balance largo/corto plazo (~60% construcción de marca / ~40% activación, Binet & Field): el 100% activación canibaliza el futuro.
+- Foco: pocas cosas ejecutadas con excelencia; targeting y posicionamiento definidos antes de gastar un quetzal.
+- Exigir evidencia de efectividad (incrementalidad, no correlación); su trabajo es demoler la propuesta si es débil.
+
+💥 LENTE ALEX HORMOZI (ofertas y monetización). Metodología:
+- Value Equation: Valor = (Resultado soñado × Probabilidad percibida) ÷ (Tiempo de espera × Esfuerzo del cliente); diagnosticar cuál elemento está débil y arreglarlo.
+- Grand Slam Offer: resultado específico + stack de valor (una solución por obstáculo) + garantía que invierte el riesgo + nombre por el resultado, jamás por el servicio.
+- Precio por el valor del resultado, jamás por costo u horas; subir ticket con paquetes y experiencias premium.
+- Seguimiento: 5-7 toques de valor antes de descartar un lead (give-give-give-ask).
+- Entra con fuerza cuando el tema es paquetes, precios, eventos o ticket promedio; en temas puros de pauta cede el turno.
+
+🎯 AI CMO DE ROSANTA (moderador): alinea todo al North Star (reservas atribuidas por mes), pondera las lentes según el tema y cierra el debate.
+
+REGLA DE HUMILDAD TEMPORAL (obligatoria): el conocimiento de las lentes tiene fecha de corte y las plataformas cambian en meses. Toda afirmación que dependa de la mecánica ACTUAL de una plataforma (algoritmos de entrega de Meta/Google, tratamiento de creativos, formatos, políticas, umbrales, precios) se marca con "⚠️ verificar en plataforma" en vez de afirmarse como vigente. Precedente de la casa: el panel recomendó "1 video + 3 variantes de gancho" y la mecánica real de Meta (Andromeda agrupa casi-duplicados) lo invalidó; lo detectó el equipo humano.
+
+Entrega en español, con exactamente esta estructura:
+**🎙️ Posiciones** cada lente da su posición en 3-4 líneas, aplicando SU metodología por nombre.
+**⚔️ Donde choca el panel** los 2-3 desacuerdos reales: qué lente contra qué lente y por qué.
+**🎯 Síntesis del AI CMO** veredicto (aprobar / aprobar con ajustes / rechazar), los ajustes concretos con cifras, 3 decisiones para ejecutar esta semana y qué medir en 30 días para saber qué lente tenía razón.
+**⚠️ Qué verificar antes de ejecutar** la lista de afirmaciones marcadas "verificar en plataforma", cada una con quién la valida (Vanessa en Meta, Juanma con Cowork para investigación con fuentes). Si el debate tuvo cero marcas, decir "Sin dependencias de mecánica actual".
+Voz afirmativa. Rosanta jamás hace delivery.`;
+function renderPanel(){
+  $('asesorCards').innerHTML=ASESORES.map(a=>'<div class="card" style="padding:12px"><div style="font-size:22px">'+a[0]+'</div><b style="font-size:13px">'+a[1]+'</b><div style="font-size:11.5px;color:var(--tierra);margin:2px 0 4px">'+a[2]+'</div><div class="muted" style="font-size:11.5px;line-height:1.5">'+a[3]+'</div>'+(a[4]?'<a href="'+a[4]+'" target="_blank" rel="noopener" style="font-size:11px;color:var(--verde)">Su contenido real ↗</a>':'')+'</div>').join('');
+  const props=read('rosanta_prop',[]).filter(p=>p.estado!=='Descartada');
+  const cur=$('debSel').value;
+  $('debSel').innerHTML='<option value="libre">Tema libre (escríbelo abajo)</option>'+props.map(p=>'<option value="'+p.id+'">📄 '+p.titulo+' · '+p.autor+'</option>').join('');
+  if(cur&&[...$('debSel').options].some(o=>o.value===cur))$('debSel').value=cur;
+}
+function debatirProp(id){
+  const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);
+  if(x&&x.estado==='Nueva'){x.estado='En debate';store('rosanta_prop',p);renderProps()}
+  goTab('panel');$('debSel').value=id;
+}
+function debCard(t){
+  return '<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:14px;margin-top:12px">'+md2html(t)+'</div>';
+}
+async function debatir(){
+  const sel=$('debSel').value;
+  const libre=$('debLibre').value.trim();
+  let tema='',cont='';
+  if(sel&&sel!=='libre'){
+    const props=read('rosanta_prop',[]);
+    const p=props.find(x=>x.id===sel);
+    if(p){tema=p.titulo+' ('+p.autor+')';cont='\n\nCONTENIDO DE LA PROPUESTA A DEBATIR:\n'+(p.contenido||'');
+      if(p.estado==='Nueva'){p.estado='En debate';store('rosanta_prop',props);renderProps()}}
+  }
+  if(!tema){if(!libre){alert('Elige una propuesta o escribe un tema libre');return}tema=libre}
+  $('debOut').innerHTML='<div class="loading"><div class="spin"></div>🔎 Investigando mecánica actual de plataforma…</div>';
+  $('debStatus').textContent='';$('debReplicaBox').style.display='none';
+  /* Paso 1: investigación en vivo (llamada propia, con su propio timeout).
+     Si falla, el debate corre igual y lo declara: la regla de humildad manda. */
+  let inv='';
+  try{inv=await srv('panelInvestigar', tema+(libre?(' · Contexto: '+libre):''))}catch(e){inv=''}
+  const invBlock=inv?('\n\nINVESTIGACIÓN EN VIVO DE HOY (evidencia fresca con fuentes; las lentes DEBEN usarla cuando toquen mecánica actual y citar sus links; si contradice la memoria de una lente, gana la investigación):\n'+inv)
+    :'\n\n(Investigación en vivo no disponible en este debate: aplicar la regla de humildad temporal con máximo rigor y marcar TODA mecánica de plataforma como ⚠️ verificar.)';
+  $('debOut').innerHTML='<div class="loading"><div class="spin"></div>El panel está debatiendo…</div>';
+  try{
+    if(osConnected()){try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));}catch(e){}}
+    const apr=read('rosanta_apr',[]).slice(0,12);
+    const aprBlock=apr.length?('\n\nAPRENDIZAJES ACUMULADOS DE ROSANTA (evidencia real, úsenla en el debate):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'';
+    const t=await askIA(EST_CONTEXT+aprBlock+invBlock+'\n\n'+PANEL_PROMPT+'\n\nTEMA DEL DEBATE: '+tema+cont+(libre&&sel!=='libre'?('\n\nCONTEXTO ADICIONAL DE JUANMA (dueño): '+libre):''));
+    window._debTema=tema;
+    window._debFull=(inv?('**🔎 Investigación en vivo (previa al debate)**\n'+inv+'\n\n---\n\n'):'**🔎 Sin investigación en vivo en este debate** (revisar con más rigor las marcas ⚠️)\n\n---\n\n')+t;
+    window._debId='d'+Date.now();
+    $('debOut').innerHTML=debCard(window._debFull);
+    $('debReplicaBox').style.display='block';$('debCom').value='';
+    saveDeb();
+    $('debStatus').textContent='Debate guardado en el historial';
+  }catch(e){$('debOut').innerHTML='<p class="muted">Error en el debate: '+e.message+'</p>'}
+}
+async function debReplica(){
+  const c=$('debCom').value.trim();if(!c){alert('Escribe tu respuesta al panel');return}
+  const prev=window._debFull;if(!prev)return;
+  $('debStatus').textContent='El panel responde…';
+  try{
+    const t=await askIA(EST_CONTEXT+'\n\n'+PANEL_PROMPT+'\n\nDEBATE PREVIO SOBRE "'+window._debTema+'":\n'+prev.slice(-6000)+'\n\nJUANMA (dueño de Rosanta) RESPONDE AL PANEL:\n'+c+'\n\nContinúa el debate: replican SOLO los asesores con algo relevante que aportar (2-3 líneas cada uno, máximo 4 asesores) y 🎯 Marta actualiza su síntesis y decisiones si la respuesta de Juanma cambia algo. Máximo 25 líneas.');
+    window._debFull=prev+'\n\n**↩️ Juanma:** '+c+'\n\n'+t;
+    $('debOut').innerHTML=debCard(window._debFull);
+    $('debCom').value='';$('debStatus').textContent='Debate actualizado en el historial';
+    saveDeb();
+  }catch(e){$('debStatus').textContent='Error: '+e.message}
+}
+function saveDeb(){
+  const d=read('rosanta_deb',[]).filter(x=>x.id!==window._debId);
+  d.unshift({id:window._debId,fecha:todayISO(),tema:window._debTema,participantes:'Lentes: Loomer · Sanchez · Ciancio · Kaushik · Ritson · Hormozi · AI CMO (mod)',resultado:window._debFull});
+  store('rosanta_deb',d.slice(0,30));renderDebHist();
+}
+function delDeb(id){store('rosanta_deb',read('rosanta_deb',[]).filter(x=>x.id!==id));renderDebHist()}
+function renderDebHist(){
+  const d=read('rosanta_deb',[]);
+  $('debHist').innerHTML=d.length?d.map(x=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
+    '<summary style="cursor:pointer;font-weight:700">🧠 '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
+    '<div style="padding:10px;font-size:12.5px">'+md2html(x.resultado||'')+'</div>'+
+    '<button class="btn sec sm" onclick="navigator.clipboard.writeText(read(\'rosanta_deb\',[]).find(y=>y.id===\''+x.id+'\').resultado);alert(\'Copiado\')">Copiar</button> '+
+    '<button class="btn danger" onclick="delDeb(\''+x.id+'\')">✕</button></details>').join('')
+  :'<p class="muted">Sin debates todavía. Elige una propuesta o un tema libre y presiona 🎙️ Iniciar debate.</p>';
+}
+/* ===== Panel Datos ===== */
+function osRenderConn(){
+  const on=osConnected();
+  $('osConn').className='chip '+(on?'on':'off');
+  $('osConn').textContent=on?'Conectado a la Sheet':'Local (sin Sheet)';
+}
+async function osTest(){
+  $('osStatus').textContent='Probando…';
+  try{
+    const r=await osGet('calendario');
+    if(r.error)throw new Error(r.error);
+    $('osStatus').textContent='✅ Conexión OK. La pestaña "calendario" tiene '+(r.rows?r.rows.length:0)+' filas.';
+  }catch(e){$('osStatus').textContent='❌ '+e.message}
+}
+async function osPushAll(){
+  $('osSyncStatus').textContent='Enviando…';
+  try{
+    for(const k in OS_MAP){await osPost({tab:OS_MAP[k],action:'replace',rows:read(k,[])})}
+    $('osSyncStatus').textContent='✅ Calendario, piezas y carritos enviados a la Sheet.';
+  }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
+}
+async function osPullAll(){
+  if(!confirm('Traer de la Sheet reemplaza los datos locales de calendario, piezas y carritos. ¿Continuar?'))return;
+  $('osSyncStatus').textContent='Trayendo…';
+  try{
+    await calPull(); // calendario va aparte: fila por fila, no en OS_MAP
+    for(const k in OS_MAP){const r=await osGet(OS_MAP[k]);if(r.rows)localStorage.setItem(k,JSON.stringify(r.rows))}
+    renderCal();renderPz();renderCarr();renderApr();seedProps();renderProps();renderDebHist();renderPanel();
+    $('osSyncStatus').textContent='✅ Datos traídos de la Sheet.';
+  }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
+}
+function osExport(){
+  const data={calendario:read('rosanta_cal',[]),piezas:read('rosanta_pz',[]),carritos:read('rosanta_carr',[]),biblioteca:read('rosanta_lib',[]),propuestas:read('rosanta_prop',[]),debates:read('rosanta_deb',[]),exportado:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rosanta_marketing_os_'+todayISO()+'.json';a.click();
+  $('osSyncStatus').textContent='💾 Respaldo JSON descargado.';
+}
+/* init */
+$('poEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
+ckUpd();renderPz();renderLib();renderApr();
+calPull().then(renderCal).catch(function(){}); // calendario siempre fresco desde la Sheet
+if(FULL){
+  osRenderConn();seedProps();
+  renderCarr();renderProps();renderDebHist();renderPanel();renderUtmHist();loadMeta();loadGads();
+}else{
+  renderCal(); // para contenido, Calendario es el tab inicial
+}
+</script>
+</body>
+</html>

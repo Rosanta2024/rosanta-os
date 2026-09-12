@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Controles de fecha y orden. Discretos, del mismo tamaño que los filtros
+       que ya existían, para que la barra siga leyéndose de un vistazo. */
+    .crm-barra .fchgrupo{display:flex;align-items:center;gap:.3rem;font-size:.82rem;color:#6f6a61}
+    .crm-barra input[type="date"]{width:9.2rem}
+    .col-fecha{white-space:nowrap}
+    .fecha-nueva{font-weight:700}
+    .badge-nuevo{display:inline-block;margin-left:.35rem;padding:0 .35rem;border-radius:.6rem;
+                 font-size:.68rem;font-weight:700;background:#e7efe4;color:#4E6D5A;vertical-align:middle}
+  </style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">CRM</span>
+    </div>
+    <div class="quien">
+      <a class="volver" href="<?= urlBase ?>?page=marketing">← Sistema de Marketing</a>
+      <a class="volver" href="<?= urlBase ?>">← Panel principal</a>
+    </div>
+  </header>
+
+  <!-- Solo la tabla de contactos. La conversación vive en la vista Consola;
+       el botón "Ver conversación" de cada fila la abre ya filtrada. -->
+  <div class="crm crm-solo">
+    <div class="crm-top">
+      <div class="crm-barra">
+        <select id="fSeg"><option value="">Todos los segmentos</option></select>
+        <select id="fIdi"><option value="">Todo idioma</option><option>ES</option><option>EN</option></select>
+        <select id="fOrden" title="Cómo se ordena la lista">
+          <option value="recientes">Más recientes primero</option>
+          <option value="antiguos">Más antiguos primero</option>
+          <option value="gasto">Mayor gasto</option>
+          <option value="nombre">Nombre A→Z</option>
+        </select>
+        <span class="fchgrupo">
+          Actividad
+          <input type="date" id="fDesde" title="Desde esta fecha">
+          <input type="date" id="fHasta" title="Hasta esta fecha">
+          <button class="btn-exportar sec" id="btnLimpiar" title="Quitar el rango de fechas">✕</button>
+        </span>
+        <label style="font-size:.82rem;color:#6f6a61;display:flex;align-items:center;gap:.35rem">
+          <input type="checkbox" id="fChat" style="width:auto"> Solo con conversación
+        </label>
+        <input id="fBusca" placeholder="Buscar nombre, teléfono o email" style="min-width:15rem">
+        <span class="cuenta" id="cuenta">Cargando…</span>
+        <? if (usuario.puedeEditar) { ?>
+          <button class="btn-exportar sec" id="btnImportar">＋ Agregar CSV</button>
+          <input type="file" id="fileCsv" accept=".csv,text/csv" style="display:none">
+        <? } ?>
+        <button class="btn-exportar" id="btnExportar" disabled>⬇ Exportar CSV</button>
+      </div>
+      <div class="crm-lista" id="lista">
+        <div class="vacio">Cargando contactos de la maestra…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista previa de importación: se muestra antes de escribir en la maestra. -->
+  <div class="modal" id="impModal" hidden>
+    <div class="modal-card">
+      <h3>Agregar contactos desde CSV</h3>
+      <div id="impResumen" class="imp-resumen"></div>
+      <p class="imp-nota" id="impNota"></p>
+      <div class="modal-pie">
+        <button class="btn-exportar sec" id="impCancelar">Cancelar</button>
+        <button class="btn-exportar" id="impConfirmar" disabled>Importar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  // Token del enlace personal (?u=). Va primero en toda llamada al servidor.
+  var AUTH = '<?= authToken ?>';
+  var contactos = [], conChat = {}, filtrados = [];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function fmtQ(n) { return 'Q' + (Number(n) || 0).toLocaleString('es-GT', { maximumFractionDigits: 0 }); }
+
+  // Las fechas vienen como yyyy-MM-dd, así que comparar texto ya ordena bien.
+  function hoyISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+           '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // "Actividad" = lo más reciente que se sabe de esa persona: cuándo entró,
+  // cuándo reservó o cuándo intentó reservar. Es lo que ordena la lista.
+  function actividad(c) {
+    var f = [c.fechaAlta, c.ultimaReserva, c.ultimoIntento]
+      .filter(function (x) { return x; }).sort();
+    return f.length ? f[f.length - 1] : '';
+  }
+  var HOY = hoyISO();
+  function esNuevoHoy(c) { return c.fechaAlta === HOY; }
+
+  // ---- carga
+  google.script.run
+    .withSuccessHandler(function (res) {
+      contactos = res || [];
+      llenarSegmentos();
+      pintar();
+      // Las claves con chat van aparte: la maestra puede traer miles de filas y
+      // no queremos que el listado espere a la hoja de conversaciones.
+      google.script.run
+        .withSuccessHandler(function (ks) {
+          (ks || []).forEach(function (k) { conChat[k] = 1; });
+          pintar();
+        })
+        .withFailureHandler(function () { /* sin chats: el CRM igual sirve */ })
+        .crmClavesConChat(AUTH);
+    })
+    .withFailureHandler(function (err) {
+      $('lista').innerHTML = '<div class="vacio">No se pudo leer la maestra: ' +
+        esc(err && err.message ? err.message : err) + '</div>';
+      $('cuenta').textContent = '';
+    })
+    .crmContactos(AUTH);
+
+  function llenarSegmentos() {
+    var segs = {};
+    contactos.forEach(function (c) { if (c.segmento) segs[c.segmento] = 1; });
+    Object.keys(segs).sort().forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      $('fSeg').appendChild(o);
+    });
+  }
+
+  function aplicaFiltros() {
+    var seg = $('fSeg').value, idi = $('fIdi').value;
+    var soloChat = $('fChat').checked;
+    var q = $('fBusca').value.trim().toLowerCase();
+    var desde = $('fDesde').value, hasta = $('fHasta').value;
+    return contactos.filter(function (c) {
+      if (seg && c.segmento !== seg) return false;
+      if (idi && c.idioma !== idi) return false;
+      if (soloChat && !conChat[c.clave]) return false;
+      if (desde || hasta) {
+        var a = actividad(c);
+        // Sin ninguna fecha, el contacto queda fuera de cualquier rango.
+        if (!a) return false;
+        if (desde && a < desde) return false;
+        if (hasta && a > hasta) return false;
+      }
+      if (q && (c.nombre + ' ' + c.telefono + ' ' + c.email).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+  }
+
+  function ordenar(lista) {
+    var modo = $('fOrden').value;
+    var copia = lista.slice();
+    if (modo === 'gasto') {
+      copia.sort(function (a, b) { return (Number(b.gasto) || 0) - (Number(a.gasto) || 0); });
+    } else if (modo === 'nombre') {
+      copia.sort(function (a, b) { return String(a.nombre).localeCompare(String(b.nombre), 'es'); });
+    } else {
+      // Por actividad. Los que no tienen ninguna fecha se van al final siempre,
+      // así el orden "más antiguos" muestra historia real y no filas vacías.
+      var asc = (modo === 'antiguos');
+      copia.sort(function (a, b) {
+        var fa = actividad(a), fb = actividad(b);
+        if (!fa && !fb) return 0;
+        if (!fa) return 1;
+        if (!fb) return -1;
+        return asc ? (fa < fb ? -1 : fa > fb ? 1 : 0) : (fa > fb ? -1 : fa < fb ? 1 : 0);
+      });
+    }
+    return copia;
+  }
+
+  function pintar() {
+    filtrados = ordenar(aplicaFiltros());
+    var nuevosHoy = filtrados.filter(esNuevoHoy).length;
+    $('cuenta').textContent = filtrados.length.toLocaleString('es-GT') + ' de ' +
+      contactos.length.toLocaleString('es-GT') + ' contactos' +
+      (nuevosHoy ? ' · ' + nuevosHoy + ' nuevo' + (nuevosHoy > 1 ? 's' : '') + ' hoy' : '');
+
+    $('btnExportar').disabled = !filtrados.length; // exporta lo que se ve ahora
+
+    if (!filtrados.length) {
+      $('lista').innerHTML = '<div class="vacio">Sin contactos para ese filtro.</div>';
+      return;
+    }
+    var html = '<table><thead><tr>' +
+      '<th>Nombre</th><th>Teléfono</th><th>Email</th><th>Segmento</th>' +
+      '<th>Idioma</th><th>Alta</th><th>Última reserva</th><th>Último intento</th>' +
+      '<th>Gasto</th><th>Conversación</th>' +
+      '</tr></thead><tbody>' +
+      filtrados.map(function (c, i) {
+        var tiene = c.clave && conChat[c.clave];
+        var boton = tiene
+          ? '<button class="btn-chat" data-i="' + i + '">💬 Ver conversación</button>'
+          : '<button class="btn-chat vacia" data-i="' + i + '" title="Este contacto todavía no tiene chat">Abrir consola</button>';
+        var nuevo = esNuevoHoy(c) ? '<span class="badge-nuevo">nuevo</span>' : '';
+        return '<tr>' +
+          '<td><b>' + esc(c.nombre) + '</b>' + nuevo + '</td>' +
+          '<td>' + esc(c.telefono) + '</td>' +
+          '<td>' + esc(c.email) + '</td>' +
+          '<td>' + (c.segmento ? '<span class="seg-chip">' + esc(c.segmento) + '</span>' : '') + '</td>' +
+          '<td>' + esc(c.idioma) + '</td>' +
+          '<td class="col-fecha' + (esNuevoHoy(c) ? ' fecha-nueva' : '') + '">' + esc(c.fechaAlta) + '</td>' +
+          '<td class="col-fecha">' + esc(c.ultimaReserva) + '</td>' +
+          '<td class="col-fecha">' + esc(c.ultimoIntento) + '</td>' +
+          '<td>' + (c.gasto ? fmtQ(c.gasto) : '') + '</td>' +
+          '<td class="col-chat">' + boton + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    $('lista').innerHTML = html;
+
+    $('lista').querySelectorAll('.btn-chat').forEach(function (b) {
+      b.addEventListener('click', function () { verConversacion(filtrados[+b.dataset.i]); });
+    });
+  }
+
+  // ---- pedir al shell que abra la Consola filtrada a este contacto
+  function verConversacion(c) {
+    // clave = últimos 8 dígitos del teléfono; sin teléfono, la consola abre normal.
+    var msg = { tipo: 'rosanta:verConversacion', clave: c.clave || '' };
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(msg, '*'); // dentro del Sistema de Marketing
+    } else {
+      // CRM abierto suelto (?page=crm): no hay shell, abrir la consola en pestaña.
+      window.open(<?!= JSON.stringify(consolaUrl) ?>, '_blank', 'noopener');
+    }
+  }
+
+  // ---- exportar a CSV lo que está filtrado en pantalla
+  var COLS = [
+    ['nombre', 'Nombre'], ['telefono', 'Teléfono'], ['email', 'Email'],
+    ['segmento', 'Segmento'], ['idioma', 'Idioma'],
+    ['fechaAlta', 'Alta'], ['ultimaReserva', 'Última reserva'],
+    ['ultimoIntento', 'Último intento'], ['gasto', 'Gasto (Q)']
+  ];
+  function celda(v) {
+    var s = String(v == null ? '' : v);
+    // Comillas, comas y saltos de línea rompen el CSV: se entrecomilla y se
+    // duplican las comillas internas (formato estándar RFC 4180).
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function exportar() {
+    if (!filtrados.length) return;
+    var filas = [COLS.map(function (c) { return c[1]; }).join(',')];
+    filtrados.forEach(function (c) {
+      filas.push(COLS.map(function (col) {
+        var v = c[col[0]];
+        if (col[0] === 'gasto') v = c.gasto || 0; // número crudo, no "Q1,234"
+        return celda(v);
+      }).join(','));
+    });
+    // El BOM ﻿ hace que Excel abra los acentos (á, ñ) en UTF-8 sin romperlos.
+    var blob = new Blob(['﻿' + filas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+
+    var d = new Date();
+    var stamp = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    var seg = $('fSeg').value ? '_' + $('fSeg').value.replace(/[^\w]+/g, '-') : '';
+
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rosanta_crm' + seg + '_' + stamp + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  $('btnExportar').addEventListener('click', exportar);
+
+  // ---- Agregar CSV (solo si el usuario puede editar; el botón existe o no)
+  var btnImp = $('btnImportar');
+  if (btnImp) {
+    var fileCsv = $('fileCsv');
+    var porImportar = null; // filas ya mapeadas, listas para el servidor
+
+    btnImp.addEventListener('click', function () { fileCsv.value = ''; fileCsv.click(); });
+    fileCsv.addEventListener('change', function () {
+      var file = fileCsv.files && fileCsv.files[0];
+      if (!file) return;
+      var lector = new FileReader();
+      lector.onload = function () { previsualizar(String(lector.result || '')); };
+      lector.readAsText(file, 'UTF-8');
+    });
+
+    // Parser CSV con soporte de comillas (comas y saltos dentro de "…").
+    function parseCSV(texto) {
+      texto = texto.replace(/^﻿/, ''); // quita BOM si viene de Excel
+      var filas = [], campo = '', fila = [], i = 0, dentro = false;
+      while (i < texto.length) {
+        var ch = texto[i];
+        if (dentro) {
+          if (ch === '"') {
+            if (texto[i + 1] === '"') { campo += '"'; i += 2; continue; }
+            dentro = false; i++; continue;
+          }
+          campo += ch; i++; continue;
+        }
+        if (ch === '"') { dentro = true; i++; continue; }
+        if (ch === ',') { fila.push(campo); campo = ''; i++; continue; }
+        if (ch === '\r') { i++; continue; }
+        if (ch === '\n') { fila.push(campo); filas.push(fila); campo = ''; fila = []; i++; continue; }
+        campo += ch; i++;
+      }
+      if (campo !== '' || fila.length) { fila.push(campo); filas.push(fila); }
+      return filas.filter(function (f) { return f.join('').trim() !== ''; });
+    }
+
+    // Encabezado del CSV -> nuestros campos canónicos (acepta alias comunes).
+    var ALIAS = {
+      first_name: ['first_name', 'nombre', 'nombre_pila', 'name'],
+      telefono:   ['telefono', 'telefono', 'phone', 'celular', 'whatsapp', 'movil'],
+      email:      ['email', 'correo', 'e-mail', 'mail'],
+      idioma:     ['idioma', 'language', 'lang'],
+      fuente:     ['fuente', 'source', 'origen'],
+      segmento:   ['segmento', 'segment', 'etiqueta', 'tag'],
+      ultima_reserva: ['ultima_reserva', 'ultima reserva', 'last_reservation', 'fecha', 'reserva'],
+      gasto_gtq:  ['gasto_gtq', 'gasto_total', 'gasto', 'total', 'spend'],
+      opt_in:     ['opt_in', 'consentimiento', 'optin'],
+      notas:      ['notas', 'notes', 'nota', 'observaciones'],
+      fecha_alta: ['fecha_alta', 'alta', 'fecha alta', 'created', 'created_at'],
+      ultimo_intento: ['ultimo_intento', 'ultimo intento', 'intento', 'carrito']
+    };
+    function norma(s) {
+      return String(s || '').trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // sin acentos
+    }
+    function mapearEncabezado(cols) {
+      var idx = {};
+      cols.forEach(function (c, i) {
+        var n = norma(c);
+        Object.keys(ALIAS).forEach(function (campo) {
+          if (idx[campo] === undefined && ALIAS[campo].indexOf(n) > -1) idx[campo] = i;
+        });
+      });
+      return idx;
+    }
+
+    function previsualizar(texto) {
+      var filas = parseCSV(texto);
+      if (filas.length < 2) {
+        return abrirModal('El archivo no tiene filas de datos (solo encabezado o vacío).', null);
+      }
+      var idx = mapearEncabezado(filas[0]);
+      if (idx.telefono === undefined && idx.email === undefined) {
+        return abrirModal('No encontré columnas de teléfono ni email en el CSV. Encabezados leídos: ' +
+          esc(filas[0].join(', ')), null);
+      }
+
+      // Dedup aproximado contra lo ya cargado (el servidor hace el definitivo).
+      var yaTel = {}, yaMail = {};
+      contactos.forEach(function (c) {
+        if (c.clave) yaTel[c.clave] = 1;
+        if (c.email) yaMail[c.email.toLowerCase()] = 1;
+      });
+      function clave8(v) { var d = String(v || '').replace(/[^0-9]/g, ''); return d.length < 8 ? '' : d.slice(-8); }
+
+      var mapa = {}, nuevos = 0, existen = 0, invalidos = 0;
+      porImportar = [];
+      for (var r = 1; r < filas.length; r++) {
+        var f = filas[r], obj = {};
+        Object.keys(idx).forEach(function (campo) { obj[campo] = (f[idx[campo]] || '').trim(); });
+        var k8 = clave8(obj.telefono), mail = (obj.email || '').toLowerCase();
+        if (!k8 && !mail) { invalidos++; continue; }
+        var dup = (k8 && (yaTel[k8] || mapa['t' + k8])) || (mail && (yaMail[mail] || mapa['m' + mail]));
+        if (dup) { existen++; continue; }
+        if (k8) mapa['t' + k8] = 1;
+        if (mail) mapa['m' + mail] = 1;
+        nuevos++;
+        porImportar.push(obj);
+      }
+
+      var html =
+        '<div class="imp-linea"><b>' + (filas.length - 1) + '</b> filas de datos leídas</div>' +
+        '<div class="imp-linea nuevo"><b>' + nuevos + '</b> contactos nuevos a agregar</div>' +
+        '<div class="imp-linea"><b>' + existen + '</b> ya existen (se omiten)</div>' +
+        (invalidos ? '<div class="imp-linea">' + invalidos + ' sin teléfono ni email (se descartan)</div>' : '');
+      abrirModal(html, nuevos);
+    }
+
+    function abrirModal(html, nuevos) {
+      $('impResumen').innerHTML = html;
+      var puede = nuevos && nuevos > 0;
+      $('impNota').textContent = puede
+        ? 'Se agregan solo los nuevos, con la fecha de alta de hoy. Los duplicados no se tocan. El dedup final lo hace el servidor por teléfono y email.'
+        : '';
+      $('impConfirmar').disabled = !puede;
+      $('impModal').hidden = false;
+    }
+    function cerrarModal() { $('impModal').hidden = true; porImportar = null; }
+
+    $('impCancelar').addEventListener('click', cerrarModal);
+    $('impModal').addEventListener('click', function (e) { if (e.target === $('impModal')) cerrarModal(); });
+
+    $('impConfirmar').addEventListener('click', function () {
+      if (!porImportar || !porImportar.length) return;
+      var b = $('impConfirmar');
+      b.disabled = true; b.textContent = 'Importando…';
+      google.script.run
+        .withSuccessHandler(function (res) {
+          $('impModal').hidden = true;
+          b.textContent = 'Importar';
+          alert('Listo. Agregados: ' + res.agregados +
+                ' · Ya existían: ' + res.omitidos +
+                (res.invalidos ? ' · Descartados: ' + res.invalidos : ''));
+          location.reload(); // recarga la tabla con los nuevos contactos
+        })
+        .withFailureHandler(function (err) {
+          b.disabled = false; b.textContent = 'Importar';
+          alert('No se pudo importar: ' + (err && err.message ? err.message : err));
+        })
+        .crmImportarContactos(AUTH, porImportar);
+    });
+  }
+
+  ['fSeg', 'fIdi', 'fOrden'].forEach(function (id) { $(id).addEventListener('change', pintar); });
+  ['fDesde', 'fHasta'].forEach(function (id) { $(id).addEventListener('change', pintar); });
+  $('btnLimpiar').addEventListener('click', function () {
+    $('fDesde').value = ''; $('fHasta').value = ''; pintar();
+  });
+  $('fChat').addEventListener('change', pintar);
+  $('fBusca').addEventListener('input', pintar);
+})();
+</script>
+</body>
+</html>

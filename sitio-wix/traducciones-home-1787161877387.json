@@ -1,0 +1,21 @@
+{
+  "fecha": "2026-08-19T17:51:15.127Z",
+  "creados": [
+    {
+      "id": "27fc84f7-81c7-4b22-9d73-5641a994060d",
+      "entityId": "comp-mszh3qyb",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b"
+    },
+    {
+      "id": "ccd5974c-5461-4fee-926e-01db9370d310",
+      "entityId": "comp-mszgsmi2",
+      "schemaId": "181ccb6b-dfb5-4b18-aacc-eadac190f94b"
+    },
+    {
+      "id": "935d49ab-2a04-4e08-add1-ee24a5a10514",
+      "entityId": "comp-lhi26c4o",
+      "schemaId": "f2f2ef5e-8cbd-4296-ade9-b38a49424ba4"
+    }
+  ],
+  "saltados": []
+}

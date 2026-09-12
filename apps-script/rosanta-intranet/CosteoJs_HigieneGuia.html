@@ -1,0 +1,96 @@
+function vistaHigiene(){
+  const h = window.__HIG__;
+  if(!h) return `<p class="empty">Leyendo el recetario…</p>`;
+  const B = [
+    ['Líneas fuera del Banco de Datos','lineasFueraDelBanco','El nombre que escribió cocina no coincide con ningún producto. Esas líneas cuestan Q0.'],
+    ['Fichas vacías','fichasVacias','Sin ingredientes cargados. No tienen costo.'],
+    ['Platos sobre meta','platosSobreMeta','Comparados contra la meta de su área.'],
+    ['Insumos sin precio de compra','insumosSinPrecioDeCompra','No se les puede registrar un precio nuevo hasta corregirlos a mano una vez.'],
+    ['Insumos sin proveedor','insumosSinProveedor','Quedan fuera de la vista de proveedores.'],
+    ['Insumos sin uso en ninguna ficha','insumosSinUso','O sobran en el Banco, o el nombre no coincide.']
+  ];
+  return B.map(([t,k,d]) => `<div class="hig">
+      <h3>${t}</h3><div class="n">${h[k].length}</div>
+      <p style="margin:2px 0 0;font-size:13px;color:var(--muted)">${d}</p>
+      ${h[k].length?`<ul>${h[k].slice(0,60).map(x=>`<li>${esc(x)}</li>`).join('')}${h[k].length>60?`<li style="color:var(--muted)">…y ${h[k].length-60} más</li>`:''}</ul>`:''}
+    </div>`).join('');
+}
+function vistaGuia(){
+  const metas = (D.meta.areas||[]).map(a => (a.area==='BARRA'?'Barra':'Cocina') + ' ' + a.cmvObjetivo + '%').join(' · ');
+  return `<div class="guia">
+    <h2>De dónde salen estos números</h2>
+    <p>Nada de lo que ves acá se escribe a mano. La página lee las hojas del recetario —las mismas
+    que edita cocina— y las vuelve a leer cada quince minutos. Si alguien corrige una ficha en
+    Sheets, acá se ve solo.</p>
+    <p>Eso también quiere decir que <strong>el recetario sigue siendo la fuente de verdad</strong>.
+    Si un dato está mal, se corrige allá, no acá.</p>
+
+    <h2>Cómo leer una ficha</h2>
+    <p>Cada plato trae tres cifras: lo que cuesta hacerlo, lo que se cobra y el CMV, que es el
+    porcentaje del precio que se va en materia prima. La meta no es la misma en todas partes:
+    <strong>${metas}</strong>. Un cóctel al 18% está bien; un plato al 18% está bajo.</p>
+    <div class="leyenda">
+      <span><i style="background:var(--meta)"></i> En meta</span>
+      <span><i style="background:var(--alto)"></i> Sobre meta · el plato cuesta de más</span>
+      <span><i style="background:var(--bajo)"></i> Muy bajo · puede que falte cargar algo</span>
+      <span><i style="background:var(--vacia)"></i> Ficha vacía · sin receta</span>
+      <span><i style="background:var(--pre)"></i> Pre-elaborado</span>
+    </div>
+    <p>Un punto lila junto a un ingrediente quiere decir que ese ingrediente tiene su propia receta.
+    El botón <em>ver receta ›</em> te lleva directo: desde el Lomito podés abrir la gremolata sin
+    salir de la ficha.</p>
+
+    <h2>Buscar</h2>
+    <p>El buscador de arriba no busca solo por nombre de plato. También busca por ingrediente y por
+    proveedor. Escribí <em>ajo confitado</em> y salen todos los platos que lo llevan; escribí
+    <em>Marroquín</em> y salen los que dependen de ese proveedor.</p>
+
+    <h2>Cambiar un precio</h2>
+    <p>Entrá a <strong>Productos</strong>, tocá el producto y escribí el precio de compra nuevo.
+    Ahí hay dos botones y hacen cosas distintas:</p>
+    <div class="caja">
+      <h3>Simular</h3>
+      <p style="margin:0">No guarda nada. Recalcula todas las recetas que usan ese producto y te
+      muestra arriba cuántos platos se salen de meta. Sirve para ver el golpe de una subida
+      <em>antes</em> de aceptarla. Se deshace con "Volver a los precios reales".</p>
+    </div>
+    <div class="caja">
+      <h3>Registrar precio</h3>
+      <p style="margin:0">Guarda de verdad. Escribe el precio en el Banco de Datos, deja la fila en
+      el histórico con fecha, factura y tu nombre, y todas las fichas se recalculan solas. Te pide
+      el número de factura: ponelo siempre que lo tengas, es lo que hace auditable el costeo.</p>
+    </div>
+    <div class="llave">Si el producto no tiene precio de compra cargado, no se puede registrar:
+    falta el dato con el que se calcula la conversión. Esos productos están listados en la pestaña
+    <strong>Higiene</strong> y hay que corregirlos a mano una sola vez.</div>
+
+    <h2>Cuando algo no cuadra</h2>
+    <ul>
+      <li><strong>Un ingrediente dice "fuera del banco".</strong> El nombre que escribió cocina en la
+      ficha no coincide con ningún producto del Banco de Datos. Esa línea cuesta Q0 y el plato sale
+      más barato de lo que es. Se arregla igualando el nombre en la ficha.</li>
+      <li><strong>Un plato marca "Muy bajo".</strong> Casi siempre falta un ingrediente, no es que el
+      plato sea una ganga.</li>
+      <li><strong>Una ficha aparece vacía.</strong> Cocina todavía no dictó la receta.</li>
+      <li><strong>Un pre-elaborado no tiene costo por unidad.</strong> Le falta el rinde: cuántos
+      gramos o mililitros salen del batch.</li>
+    </ul>
+    <p>La pestaña <strong>Higiene</strong> junta todo eso en una lista. Vale revisarla una vez por mes.</p>
+
+    <h2>Qué falta hoy</h2>
+    <p>Siete platos de la carta 2027 no tienen receta cargada: Coliflor con Romesco, Brócoli con
+    Nduja, Bok Choy, Vegetales Fermentados, Arroz Meloso, Lomito de la Casa y Estofado de Rabo.
+    Aparecen como fichas vacías a propósito, para que no se olviden.</p>
+    <p>Y en las tres pastas, el fetuccini está costeado con una receta estándar de pasta fresca
+    mientras cocina entrega la real. La salsa sí es la de cocina.</p>
+
+    <h2>Quién toca qué</h2>
+    <ul>
+      <li><strong>Cocina y barra</strong> corrigen recetas y cantidades en las hojas del recetario.</li>
+      <li><strong>Administración</strong> registra los precios de compra desde acá, con factura.</li>
+      <li><strong>Dirección</strong> decide precios de carta mirando el CMV.</li>
+    </ul>
+    <p style="color:var(--muted);font-size:13px">Si algo se ve raro, lo más probable es que sea un
+    dato del recetario y no la página. Revisá la ficha en Sheets antes de dar por buena una cifra.</p>
+  </div>`;
+}

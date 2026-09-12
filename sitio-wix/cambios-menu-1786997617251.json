@@ -1,0 +1,39 @@
+{
+  "fecha": "2026-08-17T20:13:34.732Z",
+  "items": [
+    {
+      "id": "3c835736-5ad8-472e-b3f2-1ed5b2420ac1",
+      "antes": {
+        "name": "Grilled Tenderloin",
+        "description": "Tenderloin medallion cooked to your liking, with a spinach and rosemary purée over black garlic sauce, finished with fermented carrots. Suggested pairing: Red Pepper, Colonial Fashioned."
+      }
+    },
+    {
+      "id": "50828e60-a628-47bc-b396-db1d44dfa5ba",
+      "antes": {
+        "name": "Catch of the Day",
+        "description": "The day's catch, served with a white wine sauce scented with sage, sweet potato purée and roasted carrots, tender green beans and grilled bok choy. Product of the day · Gentle, herbal preparation."
+      }
+    }
+  ],
+  "tm": [
+    {
+      "entityId": "3c835736-5ad8-472e-b3f2-1ed5b2420ac1",
+      "contentIdViejo": "9d86f176-75fc-4b55-b190-8b31df3a791e",
+      "antes": {
+        "name": "Lomito a la Parrilla",
+        "description": "Medallón de lomito al término de tu preferencia, acompañado de puré de espinaca y romero, sobre una salsa de ajo negro complementado con zanahorias fermentadas. Maridaje sugerido: Red Pepper, Colonial Fashioned."
+      },
+      "contentIdNuevo": "37ead9fd-da13-4d0a-a843-aaf8f3fece1a"
+    },
+    {
+      "entityId": "50828e60-a628-47bc-b396-db1d44dfa5ba",
+      "contentIdViejo": "4bb58979-d9a3-40b1-8031-df1e27dfc275",
+      "antes": {
+        "name": "Pescado del Día",
+        "description": "Pesca del día, servida con una salsa de vino blanco aromatizada con salvia, puré de camote y zanahorias horneadas, ejotes tiernos y bok choy asado. Producto del día · Preparación suave y herbal."
+      },
+      "contentIdNuevo": "0f2ebf6f-90e7-4302-b35a-34a26fdc0111"
+    }
+  ]
+}

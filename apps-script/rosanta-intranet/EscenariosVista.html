@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Escenarios y punto de equilibrio · Pilar 3, Finance & Data OS.
+       Lo que pasó vive en la pantalla de Finanzas. Aquí vive lo que pasaría:
+       es la única pantalla del pilar que no reporta, sino que modela.
+       Solo lectura: mover una palanca no escribe nada en ningún lado. */
+    main.esc { max-width: 1140px; }
+    .esc-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .esc-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
+      font-family: 'Lato', Arial, sans-serif; }
+    .esc-boton:hover { background: rgba(69,107,80,0.07); }
+    .esc-boton.on { background: var(--verde-bosque); color: var(--blanco); }
+    .esc-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+
+    .esc-anio { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.5rem;
+      display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .esc-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1rem; }
+    .esc-anio .u:first-child { border-left: 0; padding-left: 0; }
+    .esc-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem; }
+    .esc-anio .t { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.72; margin-top: 0.2rem; }
+    .esc-anio .mal { color: #FFB4A2; }
+
+    .esc-seccion { margin-top: 2.4rem; }
+    .esc-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
+    .esc-nota { font-size: 0.84rem; opacity: 0.72; margin-bottom: 1rem; line-height: 1.55;
+      max-width: 78ch; }
+
+    .esc-caja { background: var(--blanco); border-radius: 20px; padding: 1.3rem 1.45rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .esc-presets { display: flex; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+
+    .esc-palancas { display: grid; gap: 1.1rem 1.6rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .pal .cab { display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 0.86rem; }
+    .pal .cab b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem;
+      color: var(--verde-bosque); }
+    .pal input[type=range] { width: 100%; margin: 0.35rem 0 0.15rem; accent-color: #57A77F; }
+    .pal .hint { font-size: 0.75rem; opacity: 0.62; line-height: 1.45; }
+
+    .esc-res { margin-top: 1.4rem; padding-top: 1.2rem;
+      border-top: 1px solid rgba(26,26,26,0.08); }
+    .esc-res .lbl { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
+      opacity: 0.6; }
+    .esc-res .big { font-family: 'Playfair Display', Georgia, serif; font-size: 2.6rem;
+      line-height: 1.15; margin: 0.15rem 0 0.4rem; }
+    .esc-res .det { font-size: 0.86rem; line-height: 1.6; }
+
+    .esc-comp { display: grid; gap: 0.55rem; margin-top: 1.2rem; }
+    .esc-fila { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 0.8rem;
+      align-items: center; font-size: 0.82rem; }
+    .esc-fila .et { opacity: 0.75; }
+    .esc-fila .b { position: relative; height: 22px; background: rgba(26,26,26,0.05);
+      border-radius: 6px; }
+    .esc-fila .b span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px;
+      background: rgba(26,26,26,0.22); }
+    .esc-fila .b.e span { background: var(--verde-medio); }
+    .esc-fila .b.neg span { background: #C4553B; }
+    .esc-fila .b i { position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+      font-style: normal; font-size: 0.76rem; }
+    .esc-leyenda { font-size: 0.76rem; opacity: 0.6; display: flex; gap: 1.2rem;
+      margin-top: 0.3rem; }
+
+    .esc-be { display: grid; gap: 1.4rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 860px) { .esc-be { grid-template-columns: 1fr; } }
+    .esc-be select { font-family: 'Lato', Arial, sans-serif; font-size: 0.88rem;
+      padding: 0.45rem 0.6rem; border: 1px solid rgba(26,26,26,0.16); border-radius: 10px;
+      background: #FCFBFA; }
+    .be-n { font-family: 'Playfair Display', Georgia, serif; font-size: 2.1rem;
+      color: var(--verde-bosque); line-height: 1.15; margin-top: 0.6rem; }
+    .be-n.mal { color: #C4553B; }
+    .be-txt { font-size: 0.86rem; line-height: 1.6; margin-top: 0.5rem; }
+    .be-pista { height: 26px; border-radius: 8px; background: rgba(26,26,26,0.06);
+      position: relative; margin-top: 1rem; }
+    .be-pista .venta { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px;
+      background: rgba(87,167,127,0.35); }
+    .be-pista .marca { position: absolute; top: -5px; bottom: -5px; width: 3px;
+      background: #C4553B; }
+    .be-pista .et { position: absolute; top: 32px; font-size: 0.74rem; color: #C4553B;
+      transform: translateX(-50%); white-space: nowrap; }
+
+    table.esc { width: 100%; border-collapse: collapse; background: var(--blanco);
+      border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
+      font-size: 0.86rem; }
+    table.esc th, table.esc td { padding: 0.55rem 0.7rem; text-align: right;
+      border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
+    table.esc th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.esc th:first-child, table.esc td:first-child { text-align: left; }
+    table.esc tr:last-child td { border-bottom: 0; }
+    td.r { color: #C4553B; } td.v { color: #2E7D52; }
+    .tabla-scroll { overflow-x: auto; }
+
+    .esc-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
+    .esc-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+      font-size: 0.9rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Escenarios</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <? if (mostrarVolver) { ?>
+        <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+      <? } ?>
+    </div>
+  </header>
+
+  <main class="esc">
+    <div class="esc-barra-sup">
+      <div>
+        <h1>Escenarios y punto de equilibrio</h1>
+        <p class="esc-sub" id="sub">Cargando…</p>
+      </div>
+      <? if (mostrarVolver) { ?>
+        <a class="esc-boton" href="<?= urlBase ?>?page=finanzas<?!= authToken ? '&u=' + authToken : '' ?>">Ir a Finanzas</a>
+      <? } ?>
+    </div>
+
+    <div id="cargando" class="esc-cargando">Leyendo el maestro…</div>
+
+    <div id="todo" style="display:none">
+      <div class="esc-anio" id="anio"></div>
+
+      <section class="esc-seccion">
+        <h2>Simulador de escenarios</h2>
+        <p class="esc-nota">
+          Cada palanca mueve el año completo con los datos reales de base. No es una
+          proyección: es una pregunta. «Si el alquiler bajara a la referencia del sector y
+          vendiéramos 15% más, ¿el año cerraba en positivo?»
+        </p>
+        <div class="esc-caja">
+          <div class="esc-presets" id="presets"></div>
+          <div class="esc-palancas" id="palancas"></div>
+          <div class="esc-res">
+            <div class="lbl">Resultado operativo del año en este escenario</div>
+            <div class="big" id="resVal">—</div>
+            <div class="det" id="resDet"></div>
+            <div class="esc-comp" id="comp"></div>
+            <div class="esc-leyenda">
+              <span>▪ Gris: como está hoy</span><span>▪ Verde: el escenario</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="esc-seccion">
+        <h2>Punto de equilibrio</h2>
+        <p class="esc-nota">
+          Cuánto hay que vender en el mes para no perder: el gasto fijo dividido entre el
+          margen de contribución. Lo semivariable entra a la mitad. El gasto fijo sale de la
+          clasificación del gasto bancario, así que su nómina es la pagada y no la devengada —
+          es lo primero que hay que revisar si este número se usa para decidir.
+        </p>
+        <div class="esc-caja esc-be">
+          <div>
+            <label style="font-size:.82rem;opacity:.7">Mes:
+              <select id="selMes"></select>
+            </label>
+            <div class="be-n" id="beVal">—</div>
+            <div class="be-txt" id="beTxt"></div>
+            <div class="be-pista" id="bePista"></div>
+          </div>
+          <div class="tabla-scroll">
+            <table class="esc">
+              <thead><tr>
+                <th>Mes</th><th>Venta</th><th>Equilibrio</th><th>Margen</th><th>Holgura</th>
+              </tr></thead>
+              <tbody id="beTabla"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+<script>
+  /* El token va como PRIMER argumento en TODA llamada a google.script.run. */
+  var AUTH = '<?= authToken ?>';
+  var D = null, T = null, BL = [];
+
+  function q(n) {
+    return 'Q' + Math.round(Number(n) || 0).toLocaleString('es-GT');
+  }
+  function pct(n) { return (n === null || n === undefined) ? '—' : Number(n).toFixed(1) + '%'; }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* ---------------------------------------------------------- el simulador
+     Portado del tablero rosanta-dre-mensual sin cambiarle una coma a la
+     aritmetica, para poder cotejar los dos mientras el viejo siga vivo.
+
+     El volumen mueve la venta Y el COGS, porque mas gente come mas comida. El
+     precio mueve solo la venta: subir la carta no cambia lo que cuesta el
+     plato. Y del gasto operativo solo una parte sigue al volumen: servicios,
+     mantencion y bienes de uso al 40%, comisiones en proporcion a la venta
+     (son un porcentaje de lo que cobra la tarjeta) y el resto no se mueve. */
+  var PAL = [
+    { id: 'precio',   n: 'Precio de venta', min: -10, max: 30, u: '%',
+      hint: 'Sube o baja todos los precios de carta' },
+    { id: 'volumen',  n: 'Comensales', min: -20, max: 40, u: '%',
+      hint: 'Más o menos gente, mismo ticket' },
+    { id: 'cmv',      n: 'Costo de mercadería', min: -10, max: 10, u: ' pp',
+      hint: 'Puntos porcentuales sobre la venta' },
+    { id: 'alquiler', n: 'Alquiler', min: -50, max: 10, u: '%', bloque: 'Inmueble y ocupacion',
+      hint: 'referencia 6–10% de la venta' },
+    { id: 'honor',    n: 'Prestadores y honorarios', min: -70, max: 10, u: '%',
+      bloque: 'Prestadores y honorarios', hint: 'referencia 1–3%' },
+    { id: 'comis',    n: 'Comisiones y cargos', min: -40, max: 10, u: '%',
+      bloque: 'Comisiones y cargos', hint: 'referencia 3–5%' },
+    { id: 'nomina',   n: 'Nómina', min: -20, max: 20, u: '%', bloque: 'Nomina y salarios',
+      hint: 'referencia 25–30%' }
+  ];
+  var PRESETS = {
+    base: {}, reset: {},
+    alq: { alquiler: -35 },
+    tres: { alquiler: -35, honor: -60, comis: -25 },
+    vol: { volumen: 15 }
+  };
+  var NOMBRE_PRESET = {
+    base: 'Situación actual', alq: 'Alquiler a referencia',
+    tres: 'Corregir los tres bloques altos', vol: '+15% de comensales', reset: 'Reiniciar'
+  };
+  var st = {};
+
+  function calc() {
+    var f = 1 + st.precio / 100, g = 1 + st.volumen / 100;
+    var ventas = T.ventas * f * g;
+    var cogs = T.cogs * g * (1 + st.cmv / 100 * (T.ventas / T.cogs));
+    var bl = {};
+    BL.forEach(function (b) { bl[b] = T.bloques[b] || 0; });
+    if (bl['Inmueble y ocupacion'] !== undefined) bl['Inmueble y ocupacion'] *= 1 + st.alquiler / 100;
+    if (bl['Prestadores y honorarios'] !== undefined) bl['Prestadores y honorarios'] *= 1 + st.honor / 100;
+    if (bl['Comisiones y cargos'] !== undefined) bl['Comisiones y cargos'] *= (1 + st.comis / 100) * f * g;
+    if (bl['Nomina y salarios'] !== undefined) bl['Nomina y salarios'] *= 1 + st.nomina / 100;
+    ['Tarifas y servicios', 'Mantencion', 'Bienes de uso'].forEach(function (b) {
+      if (bl[b]) bl[b] *= 1 + (g - 1) * 0.4;
+    });
+    var gop = 0;
+    Object.keys(bl).forEach(function (b) { if (b !== 'Impuestos') gop += bl[b]; });
+    return { ventas: ventas, cogs: cogs, gop: gop, res: ventas - cogs - gop };
+  }
+
+  function barras(e) {
+    var filas = [['Ventas', T.ventas, e.ventas], ['Mercadería', T.cogs, e.cogs],
+                 ['Gasto operativo', T.gop, e.gop], ['Resultado', T.neto, e.res]];
+    var tope = 0;
+    filas.forEach(function (f) { tope = Math.max(tope, Math.abs(f[1]), Math.abs(f[2])); });
+    tope = tope || 1;
+    return filas.map(function (f) {
+      function b(v, cls) {
+        return '<div class="b ' + cls + (v < 0 ? ' neg' : '') + '">' +
+          '<span style="width:' + (Math.abs(v) / tope * 100) + '%"></span>' +
+          '<i>' + q(v) + '</i></div>';
+      }
+      return '<div class="esc-fila"><div class="et">' + f[0] + '</div>' +
+        b(f[1], '') + b(f[2], 'e') + '</div>';
+    }).join('');
+  }
+
+  function pinta() {
+    var e = calc(), base = T.neto, d = e.res - base;
+    var v = document.getElementById('resVal');
+    v.textContent = q(e.res);
+    v.style.color = e.res < 0 ? '#C4553B' : '#2E7D52';
+    document.getElementById('resDet').innerHTML =
+      'Hoy: <b>' + q(base) + '</b> · en este escenario: <b>' + q(e.res) + '</b> · diferencia: ' +
+      '<b style="color:' + (d >= 0 ? '#2E7D52' : '#C4553B') + '">' + (d >= 0 ? '+' : '') + q(d) +
+      '</b><br>Ventas ' + q(e.ventas) + ' · mercadería ' + pct(e.cogs / e.ventas * 100) +
+      ' · gasto operativo ' + pct(e.gop / e.ventas * 100) +
+      ' · por mes ' + q(e.res / D.meses.length);
+    document.getElementById('comp').innerHTML = barras(e);
+  }
+
+  function montarSimulador() {
+    PAL.forEach(function (p) { st[p.id] = 0; });
+    document.getElementById('presets').innerHTML = ['base', 'alq', 'tres', 'vol', 'reset']
+      .map(function (k) {
+        return '<button class="esc-boton" data-p="' + k + '">' + NOMBRE_PRESET[k] + '</button>';
+      }).join('');
+    document.getElementById('palancas').innerHTML = PAL.map(function (p) {
+      var hoy = p.bloque && T.bloques[p.bloque]
+        ? 'Hoy ' + pct(T.bloques[p.bloque] / T.ventas * 100) + ' de la venta · ' : '';
+      return '<div class="pal"><div class="cab"><span>' + esc(p.n) + '</span>' +
+        '<b id="v_' + p.id + '">0' + p.u + '</b></div>' +
+        '<input type="range" id="s_' + p.id + '" min="' + p.min + '" max="' + p.max +
+        '" step="1" value="0">' +
+        '<div class="hint">' + hoy + esc(p.hint) + '</div></div>';
+    }).join('');
+
+    PAL.forEach(function (p) {
+      var el = document.getElementById('s_' + p.id);
+      el.addEventListener('input', function () {
+        st[p.id] = Number(el.value);
+        document.getElementById('v_' + p.id).textContent =
+          (st[p.id] > 0 ? '+' : '') + st[p.id] + p.u;
+        pinta();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-p]'), function (b) {
+      b.addEventListener('click', function () {
+        var P = PRESETS[b.getAttribute('data-p')] || {};
+        PAL.forEach(function (p) {
+          st[p.id] = P[p.id] || 0;
+          document.getElementById('s_' + p.id).value = st[p.id];
+          document.getElementById('v_' + p.id).textContent =
+            (st[p.id] > 0 ? '+' : '') + st[p.id] + p.u;
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-p]'), function (o) {
+          o.classList.remove('on');
+        });
+        b.classList.add('on');
+        pinta();
+      });
+    });
+    pinta();
+  }
+
+  /* ------------------------------------------------------ punto de equilibrio */
+  function pintaBE(i) {
+    var m = D.meses[i];
+    var tk = m.com ? m.ventas / m.com : 0;
+    var falta = m.bev - m.ventas;
+    var el = document.getElementById('beVal');
+    el.textContent = q(m.bev);
+    el.className = 'be-n' + (falta > 0 ? ' mal' : '');
+    document.getElementById('beTxt').innerHTML =
+      'Con un gasto fijo de <b>' + q(m.fijo) + '</b> y un margen de contribución de <b>' +
+      pct(m.mc) + '</b>, ' + m.mes + ' necesitaba <b>' + q(m.bev) +
+      '</b> de venta para no perder. Vendió ' + q(m.ventas) + ' con ' + m.com + ' comensales' +
+      (tk ? ' (ticket ' + q(tk) + '), o sea <b>' + Math.round(m.bev / tk).toLocaleString('es-GT') +
+            '</b> comensales para llegar al equilibrio.' : '.') +
+      (falta > 0 ? ' Faltaron <b style="color:#C4553B">' + q(falta) + '</b>.'
+                 : ' Sobraron <b style="color:#2E7D52">' + q(-falta) + '</b>.');
+
+    var tope = Math.max(m.ventas, m.bev) * 1.12 || 1;
+    document.getElementById('bePista').innerHTML =
+      '<span class="venta" style="width:' + (m.ventas / tope * 100) + '%"></span>' +
+      '<span class="marca" style="left:' + (m.bev / tope * 100) + '%"></span>' +
+      '<span class="et" style="left:' + (m.bev / tope * 100) + '%">equilibrio</span>';
+  }
+
+  function pintar(d) {
+    D = d; T = d.total;
+    BL = Object.keys(T.bloques || {});
+    document.getElementById('sub').textContent =
+      'Año ' + d.anio + ' · ' + d.meses.length + ' meses con venta · datos al ' + d.gen;
+
+    function unidad(n, tt, mal) {
+      return '<div class="u"><div class="n' + (mal ? ' mal' : '') + '">' + n +
+             '</div><div class="t">' + tt + '</div></div>';
+    }
+    document.getElementById('anio').innerHTML =
+      unidad(q(T.ventas), 'Ventas netas del año') +
+      unidad(q(T.cogs), 'Mercadería') +
+      unidad(q(T.gop), 'Gasto operativo') +
+      unidad(q(T.neto), 'Resultado', T.neto < 0) +
+      unidad(pct(T.netop), 'Sobre la venta', T.netop < 0);
+
+    montarSimulador();
+
+    var sel = document.getElementById('selMes');
+    sel.innerHTML = d.meses.map(function (m, i) {
+      return '<option value="' + i + '"' + (i === d.meses.length - 1 ? ' selected' : '') + '>' +
+        m.mes + '</option>';
+    }).join('');
+    sel.addEventListener('change', function () { pintaBE(Number(sel.value)); });
+    pintaBE(d.meses.length - 1);
+
+    document.getElementById('beTabla').innerHTML = d.meses.map(function (m) {
+      var h = m.ventas - m.bev;
+      return '<tr><td>' + m.mes + '</td><td>' + q(m.ventas) + '</td><td>' + q(m.bev) + '</td>' +
+        '<td>' + pct(m.mc) + '</td>' +
+        '<td class="' + (h < 0 ? 'r' : 'v') + '">' + (h >= 0 ? '+' : '') + q(h) + '</td></tr>';
+    }).join('');
+
+    document.getElementById('cargando').style.display = 'none';
+    document.getElementById('todo').style.display = '';
+  }
+
+  google.script.run
+    .withSuccessHandler(pintar)
+    .withFailureHandler(function (e) {
+      document.getElementById('cargando').innerHTML =
+        '<div class="esc-error">No se pudo leer el maestro.<br>' +
+        esc(e && e.message ? e.message : e) + '</div>';
+    })
+    .getFinanzasData(AUTH, false);
+</script>
+</body>
+</html>

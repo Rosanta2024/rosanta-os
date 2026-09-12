@@ -1,0 +1,548 @@
+/**
+ * Pruebas.gs — Bateria de chequeos de la intranet. NO ESCRIBE NADA.
+ *
+ * Por que existe: hasta hoy la unica forma de saber si la intranet esta sana era
+ * que una persona mirara una pantalla y notara algo raro. Asi se descubrieron el
+ * Camembert con valor viejo, el puente del POS que resolvia mal y el camote que se
+ * leia como 12 gramos. Ninguno dio error. Los tres vivieron semanas.
+ *
+ * Como se corre:
+ *   - desde el editor:   abrir CORRER_PRUEBAS.gs y darle Run (es su unica funcion)
+ *   - desde la terminal: clasp run CORRER_PRUEBAS   (necesita el proyecto de Cloud)
+ *   - desde el navegador: la ruta ?page=pruebas
+ *
+ * Todo lo de aca dentro es privado (termina en _) menos correrPruebas(), para no
+ * chocar con nada: en Apps Script todos los .gs comparten un solo ambito global.
+ *
+ * REGLA: ninguna prueba escribe. Si alguna necesitara escribir, va en otro archivo.
+ */
+
+var PRUEBAS_CFG = {
+  /** Numeros que deben dar. Actualizar cuando cambie el recetario, a proposito. */
+  esperado: {
+    platosCocina:        35,
+    preelaboradosCocina: 40,
+    conCmvCocina:        26,
+    vaciasCocina:         9,   // las 7 nuevas + Charlotta y Panacotta, todavia sin costear
+    platosMapeadosPOS:   35
+  },
+
+  /** CMV de control, en porcentaje. Tolerancia +-0.6 puntos. */
+  control: {
+    'ensalada rosanta'         : 15.0,   // v16: bajo de 15.9 al corregirse la gremolata
+    'tabla de jamones y quesos': 22.6,
+    'gratin de papas'          : 19.8,
+    'mix de fritas'            : 23.6,
+    'peras horneadas'          : 19.7
+  },
+  toleranciaCmv: 0.6,
+
+  /**
+   * Version del recetario que la intranet deberia estar leyendo.
+   * Se compara contra el NOMBRE del documento. Si no coincide, media bateria
+   * sale en rojo por la misma causa, y esta prueba lo dice de una vez.
+   */
+  recetarioEsperado: 'v16',
+
+  /**
+   * Lineas de ficha que apuntan a un producto que no esta en el Banco de su area.
+   * No son cero y no deberian serlo todavia:
+   *   COCINA 2:
+   *     MOUSSE DE CHOCOLATE > Crema de Limon
+   *        Falta la receta. Lo resuelve Jeffry.
+   *     Zanahorias Rostizadas > ZANAHORIA BEBE
+   *        Lo rompi yo en la v16: la fila del Banco se renombro a
+   *        "ZZ DUP · Zanahoria Bebe" por duplicada, y la ficha dejo de
+   *        encontrarla. NO afecta ningun costo: esa ficha trae el precio
+   *        escrito a mano, no tiene fila propia en el Banco y ningun plato
+   *        la consume. Se cierra cuando se decida si vale Q15 o Q10 la libra.
+   *   BARRA 38 -> cordiales, sales y mermeladas de coctel que nunca se cargaron
+   *               al Banco de barra. Es un trabajo aparte, no una regresion.
+   * Si el numero SUBE, algo se rompio. Si BAJA, alguien avanzo: actualizar aca.
+   */
+  huerfanos: { COCINA: 2, BARRA: 38 },
+
+  /** Modulos validos en la hoja USUARIOS. Uno fuera de esta lista es un typo. */
+  modulosValidos: ['finanzas', 'recetario', 'marketing', 'contenido', 'crm', 'consola', 'resenas'],
+
+  /** Propiedades que tienen que existir si o si. */
+  propsObligatorias: ['CONFIG_SHEET_ID', 'RECETARIO_COCINA_SHEET_ID'],
+  propsOpcionales:   ['RECETARIO_BARRA_SHEET_ID', 'COSTEO_SHEET_ID',
+                      'POS_CATALOGO_SHEET_ID', 'RECETARIO_FOTOS_FOLDER_ID'],
+
+  /** Las de red tardan y dependen de terceros. Se piden aparte. */
+  incluirRed: false
+};
+
+// ---------------------------------------------------------------- infraestructura
+
+/** Modelo de costeo cacheado en memoria: construirModelo_ es caro, se arma una vez. */
+var PRUEBAS_MODELO_ = null;
+function prModelo_() {
+  if (!PRUEBAS_MODELO_) PRUEBAS_MODELO_ = construirModelo_();
+  return PRUEBAS_MODELO_;
+}
+
+function prGrupo_(res, nombre) {
+  var g = { nombre: nombre, pruebas: [] };
+  res.grupos.push(g);
+  return g;
+}
+
+/**
+ * Registra un resultado.
+ *   estado: 'OK' | 'FALLA' | 'AVISO' | 'SALTADA'
+ * AVISO = algo que hay que mirar pero no rompe nada hoy.
+ */
+function prAnotar_(grupo, nombre, estado, detalle, leido, esperado) {
+  grupo.pruebas.push({
+    nombre: nombre, estado: estado, detalle: detalle || '',
+    leido: leido === undefined ? null : leido,
+    esperado: esperado === undefined ? null : esperado
+  });
+}
+
+/** Envuelve una prueba para que un error adentro no tumbe la bateria completa. */
+function prCorrer_(grupo, nombre, fn) {
+  try {
+    fn();
+  } catch (e) {
+    prAnotar_(grupo, nombre, 'FALLA', 'Reviento: ' + String(e && e.message || e));
+  }
+}
+
+function prIgual_(grupo, nombre, leido, esperado, detalle) {
+  prAnotar_(grupo, nombre, leido === esperado ? 'OK' : 'FALLA', detalle || '', leido, esperado);
+}
+
+// ---------------------------------------------------------------- 1. cimientos
+
+function prCimientos_(res) {
+  var g = prGrupo_(res, '1. Cimientos');
+  var props = PropertiesService.getScriptProperties();
+
+  PRUEBAS_CFG.propsObligatorias.forEach(function (clave) {
+    prCorrer_(g, clave, function () {
+      var id = props.getProperty(clave);
+      if (!id) { prAnotar_(g, clave, 'FALLA', 'La propiedad no existe'); return; }
+      var ss = SpreadsheetApp.openById(id);          // tira si el archivo se borro
+      prAnotar_(g, clave, 'OK', '', ss.getName());
+    });
+  });
+
+  PRUEBAS_CFG.propsOpcionales.forEach(function (clave) {
+    prCorrer_(g, clave, function () {
+      var id = props.getProperty(clave);
+      if (!id) { prAnotar_(g, clave, 'SALTADA', 'Sin configurar'); return; }
+      if (clave.indexOf('FOLDER') > -1) {
+        prAnotar_(g, clave, 'OK', '', DriveApp.getFolderById(id).getName());
+      } else {
+        prAnotar_(g, clave, 'OK', '', SpreadsheetApp.openById(id).getName());
+      }
+    });
+  });
+
+  prCorrer_(g, 'Version del recetario', function () {
+    var ss = abrirPorClave_('RECETARIO_COCINA_SHEET_ID');
+    if (!ss) { prAnotar_(g, 'Version del recetario', 'FALLA', 'No abre'); return; }
+    var nombre = ss.getName();
+    var ok = nombre.indexOf(PRUEBAS_CFG.recetarioEsperado) > -1;
+    prAnotar_(g, 'Version del recetario', ok ? 'OK' : 'FALLA',
+      ok ? '' : 'RAIZ: mientras la intranet lea esta version, los numeros de control y ' +
+                'las tres pruebas del puente con el POS van a salir en rojo. La columna K ' +
+                '(pestana de la ficha) existe desde la ' + PRUEBAS_CFG.recetarioEsperado + '.',
+      nombre, PRUEBAS_CFG.recetarioEsperado);
+  });
+
+  prCorrer_(g, 'La web app esta desplegada', function () {
+    var url = ScriptApp.getService().getUrl();
+    prAnotar_(g, 'La web app esta desplegada', url ? 'OK' : 'FALLA', url || 'Sin URL');
+  });
+}
+
+// ---------------------------------------------------------------- 2. recetario
+
+function prRecetario_(res) {
+  var g = prGrupo_(res, '2. Recetario de cocina');
+  var e = PRUEBAS_CFG.esperado;
+
+  prCorrer_(g, 'Conteos', function () {
+    var m = prModelo_();
+    var coc = m.recetas.filter(function (r) { return r.area === 'COCINA'; });
+    var platos = coc.filter(function (r) { return r.tipo === 'plato'; });
+    var vacias = platos.filter(function (r) { return !r.ingredientes.length; });
+    var conCmv = platos.filter(function (r) { return r.cmv != null && r.cmv > 0; });
+
+    prIgual_(g, 'Fichas de plato',   platos.length,             e.platosCocina);
+    prIgual_(g, 'Pre-elaborados',    coc.length - platos.length, e.preelaboradosCocina);
+    prIgual_(g, 'Platos con CMV',    conCmv.length,             e.conCmvCocina);
+    prAnotar_(g, 'Platos sin costear',
+      vacias.length === e.vaciasCocina ? 'OK' : 'AVISO',
+      vacias.map(function (r) { return r.nombre; }).join(' · '),
+      vacias.length, e.vaciasCocina);
+  });
+
+  prCorrer_(g, 'Numeros de control', function () {
+    var m = prModelo_();
+    Object.keys(PRUEBAS_CFG.control).forEach(function (clave) {
+      var esp = PRUEBAS_CFG.control[clave];
+      var r = m.recetas.filter(function (x) { return normalizar_(x.nombre) === clave; })[0];
+      if (!r) { prAnotar_(g, 'CMV ' + clave, 'FALLA', 'La ficha no aparece en el modelo'); return; }
+      if (r.cmv == null) { prAnotar_(g, 'CMV ' + clave, 'FALLA', 'Sin CMV', null, esp); return; }
+      var ok = Math.abs(r.cmv - esp) < PRUEBAS_CFG.toleranciaCmv;
+      prAnotar_(g, 'CMV ' + clave, ok ? 'OK' : 'FALLA',
+        ok ? '' : 'Se movio ' + (r.cmv - esp).toFixed(1) + ' puntos',
+        Number(r.cmv.toFixed(1)), esp);
+    });
+  });
+
+  prCorrer_(g, 'Ingredientes sin match en el Banco', function () {
+    // Se cuentan POR AREA: la barra arrastra 38 de siempre (cordiales y sales que
+    // nunca se cargaron a su Banco) y mezclarlas con cocina tapaba lo que importa.
+    var m = prModelo_(), porArea = {};
+    m.recetas.forEach(function (r) {
+      r.ingredientes.forEach(function (i) {
+        if (i.insumo !== null) return;
+        if (!porArea[r.area]) porArea[r.area] = [];
+        porArea[r.area].push(r.nombre + ' > ' + i.nombre);
+      });
+    });
+    Object.keys(PRUEBAS_CFG.huerfanos).forEach(function (area) {
+      var lista = porArea[area] || [], esp = PRUEBAS_CFG.huerfanos[area];
+      var estado = lista.length > esp ? 'FALLA' : (lista.length < esp ? 'AVISO' : 'OK');
+      var detalle = lista.slice(0, 12).join(' · ');
+      if (lista.length < esp) detalle = 'Bajaron. Actualizar el numero en PRUEBAS_CFG. ' + detalle;
+      prAnotar_(g, 'Sin match en el Banco de ' + area, estado, detalle, lista.length, esp);
+    });
+  });
+
+  prCorrer_(g, 'Hojas de control leidas como receta', function () {
+    var m = prModelo_();
+    // Una hoja que no es ficha se cuela cuando falta en COSTEO.tabsNoReceta.
+    // Se nota porque queda sin ingredientes Y sin precio.
+    var basura = m.recetas.filter(function (r) { return !r.ingredientes.length && r.precio === null; });
+    prAnotar_(g, 'Hojas de control leidas como receta',
+      basura.length === 0 ? 'OK' : 'FALLA',
+      basura.map(function (r) { return r.area + ' > ' + r.nombre; }).join(' · '),
+      basura.length, 0);
+  });
+
+  prCorrer_(g, 'Formulas rotas en las fichas', function () {
+    var ss = abrirPorClave_('RECETARIO_COCINA_SHEET_ID');
+    if (!ss) { prAnotar_(g, 'Formulas rotas en las fichas', 'SALTADA', 'Sin recetario'); return; }
+    var rotas = prEscanearErrores_(ss);
+    prAnotar_(g, 'Formulas rotas en las fichas',
+      rotas.length === 0 ? 'OK' : 'FALLA',
+      rotas.slice(0, 15).join(' · '), rotas.length, 0);
+  });
+}
+
+/** Recorre las hojas y devuelve las celdas con error de formula (#REF!, #N/A, #VALUE!...). */
+function prEscanearErrores_(ss) {
+  var malas = [];
+  ss.getSheets().forEach(function (hoja) {
+    var datos = hoja.getDataRange().getValues();
+    for (var i = 0; i < datos.length; i++) {
+      for (var j = 0; j < datos[i].length; j++) {
+        var v = datos[i][j];
+        if (typeof v === 'string' && v.length > 1 && v.charAt(0) === '#' && v.indexOf('!') > -1) {
+          malas.push(hoja.getName() + '!' + String.fromCharCode(65 + j) + (i + 1) + ' ' + v);
+        }
+      }
+    }
+  });
+  return malas;
+}
+
+// ---------------------------------------------------------------- 3. puente POS
+
+function prPuentePOS_(res) {
+  var g = prGrupo_(res, '3. Puente con el POS');
+
+  prCorrer_(g, 'El mapa carga', function () {
+    var m = mapaPOS_(true);
+    prIgual_(g, 'Platos mapeados', Object.keys(m.platos).length,
+             PRUEBAS_CFG.esperado.platosMapeadosPOS);
+
+    var sinPestana = [];
+    for (var p in m.platos) if (!m.platos[p].pestana) sinPestana.push(p);
+    prAnotar_(g, 'Todos tienen pestana (columna K)',
+      sinPestana.length === 0 ? 'OK' : 'FALLA', sinPestana.join(' · '), sinPestana.length, 0);
+  });
+
+  prCorrer_(g, 'nombrePOS_ resuelve por pestana', function () {
+    // Este es el que fallaba callado: comparaba el nombre de la pestana contra la
+    // columna B por coincidencia exacta y nunca coincidia, porque las pestanas van
+    // en MAYUSCULAS y 13 platos tienen ademas otro nombre de fondo.
+    var ss = abrirPorClave_('RECETARIO_COCINA_SHEET_ID');
+    var m = mapaPOS_(), ok = 0, rotos = [], sinHoja = [];
+    for (var plato in m.platos) {
+      var pest = m.platos[plato].pestana;
+      if (!pest) continue;
+      if (ss && !ss.getSheetByName(pest)) { sinHoja.push(plato + ' -> "' + pest + '"'); continue; }
+      if (nombrePOS_(pest) === m.platos[plato].pos) ok++;
+      else rotos.push(pest + ' devolvio "' + nombrePOS_(pest) + '"');
+    }
+    prIgual_(g, 'Nombres resueltos', ok, PRUEBAS_CFG.esperado.platosMapeadosPOS,
+             rotos.slice(0, 10).join(' · '));
+    prAnotar_(g, 'La pestana existe en el documento',
+      sinHoja.length === 0 ? 'OK' : 'FALLA', sinHoja.join(' · '), sinHoja.length, 0);
+  });
+
+  prCorrer_(g, 'La vuelta: del POS a la ficha', function () {
+    // Varios platos comparten un mismo producto del POS: los cuatro postres se
+    // venden por un unico boton de Q65 y la receta rota. Con esos, la vuelta no
+    // puede devolver el mismo plato, y no tiene por que. Lo que importa es que
+    // devuelva UNO que use ese nombre. Pedir identidad marcaba 3 fallas falsas.
+    var m = mapaPOS_(), ok = 0, rotos = [], compartidos = 0, cuantos = {};
+    for (var p in m.platos) {
+      var kp = normalizar_(m.platos[p].pos);
+      cuantos[kp] = (cuantos[kp] || 0) + 1;
+    }
+    for (var plato in m.platos) {
+      var pos = m.platos[plato].pos;
+      if (cuantos[normalizar_(pos)] > 1) compartidos++;
+      var vuelta = fichaDesdePOS_(pos);
+      if (vuelta && m.platos[vuelta] && m.platos[vuelta].pos === pos) ok++;
+      else rotos.push(pos);
+    }
+    prIgual_(g, 'La vuelta: del POS a la ficha', ok, Object.keys(m.platos).length,
+             rotos.length ? rotos.slice(0, 10).join(' · ')
+                          : compartidos + ' platos comparten boton en el POS (los postres)');
+  });
+
+  prCorrer_(g, 'Precios recetario vs POS', function () {
+    var id = PropertiesService.getScriptProperties().getProperty('POS_CATALOGO_SHEET_ID');
+    if (!id) {
+      prAnotar_(g, 'Precios recetario vs POS', 'SALTADA',
+                'Falta POS_CATALOGO_SHEET_ID. Subir el catalogo del POS y guardar su ID.');
+      return;
+    }
+    var r = verificarNombresPOS(id);
+    prAnotar_(g, 'Nombres vivos en el POS', r.rotos.length === 0 ? 'OK' : 'FALLA',
+              r.rotos.slice(0, 10).join(' · '), r.rotos.length, 0);
+    prAnotar_(g, 'Precios iguales', r.precios.length === 0 ? 'OK' : 'AVISO',
+              r.precios.slice(0, 10).join(' · '), r.precios.length, 0);
+  });
+}
+
+// ---------------------------------------------------------------- 4. accesos
+
+function prAccesos_(res) {
+  var g = prGrupo_(res, '4. Accesos');
+
+  prCorrer_(g, 'La hoja USUARIOS', function () {
+    var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
+    var hoja = ss.getSheetByName('USUARIOS');
+    if (!hoja) { prAnotar_(g, 'La hoja USUARIOS', 'FALLA', 'No existe'); return; }
+    var filas = hoja.getDataRange().getValues();
+    prAnotar_(g, 'La hoja USUARIOS', 'OK', (filas.length - 1) + ' personas', filas.length - 1);
+
+    var sinRol = [], sinModulos = [], modulosRaros = [], sinToken = [];
+    for (var i = 1; i < filas.length; i++) {
+      var correo = String(filas[i][0] || '').trim();
+      if (!correo) continue;
+      if (!String(filas[i][1] || '').trim()) sinRol.push(correo);
+
+      var mods = String(filas[i][2] || '').split(',')
+        .map(function (m) { return m.trim(); }).filter(function (m) { return m; });
+      if (!mods.length) sinModulos.push(correo);
+      mods.forEach(function (m) {
+        if (PRUEBAS_CFG.modulosValidos.indexOf(m) === -1) modulosRaros.push(correo + ' > "' + m + '"');
+      });
+
+      // Sin correo del dominio, la sesion no identifica: el token es la unica puerta.
+      if (correo.indexOf('@rosanta.rest') === -1 && !String(filas[i][5] || '').trim()) {
+        sinToken.push(correo);
+      }
+    }
+    prAnotar_(g, 'Todos con rol',     sinRol.length      === 0 ? 'OK' : 'FALLA', sinRol.join(' · '));
+    prAnotar_(g, 'Todos con modulos', sinModulos.length  === 0 ? 'OK' : 'FALLA', sinModulos.join(' · '));
+    prAnotar_(g, 'Sin modulos con typo', modulosRaros.length === 0 ? 'OK' : 'FALLA', modulosRaros.join(' · '));
+    prAnotar_(g, 'Cuentas de Gmail con token', sinToken.length === 0 ? 'OK' : 'FALLA',
+      sinToken.length ? 'Sin token no pueden entrar: ' + sinToken.join(' · ') : '');
+  });
+
+  prCorrer_(g, 'Cada token resuelve a su persona', function () {
+    var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS');
+    var filas = hoja.getDataRange().getValues(), ok = 0, rotos = [];
+    for (var i = 1; i < filas.length; i++) {
+      var t = String(filas[i][5] || '').trim();
+      if (!t) continue;
+      var u = getUsuarioPorToken_(t);
+      if (u && u.email === String(filas[i][0]).toLowerCase().trim()) ok++;
+      else rotos.push(String(filas[i][0]));
+    }
+    prAnotar_(g, 'Cada token resuelve a su persona', rotos.length === 0 ? 'OK' : 'FALLA',
+              rotos.join(' · '), ok);
+  });
+
+  prCorrer_(g, 'Los roles de USUARIOS existen en la capa de escritura', function () {
+    // El hueco que esto caza: la hoja USUARIOS tiene a la direccion como "dueno"
+    // y EDIT.permisos solo conocia chef, cocina, administracion y direccion.
+    // puede_('dueno', ...) devolvia lista vacia, o sea false para todo: el dueño
+    // del restaurante habria quedado sin poder tocar nada el dia que se cablee
+    // la interfaz. No daba error, simplemente no dejaba hacer nada.
+    if (typeof EDIT === 'undefined' || !EDIT.permisos) {
+      prAnotar_(g, 'Los roles de USUARIOS existen en la capa de escritura', 'SALTADA',
+                'EdicionRecetario.gs no esta instalado');
+      return;
+    }
+    var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS');
+    var filas = hoja.getDataRange().getValues(), huerfanos = [], vistos = {};
+    for (var i = 1; i < filas.length; i++) {
+      var rol = String(filas[i][1] || '').trim();
+      if (!rol) continue;
+
+      // Solo cuentan los roles de quien puede LLEGAR al recetario. Marketing y
+      // contenido (roles "equipo" y "pauta") entran a Marketing OS y no tocan el
+      // documento de costos: que no tengan permisos de escritura es lo correcto,
+      // no un hueco. Sin este filtro la prueba los marcaba como falla.
+      var mods = String(filas[i][2] || '').split(',').map(function (m) { return normalizar_(m); });
+      if (mods.indexOf('recetario') === -1) continue;
+
+      if (vistos[normalizar_(rol)]) continue;
+      vistos[normalizar_(rol)] = true;
+      if (!EDIT.permisos[normalizar_(rol)]) {
+        huerfanos.push('"' + rol + '" (' + String(filas[i][0]).trim() + ')');
+      }
+    }
+    prAnotar_(g, 'Los roles de USUARIOS existen en la capa de escritura',
+      huerfanos.length === 0 ? 'OK' : 'FALLA',
+      huerfanos.length ? 'Sin permisos definidos, no van a poder hacer nada: ' + huerfanos.join(' · ') : '',
+      huerfanos.length, 0);
+  });
+
+  prCorrer_(g, 'Quien corre las pruebas se identifica', function () {
+    var u = getUsuarioActual();
+    prAnotar_(g, 'Quien corre las pruebas se identifica', u ? 'OK' : 'AVISO',
+      u ? u.email + ' · ' + u.rol : 'La sesion no devuelve correo (normal fuera del dominio)');
+  });
+}
+
+// ---------------------------------------------------------------- 5. modulos
+
+function prModulos_(res) {
+  var g = prGrupo_(res, '5. Los modulos responden');
+
+  prCorrer_(g, 'Recetario (getCosteoData)', function () {
+    var d = getCosteoData();
+    var n = d && d.recetas ? d.recetas.length : 0;
+    prAnotar_(g, 'Recetario (getCosteoData)', n > 0 ? 'OK' : 'FALLA', n + ' recetas', n);
+  });
+
+  prCorrer_(g, 'Proveedores (getReporteHigiene)', function () {
+    var h = getReporteHigiene();
+    prAnotar_(g, 'Proveedores (getReporteHigiene)', h ? 'OK' : 'FALLA', h ? 'responde' : 'vacio');
+  });
+
+  prCorrer_(g, 'CRM (crmContactos)', function () {
+    var c = crmContactos();
+    var n = c && c.length ? c.length : 0;
+    prAnotar_(g, 'CRM (crmContactos)', n >= 0 ? 'OK' : 'FALLA', n + ' contactos', n);
+  });
+
+  prCorrer_(g, 'Sincronizacion de precios', function () {
+    // OJO: probarSincronizacion() solo escribe en el Log y devuelve undefined.
+    // Llamarla y leer su retorno hacia que esta prueba dijera "sin cambios que
+    // proponer" mientras proponia tres. Se llama a la de abajo, que si devuelve.
+    if (!PropertiesService.getScriptProperties().getProperty('INVENTARIO_CIERRE_SHEET_ID')) {
+      prAnotar_(g, 'Sincronizacion de precios', 'SALTADA',
+                'Falta INVENTARIO_CIERRE_SHEET_ID. Correr PROBAR_SYNC una vez.');
+      return;
+    }
+    var r = sincronizarPreciosDeCierre('COCINA');   // propone, nunca escribe
+    var n = r.cambios.length;
+    prAnotar_(g, 'Precios del cierre por revisar', n === 0 ? 'OK' : 'AVISO',
+      r.cambios.map(function (c) {
+        return c.producto + ' Q' + c.precioViejo + '->Q' + c.precioNuevo + ' (' + c.pct + '%)';
+      }).join(' · '), n);
+    prAnotar_(g, 'Candado de unidad', 'OK',
+      r.unidadDistinta.length + ' bloqueados por unidad distinta, incluida la malanga',
+      r.unidadDistinta.length);
+  });
+
+  if (PRUEBAS_CFG.incluirRed) {
+    prCorrer_(g, 'Meta (red)', function () {
+      var d = metaDiagnosticoJson();
+      prAnotar_(g, 'Meta (red)', d && d.ok !== false ? 'OK' : 'FALLA',
+                d && d.error ? String(d.error) : 'responde');
+    });
+  } else {
+    prAnotar_(g, 'Meta (red)', 'SALTADA', 'Tarda y depende de terceros. PRUEBAS_CFG.incluirRed = true para incluirla.');
+  }
+}
+
+// ---------------------------------------------------------------- entrada
+
+/**
+ * Corre todo y devuelve el resultado como objeto. No escribe nada, no imprime nada.
+ * La usan PRUEBAS() (editor y clasp run) y la ruta ?page=pruebas del navegador.
+ */
+function correrPruebas() {
+  var arranque = new Date().getTime();
+  PRUEBAS_MODELO_ = null;                       // modelo fresco en cada corrida
+
+  var res = { grupos: [], fecha: new Date().toISOString() };
+
+  prCimientos_(res);
+  prRecetario_(res);
+  prPuentePOS_(res);
+  prAccesos_(res);
+  prModulos_(res);
+
+  var n = 0, ok = 0, mal = 0, avisos = 0, saltadas = 0;
+  res.grupos.forEach(function (g) {
+    g.pruebas.forEach(function (p) {
+      n++;
+      if (p.estado === 'OK') ok++;
+      else if (p.estado === 'FALLA') mal++;
+      else if (p.estado === 'AVISO') avisos++;
+      else saltadas++;
+    });
+  });
+
+  res.total = n; res.ok = ok; res.fallas = mal; res.avisos = avisos; res.saltadas = saltadas;
+  res.sana = (mal === 0);
+  res.ms = new Date().getTime() - arranque;
+  return res;
+}
+
+/** El resultado en texto plano. Lo usan el editor y la vista del navegador. */
+function pruebasATexto_(res) {
+  var l = [];
+  l.push(res.sana ? 'INTRANET SANA' : 'HAY ' + res.fallas + ' FALLA(S)');
+  l.push(res.ok + ' OK · ' + res.fallas + ' fallas · ' + res.avisos + ' avisos · ' +
+         res.saltadas + ' saltadas · ' + (res.ms / 1000).toFixed(1) + 's');
+  res.grupos.forEach(function (g) {
+    l.push('');
+    l.push(g.nombre);
+    g.pruebas.forEach(function (p) {
+      var marca = p.estado === 'OK' ? '  OK  ' : p.estado === 'FALLA' ? ' FALLA' :
+                  p.estado === 'AVISO' ? ' AVISO' : '  --  ';
+      var linea = marca + '  ' + p.nombre;
+      if (p.esperado != null && p.leido !== p.esperado) {
+        linea += '   (leido ' + p.leido + ', esperado ' + p.esperado + ')';
+      } else if (p.leido != null) {
+        linea += '   ' + p.leido;
+      }
+      l.push(linea);
+      if (p.detalle) l.push('          ' + p.detalle);
+    });
+  });
+  return l.join('\n');
+}
+
+/**
+ * Envoltorio para el navegador. Lo llama PruebasVista.html por google.script.run.
+ * Solo direccion: el resultado expone IDs de documentos y correos del equipo.
+ *
+ * Usa resolverUsuario_(auth) y no getUsuarioActual() a proposito: asi funciona
+ * igual para una cuenta del dominio y para un enlace con token.
+ */
+function correrPruebasWeb(auth) {
+  var u = resolverUsuario_(auth);
+  if (!u) throw new Error('Sin acceso');
+  if (String(u.rol || '').toLowerCase() !== 'dueno') throw new Error('Solo direccion');
+  return correrPruebas();
+}

@@ -1,0 +1,87 @@
+{
+  "fecha": "2026-08-19T18:04:00.302Z",
+  "creados": [
+    {
+      "id": "f58b3519-b2cc-4ef0-89b3-4737260cbf28",
+      "entityId": "comp-msvvt1t1"
+    },
+    {
+      "id": "5f40ff2a-f547-47d0-ac80-e1d455b625df",
+      "entityId": "comp-msvx54vc"
+    },
+    {
+      "id": "480a31bb-22b6-421b-9e1e-a9a03ccd2856",
+      "entityId": "comp-msvvq3g7"
+    },
+    {
+      "id": "0d99087d-de81-4d2b-bff4-476ab7b1d261",
+      "entityId": "comp-mt07akbq"
+    },
+    {
+      "id": "543b39ed-6614-4c30-b693-43f7e740ff99",
+      "entityId": "comp-mt07bza3"
+    },
+    {
+      "id": "a0389bed-e76c-4fe2-86f5-7ec9967bb9a4",
+      "entityId": "comp-mszgypvv"
+    },
+    {
+      "id": "024d4a53-7c0b-4d04-bab9-832a718c8f9b",
+      "entityId": "comp-msvygwmb"
+    },
+    {
+      "id": "ebf3c450-95ce-4ad3-b45a-a7184c7d73d2",
+      "entityId": "comp-moqg08v8"
+    },
+    {
+      "id": "a021cd8c-f634-43c5-bb0d-07bcd659fc16",
+      "entityId": "comp-mszhr53v"
+    },
+    {
+      "id": "0fadd72e-71ee-479a-9e4a-ce8c09cb96fd",
+      "entityId": "comp-mszhs5j2"
+    },
+    {
+      "id": "72d612cf-7774-4b95-b820-960ffe338e33",
+      "entityId": "comp-mszhv2sb"
+    },
+    {
+      "id": "b47dfac5-e114-49f6-a707-f4a189cc58b9",
+      "entityId": "comp-mszhw6of"
+    },
+    {
+      "id": "f72c03f8-c539-4ae9-af1f-ea28ec2bb62a",
+      "entityId": "comp-mszhx9gp"
+    },
+    {
+      "id": "a5b8b6d3-f3e5-4502-bc95-3f03a12633c1",
+      "entityId": "comp-mszhy56d"
+    },
+    {
+      "id": "31a2677b-979d-405e-a8fb-06c45f5801f6",
+      "entityId": "comp-mszi0r6k"
+    },
+    {
+      "id": "8db5249d-d08e-47cc-92e8-49ca540b4231",
+      "entityId": "comp-lhjc19k8"
+    },
+    {
+      "id": "eb0f5cb6-27bc-4d72-a18b-e4e7097aa0d9",
+      "entityId": "comp-lhjc19ki"
+    },
+    {
+      "id": "c2a9c718-c246-4cdb-b72f-44085a8c6b71",
+      "entityId": "comp-lhjc19lh"
+    }
+  ],
+  "actualizados": [
+    {
+      "id": "11fb2ee2-4a78-4372-a236-f149c50aa6f7",
+      "entityId": "CUSTOM_MAIN_MENU",
+      "etiquetas": 10,
+      "xmlAnterior": "<?xml version='1.1' encoding='UTF-8'?><menu><items><items><label>ROSANTA</label><items/></items><items><label>Encuesta</label><items/></items><items><label>HONEST COOKING</label><items/></items><items><label>MENU</label><items><items><label>Español</label><items/></items><items><label> English</label><items/></items><items><label>full-menu</label><items/></items></items></items><items><label>GALLERY</label><items/></items><items><label>RESERVATIONS</label><items/></items><items><label>COTIZACIONES</label><items/></items><items><label>EVENTS</label><items/></items><items><label>GIFT IDEAS</label><items/></items><items><label>FAQ</label><items/></items><items><label>Privacy Policy</label><items/></items><items><label>CONTACT</label><items/></items><items><label>LOCATION</label><items/></items><items><label>BRUNCH</label><items/></items><items><label>BRUNCH ESPAÑOL1</label><items/></items><items><label> BRUNCH INGLÉS</label><items/></items><items><label>BRUNCH INGLÉS 2</label><items/></items><items><label>Para empezar </label><items/></items><items><label>Something to start with</label><items/></items><items><label>Algo más fuerte</label><items/></items><items><label>Something Stronger</label><items/></items><items><label>Cócteles</label><items/></items><items><label>Cocktails</label><items/></items><items><label>Bebidas y Vinos</label><items/></items><items><label>Beverages and Wines</label><items/></items><items><label>Spirits and liqueurs</label><items/></items><items><label>Licores y Digestivos</label><items/></items><items><label>Términos y Condiciones</label><items/></items><items><label>Mi cuenta</label><items/></items><items><label>Mis suscripciones</label><items/></items><items><label>Finalización de compra</label><items/></items><items><label>Página del carrito</label><items/></items><items><label>Reservation Confirmation</label><items/></items><items><label>Reservation Details</label><items/></items><items><label>Fullscreen Page</label><items/></items><items><label>Tarjeta de regalo</label><items/></items><items><label>Cotizaciones</label><items/></items><items><label>Fidelización</label><items/></items><items><label>Mis recompensas</label><items/></items><items><label>Resultados de la búsqueda</label><items/></items><items><label>Perfil</label><items/></items><items><label>Página de agradecimiento</label><items/></items><items><label>Mi billetera</label><items/></items><items><label>Mis direcciones</label><items/></items><items><label>Experiencias</label><items/></items><items><label>Detalles de la experiencia</label><items/></items></items></menu>"
+    }
+  ],
+  "saltados": [],
+  "noEncontrados": []
+}

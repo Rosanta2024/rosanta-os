@@ -1,0 +1,40 @@
+{
+  "pkg": "rosanta-design-system",
+  "globalName": "Rosanta",
+  "projectId": "6ef12a50-8de8-48c6-a3e3-5e377c6c4d88",
+  "shape": "package",
+  "entry": "./src/index.js",
+  "srcDir": "src",
+  "cssEntry": "tokens.css",
+  "extraFonts": "assets/fonts/brand-fonts.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "Statement": { "cardMode": "column" }
+  },
+  "componentSrcMap": {
+    "Hero": "src/components/Typography.jsx",
+    "Title": "src/components/Typography.jsx",
+    "Eyebrow": "src/components/Typography.jsx",
+    "Body": "src/components/Typography.jsx",
+    "Logo": "src/components/Logo.jsx",
+    "Flor": "src/components/Flor.jsx",
+    "Card": "src/components/Card.jsx",
+    "Pill": "src/components/Pill.jsx",
+    "Button": "src/components/Button.jsx",
+    "Swatches": "src/components/Swatches.jsx",
+    "Statement": "src/components/Statement.jsx"
+  },
+  "dtsPropsFor": {
+    "Hero": "  /** Hero title text. Peskia, uppercase, huge — 2-3 words only. */\n  children?: React.ReactNode;",
+    "Title": "  /** Title text (Playfair, weight 800). */\n  children?: React.ReactNode;\n  /** Italic tail in verde-medio — the signature gesture. */\n  flourish?: string;",
+    "Eyebrow": "  /** Small Poppins kicker, uppercase, wide tracking, verde-medio. */\n  children?: React.ReactNode;",
+    "Body": "  /** Body copy (Avenir / Lato). */\n  children?: React.ReactNode;",
+    "Logo": "  /** Pick by background: dark bg -> crema/white, light bg -> verde/black. */\n  variant?: 'verde' | 'crema' | 'white' | 'black';\n  /** Render width in px. Min ~120px; below that use the O isotype instead. */\n  width?: number;\n  style?: React.CSSProperties;",
+    "Flor": "  /** 'botanica' = lila bell + leaves (small accent); 'grande' = symmetric 4-petal silhouette (huge / full-bleed). */\n  kind?: 'botanica' | 'grande';\n  /** Only applies to kind=\"grande\" — follow the background. */\n  fill?: 'crema' | 'verde' | 'lila';\n  width?: number;\n  opacity?: number;\n  style?: React.CSSProperties;",
+    "Card": "  /** Uppercase Poppins kicker at the top of the card. */\n  title?: string;\n  /** light = white/crema, dark = panel, green = verde accent. */\n  tone?: 'light' | 'dark' | 'green';\n  children?: React.ReactNode;",
+    "Pill": "  children?: React.ReactNode;\n  /** verde-medio by default; lila as an occasional spark. */\n  tone?: 'verde' | 'lila';",
+    "Button": "  children?: React.ReactNode;\n  /** primary = verde on crema; inverse = crema on verde; ghost = outlined. */\n  variant?: 'primary' | 'inverse' | 'ghost';\n  onClick?: React.MouseEventHandler<HTMLButtonElement>;\n  disabled?: boolean;\n  type?: 'button' | 'submit' | 'reset';\n  style?: React.CSSProperties;",
+    "Swatches": "  /** Palette reference block — takes no props. */\n  children?: never;",
+    "Statement": "  /** Small Poppins kicker (verde). */\n  eyebrow?: string;\n  /** Main line (Playfair, white). */\n  headline?: string;\n  /** Italic tail in verde-medio — the signature gesture. */\n  flourish?: string;\n  /** One or two short lines. */\n  body?: string;"
+  }
+}

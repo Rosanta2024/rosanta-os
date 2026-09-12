@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Pantalla de Finanzas · Pilar 3, Finance & Data OS.
+       Es para analizar y decidir. Solo lectura: no captura nada, no escribe
+       nada. Las acciones las define la direccion y se presentan aparte. */
+    main.fin { max-width: 1140px; }
+    .fin-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+    .fin-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .fin-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
+      font-family: 'Lato', Arial, sans-serif; }
+    .fin-boton:hover { background: rgba(69,107,80,0.07); }
+
+    /* --- el año en una línea --- */
+    .fin-anio { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.5rem;
+      display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    .fin-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1rem; }
+    .fin-anio .u:first-child { border-left: 0; padding-left: 0; }
+    .fin-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem;
+      line-height: 1.15; }
+    .fin-anio .t { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.72; margin-top: 0.2rem; }
+    .fin-anio .mal { color: #FFB4A2; }
+
+    .fin-seccion { margin-top: 2.4rem; }
+    .fin-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
+    .fin-nota { font-size: 0.84rem; opacity: 0.72; margin-bottom: 1rem; line-height: 1.55;
+      max-width: 78ch; }
+
+    /* --- tarjetas de la semana --- */
+    .fin-semaforos { display: grid; gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); }
+    .fin-card { background: var(--blanco); border-radius: 20px; padding: 1.2rem 1.35rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-top: 6px solid var(--verde-medio); }
+    .fin-card.amarillo { border-top-color: #E0A93B; }
+    .fin-card.rojo { border-top-color: #C4553B; }
+    .fin-card.gris { border-top-color: #BDBDBD; }
+    .fin-card h3 { font-size: 0.95rem; display: flex; align-items: center; gap: 0.45rem; }
+    .punto { width: 9px; height: 9px; border-radius: 50%; background: var(--verde-medio);
+      display: inline-block; flex: none; }
+    .amarillo .punto { background: #E0A93B; }
+    .rojo .punto { background: #C4553B; }
+    .gris .punto { background: #BDBDBD; }
+    .fin-valor { font-family: 'Playfair Display', Georgia, serif; font-size: 2.3rem;
+      line-height: 1.1; margin: 0.5rem 0 0.15rem; }
+    .fin-meta { font-size: 0.82rem; opacity: 0.7; }
+    .fin-cruda { font-size: 0.76rem; opacity: 0.6; margin-top: 0.55rem;
+      padding-top: 0.55rem; border-top: 1px solid rgba(26,26,26,0.08); }
+
+    /* --- bloques contra la banda del sector --- */
+    .fin-bloques { background: var(--blanco); border-radius: 18px; padding: 0.4rem 1.35rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .bq { display: grid; grid-template-columns: 190px 1fr 96px 108px; gap: 1rem;
+      align-items: center; padding: 0.75rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
+    .bq:last-child { border-bottom: 0; }
+    .bq .nom { font-size: 0.89rem; }
+    .bq .nom small { display: block; opacity: 0.55; font-size: 0.75rem; }
+    .bq .pista { position: relative; height: 12px; background: rgba(26,26,26,0.06);
+      border-radius: 999px; }
+    .bq .banda { position: absolute; top: 0; bottom: 0; background: rgba(76,175,125,0.30);
+      border-radius: 2px; }
+    .bq .val { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px;
+      background: var(--verde-medio); }
+    .bq.rojo .val { background: #C4553B; }
+    .bq.bajo .val { background: var(--lila); }
+    .bq.gris .val { background: #BDBDBD; }
+    .bq .pct { text-align: right; font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.15rem; }
+    .bq.rojo .pct { color: #C4553B; }
+    .bq .exc { text-align: right; font-size: 0.78rem; opacity: 0.8; line-height: 1.35; }
+    .bq.rojo .exc { color: #C4553B; opacity: 1; }
+    .bq .exc small { opacity: 0.8; }
+
+    /* --- estructura fijo / variable --- */
+    .fin-tipos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .tipo { background: var(--blanco); border-radius: 16px; padding: 1.1rem 1.25rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .tipo .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem;
+      color: var(--verde-bosque); }
+    .tipo .t { font-size: 0.8rem; opacity: 0.72; line-height: 1.45; margin-top: 0.25rem; }
+
+    /* --- tablas --- */
+    table.fin { width: 100%; border-collapse: collapse; background: var(--blanco);
+      border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
+      font-size: 0.86rem; }
+    table.fin th, table.fin td { padding: 0.55rem 0.7rem; text-align: right;
+      border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
+    table.fin th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.fin th:first-child, table.fin td:first-child { text-align: left; }
+    table.fin tr:last-child td { border-bottom: 0; }
+    table.fin tr.actual td { background: rgba(76,175,125,0.09); font-weight: 700; }
+    table.fin tr.total td { background: rgba(69,107,80,0.07); font-weight: 700; }
+    .tabla-scroll { overflow-x: auto; }
+    td.v { color: #2E7D52; } td.a { color: #A97514; } td.r { color: #C4553B; }
+
+    /* --- integridad --- */
+    .fin-integridad { display: grid; gap: 0.8rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .fin-int { background: var(--blanco); border-radius: 14px; padding: 0.95rem 1.05rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .fin-int .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.45rem;
+      color: var(--verde-bosque); }
+    .fin-int .t { font-size: 0.78rem; opacity: 0.72; line-height: 1.45; }
+    .fin-int.mal .n { color: #C4553B; }
+
+    /* --- RAA: analisis y accion --- */
+    .raa { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+    .raa-card { background: var(--blanco); border-radius: 18px; padding: 1.15rem 1.3rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-left: 6px solid #BDBDBD; }
+    .raa-card.amarillo { border-left-color: #E0A93B; }
+    .raa-card.rojo { border-left-color: #C4553B; }
+    .raa-card.verde { border-left-color: var(--verde-medio); }
+    .raa-card h3 { font-size: 0.95rem; display: flex; align-items: center;
+      justify-content: space-between; gap: 0.5rem; }
+    .raa-card h3 .val { font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem; }
+    .raa-res { font-size: 0.84rem; line-height: 1.55; opacity: 0.85; margin: 0.6rem 0; }
+    .raa-costo { background: rgba(196,85,59,0.08); border-radius: 12px; padding: 0.6rem 0.8rem;
+      font-size: 0.84rem; line-height: 1.5; margin-bottom: 0.85rem; }
+    .raa-costo b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem;
+      color: #C4553B; }
+    .raa-card label { display: block; font-size: 0.76rem; text-transform: uppercase;
+      letter-spacing: 0.06em; opacity: 0.6; margin: 0.6rem 0 0.25rem; }
+    .raa-card textarea, .raa-card select { width: 100%; font-family: 'Lato', Arial, sans-serif;
+      font-size: 0.86rem; padding: 0.55rem 0.7rem; border: 1px solid rgba(26,26,26,0.16);
+      border-radius: 10px; background: #FCFBFA; resize: vertical; }
+    .raa-card textarea { min-height: 64px; line-height: 1.5; }
+    .raa-pie { display: flex; align-items: center; justify-content: space-between;
+      gap: 0.6rem; margin-top: 0.8rem; flex-wrap: wrap; }
+    .raa-guardado { font-size: 0.76rem; opacity: 0.62; }
+    .raa-verde-nota { font-size: 0.84rem; opacity: 0.72; line-height: 1.5; }
+    .raa-hist td { font-size: 0.82rem; white-space: normal; vertical-align: top; }
+
+    /* --- cobertura del dato --- */
+    .cob { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
+      box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 1rem; }
+    .cob details { border-bottom: 1px solid rgba(26,26,26,0.06); padding: 0.65rem 0; }
+    .cob details:last-child { border-bottom: 0; }
+    .cob summary { cursor: pointer; font-size: 0.88rem; display: flex;
+      justify-content: space-between; gap: 1rem; }
+    .cob summary .fuga { color: #C4553B; font-weight: 700; }
+    .cob .linea { display: flex; justify-content: space-between; gap: 1rem;
+      font-size: 0.82rem; padding: 0.25rem 0 0.25rem 1rem; opacity: 0.85; }
+    .cob .linea.mal { color: #C4553B; opacity: 1; }
+
+    .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
+    .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+      font-size: 0.9rem; line-height: 1.5; }
+    @media (max-width: 720px) {
+      .bq { grid-template-columns: 1fr 78px; }
+      .bq .pista, .bq .exc { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Finanzas</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <? if (mostrarVolver) { ?>
+        <!-- Dentro del shell de Finanzas este boton sobra y estorba: se saltaba el
+             lateral y sacaba al usuario de la seccion. Code.gs manda mostrarVolver
+             en false cuando la pagina viene con ?embed=1. -->
+        <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+      <? } ?>
+    </div>
+  </header>
+
+  <main class="fin">
+    <div class="fin-barra-sup">
+      <div>
+        <h1>Finanzas</h1>
+        <p class="fin-sub" id="sub">Cargando…</p>
+      </div>
+      <button class="fin-boton" id="btn-refrescar">Actualizar datos</button>
+    </div>
+
+    <div id="cargando" class="fin-cargando">Leyendo el maestro…</div>
+
+    <div id="todo" style="display:none">
+      <div class="fin-anio" id="anio"></div>
+
+      <section class="fin-seccion">
+        <h2>Dónde está el dinero</h2>
+        <p class="fin-nota">
+          Cada bloque de gasto del año contra la banda del sector, en porcentaje de la venta.
+          La franja clara es la banda; la barra es dónde estamos. La última columna traduce el
+          exceso a quetzales al mes, que es lo único que permite comparar un bloque con otro.
+        </p>
+        <div class="fin-bloques" id="bloques"></div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Estructura del gasto</h2>
+        <p class="fin-nota">
+          Cuánto del gasto operativo no se mueve aunque la venta caiga. Mientras más pese lo
+          fijo, más venta hace falta para llegar al punto de equilibrio.
+        </p>
+        <div class="fin-tipos" id="tipos"></div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Mes a mes</h2>
+        <p class="fin-nota">
+          Nómina devengada de la planilla, no del pago bancario: el banco reparte los sueldos
+          de un mes entre dos y el prime cost salta sin que la operación cambie. Las propinas
+          no entran al costo laboral.
+        </p>
+        <div class="tabla-scroll">
+          <table class="fin">
+            <thead><tr>
+              <th>Mes</th><th>Ventas netas</th><th>Eventos</th><th>Comensales</th>
+              <th>COGS</th><th>Mano de obra</th><th>Prime</th><th>Neto</th>
+            </tr></thead>
+            <tbody id="tabla-mes"></tbody>
+          </table>
+        </div>
+        <p class="fin-nota" id="nota-mes" style="margin-top:.8rem"></p>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>La semana</h2>
+        <p class="fin-nota">
+          El número con semáforo es siempre la media móvil de 4, que es el cociente de las
+          sumas y no el promedio de los porcentajes. La semana cruda va como contexto: sola se
+          mueve entre 16% y 68% porque la compra no cae en la semana en que se consume.
+        </p>
+        <div class="fin-semaforos" id="semaforos"></div>
+        <div class="tabla-scroll" style="margin-top:1.1rem">
+          <table class="fin">
+            <thead><tr>
+              <th>Semana</th><th>Ventas netas</th><th>Δ</th><th>Comensales</th><th>Ticket</th>
+              <th>Food cruda</th><th>Food móvil 4</th><th>Prime móvil 4</th><th>Caja</th>
+            </tr></thead>
+            <tbody id="tabla-sem"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Qué hay que responder</h2>
+        <p class="fin-nota">
+          Todo indicador en amarillo o rojo abre una tarjeta. El resultado y el costo los
+          calcula el sistema; el análisis y la acción se escriben aquí y quedan en la hoja RAA
+          del Sheet de configuración, para poder revisar la semana que viene si la acción
+          funcionó. Una acción sin nombre no es una acción: si todos son responsables, no lo
+          es nadie.
+        </p>
+        <div id="raa-cargando" class="fin-nota">Cargando el bloque de acciones…</div>
+        <div class="raa" id="raa"></div>
+        <div id="raa-hist-caja" style="display:none;margin-top:1.4rem">
+          <h3 style="font-size:1rem;margin-bottom:.5rem">Lo que se decidió antes</h3>
+          <div class="tabla-scroll">
+            <table class="fin raa-hist">
+              <thead><tr>
+                <th>Semana</th><th>Indicador</th><th>Acción</th><th>Responsable</th><th>Fecha</th>
+              </tr></thead>
+              <tbody id="raa-hist"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Integridad del dato</h2>
+        <p class="fin-nota">
+          Es lo que le da credibilidad a todo lo de arriba. Lo comprado sin factura carga el
+          IVA: sube 12% contra el mismo plato comprado con FEL.
+        </p>
+        <div class="fin-integridad" id="integridad"></div>
+        <p class="fin-nota" id="ults" style="margin-top:1rem"></p>
+
+        <h3 style="font-size:1rem;margin-top:1.6rem">Qué pasa con cada quetzal</h3>
+        <p class="fin-nota">
+          Dónde termina el dinero de cada hoja del maestro. No cambia ningún número de arriba:
+          sirve para ver lo que se cae en silencio. Una categoría que el cálculo no reconoce no
+          suma en ningún lado y nadie se entera.
+        </p>
+        <div class="cob" id="cobertura"></div>
+      </section>
+    </div>
+  </main>
+
+<script>
+  /* El token va como PRIMER argumento en TODA llamada a google.script.run: doGet
+     resolvio la identidad al abrir la pagina, pero cada llamada es una peticion
+     nueva y el servidor la vuelve a resolver. Si agregas una llamada, pasale AUTH. */
+  var AUTH = '<?= authToken ?>';
+  var D = null;
+  var RAA = null;
+
+  function q(n, dec) {
+    var d = dec === undefined ? 0 : dec;
+    return 'Q' + Number(n || 0).toLocaleString('es-GT',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function pct(n) { return (n === null || n === undefined) ? '—' : Number(n).toFixed(1) + '%'; }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function nombreHoja(h) { return h.replace(/^[0-9]+[a-z]?_/, '').replace(/_/g, ' '); }
+
+  // Seccion 5 de la especificacion. El semaforo va sobre la movil de 4.
+  function zona(ind, v, meta) {
+    if (v === null || v === undefined) return 'gris';
+    if (ind === 'food')   return v <= meta ? 'verde' : (v <= meta + 3 ? 'amarillo' : 'rojo');
+    if (ind === 'prime')  return v < 60 ? 'verde' : (v <= 65 ? 'amarillo' : 'rojo');
+    if (ind === 'caja')   return v >= 21 ? 'verde' : (v >= 7 ? 'amarillo' : 'rojo');
+    if (ind === 'ventas') return v >= 0 ? 'verde' : (v >= -10 ? 'amarillo' : 'rojo');
+    return 'gris';
+  }
+  function letra(z) {
+    return z === 'verde' ? 'v' : (z === 'amarillo' ? 'a' : (z === 'rojo' ? 'r' : ''));
+  }
+
+  function pintar(d) {
+    D = d;
+    var t = d.total, u = d.ultima || {};
+    document.getElementById('sub').textContent =
+      'Año ' + d.anio + ' · ' + d.meses.length + ' meses con venta · ' +
+      (u.w ? 'última semana S' + u.w + ' (' + u.ini + ' al ' + u.fin + ') · ' : '') +
+      'datos al ' + d.gen;
+
+    // ---- el año
+    function unidad(n, tt, mal) {
+      return '<div class="u"><div class="n' + (mal ? ' mal' : '') + '">' + n +
+             '</div><div class="t">' + tt + '</div></div>';
+    }
+    document.getElementById('anio').innerHTML =
+      unidad(q(t.ventas), 'Ventas netas del año') +
+      unidad(pct(t.cogsp), 'Mercadería') +
+      unidad(pct(t.laborp), 'Mano de obra') +
+      unidad(pct(t.primep), 'Prime cost', t.primep > 65) +
+      unidad(pct(t.netop), 'Utilidad neta', t.netop < 0);
+
+    // ---- bloques contra la banda
+    var tope = 0;
+    d.bloques.forEach(function (b) { tope = Math.max(tope, b.pct, b.max || 0); });
+    tope = tope * 1.12 || 1;
+    document.getElementById('bloques').innerHTML = d.bloques.map(function (b) {
+      var banda = b.max
+        ? '<span class="banda" style="left:' + (b.min / tope * 100) + '%;width:' +
+          ((b.max - b.min) / tope * 100) + '%"></span>' : '';
+      var exc = b.zona === 'rojo'
+        ? q(b.sobre_mes) + '<br><small>al mes sobre la banda</small>'
+        : (b.max ? 'dentro' : '—');
+      return '<div class="bq ' + b.zona + '">' +
+        '<div class="nom">' + esc(b.bloque) +
+          '<small>' + q(b.q) + ' en el año' +
+          (b.max ? ' · banda ' + b.min + '–' + b.max + '%' : '') + '</small></div>' +
+        '<div class="pista">' + banda +
+          '<span class="val" style="width:' + Math.min(b.pct / tope * 100, 100) + '%"></span></div>' +
+        '<div class="pct">' + pct(b.pct) + '</div>' +
+        '<div class="exc">' + exc + '</div></div>';
+    }).join('');
+
+    // ---- estructura del gasto
+    var tot = t.tipo.F + t.tipo.S + t.tipo.V;
+    var etiquetas = {
+      F: ['Fijo', 'No se mueve aunque no se venda: alquiler, seguros, suscripciones.'],
+      S: ['Semivariable', 'Se mueve, pero no en proporción: nómina base, limpieza, pauta.'],
+      V: ['Variable', 'Sigue a la venta: servicios, comisiones, mantenimiento.']
+    };
+    document.getElementById('tipos').innerHTML = ['F', 'S', 'V'].map(function (k) {
+      return '<div class="tipo"><div class="n">' +
+        (tot ? (t.tipo[k] / tot * 100).toFixed(0) : 0) + '%</div>' +
+        '<div class="t"><strong>' + etiquetas[k][0] + '</strong> · ' + q(t.tipo[k]) +
+        ' en el año<br>' + etiquetas[k][1] + '</div></div>';
+    }).join('');
+
+    // ---- mes a mes
+    var sinPlanilla = 0;
+    document.getElementById('tabla-mes').innerHTML = d.meses.map(function (m) {
+      // Sin planilla del mes, la mano de obra entra en cero y el mes se pinta
+      // rentable. Septiembre 2026 leia prime 30.6% y neto +53.6% por esto: no es
+      // un buen mes, es un mes sin nómina cargada. Se muestra apagado y con
+      // asterisco en vez de dejar que compita con los meses de verdad.
+      if (!m.devengado) sinPlanilla++;
+      var op = m.devengado ? '' : ' style="opacity:.45" title="Sin planilla devengada del mes"';
+      return '<tr><td>' + m.mes + (m.devengado ? '' : ' *') + '</td>' +
+        '<td>' + q(m.ventas) + '</td>' +
+        '<td style="opacity:.6">' + (m.eventos ? q(m.eventos) : '—') + '</td>' +
+        '<td>' + m.com + '</td>' +
+        '<td class="' + letra(zona('food', m.cogsp, d.meta_cogs)) + '">' + pct(m.cogsp) + '</td>' +
+        '<td' + op + '>' + (m.devengado ? pct(m.laborp) : '—') + '</td>' +
+        '<td' + (m.devengado ? ' class="' + letra(zona('prime', m.primep)) + '"' : op) + '>' +
+          (m.devengado ? pct(m.primep) : '—') + '</td>' +
+        '<td' + (m.devengado ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : op) + '>' +
+          (m.devengado ? pct(m.netop) : '—') + '</td></tr>';
+    }).join('') +
+      '<tr class="total"><td>Año</td><td>' + q(t.ventas) + '</td>' +
+      '<td>' + q(t.eventos) + '</td><td>' + t.com + '</td>' +
+      '<td>' + pct(t.cogsp) + '</td><td>' + pct(t.laborp) + '</td>' +
+      '<td class="' + letra(zona('prime', t.primep)) + '">' + pct(t.primep) + '</td>' +
+      '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>';
+
+    document.getElementById('nota-mes').innerHTML = sinPlanilla
+      ? '* ' + sinPlanilla + ' mes(es) sin planilla devengada cargada: su mano de obra, ' +
+        'su prime cost y su resultado quedan en blanco a propósito. Con la nómina en cero ' +
+        'el mes se pintaría rentable sin serlo. El total del año sí los incluye en ventas ' +
+        'y mercadería.'
+      : '';
+
+    // ---- la semana
+    function tarjeta(z, titulo, valor, meta, cruda) {
+      return '<div class="fin-card ' + z + '"><h3><span class="punto"></span>' + titulo + '</h3>' +
+        '<div class="fin-valor">' + valor + '</div>' +
+        '<div class="fin-meta">' + meta + '</div>' +
+        (cruda ? '<div class="fin-cruda">' + cruda + '</div>' : '') + '</div>';
+    }
+    document.getElementById('semaforos').innerHTML =
+      tarjeta(zona('food', u.cogs_m4, d.meta_cogs), 'Food cost móvil 4', pct(u.cogs_m4),
+        'Meta ' + pct(d.meta_cogs) + ' · mix cocina ' + d.mix.cocina + '%',
+        'Semana cruda ' + pct(u.cogsp) + ' · ' + q(u.cogs)) +
+      tarjeta(zona('prime', u.prime_m4), 'Prime cost móvil 4', pct(u.prime_m4),
+        'Verde bajo 60% · rojo sobre 65%',
+        'Semana cruda ' + pct(u.prime) + ' · mano de obra ' + pct(u.laborp)) +
+      tarjeta(zona('caja', d.dias_caja), 'Caja', Number(d.dias_caja).toFixed(1) + ' días',
+        q(d.caja) + ' · gasto ' + q(d.gasto_dia) + ' al día',
+        'Verde con 21 días o más') +
+      tarjeta(zona('ventas', u.dv), 'Ventas de la semana', q(u.ventas),
+        (u.dv >= 0 ? '+' : '') + pct(u.dv) + ' contra la semana anterior',
+        u.com + ' comensales · ticket ' + q(u.tp, 2));
+
+    document.getElementById('tabla-sem').innerHTML =
+      d.semanas.slice(-13).reverse().map(function (s) {
+        return '<tr' + (s.w === u.w ? ' class="actual"' : '') + '>' +
+          '<td>S' + s.w + ' · ' + s.ini + '</td>' +
+          '<td>' + q(s.ventas) + '</td>' +
+          '<td class="' + letra(zona('ventas', s.dv)) + '">' +
+            (s.dv === undefined ? '—' : (s.dv >= 0 ? '+' : '') + pct(s.dv)) + '</td>' +
+          '<td>' + s.com + '</td><td>' + q(s.tp) + '</td>' +
+          '<td style="opacity:.55">' + pct(s.cogsp) + '</td>' +
+          '<td class="' + letra(zona('food', s.cogs_m4, d.meta_cogs)) + '">' + pct(s.cogs_m4) + '</td>' +
+          '<td class="' + letra(zona('prime', s.prime_m4)) + '">' + pct(s.prime_m4) + '</td>' +
+          '<td>' + q(s.caja) + '</td></tr>';
+      }).join('');
+
+    // ---- integridad
+    var it = d.integridad;
+    document.getElementById('integridad').innerHTML =
+      '<div class="fin-int' + (it.por_clasificar ? ' mal' : '') + '"><div class="n">' +
+        it.por_clasificar + '</div><div class="t">partidas en POR_CLASIFICAR</div></div>' +
+      '<div class="fin-int"><div class="n">' + pct(it.factura_pct) +
+        '</div><div class="t">de la compra de mercadería con factura</div></div>' +
+      '<div class="fin-int' + (it.dias_atraso > 10 ? ' mal' : '') + '"><div class="n">' +
+        it.dias_atraso + '</div><div class="t">días desde la última venta cargada</div></div>' +
+      '<div class="fin-int' + (it.sin_identificar ? ' mal' : '') + '"><div class="n">' +
+        q(it.sin_identificar) + '</div><div class="t">salieron del banco sin identificar a ' +
+        'quién: siguen fuera del DRE hasta saberlo</div></div>' +
+      (it.sin_mapear
+        ? '<div class="fin-int mal"><div class="n">' + q(it.sin_mapear) +
+          '</div><div class="t">en categorías que el cálculo no reconoce: ese dinero se ' +
+          'cae en silencio y hay que mapearlas</div></div>'
+        : '');
+
+    // ---- cobertura: que pasa con cada quetzal
+    var cobHtml = Object.keys(it.cobertura || {}).map(function (h) {
+      var d2 = it.cobertura[h];
+      var fuga = (it.fugas || {})[h] || 0;
+      var lineas = Object.keys(d2).sort(function (a, b) { return d2[b] - d2[a]; })
+        .map(function (k) {
+          var mal = ['CATEGORIA DESCONOCIDA', 'SIN CATEGORIA', 'POR CLASIFICAR'].indexOf(k) > -1;
+          return '<div class="linea' + (mal ? ' mal' : '') + '"><span>' + esc(k) +
+                 (mal ? ' &nbsp;·&nbsp; fuga' : '') + '</span><span>' + q(d2[k]) + '</span></div>';
+        }).join('');
+      return '<details><summary><span>' + esc(nombreHoja(h)) + '</span>' +
+        '<span' + (fuga ? ' class="fuga"' : '') + '>' +
+        (fuga ? q(fuga) + ' sin destino' : 'todo con destino') + '</span></summary>' +
+        lineas + '</details>';
+    }).join('');
+    var desc = it.desconocidas || {};
+    if (Object.keys(desc).length) {
+      cobHtml += '<details open><summary><span>Categorías que el cálculo no reconoce</span>' +
+        '<span class="fuga">' + Object.keys(desc).length + '</span></summary>' +
+        Object.keys(desc).sort(function (a, b) { return desc[b] - desc[a]; }).map(function (k) {
+          return '<div class="linea mal"><span>' + esc(k) + '</span><span>' + q(desc[k]) +
+                 '</span></div>';
+        }).join('') + '</details>';
+    }
+    document.getElementById('cobertura').innerHTML = cobHtml ||
+      '<p class="fin-nota" style="padding:.8rem 0">Sin datos de cobertura.</p>';
+
+    // ---- de donde salio la planilla de cada mes
+    var resp = Object.keys(it.planilla || {}).filter(function (m) {
+      return it.planilla[m] === 'respaldo';
+    });
+    var avisoPlanilla = '';
+    if (it.planilla_error) {
+      avisoPlanilla = '<br><span style="color:#C4553B">No se pudo leer el Sheet de planilla (' +
+        esc(it.planilla_error) + '): la nómina de todos los meses salió del respaldo del código.</span>';
+    } else if (resp.length) {
+      avisoPlanilla = '<br><span style="color:#A97514">Nómina devengada del respaldo del código en ' +
+        resp.length + ' mes(es): ' + resp.map(function (m) { return 'mes ' + m; }).join(', ') +
+        '. El Sheet de planilla no trae esos meses todavía.</span>';
+    }
+
+    document.getElementById('ults').innerHTML = 'Última fila cargada · ' +
+      Object.keys(it.ult).map(function (h) {
+        return esc(nombreHoja(h)) + ' ' + esc(it.ult[h]);
+      }).join(' · ') + avisoPlanilla;
+
+    document.getElementById('cargando').style.display = 'none';
+    document.getElementById('todo').style.display = '';
+  }
+
+  function cargar(forzar) {
+    document.getElementById('todo').style.display = 'none';
+    var c = document.getElementById('cargando');
+    c.style.display = ''; c.textContent = 'Leyendo el maestro…';
+    var run = google.script.run
+      .withSuccessHandler(function (d) { pintar(d); cargarRaa(forzar); })
+      .withFailureHandler(function (e) {
+        c.innerHTML = '<div class="fin-error">No se pudo leer el maestro.<br>' +
+          esc(e && e.message ? e.message : e) + '</div>';
+      });
+    if (forzar) run.refrescarFinanzas(AUTH); else run.getFinanzasData(AUTH, false);
+  }
+
+  /* ------------------------------------------------------------------ RAA */
+
+  function tarjetaRaa(t) {
+    var abierta = t.zona === 'amarillo' || t.zona === 'rojo';
+    var valor = t.ind === 'caja'
+      ? Number(t.valor).toFixed(1) + ' días'
+      : (t.ind === 'ventas' ? ((t.valor >= 0 ? '+' : '') + pct(t.valor)) : pct(t.valor));
+
+    var cab = '<h3><span>' + esc(t.nombre) + '</span><span class="val">' + valor + '</span></h3>' +
+      '<div class="raa-res">' + esc(t.resultado) + '</div>';
+
+    if (!abierta) {
+      return '<div class="raa-card ' + t.zona + '">' + cab +
+        '<div class="raa-verde-nota">En zona verde. No pide acción esta semana' +
+        (t.accion ? ', pero traía una: “' + esc(t.accion) + '”.' : '.') + '</div></div>';
+    }
+
+    var opts = ['<option value="">Elegí un responsable…</option>'].concat(
+      RAA.equipo.map(function (n) {
+        return '<option value="' + esc(n) + '"' + (n === t.responsable ? ' selected' : '') +
+               '>' + esc(n) + '</option>';
+      })).join('');
+
+    return '<div class="raa-card ' + t.zona + '" data-ind="' + t.ind + '">' + cab +
+      '<div class="raa-costo">Cuesta <b>' + q(t.costo) + '</b> al mes. ' +
+        esc(t.costo_txt) + '</div>' +
+      '<label>Análisis</label>' +
+      '<textarea id="an_' + t.ind + '" placeholder="Qué específicamente se rompió. ' +
+        'No vale «fue una semana ocupada»: una semana ocupada debería BAJAR el food cost.">' +
+        esc(t.analisis) + '</textarea>' +
+      '<label>Acción</label>' +
+      '<textarea id="ac_' + t.ind + '" placeholder="La conducta exacta que cambia la semana ' +
+        'que viene. Si no se puede escribir, no es una acción.">' + esc(t.accion) + '</textarea>' +
+      '<label>Responsable</label>' +
+      '<select id="re_' + t.ind + '">' + opts + '</select>' +
+      '<div class="raa-pie">' +
+        '<button class="fin-boton" data-guardar="' + t.ind + '">Guardar</button>' +
+        '<span class="raa-guardado" id="ok_' + t.ind + '">' +
+          (t.guardado ? 'Guardado ' + esc(t.guardado) : '') + '</span>' +
+      '</div></div>';
+  }
+
+  function pintarRaa(r) {
+    RAA = r;
+    document.getElementById('raa-cargando').style.display = 'none';
+    document.getElementById('raa').innerHTML = r.tarjetas.map(tarjetaRaa).join('');
+
+    document.querySelectorAll('[data-guardar]').forEach(function (b) {
+      b.addEventListener('click', function () { guardar(b.getAttribute('data-guardar'), b); });
+    });
+
+    if (r.historial && r.historial.length) {
+      document.getElementById('raa-hist-caja').style.display = '';
+      document.getElementById('raa-hist').innerHTML = r.historial.map(function (h) {
+        return '<tr><td>S' + h.semana + '</td><td>' + esc(h.ind) + '</td>' +
+          '<td>' + esc(h.accion) + '</td><td>' + esc(h.responsable) + '</td>' +
+          '<td>' + esc(h.fecha) + '</td></tr>';
+      }).join('');
+    }
+  }
+
+  function guardar(ind, boton) {
+    var ok = document.getElementById('ok_' + ind);
+    boton.disabled = true;
+    ok.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function (r) { pintarRaa(r); })
+      .withFailureHandler(function (e) {
+        boton.disabled = false;
+        ok.textContent = (e && e.message) ? e.message : 'No se pudo guardar.';
+      })
+      .guardarRaa(AUTH, {
+        ind: ind,
+        analisis: document.getElementById('an_' + ind).value,
+        accion: document.getElementById('ac_' + ind).value,
+        responsable: document.getElementById('re_' + ind).value
+      });
+  }
+
+  function cargarRaa(forzar) {
+    var c = document.getElementById('raa-cargando');
+    c.style.display = ''; c.textContent = 'Cargando el bloque de acciones…';
+    google.script.run
+      .withSuccessHandler(pintarRaa)
+      .withFailureHandler(function (e) {
+        c.innerHTML = '<span style="color:#C4553B">No se pudo cargar el bloque de acciones: ' +
+          esc(e && e.message ? e.message : e) + '</span>';
+      })
+      .getRaaData(AUTH, !!forzar);
+  }
+
+  document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });
+  cargar(false);
+</script>
+</body>
+</html>

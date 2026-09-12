@@ -1,0 +1,313 @@
+function linea(r){
+  const cmv = cmvAhora(r), st = estadoDe(cmv,r);
+  return `<button class="linkline" data-r="${r.id}">${esc(Tt(r.n))} <span style="color:var(--muted)">· ${cmv!=null?cmv.toFixed(1)+'% de '+r.obj+'%':'sin CMV'}</span></button>`;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.classList.contains('close')) return cerrar();
+  if(t.dataset.ima){ imArea = t.dataset.ima; pintar(); return; }
+  if(t.dataset.dbs !== undefined){
+    dbSemanas = +t.dataset.dbs; window.__DB__ = null; pintar(); return;
+  }
+  if(t.dataset.ims !== undefined){
+    imSemanas = +t.dataset.ims; window.__IM__ = null; pintar(); return;
+  }
+  if(t.dataset.view){ view = t.dataset.view; pintar(); return; }
+  if(t.dataset.area !== undefined && t.closest('.areas')){ area = t.dataset.area || ''; filt.prov=null; pintar(); return; }
+  if(t.dataset.fr){ filt.rec = t.dataset.fr; pintar(); return; }
+  if(t.dataset.fi){ if(t.dataset.fi==='_prov'){filt.prov=null;} else filt.ins = t.dataset.fi; pintar(); return; }
+  if(t.dataset.p){ filt.prov = t.dataset.p; filt.ins='todos'; view='insumos'; area=''; pintar(); return; }
+  if(t.dataset.r != null && t.dataset.r !== ''){ abrir(fichaHTML(R[+t.dataset.r])); return; }
+  if(t.id === 'aplicar'){
+    const id = +t.dataset.i, ins = I[id], v = parseFloat(document.getElementById('np').value);
+    if(!isNaN(v) && ins.pc) sim.set(id, ins.pr * (v / ins.pc));
+    else if(!isNaN(v)) sim.set(id, v);
+    memo.clear(); abrirInsumo(id); pintar(); return;
+  }
+  if(t.id === 'quitar'){ const id=+t.dataset.i; sim.delete(id); memo.clear(); abrirInsumo(id); pintar(); return; }
+  if(t.id === 'registrar'){
+    const id = +t.dataset.i, ins = I[id];
+    const v = parseFloat(document.getElementById('np').value);
+    if(isNaN(v) || v <= 0){ alert('Escribí un precio de compra válido.'); return; }
+    const fac = prompt('Número de factura o boleta (podés dejarlo vacío):', '');
+    if(fac === null) return;
+    t.disabled = true; t.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        sim.delete(id);
+        alert('Guardado. ' + res.producto + ': Q' + res.antes + ' → Q' + res.ahora +
+              (res.variacion!=null ? ' (' + (res.variacion>0?'+':'') + res.variacion.toFixed(1) + '%)' : '') +
+              '\n' + res.recetasAfectadas.length + ' receta(s) recalculada(s).');
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Registrar precio'; alert('No se pudo guardar: ' + e.message); })
+      .registrarPrecio(AUTH, {producto: ins.p, proveedor: ins.prov, precioCompra: v, factura: fac});
+    return;
+  }
+  // --- abrir el formulario de receta nueva
+  if(t.id === 'nueva'){ nfTipo = 'plato'; abrir(fichaNuevaHTML()); return; }
+  if(t.dataset.nft){ nfTipo = t.dataset.nft; abrir(fichaNuevaHTML()); return; }
+
+  // --- crear la ficha
+  if(t.id === 'nf-crear'){
+    const esPlato = nfTipo === 'plato';
+    const datos = {
+      tipo: nfTipo,
+      nombre: (document.getElementById('nf-nombre').value || '').trim(),
+      nota: (document.getElementById('nf-nota').value || '').trim()
+    };
+    if(!datos.nombre){ alert('Escribi el nombre de la receta.'); return; }
+    if(esPlato){
+      datos.categoria = (document.getElementById('nf-cat').value || '').trim();
+      datos.precio = parseFloat(document.getElementById('nf-precio').value);
+      if(!datos.categoria){ alert('Elegi o escribi una categoria.'); return; }
+      if(isNaN(datos.precio) || datos.precio <= 0){ alert('El precio de carta tiene que ser mayor que cero.'); return; }
+    } else {
+      datos.rinde = parseFloat(document.getElementById('nf-rinde').value);
+      if(isNaN(datos.rinde) || datos.rinde <= 0){ alert('El rinde tiene que ser mayor que cero.'); return; }
+    }
+    t.disabled = true; t.textContent = 'Creando\u2026';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Crear la ficha';
+          alert('No se creo: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        alert('Listo. Se creo la pestaña "' + res.resultado.pestana + '".' +
+              (res.resultado.filaResumen ? '\nRESUMEN CMV, fila ' + res.resultado.filaResumen + ', marcada por costear.' : ''));
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear la ficha'; alert('No se pudo crear: ' + e.message); })
+      .webCrearFicha(AUTH, datos, area || 'COCINA');
+    return;
+  }
+
+  // --- quitar una linea de la ficha
+  if(t.classList.contains('qdel')){
+    const fila = +t.dataset.f, r = R[+t.dataset.rid];
+    const ln = r.ing.filter(function(x){ return x.f === fila; })[0];
+    if(!confirm('Quitar "' + (ln ? ln.n : 'esta linea') + '" de ' + r.n + '?\n\nLa linea queda vacia y el costo del plato baja. Se puede volver a agregar despues.')) return;
+    t.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se quito: ' + ((res && res.error) || 'sin respuesta')); return; }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; alert('No se pudo quitar: ' + e.message); })
+      .webQuitarLinea(AUTH, r.n, fila, r.area);
+    return;
+  }
+
+  // --- cambiar el proveedor de un insumo. NO toca el precio.
+  if(t.id === 'np-prov-save'){
+    const prod = t.dataset.prod;
+    const prov = (document.getElementById('np-prov').value || '').trim();
+    if(!prov){ alert('Escribi un proveedor.'); return; }
+    t.disabled = true; t.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Guardar';
+          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + e.message); })
+      .webAsignarProveedor(AUTH, prod, prov, t.dataset.area);
+    return;
+  }
+
+  // --- alta de insumo en el Banco.
+  // El servidor contesta {ok:false, motivo:'posible duplicado', similares:[...]} cuando
+  // encuentra parecidos. Eso NO es un error: es la pregunta. Se muestra y se reintenta
+  // con confirmar=true. Si se tratara como error, el candado anti-duplicados seria un
+  // muro en vez de un aviso, y el Banco ya tiene un "Perejil" y un "Prejil" que
+  // demuestran lo caro que sale no preguntar.
+  if(t.id === 'ni-add'){
+    const val = id => (document.getElementById(id).value || '').trim();
+    const datos = {
+      producto: val('ni-prod'), categoria: val('ni-cat'),
+      precioCompra: parseFloat(val('ni-pc')),
+      unidadCompra: val('ni-uc'), unidadReceta: val('ni-ur'),
+      contenido: val('ni-cont') ? parseFloat(val('ni-cont')) : null,
+      proveedor: val('ni-prov')
+    };
+    if(!datos.producto){ alert('Falta el nombre del producto.'); return; }
+    if(isNaN(datos.precioCompra) || datos.precioCompra <= 0){ alert('El precio de compra tiene que ser mayor que cero.'); return; }
+    if(!datos.unidadCompra || !datos.unidadReceta){ alert('Faltan la unidad de compra y la de receta.'); return; }
+
+    const mandar = function(confirmar){
+      t.disabled = true; t.textContent = 'Creando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Crear';
+          if(res && res.ok){ location.reload(); return; }
+          if(res && res.motivo === 'posible duplicado'){
+            const lista = res.similares.map(s => '  · ' + s.producto + '  (' + s.similitud + '% ' + s.motivo + ', Q' + s.precio + ' / ' + s.unidad + ')').join('\n');
+            if(confirm('Ya hay algo parecido en el Banco:\n\n' + lista +
+                       '\n\n¿Crear "' + datos.producto + '" igual?\n\nSi es el mismo producto, cancelá y cambiale el precio al que ya existe.')){
+              mandar(true);
+            }
+            return;
+          }
+          if(res && res.requiereContenido){
+            alert('Falta el contenido.\n\n' + (res.motivo || '') +
+                  '\n\nUn envase (manojo, caja, frasco) necesita saber cuántas ' + datos.unidadReceta + ' trae.');
+            return;
+          }
+          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
+        })
+        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
+        .webCrearInsumo(AUTH, datos, confirmar, area || 'COCINA');
+    };
+    mandar(false);
+    return;
+  }
+
+  // --- alta de proveedor. Mismo flujo de confirmacion que el insumo.
+  if(t.id === 'npr-add'){
+    const val = id => (document.getElementById(id).value || '').trim();
+    const datos = { nombre: val('npr-nom'), nit: val('npr-nit'),
+                    contacto: val('npr-con'), telefono: val('npr-tel') };
+    if(!datos.nombre){ alert('Falta el nombre del proveedor.'); return; }
+
+    const mandar = function(confirmar){
+      t.disabled = true; t.textContent = 'Creando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Crear';
+          if(res && res.ok){ location.reload(); return; }
+          if(res && res.motivo === 'posible duplicado'){
+            const lista = res.similares.map(s => '  · ' + s.nombre + '  (' + s.similitud + '%)').join('\n');
+            if(confirm('Ya hay un proveedor parecido:\n\n' + lista +
+                       '\n\n¿Crear "' + datos.nombre + '" igual?')){
+              mandar(true);
+            }
+            return;
+          }
+          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
+        })
+        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
+        .webCrearProveedor(AUTH, datos, confirmar);
+    };
+    mandar(false);
+    return;
+  }
+
+  // --- agregar una linea. La unidad NO se pide: la pone el Banco.
+  if(t.id === 'np-add'){
+    const r = R[+t.dataset.rid];
+    const prod = (document.getElementById('np-prod').value || '').trim();
+    const cant = parseFloat(document.getElementById('np-cant').value);
+    if(!prod){ alert('Elegi un producto del Banco de Datos.'); return; }
+    if(isNaN(cant) || cant <= 0){ alert('La cantidad tiene que ser mayor que cero.'); return; }
+    t.disabled = true; t.textContent = 'Agregando\u2026';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = 'Agregar';
+          alert('No se agrego: ' + ((res && res.error) || 'sin respuesta'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + e.message); })
+      .webAgregarLinea(AUTH, r.n, prod, cant, '', r.area);   // unidad vacia: manda el Banco
+    return;
+  }
+
+  // --- precio de carta
+  if(t.id === 'np-menu-save'){
+    const r = R[+t.dataset.rid];
+    const v = parseFloat(document.getElementById('np-menu').value);
+    if(isNaN(v) || v <= 0){ alert('El precio tiene que ser mayor que cero.'); return; }
+    if(v === r.precio){ alert('Es el mismo precio que ya tenia.'); return; }
+    const motivo = prompt('Por que cambia el precio? (queda en la bitacora, podes dejarlo vacio)', '');
+    if(motivo === null) return;
+    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; t.textContent = '\u2713'; alert('No se guardo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        location.reload();
+      })
+      .withFailureHandler(function(e){ t.disabled = false; t.textContent = '\u2713'; alert('No se pudo guardar: ' + e.message); })
+      .webCambiarPrecioMenu(AUTH, r.n, v, motivo, r.area);
+    return;
+  }
+
+  if(t.classList.contains('qsave')){
+    const fila = +t.dataset.f, r = R[+t.dataset.rid];
+    const inp = dr.querySelector('.qin[data-f="' + fila + '"]');
+    const v = parseFloat(inp && inp.value);
+    // El servidor exige cantidad > 0. Se avisa aca con el mismo criterio, para que la
+    // persona no mande algo que va a volver rechazado.
+    if(isNaN(v) || v <= 0){
+      alert(v === 0
+        ? 'La cantidad tiene que ser mayor que cero. Para sacar el ingrediente hay que quitar la linea, no ponerla en 0.'
+        : 'Escribi una cantidad valida.');
+      return;
+    }
+    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){
+          t.disabled = false; t.textContent = '\u2713';
+          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta del servidor'));
+          return;
+        }
+        location.reload();
+      })
+      .withFailureHandler(function(e){
+        t.disabled = false; t.textContent = '\u2713';
+        alert('No se pudo guardar: ' + e.message);
+      })
+      .webEditarCantidad(AUTH, r.n, fila, v, r.area);   // r.n es el nombre de la pestana
+    return;
+  }
+  if(t.id === 'simreset'){ sim.clear(); memo.clear(); cerrar(); pintar(); return; }
+  if(t.dataset.i != null && t.dataset.i !== ''){ abrirInsumo(+t.dataset.i); return; }
+});
+let td;
+document.getElementById('q').addEventListener('input', e => {
+  clearTimeout(td); td = setTimeout(() => { q = e.target.value.trim(); pintar(); }, 120);
+});
+
+const porArea = a => R.filter(r => r.area===a && r.t==='plato');
+document.getElementById('foot').textContent =
+  `Cocina: ${porArea('COCINA').length} fichas de plato, ${porArea('COCINA').filter(r=>cmvAhora(r)!=null).length} con CMV, meta 30%. ` +
+  `Barra: ${porArea('BARRA').length} cócteles y bebidas, meta 20%. ` +
+  `${R.length - porArea('COCINA').length - porArea('BARRA').length} pre-elaborados · ${I.length} productos · ${P.length} proveedores. ` +
+  `Fuente: ${D.meta.fuente}, leído el ${D.meta.fecha}.`;
+pintar();
+
+/* Que puede hacer quien entro. Va ACA ADENTRO y no en arrancar(), porque pintar()
+   es local a iniciarApp(): desde afuera no se la puede llamar.
+   Eso fue justamente el bug de la tarjeta "Nueva receta": la grilla se dibuja al
+   arrancar, con PUEDE todavia vacio, y sin volver a pintar la tarjeta no aparecia
+   nunca. Editar cantidades si funcionaba, porque ese panel se dibuja al abrir una
+   ficha, o sea despues de que llego la respuesta.
+
+   Si esto falla o tarda, PUEDE queda vacio y la pagina se comporta como antes:
+   solo lectura. Nada de lo que ya funcionaba depende de que responda.
+
+   OJO: esto es para la INTERFAZ. El candado de verdad esta en el servidor y se
+   vuelve a verificar en cada operacion. Esconder un boton no protege nada. */
+window.PUEDE = {};
+google.script.run
+  .withSuccessHandler(function(r){
+    if(r && r.ok && r.resultado){
+      window.PUEDE = r.resultado.puede || {};
+      // Donde puede ESCRIBIR esta persona. Lo lee AREA_EDITABLE. Si el servidor no
+      // lo manda —una version vieja—, queda undefined y AREA_EDITABLE devuelve
+      // false: la pantalla se va a solo lectura en vez de ofrecer lo que no puede.
+      window.PUEDE.areas = r.resultado.areas;
+      window.YO = r.resultado;
+      pintar();                       // <- sin esto, la grilla se queda en solo lectura
+    }
+  })
+  .withFailureHandler(function(){ /* silencio: se queda en solo lectura */ })
+  .webEstadoEdicion(AUTH);

@@ -1,0 +1,29 @@
+function vistaProveedores(){
+  const k = nrm(q);
+  const list = P.filter(p => !q || nrm(p.nombre).includes(k));
+  /* La barra de peso se mide contra TODOS los proveedores, no contra los filtrados:
+     si se midiera contra la busqueda, el mas grande de tres resultados se veria
+     lleno y parecerian todos iguales. */
+  const maxProd = Math.max(1, ...P.map(x => x.productos || 0));
+  /* La barra de agregar va ARRIBA. Al pie de 61 proveedores nadie la encuentra:
+     hay que scrollear una pantalla y media para crear uno. */
+  return `  ${(window.PUEDE && window.PUEDE.crearProveedor) ? `<div class="addrow">
+      <div class="sec-t" style="margin-top:0">Agregar un proveedor</div>
+      <div class="simrow" style="flex-wrap:wrap">
+        <input id="npr-nom" placeholder="Nombre" style="width:220px" autocomplete="off">
+        <input id="npr-nit" placeholder="NIT (opcional)" style="width:150px" autocomplete="off">
+        <input id="npr-con" placeholder="Contacto (opcional)" style="width:180px" autocomplete="off">
+        <input id="npr-tel" placeholder="Teléfono (opcional)" style="width:160px" autocomplete="off">
+        <button class="chip" id="npr-add" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Crear</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Crear el proveedor no le asigna ningún producto. Para eso, abrí el producto en la pestaña Insumos y cambiale el proveedor ahí. Antes de crear se avisa si ya hay uno parecido: “Mercado” y “mercado pro activo” son distintos, pero “La Torre” y “La Torre S.A.” casi nunca.</p>
+    </div>` : ''}
+    <p class="lead">Cada proveedor con los productos que le compramos y cuántas recetas dependen de él. Tocá uno para ver su lista.</p>
+    <div class="provgrid">${list.map(p => `
+      <button class="provcard" data-p="${esc(p.nombre)}">
+        <span class="n">${esc(p.nombre)}</span>
+        <span class="m">${p.productos} producto${p.productos===1?'':'s'} · ${p.recetas} receta${p.recetas===1?'':'s'}</span>
+        <span class="peso" aria-hidden="true"><i style="width:${Math.max(2, Math.round(p.productos / maxProd * 100))}%"></i></span>
+      </button>`).join('')}</div>`;
+}
+

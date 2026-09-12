@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la .design-sync)",
+      "Bash(cat .design-sync/config.json)",
+      "Bash(ls -la design-sync.config.json)",
+      "Bash(git rev-parse *)",
+      "Bash(command -v curl)",
+      "Bash(curl --version)",
+      "Bash(curl -sS --max-time 8 -o /dev/null -w \"nodejs.org -> HTTP %{http_code}\\\\n\" https://nodejs.org/dist/index.json)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(kill 72168)",
+      "Bash(pkill -f \"http-serve.mjs\")"
+    ]
+  }
+}

@@ -1,0 +1,194 @@
+<!-- CosteoVista.html — Recetario + Proveedores para la intranet.
+     Revision 21 ago 2026:
+       · meta de CMV por area (antes toda la barra se medía contra 30%)
+       · filtro Cocina / Barra
+       · salto directo del ingrediente a la ficha de su sub-receta
+       · historial de precios visible en el panel del producto
+       · pestaña de higiene del recetario
+     Servida desde Code.gs con HtmlService.createTemplateFromFile('CosteoVista').
+     Depende de: ConfigCosteo.gs, CosteoDatos.gs, Proveedores.gs -->
+<!-- Google sirve toda web app dentro de un iframe suyo. Sin esto, el boton
+     "Panel principal" navega DENTRO de ese iframe en vez de en la ventana: en
+     /exec queda un marco anidado y en /dev Google directamente se niega a
+     servirse enmarcado y contesta "You need access". Todas las demas vistas de
+     la intranet ya lo traian; esta era la unica que no. -->
+<base target="_top">
+<title>Recetario 14·91</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap">
+<?!= include('Logo') ?>
+<!-- PARTIDO EN PARCIALES EL 12-SEP-2026.
+     Este archivo pasaba de 121 KB y 2.000 lineas: el estilo, las siete pestanas,
+     los paneles y el arranque, todo junto. Aca quedo el esqueleto —cabecera,
+     pestanas, secciones vacias y el orden de carga— y cada pieza vive en su
+     parcial:
+
+     · CosteoEstilos         — CSS de todo el modulo
+     · CosteoJs_Base         — datos, estado, helpers, calculo de costo y CMV, filtros
+     · CosteoJs_Recetas      — pestana Recetas: tarjeta() y vistaRecetas()
+     · CosteoJs_Insumos      — pestana Productos: vistaInsumos()
+     · CosteoJs_Proveedores  — pestana Proveedores: vistaProveedores()
+     · CosteoJs_Menu         — pestana Ingenieria de menu: IM_*, imMatriz(), vistaMenu()
+     · CosteoJs_Inicio       — pestana Inicio: tablero operativo de Profit OS
+     · CosteoJs_HigieneGuia  — pestanas Higiene y Como funciona
+     · CosteoJs_Pintar       — llamadas al servidor, pintar() y el cajon lateral
+     · CosteoJs_Paneles      — paneles del cajon: fichaHTML(), insumoHTML(), abrirInsumo()
+     · CosteoJs_Acciones     — linea(), los listeners de click y el arranque de la vista
+
+     Los CosteoJs_* NO son islas: son el cuerpo de iniciarApp(), pegado como
+     texto en el orden de abajo. Comparten un solo ambito (D, R, I, P, view,
+     area, los helpers), asi que el ORDEN IMPORTA y ninguno se puede llamar por
+     separado ni mover de lugar sin mirar que usa.
+
+     Se pegan con incluirCrudo_() y NO con include(): include() lee con
+     createHtmlOutputFromFile, que SANITIZA —sobre este mismo archivo devolvia
+     108.722 de 121.691 caracteres— y se comeria pedazos de JavaScript sin
+     avisar. incluirCrudo_() usa getRawContent(), que devuelve el texto tal cual.
+
+     Al agregar un parcial nuevo: sumalo tambien a la lista VISTAS de las dos
+     pruebas de Pruebas.js que barren las vistas buscando llamadas sin token.
+     Lo que no se lee, no se protege. -->
+<style>
+<?!= incluirCrudo_('CosteoEstilos') ?>
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1 class="logo"><span class="oculto">Rosanta · Recetario</span></h1>
+        <span class="sec">Recetario · 14° N · 91° W</span>
+      </div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar plato, ingrediente o proveedor…" autocomplete="off" aria-label="Buscar">
+      </div>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
+    <nav class="nav" role="tablist" aria-label="Secciones">
+      <button role="tab" data-view="inicio" aria-selected="true">Inicio</button>
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
+      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
+      <span class="areas" role="group" aria-label="Área">
+        <button data-area="COCINA" aria-pressed="true">Cocina</button>
+        <button data-area="BARRA" aria-pressed="false">Barra</button>
+        <button data-area="" aria-pressed="false">Todo</button>
+      </span>
+    </nav>
+  </div>
+  <div class="simbar" id="simbar" role="status">
+    <span id="simtext"></span>
+    <span class="sp"><button id="simreset">Volver a los precios reales</button></span>
+  </div>
+</header>
+
+<div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
+  <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+  <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
+</div>
+<main class="wrap">
+  <section id="v-inicio"></section>
+  <section id="v-menu" hidden></section>
+  <section id="v-recetas" hidden></section>
+  <section id="v-insumos" hidden></section>
+  <section id="v-proveedores" hidden></section>
+  <section id="v-higiene" hidden></section>
+  <section id="v-guia" hidden></section>
+</main>
+
+<footer class="wrap pie">
+  <span id="foot"></span>
+  <span class="marca-pie">Rosanta · Cocina con Carisma &nbsp;<span class="flor">❀</span>&nbsp; 14° N · 91° W</span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" tabindex="-1"></aside>
+
+<script>
+/* EL TOKEN DEL ENLACE PERSONAL (10-sep-2026)
+   Toda llamada a google.script.run tiene que mandarlo como primer argumento. La
+   pagina se abre porque doGet ya resolvio la identidad, pero cada llamada al
+   servidor es una peticion nueva y llega sin nada: sin el token cae en la sesion
+   de dominio y a quien entra con Gmail personal le contesta "Sin acceso al
+   recetario". Asi le paso a Jeffry, que fue el primero en entrar de verdad al
+   modulo. Si agregas una llamada nueva, pasale AUTH. */
+var AUTH = '<?= authToken ?>';
+
+function iniciarApp(){
+<?!= incluirCrudo_('CosteoJs_Base') ?>
+<?!= incluirCrudo_('CosteoJs_Recetas') ?>
+<?!= incluirCrudo_('CosteoJs_Insumos') ?>
+<?!= incluirCrudo_('CosteoJs_Proveedores') ?>
+<?!= incluirCrudo_('CosteoJs_Menu') ?>
+<?!= incluirCrudo_('CosteoJs_Inicio') ?>
+<?!= incluirCrudo_('CosteoJs_HigieneGuia') ?>
+<?!= incluirCrudo_('CosteoJs_Pintar') ?>
+<?!= incluirCrudo_('CosteoJs_Paneles') ?>
+<?!= incluirCrudo_('CosteoJs_Acciones') ?>
+}
+</script>
+
+<script>
+/* Adapta el modelo de CosteoDatos.gs a la forma compacta que usa la vista.
+   Lo importante: area y cmvObjetivo viajan por receta, y cada linea lleva su sub-receta. */
+function adaptar(m){
+  return {
+    meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas},
+    proveedores:m.proveedores,
+    insumos:m.insumos.map(function(i){
+      return {id:i.id, p:i.producto, c:i.categoria, pr:i.precio, u:i.unidad, pc:i.precioCompra,
+              uc:i.unidadCompra, cv:i.conversion, prov:i.proveedor, area:i.area, sub:i.sub, usos:i.usos};
+    }),
+    recetas:m.recetas.map(function(r){
+      return {id:r.id, n:r.nombre, t:r.tipo, cat:r.categoria, area:r.area, obj:r.cmvObjetivo,
+              precio:r.precio, costo:r.costo, costoUnit:r.costoUnit, unidadCosto:r.unidadCosto,
+              cmv:r.cmv==null?null:Math.round(r.cmv*10)/10, merma:r.merma,
+              rinde:r.rinde, rindeTexto:r.rindeTexto, nota:r.nota, sug:r.sugerido, est:r.estado, base:r.base,
+              ing:r.ingredientes.map(function(g){
+                return {i:g.insumo, r:g.receta, n:g.nombre, q:g.cantidad, u:g.unidad, t:g.total, f:g.fila};
+              })};
+    })
+  };
+}
+function arrancar(m){
+  window.__DATA__ = adaptar(m);
+  document.getElementById('cargando').remove();
+  iniciarApp();
+}
+function fallar(e){
+  document.getElementById('cargando').innerHTML =
+    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">' +
+    (e && e.message ? e.message : e) + '</p>';
+}
+/* LAS DOS LLAMADAS SALEN JUNTAS, no una despues de la otra.
+   getCosteoData tarda lo suyo (es el recetario entero) y getProfitOS tambien, y
+   hasta ahora la segunda no arrancaba hasta que la primera volvia: el usuario
+   esperaba la SUMA. El tablero no necesita nada del recetario, asi que se pide en
+   paralelo y lo que se espera es la mas lenta de las dos.
+
+   El resultado se guarda y no se pinta: pintar() necesita __DATA__, que todavia
+   puede no haber llegado. Cuando iniciarApp arranca, pedirProfitOS lo encuentra ya
+   servido en el cache y no vuelve a pedirlo. */
+window.__POS_CACHE__ = {};
+window.__POSCARGANDO__ = 13;
+google.script.run
+  .withSuccessHandler(function(r){
+    window.__POSCARGANDO__ = null;
+    window.__POS_CACHE__[13] = r;
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .withFailureHandler(function(e){
+    window.__POSCARGANDO__ = null;
+    var err = {ok:false, error:(e && e.message) || 'No se pudo leer'};
+    window.__POS_CACHE__[13] = {tablero:err, menu:err};
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .getProfitOS(AUTH, 13);
+
+google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData(AUTH);
+</script>

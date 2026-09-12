@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <title>Pruebas · Rosanta Intranet</title>
+  <style>
+    :root{
+      --verde:#4A6741; --tierra:#A0785A; --crema:#F5EFE0;
+      --cobre:#C9923F; --marron:#3D2B1F;
+      --ok:#3F7D58; --falla:#B3402F; --aviso:#C9923F; --saltada:#8A8378;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--crema);color:var(--marron);
+         font:15px/1.55 Georgia,"Times New Roman",serif}
+    .wrap{max-width:880px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+    header{display:flex;align-items:baseline;justify-content:space-between;
+           gap:1rem;flex-wrap:wrap;border-bottom:2px solid var(--verde);padding-bottom:.75rem}
+    h1{font-size:1.4rem;margin:0;color:var(--verde);font-weight:normal;letter-spacing:.01em}
+    .sub{font-size:.82rem;color:var(--tierra)}
+    button{font:inherit;font-size:.9rem;background:var(--verde);color:var(--crema);
+           border:0;border-radius:3px;padding:.5rem 1.1rem;cursor:pointer}
+    button:hover{background:#3d5636}
+    button[disabled]{background:var(--saltada);cursor:default}
+
+    .resumen{margin:1.25rem 0;padding:1rem 1.15rem;border-radius:4px;
+             border-left:5px solid var(--saltada);background:#fff}
+    .resumen.sana{border-left-color:var(--ok)}
+    .resumen.mal{border-left-color:var(--falla)}
+    .resumen h2{margin:0 0 .3rem;font-size:1.15rem;font-weight:normal}
+    .resumen.sana h2{color:var(--ok)}
+    .resumen.mal h2{color:var(--falla)}
+    .conteo{font-size:.85rem;color:var(--tierra)}
+
+    .grupo{margin-top:1.6rem}
+    .grupo h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;
+              color:var(--tierra);margin:0 0 .5rem;font-weight:normal}
+    .fila{display:flex;gap:.75rem;align-items:baseline;padding:.5rem .75rem;
+          border-bottom:1px solid #E4DCC8;background:#fff}
+    .fila:first-of-type{border-radius:4px 4px 0 0}
+    .fila:last-of-type{border-bottom:0;border-radius:0 0 4px 4px}
+    .marca{flex:0 0 4.6rem;font:600 .7rem/1.5 ui-monospace,Menlo,monospace;
+           letter-spacing:.06em;text-align:center;border-radius:2px;padding:.1rem 0;color:#fff}
+    .OK .marca{background:var(--ok)}
+    .FALLA .marca{background:var(--falla)}
+    .AVISO .marca{background:var(--aviso)}
+    .SALTADA .marca{background:var(--saltada)}
+    .cuerpo{flex:1 1 auto;min-width:0}
+    .nombre{font-size:.94rem}
+    .FALLA .nombre{font-weight:bold;color:var(--falla)}
+    .cifra{font:.8rem/1.5 ui-monospace,Menlo,monospace;color:var(--tierra)}
+    .FALLA .cifra{color:var(--falla)}
+    .detalle{font-size:.8rem;color:var(--saltada);margin-top:.15rem;
+             word-break:break-word;overflow-wrap:anywhere}
+    .vacio{padding:2.5rem 0;text-align:center;color:var(--tierra)}
+    .nota{margin-top:2.5rem;font-size:.8rem;color:var(--saltada);
+          border-top:1px solid #E4DCC8;padding-top:.9rem}
+  </style>
+</head>
+<body data-auth="<?= authToken ?>">
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Pruebas de la intranet</h1>
+        <div class="sub">Ninguna de estas pruebas escribe nada. Solo leen y comparan.</div>
+      </div>
+      <button id="correr">Correr de nuevo</button>
+    </header>
+
+    <div id="salida"><p class="vacio">Corriendo las pruebas… tarda unos 3 minutos. Es normal: recorre las 91 pestanas del recetario.</p></div>
+
+    <p class="nota">Los numeros que se esperan viven en <code>PRUEBAS_CFG</code>, arriba de
+    <code>Pruebas.gs</code>. Se cambian a proposito cuando hay una decision tomada,
+    nunca para que algo deje de salir en rojo.</p>
+  </div>
+
+<script>
+  var AUTH = document.body.dataset.auth || '';
+  var boton = document.getElementById('correr');
+  var salida = document.getElementById('salida');
+
+  function esc(t){
+    return String(t == null ? '' : t)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function pintar(res){
+    boton.disabled = false;
+    boton.textContent = 'Correr de nuevo';
+
+    var h = '<div class="resumen ' + (res.sana ? 'sana' : 'mal') + '">' +
+      '<h2>' + (res.sana ? 'Intranet sana' :
+        'Hay ' + res.fallas + (res.fallas === 1 ? ' falla' : ' fallas')) + '</h2>' +
+      '<div class="conteo">' + res.ok + ' OK · ' + res.fallas + ' fallas · ' +
+      res.avisos + ' avisos · ' + res.saltadas + ' saltadas · ' +
+      (res.ms/1000).toFixed(1) + ' s</div></div>';
+
+    res.grupos.forEach(function(g){
+      h += '<div class="grupo"><h3>' + esc(g.nombre) + '</h3>';
+      g.pruebas.forEach(function(p){
+        var cifra = '';
+        // Ojo: google.script.run convierte los null en undefined al serializar,
+        // asi que la comparacion va con != y no con !==. Con !== se pintaba
+        // "esperado" seguido de nada en toda fila que no compara numeros.
+        if (p.esperado != null && p.leido !== p.esperado) {
+          cifra = 'leido ' + esc(p.leido) + ', esperado ' + esc(p.esperado);
+        } else if (p.leido != null) {
+          cifra = esc(p.leido);
+        }
+        h += '<div class="fila ' + p.estado + '">' +
+             '<span class="marca">' + p.estado + '</span>' +
+             '<span class="cuerpo"><span class="nombre">' + esc(p.nombre) + '</span>' +
+             (cifra ? ' <span class="cifra">' + cifra + '</span>' : '') +
+             (p.detalle ? '<div class="detalle">' + esc(p.detalle) + '</div>' : '') +
+             '</span></div>';
+      });
+      h += '</div>';
+    });
+    salida.innerHTML = h;
+  }
+
+  function fallar(err){
+    boton.disabled = false;
+    boton.textContent = 'Reintentar';
+    salida.innerHTML = '<div class="resumen mal"><h2>No se pudieron correr</h2>' +
+      '<div class="conteo">' + esc(err && err.message ? err.message : err) + '</div></div>';
+  }
+
+  function correr(){
+    boton.disabled = true;
+    boton.textContent = 'Corriendo…';
+    salida.innerHTML = '<p class="vacio">Corriendo las pruebas… tarda unos 3 minutos. Es normal: recorre las 91 pestanas del recetario.</p>';
+    google.script.run.withSuccessHandler(pintar).withFailureHandler(fallar).correrPruebasWeb(AUTH);
+  }
+
+  boton.addEventListener('click', correr);
+  correr();
+</script>
+</body>
+</html>

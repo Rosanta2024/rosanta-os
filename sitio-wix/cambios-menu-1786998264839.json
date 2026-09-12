@@ -1,0 +1,23 @@
+{
+  "fecha": "2026-08-17T20:24:23.244Z",
+  "items": [
+    {
+      "id": "91c42417-813e-4640-b646-e568efd39c57",
+      "antes": {
+        "name": "Red Pepper",
+        "description": "Colonial Antigüeño rum infused with roasted red bell peppers, tobacco bitters, a touch of syrup, smoked with vanilla tobacco. Suggested pairing: Grilled Tenderloin."
+      }
+    }
+  ],
+  "tm": [
+    {
+      "entityId": "91c42417-813e-4640-b646-e568efd39c57",
+      "contentIdViejo": "9b893440-4c95-4a0e-af6c-db216b400c11",
+      "antes": {
+        "name": "Red Pepper",
+        "description": "Ron Colonial Antigüeño macerado en chiles morrones horneados, bitter de tabaco, un toque de jarabe y ahumado con tabaco de vainilla. Maridaje sugerido: Lomito a la Parrilla."
+      },
+      "contentIdNuevo": "ef68a592-aead-4db9-8740-0987c3d8dfb2"
+    }
+  ]
+}

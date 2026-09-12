@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Sistema de Marketing</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
+  </header>
+
+  <!--
+    El lateral cambia de vista en el cliente, sin recargar la pagina.
+    Antes cada item era un <a href="...?page=marketing&sub=X">: esa navegacion
+    perdia el query string y terminaba cayendo en el Panel principal. Ahora no
+    se navega: se monta un iframe por vista la primera vez que se abre y se
+    alterna cual esta visible. De paso, cada vista conserva su estado (scroll,
+    filtros del CRM, pestana abierta en Marketing OS) al ir y volver.
+  -->
+  <div class="sm">
+    <nav class="sm-side">
+      <span class="rotulo">Módulos</span>
+      <button type="button" class="sm-item" data-sub="os">Marketing OS</button>
+      <? if (usuarioTieneModulo(usuario, 'resenas')) { ?>
+        <button type="button" class="sm-item" data-sub="resenas">Reseñas</button>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'crm')) { ?>
+        <button type="button" class="sm-item" data-sub="crm">CRM</button>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'consola')) { ?>
+        <button type="button" class="sm-item" data-sub="consola">Consola de chats</button>
+      <? } ?>
+    </nav>
+
+    <main class="sm-main" id="smMain">
+      <div class="sm-aviso" id="smFalta" style="display:none">
+        <h2>Falta la URL del panel de reseñas</h2>
+        <p>Cargá su /exec en <code>RESENAS_URL</code> dentro de Config.gs.</p>
+      </div>
+      <div class="sm-aviso" id="smNoEmbebe" style="display:none">
+        <h2>Esta vista no se deja embeber</h2>
+        <p>Su Web App responde con X-Frame-Options. Se arregla con una línea en
+           su doGet (<code>setXFrameOptionsMode(ALLOWALL)</code>) y una versión nueva.</p>
+        <a class="btn" id="smAbrirResenas" target="_blank" rel="noopener" href="#">Abrir en pestaña</a>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function () {
+  // Cada URL lleva un solo parametro: es el patron que si funciona.
+  var URLS = {
+    os:      <?!= JSON.stringify(urlBase + '?page=marketing-os' + (authToken ? '&u=' + authToken : '')) ?>,
+    crm:     <?!= JSON.stringify(urlBase + '?page=crm' + (authToken ? '&u=' + authToken : '')) ?>,
+    resenas: <?!= JSON.stringify(resenasUrl || '') ?>,
+    consola: <?!= JSON.stringify(consolaUrl || '') ?>
+  };
+  // Consola y Reseñas son proyectos aparte: pueden bloquear el embed con
+  // X-Frame-Options. Marketing OS y CRM son de este mismo proyecto, siempre embeben.
+  var EXTERNAS = { resenas: 1, consola: 1 };
+  var inicial = <?!= JSON.stringify(sub) ?>;
+
+  var main   = document.getElementById('smMain');
+  var falta  = document.getElementById('smFalta');
+  var noEmb  = document.getElementById('smNoEmbebe');
+  var frames = {};
+  var actual = null;
+  var claveConsola = null; // contacto que el CRM pidió abrir en la consola
+
+  var btnAbrir = document.getElementById('smAbrirResenas');
+
+  function ocultarAvisos() {
+    falta.style.display = 'none';
+    noEmb.style.display = 'none';
+  }
+
+  // Le pasa a la consola el contacto pendiente. Se llama al cargar el iframe y
+  // al volver a la vista: la consola aplica la clave sin recargarse.
+  function empujarConsola() {
+    if (!claveConsola || !frames.consola || !frames.consola.contentWindow) return;
+    frames.consola.contentWindow.postMessage(
+      { tipo: 'rosanta:abrirContacto', clave: claveConsola }, '*');
+  }
+
+  function montar(sub) {
+    if (frames[sub]) return frames[sub];
+    var f = document.createElement('iframe');
+    f.title = sub;
+    f.style.display = 'none';
+    f.src = URLS[sub];
+    main.appendChild(f);
+    frames[sub] = f;
+
+    if (sub === 'consola') {
+      f.addEventListener('load', empujarConsola); // apenas cargue, aplicar pendiente
+    }
+    // Si a los 6s no cargó, casi siempre es X-Frame-Options.
+    if (EXTERNAS[sub]) {
+      var ok = false;
+      f.addEventListener('load', function () { ok = true; });
+      setTimeout(function () {
+        if (!ok && actual === sub) {
+          f.style.display = 'none';
+          btnAbrir.href = URLS[sub] || '#'; // abrir la vista que falló, no siempre reseñas
+          noEmb.style.display = 'block';
+        }
+      }, 6000);
+    }
+    return f;
+  }
+
+  function mostrar(sub) {
+    if (!URLS.hasOwnProperty(sub)) sub = 'os';
+    actual = sub;
+
+    document.querySelectorAll('.sm-item').forEach(function (b) {
+      b.classList.toggle('act', b.dataset.sub === sub);
+    });
+    Object.keys(frames).forEach(function (k) { frames[k].style.display = 'none'; });
+    ocultarAvisos();
+
+    if (EXTERNAS[sub] && !URLS[sub]) { falta.style.display = 'block'; return; }
+    var yaEstaba = !!frames[sub];
+    montar(sub).style.display = 'block';
+    if (sub === 'consola' && yaEstaba) empujarConsola(); // ya cargada: aplicar ya
+  }
+
+  document.querySelectorAll('.sm-item').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.sub !== 'consola') claveConsola = null; // ir a otra vista suelta el pendiente
+      mostrar(b.dataset.sub);
+    });
+  });
+
+  // El CRM (iframe hijo) pide abrir la conversación de un contacto.
+  window.addEventListener('message', function (ev) {
+    var d = ev.data;
+    if (!d || d.tipo !== 'rosanta:verConversacion') return;
+    claveConsola = d.clave || null; // sin clave: la consola abre normal
+    mostrar('consola');
+  });
+
+  mostrar(inicial);
+})();
+</script>
+</body>
+</html>

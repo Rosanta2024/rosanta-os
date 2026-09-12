@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Intranet</span>
+    </div>
+    <div class="quien">
+      Hola <?= usuario.nombre || usuario.email ?> · rol: <?= usuario.rol ?>
+    </div>
+  </header>
+  <? var qs = authToken ? ('&u=' + authToken) : ''; ?>
+  <main>
+    <h1>Panel principal</h1>
+    <p>Elige un modulo para empezar.</p>
+    <div class="tarjetas">
+      <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=finanzas<?= qs ?>">
+          <h3>Finanzas</h3>
+          <p>Ventas, gastos, planilla y propinas del Reporte Maestro. Semaforos de margen y food cost.</p>
+          <span class="chip">solo lectura</span>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
+        <a class="tarjeta lila" href="<?= urlBase ?>?page=metas<?= qs ?>">
+          <h3>Metas de la semana</h3>
+          <p>Donde vamos contra la meta del mes y cuanto hay que vender esta semana para llegar.</p>
+          <span class="chip">solo lectura</span>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
+        <a class="tarjeta lila" href="<?= urlBase ?>?page=comparativo<?= qs ?>">
+          <h3>2026 contra 2025</h3>
+          <p>La venta mes a mes contra el mismo mes del año pasado, con tickets y ticket promedio.</p>
+          <span class="chip">solo lectura</span>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'recetario')) { ?>
+        <a class="tarjeta lila" href="<?= urlBase ?>?page=costeo<?= qs ?>">
+          <h3>Recetario y costeo</h3>
+          <p>Recetas con ingredientes, costo por platillo y margen calculado en vivo.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'marketing')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=marketing<?= qs ?>">
+          <h3>Sistema de Marketing</h3>
+          <p>Marketing OS, resenas y CRM. Adentro: estrategia, pauta con ROAS, espia, calendario, creador Kaprica y carritos.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } else if (usuarioTieneModulo(usuario, 'contenido')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=marketing<?= qs ?>">
+          <h3>Contenido</h3>
+          <p>Calendario del mes, creador Kaprica y checklist de piezas. Tu mesa de trabajo de contenido.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } ?>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,137 @@
+/* ===== DASHBOARD OPERATIVO DE PROFIT OS ============================
+   La primera pantalla del modulo. Contesta "como vamos", no "que hago con
+   este plato" —eso es la pestana de al lado—.
+
+   Seis indicadores. Cinco salen de lo que getIngenieriaMenu ya calcula,
+   reagrupado; el sexto —CMV real contra teorico— todavia no existe y la
+   pantalla LO DICE en vez de disimularlo: un tablero al que le falta el
+   indicador que lo justifica tiene que declararlo.
+
+   TODO PORCENTAJE VA SOBRE VENTA NETA (bruta / 1.12). El costo va tal como
+   se paga. Ver COSTEO.iva: buena parte de la compra es informal y ya viene
+   sin IVA, asi que corregir el denominador es el extremo conservador.
+
+   Todo cuelga de #db y todas las clases llevan prefijo db-, misma regla que
+   #im: ninguna regla de aca puede tocar el resto de la vista.
+   ------------------------------------------------------------------ */
+const DB_VENTANAS = IM_VENTANAS;   // la misma ventana y por la misma razon
+
+/* Verde si esta en meta o abajo, naranja si esta arriba. El color es el
+   veredicto: un numero sin veredicto obliga a recordar cual era la meta. */
+const dbSemaforo = (valor, meta) => valor <= meta ? 'var(--meta)' : 'var(--alto)';
+const dbPct = n => (n * 100).toFixed(1) + '%';
+
+function dbTile(o){
+  return `<div class="db-t" style="--db-c:${o.color || 'var(--muted)'}">
+    <span class="db-lbl">${o.titulo}</span>
+    <b class="db-n">${o.valor}</b>
+    ${o.sub ? `<span class="db-sub">${o.sub}</span>` : ''}
+    ${o.cuerpo || ''}
+    ${o.pie ? `<span class="db-pie">${o.pie}</span>` : ''}
+  </div>`;
+}
+
+function vistaInicio(){
+  const d = window.__DB__;
+  const bar = `<div class="db-bar">
+      <div class="db-grp"><b>Ventana</b><div class="db-seg" role="group" aria-label="Ventana">
+        ${DB_VENTANAS.map(([n,l,t])=>`<button data-dbs="${n}" title="${t}" aria-pressed="${dbSemanas===n}">${l}</button>`).join('')}
+      </div></div>
+      <div class="db-stamp"><b>${d&&d.ok?imFe(d.desde)+' – '+imFe(d.hasta)+' · '+d.dias+' días':'—'}</b>
+        <span>${d&&d.ok?d.tickets.toLocaleString('es-GT')+' tickets · venta neta '+imQ(d.ventaNeta):'—'}</span></div>
+    </div>`;
+  if(!d)    return `<div id="db">${bar}<p class="empty">Leyendo las ventas…</p></div>`;
+  if(!d.ok) return `<div id="db">${bar}<p class="empty">${esc(d.error||'No se pudo leer')}</p></div>`;
+
+  const c = d.cmv;
+  /* 1. CMV teorico. Las DOS AREAS QUEDAN SIEMPRE VISIBLES: un global de 28.5%
+     que se ve sano esconde que barra esta cuatro puntos arriba de su meta. */
+  const tCmv = dbTile({
+    titulo:'CMV teórico', color: dbSemaforo(c.global, c.metaGlobal),
+    valor: dbPct(c.global), sub:`meta ponderada ${dbPct(c.metaGlobal)}`,
+    cuerpo: `<div class="db-filas">
+      ${[['Cocina',c.cocina],['Barra',c.barra]].map(([n,a])=>`
+        <div class="db-f"><span>${n}</span>
+          <b style="color:${dbSemaforo(a.cmv,a.meta)}">${dbPct(a.cmv)}</b>
+          <small>meta ${dbPct(a.meta)}</small></div>`).join('')}
+    </div>`,
+    pie:'Sobre venta neta. El global va ponderado por la venta de cada área, no promediado.'
+  });
+
+  /* 2. El que falta, y se declara. */
+  const tReal = dbTile({
+    titulo:'CMV real contra teórico', color:'var(--muted)',
+    valor:'<span class="db-falta">Falta</span>',
+    sub:'el indicador que justifica el pilar',
+    pie:`Mientras no exista, el ${dbPct(c.global)} es una hipótesis bien construida, no un hecho.
+         La diferencia contra el real es merma, porción, robo y precios viejos, todo junto.
+         ${esc(d.real.falta)}`
+  });
+
+  const tContrib = dbTile({
+    titulo:'Contribución del período', color:'var(--bosque)',
+    valor: imQ(d.contribucion.total),
+    sub:`cocina ${imQ(d.contribucion.cocina)} · barra ${imQ(d.contribucion.barra)}`,
+    pie:'Venta neta menos materia prima, sobre todo lo que tiene costo firme. Es el tamaño del premio.'
+  });
+
+  const tRecup = dbTile({
+    titulo:'Recuperable contra meta', color:'var(--alto)',
+    valor: imQ(d.recuperable.total) + '<small>/año</small>',
+    sub:`${d.recuperable.productos} productos arriba de su meta`,
+    cuerpo: dbLista(d.recuperable.top, p=>`${(p.cmv*100).toFixed(1)}% contra ${(p.meta*100).toFixed(0)}%`),
+    pie:'La lista de trabajo, en quetzales. Acá la palanca es el costo o la receta.'
+  });
+
+  /* 5. Va al lado del 4 A PROPOSITO: la palanca de sala pesa casi lo mismo que
+     toda la de costo junta, y un tablero que solo muestra costos empuja a la
+     gerencia hacia el lado equivocado. */
+  const tSala = dbTile({
+    titulo:'Oportunidad en sala', color:'var(--lila)',
+    valor: imQ(d.sala.total) + '<small>/año</small>',
+    sub:`${d.sala.productos} rompecabezas con venta al menos mensual`,
+    cuerpo: dbLista(d.sala.top, p=>`${Math.round(p.udsMes)} al mes · margen ${imQ(p.mc)}`),
+    pie:'Valuados a cinco unidades más al mes cada uno. Acá la palanca es la sala, no el costo.'
+  });
+
+  /* 6. VALIDA A LOS OTROS CINCO. Con 18% a ciegas, el CMV es "29.7% de lo que
+     si sabemos medir". Por eso el color se pone en rojo solo arriba del umbral. */
+  const ciego = d.ciego, ciegoAlto = ciego.pctVenta > ciego.tolerable;
+  const dias = d.diasDesdeCarga;
+  const tCiego = dbTile({
+    titulo:'Punto ciego', color: ciegoAlto ? 'var(--alto)' : 'var(--meta)',
+    valor: dbPct(ciego.pctVenta),
+    sub:`de la venta · ${ciego.productos} productos · ${imQ(ciego.venta)} bruto`,
+    cuerpo:`<div class="db-filas"><div class="db-f"><span>Última carga del POS</span>
+        <b style="color:${dias!=null && dias>7 ? 'var(--alto)' : 'var(--meta)'}">${
+          dias==null ? '—' : (dias===0 ? 'hoy' : 'hace '+dias+' día'+(dias===1?'':'s'))}</b>
+        <small>${esc(d.cargadoEl||'nunca')}</small></div></div>`,
+    pie: ciegoAlto
+      ? `Los otros cinco indicadores miden solo lo que sí se puede costear. Debajo de ${dbPct(ciego.tolerable)} pasan de indicativos a confiables.`
+      : 'Debajo del umbral: los otros cinco indicadores son confiables.'
+  });
+
+  const avisos = window.__DBAV__;
+  const franja = !avisos ? `<p class="db-cargando">Buscando avisos…</p>`
+    : !avisos.length ? ''
+    : `<div class="db-avisos">${avisos.map(a=>`
+        <div class="db-a db-a-${a.nivel}">
+          <span class="db-a-t">${esc(a.texto)}</span>
+          ${a.nota ? `<span class="db-a-n">${esc(a.nota)}</span>` : ''}
+          ${a.detalle && a.detalle.length ? `<ul class="db-a-d">${a.detalle.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        </div>`).join('')}</div>`;
+
+  return `<div id="db">${bar}
+    <div class="db-grid">${tCmv}${tReal}${tContrib}${tRecup}${tSala}${tCiego}</div>
+    ${franja}</div>`;
+}
+
+/* Las listas cortas de los tiles. Tres nombres, no diez: el tile dice cuanto
+   pesa y por donde empezar, la pestana de al lado tiene el detalle. */
+function dbLista(items, porque){
+  if(!items || !items.length) return '';
+  return `<ul class="db-l">${items.map(p=>`<li>
+    <span class="db-l-n">${esc(p.n)}<small>${esc(porque(p))}</small></span>
+    <span class="db-l-v">${imQ(p.valor)}</span></li>`).join('')}</ul>`;
+}
+

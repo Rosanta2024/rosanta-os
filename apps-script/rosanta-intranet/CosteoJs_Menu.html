@@ -1,0 +1,273 @@
+/* ===== Ingenieria de menu ==========================================
+   La pantalla contesta "que hago esta semana", no "cual es la tabla".
+   Orden: periodo -> cinco contadores -> una sola matriz -> las dos listas
+   de accion -> el punto ciego. Sin tabla de detalle: esa ya esta en el
+   Excel y en la pestana de Costeo, y empuja hacia abajo lo unico que pide
+   una decision. Decision de Juanma, 26-ago-2026.
+   Lee el payload de getIngenieriaMenu() tal como viene. No toca el .gs.
+   ------------------------------------------------------------------ */
+const IM_CLASES = {
+  ESTRELLA:     ['Estrella',     'Protegela: no le toques el precio ni la receta'],
+  CABALLO:      ['Caballo',      'Vende mucho y deja poco: bajale el costo'],
+  ROMPECABEZAS: ['Rompecabezas', 'Deja bien y no se vende: empujala en sala'],
+  PERRO:        ['Perro',        'Ni vende ni deja: sacala o rehacela']
+};
+/* El color es el argumento. Estrella en verde claro, caballo en verde bosque,
+   rompecabezas en lila —el mismo lila del punto ciego y de "empujar en sala"—
+   y perro en gris. Cambiar esto rompe la lectura de la matriz. */
+const IM_COLOR = {
+  ESTRELLA:'var(--im-medio)', CABALLO:'var(--im-bosque)',
+  ROMPECABEZAS:'var(--im-lila)', PERRO:'var(--im-gris)'
+};
+/* Las ventanas son MULTIPLOS ENTEROS DE SEMANA, no meses de calendario. La venta
+   de un restaurante depende del dia de la semana: un mes de 31 dias con 5 sabados
+   contra uno de 28 con 4 no son comparables, y la popularidad es una razon de
+   unidades —basta un fin de semana de mas para mover el mix y con el la
+   clasificacion—. 4, 13 y 52 semanas siempre traen la misma cantidad de fines de
+   semana, y calzan con el ritual del lunes. El sello de arriba dice el rango y los
+   dias exactos, asi que el nombre corto nunca engana.
+   "Ano" es un ano CORRIDO de 52 semanas, no "todo lo cargado": cuando entren datos
+   de 2027, "todo" seria 14 meses y nadie lo notaria. */
+const IM_VENTANAS = [
+  [4,  'Mes',       'Últimas 4 semanas — el mes corrido'],
+  [13, 'Trimestre', 'Últimas 13 semanas — el trimestre corrido. Es la ventana por defecto'],
+  [52, 'Año',       'Últimas 52 semanas — el año corrido, o todo lo que haya si hay menos']
+];
+const imQ  = n => 'Q' + Math.round(n||0).toLocaleString('es-GT');
+/* LA FECHA DEL CATALOGO DEL POS, en el sello y a la vista.
+   Esta es la mitad del valor de resolver el catalogo solo: el problema nunca fue que
+   el dato estuviera viejo, fue que NO HABIA FORMA DE DARSE CUENTA. Arriba de dos
+   semanas se pone en rojo y pide exportar; si se leyo el respaldo en vez de la
+   carpeta, tambien lo dice. */
+const IM_CAT_DIAS = 14;
+const IM_MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+                  'septiembre','octubre','noviembre','diciembre'];
+function imCatalogo(c){
+  if(!c) return '';
+  if(!c.fecha) return `<span style="color:var(--im-alerta)">Catálogo del POS: sin fecha reconocible</span>`;
+  const f = new Date(c.fecha);
+  const txt = `${f.getDate()} de ${IM_MESES[f.getMonth()]} de ${f.getFullYear()}`;
+  const dias = Math.floor((Date.now() - c.fecha) / 86400000);
+  const viejo = dias > IM_CAT_DIAS;
+  const extra = c.respaldo ? ' · leído del respaldo, no de la carpeta'
+              : (c.aviso ? ' · ' + esc(c.aviso) : '');
+  return `<span style="color:${viejo||c.respaldo||c.aviso ? 'var(--im-alerta)' : 'inherit'}">
+    Catálogo del POS: ${txt}${viejo ? ' — hay que exportar de nuevo' : ''}${extra}</span>`;
+}
+
+const imFe = s => { const m = String(s||'').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? m[3]+'/'+m[2] : String(s||'—'); };
+
+/* Nombres cortos, solo para las etiquetas dentro de la matriz. En las listas
+   y en los tooltips siempre va el nombre completo. */
+function imCorto(n){
+  return String(n)
+    .replace(/^(Whiskey|Ron|Tequila|Single Malts|Ginebra|Irlandes|Infusiones|Tes|Tés) - /,'')
+    .replace(/ \/\/ Casa/,'')
+    .replace('Ensalada Rosanta con','Ens.')
+    .replace('Pasta de la Casa con','Pasta')
+    .replace('Costillas de Cerdo con Cafe y Cardamomo','Costillas')
+    .replace('Pollo en Salsa de Tamarindo','Pollo Tamarindo')
+    .replace('Camarones al Horno','Camarones')
+    .replace('Pulpo a la Parrilla','Pulpo')
+    .replace('Brisket en Salsa Bordelesa','Brisket')
+    .replace('Coliflor a la Parrilla con Romesco','Coliflor')
+    .replace('Tabla de Jamones y Quesos','Tabla Jamones')
+    .replace('Ejotes al Aceite de Ajonjoli y Ajo','Ejotes')
+    .replace('Agua Natural de la casa 1L','Agua natural')
+    .replace(/^Pan de la Casa$/,'Pan');
+}
+
+/* La matriz. Una sola, no una por categoria: cada punto ya viene normalizado
+   contra el umbral y el margen promedio DE SU PROPIA CATEGORIA, asi que el
+   cruce cae siempre en 1x1 y caben todas las categorias en un plano sin
+   romper la regla de comparar solo dentro de la categoria.
+   El tamano es la contribucion en quetzales. */
+function imMatriz(pts, sin){
+  const W=560, H=340, L=44, R=16, T=18, B=56;
+  const rx = pts.map(p=>p.popNorm), ry = pts.map(p=>p.mcNorm);
+  /* Topamos el eje en el percentil 92 para que un solo producto altisimo no
+     aplaste a los demas contra el origen. Lo que se sale se dibuja en el borde. */
+  const pc = (a,q)=>{ const s=a.slice().sort((x,y)=>x-y); return s.length ? s[Math.min(s.length-1, Math.floor(s.length*q))] : 1; };
+  const mx = Math.min(Math.max(2.2,...rx,0)*1.06, Math.max(2.2, pc(rx,.92)*1.35));
+  const my = Math.min(Math.max(1.7,...ry,0)*1.08, Math.max(1.7, pc(ry,.92)*1.30));
+  const X = v => L + Math.min(v,mx)/mx*(W-L-R);
+  const Y = v => H-B - Math.min(v,my)/my*(H-T-B);
+  const maxC = Math.max(1, ...pts.map(p=>Math.abs(p.contrib)||0));
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Matriz de ingeniería de menú">`;
+  s += `<rect x="${X(1)}" y="${T}" width="${W-R-X(1)}" height="${Y(1)-T}" fill="var(--im-wash)"/>`;
+  s += `<line class="im-cross" x1="${X(1)}" y1="${T}" x2="${X(1)}" y2="${H-B}"/>`;
+  s += `<line class="im-cross" x1="${L}" y1="${Y(1)}" x2="${W-R}" y2="${Y(1)}"/>`;
+  /* Los rotulos fijos se guardan y se dibujan AL FINAL, encima de todo. Iban
+     primero, y entonces cualquier punto que cayera cerca del origen les pasaba el
+     circulo por encima: con datos reales de cocina, dos platos tapaban "perro" y la
+     leyenda del cuadrante se perdia. Los nombres de producto ya esquivan estas
+     cajas; lo que faltaba era protegerlas de los circulos, que se dibujan donde
+     manda el dato y no esquivan nada. El halo del CSS hace el resto. */
+  const fijos =
+      `<text class="im-qz" x="${W-R-4}" y="${T+11}" text-anchor="end" fill="var(--im-medio)">estrella</text>`
+    + `<text class="im-qz" x="${L+4}" y="${T+11}" fill="var(--im-lila)">rompecabezas</text>`
+    + `<text class="im-qz" x="${W-R-4}" y="${H-B-5}" text-anchor="end" fill="var(--im-bosque)">caballo</text>`
+    + `<text class="im-qz" x="${L+4}" y="${H-B-5}" fill="var(--im-gris)">perro</text>`
+    + `<text class="im-axl" x="${X(1)}" y="${H-B+13}" text-anchor="middle">umbral de su categoría</text>`
+    + `<text class="im-axl" x="${L-6}" y="${Y(1)+3}" text-anchor="end">MC prom.</text>`
+    + `<text class="im-axt" x="${W-R}" y="${H-4}" text-anchor="end">popularidad relativa →</text>`
+    + `<text class="im-axt" x="${L-6}" y="${T+2}" text-anchor="end" transform="rotate(-90 ${L-6} ${T+2})">margen relativo →</text>`;
+
+  /* LOS NOMBRES. Antes solo se etiquetaban los siete de mayor contribucion y
+     las etiquetas se pisaban con los puntos: en barra, con 50 circulos, la
+     mitad de los nombres caia encima de un dato. Ahora se intenta etiquetar
+     TODOS, en orden de contribucion —el que mas pesa escoge lugar primero— y
+     cada nombre se prueba en ocho posiciones alrededor de su punto. Si ninguna
+     queda libre de otros nombres y de otros circulos, ese punto se queda sin
+     etiqueta y se lee con el mouse. Asi la matriz nunca miente por encimarse.  */
+  const orden = pts.slice().sort((a,b)=>(Math.abs(b.contrib)||0)-(Math.abs(a.contrib)||0));
+  const circ = [], textos = [];
+  /* Los rotulos fijos del plano —los cuatro cuadrantes, los ejes y el titulo
+     vertical— entran como cajas ocupadas antes que ningun nombre, para que
+     ningun producto se les monte encima. */
+  const cajas = [[L-2,T,L+78,T+13],[W-R-58,T,W-R,T+13],
+                 [L-2,H-B-14,L+40,H-B-2],[W-R-46,H-B-14,W-R,H-B-2],
+                 [L-40,Y(1)-8,L+1,Y(1)+3],[L-2,T,L+11,H-B-2]];
+
+  orden.forEach(p=>{
+    const x = X(p.popNorm), y = Y(p.mcNorm);
+    const rad = 4 + Math.sqrt(Math.max(Math.abs(p.contrib)||0,0)/maxC)*8;
+    circ.push([x,y,rad]);
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}" fill="${IM_COLOR[p.clase]}" opacity=".8"><title>${esc(p.n)} — ${esc(p.cat)}
+${p.uds} uds · margen ${imQ(p.mc)} · contribución ${imQ(p.contrib)}
+Precio de carta ${imQ(p.precio)} · neto ${imQ(p.precioNeto)} · costo ${imQ(p.costo)} · CMV ${(p.cmv*100).toFixed(1)}%</title></circle>`;
+  });
+
+  const choca = (b, saltar) => {
+    if(b[0] < 2 || b[2] > W-2 || b[1] < T-6 || b[3] > H-B-2) return true;
+    for(let i=0;i<cajas.length;i++){ const c=cajas[i];
+      if(b[0] < c[2]+3 && b[2] > c[0]-3 && b[1] < c[3]+2 && b[3] > c[1]-2) return true; }
+    for(let i=0;i<circ.length;i++){ if(i===saltar) continue;
+      const [cx,cy,cr]=circ[i];
+      const dx = Math.max(b[0]-cx, 0, cx-b[2]), dy = Math.max(b[1]-cy, 0, cy-b[3]);
+      if(dx*dx+dy*dy < (cr+1.5)*(cr+1.5)) return true; }
+    return false;
+  };
+
+  orden.forEach((p,i)=>{
+    const [x,y,rad] = circ[i];
+    const txt = imCorto(p.n), an = 4.55*txt.length + 2, alt = 9;   /* ancho aproximado a 9px */
+    /* Derecha e izquierda primero —es donde se lee mejor—, despues arriba y
+       abajo, y por ultimo las diagonales. */
+    const cand = [[rad+4,3.2,'start'],[-(rad+4),3.2,'end'],[0,-(rad+5),'middle'],[0,rad+11,'middle'],
+                  [rad+4,-(rad+2),'start'],[-(rad+4),-(rad+2),'end'],[rad+4,rad+8,'start'],[-(rad+4),rad+8,'end']];
+    for(const [dx,dy,anc] of cand){
+      const lx = x+dx, ly = y+dy;
+      const x0 = anc==='start' ? lx : anc==='end' ? lx-an : lx-an/2;
+      const caja = [x0, ly-alt+1.5, x0+an, ly+2];
+      if(choca(caja, i)) continue;
+      cajas.push(caja);
+      textos.push(`<text class="im-lab" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anc}">${esc(txt)}</text>`);
+      return;
+    }
+  });
+  s += textos.join('');
+
+  /* Repartidos parejo a lo ancho, no por popularidad: aca lo que importa es
+     cuantos son, no donde caerian. Amontonados no se cuentan. */
+  const b0 = L+54, b1 = W-R, paso = sin.length>1 ? (b1-b0)/(sin.length-1) : 0;
+  sin.forEach((p,i)=>{
+    const x = sin.length>1 ? b0 + i*paso : (b0+b1)/2;
+    s += `<circle cx="${x.toFixed(1)}" cy="${H-B+32}" r="3.5" fill="none" stroke="var(--im-lila)" stroke-width="1.4" stroke-dasharray="2.5 2"><title>${esc(p.n)} — sin costo confiable · ${p.uds} uds</title></circle>`;
+  });
+  if(sin.length) s += `<text class="im-axl" x="${L-6}" y="${H-B+35}" text-anchor="end" fill="var(--im-lila)">sin costo</text>`;
+  return s + fijos + '</svg>';
+}
+
+function vistaMenu(){
+  const d = window.__IM__;
+  const bar = `<div class="im-bar">
+      <div class="im-grp"><b>Área</b><div class="im-seg" role="group" aria-label="Área">
+        ${['COCINA','BARRA'].map(a=>`<button data-ima="${a}" aria-pressed="${imArea===a}">${a==='COCINA'?'Cocina':'Barra'}</button>`).join('')}
+      </div></div>
+      <div class="im-grp"><b>Ventana</b><div class="im-seg" role="group" aria-label="Ventana">
+        ${IM_VENTANAS.map(([n,l,t])=>`<button data-ims="${n}" title="${t}" aria-pressed="${imSemanas===n}">${l}</button>`).join('')}
+      </div></div>
+      <div class="im-stamp" id="imStamp"><b>${d&&d.ok?imFe(d.desde)+' – '+imFe(d.hasta)+' · '+d.dias+' días':'—'}</b>
+        <span>${d&&d.ok?d.tickets.toLocaleString('es-GT')+' tickets · '+imQ(d.venta)+(d.cargadoEl?' · cargado el '+esc(d.cargadoEl):''):'—'}</span>
+        ${d&&d.ok?imCatalogo(d.catalogo):''}</div>
+    </div>`;
+  if(!d)    return `<div id="im">${bar}<p class="empty">Leyendo las ventas…</p></div>`;
+  if(!d.ok) return `<div id="im">${bar}<p class="empty">${esc(d.error||'No se pudo leer')}</p></div>`;
+
+  const a = d.areas[imArea], c = a.conteo;
+  const lead = `<p class="im-lead">${a.productos} productos con venta · ${a.firmes} con costo firme ·
+    CMV ponderado <strong>${(a.cmv*100).toFixed(1)}%</strong> ·
+    contribución <strong>${imQ(a.contribucion)}</strong> ·
+    recuperable contra meta <strong>${imQ(a.recuperable)}/año</strong></p>`;
+
+  const kpis = `<div class="im-kpis">
+    ${Object.keys(IM_CLASES).map(k=>`<div class="im-k" style="--im-kc:${IM_COLOR[k]}">
+      <b>${c[k]}</b><span>${IM_CLASES[k][0]}</span><em>${IM_CLASES[k][1]}</em></div>`).join('')}
+    <div class="im-k" style="--im-kc:var(--im-lila)"><b>${c['SIN CLASIFICAR']}</b><span>Sin costo</span>
+      <em>${a.sinCostoUds.toLocaleString('es-GT')} uds · ${imQ(a.sinCostoVenta)} sin poder medir</em></div>
+  </div>`;
+
+  /* "Empujar en sala" solo trae productos con al menos una venta al mes. Sin ese
+     piso la barra proponia empujar el Macallan 12: una copa en ocho meses. Eso no
+     es una decision, es una corazonada. El filtro ya viene hecho del .gs. */
+  const push = a.empujar.slice(0,5).map(p=>{
+    const mp = p.mcNorm ? p.mc/p.mcNorm : 0;
+    return `<li><span class="im-nm">${esc(p.n)}<small>${esc(p.cat)} · ${Math.round(p.udsMes)} al mes · margen ${imQ(p.mc)} contra ${imQ(mp)} de su categoría</small></span>
+      <span class="im-vv" style="color:var(--im-lila)">+${imQ(p.mc*5*12)}<small>por 5 más al mes</small></span></li>`;
+  }).join('') || `<li><span class="im-nm im-vacio">Nada que empujar con el piso de una venta al mes.</span></li>`;
+
+  const meta = a.fueraDeMeta.slice(0,5).map(p=>
+    `<li><span class="im-nm">${esc(p.n)}<small>${(p.cmv*100).toFixed(1)}% contra meta de ${(p.meta*100).toFixed(0)}% · ${p.uds} uds</small></span>
+      <span class="im-vv" style="color:var(--im-alerta)">${imQ(p.vsMeta)}<small>al año</small></span></li>`
+  ).join('') || `<li><span class="im-nm im-vacio">Todo dentro de meta.</span></li>`;
+
+  /* CUATRO SECCIONES, cada tema en su propio panel con su titulo: la matriz,
+     empujar en sala, fuera de meta, y el punto ciego. Antes las dos listas de
+     accion compartian caja y se leian como una sola cosa; son dos decisiones
+     distintas —una es de sala y la otra es de costo— y cada una tiene su
+     propio numero. Decision de Juanma, 29-ago-2026. */
+  const secMatriz = `<div class="im-panel">
+      <h3>Dónde está cada producto</h3>
+      <p class="im-h">Todas las categorías en un solo plano. Cada punto está medido contra el umbral y el
+        margen promedio <strong>de su propia categoría</strong>, así que el cruce siempre cae en 1&nbsp;×&nbsp;1.
+        El tamaño es la contribución. Pasá el mouse para el detalle.</p>
+      ${imMatriz(a.puntos, a.sinCosto)}
+    </div>`;
+
+  const secPush = `<div class="im-panel">
+      <h3 style="color:var(--im-lila)">Empujar en sala</h3>
+      <p class="im-h">Dejan buen margen y se venden poco. Solo entran los que venden al menos una vez
+        al mes: empujar algo que nadie pide no es una decisión, es una corazonada.</p>
+      <ul class="im-acc">${push}</ul>
+    </div>`;
+
+  const secMeta = `<div class="im-panel">
+      <h3 style="color:var(--im-alerta)">Fuera de meta</h3>
+      <p class="im-h">Lo que cuesta al año no llegar al objetivo de CMV de su categoría.
+        Acá la palanca es el costo o la receta, no la sala.</p>
+      <ul class="im-acc">${meta}</ul>
+    </div>`;
+
+  const cols = `<div class="im-cols">${secMatriz}<div class="im-stack">${secPush}${secMeta}</div></div>`;
+
+  /* El punto ciego. Tope de 12 y una linea de resumen para el resto: la lista
+     completa no cabe y tampoco hace falta. */
+  const TOP = 12, vis = a.sinCosto.slice(0,TOP), resto = a.sinCosto.slice(TOP);
+  const ciego = !a.sinCosto.length ? '' : `<div class="im-panel">
+    <h3 style="color:var(--im-lila)">Lo que no se puede medir</h3>
+    <p class="im-h">${a.sinCosto.length} productos se venden sin un costo en el que se pueda confiar —
+      ${a.sinCostoUds.toLocaleString('es-GT')} unidades y ${imQ(a.sinCostoVenta)} en esta ventana.
+      Ninguno entra a la matriz: clasificarlos sería inventar.</p>
+    <div class="im-ciego">
+      ${vis.map(p=>`<div class="im-cg"><div class="im-cr"><span class="im-cn">${esc(p.n)}</span>
+        <span class="im-cv">${imQ(p.venta)}</span></div><span class="im-cm">${esc(p.cat)} · ${p.uds} uds</span></div>`).join('')}
+      ${resto.length?`<div class="im-cg im-resto"><div class="im-cr"><span class="im-cn">y ${resto.length} más</span>
+        <span class="im-cv">${imQ(resto.reduce((s,p)=>s+p.venta,0))}</span></div>
+        <span class="im-cm">${resto.reduce((s,p)=>s+p.uds,0)} uds entre todos</span></div>`:''}
+    </div></div>`;
+
+  return `<div id="im">${bar}${lead}${kpis}${cols}${ciego}</div>`;
+}
+
