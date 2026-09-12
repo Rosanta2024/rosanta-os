@@ -98,7 +98,39 @@ var LOTE_SC_FEL = [
   ['838943395',  '2026-07-29',  690.00, 'ALIMENTOS',               '', 'POR_CLASIFICAR'],   // Carniceria "Santa Rosa" · FPEQ, IVA 0.00 · espejo dice 28/07
   ['2783988677', '2026-05-31', 6000.00, 'SERVICIOS PROFESIONALES', '', 'POR_CLASIFICAR'],   // Juan Manuel Lemus Valdez · honorarios · espejo dice 30/05
   ['2342405772', '2026-09-06',  115.98, 'MATERIALES',              '', 'POR_CLASIFICAR'],   // Cemaco Zona Siete · ya escrita
-  ['2623096013', '2026-09-04',  246.00, 'MATERIALES',              '', 'POR_CLASIFICAR']    // Agropecuaria El Campesino · ya escrita
+  ['2623096013', '2026-09-04',  246.00, 'MATERIALES',              '', 'POR_CLASIFICAR'],   // Agropecuaria El Campesino · ya escrita
+
+  // --- 12-sep-2026 · Migdalia Lico, verduras del mercado. Juanma: TODO es
+  //     ALIMENTOS; el reparto con COCTELERIA era error. Ya no se le compra.
+  ['2199799421', '2026-01-09',   234.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1522813130', '2026-01-23',   705.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1470842053', '2026-02-11',   618.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['276450310', '2026-02-18',   546.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1448888294', '2026-02-27',   408.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['830554281', '2026-03-06',   705.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['2277854627', '2026-03-13',   877.50, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3259909054', '2026-03-28',  1012.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['2013545280', '2026-04-01',   343.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1293175284', '2026-04-08',   688.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3257943588', '2026-04-15',   620.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['652886596', '2026-04-15',   765.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1608599865', '2026-04-30',   307.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3467264168', '2026-05-13',   301.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3382788448', '2026-05-09',   222.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3684518513', '2026-06-26',   749.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3646050265', '2026-08-08',   687.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['3515695206', '2026-08-21',   481.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1595032368', '2026-07-24',   408.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['2839824295', '2026-07-04',   109.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['4071834379', '2026-07-11',   345.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1816609986', '2026-09-05',   199.10, 'ALIMENTOS', '', 'COCTELERIA'],
+  ['1738031193', '2026-09-02',   515.00, 'ALIMENTOS', '', 'COCTELERIA'],
+  // 23 filas · Q11845.10
+  // --- 12-sep-2026 · GRUPO ECO, alquiler de la maquina de agua. Dos de las
+  //     diez mensualidades quedaron como BEBIDAS; las otras ocho ya estan bien.
+  ['487473840', '2026-04-01',  1467.14, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
+  ['2357282728', '2026-09-01',  1250.00, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
+  // 2 filas · Q2717.14
 ];
 
 // EL Q750 NO VA EN ESTE LOTE, y la historia vale la pena dejarla escrita.
@@ -118,7 +150,12 @@ var LOTE_SC_FEL = [
 var LOTE_SC_BI = [];
 
 var LOTE_SC_BAC = [
-  ['22337707', '2026-01-14', 0.00, 'ALIMENTOS', '', 'POR_CLASIFICAR']   // "PAGO PROV. QTZ DEM" · es CREDITO de Q320, debito 0.00
+  ['22337707', '2026-01-14', 0.00, 'ALIMENTOS', '', 'POR_CLASIFICAR'],  // "PAGO PROV. QTZ DEM" · es CREDITO de Q320, debito 0.00
+
+  // --- BAC · 12-sep-2026 · Jonas Antonio Dobias Nuila. Juanma no lo reconoce:
+  //     pasa a PERSONAL. Estaban como ALIMENTOS_EFECTIVO, categoria puesta a ojo.
+  ['900454637', '2026-04-14',  1000.00, 'PERSONAL', 'Si', 'ALIMENTOS_EFECTIVO'],
+  ['900487541', '2026-04-17',  1000.00, 'PERSONAL', 'Si', 'ALIMENTOS_EFECTIVO']
 ];
 
 function _fSC(v) {
@@ -199,7 +236,7 @@ function _correrSC(escribir) {
     Logger.log('--- revisar ---');
     for (var z = 0; z < avisos.length; z++) Logger.log('   ' + avisos[z]);
   } else {
-    Logger.log('Sin avisos: las siete filas se encontraron como se esperaba.');
+    Logger.log('Sin avisos: todas las filas del lote se encontraron como se esperaba.');
   }
   if (escribir) Logger.log('Listo. Ahora corre generarEspejo().');
 }
