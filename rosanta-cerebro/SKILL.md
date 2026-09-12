@@ -61,16 +61,30 @@ ese vive en el tablero— sino lo que cambió de entender.
    seguridad devolvió "limpio" sin haber leído un solo archivo. Un verificador que no encuentra
    nada porque no leyó nada da el mismo verde que uno que leyó todo.
 
+### Antes de preguntar quién es un proveedor, leer `Establecimiento`
+
+**`01_FEL_Maestro` tiene una columna `Establecimiento` y está poblada en las 1,018 facturas,
+sin una sola vacía.** `Nombre_Emisor` trae el nombre legal o de la persona; `Establecimiento`
+trae el nombre comercial. Hay **107 proveedores** donde los dos no coinciden.
+
+Los dos "destinatarios sin identificar" de `p102` estaban ahí todo el tiempo:
+`GRUPO AGMN, S.A.` → **Clínica de Fisioterapia Roca**, y
+`Edi Joaquín Gaitán García` → **Alquifiestas MEG**. El pendiente mandaba al Histórico
+transaccional del banco para algo que estaba en la columna de al lado. Y Migdalia Lico figura
+como **Distribuidora de Alimentos Los Alpes**: el nombre comercial decía "alimentos" mientras
+23 de sus facturas vivían en `COCTELERIA`.
+
 ### Finanzas: lo que apareció y todavía no se escribió
 
-**Hay un lote de 33 reclasificaciones subido a `rosanta-maestro` y SIN CORRER.** Está en
-`reclasificar_sin_clasificar.js`. Empezó siendo 3 filas y creció a 33 al cotejar proveedores:
+**Hay un lote de 39 reclasificaciones subido a `rosanta-maestro` y SIN CORRER.** Está en
+`reclasificar_sin_clasificar.js`. Empezó siendo 3 filas y creció a 39 al cotejar proveedores:
 
 | Qué | Filas | Monto |
 |---|---|---|
 | Migdalia Lico, `COCTELERIA` → `ALIMENTOS` | 23 | Q11,845.10 |
 | GRUPO ECO, `BEBIDAS` → `ALQUILER_EQUIPO` | 2 | Q2,717.14 |
 | Jonas Dobias (BAC), → `PERSONAL` | 2 | Q2,000.00 |
+| Alquifiestas MEG, `MANTENIMIENTO…` → `EVENTOS` | 6 | Q2,241.00 |
 | Las 3 originales de `p119` | 3 | Q7,611.25 |
 
 Para correrlo: `revisarSinClasificar()` **y leer el log**; solo si dice "Sin avisos",
