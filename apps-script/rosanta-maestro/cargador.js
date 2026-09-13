@@ -585,6 +585,9 @@ function alAbrirMaestro() {
     null,
     { name: 'Actualizar el espejo',       functionName: 'menuEspejo' },
     null,
+    { name: 'Reclasificar lote: revisar', functionName: 'menuReclasRevisar' },
+    { name: 'Reclasificar lote: APLICAR', functionName: 'menuReclasAplicar' },
+    null,
     { name: 'Volver a revisar todo',      functionName: 'menuOlvidar' }
   ]);
 }
@@ -600,6 +603,37 @@ function menuCargar() {
 function menuRevisar() { _barrido(false); _avisoLog(); }
 function menuEspejo()  { generarEspejo(); _avisoLog(); }
 function menuOlvidar() { olvidarProgreso(); _avisoLog(); }
+
+/* 12-sep-2026: estas dos entradas existen porque el desplegable de funciones del
+   editor de Apps Script NO es confiable en este proyecto. Evidencia del mismo dia:
+   se le dio Run a las 16:48:07 con el desplegable diciendo "revisarSinClasificar" y
+   la pagina de Ejecuciones registro que corrio "_fSC". Tres intentos de seleccionar
+   reclasificarSinClasificar —por coordenada, por teclado y por referencia de
+   elemento— dejaron el desplegable donde estaba. El menu del Sheet si funciona.
+   Se corre desde aca y se verifica en la pagina de Ejecuciones, que es la unica
+   fuente que no miente sobre que se ejecuto. */
+function menuReclasRevisar() { revisarSinClasificar(); _avisoLog(); }
+
+function menuReclasAplicar() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.alert('Rosanta \u2014 reclasificar el lote',
+    'Esto ESCRIBE en el maestro.\n\n' +
+    'Cada fila se verifica antes de escribir: llave unica, fecha, monto y que la ' +
+    'categoria actual sea la esperada. La que no cuadre NO se toca y se reporta.\n\n' +
+    'Corre primero "Reclasificar lote: revisar" y leelo. Si dijo "Sin avisos", segui.\n\n' +
+    'Aplicar ahora?', ui.ButtonSet.YES_NO);
+  if (r !== ui.Button.YES) {
+    ui.alert('Rosanta', 'No se escribio nada.', ui.ButtonSet.OK);
+    return;
+  }
+  reclasificarSinClasificar();
+  generarEspejo();
+  ui.alert('Rosanta',
+    'Lote aplicado y espejo regenerado.\n\n' +
+    'VERIFICA en Extensiones > Apps Script > Ejecuciones que aparezca ' +
+    '"reclasificarSinClasificar". Si no aparece, no se escribio.',
+    ui.ButtonSet.OK);
+}
 function _avisoLog() {
   SpreadsheetApp.getUi().alert('Rosanta',
     'Listo. El detalle esta en Extensiones > Apps Script > Registros de ejecucion.',
