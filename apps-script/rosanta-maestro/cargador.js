@@ -627,6 +627,14 @@ function menuReclasAplicar() {
     return;
   }
   reclasificarSinClasificar();
+
+  /* 12-sep-2026: este flush NO es decorativo. La primera corrida escribio las 36
+     filas correctamente —el Sheet lo confirma— pero el espejo que se genero cinco
+     segundos despues traia el FEL nuevo y las DOS FILAS DEL BAC viejas. El BAC es
+     el ultimo libro que escribe el lote, asi que sus setValue seguian pendientes
+     cuando generarEspejo() leyo la hoja. El dato estaba bien y el espejo mentia,
+     que es la peor combinacion: el analisis local habria dicho que no se escribio. */
+  SpreadsheetApp.flush();
   generarEspejo();
   ui.alert('Rosanta',
     'Lote aplicado y espejo regenerado.\n\n' +
