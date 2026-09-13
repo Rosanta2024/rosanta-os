@@ -7,18 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 12 sep 2026 (v14).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
-
----
-
-## Cena Romántica y cuenta de cobro (12 sep 2026 · noche, v14)
-
-- **Cena Romántica para Dos: Q900, valorada en Q1,120.** La de **Q800 / valorada en Q1,000 queda OBSOLETA**. Contenido: Pulpo a la parrilla, dos Lomitos a la Parrilla (lomito de la casa), postre para compartir, botella de Cabernet Sauvignon y decoración. Reserva con 24 h. **Anticipo 50% = Q450** por transferencia; el resto, el día de la cena. Detalle y la advertencia del cálculo (a carta suma Q1,075) en `references/negocio.md` › Menú.
-- **Cuenta BAC Monetaria de cobro a clientes: `904802543`** (9 dígitos, confirmada contra los estados de cuenta del BAC). El Doc del bot tenía `9048025432`, que **estaba mal** y la usaban las gift cards.
-- **El bot lee su conocimiento del Google Doc `1a85WPjmr5e_Lybc8Mzw1YH38cBWsGc5mSgK00cmeY6I` en vivo, con caché de 10 min** (`Code.js` › `getKnowledgeBase`). Cambiar un precio para el bot = editar ese Doc; no hace falta publicar código. El `.md` de `00_Admin/Apps_Script_e_IA/` es solo una copia de referencia y el bot **no** lo lee. El conector de Drive de Claude **no puede editar el cuerpo de un Doc** (solo título y carpeta): se edita desde el navegador.
-- **Web actualizada a Q900 por Juanma (12 sep 2026)**, a mano en Wix. **Ojo:** `sitio-wix/cargar-tanda3.js` todavía trae el texto de Q800; si se vuelve a correr ese cargador, pisa el precio nuevo.
-- **Carta del bot = carta 2027 (12 sep 2026).** Fuente: `04_Profit_OS/Ingenieria_de_Menu/MENU_Legado/MENUS_VF/Cartas - Menu 2027/Menu ES 2027 VF.pdf` (19-ago, la más reciente; trae **dos lomitos: Lomito Rosanta Q190 y Lomito de la Casa Q180**) y `Menu Vinos 2027.pdf` (copa Q70, botellas Q350–Q535). Decisiones de Juanma: **en el bot solo llevan precio los platos y los vinos**; cócteles, licores, cervezas y bebidas sin alcohol se mencionan como "amplia carta de licores por copa y por botella", **sin precios**. **Postres: sin lista**, "según los productos de temporada".
-- **Precio mínimo de cualquier copa: Q70, confirmado por Juanma (12 sep 2026).** Vale igual para licores y vinos. Queda obsoleto lo que dice el POS del 24-ago (Botran Q50, Colonial Q60, etc.). Los precios por copa de cada licor salen del checklist del 30-ago (`2026-08-30_Actualizacion_POS_Checklist.html`), que ya no hay que tratar como propuesta. En el bot los licores siguen **sin precio**, por decisión de Juanma.
+**Última actualización: 12 sep 2026 (v12).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 

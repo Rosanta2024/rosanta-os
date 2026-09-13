@@ -80,14 +80,9 @@ Carpeta raíz: `1ndxLpZqr-j4wdlpJN4FQDgWohL-NTlY0` (Drive de restaurante@rosanta
 ## Menú
 
 - Menú completo con precios: Doc base de conocimiento del bot (`1a85WPjmr5e_Lybc8Mzw1YH38cBWsGc5mSgK00cmeY6I`) y skill `rosanta-cotizador` (menús de evento).
-- **Carta 2026-2027 vigente y corriendo en el restaurante**, con el POS ya sincronizado (ago 2026): 212 productos con precios actualizados, 187 fuera de carta dados de baja, carta de vinos 2027 cargada (copa Q70), licor botella +7% redondeado a múltiplo de 5. **Ninguna copa baja de Q70, ni de licor ni de vino** (confirmado por Juanma el 12 sep 2026).
+- **Carta 2026-2027 vigente y corriendo en el restaurante**, con el POS ya sincronizado (ago 2026): 212 productos con precios actualizados, 187 fuera de carta dados de baja, carta de vinos 2027 cargada (copa Q70), licor botella +7% redondeado a múltiplo de 5.
 - Menú web: `rosanta.rest/menu-completo`, servido desde GitHub Pages (`Rosanta2024/rosanta-menu`). Cambiar precios = editar `index.html` en GitHub.
-- **A los clientes se les comparte la carta como página web, NUNCA como PDF** (Juanma, 12 sep 2026). El link que da el bot, `https://www.rosanta.rest/menú-español`, abre la carta web y es el correcto: no cambiarlo.
 - **Para Compartir** correcto (entrantes de carta: Carpaccio de lomito, Pulpo a la parrilla, Queso horneado, Tabla de jamones y quesos; fuertes: Lomito en salsa de puerros, Pesca del día). **NO usar Tapas Guatemaltecas en Para Compartir.**
-- **Cena Romántica para Dos: Q900, valorada en Q1,120** (Juanma, 12 sep 2026). **Reemplaza la de Q800 / valorada en Q1,000, que queda OBSOLETA.** Incluye: Pulpo a la parrilla para compartir, dos Lomitos a la Parrilla (el lomito de la casa de la carta 2027), un postre para compartir, una botella de vino tinto Cabernet Sauvignon y decoración (Q150 en el cálculo). Se reserva con 24 h de anticipación y se confirma con **50% de anticipo (Q450)** por transferencia; los otros Q450 se pagan el día de la cena. Vive en la sección 7 del Doc del bot.
-  - *Ojo con el cálculo:* a precios de carta 2027 ese contenido suma **Q1,075** (150 + 180×2 + 65 + 350 + 150), no Q1,120. Los Q1,120 salen de una versión anterior con Lomito Rosanta a Q190 y cava a Q375. El número publicado lo decidió Juanma.
-  - **Web actualizada a Q900 por Juanma el 12 sep 2026** (a mano en Wix, sección Ideas para regalar). `~/Dev/Rosanta/sitio-wix/cargar-tanda3.js` sigue con el texto viejo de Q800: no volver a correrlo sin actualizarlo.
-- **Cuenta para transferencias de clientes: BAC Monetaria 904802543** (9 dígitos), a nombre de CORSAGA, SOCIEDAD ANÓNIMA. Confirmado contra los estados de cuenta del BAC. **La versión de 10 dígitos `9048025432` que tenía el Doc del bot estaba MAL** (la usaban las gift cards).
 - **Rosanta NO vende brunch** (eliminado de la web en ago 2026, no se sirve desde hace más de un año). **NO hace delivery.**
 - Cocina: natural, de temporada, guatemalteca contemporánea, maridada con **gastrococtelería**, en jardín. La leña de la parrilla es de **gravilea**, nunca "leña de café".
 

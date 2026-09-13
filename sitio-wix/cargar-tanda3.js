@@ -57,8 +57,8 @@ const COMPONENTES = [
   ['comp-mszhy56d', [
     ["Some nights ask for something more. A table for two, a quiet corner, and the rest of the world waiting outside.",
      'Hay noches que piden algo más. Una mesa para dos, un rincón tranquilo, y el resto del mundo esperando afuera.'],
-    ["The Romantic Dinner is made for a whole evening: a starter and a dessert to share, two main courses, a bottle of wine to stretch every word, and the table dressed in candles and rose petals that make it a place only yours. To close, a gift to carry home, so the night lingers long after the last light in the garden. Q800 for two, valued at Q1000.",
-     'La Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q800 para dos, valorada en Q1000.'],
+    ["The Romantic Dinner is made for a whole evening: a starter and a dessert to share, two main courses, a bottle of wine to stretch every word, and the table dressed in candles and rose petals that make it a place only yours. To close, a gift to carry home, so the night lingers long after the last light in the garden. Q900 for two, valued at Q1,120.",
+     'La Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q900 para dos, valorada en Q1,120.'],
     ["Prepared by reservation only, with 24 hours' notice: call 7768-8880 or write to restaurante@rosanta.rest, and we will arrange every detail so all you have to do is arrive.",
      'Se prepara solo con reservación, con 24 horas de anticipación: llama al 7768-8880 o escribe a restaurante@rosanta.rest, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar.']
   ]],
