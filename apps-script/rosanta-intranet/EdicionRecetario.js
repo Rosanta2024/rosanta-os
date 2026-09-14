@@ -393,18 +393,73 @@ function invalidarCache_() {
    1. EDITAR RECETAS
    ========================================================================== */
 
-/** Localiza el bloque de ingredientes de una ficha: { colBase, filaHeader, filaSubtotal }. */
+/**
+ * La pestana de una ficha, tolerando espacios de mas.
+ *
+ * La vista manda el nombre RECORTADO (leerFicha_ hace trim), pero en barra hay
+ * pestanas que terminan en espacio: "BOTRAN TAMARINDO ", "BITTER CARDAMOMO ",
+ * "GIN INFUSIONADO ALBAHACA  ". getSheetByName no las encontraba y cualquier
+ * escritura en esas tres fichas contestaba "No existe la ficha".
+ */
+function fichaDe_(ss, ficha) {
+  var h = ss.getSheetByName(ficha);
+  if (h) return h;
+  var buscado = normalizar_(ficha), hojas = ss.getSheets();
+  for (var i = 0; i < hojas.length; i++) {
+    if (normalizar_(hojas[i].getName()) === buscado) return hojas[i];
+  }
+  throw new Error('No existe la ficha "' + ficha + '".');
+}
+
+/** Etiquetas que cierran la lista de ingredientes, comparadas por prefijo. */
+var CIERRES_BLOQUE = ['subtotal', 'costo total', 'variacion', 'merma', 'rinde', 'costo por'];
+
+/**
+ * Localiza el bloque de ingredientes de una ficha:
+ *   { colBase, filaHeader, filaSubtotal, primera, ultima }
+ * primera..ultima son las filas que SUMA el total: una linea fuera de ese rango
+ * aparece en la ficha pero no suma al costo.
+ *
+ * Hasta el 14-sep-2026 exigia una fila que empezara con "SUBTOTAL". En cocina eso
+ * dejaba afuera los pre-elaborados (cierran con "COSTO TOTAL DEL
+ * BATCH", y es la plantilla que usa crearFicha, asi que toda ficha nueva nacia
+ * rota), los 7 platos de la carta 2027 y las 3 pastas (la fila del =SUM no tiene
+ * etiqueta). En total 48 fichas rechazaban ingredientes. Jeffry no pudo cargar ni
+ * el Bok Choy ni la Salsa Romesco.
+ *
+ * Ahora manda la formula =SUM de la columna TOTAL, que es lo que de verdad define
+ * que filas cuentan. Si no hay SUM (Chips de Malanga), la primera etiqueta de cierre.
+ */
 function bloqueFicha_(hoja) {
-  var f = hoja.getDataRange().getValues(), header = null, colBase = null, subtotal = null;
-  for (var i = 0; i < Math.min(f.length, 45); i++) {
+  var rango = hoja.getDataRange();
+  var f = rango.getValues(), fx = rango.getFormulas();
+  var tope = Math.min(f.length, 60), header = null, colBase = null;
+
+  for (var i = 0; i < tope && header === null; i++) {
     for (var c = 0; c < 3; c++) {
-      var v = normalizar_(f[i][c]);
-      if (v === 'ingrediente' && header === null) { header = i + 1; colBase = c + 1; }
-      if (v.indexOf('subtotal') === 0 && subtotal === null) subtotal = i + 1;
+      if (normalizar_(f[i][c]) === 'ingrediente') { header = i + 1; colBase = c + 1; break; }
     }
   }
-  if (header === null || subtotal === null) throw new Error('No pude ubicar el bloque de ingredientes en "' + hoja.getName() + '".');
-  return { colBase: colBase, filaHeader: header, filaSubtotal: subtotal };
+  if (header === null) throw new Error('No pude ubicar el bloque de ingredientes en "' + hoja.getName() + '": falta la fila INGREDIENTE.');
+
+  var subtotal = null, primera = null, ultima = null;
+  for (i = header; i < tope && subtotal === null; i++) {
+    var suma = String(fx[i][colBase + 3] || '').match(/^=\s*SUM\(\s*[A-Z]+(\d+)\s*:\s*[A-Z]+(\d+)\s*\)/i);
+    if (suma) {
+      subtotal = i + 1;
+      primera = Number(suma[1]); ultima = Number(suma[2]);
+      break;
+    }
+    for (c = 0; c < 3; c++) {
+      var v = normalizar_(f[i][c]);
+      if (CIERRES_BLOQUE.some(function (p) { return v.indexOf(p) === 0; })) { subtotal = i + 1; break; }
+    }
+  }
+  if (subtotal === null) throw new Error('No pude ubicar el bloque de ingredientes en "' + hoja.getName() + '": no encuentro el total.');
+  if (primera === null || primera <= header || ultima >= subtotal || primera > ultima) {
+    primera = header + 1; ultima = subtotal - 1;
+  }
+  return { colBase: colBase, filaHeader: header, filaSubtotal: subtotal, primera: primera, ultima: ultima };
 }
 
 /** Cambia la cantidad de una linea. Es lo unico que puede hacer cocina. */
@@ -412,8 +467,7 @@ function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area) {
   exigirPermiso_(rol, 'editarCantidad');
   if (!(cantidadNueva > 0)) throw new Error('La cantidad tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
-  var h = ss.getSheetByName(ficha);
-  if (!h) throw new Error('No existe la ficha "' + ficha + '".');
+  var h = fichaDe_(ss, ficha);
   var b = bloqueFicha_(h);
   if (fila <= b.filaHeader || fila >= b.filaSubtotal) throw new Error('La fila ' + fila + ' no es una linea de ingrediente.');
 
@@ -438,6 +492,9 @@ function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
   for (var i = EDIT.filaPrimerDato - 1; i < banco.length; i++) {
     if (normalizar_(banco[i][EDIT.col.producto - 1]) === normalizar_(producto)) {
       encontrado = { nombre: String(banco[i][EDIT.col.producto - 1]).trim(),
+                     // tal cual esta en el Banco, espacios incluidos: el VLOOKUP es exacto
+                     // y en barra hay productos que terminan en espacio ("QUETZALTECA ")
+                     enHoja: String(banco[i][EDIT.col.producto - 1]),
                      unidad: String(banco[i][EDIT.col.unidadReceta - 1] || '').trim() };
       break;
     }
@@ -446,21 +503,27 @@ function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
     throw new Error('"' + producto + '" no esta en el Banco de Datos. Primero hay que darlo de alta como producto.');
   }
 
-  var h = ss.getSheetByName(ficha);
-  if (!h) throw new Error('No existe la ficha "' + ficha + '".');
+  var h = fichaDe_(ss, ficha);
   var b = bloqueFicha_(h);
 
-  // primera fila libre entre el header y el subtotal
+  // Primera fila libre DENTRO del rango que suma el total.
+  // Antes se buscaba hasta el subtotal y, si no habia lugar, se insertaba justo antes
+  // de el. En cocina la fila libre podia ser la de separacion y en barra (fichas sin
+  // filas libres) la fila insertada quedaba afuera del =SUM: la linea aparecia en la
+  // ficha pero no sumaba al costo, sin ningun error.
+  var nombres = h.getRange(b.primera, b.colBase, b.ultima - b.primera + 1, 1).getValues();
   var destino = null;
-  for (var r = b.filaHeader + 1; r < b.filaSubtotal; r++) {
-    if (!h.getRange(r, b.colBase).getValue()) { destino = r; break; }
+  for (var r = 0; r < nombres.length; r++) {
+    if (!String(nombres[r][0]).trim()) { destino = b.primera + r; break; }
   }
   if (!destino) {
-    h.insertRowBefore(b.filaSubtotal);
-    destino = b.filaSubtotal;
+    // Insertar ANTES de la ultima linea cae adentro del rango, y Sheets estira el =SUM
+    // (y las formulas que apuntan a las filas de abajo) solo.
+    h.insertRowBefore(b.ultima);
+    destino = b.ultima;
   }
 
-  h.getRange(destino, b.colBase).setValue(encontrado.nombre);
+  h.getRange(destino, b.colBase).setValue(encontrado.enHoja);
   h.getRange(destino, b.colBase + 1).setValue(cantidad);
   h.getRange(destino, b.colBase + 2).setValue(unidad || encontrado.unidad);
   // la formula de precio: la misma que usan todas las fichas
@@ -483,8 +546,7 @@ function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
 function quitarLinea(ficha, fila, quien, rol, area) {
   exigirPermiso_(rol, 'quitarLinea');
   var ss = recetarioDe_(area);
-  var h = ss.getSheetByName(ficha);
-  if (!h) throw new Error('No existe la ficha "' + ficha + '".');
+  var h = fichaDe_(ss, ficha);
   var b = bloqueFicha_(h);
   if (fila <= b.filaHeader || fila >= b.filaSubtotal) throw new Error('La fila ' + fila + ' no es una linea de ingrediente.');
 
@@ -503,8 +565,7 @@ function cambiarPrecioMenu(ficha, precioNuevo, quien, rol, motivo, area) {
   exigirPermiso_(rol, 'cambiarPrecioMenu');
   if (!(precioNuevo > 0)) throw new Error('El precio tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
-  var h = ss.getSheetByName(ficha);
-  if (!h) throw new Error('No existe la ficha "' + ficha + '".');
+  var h = fichaDe_(ss, ficha);
   var f = h.getDataRange().getValues(), fila = null, col = null;
   for (var i = 0; i < Math.min(f.length, 8); i++) {
     for (var c = 0; c < 5; c++) {
@@ -549,7 +610,7 @@ function crearInsumo(datos, quien, rol, confirmar, area) {
   var conv = factorConversion_(datos.unidadCompra, datos.unidadReceta, datos.contenido);
   if (!conv.ok) {
     return { ok:false, motivo:conv.motivo, requiereContenido: !!conv.requiereContenido,
-             tipicos: conv.requiereContenido ? contenidosTipicos_(datos.unidadCompra, datos.unidadReceta) : [] };
+             tipicos: conv.requiereContenido ? contenidosTipicos_(datos.unidadCompra, datos.unidadReceta, area) : [] };
   }
 
   var precioReceta = datos.precioCompra / conv.factor;

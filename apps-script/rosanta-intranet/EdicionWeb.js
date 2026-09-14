@@ -35,14 +35,27 @@ function edicionQuien_(auth) {
   return u;
 }
 
-/** Envuelve una operacion: resuelve identidad, corre, y nunca deja escapar una excepcion. */
-function edicionCorrer_(auth, fn) {
+/**
+ * Envuelve una operacion: resuelve identidad, corre, y nunca deja escapar una excepcion.
+ *
+ * `accion` (opcional, solo en las que escriben): si la operacion falla, el intento
+ * queda en la BITACORA como "ERROR · accion" con el mensaje que vio la persona.
+ * Hasta el 14-sep-2026 un intento fallido no dejaba rastro: Jeffry paso dias sin
+ * poder cargar el Bok Choy y la bitacora solo mostraba lo que SI habia funcionado.
+ */
+function edicionCorrer_(auth, fn, accion) {
+  var u = null;
   try {
-    var u = edicionQuien_(auth);
+    u = edicionQuien_(auth);
     var r = fn(u);
     return { ok: true, resultado: r === undefined ? null : r };
   } catch (e) {
-    return { ok: false, error: String(e && e.message || e) };
+    var msg = String(e && e.message || e);
+    if (accion) {
+      // el rastro nunca puede tapar el error original
+      try { bitacora_(u ? u.email : '', u ? u.rol : '', 'ERROR · ' + accion, '', '', '', '', '', msg); } catch (e2) {}
+    }
+    return { ok: false, error: msg };
   }
 }
 
@@ -124,28 +137,28 @@ function webEditarCantidad(auth, ficha, fila, cantidadNueva, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return editarCantidad(ficha, fila, cantidadNueva, u.email, u.rol, a);
-  });
+  }, 'editarCantidad ' + ficha);
 }
 
 function webAgregarLinea(auth, ficha, producto, cantidad, unidad, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return agregarLinea(ficha, producto, cantidad, unidad, u.email, u.rol, a);
-  });
+  }, 'agregarLinea ' + ficha + ' · ' + producto);
 }
 
 function webQuitarLinea(auth, ficha, fila, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return quitarLinea(ficha, fila, u.email, u.rol, a);
-  });
+  }, 'quitarLinea ' + ficha);
 }
 
 function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return cambiarPrecioMenu(ficha, precioNuevo, u.email, u.rol, motivo, a);
-  });
+  }, 'cambiarPrecioMenu ' + ficha);
 }
 
 /**
@@ -156,7 +169,7 @@ function webCrearFicha(auth, datos, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return crearFicha(datos, u.email, u.rol, a);
-  });
+  }, 'crearFicha ' + (datos && datos.nombre || ''));
 }
 
 /* ==========================================================================
@@ -167,27 +180,27 @@ function webCrearInsumo(auth, datos, confirmar, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return crearInsumo(datos, u.email, u.rol, confirmar, a);
-  });
+  }, 'crearInsumo ' + (datos && datos.producto || ''));
 }
 
 function webCambiarPrecioInsumo(auth, producto, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return cambiarPrecioInsumo(producto, precioNuevo, u.email, u.rol, motivo, a);
-  });
+  }, 'cambiarPrecio ' + producto);
 }
 
 function webCrearProveedor(auth, datos, confirmar) {
   return edicionCorrer_(auth, function (u) {
     return crearProveedor(datos, u.email, u.rol, confirmar);
-  });
+  }, 'crearProveedor ' + (datos && datos.nombre || ''));
 }
 
 function webAsignarProveedor(auth, producto, proveedor, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
     return asignarProveedor(producto, proveedor, u.email, u.rol, a);
-  });
+  }, 'asignarProveedor ' + producto);
 }
 
 /* ==========================================================================

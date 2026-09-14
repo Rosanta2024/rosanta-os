@@ -288,7 +288,14 @@ function ultimaCargaVentas_() {
   try {
     var h = hojaCosteo_().getSheetByName(VENTAS.hojaLog);
     if (!h || h.getLastRow() < 2) return { cuando: '', dias: null };
-    var txt = String(h.getRange(h.getLastRow(), 1).getValue() || '');
+    // CARGADO EL se escribe como texto 'yyyy-MM-dd HH:mm', pero Sheets lo guarda como
+    // Date y al releerlo vuelve un objeto. String(Date) da "Thu Sep 10 2026 18:18:00
+    // GMT-0600", la regex de abajo no lo reconocia y los dias desde la carga salian
+    // null: el tablero no podia marcar en rojo un feed viejo.
+    var v = h.getRange(h.getLastRow(), 1).getValue();
+    var txt = Object.prototype.toString.call(v) === '[object Date]'
+      ? Utilities.formatDate(v, 'America/Guatemala', 'yyyy-MM-dd HH:mm')
+      : String(v || '');
     var m = txt.match(/(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return { cuando: txt, dias: null };
     var d = new Date(+m[1], +m[2] - 1, +m[3]);

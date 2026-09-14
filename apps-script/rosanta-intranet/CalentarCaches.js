@@ -52,6 +52,16 @@ function calentarCaches() {
     }
   }
 
+  // PRIMERO las ventas nuevas del POS, si las hay: el tablero de abajo se
+  // reconstruye con ellas. La huella cambia sola al escribir SYNC_VENTAS, asi que el
+  // cache viejo del tablero deja de servir sin invalidarlo a mano.
+  try {
+    var carga = cargarVentasSiHayPendientes_();
+    if (carga && carga.pendientes) hecho.push('ventas POS (' + carga.pendientes + ' export)');
+  } catch (e) {
+    fallo.push('ventas POS: ' + String(e && e.message || e));
+  }
+
   // El caro: ~40 s. Es el que justifica todo este archivo.
   calentar('recetario', function () { return !c.get(COSTEO.cacheKey); },
            function () { getCosteoData(); });

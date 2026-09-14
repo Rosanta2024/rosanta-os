@@ -382,10 +382,37 @@ function escribirVentas_(filas, desde, hasta, cuando) {
    LA FUNCION DEL LUNES
    ========================================================================== */
 
+/**
+ * LA CARGA SE HACE SOLA. La llama calentarCaches() cada 5 minutos.
+ *
+ * POR QUE: el 14-sep-2026 el reporte de S37 estaba en Drive desde el mediodia y la
+ * ingenieria de menu seguia en el 6-sep. cargarVentasPorProducto() era un paso
+ * manual de los lunes, y un paso manual cuyo olvido no da ningun error es la misma
+ * trampa que ya se mato en el catalogo del POS (ver ConfigPOS.gs): la pantalla no
+ * falla, muestra la semana pasada.
+ *
+ * Revisa Drive como mucho cada VENTAS_AUTO.segs: listar las carpetas cuesta ~7 s y
+ * no hace falta cada 5 minutos. Si no hay nada nuevo, no escribe nada.
+ * El candado evita que dos corridas carguen el mismo archivo a la vez: escribirVentas_
+ * reemplaza por rango y es idempotente, pero dos escrituras simultaneas sobre la
+ * misma hoja no lo son.
+ */
+var VENTAS_AUTO = { clave: 'ventas_auto_revisado_v1', segs: 1800 };
+
+function cargarVentasSiHayPendientes_() {
+  var c = CacheService.getScriptCache();
+  if (c.get(VENTAS_AUTO.clave)) return null;
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(0)) return null;
+  try {
+    c.put(VENTAS_AUTO.clave, '1', VENTAS_AUTO.segs);
+    return cargarVentasPorProducto();
+  } finally {
+    candado.releaseLock();
+  }
+}
+
 function cargarVentasPorProducto() {
-  // Esta corrida resuelve el aviso "exports del POS sin cargar". Se borra el cache
-  // de avisos para que desaparezca en el acto y no dentro de media hora.
-  if (typeof olvidarAvisosDashboard_ === 'function') olvidarAvisosDashboard_();
   var cuando = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm');
   var enDrive = ventasArchivosEnDrive_();
   var yaEstan = ventasYaCargados_();
@@ -394,6 +421,12 @@ function cargarVentasPorProducto() {
   Logger.log('%s archivo(s) con el prefijo "%s" · %s ya cargados · %s pendientes',
              enDrive.length, VENTAS.prefijo, enDrive.length - pendientes.length, pendientes.length);
   if (!pendientes.length) { Logger.log('Nada nuevo que cargar.'); return { pendientes: 0 }; }
+
+  // Esta corrida resuelve el aviso "exports del POS sin cargar". Se borra el cache
+  // de avisos para que desaparezca en el acto y no dentro de media hora. Va DESPUES
+  // del chequeo de pendientes: ahora esto corre solo cada media hora, y borrar el
+  // cache sin haber cargado nada obligaba a recalcular los avisos (7 s) de gusto.
+  if (typeof olvidarAvisosDashboard_ === 'function') olvidarAvisosDashboard_();
 
   var log = hojaSyncVentas_(), resumen = [];
 

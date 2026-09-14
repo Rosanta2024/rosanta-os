@@ -85,18 +85,23 @@ function crearFicha(datos, quien, rol, area) {
     if (!(rinde > 0)) throw new Error('El rinde tiene que ser mayor que cero.');
   }
 
+  var cfg = configArea_(areaValida_(area));
   var h = ss.insertSheet(nombre, ss.getSheets().length);
+  var filaResumen = null;
   try {
-    if (tipo === 'plato') crearCuerpoPlato_(h, nombre, datos, precio);
+    if (tipo === 'plato') crearCuerpoPlato_(h, nombre, datos, precio, cfg);
     else                  crearCuerpoPre_(h, nombre, datos, rinde);
+    // RESUMEN CMV es de cocina. El recetario de barra no la tiene: sus platos se leen
+    // directo de la ficha. Antes esto tiraba y la pestaña ya creada quedaba huerfana,
+    // asi que el segundo intento contestaba "Ya existe una pestaña".
+    if (tipo === 'plato' && ss.getSheetByName(FICHA_NUEVA.hojaResumen)) {
+      filaResumen = agregarAlResumen_(ss, nombre, datos, precio);
+    }
   } catch (e) {
-    // Si el cuerpo falla a mitad de camino, no dejar una pestaña rota dando vueltas.
+    // Si algo falla a mitad de camino, no dejar una pestaña rota dando vueltas.
     ss.deleteSheet(h);
     throw e;
   }
-
-  var filaResumen = null;
-  if (tipo === 'plato') filaResumen = agregarAlResumen_(ss, nombre, datos, precio);
 
   bitacora_(quien, rol, 'crearFicha', conArea_(nombre, area), nombre, tipo, '',
             tipo === 'plato' ? ('Q' + precio + ' · ' + datos.categoria) : (rinde + ' porciones'),
@@ -105,8 +110,20 @@ function crearFicha(datos, quien, rol, area) {
   return { ok: true, pestana: nombre, tipo: tipo, filaResumen: filaResumen };
 }
 
-/** El cuerpo de una ficha de plato. Copiado de ENSALADA ROSANTA. */
-function crearCuerpoPlato_(h, nombre, datos, precio) {
+/** La configuracion de un area (merma y meta de CMV) desde COSTEO.areas. */
+function configArea_(area) {
+  for (var i = 0; i < COSTEO.areas.length; i++) if (COSTEO.areas[i].area === area) return COSTEO.areas[i];
+  throw new Error('Area desconocida: "' + area + '".');
+}
+
+/**
+ * El cuerpo de una ficha de plato. Copiado de ENSALADA ROSANTA.
+ * La merma y la meta salen del area: cocina 10% y 30%, barra 3% y 20%. Antes iban
+ * fijas en 10 y 30, y un coctel nuevo nacia costeado con la vara de cocina.
+ */
+function crearCuerpoPlato_(h, nombre, datos, precio, cfg) {
+  var mermaPct = cfg ? cfg.merma : FICHA_NUEVA.mermaPct;
+  var cmvObjetivo = cfg ? cfg.cmvObjetivo / 100 : FICHA_NUEVA.cmvObjetivo;
   var n = FICHA_NUEVA.lineasPlato, prim = 5, ult = prim + n - 1;   // 5..19
   var fSub = ult + 2;                                             // 21
 
@@ -122,12 +139,12 @@ function crearCuerpoPlato_(h, nombre, datos, precio) {
 
   h.getRange(fSub,     2).setValue('SUBTOTAL MATERIA PRIMA');
   h.getRange(fSub,     6).setFormula('=SUM(F' + prim + ':F' + ult + ')');
-  h.getRange(fSub + 1, 2).setValue('VARIACIÓN / MERMA (' + FICHA_NUEVA.mermaPct + '%)');
-  h.getRange(fSub + 1, 6).setFormula('=IFERROR(F' + fSub + '*' + (FICHA_NUEVA.mermaPct / 100) + ',"")');
+  h.getRange(fSub + 1, 2).setValue('VARIACIÓN / MERMA (' + mermaPct + '%)');
+  h.getRange(fSub + 1, 6).setFormula('=IFERROR(F' + fSub + '*' + (mermaPct / 100) + ',"")');
   h.getRange(fSub + 2, 2).setValue('COSTO TOTAL');
   h.getRange(fSub + 2, 6).setFormula('=IFERROR(F' + fSub + '+F' + (fSub + 1) + ',"")');
-  h.getRange(fSub + 3, 2).setValue('PRECIO SUGERIDO (CMV ' + (FICHA_NUEVA.cmvObjetivo * 100) + '%)');
-  h.getRange(fSub + 3, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/' + FICHA_NUEVA.cmvObjetivo + ',"")');
+  h.getRange(fSub + 3, 2).setValue('PRECIO SUGERIDO (CMV ' + Math.round(cmvObjetivo * 100) + '%)');
+  h.getRange(fSub + 3, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/' + cmvObjetivo + ',"")');
   h.getRange(fSub + 4, 2).setValue('CMV % ACTUAL');
   h.getRange(fSub + 4, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/E2,"")');
   h.getRange(fSub + 4, 6).setNumberFormat('0.0%');

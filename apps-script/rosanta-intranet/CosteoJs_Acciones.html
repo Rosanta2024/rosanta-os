@@ -81,7 +81,7 @@ document.addEventListener('click', e => {
         location.reload();
       })
       .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear la ficha'; alert('No se pudo crear: ' + e.message); })
-      .webCrearFicha(AUTH, datos, area || 'COCINA');
+      .webCrearFicha(AUTH, datos, area);   // vacia (filtro "Todo"): el servidor usa el area del rol
     return;
   }
 
@@ -162,7 +162,7 @@ document.addEventListener('click', e => {
           alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
         })
         .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
-        .webCrearInsumo(AUTH, datos, confirmar, area || 'COCINA');
+        .webCrearInsumo(AUTH, datos, confirmar, area);   // vacia: el servidor usa el area del rol (antes forzaba COCINA y a Jose se lo rechazaba)
     };
     mandar(false);
     return;

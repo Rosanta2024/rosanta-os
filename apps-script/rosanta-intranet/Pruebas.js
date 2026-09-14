@@ -23,7 +23,7 @@ var PRUEBAS_CFG = {
   /** Numeros que deben dar. Actualizar cuando cambie el recetario, a proposito. */
   esperado: {
     platosCocina:        35,
-    preelaboradosCocina: 40,
+    preelaboradosCocina: 41,   // 13-sep-2026: +Salsa Romesco, la creo Jeffry desde la intranet
     conCmvCocina:        26,
     vaciasCocina:         9,   // las 7 nuevas + Charlotta y Panacotta, todavia sin costear
     platosMapeadosPOS:   35
@@ -559,11 +559,47 @@ function prRecetario_(res) {
     var m = prModelo_();
     // Una hoja que no es ficha se cuela cuando falta en COSTEO.tabsNoReceta.
     // Se nota porque queda sin ingredientes Y sin precio.
-    var basura = m.recetas.filter(function (r) { return !r.ingredientes.length && r.precio === null; });
+    // Salvo un pre-elaborado recien creado: nunca lleva precio y nace sin ingredientes,
+    // pero trae su RINDE. El 14-sep-2026 la Salsa Romesco de Jeffry cayo aca como basura.
+    var basura = m.recetas.filter(function (r) {
+      if (r.tipo === 'preelaborado' && r.rinde) return false;
+      return !r.ingredientes.length && r.precio === null;
+    });
     prAnotar_(g, 'Hojas de control leidas como receta',
       basura.length === 0 ? 'OK' : 'FALLA',
       basura.map(function (r) { return r.area + ' > ' + r.nombre; }).join(' · '),
       basura.length, 0);
+  });
+
+  // Agregar un ingrediente arranca por bloqueFicha_. Si no ubica el bloque, la ficha
+  // queda solo lectura para cocina y barra, y NINGUNA otra prueba lo nota porque
+  // ninguna escribe. Asi pasaron el 13-sep-2026 el Bok Choy y la Salsa Romesco: 48
+  // fichas de cocina rechazaban ingredientes y la bateria salia sana.
+  // Solo LEE. Recorre las dos areas.
+  prCorrer_(g, 'Todas las fichas aceptan ingredientes', function () {
+    var rotas = [], vistas = 0;
+    COSTEO.areas.forEach(function (cfg) {
+      var ss = abrirPorClave_(cfg.clave);
+      if (!ss) return;
+      ss.getSheets().forEach(function (hoja) {
+        var t = normalizar_(hoja.getName());
+        if (t.indexOf('banco de datos') === 0 || esHojaDeControl_(hoja.getName())) return;
+        vistas++;
+        try {
+          var b = bloqueFicha_(hoja);
+          fichaDe_(ss, hoja.getName().trim());   // la vista manda el nombre recortado; tira si no la encuentra
+          if (!(b.primera > b.filaHeader && b.ultima < b.filaSubtotal && b.primera <= b.ultima)) {
+            rotas.push(cfg.area + ' > ' + hoja.getName() + ' (rango ' + b.primera + '-' + b.ultima + ')');
+          }
+        } catch (e) {
+          rotas.push(cfg.area + ' > ' + hoja.getName() + ': ' + (e && e.message || e));
+        }
+      });
+    });
+    prAnotar_(g, 'Todas las fichas aceptan ingredientes',
+      rotas.length === 0 ? 'OK' : 'FALLA',
+      rotas.length ? rotas.slice(0, 15).join(' · ') : vistas + ' fichas en cocina y barra',
+      rotas.length, 0);
   });
 
   prCorrer_(g, 'Formulas rotas en las fichas', function () {
