@@ -22,6 +22,39 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ---
 
+## Regla dura: un proveedor se identifica por NIT (14 sep 2026)
+
+**Nunca filtrar facturas por un pedazo del nombre del emisor. El identificador es el
+NIT**, que es el identificador tributario y es único. Regla dada por Juanma.
+
+Se paga con un ejemplo real. El 12-sep se movieron **23 facturas por Q11,845.10** de
+`COCTELERIA` a `ALIMENTOS` con un filtro `"LICO" in Nombre_Emisor`, creyendo que eran de
+Migdalia Lico. Hay **tres** proveedores cuyo nombre contiene "LICO":
+
+| Emisor | NIT | Establecimiento |
+|---|---|---|
+| MIGDALIA AZUCENA, LICO LÓPEZ | 110989163 | Distribuidora de Alimentos Los Alpes |
+| CRISTINA, ANONA LICO | 52496325 | Doña Mina y Don Rolando (verduras) |
+| DISTRIBUIDORA DE **LICO**RES, S.A. | 345377 | **LA NACIONAL** |
+
+Las 23 eran del tercero: **un distribuidor de licor**. Entró compra de licor al food
+cost, que es el número que se mide contra la meta de 30%. Los NIT no se parecen en nada:
+con el NIT el error era imposible.
+
+**Y ojo con los tres primeros:** Juanma dejó de comprarle a Migdalia y hoy le compra a
+**Anona** (Doña Mina y Don Rolando). Son proveedores distintos de verdura, no el mismo
+con otro nombre.
+
+Dos corolarios que también costaron:
+
+- **Un número que se mueve mucho después de un cambio propio no es un hallazgo.**
+  "La coctelería estaba inflada en más de un tercio" no era un descubrimiento: era el
+  efecto de haberla vaciado. Antes de reportar un salto, descartar que lo haya causado
+  uno mismo.
+- **No bundlear un juicio nuevo dentro de una corrección.** Al revertir un error se
+  restaura el estado anterior exacto; si además hay dudas sobre si ese estado era el
+  correcto, eso es una decisión aparte y se toma aparte.
+
 ## Cierre del 12 sep 2026 · tarde (v13)
 
 Sesión de limpieza de pendientes. **De 35 activos a 23.** Lo que sigue no es el listado —
