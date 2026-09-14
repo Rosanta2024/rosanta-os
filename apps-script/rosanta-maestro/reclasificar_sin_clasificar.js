@@ -163,7 +163,11 @@ var LOTE_SC_FEL = [
   ['417613928', '2026-04-30',   100.00, 'PERSONAL', 'Si', 'VIATICOS'],
   ['3260893584', '2026-05-02',   100.00, 'PERSONAL', 'Si', 'VIATICOS'],
   ['285428535', '2026-03-10',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],  // 23:00
-  ['3038725621', '2026-01-13',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],  // 22:00
+  ['3038725621', '2026-01-14',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],  // 22:00 en la hoja,
+  //   pero Apps Script la lee como 2026-01-14. El desfase de p120 NO es de una hora:
+  //   una fila guardada a las 22:00 ya cae en el dia siguiente, igual que las de 23:00.
+  //   La primera version de esta linea decia 2026-01-13 y el script la reporto como
+  //   NO CUADRA y no la toco, que es exactamente para lo que existe esa verificacion.
   ['2497986769', '',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],  // sin fecha en la hoja
   // total Q5355.00
 ];
