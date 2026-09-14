@@ -1,0 +1,777 @@
+/* ---------- pestana Inventarios ----------
+   El cierre mensual de cada area, leido de las hojas de Rosanta que creo la fase 1
+   (Rosanta_Inventario_Cocina y Rosanta_Inventario_Barra). Servidor: InventarioDatos.gs.
+   Una llamada por area trae TODOS los meses y el catalogo: cambiar de mes no pide nada.
+
+   Entrega 1 (14-sep-2026): ver. Tres vistas: el mes, el catalogo y "por conectar".
+   Entrega 2 (14-sep-2026): cargar, solo en el area del rol y solo en el mes ABIERTO
+     (que por regla es el ultimo):
+       · abrir el conteo del mes siguiente
+       · existencia, precio y proveedor por producto, con un solo "Guardar"
+       · alta de productos con aviso de parecidos
+       · inactivar / reactivar, avisando en que recetas esta el producto
+       · clasificar y conectar con el Banco de Datos, o crearlo ahi
+   Cerrar el mes es la entrega 3.
+
+   LO QUE CAMBIA ACA SE VE EN LAS OTRAS PESTANAS (regla de Juanma, 14-sep-2026). Un
+   proveedor nuevo se crea en Proveedores y pasa al producto del Banco; un insumo nuevo
+   se crea en el Banco. Cuando el servidor dice que toco el recetario (resultado.recetario),
+   la pagina se RECARGA y vuelve sola a esta pestana: los datos de Productos, Proveedores
+   y Recetas viven en D, que se lee una vez al abrir, y sin recargar mostrarian lo viejo.
+   El precio no viaja al Banco al guardar: pasa al cerrar el mes (entrega 3).
+
+   LO ESCRITO NO SE PIERDE AL REPINTAR. pintar() rehace el HTML entero con cualquier
+   click. Por eso cada input guarda lo que se escribe en invBorr, y la tabla se dibuja
+   desde ahi. Si se sale de la pagina con cambios sin guardar, el navegador pregunta.
+
+   Los clicks de esta pestana se atienden aca y no en CosteoJs_Acciones. Los data-* son
+   propios (todos empiezan con inv) a proposito: Acciones ya usa data-p, data-i y
+   data-r, y un nombre repetido abriria un panel equivocado. El candado de verdad esta
+   en el servidor: esconder un boton no protege nada. */
+const INVDATOS = {}, invCargando = {}, invMesSel = {}, invBorr = {};
+let invSub = 'mes', invAltaOn = false, invSoloSin = false, invAviso = '', invClas = null, invSaliendo = false;
+const INV_SIN_BANCO = ['PREPARADO', 'LIMPIEZA', 'REVENTA'];
+const INV_TIPOS = [['INSUMO','Insumo','su precio alimenta el Banco de Datos y las recetas'],
+                   ['PREPARADO','Preparado','se cuenta, pero su costo lo da su propia receta'],
+                   ['REVENTA','Reventa','se vende tal cual; solo valoriza el inventario'],
+                   ['LIMPIEZA','Limpieza','solo valoriza el inventario']];
+const INV_BLOQUES = [['DESTILADOS','Destilados'],['VINOS','Vinos'],['CERVEZA','Cervezas y refrescos'],['INSUMOS','Insumos de barra']];
+const INV_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const INV_VINCULO = {EXACTO:'mismo nombre', ALIAS:'alias', OTRA_AREA:'Banco de la otra área', TIPEO:'nombre corregido',
+                     MANUAL:'conectado a mano', PENDIENTE:'sin conectar'};
+const INV_VOLVER = 'rosanta-inv-volver';
+let INVPRECIOS = null, invCargandoPrecios = false;   // entrega 3: lo que espera aprobacion y las tandas
+
+/* El inventario va por area: con el filtro en "Todo" se muestra la primera del rol. */
+const invArea = () => area || (((window.PUEDE && window.PUEDE.areas) || [])[0]) || 'COCINA';
+const invNomArea = a => a === 'BARRA' ? 'barra' : 'cocina';
+const invMesNombre = m => { const p = String(m).split('-'); return (INV_MESES[(+p[1] || 1) - 1] || m) + ' ' + p[0]; };
+const invMesSig = m => { let [y, n] = String(m).split('-').map(Number); n++; if(n > 12){ n = 1; y++; } return y + '-' + String(n).padStart(2, '0'); };
+const invNum = n => n == null ? '—' : n.toLocaleString('es-GT', {maximumFractionDigits: 2});
+const invEditable = a => AREA_EDITABLE(a) && !!(window.PUEDE && window.PUEDE.areas);
+const invEsDest = f => f[10] === 'DESTILADOS';
+/* Lo que se ve en el input: en destilados, % de botella; en el resto, la unidad. */
+const invVerEx = f => f[7] == null ? '' : String(invEsDest(f) ? Math.round(f[7] * 1000) / 10 : Math.round(f[7] * 10000) / 10000);
+const invLeerNum = v => { v = String(v == null ? '' : v).trim().replace(',', '.'); return v === '' ? null : Number(v); };
+const invBtnVerde = 'background:var(--bosque);border-color:var(--bosque);color:var(--surface)';
+
+/* Volver a esta pestana despues de recargar (ver arriba). Corre al cargar el parcial,
+   antes del pintar() de CosteoJs_Acciones, asi la primera pantalla ya es esta. */
+try {
+  const v = JSON.parse(sessionStorage.getItem(INV_VOLVER) || 'null');
+  if(v){
+    sessionStorage.removeItem(INV_VOLVER);
+    view = 'inventario'; area = v.area || ''; invSub = v.sub || 'mes'; invAviso = v.aviso || '';
+    if(v.a && v.mes) invMesSel[v.a] = v.mes;
+  }
+} catch(e){ /* sin sessionStorage: se abre en Inicio, como siempre */ }
+
+function invRecargarPagina(a, aviso){
+  invSaliendo = true;
+  try { sessionStorage.setItem(INV_VOLVER, JSON.stringify({area: area, a: a, mes: invMesSel[a], sub: invSub,
+    aviso: aviso + ' Las otras pestañas ya muestran el cambio.'})); } catch(e){}
+  location.reload();
+}
+/* Recarga la pagina si el servidor toco el recetario; si no, solo el inventario. */
+function invDespues(a, r, aviso){
+  if(r && r.avisos && r.avisos.length) alert('Se guardó, pero hay algo que revisar:\n\n' + r.avisos.map(x => '  · ' + x).join('\n'));
+  if(r && r.recetario) return invRecargarPagina(a, aviso);
+  invAviso = aviso; invRecargar(a);
+}
+const invEcos = r => [
+  r && r.bancoNuevo ? 'se creó en el Banco de Datos' : '',
+  r && r.bancoActualizados && r.bancoActualizados.length ? `proveedor actualizado en ${r.bancoActualizados.length} producto${r.bancoActualizados.length === 1 ? '' : 's'} del Banco` : '',
+  r && r.proveedoresNuevos && r.proveedoresNuevos.length ? 'proveedor nuevo en Proveedores: ' + r.proveedoresNuevos.join(', ') : ''
+].filter(Boolean).join(' · ');
+
+function pedirInventario(a){
+  if(INVDATOS[a] || invCargando[a]) return;
+  invCargando[a] = true;
+  google.script.run
+    .withSuccessHandler(function(res){
+      invCargando[a] = false;
+      INVDATOS[a] = (res && res.ok) ? res.resultado : {error: (res && res.error) || 'sin respuesta del servidor'};
+      if(view === 'inventario') pintar();
+    })
+    .withFailureHandler(function(e){
+      invCargando[a] = false;
+      INVDATOS[a] = {error: (e && e.message) || 'no se pudo leer'};
+      if(view === 'inventario') pintar();
+    })
+    .webInventario(AUTH, a);
+}
+function invRecargar(a){ delete INVDATOS[a]; pintar(); }
+
+/* Los cambios de verdad de un mes: lo escrito que difiere de lo que hay en la hoja. */
+function invCambios(a, m){
+  const borr = invBorr[a + '|' + m.mes] || {}, out = [];
+  m.filas.forEach(f => {
+    const b = borr[f[0]]; if(!b) return;
+    const x = {id: f[0]}; let hay = false;
+    if('existencia' in b){
+      const v = invLeerNum(b.existencia), orig = invLeerNum(invVerEx(f));
+      if(!(v === orig || (v != null && orig != null && Math.abs(v - orig) < 1e-9))){
+        x.existencia = v == null ? '' : (invEsDest(f) ? v / 100 : v); hay = true;
+      }
+    }
+    if('precio' in b){
+      const v = invLeerNum(b.precio);
+      if(!(v === f[6] || (v != null && f[6] != null && Math.abs(v - f[6]) < 1e-9))){ x.precio = v == null ? '' : v; hay = true; }
+    }
+    if('proveedor' in b && String(b.proveedor).trim() !== (f[5] || '')){ x.proveedor = String(b.proveedor).trim(); hay = true; }
+    if(hay){ x._prod = f[2]; out.push(x); }
+  });
+  return out;
+}
+function invHayPendientes(){
+  return Object.keys(invBorr).some(k => {
+    const [a, mes] = k.split('|'), d = INVDATOS[a];
+    const m = d && d.meses && d.meses.find(x => x.mes === mes);
+    return m && invCambios(a, m).length;
+  });
+}
+
+/* ---------- proveedores que no conoce el recetario ----------
+   Antes de mandar, se avisa: el servidor los crea en PROVEEDORES si no existen, y un
+   "La Torre S.A." al lado de "La Torre" es justo el duplicado que se quiere evitar. */
+function invSimil(a, b){
+  a = nrm(a); b = nrm(b);
+  if(a === b) return 1;
+  if(!a.length || !b.length) return 0;
+  const m = [];
+  for(let i = 0; i <= a.length; i++) m[i] = [i];
+  for(let j = 0; j <= b.length; j++) m[0][j] = j;
+  for(let i = 1; i <= a.length; i++) for(let j = 1; j <= b.length; j++)
+    m[i][j] = Math.min(m[i-1][j] + 1, m[i][j-1] + 1, m[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return 1 - m[a.length][b.length] / Math.max(a.length, b.length);
+}
+function invProvsConocidos(){
+  const s = new Set(P.map(x => x.nombre));
+  Object.keys(INVDATOS).forEach(k => (INVDATOS[k].productos || []).forEach(p => { if(p[8]) s.add(p[8]); }));
+  return [...s];
+}
+/* true = seguir. Pregunta solo si hay alguno desconocido. */
+function invConfirmarProvs(nombres){
+  const conocidos = invProvsConocidos(), set = new Set(conocidos.map(nrm));
+  const nuevos = [...new Set(nombres.map(x => String(x || '').trim()).filter(Boolean))].filter(n => !set.has(nrm(n)));
+  if(!nuevos.length) return true;
+  const detalle = nuevos.map(n => {
+    const par = conocidos.map(c => [c, invSimil(n, c)]).filter(x => x[1] >= 0.72 || (nrm(x[0]).includes(nrm(n)) || nrm(n).includes(nrm(x[0]))))
+                         .sort((x, y) => y[1] - x[1]).slice(0, 3).map(x => x[0]);
+    return '  · ' + n + (par.length ? '   (¿no será ' + par.join(' / ') + '?)' : '');
+  }).join('\n');
+  return confirm('Estos proveedores no están en el recetario:\n\n' + detalle +
+    '\n\nSi no existen, se crean en Proveedores. ¿Seguir?\n\nSi es uno que ya existe con otro nombre, cancelá y elegilo de la lista.');
+}
+
+function vistaInventario(){
+  const a = invArea(), datos = INVDATOS[a], ed = invEditable(a);
+  const aviso = invAviso ? `<p class="nota" style="border-left:3px solid var(--bosque);padding-left:13px;color:var(--ink)">${esc(invAviso)}</p>` : '';
+  const cab = `<p class="lead">El cierre de ${invNomArea(a)}: lo que había el último día de cada mes, valorizado al precio de ese mes.${area ? '' : ` Con “Todo” se muestra ${a === 'BARRA' ? 'Barra' : 'Cocina'}, porque el inventario va por área.`}</p>
+    ${ed ? '' : (avisoArea(a) || `<p class="nota" style="border-left:3px solid var(--lila);padding-left:13px">Podés mirar el inventario, pero tu rol no carga ${invNomArea(a)}.</p>`)}${aviso}`;
+  if(!datos) return cab + `<p class="empty">Leyendo el inventario de ${invNomArea(a)}…</p>`;
+  if(datos.error) return cab + `<p class="empty">No se pudo leer el inventario: ${esc(datos.error)}<br>
+    <button class="chip" data-invreintentar="1" style="margin-top:12px">Reintentar</button></p>`;
+  if(!datos.meses.length) return cab + `<p class="empty">La hoja de ${invNomArea(a)} todavía no tiene ningún mes.</p>`;
+
+  const meses = datos.meses, ultimo = meses[meses.length - 1];
+  let sel = invMesSel[a];
+  if(!meses.some(m => m.mes === sel)) sel = ultimo.mes;
+  const ix = meses.findIndex(m => m.mes === sel), m = meses[ix], ant = ix > 0 ? meses[ix - 1] : null;
+  const abierto = m.estado === 'ABIERTO';
+  const conectar = datos.productos.filter(p => p[4] === 'PENDIENTE' && INV_SIN_BANCO.indexOf(p[3]) === -1);
+
+  const tira = `<div class="toolbar" style="flex-wrap:wrap">${meses.map(x =>
+    `<button class="chip" data-invmes="${esc(x.mes)}" aria-pressed="${x.mes === sel}">${invMesNombre(x.mes)} · ${x.estado === 'ABIERTO' ? 'abierto' : Q0(x.total)}</button>`).join('')}
+    ${ed && ultimo.estado !== 'ABIERTO' ? `<button class="chip" data-invabrir="1" style="${invBtnVerde}">Abrir el conteo de ${invMesNombre(invMesSig(ultimo.mes))}</button>` : ''}</div>`;
+
+  const contados = m.filas.filter(f => f[7] != null).length;
+  const delta = ant && !abierto ? m.total - ant.total : null;
+  const resumen = `<p style="font-size:14px;margin:4px 0 12px">
+      <strong>${invMesNombre(m.mes)}: ${Q(m.total)}</strong>
+      ${abierto ? ` · <strong style="color:var(--bosque)">conteo abierto</strong> · ${contados} de ${m.filas.length} productos contados`
+                : ` en ${m.filas.length} productos contados`}
+      ${delta != null ? ` · <span style="color:var(--muted)">${delta >= 0 ? '+' : '−'}${Q(Math.abs(delta))} contra ${invMesNombre(ant.mes).toLowerCase()}${ant.total ? ` (${delta >= 0 ? '+' : '−'}${Math.abs(delta / ant.total * 100).toFixed(1)}%)` : ''}</span>` : ''}
+      ${!abierto && m.estado ? ` · <span style="color:var(--muted)">${esc(m.estado.toLowerCase())}</span>` : ''}</p>
+    ${m.cuadra ? '' : `<p class="nota" style="border-left:3px solid var(--alto);padding-left:13px;color:var(--ink)">La fila TOTAL de la hoja dice <strong>${Q(m.totalHoja)}</strong>, pero los productos suman <strong>${Q(m.total)}</strong>. Se muestra la suma de los productos. Hay que revisar la pestaña ${esc(m.mes)}.</p>`}`;
+
+  const subs = `<div class="toolbar">
+      <button class="chip" data-invsub="mes" aria-pressed="${invSub === 'mes'}">El mes</button>
+      <button class="chip" data-invsub="catalogo" aria-pressed="${invSub === 'catalogo'}">Catálogo · ${datos.productos.length}</button>
+      <button class="chip" data-invsub="conectar" aria-pressed="${invSub === 'conectar'}">Por conectar · ${conectar.length}</button>
+      <button class="chip" data-invsub="precios" aria-pressed="${invSub === 'precios'}">Precios al Banco${INVPRECIOS && INVPRECIOS.pendientes && INVPRECIOS.pendientes.length ? ' · ' + INVPRECIOS.pendientes.length + ' por aprobar' : ''}</button>
+      <span class="count">Leído el ${esc(datos.leido)}</span>
+    </div>
+    ${q ? `<p class="buscando">Filtrando por “${esc(q)}” dentro del inventario de ${invNomArea(a)}.</p>` : ''}`;
+
+  let cuerpo;
+  if(invSub === 'precios') cuerpo = invVistaPrecios();
+  else if(invSub === 'catalogo') cuerpo = invCatalogo(datos.productos, a, ed);
+  else if(invSub === 'conectar') cuerpo = invPorConectar(conectar, a, ed);
+  else cuerpo = (abierto && ed) ? invMesEditable(m, ant, a, datos) : invMes(m, ant);
+  return cab + tira + resumen + subs + cuerpo;
+}
+
+const invCoincide = (...campos) => !q || campos.some(c => nrm(c).includes(nrm(q)));
+
+/* Agrupa filas por categoria, en el orden en que aparecen en la hoja. */
+function invGrupos(filas){
+  const orden = [], grupos = {};
+  filas.forEach(f => { if(!grupos[f[1]]){ grupos[f[1]] = []; orden.push(f[1]); } grupos[f[1]].push(f); });
+  return orden.map(cat => ({cat, filas: grupos[cat]}));
+}
+function invCambioPrecio(actual, antes){
+  if(antes == null || actual == null || !(antes > 0) || Math.abs(actual - antes) <= 0.005) return '';
+  const pct = (actual - antes) / antes * 100;
+  return `<div style="font-size:11.5px;color:${Math.abs(pct) >= 10 ? 'var(--alto)' : 'var(--muted)'}">${pct > 0 ? '+' : '−'}${Math.abs(pct).toFixed(0)}% · antes ${Q(antes)}</div>`;
+}
+
+function invMes(m, ant){
+  const precioAnt = {};
+  if(ant) ant.filas.forEach(f => { precioAnt[f[0]] = f[6]; });
+  const filas = m.filas.filter(f => invCoincide(f[2], f[1], f[5]));
+  if(!filas.length) return '<p class="empty">Sin resultados.</p>';
+
+  const cuerpo = invGrupos(filas).map(g => {
+    const sub = g.filas.reduce((s, f) => s + (f[8] || 0), 0);
+    return `<tr><td colspan="4" style="font-weight:700;padding-top:14px">${esc(Tt(g.cat) || 'Sin categoría')}</td>
+        <td class="r" style="font-weight:700;padding-top:14px">${Q(sub)}</td></tr>` +
+      g.filas.map(f => `<tr>
+          <td>${esc(f[2])}<div style="color:var(--muted);font-size:11.5px">${esc([f[3], f[4]].filter(Boolean).join(' · '))}</div></td>
+          <td>${esc(f[5] || '—')}</td>
+          <td class="r">${f[6] != null ? Q(f[6]) : '—'}${invCambioPrecio(f[6], precioAnt[f[0]])}</td>
+          <td class="r">${invNum(f[7])}${f[9] ? `<div style="color:var(--muted);font-size:11.5px">contado: ${esc(f[9])}</div>`
+                          : (invEsDest(f) && f[7] != null ? `<div style="color:var(--muted);font-size:11.5px">${invVerEx(f)}% de botella</div>` : '')}</td>
+          <td class="r">${Q(f[8])}</td>
+        </tr>`).join('');
+  }).join('');
+
+  return `<div class="tablewrap"><table>
+      <thead><tr><th>Producto</th><th>Proveedor</th><th class="r">Precio</th><th class="r">Existencia</th><th class="r">Monto</th></tr></thead>
+      <tbody>${cuerpo}</tbody></table></div>
+    ${m.cerradoPor ? `<p class="nota">Cerrado por ${esc(m.cerradoPor)}.${m.corrida ? ' Los precios de este cierre que cambiaron menos de 10% ya están en el Banco de Datos: ver <strong>Precios al Banco</strong>.' : ''}</p>` : ''}
+    <p class="nota">La existencia sale del monto dividido entre el precio, que es como se valorizó cada mes. Lo que la persona anotó está debajo, como “contado”: en barra es el porcentaje de botella. Un cambio de precio de 10% o más contra el mes anterior se marca en rojo.</p>`;
+}
+
+/* ---------- el mes abierto: cargar ---------- */
+function invMesEditable(m, ant, a, datos){
+  const key = a + '|' + m.mes, borr = invBorr[key] || {};
+  const exAnt = {}, precioAnt = {};
+  if(ant) ant.filas.forEach(f => { exAnt[f[0]] = f; precioAnt[f[0]] = f[6]; });
+  const nCambios = invCambios(a, m).length;
+  let filas = m.filas.filter(f => invCoincide(f[2], f[1], f[5]));
+  if(invSoloSin) filas = filas.filter(f => { const b = borr[f[0]]; return f[7] == null && !(b && String(b.existencia || '').trim()); });
+
+  const barra = `<div class="toolbar" style="flex-wrap:wrap">
+      <button class="chip" data-invguardar="1" style="${invBtnVerde}"${nCambios ? '' : ' disabled'}>${nCambios ? `Guardar ${nCambios} producto${nCambios === 1 ? '' : 's'}` : 'Sin cambios'}</button>
+      ${nCambios ? '<button class="chip" data-invdescartar="1">Descartar</button>' : ''}
+      <button class="chip" data-invsin="1" aria-pressed="${invSoloSin}">Solo sin contar</button>
+      <button class="chip" data-invaltatoggle="1" aria-pressed="${invAltaOn}">Agregar un producto</button>
+      ${nCambios ? '<span class="count">Guardá antes de cerrar el mes</span>'
+                 : `<button class="chip" data-invcerrar="${esc(m.mes)}" style="margin-left:auto">Cerrar ${invMesNombre(m.mes).split(' ')[0].toLowerCase()}</button>`}
+    </div>`;
+
+  const cuerpo = invGrupos(filas).map(g =>
+    `<tr><td colspan="4" style="font-weight:700;padding-top:14px">${esc(Tt(g.cat) || 'Sin categoría')}</td></tr>` +
+    g.filas.map(f => {
+      const b = borr[f[0]] || {}, dest = invEsDest(f), pa = exAnt[f[0]];
+      const vEx = 'existencia' in b ? b.existencia : invVerEx(f);
+      const vPr = 'precio' in b ? b.precio : (f[6] == null ? '' : f[6]);
+      const vPv = 'proveedor' in b ? b.proveedor : (f[5] || '');
+      const campo = (c, v, extra) => `data-invkey="${esc(key)}" data-invid="${esc(f[0])}" data-invcampo="${c}" value="${esc(v)}" ${extra}`;
+      return `<tr>
+        <td>${esc(f[2])}<div style="color:var(--muted);font-size:11.5px">${esc([f[3], f[4]].filter(Boolean).join(' · '))}</div></td>
+        <td class="r"><input type="number" step="any" min="0" style="width:96px" placeholder="sin contar" ${campo('existencia', vEx, `aria-label="Existencia de ${esc(f[2])}"`)}>
+          <span style="color:var(--muted);font-size:12px">${dest ? '%' : ''}</span>
+          ${pa && pa[7] != null ? `<div style="color:var(--muted);font-size:11.5px">${invMesNombre(ant.mes).split(' ')[0].toLowerCase()}: ${invVerEx(pa)}${dest ? '%' : ''}</div>` : ''}</td>
+        <td class="r"><input type="number" step="0.01" min="0" style="width:96px" ${campo('precio', vPr, `aria-label="Precio de ${esc(f[2])}"`)}>
+          ${invCambioPrecio(invLeerNum(vPr), precioAnt[f[0]])}</td>
+        <td><input list="inv-provs" style="width:170px" autocomplete="off" ${campo('proveedor', vPv, `aria-label="Proveedor de ${esc(f[2])}"`)}></td>
+      </tr>`;
+    }).join('')).join('');
+
+  return `${invAltaOn ? invAltaHTML(m, a, datos) : ''}${barra}
+    <datalist id="inv-provs">${invProvsConocidos().sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    ${filas.length ? `<div class="tablewrap"><table>
+      <thead><tr><th>Producto</th><th class="r">Existencia</th><th class="r">Precio</th><th>Proveedor</th></tr></thead>
+      <tbody>${cuerpo}</tbody></table></div>` : `<p class="empty">${invSoloSin ? 'No queda nada sin contar.' : 'Sin resultados.'}</p>`}
+    <p class="nota">Vacío es <strong>sin contar</strong>; si no hay nada, escribí 0. ${a === 'BARRA' ? 'En destilados la existencia va en <strong>% de botella</strong>, como siempre: 3 botellas y media son 350. ' : ''}La existencia va en la unidad de la presentación (libra, unidad, caja…). Lo que escribís se guarda recién al tocar <strong>Guardar</strong>; el monto y el total se recalculan en la hoja. Un proveedor nuevo pasa también a Proveedores y al producto del Banco. El precio llega al Banco al cerrar el mes.</p>
+    ${nCambios ? barra : ''}`;
+}
+
+function invAltaHTML(m, a, datos){
+  const cats = [...new Set(datos.productos.map(p => p[1]).filter(Boolean))].sort();
+  return `<div class="addrow">
+      <div class="sec-t" style="margin-top:0">Agregar un producto al conteo de ${invMesNombre(m.mes)}</div>
+      <div class="simrow" style="flex-wrap:wrap">
+        <input id="inva-prod" placeholder="Producto" style="width:210px" autocomplete="off">
+        <input id="inva-cat" list="inva-cats" placeholder="Categoría" style="width:170px" autocomplete="off">
+        <select id="inva-tipo" style="width:130px">${INV_TIPOS.map(t => `<option value="${t[0]}">${t[1]}</option>`).join('')}</select>
+        ${a === 'BARRA' ? `<select id="inva-bloque" style="width:170px">${INV_BLOQUES.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select>` : ''}
+        <input id="inva-pres" placeholder="Presentación (libra, 750 ml…)" style="width:190px" autocomplete="off">
+        <input id="inva-prov" list="inv-provs" placeholder="Proveedor" style="width:170px" autocomplete="off">
+        <input id="inva-precio" type="number" step="0.01" min="0" placeholder="Precio" style="width:110px">
+      </div>
+      <div class="sec-t">Si es insumo</div>
+      <div class="simrow" style="flex-wrap:wrap">
+        <input id="inva-banco" list="inv-banco" placeholder="Producto del Banco, si ya existe" style="width:240px" autocomplete="off">
+        <span style="font-size:12.5px;color:var(--muted)">o, si no existe:</span>
+        <input id="inva-ur" list="inv-unidades" placeholder="Unidad de receta (g, ml, unidad)" style="width:220px" autocomplete="off">
+        <input id="inva-cont" type="number" step="any" min="0" placeholder="Contenido (si es envase)" style="width:180px">
+        <button class="chip" data-invalta="1" style="${invBtnVerde}">Agregar</button>
+      </div>
+      <datalist id="inva-cats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      <datalist id="inv-banco">${I.filter(x => x.area === a).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+      <datalist id="inv-unidades"><option value="g"><option value="ml"><option value="unidad"></datalist>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Un <strong>insumo</strong> tiene que existir en el Banco de Datos para que su precio llegue a las recetas. Si ya está, elegilo. Si no está, se crea en el Banco con este precio, la presentación como unidad de compra y la unidad de receta que pongas: aparece en Productos y se puede usar en recetas. <strong>Contenido</strong> solo hace falta con envases: cuántos g o ml trae una caja, un frasco, un manojo. Reventa, limpieza y preparados no van al Banco. Antes de crear se avisa si ya hay algo parecido.</p>
+    </div>`;
+}
+
+/* ---------- catalogo y por conectar ---------- */
+function invUsos(a, p){
+  if(!p[5]) return [];
+  const ins = I.find(x => x.area === a && nrm(x.p) === nrm(p[5]));
+  return ins ? ins.usos.map(id => R[id] && R[id].n).filter(Boolean) : [];
+}
+
+function invCatalogo(productos, a, ed){
+  const lista = productos.filter(p => invCoincide(p[2], p[1], p[5], p[8]));
+  if(!lista.length) return '<p class="empty">Sin resultados.</p>';
+  return `<div class="tablewrap"><table>
+      <thead><tr><th>Producto</th><th>Tipo</th><th>Conexión con el Banco</th><th class="r">Precio actual</th><th>Último mes</th>${ed ? '<th></th>' : ''}</tr></thead>
+      <tbody>${lista.map(p => {
+        const inactivo = p[10] === 'NO', pend = p[4] === 'PENDIENTE';
+        return `<tr${inactivo ? ' style="opacity:.55"' : ''}>
+          <td>${esc(p[2])}<div style="color:var(--muted);font-size:11.5px">${esc(p[0])} · ${esc(Tt(p[1]))}${inactivo ? ' · inactivo' : ''}</div></td>
+          <td>${esc(p[3] || '—')}</td>
+          <td>${INV_SIN_BANCO.indexOf(p[3]) !== -1
+                ? '<span style="color:var(--muted)">no se conecta</span>'
+                : `<span${pend ? ' style="color:var(--alto)"' : ''}>${esc(INV_VINCULO[p[4]] || p[4] || '—')}</span>${p[5] ? `<div style="color:var(--muted);font-size:11.5px">${esc(p[5])}</div>` : ''}`}</td>
+          <td class="r">${p[9] != null ? Q(p[9]) : '—'}<div style="color:var(--muted);font-size:11.5px">${esc(p[7] || '')}</div></td>
+          <td>${p[11] ? invMesNombre(p[11]) : '—'}</td>
+          ${ed ? `<td class="r" style="white-space:nowrap">
+              <button class="chip" data-invclas="${esc(p[0])}">Clasificar</button>
+              <button class="chip" data-invactivo="${esc(p[0])}" data-invactivar="${inactivo ? 'SI' : 'NO'}">${inactivo ? 'Reactivar' : 'Inactivar'}</button></td>` : ''}
+        </tr>`;
+      }).join('')}</tbody></table></div>
+    <p class="nota">Los inactivos no entran al próximo conteo, pero se guardan para no perder el historial.${ed ? ' <strong>Clasificar</strong> define qué es cada producto y, si es insumo, con cuál del Banco de Datos se conecta.' : ''}</p>`;
+}
+
+function invPorConectar(lista, a, ed){
+  const vis = lista.filter(p => invCoincide(p[2], p[1], p[8]));
+  return `<p class="nota" style="margin:0 0 12px">Estos productos llevan precio y todavía no están conectados con un producto del Banco de Datos de ${invNomArea(a)}. Mientras no se conecten, su precio no puede llegar a las recetas. ${ed ? 'Tocá <strong>Conectar</strong>: elegí el producto del Banco, o crealo ahí si no existe. Si en realidad es reventa, limpieza o un preparado, marcalo así y sale de esta lista.' : 'Los conecta quien lleva el área.'}</p>
+    ${vis.length ? `<div class="tablewrap"><table>
+      <thead><tr><th>Producto</th><th>Tipo</th><th>Proveedor</th><th class="r">Precio actual</th><th>Último mes</th>${ed ? '<th></th>' : ''}</tr></thead>
+      <tbody>${vis.map(p => `<tr${p[10] === 'NO' ? ' style="opacity:.55"' : ''}>
+          <td>${esc(p[2])}<div style="color:var(--muted);font-size:11.5px">${esc(p[0])} · ${esc(Tt(p[1]))}</div></td>
+          <td>${esc(p[3] || '—')}</td>
+          <td>${esc(p[8] || '—')}</td>
+          <td class="r">${p[9] != null ? Q(p[9]) : '—'}<div style="color:var(--muted);font-size:11.5px">${esc(p[7] || '')}</div></td>
+          <td>${p[11] ? invMesNombre(p[11]) : '—'}</td>
+          ${ed ? `<td class="r"><button class="chip" data-invclas="${esc(p[0])}" style="${invBtnVerde}">Conectar</button></td>` : ''}
+        </tr>`).join('')}</tbody></table></div>`
+    : `<p class="empty">${q ? 'Sin resultados.' : 'No queda ningún producto por conectar.'}</p>`}`;
+}
+
+/* El panel de clasificar. invClas = {a, id, tipo, crear} guarda la eleccion mientras se decide. */
+function invClasHTML(){
+  const {a, id, tipo, crear} = invClas, d = INVDATOS[a];
+  const p = d && d.productos.find(x => x[0] === id);
+  if(!p) return '<div class="dbody"><p class="empty">El producto ya no está. Recargá la pestaña.</p></div>';
+  const t = INV_TIPOS.find(x => x[0] === tipo);
+  const insumo = tipo === 'INSUMO';
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">Inventario · ${a === 'BARRA' ? 'Barra' : 'Cocina'} · ${esc(p[0])}</div>
+      <h2 id="dtitle" style="font-size:26px">${esc(p[2])}</h2>
+      <div style="margin-top:6px;color:var(--muted);font-size:13.5px">${esc([Tt(p[1]), p[7], p[8], p[9] != null ? Q(p[9]) : ''].filter(Boolean).join(' · '))}</div>
+    </div>
+    <div class="dbody">
+      <div>
+        <div class="sec-t" style="margin-top:0">Qué es</div>
+        <div class="simrow" style="flex-wrap:wrap">${INV_TIPOS.map(x =>
+          `<button class="chip" data-invtipo="${x[0]}" aria-pressed="${x[0] === tipo}">${x[1]}</button>`).join('')}</div>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">${t ? esc(t[1] + ': ' + t[2]) + '.' : 'Elegí uno.'}</p>
+      </div>
+      ${insumo ? `<div>
+        <div class="sec-t">En el Banco de Datos</div>
+        <div class="simrow" style="flex-wrap:wrap">
+          <button class="chip" data-invcrear="NO" aria-pressed="${!crear}">Ya está en el Banco</button>
+          <button class="chip" data-invcrear="SI" aria-pressed="${!!crear}">No está: crearlo</button>
+        </div>
+        ${crear ? `<div class="simrow" style="flex-wrap:wrap;margin-top:10px">
+            <input id="invc-ur" list="invc-unidades" placeholder="Unidad de receta (g, ml, unidad)" style="width:230px" autocomplete="off">
+            <input id="invc-cont" type="number" step="any" min="0" placeholder="Contenido (si es envase)" style="width:190px">
+          </div>
+          <datalist id="invc-unidades"><option value="g"><option value="ml"><option value="unidad"></datalist>
+          <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Se crea en el Banco de ${invNomArea(a)} como <strong>${esc(p[2])}</strong>, a ${p[9] != null ? Q(p[9]) : '— (falta el precio)'} por ${esc(p[7] || '— (falta la presentación)')}${p[8] ? ', de ' + esc(p[8]) : ''}. Aparece en Productos y se puede usar en recetas. <strong>Contenido</strong> solo con envases: cuántos g o ml trae.</p>`
+        : `<div class="simrow" style="margin-top:10px"><input id="invc-banco" list="invc-bancos" value="${esc(p[5] || '')}" placeholder="Buscar en el Banco de ${invNomArea(a)}" style="width:280px" autocomplete="off"></div>
+          <datalist id="invc-bancos">${I.filter(x => x.area === a).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+          <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Si el producto del Banco no tiene proveedor, toma el del inventario.</p>`}
+      </div>` : ''}
+      <div><button class="chip" data-invclasok="1" style="${invBtnVerde};padding:8px 20px"${tipo ? '' : ' disabled'}>Guardar</button></div>
+    </div>`;
+}
+/* Repinta el panel conservando lo escrito en sus campos. */
+function invRepintarClas(){
+  const guardar = ['invc-banco', 'invc-ur', 'invc-cont'].map(id => { const el = document.getElementById(id); return [id, el ? el.value : null]; });
+  abrir(invClasHTML());
+  guardar.forEach(([id, v]) => { const el = document.getElementById(id); if(el && v != null) el.value = v; });
+}
+
+/* Lo que contesta el Banco cuando NO creo: pregunta por parecidos o pide el contenido.
+   Devuelve true si hay que reintentar confirmando. */
+function invPreguntaBanco(b, nombre){
+  if(b.requiereContenido){
+    alert('Falta el contenido.\n\n' + (b.motivo || '') +
+      (b.tipicos && b.tipicos.length ? '\n\nEn el Banco, por ejemplo:\n' + b.tipicos.slice(0, 5).map(x => '  · ' + x.producto + ': ' + x.contenido).join('\n') : ''));
+    return false;
+  }
+  if(b.similares && b.similares.length){
+    return confirm('En el Banco de Datos ya hay algo parecido a "' + nombre + '":\n\n' +
+      b.similares.slice(0, 8).map(s => '  · ' + s.producto + '  (' + s.similitud + '%, Q' + s.precio + ' / ' + s.unidad + ')').join('\n') +
+      '\n\n¿Crearlo igual?\n\nSi es el mismo producto, cancelá y elegí "Ya está en el Banco".');
+  }
+  alert('No se creó en el Banco: ' + (b.motivo || 'sin motivo'));
+  return false;
+}
+
+/* ---------- precios al Banco (entrega 3) ----------
+   Al cerrar el mes, un precio que cambio menos de 10% entra solo al Banco; uno de 10%
+   o mas espera aca a que Juanma lo apruebe. Todo queda en PRECIOS_POR_APROBAR (hoja de
+   costeo) y cada tanda aplicada es una corrida de SYNC_PRECIOS, que se puede deshacer.
+   Los botones salen solo si el servidor dice esDueno; el candado real es invExigirDueno_. */
+function pedirPrecios(){
+  if(INVPRECIOS || invCargandoPrecios) return;
+  invCargandoPrecios = true;
+  google.script.run
+    .withSuccessHandler(function(res){
+      invCargandoPrecios = false;
+      INVPRECIOS = (res && res.ok) ? res.resultado : {error: (res && res.error) || 'sin respuesta del servidor'};
+      if(view === 'inventario') pintar();
+    })
+    .withFailureHandler(function(e){
+      invCargandoPrecios = false;
+      INVPRECIOS = {error: (e && e.message) || 'no se pudo leer'};
+      if(view === 'inventario') pintar();
+    })
+    .webInventarioPrecios(AUTH);
+}
+const invPct = p => p == null ? '—' : `<span style="color:${Math.abs(p) >= 10 ? 'var(--alto)' : 'var(--muted)'}">${p > 0 ? '+' : ''}${p}%</span>`;
+
+function invVistaPrecios(){
+  const d = INVPRECIOS;
+  if(!d){ pedirPrecios(); return '<p class="empty">Leyendo los precios…</p>'; }
+  if(d.error) return `<p class="empty">No se pudo leer: ${esc(d.error)}<br><button class="chip" data-invpreciosre="1" style="margin-top:12px">Reintentar</button></p>`;
+  const jefe = d.esDueno, pend = d.pendientes;
+  return `<p class="nota" style="margin:0 0 12px">Al cerrar un mes, los precios de los insumos conectados pasan al Banco de Datos y de ahí a las recetas. Si cambiaron <strong>menos de 10%</strong> entran solos; si cambiaron <strong>10% o más</strong> esperan acá a que Juanma los apruebe. Preparados, reventa y limpieza nunca van al Banco. Cada tanda aplicada se puede deshacer.</p>
+    <div class="sec-t">Por aprobar · ${pend.length}</div>
+    ${pend.length ? `${jefe && pend.length > 1 ? `<div class="toolbar"><button class="chip" data-invaprobartodos="1" style="${invBtnVerde}">Aprobar los ${pend.length}</button></div>` : ''}
+      <div class="tablewrap"><table>
+      <thead><tr><th>Producto</th><th>Cierre</th><th class="r">Banco hoy</th><th class="r">Inventario</th><th class="r">Cambio</th>${jefe ? '<th></th>' : ''}</tr></thead>
+      <tbody>${pend.map(x => `<tr>
+        <td>${esc(x.producto)}<div style="color:var(--muted);font-size:11.5px">${x.area === 'BARRA' ? 'Barra' : 'Cocina'} · por ${esc(x.unidad || '—')}</div></td>
+        <td>${x.mes ? invMesNombre(x.mes) : '—'}<div style="color:var(--muted);font-size:11.5px">${esc(x.propuso || '')}</div></td>
+        <td class="r">${Q(x.anterior)}</td><td class="r">${Q(x.nuevo)}</td><td class="r">${invPct(x.pct)}</td>
+        ${jefe ? `<td class="r" style="white-space:nowrap"><button class="chip" data-invaprobar="${x.fila}" style="${invBtnVerde}">Aprobar</button> <button class="chip" data-invrechazar="${x.fila}">Rechazar</button></td>` : ''}
+      </tr>`).join('')}</tbody></table></div>
+      ${jefe ? '' : '<p class="nota">Los aprueba Juanma.</p>'}`
+    : '<p class="empty" style="padding:20px">No hay precios esperando aprobación.</p>'}
+    <div class="sec-t">Tandas aplicadas al Banco</div>
+    ${d.corridas.length ? `<div class="tablewrap"><table>
+      <thead><tr><th>Cuándo</th><th>Qué</th><th class="r">Productos</th><th>Estado</th>${jefe ? '<th></th>' : ''}</tr></thead>
+      <tbody>${d.corridas.map(k => `<tr>
+        <td>${esc(k.fecha)}</td>
+        <td>${esc(k.origen)}<div style="color:var(--muted);font-size:11.5px">${esc(k.productos.slice(0, 6).join(', '))}${k.productos.length > 6 ? '…' : ''}</div></td>
+        <td class="r">${k.productos.length}</td>
+        <td>${k.vigentes > 0 ? `${k.vigentes} en el Banco` : '<span style="color:var(--muted)">deshecha</span>'}</td>
+        ${jefe ? `<td class="r">${k.vigentes > 0 ? `<button class="chip" data-invdeshacer="${esc(k.clave)}">Deshacer</button>` : ''}</td>` : ''}
+      </tr>`).join('')}</tbody></table></div>`
+    : '<p class="empty" style="padding:20px">Todavía no se aplicó ningún precio desde el inventario.</p>'}`;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('input', e => {
+  const el = e.target;
+  if(!el || !el.dataset || !el.dataset.invcampo) return;
+  const b = invBorr[el.dataset.invkey] || (invBorr[el.dataset.invkey] = {});
+  (b[el.dataset.invid] || (b[el.dataset.invid] = {}))[el.dataset.invcampo] = el.value;
+  /* Sin repintar (se perderia el foco): solo el rotulo del boton. */
+  const a = invArea(), d = INVDATOS[a], mes = el.dataset.invkey.split('|')[1];
+  const m = d && d.meses && d.meses.find(x => x.mes === mes);
+  const n = m ? invCambios(a, m).length : 0;
+  document.querySelectorAll('[data-invguardar]').forEach(x => {
+    x.disabled = !n; x.textContent = n ? `Guardar ${n} producto${n === 1 ? '' : 's'}` : 'Sin cambios';
+  });
+});
+window.addEventListener('beforeunload', e => { if(!invSaliendo && invHayPendientes()){ e.preventDefault(); e.returnValue = ''; } });
+
+/* Alta y clasificar pueden recargar la pagina: lo escrito sin guardar se perderia. */
+function invSinPendientes(){
+  if(!invHayPendientes()) return true;
+  alert('Tenés cambios del conteo sin guardar. Guardalos o descartalos primero: esta acción puede recargar la página.');
+  return false;
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  const a = invArea();
+  if(t.dataset.invsub){ invSub = t.dataset.invsub; invAviso = ''; pintar(); return; }
+  if(t.dataset.invmes){ invMesSel[a] = t.dataset.invmes; invAviso = ''; pintar(); return; }
+  if(t.dataset.invreintentar){ invRecargar(a); return; }
+  if(t.dataset.invsin){ invSoloSin = !invSoloSin; pintar(); return; }
+  if(t.dataset.invaltatoggle){ invAltaOn = !invAltaOn; pintar(); return; }
+  if(t.dataset.invdescartar){
+    const d = INVDATOS[a], mes = invMesSel[a] || (d && d.meses.length && d.meses[d.meses.length - 1].mes);
+    if(!confirm('¿Descartar lo que escribiste y no guardaste?')) return;
+    delete invBorr[a + '|' + mes]; pintar(); return;
+  }
+
+  // --- abrir el conteo del mes siguiente
+  if(t.dataset.invabrir){
+    const d = INVDATOS[a], ult = d.meses[d.meses.length - 1], sig = invMesSig(ult.mes);
+    const activos = d.productos.filter(p => p[10] !== 'NO').length;
+    if(!confirm(`¿Abrir el conteo de ${invMesNombre(sig)} en ${invNomArea(a)}?\n\nSe copian los productos activos de ${invMesNombre(ult.mes).toLowerCase()} (${activos} en el catálogo) con su precio y su proveedor. Las existencias quedan vacías para contar.`)) return;
+    t.disabled = true; t.textContent = 'Abriendo…';
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se abrió: ' + ((res && res.error) || 'sin respuesta')); pintar(); return; }
+        invMesSel[a] = res.resultado.mes; invSub = 'mes';
+        invAviso = `Listo: el conteo de ${invMesNombre(res.resultado.mes)} está abierto con ${res.resultado.productos} productos.`;
+        invRecargar(a);
+      })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo abrir: ' + err.message); pintar(); })
+      .webInventarioAbrirMes(AUTH, a);
+    return;
+  }
+
+  if(t.dataset.invpreciosre){ INVPRECIOS = null; pintar(); return; }
+
+  // --- cerrar el mes (entrega 3)
+  if(t.dataset.invcerrar){
+    const mes = t.dataset.invcerrar, d = INVDATOS[a], m = d.meses.find(x => x.mes === mes);
+    if(!m) return;
+    if(invHayPendientes()){ alert('Tenés cambios sin guardar. Guardalos antes de cerrar el mes.'); return; }
+    const sin = m.filas.filter(f => f[7] == null).length;
+    if(!confirm(`¿Cerrar ${invMesNombre(mes)} en ${invNomArea(a)}?\n\n` +
+      `· El mes queda congelado: ya no se edita.\n` +
+      `· Los precios de los insumos conectados que cambiaron menos de 10% pasan al Banco de Datos y a las recetas.\n` +
+      `· Los que cambiaron 10% o más esperan la aprobación de Juanma.\n` +
+      `· Se abre el conteo de ${invMesNombre(invMesSig(mes))}.` +
+      (sin ? `\n\nOJO: hay ${sin} producto${sin === 1 ? '' : 's'} sin contar.` : ''))) return;
+    const mandar = function(ceros){
+      t.disabled = true; t.textContent = 'Cerrando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Cerrar';
+          if(!res || !res.ok){ alert('No se cerró: ' + ((res && res.error) || 'sin respuesta')); return; }
+          const r = res.resultado;
+          if(!r.cerrado){
+            if(confirm(`Hay ${r.sinContar.length} producto${r.sinContar.length === 1 ? '' : 's'} sin contar:\n\n` +
+                       r.sinContar.slice(0, 15).map(n => '  · ' + n).join('\n') + (r.sinContar.length > 15 ? '\n  · …' : '') +
+                       '\n\n¿Cerrar poniéndolos en 0?\n\nSi en realidad hay existencia, cancelá y contalos primero.')) mandar(true);
+            return;
+          }
+          const partes = [`${invMesNombre(r.mes)} cerrado en ${Q(r.total)}.`];
+          partes.push(r.aplicados.length ? `${r.aplicados.length} precio${r.aplicados.length === 1 ? '' : 's'} al Banco.` : 'Ningún precio cambió lo suficiente para ir al Banco.');
+          if(r.porAprobar.length) partes.push(`${r.porAprobar.length} esperan aprobación de Juanma.`);
+          if(r.sinConectar) partes.push(`${r.sinConectar} insumo${r.sinConectar === 1 ? '' : 's'} sin conectar no llevaron precio.`);
+          if(r.siguiente) partes.push(`${invMesNombre(r.siguiente)} abierto.`);
+          const detalle = [];
+          if(r.porAprobar.length) detalle.push('Esperan aprobación (cambiaron 10% o más):\n' +
+            r.porAprobar.map(x => `  · ${x.producto}: Q${x.de} → Q${x.a} (${x.pct > 0 ? '+' : ''}${x.pct}%)`).join('\n'));
+          if(r.unidadDistinta.length) detalle.push('No se tocaron: la presentación del inventario no es la unidad de compra del Banco:\n' +
+            r.unidadDistinta.slice(0, 10).map(x => `  · ${x.producto}: Banco ${x.enBanco}, inventario ${x.enInventario}`).join('\n') +
+            (r.unidadDistinta.length > 10 ? '\n  · …' : ''));
+          if(r.otros.length) detalle.push('Tampoco se tocaron:\n' + r.otros.slice(0, 10).map(x => '  · ' + x).join('\n'));
+          if(detalle.length) alert(partes.join(' ') + '\n\n' + detalle.join('\n\n'));
+          invMesSel[a] = r.mes; INVPRECIOS = null;
+          invDespues(a, r, partes.join(' '));
+        })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Cerrar'; alert('No se pudo cerrar: ' + err.message); })
+        .webInventarioCerrarMes(AUTH, a, mes, ceros);
+    };
+    mandar(false);
+    return;
+  }
+
+  // --- aprobar / rechazar precios (solo dueno; el servidor lo vuelve a exigir)
+  if(t.dataset.invaprobar || t.dataset.invrechazar || t.dataset.invaprobartodos){
+    if(!INVPRECIOS || !INVPRECIOS.pendientes) return;
+    const aprobar = !t.dataset.invrechazar;
+    const filas = t.dataset.invaprobartodos ? INVPRECIOS.pendientes.map(x => x.fila) : [+(t.dataset.invaprobar || t.dataset.invrechazar)];
+    const lista = INVPRECIOS.pendientes.filter(x => filas.indexOf(x.fila) !== -1)
+      .map(x => `  · ${x.producto}: Q${x.anterior} → Q${x.nuevo} (${x.pct > 0 ? '+' : ''}${x.pct}%)`);
+    if(!confirm((aprobar ? '¿Aprobar y llevar al Banco de Datos?\n\n' : '¿Rechazar? El Banco se queda con el precio que tiene.\n\n') +
+                lista.join('\n') + (aprobar ? '\n\nLas recetas se recalculan con el precio nuevo.' : ''))) return;
+    if(aprobar && !invSinPendientes()) return;
+    t.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se pudo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        const r = res.resultado; INVPRECIOS = null;
+        if(r.saltados.length) alert('Algunos no se aplicaron:\n\n' + r.saltados.map(x => '  · ' + x).join('\n'));
+        invDespues(a, r, aprobar ? `${r.aprobados} precio${r.aprobados === 1 ? '' : 's'} aprobado${r.aprobados === 1 ? '' : 's'} y en el Banco.`
+                                 : `${r.rechazados} precio${r.rechazados === 1 ? '' : 's'} rechazado${r.rechazados === 1 ? '' : 's'}.`);
+      })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo: ' + err.message); })
+      .webInventarioResolverPrecios(AUTH, filas, aprobar);
+    return;
+  }
+
+  // --- deshacer una tanda (solo dueno)
+  if(t.dataset.invdeshacer){
+    if(!confirm('¿Deshacer esta tanda?\n\nCada producto vuelve en el Banco de Datos al precio que tenía antes. Si alguien cambió ese precio después, ese producto no se toca.')) return;
+    if(!invSinPendientes()) return;
+    t.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se deshizo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        const r = res.resultado; INVPRECIOS = null;
+        const salt = (r.plan || []).filter(p => p.accion).map(p => '  · ' + p.accion);
+        if(salt.length) alert('Algunos no se devolvieron:\n\n' + salt.join('\n'));
+        invDespues(a, {recetario: r.revertidos > 0}, `Tanda deshecha: ${r.revertidos} precio${r.revertidos === 1 ? '' : 's'} devuelto${r.revertidos === 1 ? '' : 's'} en el Banco.`);
+      })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se deshizo: ' + err.message); })
+      .webInventarioDeshacerPrecios(AUTH, t.dataset.invdeshacer);
+    return;
+  }
+
+  // --- guardar existencias, precios y proveedores
+  if(t.dataset.invguardar){
+    const d = INVDATOS[a], m = d.meses.find(x => x.mes === (invMesSel[a] || d.meses[d.meses.length - 1].mes));
+    const cambios = invCambios(a, m);
+    if(!cambios.length) return;
+    const malos = cambios.filter(x => (typeof x.existencia === 'number' && (isNaN(x.existencia) || x.existencia < 0)) ||
+                                      (typeof x.precio === 'number' && (isNaN(x.precio) || x.precio <= 0)));
+    if(malos.length){ alert('Revisá estos productos, tienen un número que no sirve:\n\n' + malos.map(x => '  · ' + x._prod).join('\n') + '\n\nLa existencia no puede ser negativa y el precio tiene que ser mayor que cero.'); return; }
+    if(!invConfirmarProvs(cambios.map(x => x.proveedor))) return;
+    const envio = cambios.map(x => { const y = Object.assign({}, x); delete y._prod; return y; });
+    document.querySelectorAll('[data-invguardar]').forEach(x => { x.disabled = true; x.textContent = 'Guardando…'; });
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ alert('No se guardó: ' + ((res && res.error) || 'sin respuesta')); pintar(); return; }
+        const r = res.resultado;
+        delete invBorr[a + '|' + m.mes];
+        const ecos = invEcos(r);
+        invDespues(a, r, `Guardado: ${r.productos} producto${r.productos === 1 ? '' : 's'} de ${invMesNombre(m.mes)}.${ecos ? ' ' + ecos + '.' : ''}`);
+      })
+      .withFailureHandler(function(err){ alert('No se pudo guardar: ' + err.message + '\n\nLo que escribiste sigue en pantalla.'); pintar(); })
+      .webInventarioGuardar(AUTH, a, m.mes, envio);
+    return;
+  }
+
+  // --- alta de producto. Parecidos = pregunta, no error (mismo flujo que el Banco).
+  if(t.dataset.invalta){
+    if(!invSinPendientes()) return;
+    const val = id => { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
+    const datos = { producto: val('inva-prod'), categoria: val('inva-cat'), tipo: val('inva-tipo'),
+                    bloque: val('inva-bloque'), presentacion: val('inva-pres'), proveedor: val('inva-prov'),
+                    precio: val('inva-precio'), banco: val('inva-banco'), unidadReceta: val('inva-ur'), contenido: val('inva-cont') };
+    if(!datos.producto){ alert('Falta el nombre del producto.'); return; }
+    if(!datos.categoria){ alert('Falta la categoría.'); return; }
+    if(datos.tipo !== 'INSUMO' && (datos.banco || datos.unidadReceta)){ alert('Solo un insumo va al Banco de Datos. Borrá los campos de "Si es insumo" o cambiá el tipo a Insumo.'); return; }
+    if(datos.tipo === 'INSUMO' && !datos.banco){
+      if(!datos.unidadReceta){ alert('Este insumo no está en el Banco de Datos, así que se crea ahí. Falta la unidad de receta (g, ml o unidad).\n\nSi ya existe en el Banco, elegilo en "Producto del Banco".'); return; }
+      if(!datos.presentacion){ alert('Falta la presentación: en el Banco es la unidad de compra (libra, 750 ml, caja…).'); return; }
+      if(!(parseFloat(datos.precio) > 0)){ alert('Para crearlo en el Banco hace falta el precio.'); return; }
+    }
+    if(!invConfirmarProvs([datos.proveedor])) return;
+    const mandar = function(confirmar, confirmarBanco){
+      t.disabled = true; t.textContent = 'Agregando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Agregar';
+          if(!res || !res.ok){ alert('No se agregó: ' + ((res && res.error) || 'sin respuesta')); return; }
+          const r = res.resultado;
+          if(!r.creado && r.banco){ if(invPreguntaBanco(r.banco, datos.producto)) mandar(confirmar, true); return; }
+          if(!r.creado){
+            const lista = r.similares.map(s => '  · ' + s.producto + '  (' + s.id + (s.activo ? '' : ', inactivo') + ', ' + s.similitud + '%)').join('\n');
+            if(confirm('Ya hay algo parecido en el catálogo del inventario:\n\n' + lista + '\n\n¿Agregar "' + datos.producto + '" igual?\n\nSi es el mismo producto, cancelá: si está inactivo, reactivalo desde Catálogo.')) mandar(true, confirmarBanco);
+            return;
+          }
+          invAltaOn = false;
+          const ecos = invEcos(r);
+          invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) al conteo de ${invMesNombre(r.mes)}.${ecos ? ' ' + ecos + '.' : ''}`);
+        })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + err.message); })
+        .webInventarioAlta(AUTH, a, Object.assign({}, datos, {confirmarBanco: !!confirmarBanco}), confirmar);
+    };
+    mandar(false, false);
+    return;
+  }
+
+  // --- inactivar / reactivar, avisando en que recetas esta
+  if(t.dataset.invactivo){
+    const d = INVDATOS[a], p = d.productos.find(x => x[0] === t.dataset.invactivo), activar = t.dataset.invactivar === 'SI';
+    if(!p) return;
+    let msg;
+    if(activar) msg = `¿Reactivar ${p[2]}?\n\nVuelve a entrar en el conteo abierto, si hay uno.`;
+    else {
+      const usos = invUsos(a, p);
+      msg = `¿Inactivar ${p[2]}?\n\nNo entra en los próximos conteos y sale del conteo abierto si todavía no se contó.` +
+            (usos.length ? `\n\nOJO: su producto del Banco (${p[5]}) se usa en ${usos.length} receta${usos.length === 1 ? '' : 's'}:\n` +
+                           usos.slice(0, 12).map(n => '  · ' + n).join('\n') + (usos.length > 12 ? '\n  · …' : '') +
+                           '\n\nEl inventario deja de contarlo, pero las recetas siguen usando el precio que tiene hoy el Banco.' : '');
+    }
+    if(!confirm(msg)) return;
+    t.disabled = true;
+    google.script.run
+      .withSuccessHandler(function(res){
+        if(!res || !res.ok){ t.disabled = false; alert('No se cambió: ' + ((res && res.error) || 'sin respuesta')); return; }
+        invAviso = `${p[2]}: ${activar ? 'reactivado' : 'inactivado'}${res.resultado && res.resultado.nota ? ' · ' + res.resultado.nota : ''}.`;
+        invRecargar(a);
+      })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo cambiar: ' + err.message); })
+      .webInventarioActivo(AUTH, a, p[0], activar);
+    return;
+  }
+
+  // --- clasificar / conectar
+  if(t.dataset.invclas){
+    const p = INVDATOS[a].productos.find(x => x[0] === t.dataset.invclas);
+    if(!p) return;
+    invClas = {a, id: p[0], tipo: INV_TIPOS.some(x => x[0] === p[3]) ? p[3] : 'INSUMO', crear: false};
+    abrir(invClasHTML()); return;
+  }
+  if(t.dataset.invtipo && invClas){ invClas.tipo = t.dataset.invtipo; invRepintarClas(); return; }
+  if(t.dataset.invcrear && invClas){ invClas.crear = t.dataset.invcrear === 'SI'; invRepintarClas(); return; }
+  if(t.dataset.invclasok && invClas){
+    if(!invSinPendientes()) return;
+    const {a: ca, id, tipo, crear} = invClas;
+    const v = id2 => { const el = document.getElementById(id2); return el ? el.value.trim() : ''; };
+    const p = INVDATOS[ca].productos.find(x => x[0] === id);
+    const banco = tipo === 'INSUMO' && !crear ? v('invc-banco') : '';
+    let datosCrear = null;
+    if(tipo === 'INSUMO' && crear){
+      datosCrear = {unidadReceta: v('invc-ur'), contenido: v('invc-cont'), confirmar: false};
+      if(!datosCrear.unidadReceta){ alert('Falta la unidad de receta (g, ml o unidad).'); return; }
+      if(p && !(p[9] > 0)){ alert('Este producto no tiene precio en el catálogo. Cargalo en el conteo y guardá antes de crearlo en el Banco.'); return; }
+      if(p && !p[7]){ alert('Este producto no tiene presentación, que en el Banco es la unidad de compra. Sin eso no se puede crear.'); return; }
+      if(p && !invConfirmarProvs([p[8]])) return;
+    }
+    if(tipo === 'INSUMO' && !crear && !banco){ alert('Elegí el producto del Banco de Datos con el que se conecta, o marcá "No está: crearlo".'); return; }
+    const mandar = function(){
+      t.disabled = true; t.textContent = 'Guardando…';
+      google.script.run
+        .withSuccessHandler(function(res){
+          t.disabled = false; t.textContent = 'Guardar';
+          if(!res || !res.ok){ alert('No se guardó: ' + ((res && res.error) || 'sin respuesta')); return; }
+          const r = res.resultado;
+          if(!r.cambiado && r.banco && typeof r.banco === 'object'){
+            if(invPreguntaBanco(r.banco, p ? p[2] : id)){ datosCrear.confirmar = true; mandar(); }
+            return;
+          }
+          const ecos = invEcos(r);
+          const aviso = `${p ? p[2] : id}: ${r.cambiado ? (tipo === 'INSUMO' ? 'conectado con ' + r.banco : 'marcado como ' + tipo.toLowerCase()) : 'sin cambios'}.${ecos ? ' ' + ecos + '.' : ''}`;
+          invClas = null; cerrar();
+          invDespues(ca, r, aviso);
+        })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + err.message); })
+        .webInventarioClasificar(AUTH, ca, id, tipo, banco, datosCrear);
+    };
+    mandar();
+    return;
+  }
+});
+

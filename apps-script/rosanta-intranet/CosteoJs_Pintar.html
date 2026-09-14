@@ -69,6 +69,10 @@ function pintar(){
   if(view==='recetas')     document.getElementById('v-recetas').innerHTML = vistaRecetas();
   if(view==='insumos')     document.getElementById('v-insumos').innerHTML = vistaInsumos();
   if(view==='proveedores') document.getElementById('v-proveedores').innerHTML = vistaProveedores();
+  if(view==='inventario'){
+    document.getElementById('v-inventario').innerHTML = vistaInventario();
+    pedirInventario(invArea());   // no hace nada si ya lo tiene o si ya lo esta pidiendo
+  }
   if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
   if(view==='inicio'){
     document.getElementById('v-inicio').innerHTML = vistaInicio();
