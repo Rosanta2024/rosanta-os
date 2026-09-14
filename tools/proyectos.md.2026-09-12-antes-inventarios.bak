@@ -64,27 +64,6 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 ---
 
-
-### Inventarios en Profit OS (12-sep-2026)
-
-**Fase 1 hecha.** Dos hojas de Rosanta (`restaurante@rosanta.rest`) en `Inventarios 2026`, con una pestaña por mes (AAAA-MM) y el catálogo PRODUCTOS:
-- `Rosanta_Inventario_Cocina` — `1m9wAMdBbenaujlISI-l64CIfy7eib61xVqy3z7SpOuE` — mayo Q8,536.75 · junio Q6,914.83 · julio Q7,684.21 · 216 productos.
-- `Rosanta_Inventario_Barra` — `1V8fl-6vjFRnq42gDOH8trNluT-2NJ32I7LguEa-yImI` — enero a agosto · agosto Q15,401.86 · 93 productos.
-- Propiedades de script: `INV_COCINA_SHEET_ID`, `INV_BARRA_SHEET_ID`. Las `INVENTARIO_*` viejas siguen apuntando a los archivos originales.
-- Cada mes cuadra al centavo contra el total de Jeffry y de José. Junio de cocina salió del informe contable de junio. Botran oro de agosto se corrigió de 1000% a 100% (la columna tenía la medida en ml).
-
-**Decisiones de Juanma:** una hoja por área, de Rosanta (la de barra vivía en el Gmail personal de José) · precios al Banco automáticos si cambian menos de 10%, con aprobación si cambian más · tres tipos: INSUMO (su precio alimenta el Banco), PREPARADO (lo cuenta el inventario, el precio lo da la receta), REVENTA/LIMPIEZA (solo valorizan) · quitar un producto que se usa en recetas lo deja inactivo · los dudosos se vinculan desde la intranet, y los vincula quien conoce el producto · solo cierre mensual (el control diario de cerveza y el semanal siguen en la hoja de José) · el cierre del 2 de febrero es enero · la pimienta negra de julio queda como en el archivo de Jeffry.
-
-**Pendiente:** fase 2, la pestaña en Profit OS (2 o 3 sesiones) · fase 3, precios al Banco · preguntarle a José por Xibal Akbal (310% en abril y en mayo) y Colonial (480% en abril). Detalle en `apps-script/_informes/2026-09-12_Inventarios_Fase1_migracion.md`.
-
-**Reglas que salieron de este trabajo:**
-1. **`read_file_content` del conector de Drive recorta pestañas grandes sin avisar** (devolvió 190 de 216 productos). Un faltante leído por el conector se confirma abriendo la hoja, por ejemplo con `#gid=…&range=A214:F219` en la URL, que solo navega.
-2. **Sheets convierte el texto "70%" en el número 0.7.** Se ve como porcentaje pero se lee como fracción. Todo resguardo o lector de conteos de barra tiene que contemplarlo.
-3. **La existencia sale del monto** (monto ÷ precio). En cocina el monto a veces es conteo × precio y a veces libras × precio; en barra la botella va en %. El conteo original se guarda al lado.
-4. **Umbral de parecido para vincular solo: 0.85, no 0.82.** Con 0.82, "Aceite de albahaca" terminaba vinculado a Albahaca.
-5. **Migrar en dos pasos:** primero en seco (arma, cuadra contra la fuente y deja un informe .json en Drive que se lee desde la carpeta sincronizada) y después la corrida real, que no escribe si algo no cuadra y no duplica si se corre dos veces.
-6. **Antes de apretar Ejecutar en el editor, verificar en pantalla qué función está elegida.** El clic en el menú a veces no cambia la selección, y la corrida en seco y la real están una al lado de la otra.
-
 ## §3. Intranet / ERP
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.

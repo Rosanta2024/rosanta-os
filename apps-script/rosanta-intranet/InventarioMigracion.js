@@ -339,7 +339,8 @@ function invMigBloquesCocina_(d, segunda, segundaAlt) {
 function invMigGrupoCocina_(categoria) {
   var c = normalizar_(categoria);
   if (c.indexOf('produccion rosanta') === 0) return 'PREPARADO';
-  if (c.indexOf('doorways') === 0) return 'LIMPIEZA';
+  // el informe contable la llama "INSUMOS DE LIMPIEZA (DOORWAYS/VIJUSA)"
+  if (c.indexOf('doorways') !== -1 || c.indexOf('insumos de limpieza') === 0) return 'LIMPIEZA';
   return 'GENERAL';
 }
 
@@ -538,4 +539,176 @@ function invMigNum_(v) {
   else if (coma > -1) s = s.replace(',', '.');
   var n = Number(s);
   return isNaN(n) ? null : n;
+}
+
+/* ======================================================================
+ * AGREGADOS DEL 12-SEP-2026, despues de la migracion (decisiones de Juanma)
+ *
+ *   · JUNIO DE COCINA. "FIN JUNIO 26" no esta en la carpeta de cocina, pero el informe
+ *     contable de junio (hoja nativa Rosanta_Inventarios_Cierre_Junio_2026) trae el
+ *     detalle: producto, existencias, precio y monto por categoria. Su total, Q6,914.83,
+ *     coincide con el artefacto de inventarios. No trae proveedor ni presentacion: salen
+ *     del catalogo PRODUCTOS.
+ *   · BOTRAN ORO, AGOSTO. En la hoja de Jose la columna "% en existencia" dice 1000 —
+ *     el tamano de la botella en ml—, cuando julio decia 100. Se corrige a 100% (Q75) y
+ *     la celda de conteo deja escrito que se corrigio.
+ * ====================================================================== */
+
+INV_MIG.junioCocina = { mes: '2026-06', id: '1fPpls09CpKaJAwmVVxv5dwwy3rHMibqAKkNzmCKlEiw', hoja: 'Cocina' };
+// nombres del informe contable -> los del catalogo, para que junio se filtre igual que mayo y julio
+INV_MIG.categoriasJunio = {
+  'carnes': 'CARNES', 'mariscos': 'MARISCOS', 'aves y lacteos': 'AVES Y LACTEOS',
+  'abarrotes': 'ABARROTES', 'verduras y especias': 'VERDURAS Y ESPECIAS',
+  'produccion rosanta (elaborados)': 'PRODUCCION ROSANTA',
+  'insumos de limpieza (doorways/vijusa)': 'DOORWAYS-VIJUASA'
+};
+
+function migrarJunioCocinaEnSeco() { return invMigJunio_(false); }
+function migrarJunioCocina() { return invMigJunio_(true); }
+
+function invMigJunio_(escribir) {
+  invMigExigirDueno_();
+  var cfg = INV_MIG.junioCocina;
+  var idHoja = PropertiesService.getScriptProperties().getProperty(INV_MIG.propiedad.COCINA);
+  if (!idHoja) throw new Error('Todavia no existe la hoja de cocina (' + INV_MIG.propiedad.COCINA + ').');
+  var ss = SpreadsheetApp.openById(idHoja);
+  if (ss.getSheetByName(cfg.mes)) throw new Error('La pestana ' + cfg.mes + ' ya existe en la hoja de cocina: no se toca.');
+  var julio = ss.getSheetByName('2026-07');
+  var fuente = SpreadsheetApp.openById(cfg.id).getSheetByName(cfg.hoja);
+  if (!fuente) throw new Error('El informe de junio no tiene la pestana "' + cfg.hoja + '".');
+
+  // --- leer el informe: encabezado "<CATEGORIA> | Existencias | Precio | Monto", filas, "Subtotal ...", "TOTAL COCINA"
+  var d = fuente.getDataRange().getValues();
+  var filas = [], bloques = {}, cols = null, categoria = '', total = null, errores = [];
+  for (var i = 0; i < d.length; i++) {
+    var jEx = -1;
+    for (var j = 1; j < d[i].length; j++) if (normalizar_(d[i][j]) === 'existencias') { jEx = j; break; }
+    if (jEx > 0) {
+      var nc = normalizar_(d[i][jEx - 1]);
+      categoria = INV_MIG.categoriasJunio[nc] || String(d[i][jEx - 1]).trim();
+      if (!INV_MIG.categoriasJunio[nc]) errores.push('Categoria sin equivalencia: "' + d[i][jEx - 1] + '"');
+      cols = { prod: jEx - 1, ex: jEx, pre: jEx + 1, mon: jEx + 2 };
+      continue;
+    }
+    if (!cols) continue;
+    var etiqueta = String(d[i][cols.prod] == null ? '' : d[i][cols.prod]).trim(), en = normalizar_(etiqueta);
+    if (!etiqueta) continue;
+    if (en.indexOf('subtotal') === 0) { bloques[categoria] = { fuente: invMigNum_(d[i][cols.mon]) }; continue; }
+    if (en.indexOf('total cocina') === 0) { total = invMigNum_(d[i][cols.mon]); continue; }
+    var precio = invMigNum_(d[i][cols.pre]), monto = invMigNum_(d[i][cols.mon]), ex = invMigNum_(d[i][cols.ex]);
+    if (precio === null && monto === null && ex === null) continue;
+    filas.push({ bloque: categoria, categoria: categoria, producto: etiqueta, precio: precio,
+                 monto: monto || 0, existencia: precio > 0 ? (monto || 0) / precio : 0,
+                 conteo: ex === null ? '' : ex });
+  }
+  bloques._TOTAL = { fuente: total };
+
+  // --- catalogo: el mismo producto conserva su ID; lo que no esta, entra con el ID siguiente
+  var hp = ss.getSheetByName('PRODUCTOS'), cat = hp.getDataRange().getValues(), enc = cat[0];
+  var col = {}; enc.forEach(function (h, k) { col[normalizar_(h)] = k; });
+  var porClave = {}, maxId = 0;
+  for (i = 1; i < cat.length; i++) {
+    var id = String(cat[i][col['id']] || '');
+    if (!id) continue;
+    maxId = Math.max(maxId, Number(id.replace(/\D/g, '')) || 0);
+    var t = String(cat[i][col['tipo']]);
+    porClave[(t === 'PREPARADO' ? 'P' : t === 'LIMPIEZA' ? 'L' : 'G') + '|' + normalizar_(cat[i][col['producto']])] = cat[i];
+  }
+  var idx = null, nuevos = [];
+  filas.forEach(function (f) {
+    var g = invMigGrupoCocina_(f.categoria), clave = (g === 'PREPARADO' ? 'P' : g === 'LIMPIEZA' ? 'L' : 'G') + '|' + normalizar_(f.producto);
+    var c = porClave[clave];
+    if (c) {
+      f.id = c[col['id']]; f.tipo = c[col['tipo']];
+      f.presentacion = c[col['presentacion']] || ''; f.proveedor = c[col['proveedor']] || '';
+      return;
+    }
+    idx = idx || indexarBancos_();
+    var v = invMigVincular_(idx, 'COCINA', f.producto);
+    f.id = 'C-' + ('000' + (++maxId)).slice(-3); f.tipo = invMigTipo_('COCINA', f, v);
+    f.presentacion = ''; f.proveedor = '';
+    // no esta en julio, que es el ultimo mes: entra inactivo
+    var fila = enc.map(function () { return ''; });
+    fila[col['id']] = f.id; fila[col['area']] = 'COCINA'; fila[col['categoria']] = f.categoria;
+    fila[col['producto']] = f.producto; fila[col['tipo']] = f.tipo; fila[col['vinculo']] = v.como;
+    fila[col['producto en banco']] = v.banco; fila[col['parecido']] = v.parecido;
+    fila[col['precio actual']] = f.precio === null ? '' : f.precio; fila[col['activo']] = 'NO'; fila[col['ultimo mes']] = cfg.mes;
+    porClave[clave] = fila; nuevos.push(fila);
+  });
+
+  // --- cuadre
+  var cuadre = [], cuadra = total !== null && filas.length > 0;
+  Object.keys(bloques).forEach(function (b) {
+    var fte = bloques[b].fuente;
+    var calc = filas.reduce(function (s, f) { return s + (b === '_TOTAL' || f.bloque === b ? f.monto : 0); }, 0);
+    var dif = fte === null ? null : Math.round((calc - fte) * 100) / 100;
+    var ok = fte !== null && Math.abs(dif) <= INV_MIG.tolerancia;
+    if (!ok) cuadra = false;
+    cuadre.push({ bloque: b, fuente: fte, calculado: Math.round(calc * 100) / 100, diferencia: dif, ok: ok });
+  });
+  if (errores.length) cuadra = false;
+
+  var res = { ok: cuadra, escribir: escribir, mes: cfg.mes, filas: filas.length, nuevos: nuevos.length,
+              cuadre: cuadre, errores: errores, stamp: Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm') };
+  Logger.log('JUNIO COCINA %s: %s filas, %s productos nuevos, %s', escribir ? 'REAL' : 'EN SECO', filas.length, nuevos.length, cuadra ? 'CUADRA' : 'NO CUADRA');
+  cuadre.forEach(function (c) { Logger.log('   %s %s: fuente %s, calculado %s, diferencia %s', c.ok ? 'ok ' : 'MAL', c.bloque, c.fuente, c.calculado, c.diferencia); });
+  errores.forEach(function (e) { Logger.log('ERROR: %s', e); });
+  invMigCarpetaInforme_().createFile(res.stamp.replace(/[: -]/g, '') + '_junio_cocina_' + (escribir ? 'real' : 'en_seco') + '.json',
+                                     JSON.stringify({ res: res, filas: filas, nuevos: nuevos }, null, 1), MimeType.PLAIN_TEXT);
+  if (!escribir) return res;
+  if (!cuadra) throw new Error('Junio no cuadra: no se escribio nada.');
+
+  // --- escribir: la pestana va entre 2026-05 y 2026-07
+  var h = julio ? ss.insertSheet(cfg.mes, julio.getIndex() - 1) : ss.insertSheet(cfg.mes);
+  var ancho = INV_MIG.encabezadoMes.length;
+  var valores = filas.map(function (f) {
+    return [f.id, f.categoria, f.producto, f.tipo, f.presentacion, f.proveedor, f.precio === null ? '' : f.precio,
+            Math.round(f.existencia * 10000) / 10000, f.monto, f.conteo, f.bloque];
+  });
+  var suma = filas.reduce(function (s, f) { return s + f.monto; }, 0);
+  valores.push(['', '', 'TOTAL', '', '', '', '', '', Math.round(suma * 100) / 100, '', '']);
+  h.getRange(1, 1, 1, ancho).setValues([['CIERRE', cfg.mes, 'ESTADO', 'CERRADO', 'ORIGEN',
+    'Informe contable de junio (Rosanta_Inventarios_Cierre_Junio_2026)', 'MIGRADO', res.stamp, '', '', '']]);
+  invMigEscribir_(h, INV_MIG.encabezadoMes, valores, 3);
+  if (nuevos.length) hp.getRange(hp.getLastRow() + 1, 1, nuevos.length, enc.length).setValues(nuevos);
+  SpreadsheetApp.flush();
+  Logger.log('Pestana %s creada con %s filas; %s productos nuevos en PRODUCTOS.', cfg.mes, filas.length, nuevos.length);
+  return res;
+}
+
+function corregirBotranOroAgosto() {
+  invMigExigirDueno_();
+  var idHoja = PropertiesService.getScriptProperties().getProperty(INV_MIG.propiedad.BARRA);
+  if (!idHoja) throw new Error('Todavia no existe la hoja de barra.');
+  var h = SpreadsheetApp.openById(idHoja).getSheetByName('2026-08');
+  if (!h) throw new Error('La hoja de barra no tiene la pestana 2026-08.');
+  var d = h.getDataRange().getValues(), col = {};
+  d[2].forEach(function (x, k) { col[normalizar_(x)] = k; });   // el encabezado va en la fila 3
+  var fBotran = -1, fTotal = -1;
+  for (var i = 3; i < d.length; i++) {
+    var p = normalizar_(d[i][col['producto']]);
+    if (p === 'botran oro') fBotran = i;
+    if (p === 'total') fTotal = i;
+  }
+  if (fBotran < 0 || fTotal < 0) throw new Error('No encuentro la fila de Botran oro o la de TOTAL en 2026-08.');
+  var monto = invMigNum_(d[fBotran][col['monto']]), precio = invMigNum_(d[fBotran][col['precio']]);
+  var conteo = String(d[fBotran][col['conteo original']]);
+  // Sheets convierte el texto "1000%" en el NUMERO 10 con formato de porcentaje: en la celda
+  // se ve 1000%, pero getValues() devuelve 10. La primera corrida se nego por eso (bien).
+  var esMil = conteo.indexOf('1000') === 0 || invMigNum_(d[fBotran][col['conteo original']]) === 10;
+  // solo corrige el error que se vio: si ya no dice 1000% y Q750, alguien ya lo toco
+  if (monto !== 750 || !esMil || precio !== 75) {
+    throw new Error('Botran oro no esta como se esperaba (monto ' + monto + ', precio ' + precio + ', conteo "' + conteo + '"): no se toca.');
+  }
+  var antes = invMigNum_(d[fTotal][col['monto']]);
+  var suma = 0;
+  for (i = 3; i < fTotal; i++) suma += (i === fBotran ? 75 : (invMigNum_(d[i][col['monto']]) || 0));
+  suma = Math.round(suma * 100) / 100;
+  h.getRange(fBotran + 1, col['existencia'] + 1).setValue(1);
+  h.getRange(fBotran + 1, col['monto'] + 1).setValue(75);
+  h.getRange(fBotran + 1, col['conteo original'] + 1).setValue('1000% en la hoja de Jose (era la medida en ml); corregido a 100% por Juanma, 12-sep-2026');
+  h.getRange(fTotal + 1, col['monto'] + 1).setValue(suma);
+  SpreadsheetApp.flush();
+  Logger.log('Botran oro corregido: Q750 -> Q75. Total de agosto: Q%s -> Q%s', antes, suma);
+  return { antes: antes, despues: suma };
 }

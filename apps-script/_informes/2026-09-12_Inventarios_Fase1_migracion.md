@@ -110,3 +110,50 @@ servidor.
 - `InventarioMigracion.js` es de un solo uso. Cuando la fase 2 esté andando, se archiva (p143).
 - Desde que existan las hojas, la intranet debe leer de `INV_*_SHEET_ID` y no de la hoja de José.
   La hoja de José queda como histórico de consulta.
+
+## Agregados del 12 sep, después de revisar con Juanma
+
+**Existencias raras de barra (% de botella en la hoja de José):**
+
+| Producto | Ene | Feb | Mar | Abr | May | Jun | Jul | Ago |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Colonial (750 ml) | 80 | 120 | 220 | 480 | 300 | 220 | 150 | 85 |
+| Xibal Akbal (700 ml) | 0 | 80 | 140 | 310 | 310 | 290 | 265 | 165 |
+| Botran oro (1000 ml) | — | — | — | — | 175 | 175 | 100 | **1000** |
+
+Colonial y Xibal Akbal suben y bajan de forma pareja: parecen stock real (varias botellas compradas
+juntas). Queda para José si mayo de Xibal se contó o se copió de abril. **Botran oro en agosto era un
+error**: la columna de % tenía la medida en ml (1000). **Corregido a 100% (Q75) por decisión de Juanma**:
+el total de barra de agosto pasó de Q16,076.86 a **Q15,401.86**. Lo hizo `corregirBotranOroAgosto()`, y
+en la celda de conteo quedó escrito qué se corrigió.
+
+**El artefacto `rosanta-inventarios-may-jun-2026`** (del 19 de agosto) trae los montos de mayo, junio y
+julio. Contra lo migrado: barra coincide en los tres meses (±Q0.02) y cocina de mayo también. Julio de
+cocina da Q5 menos, y la diferencia es solo la pimienta negra (el archivo de Jeffry tiene Q80 en
+Verduras; el artefacto la parte en Q30 en Abarrotes y Q45 en Verduras). **Juanma decidió dejar lo del
+archivo de Jeffry**, que además es más nuevo (27 de agosto).
+
+**Junio de cocina, agregado.** Salió del informe contable de junio (hoja nativa
+`Rosanta_Inventarios_Cierre_Junio_2026`, `1fPpls09CpKaJAwmVVxv5dwwy3rHMibqAKkNzmCKlEiw`), con
+`migrarJunioCocina()`: 216 filas, 0 productos nuevos (todos existían en el catálogo), las 7 categorías y
+el total (Q6,914.83) cuadran con diferencia 0. Coincide con el artefacto. La pestaña 2026-06 quedó entre
+2026-05 y 2026-07. Proveedor y presentación se tomaron del catálogo.
+
+**Estado final de las hojas, verificado leyéndolas:**
+- Cocina: 2026-05 Q8,536.75 · **2026-06 Q6,914.83** · 2026-07 Q7,684.21.
+- Barra: enero a julio sin cambios · **2026-08 Q15,401.86**.
+
+**Trampa nueva: Sheets convierte "1000%" en el número 10.** La migración escribió el conteo de barra
+como texto "70%", pero Sheets lo guarda como número con formato de porcentaje. Se ve 70%, pero
+`getValues()` devuelve 0.7. La primera corrida de la corrección de Botran se negó por esto: esperaba
+el texto "1000" y encontró 10, así que no escribió nada, que era lo correcto. Se ajustó el resguardo y
+se corrió de nuevo. **La fase 2 tiene que leer el conteo de barra como fracción.**
+
+**Productos sin conectar, lo que realmente importa:** de los 94 pendientes, solo 32 afectan precios (11
+de cocina y 21 de barra). Los otros 62 son preparados, limpieza o reventa, que no llevan precio al
+Banco. Varios de los 21 de barra probablemente también son reventa (Macallan y Red Label se venden por
+trago).
+
+**Estimación de la fase 2:** dos o tres sesiones como la de hoy, en tres entregas (ver sin editar ·
+cargar existencias y precios, altas, inactivos y vínculos · cerrar mes y probar con Jeffry y José).
+La fase 3 (precios hacia el Banco) es otra sesión.

@@ -142,7 +142,30 @@ var LOTE_SC_FEL = [
   ['3991424570', '2026-07-08',   475.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
   ['139152244', '2026-07-10',    96.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],
   ['1028669702', '2026-05-06',   250.00, 'EVENTOS', '', 'MANTENIMIENTO Y ACCESORIOS EQUIPO'],  // 23:00, del bloque de p120
-  // 2 filas · Q2717.14
+
+  // --- 12-sep-2026 · CLINICA DE FISIOTERAPIA ROCA (emisor GRUPO AGMN, S.A.).
+  //     Fisioterapia de Juanma. Estaba como VIATICOS/Es_Personal=No en el FEL
+  //     mientras los MISMOS pagos figuraban como PERSONAL/Si en el BAC: el
+  //     mismo gasto con dos clasificaciones opuestas en dos pestanas. Pasa a
+  //     PERSONAL y sale del costo del negocio.
+  ['3014806010', '2026-01-09',   560.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['4045095184', '2026-01-13',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['2489929410', '2026-02-19',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['4070458849', '2026-02-26',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['3230810928', '2026-03-03',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['3373288175', '2026-03-10',   375.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['3877130215', '2026-03-17',   375.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['3751235183', '2026-03-19',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['2594784955', '2026-03-27',   375.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['1166952901', '2026-04-08',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['2568504660', '2026-04-14',   375.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['4251012135', '2026-04-29',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['417613928', '2026-04-30',   100.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['3260893584', '2026-05-02',   100.00, 'PERSONAL', 'Si', 'VIATICOS'],
+  ['285428535', '2026-03-10',   275.00, 'PERSONAL', 'Si', 'VIATICOS'],  // 23:00
+  ['3038725621', '2026-01-13',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],  // 22:00
+  ['2497986769', '',   390.00, 'PERSONAL', 'Si', 'VIATICOS'],  // sin fecha en la hoja
+  // total Q5355.00
 ];
 
 // EL Q750 NO VA EN ESTE LOTE, y la historia vale la pena dejarla escrita.
