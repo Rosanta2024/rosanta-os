@@ -100,37 +100,12 @@ var LOTE_SC_FEL = [
   ['2342405772', '2026-09-06',  115.98, 'MATERIALES',              '', 'POR_CLASIFICAR'],   // Cemaco Zona Siete · ya escrita
   ['2623096013', '2026-09-04',  246.00, 'MATERIALES',              '', 'POR_CLASIFICAR'],   // Agropecuaria El Campesino · ya escrita
 
-  // --- 14-sep-2026 · REVERSION. Estas 23 filas son de DISTRIBUIDORA DE LICORES,
-  //     establecimiento LA NACIONAL, NIT 345377. Un distribuidor de LICOR.
-  //     El 12-sep se movieron de COCTELERIA a ALIMENTOS por un filtro que
-  //     buscaba "LICO" en el nombre del emisor y matcheo LICORES. La regla que
-  //     se aplico —"es todo alimentos"— Juanma la dio para MIGDALIA LICO LOPEZ,
-  //     que es otro proveedor y cuyas 4 facturas nunca se tocaron. Vuelven a
-  //     COCTELERIA, que es donde estaban.
-  ['2199799421', '2026-01-09',   234.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1522813130', '2026-01-23',   705.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1470842053', '2026-02-11',   618.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['276450310', '2026-02-18',   546.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1448888294', '2026-02-27',   408.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['830554281', '2026-03-06',   705.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['2277854627', '2026-03-13',   877.50, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3259909054', '2026-03-28',  1012.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['2013545280', '2026-04-01',   343.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1293175284', '2026-04-08',   688.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3257943588', '2026-04-15',   620.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['652886596', '2026-04-15',   765.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1608599865', '2026-04-30',   307.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3467264168', '2026-05-13',   301.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3382788448', '2026-05-09',   222.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3684518513', '2026-06-26',   749.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3646050265', '2026-08-08',   687.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['3515695206', '2026-08-21',   481.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1595032368', '2026-07-24',   408.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['2839824295', '2026-07-04',   109.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['4071834379', '2026-07-11',   345.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1816609986', '2026-09-05',   199.10, 'COCTELERIA', '', 'ALIMENTOS'],
-  ['1738031193', '2026-09-02',   515.00, 'COCTELERIA', '', 'ALIMENTOS'],
-  // 23 filas · Q11845.10
+  // --- 14-sep-2026 · LAS 23 FILAS DE LA NACIONAL (NIT 345377) SALIERON DE ESTE LOTE.
+  //     El 12-sep se movieron mal de COCTELERIA a ALIMENTOS por un filtro que buscaba
+  //     "LICO" en el nombre del emisor y matcheo LICORES. Se habia armado la reversion,
+  //     pero el 14-sep Juanma tomo la clasificacion de los proveedores de barra: la
+  //     corrige el a mano en el Maestro. Este script NO toca barra. Las filas siguen
+  //     hoy en ALIMENTOS y son compra de licor; el detalle esta en el pendiente p159.
   ['487473840', '2026-04-01',  1467.14, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
   ['2357282728', '2026-09-01',  1250.00, 'ALQUILER_EQUIPO', '', 'BEBIDAS'],
   // 2 filas · Q2717.14
