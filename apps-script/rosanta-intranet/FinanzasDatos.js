@@ -32,6 +32,11 @@
  *   8. El GAS solo se cuenta por FEL: el movimiento del banco es el pago de esa
  *      misma factura. Sin la regla habia doble conteo (Q12,661 en FEL contra
  *      Q8,456 en Banco Industrial, los dos sumando).
+ *   9. Hay proveedores que SIEMPRE facturan por FEL (FIN_PAGO_DE_FACTURA): su
+ *      pago de banco o tarjeta es el pago de esa factura y no se suma. El banco
+ *      no trae NIT: el pago se reconoce por su texto. Medido el 14-sep-2026:
+ *      Q49,629 del año se contaban dos veces. La bateria vigila que cada uno
+ *      siga facturando; si deja de hacerlo, la regla borraria gasto real.
  *   7. El semaforo se pone SIEMPRE sobre la media movil de 4, nunca sobre la
  *      semana cruda: cruda, el food cost va de 16% a 68% porque la compra no
  *      cae en la semana en que se consume.
@@ -78,6 +83,49 @@ var FIN_EFECTIVO = ['ALIMENTOS_EFECTIVO', 'BEBIDAS_EFECTIVO', 'COCTELERIA_EFECTI
 // Categorias que SIEMPRE vienen con factura: se cuentan por FEL y el movimiento
 // del banco se salta, porque es el pago de esa misma factura.
 var FIN_SOLO_FEL = ['GAS', 'ALQUILER_EQUIPO'];
+// Proveedores que SIEMPRE facturan por FEL: su pago desde banco o tarjeta es el
+// pago de esa misma factura y se salta (regla 9). El banco no trae NIT, asi que
+// el pago se reconoce por el texto del movimiento y, donde el texto no alcanza,
+// tambien por la categoria. El NIT es para cotejar contra la factura.
+// Quedan fuera a proposito: Tigo, que paga 2.5 veces lo que factura, y los
+// comercios de tarjeta (PriceSmart, gasolineras), que no siempre dan FEL.
+// Mismo listado en generar_finanzas.py (PAGO_DE_FACTURA).
+var FIN_PAGO_DE_FACTURA = [
+  { prov: 'EEGSA', nit: '326445', hojas: ['03_Banco_Industrial', '04_Banco_BAC'], texto: /EEGSA/ },
+  { prov: 'Claro', nit: '9929290', hojas: ['03_Banco_Industrial'], texto: /CLARO/ },
+  { prov: 'Doorways', nit: '96569239', hojas: ['03_Banco_Industrial'], texto: /DOORWAY/ },
+  { prov: 'Doorways', nit: '96569239', hojas: ['04_Banco_BAC'], texto: /TEF A ?: ?902410067/ },
+  { prov: 'Posfile', nit: '107902699', hojas: ['03_Banco_Industrial', '05_Tarjeta_Credito_BAC'], texto: /POSFILE/ },
+  { prov: 'EX Security', nit: '104313218', hojas: ['03_Banco_Industrial'],
+    cats: ['SERVICIO DE MONITOREO Y ALARMA'] },
+  { prov: 'Edwin Flores', nit: '82651086', hojas: ['03_Banco_Industrial'],
+    texto: /MARKETING|CONTENIDO/, cats: ['SERVICIOS_PROFESIONALES'] },
+  { prov: 'Aseguradora La Ceiba', nit: '5022193', hojas: ['03_Banco_Industrial'],
+    texto: /SEGURO/, cats: ['SEGUROS_Y_FIANZAS'] }
+];
+
+/** El proveedor si la fila es el pago de una factura FEL; si no, ''. */
+function _finPagoDeFactura(hoja, texto, cat) {
+  var t = String(texto || '').toUpperCase().replace(/\s+/g, ' ');
+  for (var i = 0; i < FIN_PAGO_DE_FACTURA.length; i++) {
+    var P = FIN_PAGO_DE_FACTURA[i];
+    if (!_finEn(P.hojas, hoja)) continue;
+    if (P.texto && !P.texto.test(t)) continue;
+    if (P.cats && !_finEn(P.cats, cat)) continue;
+    return P.prov;
+  }
+  return '';
+}
+
+/** Por proveedor de la regla 9: pago saltado del año contra su factura FEL, por NIT. */
+function _finPagoFacturaResumen(saltado, felNit) {
+  var out = {};
+  FIN_PAGO_DE_FACTURA.forEach(function (P) {
+    out[P.prov] = { nit: P.nit, pago: _finR(saltado[P.prov] || 0),
+                    factura: _finR(felNit[P.nit] || 0) };
+  });
+  return out;
+}
 
 /**
  * Meta de food cost ponderada por el mix: (mix_cocina x 30%) + (mix_barra x 20%).
@@ -303,10 +351,10 @@ var FIN_FUERA = ['DEVOLUCION_INVERSION', 'CARGO_FRAUDULENTO', 'PAGO_TARJETA_CRED
 
 // Hoja -> columnas. Seccion 3 de la especificacion.
 var FIN_LIBROS = [
-  { hoja: '01_FEL_Maestro',         monto: 10, usd: 0, cat: 14, pers: 15, iva: 11, prov: 7 },
-  { hoja: '03_Banco_Industrial',    monto: 4,  usd: 0, cat: 7,  pers: 8  },
-  { hoja: '04_Banco_BAC',           monto: 5,  usd: 0, cat: 8,  pers: 9  },
-  { hoja: '05_Tarjeta_Credito_BAC', monto: 3,  usd: 4, cat: 5,  pers: 6  }
+  { hoja: '01_FEL_Maestro',         monto: 10, usd: 0, cat: 14, pers: 15, iva: 11, prov: 7, nit: 5 },
+  { hoja: '03_Banco_Industrial',    monto: 4,  usd: 0, cat: 7,  pers: 8,  desc: 3 },
+  { hoja: '04_Banco_BAC',           monto: 5,  usd: 0, cat: 8,  pers: 9,  desc: 4 },
+  { hoja: '05_Tarjeta_Credito_BAC', monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 }
 ];
 
 // 04_Banco_BAC entro al calculo el 4-sep-2026. Antes solo se leia para el saldo
@@ -369,7 +417,7 @@ function getFinanzasData(auth, forzar) {
    el calculo viejo en el acto. */
 function finCacheClave_() {
   var m = metasFoodCost_();
-  return 'finanzas_v4_m' + m.global + '-' + m.BARRA;
+  return 'finanzas_v5_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos(forzar) {
@@ -382,6 +430,8 @@ function _finDatos(forzar) {
   }
   var datos = _finCalcular();
   try {
+    // v5 (14-sep-2026): regla 9, los pagos a proveedores que facturan por FEL
+    // dejan de sumar. Una cache v4 mostraria el DRE con el doble conteo.
     // v4 (12-sep-2026, tarde): la v3 se lleno con el lector de planilla roto
     // y habria dicho "8 meses del respaldo" hasta 3 horas despues del arreglo.
     // v3 (12-sep-2026): el payload cambio (meta de food cost, cobertura,
@@ -468,6 +518,7 @@ function _finCalcular() {
   // dice donde termina el dinero. Estaba solo en generar_finanzas.py y era la
   // unica parte del pilar que no se podia ver sin correr Python en un Mac.
   var cob = {}, desconocidas = {};
+  var felNit = {}, pagoSaltado = {};   // regla 9: factura por NIT y pago saltado por proveedor
   FIN_LIBROS.forEach(function (L) { cob[L.hoja] = {}; });
 
   // Compra de mercaderia partida por area y por familia de producto. Es lo que
@@ -503,7 +554,13 @@ function _finCalcular() {
       // Espeja a proposito las reglas de abajo en vez de reusarlas: si las dos
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
-      var dest = _finDestino(cat, L.hoja, esPers);
+      var pagoDe = L.desc ? _finPagoDeFactura(L.hoja, filas[r][L.desc - 1], cat) : '';
+      var dest = _finDestino(cat, L.hoja, esPers, pagoDe);
+      if (L.nit) {
+        var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
+        felNit[nit] = (felNit[nit] || 0) + q;
+      }
+      if (dest === 'REGLA 9: pago de factura FEL') pagoSaltado[pagoDe] = (pagoSaltado[pagoDe] || 0) + q;
       cob[L.hoja][dest] = (cob[L.hoja][dest] || 0) + q;
       if (dest === 'CATEGORIA DESCONOCIDA') {
         var kd = cat || '(sin categoria)';
@@ -544,6 +601,8 @@ function _finCalcular() {
       // regla 8: hay categorias que solo se cuentan por FEL; el movimiento del
       // banco es el pago de esa misma factura
       if (_finEn(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
+      // regla 9: pago de un proveedor que siempre factura por FEL
+      if (pagoDe) continue;
       if (cat === 'IGSS') M.igss += q;
 
       var d = FIN_MAP[cat];
@@ -718,7 +777,9 @@ function _finCalcular() {
       planilla_error: planilla.error,
       cobertura: _finRedondear(cob),
       fugas: _finFugas(cob),
-      desconocidas: _finRedondear(desconocidas)
+      desconocidas: _finRedondear(desconocidas),
+      // regla 9: lo saltado de cada proveedor contra su factura del año
+      pago_factura: _finPagoFacturaResumen(pagoSaltado, felNit)
     },
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
   };
@@ -1147,7 +1208,7 @@ function _finFamilias() {
  * Donde termina una fila con esta categoria. Espeja la logica de _finCalcular.
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
-function _finDestino(cat, hoja, esPersonal) {
+function _finDestino(cat, hoja, esPersonal, pagoDe) {
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
   if (!cat) return 'SIN CATEGORIA';
@@ -1162,6 +1223,7 @@ function _finDestino(cat, hoja, esPersonal) {
     return 'alquiler por banco: no suma';
   }
   if (_finEn(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
+  if (pagoDe) return 'REGLA 9: pago de factura FEL';
   if (FIN_MAP[cat]) return 'DRE \u00b7 ' + FIN_MAP[cat][0];
   return 'CATEGORIA DESCONOCIDA';
 }

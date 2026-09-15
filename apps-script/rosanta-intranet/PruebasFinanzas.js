@@ -201,6 +201,25 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, mal.length === 0 ? 'OK' : 'FALLA', mal.join(' · '), mal.length, 0);
   });
 
+  prCorrer_(g, 'Los proveedores de la regla 9 siguen facturando', function () {
+    var nombre = 'Los proveedores de la regla 9 siguen facturando';
+    // La regla 9 salta el pago de banco y tarjeta de estos proveedores porque su
+    // factura ya entra por FEL. Si uno deja de facturar, la regla borra gasto
+    // real sin avisar. El 1.3 deja margen a un pago que cubre una factura del
+    // año anterior (Edwin: Q4,000 de facturas de 2025).
+    var pf = d.integridad.pago_factura || {};
+    var provs = Object.keys(pf);
+    var mal = provs.filter(function (p) { return pf[p].pago > 1.3 * pf[p].factura; })
+      .map(function (p) {
+        return p + ' paga Q' + Math.round(pf[p].pago) + ' y factura Q' + Math.round(pf[p].factura);
+      });
+    prAnotar_(g, nombre, provs.length && !mal.length ? 'OK' : 'FALLA',
+      !provs.length ? 'el calculo no trae el resumen de la regla 9'
+        : mal.length ? mal.join(' · ') + ': sacarlo de FIN_PAGO_DE_FACTURA'
+        : provs.length + ' proveedores · ninguno paga mas de 1.3 veces lo que factura',
+      provs.length - mal.length, provs.length);
+  });
+
   // --------------------------------------------------------- 4. equilibrio
   prCorrer_(g, 'El punto de equilibrio es un numero usable', function () {
     var nombre = 'El punto de equilibrio es un numero usable';

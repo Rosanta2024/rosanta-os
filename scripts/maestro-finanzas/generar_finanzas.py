@@ -39,6 +39,11 @@ REGLAS QUE NO SE PUEDEN CAMBIAR SIN ROMPER LOS NUMEROS
 7. Hay categorias que solo se cuentan por FEL (SOLO_FEL): el movimiento del
    banco es el pago de esa misma factura. Sin la regla habia doble conteo:
    Q12,661 de GAS en FEL contra Q8,456 en Banco Industrial, los dos sumando.
+8. Hay proveedores que SIEMPRE facturan por FEL (PAGO_DE_FACTURA): su pago de
+   banco o tarjeta es el pago de esa factura y no se suma. El banco no trae NIT,
+   asi que el pago se reconoce por su texto. Medido el 14-sep-2026 con
+   medir_doble_conteo.py: Q49,629 del año se contaban dos veces. En la intranet
+   es la regla 9 (alla el 8 ya estaba tomado).
 
 FUENTES
 -------
@@ -86,6 +91,39 @@ EFECTIVO_CATS = {'ALIMENTOS_EFECTIVO', 'BEBIDAS_EFECTIVO', 'COCTELERIA_EFECTIVO'
 # Categorias que SIEMPRE vienen con factura: se cuentan por FEL y el movimiento
 # del banco se salta, porque es el pago de esa misma factura.
 SOLO_FEL = {'GAS', 'ALQUILER_EQUIPO'}
+# Proveedores que SIEMPRE facturan por FEL: su pago desde banco o tarjeta es el
+# pago de esa misma factura y se salta (regla 8). El banco no trae NIT, asi que
+# el pago se reconoce por el texto del movimiento y, donde el texto no alcanza,
+# tambien por la categoria. El NIT es para cotejar contra la factura.
+# Quedan fuera a proposito: Tigo, que paga 2.5 veces lo que factura, y los
+# comercios de tarjeta (PriceSmart, gasolineras), que no siempre dan FEL.
+# Mismo listado en FinanzasDatos.gs (FIN_PAGO_DE_FACTURA).
+# (proveedor, NIT, hojas, patron del texto o None, categorias o None)
+_BI, _BAC, _TC = '03_Banco_Industrial', '04_Banco_BAC', '05_Tarjeta_Credito_BAC'
+PAGO_DE_FACTURA = [
+    ('EEGSA', '326445', {_BI, _BAC}, r'EEGSA', None),
+    ('Claro', '9929290', {_BI}, r'CLARO', None),
+    ('Doorways', '96569239', {_BI}, r'DOORWAY', None),
+    ('Doorways', '96569239', {_BAC}, r'TEF A ?: ?902410067', None),
+    ('Posfile', '107902699', {_BI, _TC}, r'POSFILE', None),
+    ('EX Security', '104313218', {_BI}, None, {'SERVICIO DE MONITOREO Y ALARMA'}),
+    ('Edwin Flores', '82651086', {_BI}, r'MARKETING|CONTENIDO', {'SERVICIOS_PROFESIONALES'}),
+    ('Aseguradora La Ceiba', '5022193', {_BI}, r'SEGURO', {'SEGUROS_Y_FIANZAS'}),
+]
+# columna del texto del movimiento en cada hoja de pago
+DESC = {_BI: 3, _BAC: 4, _TC: 2}
+
+
+def pago_de_factura(ws, r, hoja, c):
+    # El proveedor si la fila es el pago de una factura FEL; si no, ''.
+    if hoja not in DESC:
+        return ''
+    t = re.sub(r'\s+', ' ', str(ws.cell(r, DESC[hoja]).value or '').upper())
+    for prov, _nit, hojas, patron, cats in PAGO_DE_FACTURA:
+        if hoja in hojas and (patron is None or re.search(patron, t)) \
+                and (cats is None or c in cats):
+            return prov
+    return ''
 
 # categoria -> (bloque del DRE, tipo F=fijo S=semivariable V=variable)
 MAP = {
@@ -221,6 +259,8 @@ for m in range(1, 13):
                 continue                             # el alquiler se cuenta por banco
             if c in SOLO_FEL and hoja != '01_FEL_Maestro':
                 continue                             # regla 7: se cuentan por FEL
+            if pago_de_factura(ws, r, hoja, c):
+                continue                             # regla 8: pago de una factura FEL
             if c in MAP:
                 bl[MAP[c][0]] += q
                 tip[MAP[c][1]] += q
@@ -513,7 +553,7 @@ TODOS_LOS_LIBROS = [('01_FEL_Maestro', 10, 14, 15),
 HOJAS_LEIDAS = {h for h, _, _, _ in LIBROS}
 
 
-def _destino(c, hoja):
+def _destino(c, hoja, prov=''):
     """Donde termina una fila con esta categoria. Espeja la logica del bloque 1."""
     if c == 'PERSONAL':                              return 'personal'
     if c == 'DEVOLUCION_INVERSION':                  return 'devolucion'
@@ -528,12 +568,14 @@ def _destino(c, hoja):
         return 'alquiler por banco: no suma'
     if c in SOLO_FEL and hoja != '01_FEL_Maestro':
         return 'REGLA 7: ya vino por FEL'
+    if prov:                                         return 'REGLA 8: pago de factura FEL'
     if c in MAP:                                     return 'DRE · ' + MAP[c][0]
     return 'CATEGORIA DESCONOCIDA'
 
 
 cob = {}
 desconocidas = defaultdict(float)
+saltado = defaultdict(float)     # regla 8: pago saltado por proveedor
 for hoja, mc, cc, pc in TODOS_LOS_LIBROS:
     ws = wb[hoja]
     d = defaultdict(float)
@@ -543,9 +585,12 @@ for hoja, mc, cc, pc in TODOS_LOS_LIBROS:
             continue
         c = ws.cell(r, cc).value
         q = monto(ws, r, mc, hoja)
-        dest = 'personal' if ws.cell(r, pc).value == 'Sí' else _destino(c, hoja)
+        prov = pago_de_factura(ws, r, hoja, c)
+        dest = 'personal' if ws.cell(r, pc).value == 'Sí' else _destino(c, hoja, prov)
         if not hoja in HOJAS_LEIDAS:
             dest = 'HOJA NO LEIDA'
+        if dest == 'REGLA 8: pago de factura FEL':
+            saltado[prov] += q
         if dest == 'CATEGORIA DESCONOCIDA':
             desconocidas[str(c)] += q
         d[dest] += q
@@ -554,7 +599,7 @@ for hoja, mc, cc, pc in TODOS_LOS_LIBROS:
 # Fuga = dinero que no llega al DRE y nadie decidio que asi fuera.
 # La regla 3 y el alquiler por banco SI son decisiones, y van aparte.
 PERDIDO = ('HOJA NO LEIDA', 'CATEGORIA DESCONOCIDA', 'SIN CATEGORIA', 'POR CLASIFICAR')
-A_REVISAR = ('REGLA 3: no suma', 'REGLA 7: ya vino por FEL')
+A_REVISAR = ('REGLA 3: no suma', 'REGLA 7: ya vino por FEL', 'REGLA 8: pago de factura FEL')
 fugas = {h: round(sum(v for k, v in d.items() if k in PERDIDO), 2) for h, d in cob.items()}
 
 json.dump({'cobertura': cob, 'fugas': fugas,
@@ -572,8 +617,23 @@ if desconocidas:
     print("  CATEGORIAS QUE NO ESTAN NI EN MAP NI EN FUERA (se caen en silencio):")
     for k, v in sorted(desconocidas.items(), key=lambda x: -x[1]):
         print("     %-34s Q%10s" % (k, format(v, ',.2f')))
+# La regla 8 solo es segura mientras el proveedor siga facturando. Si lo saltado
+# del año pasa de 1.3 veces su factura, la regla esta borrando gasto real.
+fel_nit = defaultdict(float)
+_fel = wb['01_FEL_Maestro']
+for r in range(5, _fel.max_row + 1):
+    f = _fel.cell(r, 1).value
+    if isinstance(f, datetime.datetime) and f.year == ANIO:
+        nit = re.sub(r'\.0$', '', str(_fel.cell(r, 5).value or '').strip())
+        fel_nit[nit] += _fel.cell(r, 10).value or 0
+print("\nREGLA 8  pago saltado contra la factura FEL del año, por NIT")
+for prov, nit in dict((p[0], p[1]) for p in PAGO_DE_FACTURA).items():
+    pago, fac = saltado.get(prov, 0), fel_nit.get(nit, 0)
+    alerta = '  <<< paga mas de lo que factura' if pago > 1.3 * fac else ''
+    print("  %-21s NIT %-10s pago Q%10s  factura Q%10s%s"
+          % (prov, nit, format(pago, ',.2f'), format(fac, ',.2f'), alerta))
 tot_fuga = round(sum(fugas.values()), 2)
 rev = round(sum(v for d in cob.values() for k, v in d.items() if k in A_REVISAR), 2)
 print("  FUGA (nadie decidio que se cayera):        Q%s" % format(tot_fuga, ',.2f'))
-print("  Reglas 3 y 7, pagos de facturas que ya vinieron por FEL: Q%s" % format(rev, ',.2f'))
+print("  Reglas 3, 7 y 8, pagos de facturas que ya vinieron por FEL: Q%s" % format(rev, ',.2f'))
 print("  De esos, los que NO tengan factura son gasto real que se esta borrando.")
