@@ -110,6 +110,15 @@ function sincronizarPreciosDeCierre_(area) {
     };
   }
 
+  // Un cierre sin un solo precio numerico no es "nada cambio": es un cierre que no se
+  // pudo leer —precios escritos como texto, pestana vacia, columna corrida—. Hasta el
+  // 15-sep-2026 devolvia cero cambios y el semaforo quedaba AL DIA sin haber vigilado
+  // nada. Ahora tira, y el semaforo lo escribe como ERROR.
+  if (!Object.keys(inv).length) {
+    throw new Error('El cierre "' + ssInv.getName() + '" no trae ningún precio numérico en "' +
+                    SYNC.hojaPrecios + '": no se puede comparar contra el Banco.');
+  }
+
   var hBanco = ssRec.getSheetByName('BANCO DE DATOS');
   if (!hBanco) throw new Error('El recetario no tiene BANCO DE DATOS.');
   var banco = hBanco.getDataRange().getValues();

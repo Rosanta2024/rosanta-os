@@ -135,6 +135,30 @@ function webEstadoEdicion(auth) {
   });
 }
 
+/**
+ * UN CANDADO PARA LAS ESCRITURAS DEL RECETARIO (15-sep-2026).
+ *
+ * La fila de guardado de la pantalla manda los cambios de UNA persona de a uno, pero no
+ * sabe nada de las demas: si Jeffry y Jose agregan un ingrediente a la misma ficha en el
+ * mismo segundo, agregarLinea_ de los dos elige la misma "primera fila libre" y el
+ * segundo pisa al primero sin error. Lo mismo crearInsumo_ con getLastRow()+1, y la
+ * BITACORA.
+ *
+ * Es el candado del script, el mismo del inventario y de la carga de ventas: asi tampoco
+ * se cruzan con un alta que llega al Banco desde Inventarios. La escritura dura uno o dos
+ * segundos; se espera hasta 10. Si no se consigue, NO se escribe y se dice.
+ * Va ADENTRO de conCambiosDeModelo_: la correccion del cache toma el candado despues,
+ * cuando este ya se solto.
+ */
+function conCandadoRecetario_(fn) {
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(10000)) {
+    throw new Error('Otra persona está guardando en el recetario en este momento. ' +
+                    'No se guardó nada: probá de nuevo en unos segundos.');
+  }
+  try { return fn(); } finally { candado.releaseLock(); }
+}
+
 /* ==========================================================================
    1. EDITAR RECETAS
    ========================================================================== */
@@ -144,28 +168,28 @@ function webEstadoEdicion(auth) {
 function webEditarCantidad(auth, ficha, fila, cantidadNueva, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return editarCantidad_(ficha, fila, cantidadNueva, u.email, u.rol, a, producto);
+    return conCandadoRecetario_(function () { return editarCantidad_(ficha, fila, cantidadNueva, u.email, u.rol, a, producto); });
   }, 'editarCantidad ' + ficha);
 }
 
 function webAgregarLinea(auth, ficha, producto, cantidad, unidad, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return agregarLinea_(ficha, producto, cantidad, unidad, u.email, u.rol, a);
+    return conCandadoRecetario_(function () { return agregarLinea_(ficha, producto, cantidad, unidad, u.email, u.rol, a); });
   }, 'agregarLinea ' + ficha + ' · ' + producto);
 }
 
 function webQuitarLinea(auth, ficha, fila, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return quitarLinea_(ficha, fila, u.email, u.rol, a, producto);
+    return conCandadoRecetario_(function () { return quitarLinea_(ficha, fila, u.email, u.rol, a, producto); });
   }, 'quitarLinea ' + ficha);
 }
 
 function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return cambiarPrecioMenu_(ficha, precioNuevo, u.email, u.rol, motivo, a);
+    return conCandadoRecetario_(function () { return cambiarPrecioMenu_(ficha, precioNuevo, u.email, u.rol, motivo, a); });
   }, 'cambiarPrecioMenu ' + ficha);
 }
 
@@ -176,7 +200,7 @@ function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
 function webCrearFicha(auth, datos, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return crearFicha_(datos, u.email, u.rol, a);
+    return conCandadoRecetario_(function () { return crearFicha_(datos, u.email, u.rol, a); });
   }, 'crearFicha ' + (datos && datos.nombre || ''));
 }
 
@@ -187,27 +211,27 @@ function webCrearFicha(auth, datos, area) {
 function webCrearInsumo(auth, datos, confirmar, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return crearInsumo_(datos, u.email, u.rol, confirmar, a);
+    return conCandadoRecetario_(function () { return crearInsumo_(datos, u.email, u.rol, confirmar, a); });
   }, 'crearInsumo ' + (datos && datos.producto || ''));
 }
 
 function webCambiarPrecioInsumo(auth, producto, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return cambiarPrecioInsumo_(producto, precioNuevo, u.email, u.rol, motivo, a);
+    return conCandadoRecetario_(function () { return cambiarPrecioInsumo_(producto, precioNuevo, u.email, u.rol, motivo, a); });
   }, 'cambiarPrecio ' + producto);
 }
 
 function webCrearProveedor(auth, datos, confirmar) {
   return edicionCorrer_(auth, function (u) {
-    return crearProveedor_(datos, u.email, u.rol, confirmar);
+    return conCandadoRecetario_(function () { return crearProveedor_(datos, u.email, u.rol, confirmar); });
   }, 'crearProveedor ' + (datos && datos.nombre || ''));
 }
 
 function webAsignarProveedor(auth, producto, proveedor, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return asignarProveedor_(producto, proveedor, u.email, u.rol, a);
+    return conCandadoRecetario_(function () { return asignarProveedor_(producto, proveedor, u.email, u.rol, a); });
   }, 'asignarProveedor ' + producto);
 }
 

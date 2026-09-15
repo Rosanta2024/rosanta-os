@@ -165,7 +165,8 @@ function juntarVentasDeCarpeta_(carpetaId, etiqueta, recursiva, out) {
     // Google, por decision del proyecto. Un origen nativo NO hay que copiarlo: se
     // lee tal cual. Misma marca que usa catalogoArchivos_ en ConfigPOS.gs.
     out.push({ id: f.id, nombre: f.name, carpeta: etiqueta,
-               nativa: f.mimeType === MimeType.GOOGLE_SHEETS });
+               nativa: f.mimeType === MimeType.GOOGLE_SHEETS,
+               modificado: String(f.modifiedTime || '') });   // para cargarlos en orden
   });
 }
 
@@ -424,6 +425,15 @@ function cargarVentasPorProducto_() {
   var enDrive = ventasArchivosEnDrive_();
   var yaEstan = ventasYaCargados_();
   var pendientes = enDrive.filter(function (a) { return !yaEstan[a.id]; });
+  // DEL MAS VIEJO AL MAS NUEVO (15-sep-2026). Los exports son acumulados y cada uno
+  // REEMPLAZA las ventas de su rango de fechas. Drive los devolvia en cualquier orden:
+  // si el export completo de la semana entraba antes que uno anterior con los ultimos dos
+  // dias a medias, esos dos dias quedaban a medias para siempre y nadie lo veia. En orden,
+  // el mas completo siempre escribe ultimo. modifiedTime es ISO 8601: se ordena como texto.
+  pendientes.sort(function (x, y) {
+    return x.modificado < y.modificado ? -1 : x.modificado > y.modificado ? 1
+         : (x.nombre < y.nombre ? -1 : x.nombre > y.nombre ? 1 : 0);
+  });
 
   Logger.log('%s archivo(s) con el prefijo "%s" · %s ya cargados · %s pendientes',
              enDrive.length, VENTAS.prefijo, enDrive.length - pendientes.length, pendientes.length);

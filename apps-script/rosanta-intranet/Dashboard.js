@@ -392,10 +392,16 @@ function avisoPrecios_() {
   // verificarNombresPOS EXIGE el id del catalogo: llamarla sin argumento tira
   // "Cannot read properties of undefined". Si la propiedad falta, el aviso lo dice
   // en vez de reventar y dejar sin franja a los otros tres.
-  var id = PropertiesService.getScriptProperties().getProperty('POS_CATALOGO_SHEET_ID');
+  // El catalogo VIGENTE, no el de la propiedad (15-sep-2026). POS_CATALOGO_SHEET_ID es
+  // el respaldo fijo, un export viejo: comparar contra el daba "N platos con precio
+  // distinto" por precios que el POS ya habia cambiado. catalogoInfo_() elige el ultimo
+  // export de la carpeta y solo cae al respaldo si no hay carpeta.
+  var id = null;
+  try { id = catalogoInfo_().id; } catch (e) { id = null; }
   if (!id) {
     return { clave: 'precios', nivel: 'info',
-             texto: 'No se puede comparar precios con el POS: falta POS_CATALOGO_SHEET_ID.',
+             texto: 'No se puede comparar precios con el POS: no encuentro el catálogo ' +
+                    '(ni la carpeta POS_CATALOGO_FOLDER_ID ni el respaldo POS_CATALOGO_SHEET_ID).',
              detalle: [] };
   }
   // OJO: verificarNombresPOS llama a mapaPOS_(TRUE) por dentro, o sea que TIRA el

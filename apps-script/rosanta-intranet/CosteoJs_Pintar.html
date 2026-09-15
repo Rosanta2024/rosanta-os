@@ -41,6 +41,11 @@ function aplicarProfitOS(semanas, r){
   if(dbSemanas === semanas) window.__DB__ = r.tablero;
   if(imSemanas === semanas) window.__IM__ = r.menu;
   pintar();
+  /* Los avisos salen de ACA, despues de los numeros (15-sep-2026). Hasta esta fecha solo
+     los pedian los handlers de una llamada real: cuando el tablero ya venia servido por
+     la carga anticipada de CosteoVista, nadie los pedia y la franja se quedaba en
+     "Buscando avisos…" para siempre. pedirAvisos() no repite si ya los tiene. */
+  pedirAvisos();
 }
 
 /* LOS AVISOS SALEN DESPUES DE LOS NUMEROS, no a la par.

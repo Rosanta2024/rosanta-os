@@ -689,7 +689,10 @@ function prPuentePOS_(res) {
   });
 
   prCorrer_(g, 'Precios recetario vs POS', function () {
-    var id = PropertiesService.getScriptProperties().getProperty('POS_CATALOGO_SHEET_ID');
+    // El catalogo vigente, el mismo que usa el aviso del tablero (15-sep-2026). Antes
+    // esta prueba comparaba contra el respaldo fijo, un export viejo.
+    var id = null;
+    try { id = catalogoInfo_().id; } catch (e) { id = null; }
     if (!id) {
       prAnotar_(g, 'Precios recetario vs POS', 'SALTADA',
                 'Falta POS_CATALOGO_SHEET_ID. Subir el catalogo del POS y guardar su ID.');

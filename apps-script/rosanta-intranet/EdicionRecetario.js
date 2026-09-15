@@ -581,7 +581,14 @@ function quitarLinea_(ficha, fila, quien, rol, area, esperado) {
   var cantidad = h.getRange(fila, b.colBase + 1).getValue();
   if (!producto) throw new Error('La fila ' + fila + ' ya esta vacia.');
   exigirMismaLinea_(producto, esperado, fila);
-  for (var c = 0; c < 5; c++) h.getRange(fila, b.colBase + c).clearContent();
+  // Se borran producto, cantidad y unidad; las FORMULAS de precio y total se quedan
+  // (15-sep-2026). Antes se borraban las cinco celdas: si despues alguien escribia el
+  // ingrediente a mano en la hoja, esa linea valia Q0. Con el producto vacio la formula
+  // devuelve "" y no suma. Una celda con un NUMERO escrito a mano si se borra: dejarla
+  // haria que la linea quitada siguiera sumando al costo del plato.
+  var fx = h.getRange(fila, b.colBase + 3, 1, 2).getFormulas()[0];
+  h.getRange(fila, b.colBase, 1, 3).clearContent();
+  for (var c = 0; c < 2; c++) if (!fx[c]) h.getRange(fila, b.colBase + 3 + c).clearContent();
 
   bitacora_(quien, rol, 'quitarLinea', conArea_(ficha, area), String(producto), 'linea', cantidad, '', 'fila ' + fila);
   invalidarCache_({ ficha: h.getName(), area: area });

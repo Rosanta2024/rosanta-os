@@ -134,7 +134,7 @@ function registrarPrecio(auth, datos) {
 
   // Lo que toca vuelve en `cambios` y la pantalla ya no recarga: ver
   // conCambiosDeModelo_ en CosteoDatos.gs.
-  var hecho = conCambiosDeModelo_(function () {
+  var hecho = conCambiosDeModelo_(function () { return conCandadoRecetario_(function () {
     var ubic = ubicarEnBanco_(datos.producto, area);
     if (!ubic) throw new Error('El producto "' + datos.producto + '" no esta en el Banco de Datos');
 
@@ -182,7 +182,7 @@ function registrarPrecio(auth, datos) {
       ahora: nuevo,
       variacion: antesCompra ? (nuevo - antesCompra) / antesCompra * 100 : null
     };
-  });
+  }); });
 
   var res = hecho.resultado;
   res.cambios = hecho.cambios;
