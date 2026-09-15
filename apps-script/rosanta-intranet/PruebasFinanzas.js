@@ -594,6 +594,21 @@ function prFinanzas_(res) {
       mt.meta_food, par);
   });
 
+  prCorrer_(g, 'Los honorarios de marketing van al bloque Marketing', function () {
+    var nombre = 'Los honorarios de marketing van al bloque Marketing';
+    // 15-sep-2026: MARKETING_HONORARIOS existe para que el CAC de Marketing OS excluya los
+    // honorarios POR CATEGORIA y no por el texto del banco (las transferencias a Vanessa
+    // dicen "BANCA ELECTRONICA"). Tiene que caer en el MISMO bloque que la pauta: el DRE
+    // no cambia, solo se separa la categoria.
+    var h = FIN_MAP.MARKETING_HONORARIOS, p = FIN_MAP.MARKETING_DIGITAL;
+    var ok = !!h && !!p && h[0] === 'Marketing' && p[0] === 'Marketing';
+    var q = Math.round((d.total.bloques || {}).Marketing || 0);
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'las dos van a "' + h[0] + '" · el bloque lleva Q' + q + ' en el año'
+         : 'mapa: honorarios ' + JSON.stringify(h) + ' · pauta ' + JSON.stringify(p),
+      ok ? 2 : 0, 2);
+  });
+
   // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)
   var cj = null;
   prCorrer_(g, 'La proyeccion de caja se calcula', function () {

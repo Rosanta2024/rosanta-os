@@ -343,6 +343,11 @@ var FIN_MAP = {
   'COMISIONES_BANCARIAS': ['Comisiones y cargos', 'V'],
   'COMISION TARJETA DE CREDITO': ['Comisiones y cargos', 'V'],
   'MARKETING_DIGITAL': ['Marketing', 'S'], 'CUOTAS_Y_SUSCRIPCIONES': ['Marketing', 'F'],
+  // Honorarios de marketing digital (15-sep-2026, decision de Juanma). MISMO BLOQUE que
+  // la pauta —el DRE no cambia— pero categoria aparte, para que el CAC de Marketing OS
+  // excluya los honorarios POR CATEGORIA y deje de depender del texto del banco.
+  // Con esto MARKETING_DIGITAL queda solo con medios: FACEBK y GOOGLE*ADS de la tarjeta.
+  'MARKETING_HONORARIOS': ['Marketing', 'F'],
   'CUOTAS Y SUSCRIPCIONES': ['Marketing', 'F'],
   'MANTENIMIENTO': ['Mantencion', 'V'], 'MANTENIMIENTO Y ACCESORIOS EQUIPO': ['Mantencion', 'V'],
   'MATERIALES': ['Mantencion', 'V'],

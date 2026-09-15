@@ -145,6 +145,9 @@ MAP = {
  'IMPUESTOS':('Impuestos','V'), 'TRIBUTO':('Impuestos','V'),
  'COMISIONES_BANCARIAS':('Comisiones y cargos','V'), 'COMISION TARJETA DE CREDITO':('Comisiones y cargos','V'),
  'MARKETING_DIGITAL':('Marketing','S'), 'CUOTAS_Y_SUSCRIPCIONES':('Marketing','F'),
+ # honorarios de marketing digital (15-sep-2026): mismo bloque que la pauta, categoria
+ # aparte para que el CAC los excluya por categoria y no por el texto del banco.
+ 'MARKETING_HONORARIOS':('Marketing','F'),
  'CUOTAS Y SUSCRIPCIONES':('Marketing','F'),
  'MANTENIMIENTO':('Mantencion','V'), 'MANTENIMIENTO Y ACCESORIOS EQUIPO':('Mantencion','V'),
  'MATERIALES':('Mantencion','V'),
