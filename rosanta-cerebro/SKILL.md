@@ -7,7 +7,123 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 12 sep 2026 (v14).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 14 sep 2026 (v15).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 14 sep 2026 (v15): la intranet de Profit OS
+
+**Estado al cierre: el equipo está en la @88** (verificado con `clasp list-deployments`). Batería
+sobre esa versión: **89 OK · 0 fallas · 2 avisos · 2 saltadas (93 pruebas)**. Los dos avisos no
+son errores: el calentador de cachés tardó 6,7 s (Drive lento; avisa arriba de 5 s) y el cierre
+de inventario propone bajar el **Tomate Ciruelo de Q7 a Q5 (−28,6%)** en el Banco.
+
+Tres versiones en el día, para no confundirlas:
+
+| | Qué trajo | Batería |
+|---|---|---|
+| v86 | recetario sin recarga | 89 OK · 0 fallas · 1 aviso (92) |
+| v87 | la "regla 9" de Finanzas, creada por OTRA sesión y nunca desplegada sola | — |
+| **v88** | meta 28% sin IVA desde PARAMETROS (**idéntica a la 87 + lo mío**, ver §4) | **89 OK · 0 fallas · 2 avisos (93)** |
+
+### 1. Auditoría completa de la intranet
+
+- Informe con archivo y línea: `~/Dev/Rosanta/apps-script/_informes/2026-09-14_Auditoria_intranet_Profit_OS.md`.
+  Página: https://claude.ai/artifact/DGJDtLYyHGaiaNiG2DeNGB
+- **7 críticos, 24 altos, 30 medios.** Causa raíz principal: el despliegue es `access: ANYONE` +
+  `executeAs: USER_DEPLOYING`, así que **toda función global sin guion bajo final se puede llamar
+  con `google.script.run` desde cualquier página del despliegue, incluida "Esta puerta está
+  cerrada"**, ejecutándose como Juanma. Había 52 públicas sin guarda. **La batería no lo ve:**
+  solo audita las funciones que las vistas nombran.
+- **Cerrados hoy:** C5 (registrar precio sin área: el ajo de barra pisaba el de cocina y sala
+  escribía en cocina), A11 (Metas usaba su copia congelada de la meta), A12 (tres food cost
+  distintos), M25 (cada export del POS borraba el caché del recetario), Higiene en 40 s.
+- **Siguen abiertos, en este orden:** C1 las nueve escrituras de `EdicionRecetario.js`/`CrearFicha.js`
+  aceptan el ROL que manda el cliente · C2 `fijarUrlIntranet` pública (secuestro de enlaces y
+  tokens) · C3 `aplicarSincronizacion`/`sincronizarPreciosDeCierre` públicas y `APLICAR_SYNC.js`
+  sin bandera · C4 Marketing OS: `store()` → `mktReplace` pisa piezas, carritos, propuestas y
+  debates con el localStorage del dispositivo · C6 `LICORES` suma al COGS pero no al techo de
+  barra · C7 fugas de lectura por funciones públicas. Arreglo general: sufijo `_` a lo que ninguna
+  vista llama, guarda de dueño a lo de editor, y una prueba que enumere `globalThis`.
+
+### 2. El recetario ya no recarga la página (v86)
+
+- **Síntoma de cocina:** cada ingrediente agregado dejaba la pantalla en blanco ~45 s. **Causa:**
+  toda escritura terminaba en `invalidarCache_()` (borraba el modelo cacheado) y la pantalla
+  hacía `location.reload()`: la recarga reconstruía leyendo las dos hojas enteras (~40 s). Una
+  receta de 8 ingredientes con 2 productos nuevos eran más de 8 minutos en blanco. Registrar
+  un precio, ~80 s.
+- **Ahora:** la escritura ANOTA qué tocó (ficha, producto, precio), relee solo eso, corrige el
+  modelo cacheado y lo devuelve en `cambios` (`conCambiosDeModelo_`, `aplicarToques_`,
+  `parchearCacheCosteo_` en `CosteoDatos.js`). La pantalla corrige su copia (`aplicarCambios`),
+  guarda en una fila de a uno con una píldora "Guardando en la hoja…", abre la ficha nueva en el
+  acto y ofrece crear un producto que no está en el Banco sin salir de la receta. Enter carga rápido.
+- **Bugs corregidos de paso:** crear un producto o proveedor parecido a otro no hacía nada ni
+  preguntaba (la pregunta viaja dentro de `resultado` y la pantalla miraba el `ok` de afuera);
+  registrar precio escribía "Sin proveedor" encima del proveedor del Banco.
+- **Reglas para no romperlo:**
+  1. Una escritura nueva del recetario llama `invalidarCache_({ficha|insumo|precio, area})`.
+     A secas cuenta como "no se sabe qué cambió" y borra el caché.
+  2. `enlazarModelo_` (servidor) y `enlazarModelo` (`CosteoJs_Base.html`) son copias.
+  3. **La fila de guardado es obligatoria:** dos `agregarLinea` simultáneos eligen la misma fila
+     libre y se pisan; una inserción corre los números de fila. Por eso la pantalla no deja editar
+     cantidades de una ficha con algo en fila y el servidor verifica `exigirMismaLinea_`.
+  4. Marca de generación del caché: una reconstrucción de 40 s que se cruza con un guardado no
+     guarda el modelo viejo.
+- Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-14_Recetario_sin_recarga.md`.
+
+### 3. Meta de food cost: 28%, sobre precio sin IVA, de un solo lugar (v88)
+
+**Decisión de Juanma (14-sep-2026):** CMV sobre precio **neto**; meta **28%** global y de cocina;
+barra **20% plana**. **OBSOLETO:** el "30% fijo" del 10-sep, el techo "cocina 30", la tabla
+`metasBarra` por categoría (20 a 35%) y `FIN_META_AREA` (ya no existe).
+
+- **Una sola fuente:** `Rosanta_Intranet_Config` › `PARAMETROS` › `food_cost_objetivo_pct` = **28**
+  (Juanma ya la cambió) y `food_cost_barra_pct` (la fila no existe: vale 20). Las lee
+  `metasFoodCost_()` en `ConfigCosteo.js`, y de ahí salen el semáforo y el techo de compra de
+  Finanzas, las fichas, la ingeniería de menú, el tablero y las fichas nuevas.
+  `generar_finanzas.py` usa `meta_cogs = 28.0`.
+- **El CMV de la ficha subió ~12%** (26,5% → 29,7% el mismo plato): ahora es igual al tablero.
+  Precio sugerido = precio de carta con IVA que deja el CMV sin IVA en la meta.
+- **Las fórmulas de las hojas NO cambiaron:** la celda "CMV % ACTUAL" de cada pestaña sigue sobre
+  precio con IVA y no coincide con la intranet. "Sobre meta" sigue marcando desde meta + 5 puntos.
+- Números de control de la batería pasados a sin IVA (×1,12): ensalada 16,8 · tabla de jamones
+  25,3 · gratín 22,2 · mix de fritas 26,4 · peras 22,1.
+- **Una meta dentro de un cálculo cacheado es una meta vieja.** Para que cambiar la celda se vea
+  en el acto hubo que meter la meta en la clave de tres cachés (tablero `claveProfitOS_`,
+  Finanzas `finCacheClave_`, RAA) y renombrar el de parámetros a `fin_par_v2_` con 10 min en vez
+  de 6 h: la versión anterior había dejado el 30 guardado 6 horas bajo el mismo nombre, y la
+  batería leyó 30 con la celda en 28.
+
+### 4. La v88 salió con código de otra sesión que la batería no había probado
+
+Otra sesión subió la **regla 9 de Finanzas** —siete proveedores que siempre facturan por FEL
+(EEGSA, Claro, Doorways, Posfile, EX Security, Edwin Flores, Aseguradora La Ceiba): su pago de
+banco o tarjeta no suma; quita **Q49,629 de doble conteo del 2026**— y creó la v87 a las ~21:50,
+**después** de la batería de Juanma. La v88 quedó idéntica a la 87. Se verificó HEAD == disco ==
+git y dio verde porque git ya tenía ese commit. Juanma corrió la batería sobre lo publicado:
+0 fallas, la prueba nueva de la regla 9 en OK. **Queda publicada y probada.**
+
+### 5. Reglas nuevas, cada una de algo que pasó hoy
+
+1. **Antes de `create-version`, `clasp list-versions`:** si la última no es la publicada, otra
+   sesión versionó algo. Y comparar HEAD contra la bajada del momento de la batería, no solo
+   contra el disco.
+2. **Una verificación que baja 0 archivos da el mismo verde que una que bajó todo.** clasp falló
+   con `ENOTFOUND` (sin red), la bajada quedó vacía y el comparador dijo "HEAD == disco". Exigir el
+   conteo: 66 archivos.
+3. **Si el total de la batería sube y los OK no,** alguna prueba pasó de OK a aviso: pedir las
+   líneas, no suponer.
+4. **Probar escrituras sin batería:** se armó un simulador de hojas en Node que evalúa las
+   fórmulas de las fichas y corre el código real del servidor y de la pantalla (53
+   comprobaciones). Quedó en el scratchpad de la sesión, no en el repo.
+
+### 6. Pendientes que deja
+
+- Tomate Ciruelo Q7 → Q5: confirmar con Jeffry y, si es real, Productos › Registrar precio.
+- Los 6 críticos abiertos de la auditoría (§1).
+- Las hojas de las fichas siguen mostrando CMV con IVA; la banda +5 de "Sobre meta"; cada llamada
+  al servidor lee la hoja USUARIOS entera (~0,5 s).
 
 ---
 
@@ -38,7 +154,7 @@ Migdalia Lico. Hay **tres** proveedores cuyo nombre contiene "LICO":
 | DISTRIBUIDORA DE **LICO**RES, S.A. | 345377 | **LA NACIONAL** |
 
 Las 23 eran del tercero: **un distribuidor de licor**. Entró compra de licor al food
-cost, que es el número que se mide contra la meta de 30%. Los NIT no se parecen en nada:
+cost, que es el número que se mide contra la meta de 28% (30% hasta el 14-sep). Los NIT no se parecen en nada:
 con el NIT el error era imposible.
 
 **Y ojo con los tres primeros:** Juanma dejó de comprarle a Migdalia y hoy le compra a
@@ -247,6 +363,11 @@ funciones globales repetidas — ahora 0. Detalle en
 - Actualizar el prompt del forecast de caja (p94), que todavía apunta a los JSON viejos.
 
 ### 4. Dos números de food cost que NO son el mismo, y conviven a propósito
+
+> **OBSOLETO desde el 14-sep-2026 (v15):** la meta pasó a **28%** (global y cocina) y barra
+> **20% plana**, y las dos salen de `PARAMETROS` por `metasFoodCost_`. `FIN_META_AREA` ya no
+> existe. Siguen siendo dos usos distintos —el semáforo mide, el techo limita la compra—, pero ya
+> no son números escritos a mano en dos lugares. La tabla de abajo queda como historia.
 
 Decidido por Juanma el 12-sep-2026. **No reproponer unificarlos.**
 
@@ -620,7 +741,7 @@ cerraron o cambiaron de forma. No reproponer las cerradas.
    tiene margen: el tipo de cambio de los cargos en dólares (73% del gasto personal), y
    cuánto del histórico se marcó con la regla de clasificación vieja.
 
-4. **Meta de food cost: 30% fijo.** Decisión de Juanma del 10 sep. **Queda descartada** la
+4. **Meta de food cost: ~~30% fijo~~ 28% desde el 14-sep-2026, sobre precio sin IVA (ver v15).** Decisión de Juanma del 10 sep, corregida el 14. **Queda descartada** la
    fórmula del mix y el 27.8% ponderado que traía la v9 — eso es **obsoleto, no repetirlo**.
    Ya está aplicado en los tres lugares donde vivía: intranet (`PARAMETROS!B3`, de 32 a 30),
    `generar_finanzas.py` (de la fórmula a 30.0 fijo, con el razonamiento escrito en el
@@ -717,7 +838,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 - **Firma de marca: coordenada 14·91.** Forma oficial **14° N · 91° W**; corta **14·91 / #1491**. Igual en cada plato como sello, sin sufijos por platillo.
 - Stack: todo interno con Google (Apps Script, Sheets, Drive) + Claude. Sin n8n, Make ni plataformas externas. GHL y SonTickets cerrados.
 
-## Mapa de proyectos (estado al 12 sep 2026)
+## Mapa de proyectos (estado al 14 sep 2026)
 
 | Pilar / proyecto | Estado | Detalle |
 |---|---|---|
@@ -728,7 +849,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v81 publicada (12 sep), batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).** Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **v88 publicada (14 sep): recetario sin recarga, meta 28% sin IVA desde PARAMETROS y regla 9 de Finanzas. Batería 89 OK · 0 fallas · 2 avisos · 2 saltadas (93). Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |

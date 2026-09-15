@@ -51,7 +51,7 @@
 
 ### Mix de venta (medido 3 sep sobre las ventas 2026)
 
-**Cocina 77.9% / barra 22.1%** → meta de food cost = (77.9 × 30%) + (22.1 × 20%) = **27.8%**, no 32%. Verificación cruzada de Profit OS a 7 meses: cocina Q527,855 vs barra Q159,757 = 76.8/23.2, consistente.
+**Cocina 77.9% / barra 22.1%.** ~~Meta de food cost = (77.9 × 30%) + (22.1 × 20%) = **27.8%**, no 32%.~~ **OBSOLETO:** la meta no sale del mix; es **28% fija** sobre precio sin IVA desde el 14-sep-2026 (SKILL.md v15 §3). El mix sigue valiendo como dato. Verificación cruzada de Profit OS a 7 meses: cocina Q527,855 vs barra Q159,757 = 76.8/23.2, consistente.
 
 ### Defectos conocidos del dato del POS
 

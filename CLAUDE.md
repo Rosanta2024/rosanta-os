@@ -11,7 +11,8 @@
 **Por qué está escrito acá:** el 10-sep-2026 se trabajaron nueve horas en la intranet
 sin cargar el cerebro. Costó no ver que `food_cost_objetivo_pct = 32` en
 `apps-script/rosanta-intranet/Setup.js` está listado como **alerta N1**, con el objetivo
-correcto en 27.8%. Depender de acordarse ya falló una vez.
+correcto en 27.8%. Depender de acordarse ya falló una vez. (Aquel 27.8 también quedó
+obsoleto: desde el 14-sep-2026 la meta es 28% y vive solo en PARAMETROS; ver cerebro v15.)
 
 ## Al CERRAR la sesión
 

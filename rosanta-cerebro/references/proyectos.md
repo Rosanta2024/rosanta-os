@@ -89,7 +89,15 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.
 
-**Estado al 12 sep 2026: v81 publicada (verificado con `clasp list-deployments`). Batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).**
+**Estado al 14 sep 2026: v88 publicada (verificado con `clasp list-deployments`). Batería 89 OK · 0 fallas · 2 avisos · 2 saltadas (93).**
+
+- **v83–v85 (14-sep, otras sesiones):** ingredientes en todas las fichas, ventas del POS automáticas, pestaña Inventarios (fases 2 y 3).
+- **v86 (14-sep):** el recetario guarda sin recargar la página. Detalle y reglas en SKILL.md v15 §2 y `_informes/2026-09-14_Recetario_sin_recarga.md`.
+- **v87 (14-sep, otra sesión):** regla 9 de Finanzas. Nunca desplegada sola.
+- **v88 (14-sep):** meta 28% global y de cocina, barra 20%, CMV sin IVA, todo desde `PARAMETROS` por `metasFoodCost_`. Idéntica a la 87 más este cambio. Detalle en SKILL.md v15 §3 y §4.
+- Auditoría completa de la intranet del 14-sep: `_informes/2026-09-14_Auditoria_intranet_Profit_OS.md` (7 críticos, 6 siguen abiertos).
+
+~~Estado al 12 sep 2026: v81 publicada. Batería 88 OK · 0 fallas · 0 avisos · 2 saltadas (90).~~ (superado)
 El número de versión envejece en horas (76 → 81 en una tarde): **verificar con `clasp list-deployments`**.
 - **v79 (12-sep, 13:07):** unificación de la intranet + Finanzas. Panel de 5 tarjetas → 3 puertas (Finanzas & Data · Profit OS · Sistema de Marketing), shell `SistemaFinanzas` con lateral, `CosteoVista.html` partido en 11 parciales, 3 `.gs` duplicados archivados (31 funciones globales duplicadas → 0), RAA creada. Batería 90 · 0 fallas.
 - **v80 (12-sep):** encima de la 79, **el CRM acepta token** y las pruebas nuevas del barrido. Contra la 79 cambiaron exactamente `CrmDatos.js`, `CrmVista.html`, `Pruebas.js` y `PruebasFinanzas.js`.
@@ -163,7 +171,7 @@ El número de versión envejece en horas (76 → 81 en una tarde): **verificar c
 - **Opcional (p134, N3):** que `srv()` de `Marketing.html` valide `fn` contra una lista blanca declarada en la vista. El riesgo de regresión ya lo cubre el barrido; esto sería defensa extra y toca `Marketing.html`. Decisión de Juanma.
 - **El latido corre los lunes y mira `pauta_semanal`, no si las ventas por producto están al día.** Ese hueco dejó los datos parados dos semanas sin avisar.
 
-**OBSOLETO (resuelto; ver SKILL.md v11 y v12): la meta de food cost es 30% fijo por decisión de Juanma del 10-sep, y la fórmula del mix quedó descartada. El párrafo de abajo se conserva solo como historia.**
+**OBSOLETO (resuelto; ver SKILL.md v11 y v12): la meta de food cost es 30% fijo por decisión de Juanma del 10-sep, y la fórmula del mix quedó descartada. **Desde el 14-sep-2026 es 28%, sobre precio sin IVA, y vive solo en PARAMETROS (SKILL.md v15 §3).** El párrafo de abajo se conserva solo como historia.**
 ~~**Abierto (N1):**~~ la pestaña PARAMETROS de `Rosanta_Intranet_Config` tiene `food_cost_objetivo_pct = 32` fijo. El objetivo correcto depende del mix: (mix cocina × 30%) + (mix barra × 20%) = **27.8%** con el mix real (77.9/22.1). Con el número fijo el semáforo miente y hoy es 4 puntos más permisivo de lo debido. Mejor aún: convertirlo en fórmula del mix.
 
 **Siguiente etapa aprobada el 3 sep:** pantalla semanal de finanzas para la intranet — prime cost semanal, semáforo de food cost, caja y comparativo vs semana anterior. Especificación para Code y forecast de caja.
