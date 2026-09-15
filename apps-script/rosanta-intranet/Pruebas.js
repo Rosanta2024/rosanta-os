@@ -756,7 +756,7 @@ function prPuentePOS_(res) {
       prAnotar_(g, nombre, 'FALLA', 'No existe olvidarAvisosDashboard_: nadie puede limpiar el cache');
       return;
     }
-    var src = String(cargarVentasPorProducto);
+    var src = String(cargarVentasPorProducto_);   // el nucleo: el publico es solo la guarda de editor (15-sep-2026)
     if (src.indexOf('olvidarAvisosDashboard_') === -1) {
       prAnotar_(g, nombre, 'FALLA',
         'cargarVentasPorProducto ya no limpia el cache de avisos: el aviso "exports sin ' +
@@ -848,7 +848,7 @@ function prPuentePOS_(res) {
      mitades — que el nativo no se copie y que el .xlsx no se quede sin camino. */
   prCorrer_(g, 'Un reporte ya nativo se lee sin copiarlo', function () {
     var nombre = 'Un reporte ya nativo se lee sin copiarlo';
-    var src = String(cargarVentasPorProducto);
+    var src = String(cargarVentasPorProducto_);   // el nucleo: el publico es solo la guarda de editor (15-sep-2026)
     if (src.indexOf('a.nativa') === -1) {
       prAnotar_(g, nombre, 'FALLA',
         'cargarVentasPorProducto ya no mira si el archivo es nativo: va a duplicar en ' +
