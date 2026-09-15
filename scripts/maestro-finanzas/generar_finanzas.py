@@ -61,7 +61,7 @@ Propinas — Sheet nativo:
 
 Uso:  python3 generar_finanzas.py [ruta_al_espejo] [--datos CARPETA]
 """
-import openpyxl, datetime, json, os, sys, re
+import openpyxl, datetime, json, os, sys, re, calendar
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -361,6 +361,9 @@ json.dump(DRE, open(os.path.join(OUT, 'dre5.json'), 'w'))
 
 
 # ==================== 2. Los 5 numeros ====================
+# ultima venta cargada del año (con eventos, como ultVenta en FinanzasDatos.gs)
+ULT_VENTA = max((f for _r, f in filas_venta()), default=None)
+
 cinco = []
 for s in serie:
     m = s['m']
@@ -383,6 +386,10 @@ for s in serie:
                 igss += q
     lab_mes, origen = ultimo_devengado(m)
     dev = lab_mes if origen == 'planilla' else None
+    # el mes EN CURSO con planilla estimada: solo la parte de los dias con venta
+    # cargada (Juanma, 15-sep-2026). Mismo criterio que FinanzasDatos.gs.
+    if origen == 'estimada' and ULT_VENTA and ULT_VENTA.month == m:
+        lab_mes = lab_mes * ULT_VENTA.day / calendar.monthrange(ANIO, m)[1]
     lab = lab_mes + igss
     gop = s['gop'] - s['bloques'].get('Nomina y salarios', 0) + lab
     cinco.append({'mes': s['mes'], 'ventas': s['ventas'], 'cogs': round(cog, 2),

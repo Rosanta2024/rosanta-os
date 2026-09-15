@@ -728,13 +728,22 @@ function _finCalcular_() {
     // regla 11: sin planilla del mes, la ultima cargada, marcada como estimada
     var pl = _finUltimoDevengado_(planilla.valores, m);
     var devengado = pl.origen === 'planilla' ? pl.valor : null;
-    var labor = pl.valor + M.igss;
+    // El mes EN CURSO con planilla estimada lleva solo la parte de los dias con
+    // venta cargada (Juanma, 15-sep-2026): una planilla entera contra medio mes de
+    // venta daba prime 73.8% en septiembre. Un mes cerrado sin planilla va entero.
+    var parte = 1;
+    if (pl.origen === 'estimada' && ultVenta && ultVenta.getFullYear() === anio &&
+        ultVenta.getMonth() + 1 === m) {
+      parte = ultVenta.getDate() / new Date(anio, m, 0).getDate();
+    }
+    var labor = pl.valor * parte + M.igss;
     var gopDev = gop - (M.bloques['Nomina y salarios'] || 0) + labor;
     meses.push({
       m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), eventos: _finR_(M.eventos),
       com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
       devengado: devengado !== null,
       labor_origen: pl.origen, labor_desde: pl.desde ? FIN_MESES[pl.desde - 1] : '',
+      labor_parte: _finR_(parte, 3),
       gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
       dev: _finR_(M.dev), pers: _finR_(M.pers),
       neto: _finR_(M.ventas - M.cogs - gopDev),

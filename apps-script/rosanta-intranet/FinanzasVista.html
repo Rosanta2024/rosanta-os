@@ -390,7 +390,11 @@
     document.getElementById('tabla-mes').innerHTML = d.meses.map(function (m) {
       var origen = m.labor_origen || (m.devengado ? 'planilla' : 'sin dato');
       var hay = origen !== 'sin dato';
-      if (origen === 'estimada') estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—'));
+      if (origen === 'estimada') {
+        estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—') +
+          (m.labor_parte && m.labor_parte < 1
+            ? ', en proporción a los días cargados (' + Math.round(m.labor_parte * 100) + '% del mes)' : ''));
+      }
       if (!hay) sinDato++;
       var op = origen === 'planilla' ? '' : ' style="opacity:.6" title="' +
         (hay ? 'Mano de obra estimada con la planilla de ' + esc(m.labor_desde || '') : 'Sin planilla cargada') + '"';
