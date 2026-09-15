@@ -290,7 +290,7 @@ function prFinanzas_(res) {
     // llamaba con notacion de corchetes —run['getFinanzasData']()— y el barrido
     // de Pruebas.gs solo reconoce run.nombre(). Esta prueba mira la funcion.
     var FN = ['getFinanzasData', 'refrescarFinanzas', 'getMetasData',
-              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData'];
+              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData', 'getCmvRealTeorico'];
     var sinGuarda = FN.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;
@@ -455,6 +455,21 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
       mal.length ? 'sobre otra base: ' + mal.join(', ') : d.meses.length + ' meses sobre la venta total',
       d.meses.length - mal.length, d.meses.length);
+  });
+
+  // p96 parte B: la tarjeta real contra teorico del tablero de Profit OS.
+  prCorrer_(g, 'El CMV real contra teorico se calcula', function () {
+    var nombre = 'El CMV real contra teorico se calcula';
+    var rt = _cmvRealTeorico_();
+    if (!rt.ok) { prAnotar_(g, nombre, 'FALLA', rt.error, 0, 'ok'); return; }
+    var b = rt.bloque;
+    var sano = b.meses >= 1 && b.venta > 0 && b.teorico_pct > 15 && b.teorico_pct < 60 &&
+               b.real_pct > 15 && b.real_pct < 80;
+    prAnotar_(g, nombre, sano ? 'OK' : 'FALLA',
+      b.desde + ' a ' + b.hasta + ' · real ' + b.real_pct + '% · teórico ' + b.teorico_pct +
+      '% · brecha ' + b.brecha_pts + ' pts' + (b.inv_cocina ? '' : ' · cocina sin inventario') +
+      (b.inv_barra ? '' : ' · barra sin inventario'),
+      b.meses, '>=1');
   });
 
   // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)

@@ -58,10 +58,27 @@ function vistaInicio(){
     pie:'Sobre venta neta. El global va ponderado por la venta de cada área, no promediado.'
   });
 
-  /* 2. El que falta, y se declara. */
-  const tReal = dbTile({
+  /* 2. CMV real contra teorico (p96 parte B, Finanzas, 15-sep-2026). Lo pide
+     pedirCmvReal() aparte y son los ULTIMOS MESES CERRADOS, no la ventana del selector:
+     por eso el rango va en el sub. Si no llego, "Buscando…"; si fallo o no hay bloque,
+     queda el "Falta" de antes. Umbrales de Profit OS para la brecha: hasta 2 puntos
+     merma normal, de 2 a 4 revisar porcionado, mas de 4 fuga. */
+  const rt = window.__DBCMV__, rb = rt && rt.ok && rt.bloque;
+  const dbMes = m => ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m.slice(5, 7) - 1];
+  const tReal = rb ? dbTile({
+    titulo:'CMV real contra teórico',
+    color: rb.brecha_pts <= 2 ? 'var(--meta)'
+         : rb.brecha_pts <= 4 ? 'color-mix(in srgb, var(--alto) 60%, var(--muted))' : 'var(--alto)',
+    valor: (rb.brecha_pts > 0 ? '+' : '') + rb.brecha_pts.toFixed(1) + '<small> pts</small>',
+    sub:`${dbMes(rb.desde)}–${dbMes(rb.hasta)} · real ${rb.real_pct.toFixed(1)}% · teórico ${rb.teorico_pct.toFixed(1)}%`,
+    pie:`${rb.brecha_pts < 0 ? 'El real queda bajo el teórico: suele ser inventario sin cerrar o compra sin registrar.'
+         : rb.brecha_pts <= 2 ? 'Merma normal.'
+         : rb.brecha_pts <= 4 ? 'Revisar porcionado.'
+         : 'Fuga: auditar recepción, almacén y porciones.'}
+         Últimos ${rb.meses} meses cerrados, no la ventana de arriba. ${esc((rt.notas || []).join(' '))}`
+  }) : dbTile({
     titulo:'CMV real contra teórico', color:'var(--muted)',
-    valor:'<span class="db-falta">Falta</span>',
+    valor: rt ? '<span class="db-falta">Falta</span>' : '<span class="db-falta">Buscando…</span>',
     sub:'el indicador que justifica el pilar',
     pie:`Mientras no exista, el ${dbPct(c.global)} es una hipótesis bien construida, no un hecho.
          La diferencia contra el real es merma, porción, robo y precios viejos, todo junto.

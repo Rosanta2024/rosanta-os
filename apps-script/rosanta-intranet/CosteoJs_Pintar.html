@@ -46,6 +46,23 @@ function aplicarProfitOS(semanas, r){
      la carga anticipada de CosteoVista, nadie los pedia y la franja se quedaba en
      "Buscando avisos…" para siempre. pedirAvisos() no repite si ya los tiene. */
   pedirAvisos();
+  pedirCmvReal();
+}
+
+/* LA TARJETA CMV REAL CONTRA TEORICO (p96 parte B, Finanzas, 15-sep-2026). Misma regla
+   que los avisos: sale despues de los numeros y desde aplicarProfitOS, no desde pintar,
+   o con el tablero de la carga anticipada nunca se pide (A22). Corre ingenieriaDeMenu_
+   una vez por mes: es lo mas lento del tablero. Si falla, no reintenta. */
+function pedirCmvReal(){
+  if(window.__DBCMV__ || window.__DBCMVCARGANDO__) return;
+  window.__DBCMVCARGANDO__ = true;
+  google.script.run
+    .withSuccessHandler(function(r){ window.__DBCMV__ = r || { ok:false };
+                                     if(view==='inicio') pintar(); })
+    .withFailureHandler(function(e){ window.__DBCMV__ = { ok:false, error:(e && e.message) || String(e) };
+                                     window.__DBCMVCARGANDO__ = false;
+                                     if(view==='inicio') pintar(); })
+    .getCmvRealTeorico(AUTH);
 }
 
 /* LOS AVISOS SALEN DESPUES DE LOS NUMEROS, no a la par.
