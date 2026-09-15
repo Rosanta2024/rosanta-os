@@ -40,7 +40,7 @@ Piso Q18,860/mes, objetivo Q27,193/mes.
 - **5.3 puntos (Q60,926)** son la brecha real.
 
 Detalles:
-- **Agosto** es el 40% de la brecha: Q23,300 de retiros de cajero sin detalle, marcados como ALIMENTOS_EFECTIVO.
+- **Agosto** es el 40% de la brecha: Q21,800 en 18 retiros de cajero sin detalle (del 11 al 29-ago, máximo Q2,000 por retiro), marcados como ALIMENTOS_EFECTIVO.
 - **Base de la venta:** la venta de Finanzas incluye el 10% de servicio y la ficha no. **Decisión de Juanma:** el semáforo de Finanzas pasa a venta sin servicio (pendiente de pantalla).
 - **Eventos:** van en los dos lados, su venta y su compra.
 - **No hay comida de personal.**

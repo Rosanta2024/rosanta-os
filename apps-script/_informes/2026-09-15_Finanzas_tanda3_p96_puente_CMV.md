@@ -61,7 +61,7 @@ Scripts: `scripts/maestro-finanzas/p96_2026-09-15/` (`puente.py` y el registro `
 
 - **Agosto es el 40% de la brecha del año (Q24,650).**
   - La compra de cocina fue de Q57,127: con factura Q26,551 (la más alta del año) y sin factura Q30,576.
-  - De lo sin factura, **Q23,300 son retiros de cajero sin detalle desde el 11-ago**, de Q500 a Q2,000 cada uno.
+  - De lo sin factura, **Q21,800 son 18 retiros de cajero sin detalle, del 11 al 29-ago**: de Q100 a Q2,000 cada uno y nunca más de Q3,000 en un día. (Corregido: el primer informe decía Q23,300 por un error de suma.)
   - Hasta el 7-ago las filas decían qué se compró ("S31Mercado", "S31CarneaJeffry").
 - **Compra de cocina sin factura:**
 
@@ -86,6 +86,6 @@ Scripts: `scripts/maestro-finanzas/p96_2026-09-15/` (`puente.py` y el registro `
 1. **Tanda de pantalla (3.4):**
    - semáforo de Finanzas sobre venta sin servicio (decisión 1);
    - el indicador real contra teórico en Profit OS, coordinado con esa sesión.
-2. **p88:** detalle de los retiros de cajero de agosto (Q23,300) y registro de mercado.
+2. **p88:** detalle de los 18 retiros de cajero de agosto (Q21,800) y registro de mercado.
 3. **Fichas y precios (3.8 puntos):** es ingeniería de menú. El tablero ya da el "recuperable contra meta" por plato.
 4. **p111:** las fichas sin costo siguen sumando al ciego (Q20,082 de cocina en agosto).
