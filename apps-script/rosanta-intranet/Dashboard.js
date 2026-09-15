@@ -457,35 +457,31 @@ function avisoSinFicha_() {
 }
 
 /**
- * 4. Precios del ultimo cierre con movimientos sospechosos.
+ * 4. Precios del cierre de inventario que esperan aprobacion.
  *
- * Lee la pestana SEMAFORO_PRECIOS, que ya calculo refrescarSemaforoPrecios(). NO
- * recalcula: el semaforo abre el archivo del cierre y eso tarda, y este aviso se
- * pinta junto a otros tres. Si la pestana no existe todavia, el aviso lo dice en
- * vez de romperse.
+ * Hasta el 15-sep-2026 este aviso leia SEMAFORO_PRECIOS, el semaforo del Excel del
+ * cierre. Se retiro (auditoria A6): la unica fuente de precios al Banco es el cierre de
+ * inventario de la intranet, y lo que falta decidir vive en PRECIOS_POR_APROBAR. Una
+ * sola lectura de esa pestana; sin nada pendiente, no hay aviso.
  */
 function avisoCierre_() {
-  var h = hojaCosteo_().getSheetByName(SEMAFORO.hoja);
-  if (!h || h.getLastRow() < 2) {
-    return { clave: 'cierre', nivel: 'info',
-             texto: 'El semáforo de precios nunca se ha refrescado. Corré refrescarSemaforoPrecios().',
-             detalle: [] };
+  var h = hojaCosteo_().getSheetByName(INV_DATOS.hojaPorAprobar);
+  if (!h || h.getLastRow() < 2) return null;
+  var d = h.getDataRange().getValues(), c = invColumnas_(d[0]), lista = [];
+  for (var i = 1; i < d.length; i++) {
+    if (invTexto_(d[i][c['estado']]).toUpperCase() !== 'PENDIENTE') continue;
+    var pct = invNumero_(d[i][c['variacion %']]);
+    lista.push((invTexto_(d[i][c['area']]).toUpperCase() === 'BARRA' ? 'Barra' : 'Cocina') + ' · ' +
+               invTexto_(d[i][c['producto']]) + ' · Q' + invNumero_(d[i][c['precio anterior']]) + ' → Q' +
+               invNumero_(d[i][c['precio nuevo']]) + (pct == null ? '' : ' (' + (pct > 0 ? '+' : '') + pct + '%)'));
   }
-  // La hoja son bloques con encabezado. Se cuentan las filas que traen un producto y
-  // un porcentaje: no se asume ni el orden de los bloques ni el numero de columnas.
-  var filas = h.getDataRange().getValues(), revisar = [];
-  filas.forEach(function (f) {
-    var estado = String(f[0] || '').trim().toUpperCase();
-    if (estado !== 'REVISAR') return;
-    revisar.push(f.slice(1, 5).filter(function (c) { return c !== '' && c != null; }).join(' · '));
-  });
-  if (!revisar.length) return null;
+  if (!lista.length) return null;
   return {
     clave: 'cierre',
     nivel: 'alerta',
-    texto: revisar.length + (revisar.length === 1 ? ' precio del último cierre se movió' :
-                                                    ' precios del último cierre se movieron') +
-           ' más de lo esperable. Revisalos antes de aplicar el sync.',
-    detalle: revisar.slice(0, 8)
+    texto: lista.length + (lista.length === 1 ? ' precio del cierre de inventario espera'
+                                              : ' precios del cierre de inventario esperan') +
+           ' la aprobación de Juanma en Inventarios › Precios.',
+    detalle: lista.slice(0, 8)
   };
 }

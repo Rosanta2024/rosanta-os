@@ -984,6 +984,8 @@ function invCerrarMes_(area, mes, ceros, u, sinPrecioOk) {
                   (corrida ? ' · corrida ' + corrida : '')]]);
   SpreadsheetApp.flush();
 
+  olvidarAvisosDashboard_();     // el tablero avisa lo que quedo por aprobar
+
   // 4. el mes siguiente
   var siguiente = null, avisos = [];
   try { siguiente = invAbrirMes_(area, u).mes; }
@@ -1334,6 +1336,7 @@ function invResolverPrecios_(pedidos, aprobar, u) {
   }
   if (rastro.length) bitacoraLote_(rastro);
   SpreadsheetApp.flush();
+  olvidarAvisosDashboard_();
   res.recetario = res.aprobados > 0;
   return res;
 }

@@ -1275,24 +1275,13 @@ function prModulos_(res) {
     prAnotar_(g, 'CRM (crmContactos)', n >= 0 ? 'OK' : 'FALLA', n + ' contactos', n);
   });
 
-  prCorrer_(g, 'Sincronizacion de precios', function () {
-    // OJO: probarSincronizacion() solo escribe en el Log y devuelve undefined.
-    // Llamarla y leer su retorno hacia que esta prueba dijera "sin cambios que
-    // proponer" mientras proponia tres. Se llama a la de abajo, que si devuelve.
-    if (!PropertiesService.getScriptProperties().getProperty('INVENTARIO_CIERRE_SHEET_ID')) {
-      prAnotar_(g, 'Sincronizacion de precios', 'SALTADA',
-                'Falta INVENTARIO_CIERRE_SHEET_ID. Correr PROBAR_SYNC una vez.');
-      return;
-    }
-    var r = sincronizarPreciosDeCierre_('COCINA');   // propone, nunca escribe
-    var n = r.cambios.length;
-    prAnotar_(g, 'Precios del cierre por revisar', n === 0 ? 'OK' : 'AVISO',
-      r.cambios.map(function (c) {
-        return c.producto + ' Q' + c.precioViejo + '->Q' + c.precioNuevo + ' (' + c.pct + '%)';
-      }).join(' · '), n);
-    prAnotar_(g, 'Candado de unidad', 'OK',
-      r.unidadDistinta.length + ' bloqueados por unidad distinta, incluida la malanga',
-      r.unidadDistinta.length);
+  // El semaforo del Excel del cierre se retiro el 15-sep-2026 (auditoria A6): los precios
+  // entran por el cierre de inventario de la intranet, que mira el grupo 8. Esta prueba
+  // leia el .xlsx y avisaba precios que ya ningun camino aplica.
+  prCorrer_(g, 'Precios del Excel del cierre', function () {
+    prAnotar_(g, 'Precios del Excel del cierre', SEMAFORO.retirado ? 'OK' : 'AVISO',
+              SEMAFORO.retirado ? 'retirado: los precios entran por el cierre de inventario (grupo 8)'
+                                : 'el semaforo del Excel sigue activo');
   });
 
   if (PRUEBAS_CFG.incluirRed) {
@@ -1722,25 +1711,16 @@ function prSyncPrecios_(res) {
       Object.keys(enIndice).length, Object.keys(enModelo).length);
   });
 
-  prCorrer_(g, 'El semaforo tiene su pestana al dia', function () {
-    var h = hojaCosteo_().getSheetByName(SEMAFORO.hoja);
-    if (!h) {
-      prAnotar_(g, 'El semaforo tiene su pestana al dia', 'SALTADA',
-                'nunca se corrio refrescarSemaforoPrecios(). Falta el activador mensual.');
-      return;
-    }
-    var cab = h.getRange(1, 1, 4, 2).getValues();
-    var estado = '', cuando = '';
-    for (var i = 0; i < cab.length; i++) {
-      if (normalizar_(cab[i][0]) === 'estado') estado = String(cab[i][1] || '');
-      if (normalizar_(cab[i][0]) === 'ultima corrida') cuando = String(cab[i][1] || '');
-    }
-    // Un semaforo que quedo viejo miente sin dar error: es su unico modo de falla
-    // que la pestana no puede gritar sola.
-    prAnotar_(g, 'El semaforo tiene su pestana al dia',
-      estado.indexOf('AL DIA') === 0 ? 'OK' : 'AVISO',
-      'estado: ' + (estado || '(vacio)') + ' · ultima corrida: ' + (cuando || '(vacia)'),
-      estado);
+  // Retirado el 15-sep-2026 (A6). Lo que importa ahora es que nadie lo reviva: los dos
+  // APLICAR escribian en el Banco desde el Excel.
+  prCorrer_(g, 'El semaforo del Excel quedo retirado', function () {
+    var vivos = ['APLICAR_SEMAFORO', 'APLICAR_BARRA'].filter(function (n) { return typeof globalThis[n] === 'function'; });
+    prAnotar_(g, 'El semaforo del Excel quedo retirado',
+      SEMAFORO.retirado && !vivos.length ? 'OK' : 'FALLA',
+      vivos.length ? 'siguen en el proyecto: ' + vivos.join(' · ') + ' (escriben precios desde el Excel)'
+                   : SEMAFORO.retirado ? 'sin APLICAR_SEMAFORO ni APLICAR_BARRA; el activador mensual ya no lee el Excel'
+                                       : 'SEMAFORO.retirado no esta en true',
+      vivos.length, 0);
   });
 }
 

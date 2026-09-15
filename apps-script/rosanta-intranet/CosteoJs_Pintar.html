@@ -106,8 +106,8 @@ function simbar(){
   if(!sim.size) return;
   const af = R.filter(tocada);
   const platos = af.filter(r => r.t==='plato' && r.precio);
-  const fuera = platos.filter(r => { const c = cmvAhora(r); return c!=null && c > r.obj+5; }).length;
-  const antes = platos.filter(r => r.cmv!=null && r.cmv > r.obj+5).length;
+  const fuera = platos.filter(r => { const c = cmvAhora(r); return c!=null && c > r.obj; }).length;
+  const antes = platos.filter(r => r.cmv!=null && r.cmv > r.obj).length;
   document.getElementById('simtext').innerHTML =
     `<strong>${sim.size} precio${sim.size===1?'':'s'} simulado${sim.size===1?'':'s'}</strong> · ${af.length} receta${af.length===1?'':'s'} afectada${af.length===1?'':'s'} · platos sobre meta: ${antes} → <strong>${fuera}</strong>`;
 }

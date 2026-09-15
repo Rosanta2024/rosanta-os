@@ -211,7 +211,7 @@ function leerFicha_(hoja, cfg) {
     nota: '', ingredientes: [], cmvObjetivo: metaDeArea_(cfg.area)
   };
 
-  var enIngredientes = false, colIng = null;
+  var enIngredientes = false, colIng = null, mermaEnHoja = false;
 
   for (var i = 0; i < datos.length; i++) {
     var fila = datos[i], esResumen = false;
@@ -241,7 +241,7 @@ function leerFicha_(hoja, cfg) {
         enIngredientes = false; r.subtotal = primerNumero_(fila, j + 1); esResumen = true;
       }
       else if (celda.indexOf('variacion') === 0 || celda.indexOf('merma') === 0) {
-        var m = String(fila[j]).match(/(\d+)\s*%/); if (m) r.merma = Number(m[1]);
+        var m = String(fila[j]).match(/(\d+)\s*%/); if (m) { r.merma = Number(m[1]); mermaEnHoja = true; }
         esResumen = true;
       }
       else if (celda.indexOf('costo total') === 0) { r.costo = primerNumero_(fila, j + 1); esResumen = true; }
@@ -290,7 +290,10 @@ function leerFicha_(hoja, cfg) {
     }
   }
 
-  // costo del batch: lo que este disponible
+  // costo del batch: lo que este disponible. Un pre-elaborado cuya hoja no tiene fila de
+  // merma NO lleva la del area: la hoja calcula COSTO POR PORCION = batch / rinde, sin
+  // merma, y el modelo le sumaba un 10% que la hoja no aplica (auditoria M13, 15-sep-2026).
+  if (r.tipo === 'preelaborado' && !mermaEnHoja) r.merma = 0;
   if (r.costo === null && r.subtotal !== null) r.costo = r.subtotal * (1 + r.merma / 100);
 
   // para un pre-elaborado, el costo que interesa es el unitario
@@ -338,12 +341,16 @@ function conMetasVigentes_(modelo) {
   return modelo;
 }
 
-/** El estado de una receta por sus numeros. Uno solo para la lectura y para el parche de precios. */
+/**
+ * El estado de una receta por sus numeros. Uno solo para la lectura y para el parche de precios.
+ * SOBRE META es CUALQUIER exceso, igual que el tablero (decision de Juanma, 15-sep-2026).
+ * Hasta ese dia tenia 5 puntos de gracia: un plato a 32% con meta 28 decia "En meta".
+ */
 function estadoReceta_(r) {
   return !r.ingredientes.length ? 'vacia'
        : r.tipo === 'preelaborado' ? 'pre'
        : !r.precio ? 'sin_precio'
-       : r.cmv > r.cmvObjetivo + 5 ? 'alto'
+       : r.cmv > r.cmvObjetivo ? 'alto'
        : r.cmv < r.cmvObjetivo * 0.6 ? 'bajo' : 'ok';
 }
 

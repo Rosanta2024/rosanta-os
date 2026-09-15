@@ -99,7 +99,7 @@ function estadoDe(cmv, r){
   if(r.t !== 'plato') return 'pre';
   if(!r.precio) return 'sin_precio';
   if(cmv == null) return 'vacia';
-  if(cmv > r.obj + 5) return 'alto';
+  if(cmv > r.obj) return 'alto';          // cualquier exceso, igual que el tablero (15-sep-2026)
   if(cmv < r.obj * 0.6) return 'bajo';
   return 'ok';
 }
@@ -128,10 +128,20 @@ function recetasVis(){
   else if(filt.rec === 'tocadas') list = list.filter(tocada);
   return list;
 }
+/* AFECTADA = su costo con la simulacion no es el mismo que SIN simulacion, los dos con el
+   mismo motor. Antes se comparaba contra r.costo, que en un pre-elaborado es el batch
+   mientras costoAhora da el costo por unidad: cualquier simulacion marcaba a todos los
+   pre-elaborados (auditoria M13, 15-sep-2026). La tolerancia es relativa porque un
+   costo por gramo vive en milesimas. */
 function tocada(r){
   if(!sim.size) return false;
   const c1 = costoAhora(r);
-  return c1 != null && r.costo != null && Math.abs(c1 - r.costo) > 0.005;
+  if(c1 == null) return false;
+  const guardada = [...sim.entries()];
+  sim.clear();
+  let c0;
+  try { c0 = costoAhora(r); } finally { guardada.forEach(([k, v]) => sim.set(k, v)); }
+  return c0 != null && Math.abs(c1 - c0) > Math.abs(c0) * 1e-7 + 1e-9;
 }
 function insumosVis(){
   // Mismo criterio que en recetas: buscar ignora los filtros y el area.

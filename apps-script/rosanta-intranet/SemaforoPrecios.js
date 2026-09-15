@@ -32,6 +32,12 @@
  */
 
 var SEMAFORO = {
+  // RETIRADO el 15-sep-2026 (auditoria A6, decision de Juanma): la UNICA fuente de
+  // precios al Banco es el cierre de inventario de la intranet (InventarioDatos.gs). Dos
+  // caminos proponian el mismo precio con datos distintos, y el del Excel podia devolver
+  // lo que la intranet ya habia subido. APLICAR_SEMAFORO y APLICAR_BARRA pasaron a
+  // apps-script/_archivo/2026-09-15_tanda3_semaforo/. La pestana queda como historico.
+  retirado: true,
   hoja: 'SEMAFORO_PRECIOS',
   maxFilas: 40,       // por bloque. Lo que se corta se dice, no se esconde.
   colAprobar: 8,      // H — la casilla que se tilda a mano
@@ -53,6 +59,12 @@ function estaTildado_(v) {
 }
 
 function refrescarSemaforoPrecios() {
+  // Sigue existiendo y publica porque el activador mensual la llama: si desapareciera,
+  // el activador fallaria todos los meses. Borralo en Editor > Activadores.
+  if (SEMAFORO.retirado) {
+    Logger.log('Semaforo del Excel retirado el 15-sep-2026: los precios entran por el cierre de inventario. Borra este activador.');
+    return { retirado: true };
+  }
   var stamp = new Date();
   var cuando = Utilities.formatDate(stamp, 'America/Guatemala', 'yyyy-MM-dd HH:mm');
   var filas = [];

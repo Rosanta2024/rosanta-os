@@ -184,7 +184,9 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
   // Que categorias de barra entran, y las dos metas: de PARAMETROS (metasFoodCost_),
   // no escritas aca. Barra es plana desde el 14-sep-2026.
   var metas = {};
-  (COSTEO.categoriasBarra || []).forEach(function (c) { metas[c] = true; });
+  // Normalizadas (auditoria M19): "Café & Té" de la config y "CAFE & TE" del POS son la
+  // misma categoria; sin normalizar, esos productos caian a "sin equivalencia".
+  (COSTEO.categoriasBarra || []).forEach(function (c) { metas[normalizar_(c)] = true; });
   var metaCocina = metaDeArea_('COCINA') / 100, metaBarra = metaDeArea_('BARRA') / 100;
 
   // dias del periodo, por calendario: lo que se anualiza es tiempo transcurrido, no
@@ -253,7 +255,7 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
     // BARRA: por nombre + categoria del POS.
     var kc = normalizar_(nombre) + '|' + normalizar_(l.categoria);
     var reg2 = cat.porNombreCat[kc];
-    if (reg2 && metas[reg2.categoria]) {
+    if (reg2 && metas[normalizar_(reg2.categoria)]) {
       var k2 = 'BARRA|' + kc;
       if (!prod[k2]) prod[k2] = { area: 'BARRA', nombre: reg2.nombre, categoria: reg2.categoria,
                                   precio: reg2.precio, costo: reg2.costo,
@@ -309,9 +311,12 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
   // Por categoria: umbral de popularidad y MC promedio. El MC promedio SOLO sobre
   // costo firme — si entrara lo no costeado, el promedio bajaria solo y todo pareceria
   // estrella.
+  // La categoria se agrupa NORMALIZADA (auditoria M19): cocina con ficha trae la del
+  // recetario y sin ficha la del POS, y "Para Empezar" contra "PARA EMPEZAR" partia la
+  // categoria en dos y el umbral de popularidad se calculaba sobre mitades.
   var porCat = {};
   Object.keys(prod).forEach(function (k) {
-    var p = prod[k], c = p.area + '|' + p.categoria;
+    var p = prod[k], c = p.area + '|' + normalizar_(p.categoria);
     if (!porCat[c]) porCat[c] = { area: p.area, categoria: p.categoria, uds: 0, n: 0,
                                   mcPorUds: 0, udsFirmes: 0 };
     porCat[c].uds += p.uds; porCat[c].n++;
@@ -329,7 +334,8 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
   // Clasificar
   var meses = dias / 30.44;
   Object.keys(prod).forEach(function (k) {
-    var p = prod[k], g = porCat[p.area + '|' + p.categoria];
+    var p = prod[k], g = porCat[p.area + '|' + normalizar_(p.categoria)];
+    p.categoria = g.categoria;          // un solo nombre por categoria en la pantalla
     p.mc = p.precioNeto - p.costo;
     p.contribucion = p.mc * p.uds;
     p.popularidad = g.uds ? p.uds / g.uds : 0;
@@ -441,6 +447,20 @@ function probarIngenieriaMenu(desde, hasta) {
  * vez menos datos sin decir por que. Anclada al dato, la ventana es estable y la
  * fecha de arriba delata sola que el feed quedo viejo.
  */
+/**
+ * El ultimo DOMINGO cargado, en AAAA-MM-DD (auditoria A17, 15-sep-2026). Con la carga
+ * automatica el ultimo dia puede ser un miercoles a medias: "4 semanas" hasta ahi traia
+ * un fin de semana de menos y un dia incompleto, y la popularidad se movia sola. La
+ * ventana termina el domingo, que es lo que mira el ritual del lunes. Si no hay ningun
+ * domingo cargado (menos de una semana de datos), vale el ultimo dia.
+ */
+function ultimoDomingo_(max, min) {
+  var t = new Date(max + 'T12:00:00Z');
+  t.setUTCDate(t.getUTCDate() - t.getUTCDay());
+  var d = t.getUTCFullYear() + '-' + ('0' + (t.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + t.getUTCDate()).slice(-2);
+  return min && d < min ? max : d;
+}
+
 function ventanaVentas_(semanas) {
   var h = hojaCosteo_().getSheetByName(IMENU.hojaVentas);
   if (!h || h.getLastRow() < 2) return null;
@@ -455,10 +475,11 @@ function ventanaVentas_(semanas) {
   });
   if (!max) return null;
   if (!semanas) return { desde: min, hasta: max };          // todo
-  var t = new Date(max + 'T12:00:00Z');
+  var hasta = ultimoDomingo_(max, min);                     // semanas completas
+  var t = new Date(hasta + 'T12:00:00Z');
   t.setUTCDate(t.getUTCDate() - (semanas * 7 - 1));
   var desde = Utilities.formatDate(t, 'UTC', 'yyyy-MM-dd');
-  return { desde: desde < min ? min : desde, hasta: max };
+  return { desde: desde < min ? min : desde, hasta: hasta };
 }
 
 /**
@@ -499,9 +520,11 @@ function ventasYVentana_(semanas) {
   // La ventana, anclada a la ULTIMA FECHA CARGADA y no a hoy: si el lunes no se
   // carga el export, "ultimas 13 semanas" contra hoy iria corriendo el piso y
   // mostraria cada vez menos datos sin decir por que.
+  // Y termina en el ultimo DOMINGO cargado: ver ultimoDomingo_.
   var desde = min, hasta = max;
   if (semanas) {
-    var t = new Date(max + 'T12:00:00Z');
+    hasta = ultimoDomingo_(max, min);
+    var t = new Date(hasta + 'T12:00:00Z');
     t.setUTCDate(t.getUTCDate() - (semanas * 7 - 1));
     desde = Utilities.formatDate(t, 'UTC', 'yyyy-MM-dd');
     if (desde < min) desde = min;
