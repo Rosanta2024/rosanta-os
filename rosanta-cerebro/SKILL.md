@@ -7,7 +7,77 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 14 sep 2026 (v15).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 15 sep 2026 (v16).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 15 sep 2026 (v16): Finanzas & Data OS, tanda 1
+
+**El equipo está en la @92** (verificado: la @92 bajada aparte, idéntica a lo que se probó). Batería sobre esa versión: **103 OK · 0 fallas · 0 avisos · 3 saltadas**. Con la @88 las saltadas eran 2; la nueva no está identificada.
+
+Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda1.md`.
+
+### 1. Números del año con el cálculo nuevo (espejo del 15-sep, 13:21)
+
+Ventas Q1,288,737 · COGS 34.7% · prime cost 55.0% · **resultado −Q44,650 (−3.5%)** · fugas Q0.
+- Intranet y `generar_finanzas.py` dan lo mismo al centavo.
+- **OBSOLETO:** el −Q88,205 / −7.2% de `references/negocio.md`. Eran 8 meses con las reglas viejas.
+
+### 2. Reglas nuevas del cálculo (motor y Python, las dos)
+
+| Regla | Qué hace |
+|---|---|
+| 10 | Una fecha con hora se lleva a su día: de 12:00 en adelante, el día siguiente |
+| 11 | Un mes sin planilla usa la última cargada. **El mes en curso lleva solo la parte de los días con venta cargada** (Juanma, 15-sep). Se acabó el 29000 fijo de la semana |
+| 12 | UNIFORMES es su propio bloque |
+| 13 | **Una factura con Estado "Anulado" no suma.** Se sumaban 15 anuladas, Q7,535 |
+
+Además:
+- Semanas con año (AAAAWW) y consecutivas. Las cortas y las sin venta entran a la móvil de 4, por decisión de Juanma.
+- `LICORES` pasa a barra.
+- Los números escritos como texto se leen.
+- Un mes con gasto y sin venta suma al año.
+
+### 3. El maestro, corregido por Juanma con scripts de simulación
+
+- **157 fechas** (38 FEL + 119 ventas) movidas a su día verdadero.
+- **p121:** 6 pagos de mercado, Q6,605, a ALIMENTOS_EFECTIVO.
+- **Abogada:** la factura de Q2,000 pasa a SERVICIOS PROFESIONALES y el proveedor entra a `00_Proveedores`.
+- **Retiro de mercado:** Q500 "F-TORRE CUIDAD VIEJA" del 28-06 a ALIMENTOS_EFECTIVO.
+
+### 4. Hechos verificados que no hay que re-investigar
+
+- **Zona horaria:** el Sheet maestro está en (GMT-06:00) Guatemala, locale es_MX.
+- **Filas a 22/23 h:** eran del **día siguiente**. Verificado contra el reporte del POS (julio y S37) y el FEL de S37. Queda **OBSOLETA** la hipótesis de p120 de que el Sheet mostraba la fecha real. Nacieron por escribir la medianoche de Guatemala en un Sheet que estaba en otra zona; `cargador.js` ahora frena si las zonas difieren.
+- **Proveedores que sí facturan:**
+  - COMESA: 7 facturas por Q3,628, igual a lo pagado.
+  - Vinos de Altura: factura como **VIÑEDOS DE ALTURA / ENTREVINOS** (NIT 74382489).
+  - La Torre Q67.24: tiene su factura.
+- **Elder:** Q2,285 y Q2,385 son pagos fraccionados de una factura de 2025; la regla 3 los deja fuera.
+- **Anuladas sin reemplazo:** GRUPO ECO Q1,467.14 (1-abr) y Los Alpes Q1,500 (25-ene). Son errores del proveedor y quedan fuera.
+
+### 5. Decisiones de Juanma del día
+
+- **Pago a Raúl:** Q100,000 el **15 de marzo de 2027**.
+- **Máquina de agua de GRUPO ECO:** la mensualidad bajó de Q1,467.14 a **Q1,250**, negociado.
+
+### 6. Reglas técnicas nuevas
+
+1. **En el maestro, una fecha se escribe como TEXTO `AAAA-MM-DD`.** `setValue(new Date(...))` no cambió 37 celdas del FEL y no dio error; como texto entraron a la primera.
+2. **Un script de datos relee lo que escribió** (`flush` y lectura en la misma corrida). El primer "157 escritas" era mentira para 37 filas, y solo lo destapó volver a correr la revisión.
+3. **El total de la batería sube al agregar pruebas.** Si suben las saltadas, pedir las líneas antes de publicar.
+
+### 7. Pendiente del pilar
+
+- **Tanda 2** (p94 pestaña Caja + p122). Faltan respuestas de Juanma:
+  - línea de crédito;
+  - aguinaldo;
+  - deuda fuera del banco;
+  - mezcla entre vender más y bajar costo;
+  - fecha para llegar al piso.
+- **Tandas 3-5:** p96, robustez y batería.
+- Identificar las 3 saltadas.
+- Actualizar en el tablero p15, p120 y p121.
 
 ---
 

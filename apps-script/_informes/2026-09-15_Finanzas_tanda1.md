@@ -1,6 +1,10 @@
 # Finanzas & Data OS · Tanda 1 · 15 sep 2026
 
-Datos que daban números mal. Commit `52eef87`, subido a HEAD de la intranet (55 archivos) y del maestro (21). **No publicado**: el equipo sigue en la @91.
+Datos que daban números mal. **Publicado en la @92** el 15-sep-2026, despliegue `AKfycby814…`. Juanma corrió la batería sobre HEAD: **103 OK · 0 fallas · 0 avisos · 3 saltadas** (192 s). Antes de publicar se comparó HEAD contra lo probado y contra el disco (55 archivos idénticos); después, la @92 bajada aparte contra HEAD, también idénticos. Commits `52eef87` … `7ac5a8a`. Maestro: 22 archivos.
+
+**Año publicado** (espejo de las 13:21): resultado −Q44,650 (−3.5%) · prime cost 55.0% · fugas Q0 en las cuatro hojas. Intranet y `generar_finanzas.py`, iguales al centavo.
+
+**Queda abierto:** identificar las 3 saltadas. Con la @88 eran 2; la batería no se pidió línea por línea.
 
 ## Qué cambió
 
