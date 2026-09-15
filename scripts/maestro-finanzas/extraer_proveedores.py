@@ -267,8 +267,14 @@ def sugerir_nombre(comp):
             if pref and len(comp)>=5 and k.startswith(comp): hits.append((e,"la glosa es el comienzo de '%s'" % k)); break
             if pref and len(k)>=6 and comp.startswith(k): hits.append((e,"la glosa empieza con '%s'" % k)); break
     return hits
+DOCUMENTADOS={
+ "BANCAELECTRONICA":(("TARJETA","PAYPAL *VANEWILCHES"),"documentado en recategorizar_pauta.js (2-sep-2026): las cuatro BANCA ELECTRONICA son los honorarios de Vanessa Wilches, proveedora del exterior sin FEL"),
+ "MARKETING":(("NIT","82651086"),"documentado en recategorizar_pauta.js (2-sep-2026): son 6 de los 7 pagos a Edwin Flores, fila por fila (fecha y monto)"),
+ "CONTENIDO":(("NIT","82651086"),"documentado en recategorizar_pauta.js (2-sep-2026): es el septimo pago a Edwin Flores (26-ago, Q2,000)"),
+}
 CONFIRMADAS={
- ("TARJETA","PAYPAL *VANEWILCHES"):"Vanessa Wilches · especialista de pauta digital · honorarios profesionales",
+ ("TARJETA","PAYPAL *VANEWILCHES"):"Vanessa Wilches · especialista de pauta digital desde Colombia · honorarios profesionales sin FEL · cobra tambien por transferencia BI (BANCA ELECTRONICA) · va en MARKETING_DIGITAL a proposito",
+ ("NIT","82651086"):"Edwin Flores · gestion de marketing · factura Q2,000/mes por FEL (confirmado por Juanma el 2-sep, recategorizar_pauta.js)",
  ("NIT","345377"):"distribuidor de licor · la clasificacion de barra la lleva Juanma",
  ("NIT","110989163"):"Migdalia Lico · proveedora de mercado (alimentos) · ya no se le compra",
  ("NIT","52496325"):"Cristina Anona Lico · proveedor actual de frutas y verduras",
@@ -312,7 +318,11 @@ def sugerir_cat(cat):
 BIF=[]; BI_CON=0; BI_SUG=0; BI_SIN=0; QS=[0.0,0.0,0.0]
 for comp,p in sorted(BIPAT.items(), key=lambda kv:-kv[1]["q"]):
     cat_top=p["cat"].most_common(1)[0][0]
-    if comp in CONCEPTO or comp.startswith("__SIN_TEXTO__"):
+    if comp in DOCUMENTADOS:
+        tipo="vinculo documentado"; key_doc,ev=DOCUMENTADOS[comp]
+        ed=[e for e in orden if e["key"]==key_doc]
+        sug=" | ".join("%s %s"%(e["codigo"],e["nombre"]) for e in ed)
+    elif comp in CONCEPTO or comp.startswith("__SIN_TEXTO__"):
         tipo="concepto sin nombre"; sug=sugerir_cat(cat_top); ev="sugerencia solo por categoria (%s)" % cat_top if sug else ""
         BI_CON+=1
     else:
