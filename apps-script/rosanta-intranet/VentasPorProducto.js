@@ -373,10 +373,17 @@ function escribirVentas_(filas, desde, hasta, cuando) {
   }
   filas.forEach(function (f) { f[VENTAS.cols.length - 1] = cuando; });
 
-  var todo = previas.concat(filas);
-  if (h.getLastRow() > 1) h.getRange(2, 1, h.getLastRow() - 1, VENTAS.cols.length).clearContent();
-  if (todo.length) h.getRange(2, 1, todo.length, VENTAS.cols.length).setValues(todo);
-  return { reemplazadas: (h.getLastRow() - 1) - previas.length, total: todo.length };
+  var todo = previas.concat(filas), total = todo.length;
+  // SIN VENTANA VACIA (auditoria M10, 15-sep-2026). Antes se borraba la hoja entera y
+  // despues se escribia: un corte entre las dos (el limite de 6 minutos de Apps Script)
+  // dejaba VENTAS x PLATO vacia, y el tablero y la ingenieria de menu en cero hasta la
+  // corrida siguiente. Ahora es UNA sola escritura: las filas nuevas encima y, si la
+  // hoja tenia mas, filas en blanco hasta cubrirla. En todo momento la hoja tiene las
+  // ventas de antes o las de despues, nunca nada.
+  var alto = Math.max(total, h.getLastRow() - 1), blanco = VENTAS.cols.map(function () { return ''; });
+  while (todo.length < alto) todo.push(blanco);
+  if (alto > 0) h.getRange(2, 1, alto, VENTAS.cols.length).setValues(todo);
+  return { reemplazadas: filas.length, total: total };
 }
 
 /* ==========================================================================

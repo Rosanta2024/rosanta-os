@@ -7,8 +7,8 @@
  * leia como 12 gramos. Ninguno dio error. Los tres vivieron semanas.
  *
  * Como se corre:
- *   - desde el editor:   abrir CORRER_PRUEBAS.gs y darle Run (es su unica funcion)
- *   - desde la terminal: clasp run CORRER_PRUEBAS   (necesita el proyecto de Cloud)
+ *   - desde el editor:   correrPruebas (con guarda de dueno). CORRER_PRUEBAS.gs se archivo el 15-sep-2026
+ *   - desde la terminal: clasp run correrPruebasTexto   (necesita el proyecto de Cloud)
  *   - desde el navegador: la ruta ?page=pruebas
  *
  * Todo lo de aca dentro es privado (termina en _) menos tres, para no chocar con nada:
@@ -1389,7 +1389,7 @@ function prCapaWeb_(res) {
     var nombre = 'Ninguna funcion publica queda abierta';
     var G = (typeof globalThis !== 'undefined') ? globalThis : this;
     // exigirPermiso_ NO cuenta: mira el rol que le pasan, y si lo pasa el navegador no protege nada.
-    var IDENTIDAD = /(resolverUsuario_|getUsuarioActual|edicionQuien_|edicionCorrer_|exigirModulo_|soloDueno_|invMigExigirDueno_|invExigirDueno_|requiere[A-Z]\w*_)\s*\(/;
+    var IDENTIDAD = /(resolverUsuario_|getUsuarioActual|edicionQuien_|edicionCorrer_|exigirModulo_|soloDueno_|invExigirDueno_|requiere[A-Z]\w*_)\s*\(/;
     var LIBRES = {
       doGet: 'la puerta: decide la pagina con la identidad',
       include: 'la usan las plantillas; devuelve el HTML de una vista',
@@ -1585,7 +1585,7 @@ function prSyncPrecios_(res) {
     prAnotar_(g, 'Lo que escribe en lote no esta en el desplegable',
               expuestas.length === 0 ? 'OK' : 'FALLA',
               expuestas.length ? 'expuestas: ' + expuestas.join(' · ')
-                               : 'revertirSync_ solo se llama desde REVERTIR_SYNC.gs',
+                               : 'revertirSync_ solo se llama desde webInventarioDeshacerPrecios, con guarda de dueno',
               expuestas.length, 0);
   });
 

@@ -449,7 +449,8 @@ function listarCorridasSync() {
                c.clave, c.fecha, c.area, c.quien, c.ok, c.saltados, estado);
     out.push({ clave: c.clave, fecha: c.fecha, area: c.area, quien: c.quien, ok: c.ok, estado: estado });
   }
-  Logger.log('Para deshacer una: poné su clave en CORRIDA_A_REVERTIR, en REVERTIR_SYNC.gs.');
+  Logger.log('Para deshacer una del cierre de inventario: Profit OS > Inventarios > Precios > Deshacer. ' +
+             'Para las anteriores, REVERTIR_SYNC.gs quedo en apps-script/_archivo/2026-09-15_tanda4_scripts/: pegalo en el editor.');
   return out;
 }
 
