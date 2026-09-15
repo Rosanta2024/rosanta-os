@@ -110,6 +110,32 @@ Decisiones de Juanma: el techo de compra también va sin servicio; el prime cost
   - **HEAD** verificado con bajada aparte: 58 archivos. Commit 280b608.
 - **Profit OS** confirmó que su teórico ya es costo ÷ (precio ÷ 1.12), sin servicio: las dos bases quedan comparables.
 
+## 3.4B · Tarjeta "CMV real contra teórico" en el tablero de Profit OS (subida a HEAD, sin publicar)
+
+Diseño acordado con la sesión de Profit OS, que dio visto bueno para tocar solo la tarjeta y su pedido.
+
+- **Servidor** (`PuenteCmv.js`, de Finanzas):
+  - **Llamada:** `getCmvRealTeorico(auth)`, con `exigirModulo_(auth, 'recetario')`. Va aparte de `getProfitOS`, como los avisos, porque corre `ingenieriaDeMenu_` una vez por mes.
+  - **Caché:** 3 horas, con clave `huellaDatos_()` + `finCacheClave_()`.
+  - **Titular:** el bloque de los últimos 3 meses cerrados. Un mes cuenta como cerrado si su venta por plato llega hasta tres días antes de fin de mes.
+  - **Real:** compra por área de `FinanzasDatos` + inventario al cierre del mes anterior − inventario al cierre del último mes. Sin los dos cierres de un área, queda la compra sin ajustar y se marca.
+  - **Teórico:** firme + ciego al CMV de su área + fuera al CMV mezclado.
+  - **Base:** todo sobre venta sin IVA ni servicio.
+  - **Permisos:** quien no es dueño recibe solo porcentajes y brecha en puntos, sin montos. Queda así hasta que Juanma decida si cocina y barra ven quetzales de compra.
+  - **Refactor:** `revisarPuenteCmv()` y la tarjeta usan el mismo `_puenteTeoricoMeses_()`.
+- **Pantalla** (archivos de Profit OS, solo lo acordado):
+  - `CosteoJs_Pintar.html`: `pedirCmvReal()`, llamada desde `aplicarProfitOS` al lado de `pedirAvisos()`, para no repetir el bug A22.
+  - `CosteoJs_Inicio.html`: solo el bloque `tReal`.
+    - **Valor:** la brecha en puntos. **Sub:** rango ("jun–ago"), real y teórico.
+    - **Color:** hasta 2 puntos `--meta`; de 2 a 4, `color-mix(--alto 60%, --muted)`; más de 4, `--alto`.
+    - **Estados:** "Buscando…" mientras no llega; si falla, el "Falta" de antes.
+  - `Dashboard.js` no se tocó.
+- **Verificación:**
+  - **Node, con el código real:** servidor 34 OK, con motor de Finanzas sobre el espejo, POS real, inventarios de la fase 1 y el filtro de dueño. Regresión del puente: 83 OK.
+  - **Tarjeta:** dibujada en sus 5 estados; las notas salen escapadas.
+  - **HEAD:** verificado con bajada aparte.
+- **Pregunta abierta a Juanma:** ¿cocina y barra pueden ver los quetzales de venta y compra de la tarjeta?
+
 ## Pendiente
 
 1. **Tanda de pantalla (3.4):**
