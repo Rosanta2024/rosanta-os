@@ -1,6 +1,6 @@
 # Finanzas & Data OS · Tanda 4 · M9, M15 y M26 · 15 sep 2026
 
-Tres hallazgos de la auditoría del 14-sep, revisados contra el código del día. Subido a HEAD; **no publicado** hasta la batería.
+Tres hallazgos de la auditoría del 14-sep, revisados contra el código del día. **Publicado en la @96** el 15-sep, con "publica" de Juanma y la batería en verde ("intranet sana"). Antes de publicar se verificó la cuenta de clasp, que la última versión (@95) era la publicada y que HEAD (58 archivos) era idéntico a lo probado y al disco.
 
 ## Decisiones de Juanma (15-sep)
 
@@ -54,6 +54,6 @@ Tres hallazgos de la auditoría del 14-sep, revisados contra el código del día
 
 ## Pendiente
 
-1. Batería de Juanma y "publica".
+1. ~~Batería y publicación~~: hecho (@96).
 2. **Vigilar el tiempo:** la prueba del calentador ahora precalienta Finanzas y la tarjeta. Si la batería pasa de ~240 s o esa prueba da AVISO, avisar a la sesión de Profit OS.
 3. **Tanda 5:** p142 y A11.
