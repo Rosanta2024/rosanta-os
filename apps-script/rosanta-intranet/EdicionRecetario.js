@@ -383,10 +383,36 @@ function bitacora_(quien, rol, accion, hoja, referencia, campo, antes, despues, 
   bitacoraLote_([[quien, rol, accion, hoja, referencia, campo, antes, despues, nota]]);
 }
 
-function invalidarCache_() {
-  var c = CacheService.getScriptCache();
-  c.remove(COSTEO.cacheKey);
-  try { c.remove(POS_CFG.cacheKey); } catch (e) {}
+/**
+ * Avisa que se toco el recetario.
+ *
+ * Desde el 14-sep-2026 recibe QUE se toco. Si la escritura viene de la pantalla
+ * (EdicionWeb.gs, registrarPrecio), el toque se anota, al final se relee solo eso y se
+ * corrige el modelo cacheado: ver conCambiosDeModelo_ en CosteoDatos.gs. Si no —el
+ * editor, un script—, se borra el cache como siempre. Sin toque cuenta como "no se
+ * sabe que cambio" y se borra.
+ */
+function invalidarCache_(toque) {
+  try { CacheService.getScriptCache().remove(POS_CFG.cacheKey); } catch (e) {}
+  if (anotarCambioDeModelo_(toque)) return;
+  olvidarModeloCosteo_();
+}
+
+/**
+ * La fila tiene que seguir siendo el ingrediente que la persona vio.
+ *
+ * La pantalla dejo de recargarse despues de cada guardado (14-sep-2026), y eso deja
+ * cargar un ingrediente detras de otro. Pero agregarLinea puede INSERTAR una fila, y
+ * todo lo de abajo baja uno: un "cambiar la cantidad de la fila 12" pedido antes de
+ * esa insercion le cambiaria la cantidad al ingrediente de al lado, sin error. La
+ * pantalla ya no ofrece editar una ficha mientras se guarda; esto es el candado del
+ * servidor, y cubre tambien a dos personas en la misma ficha.
+ */
+function exigirMismaLinea_(producto, esperado, fila) {
+  if (!esperado) return;
+  if (normalizar_(producto) === normalizar_(esperado)) return;
+  throw new Error('La ficha cambio mientras se guardaba: en la fila ' + fila + ' ya no esta "' +
+                  esperado + '" sino "' + producto + '". No se toco nada: abrila de nuevo y repeti el cambio.');
 }
 
 /* ==========================================================================
@@ -463,7 +489,7 @@ function bloqueFicha_(hoja) {
 }
 
 /** Cambia la cantidad de una linea. Es lo unico que puede hacer cocina. */
-function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area) {
+function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area, esperado) {
   exigirPermiso_(rol, 'editarCantidad');
   if (!(cantidadNueva > 0)) throw new Error('La cantidad tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
@@ -473,11 +499,12 @@ function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area) {
 
   var producto = h.getRange(fila, b.colBase).getValue();
   if (!producto) throw new Error('La fila ' + fila + ' esta vacia.');
+  exigirMismaLinea_(producto, esperado, fila);
   var antes = h.getRange(fila, b.colBase + 1).getValue();
   h.getRange(fila, b.colBase + 1).setValue(cantidadNueva);
 
   bitacora_(quien, rol, 'editarCantidad', conArea_(ficha, area), String(producto), 'cantidad', antes, cantidadNueva, '');
-  invalidarCache_();
+  invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, producto:String(producto), antes:antes, despues:cantidadNueva };
 }
 
@@ -538,12 +565,12 @@ function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
 
   bitacora_(quien, rol, 'agregarLinea', conArea_(ficha, area), encontrado.nombre, 'linea', '',
             cantidad + ' ' + (unidad || encontrado.unidad), 'fila ' + destino);
-  invalidarCache_();
+  invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, fila:destino, producto:encontrado.nombre };
 }
 
 /** Quita una linea. Deja el rastro en la bitacora. */
-function quitarLinea(ficha, fila, quien, rol, area) {
+function quitarLinea(ficha, fila, quien, rol, area, esperado) {
   exigirPermiso_(rol, 'quitarLinea');
   var ss = recetarioDe_(area);
   var h = fichaDe_(ss, ficha);
@@ -553,10 +580,11 @@ function quitarLinea(ficha, fila, quien, rol, area) {
   var producto = h.getRange(fila, b.colBase).getValue();
   var cantidad = h.getRange(fila, b.colBase + 1).getValue();
   if (!producto) throw new Error('La fila ' + fila + ' ya esta vacia.');
+  exigirMismaLinea_(producto, esperado, fila);
   for (var c = 0; c < 5; c++) h.getRange(fila, b.colBase + c).clearContent();
 
   bitacora_(quien, rol, 'quitarLinea', conArea_(ficha, area), String(producto), 'linea', cantidad, '', 'fila ' + fila);
-  invalidarCache_();
+  invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, producto:String(producto) };
 }
 
@@ -580,7 +608,7 @@ function cambiarPrecioMenu(ficha, precioNuevo, quien, rol, motivo, area) {
   var antes = h.getRange(fila, col).getValue();
   h.getRange(fila, col).setValue(precioNuevo);
   bitacora_(quien, rol, 'cambiarPrecioMenu', conArea_(ficha, area), ficha, 'precio menu', antes, precioNuevo, motivo || '');
-  invalidarCache_();
+  invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, antes:antes, despues:precioNuevo };
 }
 
@@ -633,7 +661,7 @@ function crearInsumo(datos, quien, rol, confirmar, area) {
   bitacora_(quien, rol, 'crearInsumo', conArea_(EDIT.hojaBanco, area), String(datos.producto).trim(), 'alta', '',
             'Q' + datos.precioCompra + ' / ' + datos.unidadCompra,
             'factor ' + conv.factor + (similares.length ? ' · se confirmo pese a ' + similares.length + ' parecidos' : ''));
-  invalidarCache_();
+  invalidarCache_({ insumo: String(datos.producto).trim(), area: area });
   return { ok:true, fila:fila, precioReceta:precioReceta, factor:conv.factor };
 }
 
@@ -661,7 +689,7 @@ function cambiarPrecioInsumo(producto, precioNuevo, quien, rol, motivo, area) {
   var pct = antesCompra ? Math.round((precioNuevo - antesCompra) / antesCompra * 1000) / 10 : 0;
   bitacora_(quien, rol, 'cambiarPrecio', conArea_(EDIT.hojaBanco, area), String(producto), 'precio compra',
             antesCompra, precioNuevo, (pct >= 0 ? '+' : '') + pct + '%' + (motivo ? ' · ' + motivo : ''));
-  invalidarCache_();
+  invalidarCache_({ precio: producto, area: area });
   return { ok:true, antes:antesCompra, despues:precioNuevo, variacion:pct };
 }
 
@@ -701,7 +729,7 @@ function crearProveedor(datos, quien, rol, confirmar) {
 
   bitacora_(quien, rol, 'crearProveedor', COSTEO.hojas.proveedores, String(datos.nombre).trim(),
             'alta', '', datos.nit || '', similares.length ? 'se confirmo pese a ' + similares.length + ' parecidos' : '');
-  invalidarCache_();
+  invalidarCache_({ proveedor: String(datos.nombre).trim() });
   return { ok:true };
 }
 
@@ -718,7 +746,7 @@ function asignarProveedor(producto, proveedor, quien, rol, area) {
   var antes = h.getRange(fila, EDIT.col.proveedor).getValue();
   h.getRange(fila, EDIT.col.proveedor).setValue(proveedor);
   bitacora_(quien, rol, 'asignarProveedor', conArea_(EDIT.hojaBanco, area), String(producto), 'proveedor', antes, proveedor, '');
-  invalidarCache_();
+  invalidarCache_({ insumo: producto, area: area });
   return { ok:true, antes:antes, despues:proveedor };
 }
 

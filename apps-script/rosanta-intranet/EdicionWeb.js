@@ -25,6 +25,10 @@
  *     { ok: true,  ...datos }
  *     { ok: false, error: 'texto para mostrarle a la persona' }
  * Asi la pagina nunca tiene que interpretar una excepcion.
+ *
+ * Si la operacion toco el recetario, ademas trae `cambios`: la ficha o el producto
+ * releidos, para que la pagina corrija su copia sin recargar (14-sep-2026). Ver
+ * conCambiosDeModelo_ en CosteoDatos.gs.
  */
 
 /** Identidad resuelta del lado del servidor. Tira si no hay nadie. */
@@ -47,8 +51,10 @@ function edicionCorrer_(auth, fn, accion) {
   var u = null;
   try {
     u = edicionQuien_(auth);
-    var r = fn(u);
-    return { ok: true, resultado: r === undefined ? null : r };
+    var hecho = conCambiosDeModelo_(function () { return fn(u); });
+    var out = { ok: true, resultado: hecho.resultado === undefined ? null : hecho.resultado };
+    if (hecho.cambios) out.cambios = hecho.cambios;
+    return out;
   } catch (e) {
     var msg = String(e && e.message || e);
     if (accion) {
@@ -133,10 +139,12 @@ function webEstadoEdicion(auth) {
    1. EDITAR RECETAS
    ========================================================================== */
 
-function webEditarCantidad(auth, ficha, fila, cantidadNueva, area) {
+/* `producto`: el ingrediente que la persona vio en esa fila. Si la fila ya es otro, no
+   se escribe (ver exigirMismaLinea_). Opcional, para no romper a quien no lo manda. */
+function webEditarCantidad(auth, ficha, fila, cantidadNueva, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return editarCantidad(ficha, fila, cantidadNueva, u.email, u.rol, a);
+    return editarCantidad(ficha, fila, cantidadNueva, u.email, u.rol, a, producto);
   }, 'editarCantidad ' + ficha);
 }
 
@@ -147,10 +155,10 @@ function webAgregarLinea(auth, ficha, producto, cantidad, unidad, area) {
   }, 'agregarLinea ' + ficha + ' · ' + producto);
 }
 
-function webQuitarLinea(auth, ficha, fila, area) {
+function webQuitarLinea(auth, ficha, fila, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return quitarLinea(ficha, fila, u.email, u.rol, a);
+    return quitarLinea(ficha, fila, u.email, u.rol, a, producto);
   }, 'quitarLinea ' + ficha);
 }
 

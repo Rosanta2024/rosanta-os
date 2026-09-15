@@ -12,7 +12,7 @@
  * Fuente de verdad: las hojas nativas del recetario. Este archivo NO las modifica.
  */
 
-/** Punto de entrada del cliente. Devuelve todo el modelo, cacheado 15 min. */
+/** Punto de entrada del cliente. Devuelve todo el modelo, cacheado (ver modeloCosteo_). */
 /* auth: el token del enlace personal. Va PRIMERO, igual que en EdicionWeb.gs.
    Hasta el 10-sep-2026 esta funcion llamaba a getUsuarioActual() a secas: la
    pagina se abria con el token pero la llamada que trae los datos viajaba sin
@@ -24,26 +24,21 @@ function getCosteoData(auth) {
   var usuario = resolverUsuario_(auth);
   if (!usuarioTieneModulo(usuario, 'recetario')) throw new Error('Sin acceso al recetario');
 
-  var cache = CacheService.getScriptCache();
-  var guardado = cache.get(COSTEO.cacheKey);
-  if (guardado) {
-    try {
-      return JSON.parse(Utilities.unzip(Utilities.newBlob(
-        Utilities.base64Decode(guardado), 'application/zip'))[0].getDataAsString());
-    } catch (e) { /* cache invalido, se recalcula */ }
-  }
-
-  var modelo = construirModelo_();
-  try {
-    var zip = Utilities.zip([Utilities.newBlob(JSON.stringify(modelo), 'application/json', 'm.json')]);
-    cache.put(COSTEO.cacheKey, Utilities.base64Encode(zip.getBytes()), COSTEO.cacheSegs);
-  } catch (e) { /* si excede el limite de cache seguimos sin cachear */ }
+  var modelo = modeloCosteo_();
+  // Viajan aparte del cache a proposito: la pantalla necesita la merma de cada area y
+  // los alias de sub-receta para corregir su copia del modelo sin recargar (ver
+  // aplicarCambios en CosteoJs_Base), y un modelo cacheado antes de este cambio no
+  // los traeria.
+  modelo.meta.areas = COSTEO.areas.map(function (a) {
+    return { area: a.area, cmvObjetivo: a.cmvObjetivo, merma: a.merma };
+  });
+  modelo.meta.aliasSub = COSTEO.aliasSubReceta;
   return modelo;
 }
 
 /** Boton "actualizar" de la vista. */
 function refrescarCosteo() {
-  CacheService.getScriptCache().remove(COSTEO.cacheKey);
+  olvidarModeloCosteo_();
   return getCosteoData();
 }
 
@@ -74,6 +69,48 @@ function construirModelo_() {
     });
   });
 
+  var modelo = {
+    recetas: recetas,
+    insumos: insumos,
+    proveedores: [],
+    meta: {
+      generado: new Date().toISOString(),
+      areas: COSTEO.areas.map(function (a) { return { area: a.area, cmvObjetivo: a.cmvObjetivo }; })
+    }
+  };
+  enlazarModelo_(modelo);
+  return modelo;
+}
+
+/**
+ * Une las piezas del modelo: ingrediente -> insumo, ingrediente -> sub-receta,
+ * insumo -> las recetas que lo usan, y la lista de proveedores.
+ *
+ * Salio de construirModelo_ el 14-sep-2026 para poder correrlo tambien sobre un
+ * modelo CORREGIDO: cuando la pantalla agrega una linea o crea una ficha, el modelo
+ * cacheado se parcha con la ficha releida y se vuelve a enlazar aca, sin leer las dos
+ * hojas enteras (~40 s). Es JavaScript puro: cero llamadas a servicio.
+ *
+ * Los ids son la posicion en el arreglo, igual que al construir. Un nombre de insumo
+ * no se repite dentro de un area (leerBanco_ se queda con el primero), y entre
+ * recetas con el mismo nombre gana la ultima, igual que antes.
+ *
+ * OJO: la pantalla tiene su copia en CosteoJs_Base.html (enlazarModelo). Si cambia
+ * una regla aca, cambia alla.
+ */
+function enlazarModelo_(modelo) {
+  var insumos = modelo.insumos, recetas = modelo.recetas;
+  var porNombreInsumo = {}, porNombreReceta = {};
+  insumos.forEach(function (i, idx) {
+    i.id = idx;
+    var k = i.area + '|' + normalizar_(i.producto);
+    if (!porNombreInsumo.hasOwnProperty(k)) porNombreInsumo[k] = idx;
+  });
+  recetas.forEach(function (r, idx) {
+    r.id = idx;
+    porNombreReceta[r.area + '|' + normalizar_(r.nombre)] = idx;
+  });
+
   // insumo de produccion -> su ficha de pre-elaborado (directo o por alias)
   insumos.forEach(function (i) {
     i.sub = buscarSubReceta_(i.area, i.producto, porNombreReceta);
@@ -98,15 +135,8 @@ function construirModelo_() {
     });
   });
 
-  return {
-    recetas: recetas,
-    insumos: insumos,
-    proveedores: agruparProveedores_(insumos),
-    meta: {
-      generado: new Date().toISOString(),
-      areas: COSTEO.areas.map(function (a) { return { area: a.area, cmvObjetivo: a.cmvObjetivo }; })
-    }
-  };
+  modelo.proveedores = agruparProveedores_(insumos);
+  return modelo;
 }
 
 /** Nombre del Banco -> id de la ficha de sub-receta, probando el alias si hace falta. */
@@ -267,12 +297,17 @@ function leerFicha_(hoja, cfg) {
 
   if (r.cmv === null && r.costo && r.precio) r.cmv = r.costo / r.precio * 100;
 
-  r.estado = !r.ingredientes.length ? 'vacia'
-           : r.tipo === 'preelaborado' ? 'pre'
-           : !r.precio ? 'sin_precio'
-           : r.cmv > r.cmvObjetivo + 5 ? 'alto'
-           : r.cmv < r.cmvObjetivo * 0.6 ? 'bajo' : 'ok';
+  r.estado = estadoReceta_(r);
   return r;
+}
+
+/** El estado de una receta por sus numeros. Uno solo para la lectura y para el parche de precios. */
+function estadoReceta_(r) {
+  return !r.ingredientes.length ? 'vacia'
+       : r.tipo === 'preelaborado' ? 'pre'
+       : !r.precio ? 'sin_precio'
+       : r.cmv > r.cmvObjetivo + 5 ? 'alto'
+       : r.cmv < r.cmvObjetivo * 0.6 ? 'bajo' : 'ok';
 }
 
 /**
@@ -323,6 +358,341 @@ function agruparProveedores_(insumos) {
     return { nombre: k, productos: mapa[k].productos, recetas: Object.keys(mapa[k].recetas).length };
   }).sort(function (a, b) { return b.productos - a.productos; });
 }
+
+/* ==========================================================================
+   EL MODELO SE CORRIGE, NO SE TIRA — 14-sep-2026
+
+   Cocina reporto que cada ingrediente que agregaba a una receta nueva dejaba la
+   pantalla en blanco casi un minuto. Era asi por diseno. Cada escritura terminaba en
+   invalidarCache_(), que borraba el modelo cacheado, y la pantalla hacia
+   location.reload(): la recarga pedia getCosteoData con el cache vacio y el servidor
+   volvia a leer las dos hojas enteras (~40 s). Una receta de ocho ingredientes eran
+   seis minutos de pantalla blanca, y el que abria el recetario despues pagaba otra vez.
+
+   Ahora, cuando la escritura viene de la pantalla:
+     1. la escritura ANOTA que toco (una ficha, un producto, un precio) en vez de
+        borrar el cache (anotarCambioDeModelo_, desde invalidarCache_);
+     2. al terminar se relee SOLO eso: una pestana, o el Banco de un area;
+     3. el modelo cacheado se corrige con lo releido y se vuelve a enlazar sin leer
+        nada mas (enlazarModelo_ es JavaScript puro);
+     4. lo releido vuelve a la pantalla en `cambios`, que corrige su copia sin recargar.
+
+   Si algo de eso no se puede —el cache ya estaba vacio, otro proceso tiene el
+   candado, la ficha no aparece— se vuelve a lo de antes: se borra el cache y la
+   pantalla recibe cambios.recargar = true. Nunca queda un cache a medio corregir.
+
+   Lo que escribe por fuera de la pantalla (el sync de precios, el cargador de ventas,
+   el editor) no pasa por aca y sigue borrando el cache como siempre.
+   ========================================================================== */
+
+/**
+ * Marca de generacion del modelo. La cambia toda escritura que toca el recetario.
+ *
+ * Cubre una carrera concreta: calentarCaches() empieza a reconstruir (40 s), en el
+ * medio alguien agrega un ingrediente, y al terminar la reconstruccion guardaria en
+ * el cache un modelo leido ANTES de ese ingrediente. Con la marca, modeloCosteo_ ve
+ * que cambio mientras construia y no guarda lo viejo.
+ */
+var COSTEO_GEN_ = 'costeo_gen_v1';
+
+function marcarGeneracionCosteo_(cache) {
+  // La hora sola no alcanza: dos marcas en el mismo milisegundo quedarian iguales y la
+  // reconstruccion creeria que nada cambio. El sufijo al azar lo hace imposible.
+  try { cache.put(COSTEO_GEN_, new Date().getTime() + ':' + Math.random().toString(36).slice(2), 21600); } catch (e) {}
+}
+
+/** Borra el modelo cacheado y cambia la marca. Es lo que hacia invalidarCache_ antes. */
+function olvidarModeloCosteo_() {
+  var cache = CacheService.getScriptCache();
+  cache.remove(COSTEO.cacheKey);
+  marcarGeneracionCosteo_(cache);
+}
+
+/** El modelo del cache, o null si no hay o no se puede leer. */
+function leerModeloCacheado_(cache) {
+  var guardado = cache.get(COSTEO.cacheKey);
+  if (!guardado) return null;
+  try {
+    return JSON.parse(Utilities.unzip(Utilities.newBlob(
+      Utilities.base64Decode(guardado), 'application/zip'))[0].getDataAsString());
+  } catch (e) { return null; }
+}
+
+/**
+ * Guarda el modelo comprimido. Si no entra (100 KB por valor), BORRA lo que hubiera:
+ * despues de un parche, dejar el valor viejo seria dejar un modelo que ya no coincide
+ * con la hoja.
+ */
+function guardarModeloCacheado_(cache, modelo) {
+  try {
+    var zip = Utilities.zip([Utilities.newBlob(JSON.stringify(modelo), 'application/json', 'm.json')]);
+    cache.put(COSTEO.cacheKey, Utilities.base64Encode(zip.getBytes()), COSTEO.cacheSegs);
+    return true;
+  } catch (e) {
+    cache.remove(COSTEO.cacheKey);
+    return false;
+  }
+}
+
+/** El modelo: del cache si esta; si no, construido y guardado. */
+function modeloCosteo_() {
+  var cache = CacheService.getScriptCache();
+  var modelo = leerModeloCacheado_(cache);
+  if (modelo) return modelo;
+  var gen = cache.get(COSTEO_GEN_);
+  modelo = construirModelo_();
+  if (cache.get(COSTEO_GEN_) === gen) guardarModeloCacheado_(cache, modelo);
+  return modelo;
+}
+
+/* Lo que va tocando la escritura en curso. null = nadie esta juntando, y las
+   escrituras borran el cache como siempre. Es por ejecucion: cada llamada de
+   google.script.run es una ejecucion nueva y arranca en null. */
+var CAMBIOS_MODELO_ = null;
+
+/** true si habia alguien juntando y el toque quedo anotado. */
+function anotarCambioDeModelo_(toque) {
+  if (!CAMBIOS_MODELO_) return false;
+  CAMBIOS_MODELO_.push(toque || { todo: true });
+  return true;
+}
+
+/**
+ * Corre fn juntando lo que toca, y al final corrige el modelo.
+ * Devuelve { resultado, cambios }; cambios es null si fn no toco el recetario.
+ *
+ *   toque = { ficha, area }    una pestana de receta
+ *         | { insumo, area }   una fila del Banco (alta, proveedor)
+ *         | { precio, area }   el precio de una fila del Banco: mueve las recetas que lo usan
+ *         | { proveedor }      la hoja PROVEEDORES, que no es parte del modelo
+ *         | { todo: true }     no se sabe que cambio: se borra el cache
+ */
+function conCambiosDeModelo_(fn) {
+  if (CAMBIOS_MODELO_) return { resultado: fn(), cambios: null };   // anidado: junta el de afuera
+  CAMBIOS_MODELO_ = [];
+  var resultado, toques;
+  try {
+    resultado = fn();
+  } catch (e) {
+    toques = CAMBIOS_MODELO_;
+    CAMBIOS_MODELO_ = null;
+    if (toques.length) olvidarModeloCosteo_();   // fallo despues de escribir algo
+    throw e;
+  }
+  toques = CAMBIOS_MODELO_;
+  CAMBIOS_MODELO_ = null;
+  if (!toques.length) return { resultado: resultado, cambios: null };
+
+  // La escritura ya ocurrio: nada de lo que siga puede hacerla parecer fallida.
+  var cambios;
+  try {
+    cambios = aplicarToques_(toques);
+  } catch (e) {
+    olvidarModeloCosteo_();
+    cambios = { fichas: [], insumos: [], recargar: true };
+  }
+  return { resultado: resultado, cambios: cambios };
+}
+
+/**
+ * Relee lo tocado, corrige el modelo cacheado y arma lo que vuelve a la pantalla:
+ * { fichas: [receta cruda...], insumos: [insumo crudo...], recargar }.
+ * "Cruda" = la forma de leerFicha_ / leerBanco_, sin ids ni enlaces: la pantalla une
+ * las piezas por nombre, porque sus ids no tienen por que coincidir con estos.
+ */
+function aplicarToques_(toques) {
+  var cambios = { fichas: [], insumos: [], recargar: false };
+  var fichas = {}, bancos = {}, precios = {};
+
+  for (var t = 0; t < toques.length; t++) {
+    var x = toques[t];
+    if (!x || x.todo) {
+      olvidarModeloCosteo_();
+      cambios.recargar = true;
+      return cambios;
+    }
+    if (x.proveedor) continue;
+    var a = areaValida_(x.area);
+    if (x.ficha) fichas[a + '|' + normalizar_(x.ficha)] = { area: a, ficha: x.ficha };
+    var nombre = x.insumo || x.precio;
+    if (nombre) {
+      if (!bancos[a]) bancos[a] = {};
+      bancos[a][normalizar_(nombre)] = true;
+      if (x.precio) precios[a + '|' + normalizar_(nombre)] = true;
+    }
+  }
+  if (!Object.keys(fichas).length && !Object.keys(bancos).length) return cambios;
+
+  // Un producto NUEVO en el Banco tambien mueve a las fichas que ya lo nombraban: esa
+  // linea estaba "fuera del banco", su VLOOKUP daba vacio, y ahora calcula. Si no se
+  // releen, el modelo se queda con la linea en cero y el costo viejo de la ficha. Son
+  // pocas (casi siempre ninguna), y se sacan del modelo cacheado sin leer ninguna hoja.
+  if (Object.keys(bancos).length) {
+    var previo = leerModeloCacheado_(CacheService.getScriptCache());
+    if (previo) {
+      var existentes = {};
+      previo.insumos.forEach(function (y) { existentes[y.area + '|' + normalizar_(y.producto)] = true; });
+      Object.keys(bancos).forEach(function (a) {
+        Object.keys(bancos[a]).forEach(function (n) {
+          if (existentes[a + '|' + n]) return;
+          previo.recetas.forEach(function (r) {
+            if (r.area !== a) return;   // el VLOOKUP de la ficha busca en el Banco de su propia area
+            var nombra = r.ingredientes.some(function (g) { return g.insumo === null && normalizar_(g.nombre) === n; });
+            if (nombra) fichas[a + '|' + normalizar_(r.nombre)] = { area: a, ficha: r.nombre };
+          });
+        });
+      });
+    }
+  }
+
+  // 1. RELEER SOLO LO TOCADO. Sin flush, las formulas de la linea recien escrita
+  //    todavia no calcularon y su total llega vacio.
+  SpreadsheetApp.flush();
+
+  Object.keys(fichas).forEach(function (k) {
+    var f = fichas[k];
+    var leida = leerFicha_(fichaDe_(recetarioDe_(f.area), f.ficha), configArea_(f.area));
+    if (leida) cambios.fichas.push(leida);
+  });
+
+  Object.keys(bancos).forEach(function (a) {
+    // Mismo criterio que construirModelo_: toda pestana que empiece con "banco de
+    // datos", en orden, y el primer registro de un nombre gana.
+    var lista = [], indice = {}, cfg = configArea_(a);
+    recetarioDe_(a).getSheets().forEach(function (hoja) {
+      if (normalizar_(hoja.getName()).indexOf('banco de datos') === 0) leerBanco_(hoja, cfg, lista, indice);
+    });
+    Object.keys(bancos[a]).forEach(function (n) {
+      var k = a + '|' + n;
+      // No aparece: una fila sin precio numerico, que leerBanco_ salta. La pantalla no
+      // sabria que hacer con eso; que pida el modelo entero.
+      if (!indice.hasOwnProperty(k)) { cambios.recargar = true; return; }
+      var i = lista[indice[k]];
+      delete i.id;
+      cambios.insumos.push(i);
+    });
+  });
+
+  // 2. CORREGIR EL MODELO CACHEADO.
+  var sinFactor = false;
+  var escaladas = parchearCacheCosteo_(function (modelo) {
+    var porReceta = {}, porInsumo = {};
+    modelo.recetas.forEach(function (r, i) { porReceta[r.area + '|' + normalizar_(r.nombre)] = i; });
+    modelo.insumos.forEach(function (y, i) {
+      var k = y.area + '|' + normalizar_(y.producto);
+      if (!porInsumo.hasOwnProperty(k)) porInsumo[k] = i;
+    });
+
+    cambios.fichas.forEach(function (f) {
+      var k = f.area + '|' + normalizar_(f.nombre), copia = copiarJson_(f);
+      if (porReceta.hasOwnProperty(k)) modelo.recetas[porReceta[k]] = copia;
+      else { porReceta[k] = modelo.recetas.length; modelo.recetas.push(copia); }
+    });
+
+    // Las fichas van ANTES de escalar: una ficha recien releida ya trae el costo bueno
+    // y todavia no tiene enlaces, asi que escalarRecetasPorInsumo_ no la toca.
+    var tocadas = [];
+    cambios.insumos.forEach(function (y) {
+      var k = y.area + '|' + normalizar_(y.producto), copia = copiarJson_(y);
+      if (!porInsumo.hasOwnProperty(k)) {
+        porInsumo[k] = modelo.insumos.length;
+        modelo.insumos.push(copia);
+        return;
+      }
+      var pos = porInsumo[k], viejo = modelo.insumos[pos];
+      if (precios[k] && viejo.precio !== y.precio) {
+        if (typeof viejo.precio === 'number' && viejo.precio > 0 && typeof y.precio === 'number') {
+          tocadas = tocadas.concat(escalarRecetasPorInsumo_(modelo, pos, y.precio / viejo.precio));
+        } else {
+          sinFactor = true;
+        }
+      }
+      modelo.insumos[pos] = copia;
+    });
+
+    enlazarModelo_(modelo);
+    return tocadas;
+  });
+
+  if (escaladas === null || sinFactor) {
+    // Sin modelo cacheado, la ficha y el producto igual le sirven a la pantalla. Lo que
+    // no puede saber es el efecto de un precio sobre las recetas que lo usan.
+    if (Object.keys(precios).length) cambios.recargar = true;
+    if (sinFactor) olvidarModeloCosteo_();
+  } else {
+    var ya = {};
+    cambios.fichas.forEach(function (f) { ya[f.area + '|' + normalizar_(f.nombre)] = true; });
+    escaladas.forEach(function (r) {
+      var k = r.area + '|' + normalizar_(r.nombre);
+      if (ya[k]) return;
+      ya[k] = true;
+      cambios.fichas.push(copiarJson_(r));
+    });
+  }
+  return cambios;
+}
+
+/**
+ * Corrige el modelo cacheado bajo candado. `aplicar(modelo)` lo modifica en el lugar;
+ * lo que devuelva, se devuelve. null = no se corrigio: no habia cache, no se consiguio
+ * el candado, o fallo (en esos dos ultimos casos el cache se borra).
+ *
+ * Candado porque leer-modificar-guardar no es atomico: dos guardados a la vez leerian
+ * el mismo modelo y el segundo pisaria el parche del primero. Se espera poco a
+ * proposito: si lo tiene otro proceso (el cargador de ventas lo retiene minutos), es
+ * mejor borrar el cache que dejar a cocina esperando.
+ */
+function parchearCacheCosteo_(aplicar) {
+  var cache = CacheService.getScriptCache();
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(2000)) { olvidarModeloCosteo_(); return null; }
+  try {
+    var modelo = leerModeloCacheado_(cache);
+    if (!modelo) return null;
+    var extra = aplicar(modelo);
+    modelo.meta.parcheado = new Date().toISOString();
+    return guardarModeloCacheado_(cache, modelo) ? (extra || []) : null;
+  } catch (e) {
+    cache.remove(COSTEO.cacheKey);
+    return null;
+  } finally {
+    marcarGeneracionCosteo_(cache);
+    candado.releaseLock();
+  }
+}
+
+/**
+ * Un precio cambio: las recetas que usan ese insumo cambian en proporcion.
+ *
+ * En la hoja, el total de una linea es CANTIDAD x VLOOKUP(precio del Banco), y el
+ * subtotal, el costo, el costo por porcion, el CMV y el precio sugerido son todos
+ * lineales en la suma de las lineas. Por eso alcanza con escalar, sin releer cada
+ * pestana. La reconstruccion de cada hora corrige cualquier redondeo.
+ */
+function escalarRecetasPorInsumo_(modelo, pos, factor) {
+  var tocadas = [];
+  modelo.recetas.forEach(function (r) {
+    var antes = 0, despues = 0, toca = false;
+    r.ingredientes.forEach(function (g) {
+      if (typeof g.total !== 'number') return;
+      antes += g.total;
+      if (g.insumo === pos) { g.total = g.total * factor; toca = true; }
+      despues += g.total;
+    });
+    if (!toca) return;
+    if (antes > 0) {
+      var k = despues / antes;
+      ['subtotal', 'costo', 'costoUnit', 'cmv', 'sugerido'].forEach(function (c) {
+        if (typeof r[c] === 'number') r[c] = r[c] * k;
+      });
+    }
+    r.estado = estadoReceta_(r);
+    tocadas.push(r);
+  });
+  return tocadas;
+}
+
+function copiarJson_(o) { return JSON.parse(JSON.stringify(o)); }
 
 /**
  * Diagnostico. Correr desde el editor y leer el Log ANTES de confiar en el modulo.

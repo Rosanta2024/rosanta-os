@@ -1,6 +1,20 @@
 function fichaHTML(r){
   const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv,r), sub = batch(r.id);
+  /* Mientras la ficha tiene algo guardandose no se ofrece editar ni quitar lineas: el
+     numero de fila que ve la pantalla podria no ser el de la hoja todavia (una linea
+     agregada puede insertar una fila). Agregar si se puede: va al final de la fila de
+     guardado y no depende de ningun numero de fila. Ver ocupada() en CosteoJs_Pintar. */
+  const ocup = ocupada(claveReceta(r)) || !!r.local;
+  const colQuitar = !!(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area));
   const filas = r.ing.map(ln => {
+    if(ln.pend){
+      return `<tr class="pend">
+        <td>${esc(Tt(ln.n))} <span class="pend-tag">guardando…</span></td>
+        <td class="r">${ln.q} <span style="color:var(--muted)">${esc(ln.u||'')}</span></td>
+        <td class="r">${ln.t!=null?Q(ln.t):'—'}</td>
+        ${colQuitar ? '<td class="r"></td>' : ''}
+      </tr>`;
+    }
     const ins = ln.i!=null ? I[ln.i] : null;
     const ef = ins ? precioEf(ln.i) : null;
     const tot = (ins && ins.pr && ln.t!=null) ? ln.t*(ef/ins.pr) : (ln.t!=null?ln.t:(ln.q*(ef||0)));
@@ -10,29 +24,35 @@ function fichaHTML(r){
       <td>${ln.r!=null?'<span class="dot"></span>':''}${
         ins ? `<button class="rowbtn" data-i="${ins.id}">${esc(Tt(ln.n))}</button>` : `${esc(Tt(ln.n))} <span style="color:var(--alto);font-size:11px">· fuera del banco</span>`}${salto}
         <div style="color:var(--muted);font-size:11.5px">${ins?esc(ins.prov):'sin proveedor'}</div></td>
-      <td class="r">${(window.PUEDE && window.PUEDE.editarCantidad && ln.f && AREA_EDITABLE(r.area))
-        ? `<span class="qedit"><input class="qin" type="number" step="any" min="0" value="${ln.q}" data-f="${ln.f}" aria-label="Cantidad de ${esc(Tt(ln.n))}"><button class="qsave" data-f="${ln.f}" data-rid="${r.id}" title="Guardar esta cantidad">\u2713</button></span> <span style="color:var(--muted)">${esc(ln.u||'')}</span>`
+      <td class="r">${(window.PUEDE && window.PUEDE.editarCantidad && ln.f && AREA_EDITABLE(r.area) && !ocup)
+        ? `<span class="qedit"><input class="qin" type="number" step="any" min="0" value="${ln.q}" data-f="${ln.f}" aria-label="Cantidad de ${esc(Tt(ln.n))}"><button class="qsave" data-f="${ln.f}" data-rid="${r.id}" title="Guardar esta cantidad">✓</button></span> <span style="color:var(--muted)">${esc(ln.u||'')}</span>`
         : `${ln.q} <span style="color:var(--muted)">${esc(ln.u||'')}</span>`}</td>
       <td class="r">${tot!=null?Q(tot):'—'}</td>
-      ${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))
-        ? `<td class="r">${ln.f ? `<button class="qdel" data-f="${ln.f}" data-rid="${r.id}" title="Quitar esta linea">\u2715</button>` : ''}</td>`
+      ${colQuitar
+        ? `<td class="r">${(ln.f && !ocup) ? `<button class="qdel" data-f="${ln.f}" data-rid="${r.id}" title="Quitar esta linea">✕</button>` : ''}</td>`
         : ''}
     </tr>`;
   }).join('');
+  const puedeCrearInsumo = !!(window.PUEDE && window.PUEDE.crearInsumo);
   return `<div class="dhead">
       <button class="close" aria-label="Cerrar">✕</button>
       <div class="coord" style="margin-bottom:5px">${esc(r.cat || (r.t==='plato'?'Ficha de receta':'Pre-elaborado'))} · ${r.area==='BARRA'?'Barra':'Cocina'}</div>
       <h2 id="dtitle" style="font-size:26px">${esc(Tt(r.n))}</h2>
-      <div style="margin-top:9px"><span class="badge s-${st}">${ETIQ[st]}</span></div>
+      <div style="margin-top:9px">${r.local
+        ? '<span class="badge s-vacia">Creando la pestaña en la hoja…</span>'
+        : `<span class="badge s-${st}">${ETIQ[st]}</span>`}</div>
     </div>
     <div class="dbody">
       ${r.nota?`<p class="note">${esc(r.nota)}</p>`:''}
       ${r.ing.length ? `<div>
         <div class="sec-t">Ingredientes · ${r.ing.length} línea${r.ing.length===1?'':'s'}</div>
+        ${(ocup && !r.local) ? `<p class="nota-guardando">Guardando en la hoja. Podés seguir agregando ingredientes; las cantidades se pueden cambiar en cuanto termine.</p>` : ''}
         <div class="tablewrap"><table style="min-width:0">
-          <thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th>${(window.PUEDE && window.PUEDE.quitarLinea && AREA_EDITABLE(r.area))?'<th></th>':''}</tr></thead>
+          <thead><tr><th>Producto</th><th class="r">Cantidad</th><th class="r">Costo</th>${colQuitar?'<th></th>':''}</tr></thead>
           <tbody>${filas}</tbody></table></div></div>`
-        : `<p class="empty" style="padding:26px 0">Esta ficha está vacía. Cocina tiene que cargar la receta.</p>`}
+        : (r.local
+          ? `<p class="empty" style="padding:26px 0">Ficha nueva. Cargá los ingredientes abajo: van a la hoja en cuanto la pestaña esté creada.</p>`
+          : `<p class="empty" style="padding:26px 0">Esta ficha está vacía. Cocina tiene que cargar la receta.</p>`)}
       ${(window.PUEDE && window.PUEDE.agregarLinea && AREA_EDITABLE(r.area)) ? `<div class="addrow">
         <div class="sec-t" style="margin-top:0">Agregar un ingrediente</div>
         <div class="simrow">
@@ -41,7 +61,7 @@ function fichaHTML(r){
           <button class="chip" id="np-add" data-rid="${r.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Agregar</button>
         </div>
         <datalist id="banco-prods">${I.filter(x => x.area === r.area).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
-        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">El producto tiene que existir ya en el Banco de Datos. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.</p>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Se agrega en el acto y se guarda en la hoja por detrás: podés cargar uno detrás de otro. <kbd>Enter</kbd> en la cantidad también agrega. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.${puedeCrearInsumo ? ' Si el producto todavía no está en el Banco, escribilo igual: te ofrece crearlo sin salir de la receta.' : ''}</p>
       </div>` : ''}
       ${r.ing.length ? `<dl class="kv">
         <dt>Subtotal materia prima</dt><dd>${Q(sub)}</dd>
@@ -49,8 +69,8 @@ function fichaHTML(r){
         ${r.t!=='plato' && (r.rindeTexto||r.rinde) ? `<dt>Rinde</dt><dd>${esc(r.rindeTexto||r.rinde)}</dd>`:''}
         <div class="rule"></div>
         <dt>${r.t==='plato'?'Costo del plato':'Costo por '+esc(r.unidadCosto||'porción')}</dt><dd>${r.t==='plato'?Q(c):QU(c)}</dd>
-        ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area))
-          ? `<span class="qedit"><input class="qin" id="np-menu" type="number" step="1" min="0" value="${r.precio}" style="width:92px" aria-label="Precio de carta"><button class="qsave" id="np-menu-save" data-rid="${r.id}" title="Guardar el precio de carta">\u2713</button></span>`
+        ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area) && !r.local)
+          ? `<span class="qedit"><input class="qin" id="np-menu" type="number" step="1" min="0" value="${r.precio}" style="width:92px" aria-label="Precio de carta"><button class="qsave" id="np-menu-save" data-rid="${r.id}" title="Guardar el precio de carta">✓</button></span>`
           : Q0(r.precio)}</dd>
         <dt>CMV actual</dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
         <dt>Meta del área</dt><dd style="font-weight:400;color:var(--muted)">${r.obj}%</dd>
@@ -61,6 +81,7 @@ function fichaHTML(r){
 function insumoHTML(i, hist){
   const ef = precioEf(i.id), usos = i.usos.map(id=>R[id]);
   const platos = usos.filter(r=>r.t==='plato'), pre = usos.filter(r=>r.t!=='plato');
+  const ocupI = ocupada('I|' + claveInsumo(i));
   const histHTML = hist === undefined
     ? `<p style="color:var(--muted);font-size:13px;margin:0">Leyendo el historial…</p>`
     : (!hist.length
@@ -90,7 +111,10 @@ function insumoHTML(i, hist){
           <input id="np" type="number" step="0.01" min="0" value="${(sim.has(i.id) && i.pc && i.pr) ? (sim.get(i.id)/i.pr*i.pc).toFixed(2) : (i.pc!=null?i.pc:'')}" data-i="${i.id}">
           <button class="chip" id="aplicar" data-i="${i.id}">Simular</button>
           ${(window.PUEDE && window.PUEDE.cambiarPrecio && AREA_EDITABLE(i.area))
-            ? `<button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>` : ''}
+            ? (ocupI
+              ? `<button class="chip" disabled>Guardando…</button>`
+              : `<button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>`)
+            : ''}
           ${sim.has(i.id)?`<button class="chip" id="quitar" data-i="${i.id}">Quitar</button>`:''}
         </div>
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Simular</strong> no guarda nada: sirve para ver el impacto antes de aceptarlo.${(window.PUEDE && window.PUEDE.cambiarPrecio) ? ` <strong>Registrar</strong> escribe el precio en el Banco de Datos y lo deja en el histórico con fecha y factura.` : ` Para registrar el precio hace falta un permiso que tu rol no tiene; simular podés siempre.`}</p>
@@ -99,9 +123,11 @@ function insumoHTML(i, hist){
         <div class="sec-t">Proveedor</div>
         <div class="simrow">
           <input id="np-prov" list="lista-provs" value="${esc(i.prov==='—'?'':i.prov)}" placeholder="Proveedor" style="width:240px" autocomplete="off">
-          <button class="chip" id="np-prov-save" data-prod="${esc(i.p)}" data-area="${esc(i.area||'COCINA')}">Guardar</button>
+          ${ocupI
+            ? `<button class="chip" disabled>Guardando…</button>`
+            : `<button class="chip" id="np-prov-save" data-prod="${esc(i.p)}" data-area="${esc(i.area||'COCINA')}">Guardar</button>`}
         </div>
-        <datalist id="lista-provs">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <datalist id="lista-provs">${nombresProveedores().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Cambia a quién le compramos este producto. <strong>No toca el precio.</strong> Si el proveedor todavía no existe, creálo primero en la pestaña Proveedores.</p>
       </div>` : ''}
       <div><div class="sec-t">Historial de precios</div>${histHTML}</div>
@@ -114,11 +140,67 @@ function insumoHTML(i, hist){
       </div>
     </div>`;
 }
+/* El historial se guarda en CAJON para que un redibujo del cajon (llega un cambio del
+   servidor) no vuelva a "Leyendo el historial…" ni lo pida otra vez. */
 function abrirInsumo(id){
-  const i = I[id];
+  const i = I[id]; if(!i) return;
+  const k = claveInsumo(i);
   abrir(insumoHTML(i, undefined));
+  CAJON = {tipo: 'insumo', clave: k, hist: undefined};
+  const sigueAbierto = () => dr.classList.contains('on') && CAJON && CAJON.tipo === 'insumo' && CAJON.clave === k;
   google.script.run
-    .withSuccessHandler(function(h){ if(dr.classList.contains('on')) abrir(insumoHTML(i, h)); })
-    .withFailureHandler(function(){ if(dr.classList.contains('on')) abrir(insumoHTML(i, [])); })
+    .withSuccessHandler(function(h){ if(sigueAbierto()){ CAJON.hist = h; refrescarCajon(); } })
+    .withFailureHandler(function(){ if(sigueAbierto()){ CAJON.hist = []; refrescarCajon(); } })
     .getHistorialPrecios(AUTH, i.p);
+}
+
+/* ALTA DE UN PRODUCTO SIN SALIR DE LA RECETA (14-sep-2026).
+   Cocina carga productos nuevos en recetas nuevas. Antes eso era: ir a Productos,
+   crearlo, esperar la recarga, volver a buscar la ficha, agregar, esperar otra recarga.
+   Ahora el ingrediente que no esta en el Banco abre esto; al crearlo vuelve a la ficha
+   con la linea ya agregada. Las listas sugieren las categorias y unidades que ya usa el
+   area, para que no nazcan "Libra" y "libras" como dos unidades distintas. */
+function altaInsumoHTML(r, nombre, cant){
+  const delArea = I.filter(x => x.area === r.area);
+  const unicos = f => [...new Set(delArea.map(f))].filter(Boolean).sort();
+  const opciones = lista => lista.map(v => `<option value="${esc(v)}">`).join('');
+  return `<div class="dhead">
+      <button class="close" aria-label="Cerrar">✕</button>
+      <div class="coord" style="margin-bottom:5px">Producto nuevo · ${r.area==='BARRA'?'Barra':'Cocina'}</div>
+      <h2 id="dtitle" style="font-size:26px">Crear en el Banco de Datos</h2>
+      <div style="margin-top:6px;color:var(--muted);font-size:13.5px">Se crea y se agrega a <strong>${esc(Tt(r.n))}</strong>${cant ? ' con ' + esc(cant) : ''}.</div>
+    </div>
+    <div class="dbody">
+      <div>
+        <div class="sec-t" style="margin-top:0">Producto</div>
+        <div class="simrow">
+          <input id="ai-prod" value="${esc(nombre)}" placeholder="Producto" style="width:100%;max-width:300px" autocomplete="off">
+          <input id="ai-cat" list="ai-cats" placeholder="Categoría" style="width:190px" autocomplete="off">
+        </div>
+        <datalist id="ai-cats">${opciones(unicos(x => x.c))}</datalist>
+      </div>
+      <div>
+        <div class="sec-t">Cómo se compra</div>
+        <div class="simrow">
+          <input id="ai-pc" type="number" step="0.01" min="0" placeholder="Precio compra" style="width:130px">
+          <input id="ai-uc" list="ai-ucs" placeholder="Unidad de compra" style="width:160px" autocomplete="off">
+          <input id="ai-prov" list="ai-provs" placeholder="Proveedor" style="width:190px" autocomplete="off">
+        </div>
+        <datalist id="ai-ucs">${opciones(unicos(x => x.uc))}</datalist>
+        <datalist id="ai-provs">${opciones(nombresProveedores())}</datalist>
+      </div>
+      <div>
+        <div class="sec-t">Cómo se usa en la receta</div>
+        <div class="simrow">
+          <input id="ai-ur" list="ai-urs" placeholder="Unidad de receta" style="width:160px" autocomplete="off">
+          <input id="ai-cont" type="number" step="any" min="0" placeholder="Contenido (si aplica)" style="width:180px">
+        </div>
+        <datalist id="ai-urs">${opciones(unicos(x => x.u))}</datalist>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">La <strong>unidad de receta</strong> es la de la ficha: g, ml o unidad. El <strong>contenido</strong> solo hace falta si se compra en envase (manojo, caja, frasco): cuántas unidades de receta trae uno. Antes de crear se avisa si ya hay algo parecido en el Banco.</p>
+      </div>
+      <div class="simrow" style="background:transparent;padding:0">
+        <button class="chip" id="ai-add" data-rk="${esc(claveReceta(r))}" data-cant="${cant || ''}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface);padding:8px 20px">Crear y agregar a la receta</button>
+        <button class="chip" data-volver="${esc(claveReceta(r))}">Volver a la receta</button>
+      </div>
+    </div>`;
 }

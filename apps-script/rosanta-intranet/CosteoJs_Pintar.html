@@ -110,8 +110,110 @@ function simbar(){
 /* ---------- drawer ---------- */
 const dr = document.getElementById('drawer'), sc = document.getElementById('scrim');
 let lastFocus = null;
-function abrir(html){ lastFocus = document.activeElement; dr.innerHTML = html; dr.classList.add('on'); sc.classList.add('on'); dr.focus(); }
-function cerrar(){ dr.classList.remove('on'); sc.classList.remove('on'); if(lastFocus) lastFocus.focus(); }
+/* CAJON: que pieza del modelo muestra el cajon, para poder volver a dibujarlo cuando
+   llega un cambio del servidor. Lo ponen abrirReceta y abrirInsumo; cualquier otro
+   abrir() lo borra, porque lo que muestra no es una pieza del modelo. */
+let CAJON = null;
+function abrir(html){ CAJON = null; lastFocus = document.activeElement; dr.innerHTML = html; dr.classList.add('on'); sc.classList.add('on'); dr.focus(); }
+function cerrar(){ CAJON = null; dr.classList.remove('on'); sc.classList.remove('on'); if(lastFocus) lastFocus.focus(); }
+function abrirReceta(id){
+  const r = R[id]; if(!r) return;
+  abrir(fichaHTML(r));
+  CAJON = {tipo: 'receta', clave: claveReceta(r)};
+}
 sc.addEventListener('click', cerrar);
 document.addEventListener('keydown', e => { if(e.key==='Escape' && dr.classList.contains('on')) cerrar(); });
 
+
+/* ---------- redibujar sin perder lo que se esta escribiendo ---------- */
+/* Un cambio que llega del servidor mientras cocina ya esta escribiendo el ingrediente
+   siguiente no puede borrarle lo que tipeo ni sacarle el cursor. */
+function conservandoEntradas(cont, dibujar){
+  const vals = {};
+  cont.querySelectorAll('input[id], textarea[id]').forEach(el => { vals[el.id] = el.value; });
+  const act = document.activeElement;
+  const foco = (act && act.id && cont.contains(act)) ? act.id : null;
+  let sel = null;
+  try { if(foco && act.selectionStart != null) sel = [act.selectionStart, act.selectionEnd]; } catch(e){}
+  const scroll = cont.scrollTop;
+  dibujar();
+  Object.keys(vals).forEach(id => { const el = document.getElementById(id); if(el && cont.contains(el)) el.value = vals[id]; });
+  cont.scrollTop = scroll;
+  if(foco){
+    const el = document.getElementById(foco);
+    if(el){ el.focus(); try { if(sel) el.setSelectionRange(sel[0], sel[1]); } catch(e){} }
+  }
+}
+function refrescarCajon(){
+  if(!CAJON || !dr.classList.contains('on')) return;
+  let html = null;
+  if(CAJON.tipo === 'receta'){ const r = recetaPorClave(CAJON.clave); if(r) html = fichaHTML(r); }
+  if(CAJON.tipo === 'insumo'){ const i = insumoPorClave(CAJON.clave); if(i) html = insumoHTML(i, CAJON.hist); }
+  if(html == null) return;
+  conservandoEntradas(dr, () => { dr.innerHTML = html; });
+}
+function repintarModelo(){
+  const sec = document.getElementById('v-' + view);
+  if(sec) conservandoEntradas(sec, pintar); else pintar();
+  refrescarCajon();
+}
+
+/* ---------- las escrituras salen en fila, de a una ---------- */
+/* Con la pagina recargandose despues de cada guardado no hacia falta: no se podia hacer
+   otra cosa. Ahora se carga un ingrediente detras de otro sin esperar, y eso abre una
+   carrera real: agregarLinea elige "la primera fila libre" de la ficha, y dos agregados
+   viajando a la vez eligen LA MISMA fila; el segundo pisa al primero sin error. En fila,
+   cada uno sale cuando el anterior ya volvio. */
+const COLA = [];
+let colaOcupada = false;
+function encolar(clave, etiqueta, enviar){
+  COLA.push({clave, etiqueta, enviar});
+  estadoCola();
+  siguienteEnCola();
+}
+function siguienteEnCola(){
+  if(colaOcupada || !COLA.length) return;
+  colaOcupada = true;
+  const it = COLA[0];
+  let hecho = false;
+  const listo = () => {
+    if(hecho) return;
+    hecho = true;
+    COLA.shift(); colaOcupada = false;
+    estadoCola(COLA.length ? '' : 'Guardado en la hoja');
+    siguienteEnCola();
+  };
+  try { it.enviar(listo); }
+  catch(e){ listo(); avisarError(it.etiqueta + ':\n\n' + ((e && e.message) || e)); }
+}
+/* Una ficha (o un producto) con algo en fila. Mientras tanto no se ofrece editar sus
+   cantidades: el numero de fila que se ve podria no ser el que queda en la hoja. */
+const ocupada = clave => COLA.some(it => it.clave === clave);
+
+let pildora = null, pildoraReloj = null;
+function estadoCola(mensaje){
+  if(!pildora){
+    pildora = document.createElement('div');
+    pildora.className = 'guardando';
+    pildora.setAttribute('role', 'status');
+    pildora.setAttribute('aria-live', 'polite');
+    document.body.appendChild(pildora);
+  }
+  clearTimeout(pildoraReloj);
+  const n = COLA.length;
+  if(n){
+    pildora.className = 'guardando on';
+    pildora.textContent = n === 1 ? 'Guardando en la hoja…' : 'Guardando en la hoja… · ' + n + ' en fila';
+    return;
+  }
+  if(window.__RECARGANDO__){ pildora.className = 'guardando on'; pildora.textContent = 'Actualizando el recetario…'; return; }
+  if(mensaje){
+    pildora.className = 'guardando on ok'; pildora.textContent = mensaje;
+    pildoraReloj = setTimeout(() => { pildora.className = 'guardando'; }, 3200);
+    return;
+  }
+  pildora.className = 'guardando';
+}
+function avisar(mensaje){ if(!COLA.length) estadoCola(mensaje); }
+function avisarError(mensaje){ alert(mensaje); }
+window.addEventListener('beforeunload', e => { if(COLA.length){ e.preventDefault(); e.returnValue = ''; } });

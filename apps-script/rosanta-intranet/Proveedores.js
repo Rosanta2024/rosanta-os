@@ -122,60 +122,76 @@ function registrarPrecio(auth, datos) {
   var nuevo = Number(datos.precioCompra);
   if (!isFinite(nuevo) || nuevo <= 0) throw new Error('El precio de compra tiene que ser un numero mayor que cero');
 
-  var ubic = ubicarEnBanco_(datos.producto);
-  if (!ubic) throw new Error('El producto "' + datos.producto + '" no esta en el Banco de Datos');
+  // EL AREA (14-sep-2026). Sin area se buscaba el producto en las dos y ganaba COCINA:
+  // registrar el precio del ajo de BARRA escribia sobre el ajo de COCINA —hay ocho
+  // productos con el mismo nombre en las dos—, y como aca no se pasaba por exigirArea_,
+  // el rol de sala podia escribir en cocina. Es el agujero que EdicionWeb.gs cerro el
+  // 27-ago para las demas escrituras; este boton habia quedado afuera. La pantalla
+  // ahora manda el area del producto. Sin area se comporta como antes, para los
+  // llamadores de servidor.
+  var area = datos.area ? exigirArea_(usuario && usuario.rol, datos.area) : null;
 
-  var antesCompra = ubic.precioCompra;
-  var antesUnidad = ubic.precioUnidad;
+  // Lo que toca vuelve en `cambios` y la pantalla ya no recarga: ver
+  // conCambiosDeModelo_ en CosteoDatos.gs.
+  var hecho = conCambiosDeModelo_(function () {
+    var ubic = ubicarEnBanco_(datos.producto, area);
+    if (!ubic) throw new Error('El producto "' + datos.producto + '" no esta en el Banco de Datos');
 
-  // El factor de conversion se conserva: no hay que reinterpretar el texto de la columna.
-  var factor = (antesCompra && antesCompra !== 0) ? (antesUnidad / antesCompra) : null;
-  if (factor === null) {
-    throw new Error('No se puede convertir: el Banco de Datos no tiene precio de compra para "' +
-      ubic.producto + '". Corregilo a mano una vez y despues ya funciona.');
-  }
+    var antesCompra = ubic.precioCompra;
+    var antesUnidad = ubic.precioUnidad;
 
-  var nuevoUnidad = nuevo * factor;
+    // El factor de conversion se conserva: no hay que reinterpretar el texto de la columna.
+    var factor = (antesCompra && antesCompra !== 0) ? (antesUnidad / antesCompra) : null;
+    if (factor === null) {
+      throw new Error('No se puede convertir: el Banco de Datos no tiene precio de compra para "' +
+        ubic.producto + '". Corregilo a mano una vez y despues ya funciona.');
+    }
 
-  ubic.hoja.getRange(ubic.fila, ubic.col + 3).setValue(nuevoUnidad);   // PRECIO / UNIDAD RECETA
-  ubic.hoja.getRange(ubic.fila, ubic.col + 5).setValue(nuevo);         // PRECIO COMPRA
-  if (datos.proveedor) ubic.hoja.getRange(ubic.fila, ubic.col + 8).setValue(datos.proveedor);
+    var nuevoUnidad = nuevo * factor;
 
-  var quien = (usuario && usuario.email) || Session.getActiveUser().getEmail();
+    ubic.hoja.getRange(ubic.fila, ubic.col + 3).setValue(nuevoUnidad);   // PRECIO / UNIDAD RECETA
+    ubic.hoja.getRange(ubic.fila, ubic.col + 5).setValue(nuevo);         // PRECIO COMPRA
+    if (datos.proveedor) ubic.hoja.getRange(ubic.fila, ubic.col + 8).setValue(datos.proveedor);
 
-  // PRECIOS se conserva: guarda factura y unidad de compra, que BITACORA no tiene.
-  hojaCosteo_().getSheetByName(COSTEO.hojas.precios).appendRow([
-    new Date(), ubic.producto, datos.proveedor || ubic.proveedor, nuevo, ubic.unidadCompra,
-    nuevoUnidad, datos.factura || '', quien, datos.nota || ''
-  ]);
+    var quien = (usuario && usuario.email) || Session.getActiveUser().getEmail();
 
-  // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo() y que el sync.
-  // Sin esto, "quien tocó el precio del lomito" habia que buscarlo en tres pestanas
-  // distintas y ninguna tenia la historia completa. La regla del proyecto es que
-  // BITACORA es el registro: un cambio que no aparece ahi es un cambio invisible.
-  var pctBit = antesCompra ? Math.round((nuevo - antesCompra) / antesCompra * 1000) / 10 : 0;
-  bitacora_(quien, (usuario && usuario.rol) || '', 'registrarPrecio', EDIT.hojaBanco,
-            String(ubic.producto), 'precio compra', antesCompra, nuevo,
-            (pctBit >= 0 ? '+' : '') + pctBit + '%' +
-            (datos.factura ? ' · factura ' + datos.factura : '') +
-            (datos.nota ? ' · ' + datos.nota : ''));
+    // PRECIOS se conserva: guarda factura y unidad de compra, que BITACORA no tiene.
+    hojaCosteo_().getSheetByName(COSTEO.hojas.precios).appendRow([
+      new Date(), ubic.producto, datos.proveedor || ubic.proveedor, nuevo, ubic.unidadCompra,
+      nuevoUnidad, datos.factura || '', quien, datos.nota || ''
+    ]);
 
-  CacheService.getScriptCache().remove(COSTEO.cacheKey);
+    // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo() y que el sync.
+    // Sin esto, "quien tocó el precio del lomito" habia que buscarlo en tres pestanas
+    // distintas y ninguna tenia la historia completa. La regla del proyecto es que
+    // BITACORA es el registro: un cambio que no aparece ahi es un cambio invisible.
+    var pctBit = antesCompra ? Math.round((nuevo - antesCompra) / antesCompra * 1000) / 10 : 0;
+    bitacora_(quien, (usuario && usuario.rol) || '', 'registrarPrecio', EDIT.hojaBanco,
+              String(ubic.producto), 'precio compra', antesCompra, nuevo,
+              (pctBit >= 0 ? '+' : '') + pctBit + '%' +
+              (datos.factura ? ' · factura ' + datos.factura : '') +
+              (datos.nota ? ' · ' + datos.nota : ''));
 
-  var modelo = construirModelo_();
-  var ins = null;
-  modelo.insumos.forEach(function (i) { if (normalizar_(i.producto) === normalizar_(ubic.producto)) ins = i; });
+    invalidarCache_({ precio: ubic.producto, area: ubic.area });
 
-  return {
-    producto: ubic.producto,
-    antes: antesCompra,
-    ahora: nuevo,
-    variacion: antesCompra ? (nuevo - antesCompra) / antesCompra * 100 : null,
-    recetasAfectadas: ins ? ins.usos.map(function (rid) {
-      var r = modelo.recetas[rid];
-      return { nombre: r.nombre, area: r.area, tipo: r.tipo, cmv: r.cmv, estado: r.estado };
-    }) : []
-  };
+    return {
+      producto: ubic.producto,
+      area: ubic.area,
+      antes: antesCompra,
+      ahora: nuevo,
+      variacion: antesCompra ? (nuevo - antesCompra) / antesCompra * 100 : null
+    };
+  });
+
+  var res = hecho.resultado;
+  res.cambios = hecho.cambios;
+  // Hasta el 14-sep-2026 aca se borraba el cache y se reconstruia el modelo entero
+  // (~40 s) solo para contar las recetas afectadas, sin guardarlo: la pantalla
+  // recargaba y lo volvia a pagar. Ahora salen de las fichas que el parche recalculo.
+  res.recetasAfectadas = ((hecho.cambios && hecho.cambios.fichas) || []).map(function (r) {
+    return { nombre: r.nombre, area: r.area, tipo: r.tipo, cmv: r.cmv, estado: r.estado };
+  });
+  return res;
 }
 
 /** Ubica un producto dentro de la hoja BANCO DE DATOS (busca en todas las areas). */
@@ -254,7 +270,9 @@ function getReporteHigiene(auth) {
 }
 
 function reporteHigiene() {
-  var m = construirModelo_();
+  // Del cache, no construido (14-sep-2026). Construirlo eran ~40 s cada vez que alguien
+  // abria la pestana Higiene, aunque el recetario estuviera servido.
+  var m = modeloCosteo_();
   var fuera = [], sinUso = [], sinPrecioCompra = [], vacias = [], sobreMeta = [], sinProveedor = [];
 
   m.recetas.forEach(function (r) {

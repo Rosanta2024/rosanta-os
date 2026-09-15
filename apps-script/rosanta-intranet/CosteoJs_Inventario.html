@@ -66,16 +66,18 @@ try {
   }
 } catch(e){ /* sin sessionStorage: se abre en Inicio, como siempre */ }
 
-function invRecargarPagina(a, aviso){
-  invSaliendo = true;
-  try { sessionStorage.setItem(INV_VOLVER, JSON.stringify({area: area, a: a, mes: invMesSel[a], sub: invSub,
-    aviso: aviso + ' Las otras pestañas ya muestran el cambio.'})); } catch(e){}
-  location.reload();
-}
-/* Recarga la pagina si el servidor toco el recetario; si no, solo el inventario. */
-function invDespues(a, r, aviso){
+/* Si el servidor toco el recetario, las otras pestañas se ponen al dia SIN recargar la
+   pagina (14-sep-2026). Antes era location.reload(): casi un minuto en blanco despues
+   de cada alta que llegaba al Banco. `cambios` es lo que el servidor releyo; si no
+   vino —una tanda de precios, que no dice que recetas movio—, se pide el recetario de
+   fondo y la pantalla sigue usable mientras tanto. */
+function invDespues(a, r, aviso, cambios){
   if(r && r.avisos && r.avisos.length) alert('Se guardó, pero hay algo que revisar:\n\n' + r.avisos.map(x => '  · ' + x).join('\n'));
-  if(r && r.recetario) return invRecargarPagina(a, aviso);
+  if(r && r.recetario){
+    if(cambios) aplicarCambios(cambios);
+    if(!cambios || cambios.recargar || !((cambios.fichas || []).length || (cambios.insumos || []).length)) recargarModelo();
+    aviso = aviso + ' Las otras pestañas ya muestran el cambio.';
+  }
   invAviso = aviso; invRecargar(a);
 }
 const invEcos = r => [
@@ -586,7 +588,7 @@ document.addEventListener('click', e => {
           if(r.otros.length) detalle.push('Tampoco se tocaron:\n' + r.otros.slice(0, 10).map(x => '  · ' + x).join('\n'));
           if(detalle.length) alert(partes.join(' ') + '\n\n' + detalle.join('\n\n'));
           invMesSel[a] = r.mes; INVPRECIOS = null;
-          invDespues(a, r, partes.join(' '));
+          invDespues(a, r, partes.join(' '), res.cambios);
         })
         .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Cerrar'; alert('No se pudo cerrar: ' + err.message); })
         .webInventarioCerrarMes(AUTH, a, mes, ceros);
@@ -612,7 +614,7 @@ document.addEventListener('click', e => {
         const r = res.resultado; INVPRECIOS = null;
         if(r.saltados.length) alert('Algunos no se aplicaron:\n\n' + r.saltados.map(x => '  · ' + x).join('\n'));
         invDespues(a, r, aprobar ? `${r.aprobados} precio${r.aprobados === 1 ? '' : 's'} aprobado${r.aprobados === 1 ? '' : 's'} y en el Banco.`
-                                 : `${r.rechazados} precio${r.rechazados === 1 ? '' : 's'} rechazado${r.rechazados === 1 ? '' : 's'}.`);
+                                 : `${r.rechazados} precio${r.rechazados === 1 ? '' : 's'} rechazado${r.rechazados === 1 ? '' : 's'}.`, res.cambios);
       })
       .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo: ' + err.message); })
       .webInventarioResolverPrecios(AUTH, filas, aprobar);
@@ -630,7 +632,7 @@ document.addEventListener('click', e => {
         const r = res.resultado; INVPRECIOS = null;
         const salt = (r.plan || []).filter(p => p.accion).map(p => '  · ' + p.accion);
         if(salt.length) alert('Algunos no se devolvieron:\n\n' + salt.join('\n'));
-        invDespues(a, {recetario: r.revertidos > 0}, `Tanda deshecha: ${r.revertidos} precio${r.revertidos === 1 ? '' : 's'} devuelto${r.revertidos === 1 ? '' : 's'} en el Banco.`);
+        invDespues(a, {recetario: r.revertidos > 0}, `Tanda deshecha: ${r.revertidos} precio${r.revertidos === 1 ? '' : 's'} devuelto${r.revertidos === 1 ? '' : 's'} en el Banco.`, res.cambios);
       })
       .withFailureHandler(function(err){ t.disabled = false; alert('No se deshizo: ' + err.message); })
       .webInventarioDeshacerPrecios(AUTH, t.dataset.invdeshacer);
@@ -654,7 +656,7 @@ document.addEventListener('click', e => {
         const r = res.resultado;
         delete invBorr[a + '|' + m.mes];
         const ecos = invEcos(r);
-        invDespues(a, r, `Guardado: ${r.productos} producto${r.productos === 1 ? '' : 's'} de ${invMesNombre(m.mes)}.${ecos ? ' ' + ecos + '.' : ''}`);
+        invDespues(a, r, `Guardado: ${r.productos} producto${r.productos === 1 ? '' : 's'} de ${invMesNombre(m.mes)}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
       })
       .withFailureHandler(function(err){ alert('No se pudo guardar: ' + err.message + '\n\nLo que escribiste sigue en pantalla.'); pintar(); })
       .webInventarioGuardar(AUTH, a, m.mes, envio);
@@ -692,7 +694,7 @@ document.addEventListener('click', e => {
           }
           invAltaOn = false;
           const ecos = invEcos(r);
-          invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) al conteo de ${invMesNombre(r.mes)}.${ecos ? ' ' + ecos + '.' : ''}`);
+          invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) al conteo de ${invMesNombre(r.mes)}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
         })
         .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + err.message); })
         .webInventarioAlta(AUTH, a, Object.assign({}, datos, {confirmarBanco: !!confirmarBanco}), confirmar);
@@ -765,7 +767,7 @@ document.addEventListener('click', e => {
           const ecos = invEcos(r);
           const aviso = `${p ? p[2] : id}: ${r.cambiado ? (tipo === 'INSUMO' ? 'conectado con ' + r.banco : 'marcado como ' + tipo.toLowerCase()) : 'sin cambios'}.${ecos ? ' ' + ecos + '.' : ''}`;
           invClas = null; cerrar();
-          invDespues(ca, r, aviso);
+          invDespues(ca, r, aviso, res.cambios);
         })
         .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + err.message); })
         .webInventarioClasificar(AUTH, ca, id, tipo, banco, datosCrear);

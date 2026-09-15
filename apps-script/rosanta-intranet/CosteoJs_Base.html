@@ -217,3 +217,149 @@ function fichaNuevaHTML(){
     </div>`;
 }
 
+
+/* ==========================================================================
+   LA PANTALLA CORRIGE SU COPIA DEL MODELO, NO RECARGA — 14-sep-2026
+
+   Cocina reporto que cada ingrediente que agregaba a una receta nueva dejaba la
+   pantalla en blanco casi un minuto. Era asi por diseno: cada boton que guardaba
+   terminaba en location.reload(), y la recarga pedia el recetario entero, que el
+   servidor acababa de tirar del cache y tenia que volver a leer de las dos hojas
+   (~40 s). Una receta de ocho ingredientes eran seis minutos de pantalla blanca.
+
+   Ahora el servidor relee SOLO la ficha o el producto que toco y lo manda en
+   `cambios` (conCambiosDeModelo_, en CosteoDatos.gs). Aca se reemplaza esa pieza en
+   R o I, se vuelven a unir las piezas (enlazarModelo) y se repinta.
+
+   Las piezas se buscan por AREA y NOMBRE, nunca por id: el id es la posicion en el
+   arreglo de esta pantalla, y en el servidor puede ser otra.
+   ========================================================================== */
+const nrmK = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/\s+/g, ' ').trim().toLowerCase();                  // = normalizar_() del servidor
+const claveReceta = r => r.area + '|' + nrmK(r.n);
+const claveInsumo = i => i.area + '|' + nrmK(i.p);
+const recetaPorClave = k => R.find(r => claveReceta(r) === k) || null;
+const insumoPorClave = k => I.find(i => claveInsumo(i) === k) || null;
+const tieneClave = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
+/* Proveedores creados en esta visita. P sale de los productos del Banco, asi que un
+   proveedor sin productos no aparece ahi; sin esto no se lo podria elegir para
+   asignarlo hasta recargar la pagina. */
+const PROV_NUEVOS = [];
+const nombresProveedores = () => [...new Set(P.map(x => x.nombre).concat(PROV_NUEVOS))];
+
+/* Copia de enlazarModelo_ (CosteoDatos.gs): ingrediente -> producto, ingrediente ->
+   sub-receta, producto -> recetas que lo usan, y la lista de proveedores.
+   Si cambia una regla alla, cambia aca. */
+function enlazarModelo(){
+  const porIns = {}, porRec = {}, alias = (D.meta && D.meta.aliasSub) || {};
+  I.forEach((x, k) => { x.id = k; const c = claveInsumo(x); if(!tieneClave(porIns, c)) porIns[c] = k; });
+  R.forEach((r, k) => { r.id = k; porRec[claveReceta(r)] = k; });
+  const subDe = (a, nombre) => {
+    const k = nrmK(nombre);
+    if(tieneClave(porRec, a + '|' + k)) return porRec[a + '|' + k];
+    const al = alias[k];
+    if(al && tieneClave(porRec, a + '|' + nrmK(al))) return porRec[a + '|' + nrmK(al)];
+    return null;
+  };
+  I.forEach(x => { x.sub = subDe(x.area, x.p); x.usos = []; });
+  R.forEach(r => {
+    r.base = 0;
+    r.ing.forEach(g => {
+      const k = nrmK(g.n);
+      g.i = tieneClave(porIns, r.area + '|' + k) ? porIns[r.area + '|' + k]
+          : tieneClave(porIns, 'COCINA|' + k)   ? porIns['COCINA|' + k]
+          : tieneClave(porIns, 'BARRA|' + k)    ? porIns['BARRA|' + k] : null;
+      g.r = (g.i != null && I[g.i].sub != null) ? I[g.i].sub : subDe(r.area, g.n);
+      if(g.i != null && I[g.i].usos.indexOf(r.id) === -1) I[g.i].usos.push(r.id);
+      r.base += (g.t || 0);
+    });
+  });
+  const mapa = {};
+  I.forEach(x => {
+    if(!mapa[x.prov]) mapa[x.prov] = {nombre: x.prov, productos: 0, recetas: {}};
+    mapa[x.prov].productos++;
+    x.usos.forEach(id => { mapa[x.prov].recetas[id] = 1; });
+  });
+  const lista = Object.keys(mapa)
+    .map(k => ({nombre: k, productos: mapa[k].productos, recetas: Object.keys(mapa[k].recetas).length}))
+    .sort((a, b) => b.productos - a.productos);
+  P.length = 0; lista.forEach(p => P.push(p));
+}
+
+/* Lo escrito en pantalla que la hoja todavia no confirmo. Cada vez que llega una ficha
+   del servidor se vuelve a poner encima: si no, al confirmarse el primer ingrediente
+   de una tanda desaparecerian de la vista los que siguen en fila. */
+const PEND = new Map();      // clave de receta -> [{pid, n, q, u}]
+const LOCALES = new Map();   // clave de receta -> ficha creada en pantalla, sin confirmar
+let pidSig = 1;
+
+function ponerPendientes(r){
+  const lista = PEND.get(claveReceta(r)) || [];
+  r.ing = r.ing.filter(g => !g.pend).concat(lista.map(p => {
+    const ins = insumoPorClave(r.area + '|' + nrmK(p.n));
+    return {i: null, r: null, n: p.n, q: p.q, u: p.u, f: null, pend: true, pid: p.pid,
+            t: (ins && ins.pr != null) ? p.q * ins.pr : null};
+  }));
+}
+function agregarPendiente(r, n, q, u){
+  const k = claveReceta(r), p = {pid: pidSig++, n, q, u};
+  PEND.set(k, (PEND.get(k) || []).concat([p]));
+  ponerPendientes(r); enlazarModelo(); memo.clear();
+  return p.pid;
+}
+function quitarPendiente(k, pid){
+  const lista = (PEND.get(k) || []).filter(p => p.pid !== pid);
+  if(lista.length) PEND.set(k, lista); else PEND.delete(k);
+  const r = recetaPorClave(k);
+  if(r){ ponerPendientes(r); enlazarModelo(); memo.clear(); }
+}
+
+/* Lo que devolvio el servidor, adentro de la copia. */
+function aplicarCambios(c){
+  if(!c) return;
+  (c.insumos || []).forEach(raw => {
+    const x = adaptarInsumo(raw), k = claveInsumo(x), pos = I.findIndex(y => claveInsumo(y) === k);
+    if(pos >= 0) I[pos] = x; else I.push(x);
+  });
+  (c.fichas || []).forEach(raw => {
+    const x = adaptarReceta(raw), k = claveReceta(x), pos = R.findIndex(y => claveReceta(y) === k);
+    LOCALES.delete(k);
+    if(pos >= 0) R[pos] = x; else R.push(x);
+  });
+  PEND.forEach((_, k) => { const r = recetaPorClave(k); if(r) ponerPendientes(r); });
+  enlazarModelo(); memo.clear();
+  window.__HIG__ = null;          // la higiene sale del modelo: que se pida de nuevo
+  repintarModelo();
+  if(c.recargar) recargarModelo();
+}
+
+/* Plan B: el recetario entero, de fondo y sin tapar la pantalla. Solo cuando el
+   servidor no pudo decir que cambio (cambios.recargar) o en una tanda de precios del
+   inventario. Lo simulado se conserva por nombre: los ids pueden moverse. */
+function recargarModelo(){
+  if(window.__RECARGANDO__) return;
+  window.__RECARGANDO__ = true; estadoCola();
+  google.script.run
+    .withSuccessHandler(function(m){
+      window.__RECARGANDO__ = false;
+      const d = adaptar(m);
+      const simK = [...sim.entries()].map(([id, v]) => [I[id] ? claveInsumo(I[id]) : '', v]);
+      D.meta = d.meta;
+      R.length = 0; d.recetas.forEach(x => R.push(x));
+      I.length = 0; d.insumos.forEach(x => I.push(x));
+      LOCALES.forEach((r, k) => { if(!recetaPorClave(k)) R.push(r); });
+      PEND.forEach((_, k) => { const r = recetaPorClave(k); if(r) ponerPendientes(r); });
+      enlazarModelo();
+      sim.clear();
+      simK.forEach(([k, v]) => { const x = k && insumoPorClave(k); if(x) sim.set(x.id, v); });
+      memo.clear(); window.__HIG__ = null;
+      repintarModelo(); estadoCola();
+    })
+    .withFailureHandler(function(e){
+      window.__RECARGANDO__ = false; estadoCola();
+      avisarError('Lo guardado ya está en la hoja, pero no pude actualizar la pantalla:\n\n' +
+                  ((e && e.message) || e) + '\n\nRecargá la página para verlo.');
+    })
+    .getCosteoData(AUTH);
+}

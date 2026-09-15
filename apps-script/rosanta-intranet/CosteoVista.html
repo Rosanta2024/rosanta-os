@@ -139,24 +139,31 @@ function iniciarApp(){
 
 <script>
 /* Adapta el modelo de CosteoDatos.gs a la forma compacta que usa la vista.
-   Lo importante: area y cmvObjetivo viajan por receta, y cada linea lleva su sub-receta. */
+   Lo importante: area y cmvObjetivo viajan por receta, y cada linea lleva su sub-receta.
+
+   Partido en piezas el 14-sep-2026: la pantalla ya no recarga despues de guardar, y
+   lo que devuelve el servidor (una ficha, un producto) entra a la copia del modelo con
+   estas mismas funciones. Ver aplicarCambios en CosteoJs_Base. */
+function adaptarInsumo(i){
+  return {id:i.id, p:i.producto, c:i.categoria, pr:i.precio, u:i.unidad, pc:i.precioCompra,
+          uc:i.unidadCompra, cv:i.conversion, prov:i.proveedor, area:i.area, sub:i.sub, usos:i.usos || []};
+}
+function adaptarReceta(r){
+  return {id:r.id, n:r.nombre, t:r.tipo, cat:r.categoria, area:r.area, obj:r.cmvObjetivo,
+          precio:r.precio, costo:r.costo, costoUnit:r.costoUnit, unidadCosto:r.unidadCosto,
+          cmv:r.cmv==null?null:Math.round(r.cmv*10)/10, merma:r.merma,
+          rinde:r.rinde, rindeTexto:r.rindeTexto, nota:r.nota, sug:r.sugerido, est:r.estado, base:r.base,
+          ing:(r.ingredientes || []).map(function(g){
+            return {i:g.insumo, r:g.receta, n:g.nombre, q:g.cantidad, u:g.unidad, t:g.total, f:g.fila};
+          })};
+}
 function adaptar(m){
   return {
-    meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas},
+    meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas,
+          aliasSub:m.meta.aliasSub || {}},
     proveedores:m.proveedores,
-    insumos:m.insumos.map(function(i){
-      return {id:i.id, p:i.producto, c:i.categoria, pr:i.precio, u:i.unidad, pc:i.precioCompra,
-              uc:i.unidadCompra, cv:i.conversion, prov:i.proveedor, area:i.area, sub:i.sub, usos:i.usos};
-    }),
-    recetas:m.recetas.map(function(r){
-      return {id:r.id, n:r.nombre, t:r.tipo, cat:r.categoria, area:r.area, obj:r.cmvObjetivo,
-              precio:r.precio, costo:r.costo, costoUnit:r.costoUnit, unidadCosto:r.unidadCosto,
-              cmv:r.cmv==null?null:Math.round(r.cmv*10)/10, merma:r.merma,
-              rinde:r.rinde, rindeTexto:r.rindeTexto, nota:r.nota, sug:r.sugerido, est:r.estado, base:r.base,
-              ing:r.ingredientes.map(function(g){
-                return {i:g.insumo, r:g.receta, n:g.nombre, q:g.cantidad, u:g.unidad, t:g.total, f:g.fila};
-              })};
-    })
+    insumos:m.insumos.map(adaptarInsumo),
+    recetas:m.recetas.map(adaptarReceta)
   };
 }
 function arrancar(m){

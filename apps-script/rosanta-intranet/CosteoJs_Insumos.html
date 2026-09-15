@@ -15,7 +15,7 @@ function vistaInsumos(){
           <button class="chip" id="ni-add" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Crear</button>
         </div>
         <datalist id="lista-cats">${[...new Set(I.map(x=>x.c))].filter(Boolean).map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
-        <datalist id="lista-provs-alta">${P.map(x=>`<option value="${esc(x.nombre)}">`).join('')}</datalist>
+        <datalist id="lista-provs-alta">${nombresProveedores().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Contenido</strong> solo hace falta cuando la unidad de compra es un envase: cuántas unidades de receta trae un manojo, una caja, un frasco. Un manojo va de 20 g a 75 g según la hierba, así que no se puede adivinar. Antes de crear se avisa si ya hay algo parecido en el Banco.</p>
       </div>` : '') : ''}
     <div class="toolbar">

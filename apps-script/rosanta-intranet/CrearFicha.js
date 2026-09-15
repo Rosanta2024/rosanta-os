@@ -106,7 +106,7 @@ function crearFicha(datos, quien, rol, area) {
   bitacora_(quien, rol, 'crearFicha', conArea_(nombre, area), nombre, tipo, '',
             tipo === 'plato' ? ('Q' + precio + ' · ' + datos.categoria) : (rinde + ' porciones'),
             filaResumen ? ('RESUMEN CMV fila ' + filaResumen) : 'sin fila en RESUMEN CMV');
-  invalidarCache_();
+  invalidarCache_({ ficha: nombre, area: area });
   return { ok: true, pestana: nombre, tipo: tipo, filaResumen: filaResumen };
 }
 
@@ -185,12 +185,16 @@ function crearCuerpoPre_(h, nombre, datos, rinde) {
  * alla, las fichas nuevas van a costear distinto que las viejas sin que se note.
  */
 function ponerFormulasDeLinea_(h, desde, hasta) {
+  var filas = [];
   for (var r = desde; r <= hasta; r++) {
-    h.getRange(r, 5).setFormula(
-      '=IFERROR(VLOOKUP(B' + r + ",'BANCO DE DATOS'!$C:$D,2,0),\"\")");
-    h.getRange(r, 6).setFormula(
-      '=IFERROR(IF(AND(B' + r + '<>"",C' + r + '<>"",E' + r + '<>""),C' + r + '*E' + r + ',""),"")');
+    filas.push([
+      '=IFERROR(VLOOKUP(B' + r + ",'BANCO DE DATOS'!$C:$D,2,0),\"\")",
+      '=IFERROR(IF(AND(B' + r + '<>"",C' + r + '<>"",E' + r + '<>""),C' + r + '*E' + r + ',""),"")'
+    ]);
   }
+  // Una sola escritura para todas (14-sep-2026). Eran dos setFormula por linea: 30
+  // llamadas al servicio para una ficha de plato. Las formulas no cambiaron.
+  h.getRange(desde, 5, filas.length, 2).setFormulas(filas);
 }
 
 /**

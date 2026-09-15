@@ -3,6 +3,129 @@ function linea(r){
   return `<button class="linkline" data-r="${r.id}">${esc(Tt(r.n))} <span style="color:var(--muted)">· ${cmv!=null?cmv.toFixed(1)+'% de '+r.obj+'%':'sin CMV'}</span></button>`;
 }
 
+/* ==========================================================================
+   GUARDAR SIN RECARGAR — 14-sep-2026
+
+   Hasta esta fecha todos los botones que guardaban terminaban en location.reload(), y
+   cada recarga eran ~45 s de pantalla en blanco (ver CosteoJs_Base, "LA PANTALLA
+   CORRIGE SU COPIA DEL MODELO"). Ahora cada guardado:
+     1. se ve en pantalla en el acto cuando se puede (agregar, cantidad, quitar, precio
+        de carta, crear ficha) o deja el boton en "Guardando…" cuando depende de una
+        respuesta del servidor (alta de producto, precio de compra, proveedor);
+     2. sale a la fila de guardado (encolar, en CosteoJs_Pintar), de a uno;
+     3. cuando vuelve, la pieza releida de la hoja reemplaza a la de pantalla
+        (aplicarCambios). Si falla, lo de pantalla se deshace y se avisa.
+   ========================================================================== */
+
+/* ---------- alta de producto: la usan Productos y el atajo desde la ficha ---------- */
+function leerAltaInsumo(prefijo){
+  const val = id => ((document.getElementById(prefijo + id) || {}).value || '').trim();
+  return {
+    producto: val('prod'), categoria: val('cat'),
+    precioCompra: parseFloat(val('pc')),
+    unidadCompra: val('uc'), unidadReceta: val('ur'),
+    contenido: val('cont') ? parseFloat(val('cont')) : null,
+    proveedor: val('prov')
+  };
+}
+function faltaEnAltaInsumo(d){
+  if(!d.producto) return 'Falta el nombre del producto.';
+  if(isNaN(d.precioCompra) || d.precioCompra <= 0) return 'El precio de compra tiene que ser mayor que cero.';
+  if(!d.unidadCompra || !d.unidadReceta) return 'Faltan la unidad de compra y la de receta.';
+  return '';
+}
+/* El servidor contesta {ok:false, motivo:'posible duplicado', similares:[...]} cuando
+   encuentra parecidos. Eso NO es un error: es la pregunta. Se muestra y se reintenta
+   con confirmar=true. Si se tratara como error, el candado anti-duplicados seria un
+   muro en vez de un aviso, y el Banco ya tiene un "Perejil" y un "Prejil" que
+   demuestran lo caro que sale no preguntar.
+
+   OJO CON LA FORMA, que hasta el 14-sep-2026 estaba mal leida: webCrearInsumo pasa por
+   edicionCorrer_, que envuelve lo que devuelve crearInsumo en {ok:true, resultado}. La
+   pregunta de duplicado viaja ADENTRO: res.ok es true y res.resultado.ok es false. La
+   pantalla miraba res.ok, recargaba, y el producto parecido no se creaba ni se
+   preguntaba nada. Lo mismo con el contenido faltante y con los proveedores. */
+function crearInsumoEnCola(datos, areaAlta, boton, alCrear){
+  const txt = boton ? boton.textContent : '';
+  const soltar = () => { if(boton){ boton.disabled = false; boton.textContent = txt; } };
+  const mandar = function(confirmar){
+    if(boton){ boton.disabled = true; boton.textContent = 'Creando…'; }
+    encolar('I|' + (areaAlta || '') + '|' + nrmK(datos.producto), 'Crear ' + datos.producto, function(listo){
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo(); soltar();
+          if(!res || !res.ok){ avisarError('No se creó ' + datos.producto + ':\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          const r = res.resultado || {};
+          if(r.ok){
+            if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+            alCrear(r);
+            return;
+          }
+          if(r.motivo === 'posible duplicado'){
+            const lista = (r.similares || []).map(s => '  · ' + s.producto + '  (' + s.similitud + '% ' + s.motivo + ', Q' + s.precio + ' / ' + s.unidad + ')').join('\n');
+            if(confirm('Ya hay algo parecido en el Banco:\n\n' + lista +
+                       '\n\n¿Crear "' + datos.producto + '" igual?\n\nSi es el mismo producto, cancelá y usá el que ya existe.')) mandar(true);
+            return;
+          }
+          if(r.requiereContenido){
+            alert('Falta el contenido.\n\n' + (r.motivo || '') +
+                  '\n\nUn envase (manojo, caja, frasco) necesita saber cuántas ' + datos.unidadReceta + ' trae.');
+            return;
+          }
+          avisarError('No se creó ' + datos.producto + ':\n\n' + (r.motivo || r.error || 'sin respuesta'));
+        })
+        .withFailureHandler(function(e){ listo(); soltar(); avisarError('No se pudo crear ' + datos.producto + ':\n\n' + e.message); })
+        .webCrearInsumo(AUTH, datos, confirmar, areaAlta);
+    });
+  };
+  mandar(false);
+}
+
+/* Un ingrediente a una ficha: aparece en el acto, en gris y "guardando…", y sale a la
+   fila. Cuando la hoja confirma, la ficha releida reemplaza a la de pantalla con el
+   numero de fila real. */
+function agregarLineaEnCola(r, ins, cant){
+  const k = claveReceta(r);
+  const pid = agregarPendiente(r, ins.p, cant, ins.u);
+  repintarModelo();
+  encolar(k, 'Agregar ' + ins.p, function(listo){
+    const rr = recetaPorClave(k);
+    if(!rr){ quitarPendiente(k, pid); listo(); repintarModelo(); return; }
+    google.script.run
+      .withSuccessHandler(function(res){
+        quitarPendiente(k, pid); listo();
+        if(!res || !res.ok){
+          repintarModelo();
+          avisarError('No se agregó ' + ins.p + ' a ' + Tt(rr.n) + ':\n\n' + ((res && res.error) || 'sin respuesta del servidor'));
+          return;
+        }
+        if(res.cambios) aplicarCambios(res.cambios); else { repintarModelo(); recargarModelo(); }
+      })
+      .withFailureHandler(function(e){
+        quitarPendiente(k, pid); listo(); repintarModelo();
+        avisarError('No se pudo agregar ' + ins.p + ':\n\n' + e.message);
+      })
+      .webAgregarLinea(AUTH, rr.n, ins.p, cant, '', rr.area);   // unidad vacia: manda el Banco
+  });
+}
+
+function abrirAltaDesdeFicha(r, nombre, cant){
+  abrir(altaInsumoHTML(r, nombre, cant));
+  setTimeout(() => { const el = document.getElementById('ai-cat'); if(el) el.focus(); }, 60);
+}
+
+/* Una ficha creada en pantalla que la hoja rechazo: sale de la pantalla, y con ella
+   todo lo que esperaba en fila para esa ficha (sin la pestana, fallaria de a uno). */
+function descartarLocal(k){
+  LOCALES.delete(k); PEND.delete(k);
+  for(let j = COLA.length - 1; j >= 1; j--) if(COLA[j].clave === k) COLA.splice(j, 1);
+  const pos = R.findIndex(r => r.local && claveReceta(r) === k);
+  if(pos >= 0) R.splice(pos, 1);
+  enlazarModelo(); memo.clear();
+  if(CAJON && CAJON.clave === k) cerrar();
+  repintarModelo(); estadoCola();
+}
+
 /* ---------- eventos ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button'); if(!t) return;
@@ -19,7 +142,8 @@ document.addEventListener('click', e => {
   if(t.dataset.fr){ filt.rec = t.dataset.fr; pintar(); return; }
   if(t.dataset.fi){ if(t.dataset.fi==='_prov'){filt.prov=null;} else filt.ins = t.dataset.fi; pintar(); return; }
   if(t.dataset.p){ filt.prov = t.dataset.p; filt.ins='todos'; view='insumos'; area=''; pintar(); return; }
-  if(t.dataset.r != null && t.dataset.r !== ''){ abrir(fichaHTML(R[+t.dataset.r])); return; }
+  if(t.dataset.volver){ const r = recetaPorClave(t.dataset.volver); if(r) abrirReceta(r.id); else cerrar(); return; }
+  if(t.dataset.r != null && t.dataset.r !== ''){ abrirReceta(+t.dataset.r); return; }
   if(t.id === 'aplicar'){
     const id = +t.dataset.i, ins = I[id], v = parseFloat(document.getElementById('np').value);
     if(!isNaN(v) && ins.pc) sim.set(id, ins.pr * (v / ins.pc));
@@ -27,25 +151,40 @@ document.addEventListener('click', e => {
     memo.clear(); abrirInsumo(id); pintar(); return;
   }
   if(t.id === 'quitar'){ const id=+t.dataset.i; sim.delete(id); memo.clear(); abrirInsumo(id); pintar(); return; }
+
+  // --- precio de compra de un producto
   if(t.id === 'registrar'){
-    const id = +t.dataset.i, ins = I[id];
+    const id = +t.dataset.i, ins = I[id]; if(!ins) return;
     const v = parseFloat(document.getElementById('np').value);
     if(isNaN(v) || v <= 0){ alert('Escribí un precio de compra válido.'); return; }
     const fac = prompt('Número de factura o boleta (podés dejarlo vacío):', '');
     if(fac === null) return;
+    const kI = claveInsumo(ins), nRecetas = ins.usos.length;
     t.disabled = true; t.textContent = 'Guardando…';
-    google.script.run
-      .withSuccessHandler(function(res){
-        sim.delete(id);
-        alert('Guardado. ' + res.producto + ': Q' + res.antes + ' → Q' + res.ahora +
-              (res.variacion!=null ? ' (' + (res.variacion>0?'+':'') + res.variacion.toFixed(1) + '%)' : '') +
-              '\n' + res.recetasAfectadas.length + ' receta(s) recalculada(s).');
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Registrar precio'; alert('No se pudo guardar: ' + e.message); })
-      .registrarPrecio(AUTH, {producto: ins.p, proveedor: ins.prov, precioCompra: v, factura: fac});
+    /* Ya no manda el proveedor (14-sep-2026). Mandaba ins.prov, que es el nombre que
+       arma la pantalla —"Sin proveedor" si la celda esta vacia, o el alias oficial—, y
+       el servidor lo escribia en la columna PROVEEDOR del Banco encima de lo que habia
+       cargado cocina. El proveedor se cambia con su propio boton. El area si va: sin
+       ella el precio del ajo de barra caia en el ajo de cocina. */
+    encolar('I|' + kI, 'Precio de ' + ins.p, function(listo){
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          const x = insumoPorClave(kI); if(x) sim.delete(x.id);
+          if(res && res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+          const y = insumoPorClave(kI);
+          if(y && CAJON && CAJON.tipo === 'insumo' && CAJON.clave === kI) abrirInsumo(y.id);   // trae el historial con la factura nueva
+          avisar('Guardado. ' + res.producto + ': Q' + res.antes + ' → Q' + res.ahora +
+                 (res.variacion != null ? ' (' + (res.variacion > 0 ? '+' : '') + res.variacion.toFixed(1) + '%)' : '') +
+                 ' · ' + nRecetas + ' receta' + (nRecetas === 1 ? '' : 's') + ' recalculada' + (nRecetas === 1 ? '' : 's'));
+        })
+        .withFailureHandler(function(e){ listo(); refrescarCajon(); avisarError('No se pudo guardar el precio:\n\n' + e.message); })
+        .registrarPrecio(AUTH, {producto: ins.p, precioCompra: v, factura: fac, area: ins.area});
+    });
+    refrescarCajon();
     return;
   }
+
   // --- abrir el formulario de receta nueva
   if(t.id === 'nueva'){ nfTipo = 'plato'; abrir(fichaNuevaHTML()); return; }
   if(t.dataset.nft){ nfTipo = t.dataset.nft; abrir(fichaNuevaHTML()); return; }
@@ -68,103 +207,119 @@ document.addEventListener('click', e => {
       datos.rinde = parseFloat(document.getElementById('nf-rinde').value);
       if(isNaN(datos.rinde) || datos.rinde <= 0){ alert('El rinde tiene que ser mayor que cero.'); return; }
     }
-    t.disabled = true; t.textContent = 'Creando\u2026';
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){
-          t.disabled = false; t.textContent = 'Crear la ficha';
-          alert('No se creo: ' + ((res && res.error) || 'sin respuesta'));
-          return;
-        }
-        alert('Listo. Se creo la pestaña "' + res.resultado.pestana + '".' +
-              (res.resultado.filaResumen ? '\nRESUMEN CMV, fila ' + res.resultado.filaResumen + ', marcada por costear.' : ''));
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear la ficha'; alert('No se pudo crear: ' + e.message); })
-      .webCrearFicha(AUTH, datos, area);   // vacia (filtro "Todo"): el servidor usa el area del rol
+    // La misma area que elige el servidor con el filtro en "Todo": la primera del rol.
+    const nfArea = area || ((window.PUEDE && window.PUEDE.areas && window.PUEDE.areas[0]) || 'COCINA');
+    const nombre = esPlato ? datos.nombre.toUpperCase() : datos.nombre;   // como la nombra crearFicha
+    if(/[\[\]\*\/\\\?:]/.test(nombre)){ alert('El nombre no puede llevar  [ ] * / \\ ? :  — son caracteres que Sheets no acepta en una pestaña.'); return; }
+    const k = nfArea + '|' + nrmK(nombre);
+    if(recetaPorClave(k)){ alert('Ya hay una receta que se llama "' + Tt(nombre) + '".'); return; }
+    const cfg = ((D.meta && D.meta.areas) || []).find(a => a.area === nfArea) || {};
+    /* La ficha aparece YA, vacia y lista para cargarle ingredientes. La pestaña se crea
+       en la hoja por detras, y lo que se cargue mientras tanto espera en fila detras de
+       ella. Si la hoja la rechaza, sale de la pantalla y se avisa (descartarLocal). */
+    const local = {n: nombre, t: nfTipo, cat: esPlato ? datos.categoria : '', area: nfArea,
+      obj: cfg.cmvObjetivo != null ? cfg.cmvObjetivo : (nfArea === 'BARRA' ? 20 : 30),
+      precio: esPlato ? datos.precio : null, costo: null, costoUnit: null, unidadCosto: '', cmv: null,
+      merma: cfg.merma != null ? cfg.merma : (nfArea === 'BARRA' ? 3 : 10),
+      rinde: esPlato ? null : datos.rinde, rindeTexto: '', nota: datos.nota,
+      sug: null, est: 'vacia', base: 0, ing: [], local: true};
+    LOCALES.set(k, local); R.push(local);
+    enlazarModelo(); memo.clear();
+    encolar(k, 'Crear la ficha ' + Tt(nombre), function(listo){
+      google.script.run
+        .withSuccessHandler(function(res){
+          if(!res || !res.ok){ descartarLocal(k); listo(); avisarError('No se creó la ficha ' + Tt(nombre) + ':\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          listo();
+          if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+          const rr = res.resultado || {};
+          avisar('Ficha creada: ' + Tt(nombre) + (rr.filaResumen ? ' · RESUMEN CMV fila ' + rr.filaResumen + ', por costear' : ''));
+        })
+        .withFailureHandler(function(e){ descartarLocal(k); listo(); avisarError('No se pudo crear la ficha ' + Tt(nombre) + ':\n\n' + e.message); })
+        .webCrearFicha(AUTH, datos, nfArea);
+    });
+    abrirReceta(local.id);
+    repintarModelo();
+    setTimeout(() => { const el = document.getElementById('np-prod'); if(el) el.focus(); }, 60);
     return;
   }
 
   // --- quitar una linea de la ficha
   if(t.classList.contains('qdel')){
-    const fila = +t.dataset.f, r = R[+t.dataset.rid];
-    const ln = r.ing.filter(function(x){ return x.f === fila; })[0];
-    if(!confirm('Quitar "' + (ln ? ln.n : 'esta linea') + '" de ' + r.n + '?\n\nLa linea queda vacia y el costo del plato baja. Se puede volver a agregar despues.')) return;
-    t.disabled = true;
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; alert('No se quito: ' + ((res && res.error) || 'sin respuesta')); return; }
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; alert('No se pudo quitar: ' + e.message); })
-      .webQuitarLinea(AUTH, r.n, fila, r.area);
+    const fila = +t.dataset.f, r = R[+t.dataset.rid]; if(!r) return;
+    const k = claveReceta(r), ln = r.ing.find(x => x.f === fila && !x.pend);
+    if(!ln) return;
+    if(ocupada(k)){ alert('Esta receta todavía se está guardando. En un momento se puede quitar la línea.'); return; }
+    if(!confirm('Quitar "' + ln.n + '" de ' + r.n + '?\n\nLa linea queda vacia y el costo del plato baja. Se puede volver a agregar despues.')) return;
+    const pos = r.ing.indexOf(ln);
+    r.ing.splice(pos, 1); enlazarModelo(); memo.clear();
+    const volverla = () => {
+      const x = recetaPorClave(k);
+      if(x && x.ing.indexOf(ln) === -1){ x.ing.splice(Math.min(pos, x.ing.length), 0, ln); enlazarModelo(); memo.clear(); }
+      repintarModelo();
+    };
+    encolar(k, 'Quitar ' + ln.n, function(listo){
+      const rr = recetaPorClave(k);
+      if(!rr){ listo(); return; }
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          if(!res || !res.ok){ volverla(); avisarError('No se quitó ' + ln.n + ':\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          if(res.cambios) aplicarCambios(res.cambios); else { repintarModelo(); recargarModelo(); }
+        })
+        .withFailureHandler(function(e){ listo(); volverla(); avisarError('No se pudo quitar ' + ln.n + ':\n\n' + e.message); })
+        .webQuitarLinea(AUTH, rr.n, fila, rr.area, ln.n);   // ln.n: el servidor verifica que la fila siga siendo esa
+    });
+    repintarModelo();
     return;
   }
 
   // --- cambiar el proveedor de un insumo. NO toca el precio.
   if(t.id === 'np-prov-save'){
-    const prod = t.dataset.prod;
+    const prod = t.dataset.prod, areaI = t.dataset.area;
     const prov = (document.getElementById('np-prov').value || '').trim();
     if(!prov){ alert('Escribi un proveedor.'); return; }
     t.disabled = true; t.textContent = 'Guardando…';
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){
-          t.disabled = false; t.textContent = 'Guardar';
-          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta'));
-          return;
-        }
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + e.message); })
-      .webAsignarProveedor(AUTH, prod, prov, t.dataset.area);
+    encolar('I|' + areaI + '|' + nrmK(prod), 'Proveedor de ' + prod, function(listo){
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          if(!res || !res.ok){ refrescarCajon(); avisarError('No se guardó el proveedor:\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+          avisar('Proveedor de ' + prod + ': ' + prov);
+        })
+        .withFailureHandler(function(e){ listo(); refrescarCajon(); avisarError('No se pudo guardar el proveedor:\n\n' + e.message); })
+        .webAsignarProveedor(AUTH, prod, prov, areaI);
+    });
+    refrescarCajon();
     return;
   }
 
-  // --- alta de insumo en el Banco.
-  // El servidor contesta {ok:false, motivo:'posible duplicado', similares:[...]} cuando
-  // encuentra parecidos. Eso NO es un error: es la pregunta. Se muestra y se reintenta
-  // con confirmar=true. Si se tratara como error, el candado anti-duplicados seria un
-  // muro en vez de un aviso, y el Banco ya tiene un "Perejil" y un "Prejil" que
-  // demuestran lo caro que sale no preguntar.
+  // --- alta de insumo en el Banco, desde la pestaña Productos
   if(t.id === 'ni-add'){
-    const val = id => (document.getElementById(id).value || '').trim();
-    const datos = {
-      producto: val('ni-prod'), categoria: val('ni-cat'),
-      precioCompra: parseFloat(val('ni-pc')),
-      unidadCompra: val('ni-uc'), unidadReceta: val('ni-ur'),
-      contenido: val('ni-cont') ? parseFloat(val('ni-cont')) : null,
-      proveedor: val('ni-prov')
-    };
-    if(!datos.producto){ alert('Falta el nombre del producto.'); return; }
-    if(isNaN(datos.precioCompra) || datos.precioCompra <= 0){ alert('El precio de compra tiene que ser mayor que cero.'); return; }
-    if(!datos.unidadCompra || !datos.unidadReceta){ alert('Faltan la unidad de compra y la de receta.'); return; }
+    const datos = leerAltaInsumo('ni-');
+    const falta = faltaEnAltaInsumo(datos); if(falta){ alert(falta); return; }
+    // area vacia: el servidor usa la del rol (antes forzaba COCINA y a Jose se lo rechazaba)
+    crearInsumoEnCola(datos, area, t, function(){
+      ['ni-prod', 'ni-pc', 'ni-cont'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+      const el = document.getElementById('ni-prod'); if(el) el.focus();
+      avisar('Producto creado en el Banco: ' + datos.producto);
+    });
+    return;
+  }
 
-    const mandar = function(confirmar){
-      t.disabled = true; t.textContent = 'Creando…';
-      google.script.run
-        .withSuccessHandler(function(res){
-          t.disabled = false; t.textContent = 'Crear';
-          if(res && res.ok){ location.reload(); return; }
-          if(res && res.motivo === 'posible duplicado'){
-            const lista = res.similares.map(s => '  · ' + s.producto + '  (' + s.similitud + '% ' + s.motivo + ', Q' + s.precio + ' / ' + s.unidad + ')').join('\n');
-            if(confirm('Ya hay algo parecido en el Banco:\n\n' + lista +
-                       '\n\n¿Crear "' + datos.producto + '" igual?\n\nSi es el mismo producto, cancelá y cambiale el precio al que ya existe.')){
-              mandar(true);
-            }
-            return;
-          }
-          if(res && res.requiereContenido){
-            alert('Falta el contenido.\n\n' + (res.motivo || '') +
-                  '\n\nUn envase (manojo, caja, frasco) necesita saber cuántas ' + datos.unidadReceta + ' trae.');
-            return;
-          }
-          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
-        })
-        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
-        .webCrearInsumo(AUTH, datos, confirmar, area);   // vacia: el servidor usa el area del rol (antes forzaba COCINA y a Jose se lo rechazaba)
-    };
-    mandar(false);
+  // --- alta de insumo desde la ficha: crea y agrega la linea
+  if(t.id === 'ai-add'){
+    const k = t.dataset.rk, cant = parseFloat(t.dataset.cant);
+    const r = recetaPorClave(k); if(!r){ cerrar(); return; }
+    const datos = leerAltaInsumo('ai-');
+    const falta = faltaEnAltaInsumo(datos); if(falta){ alert(falta); return; }
+    crearInsumoEnCola(datos, r.area, t, function(){
+      const rr = recetaPorClave(k), ins = insumoPorClave(r.area + '|' + nrmK(datos.producto));
+      if(rr) abrirReceta(rr.id);
+      if(rr && ins && cant > 0){ agregarLineaEnCola(rr, ins, cant); return; }
+      if(!ins){ avisarError('Se creó "' + datos.producto + '" en el Banco, pero la pantalla todavía no lo tiene. En unos segundos aparece; si no, recargá la página y agregalo a la receta.'); return; }
+      avisar('Producto creado: ' + datos.producto);
+    });
     return;
   }
 
@@ -174,25 +329,35 @@ document.addEventListener('click', e => {
     const datos = { nombre: val('npr-nom'), nit: val('npr-nit'),
                     contacto: val('npr-con'), telefono: val('npr-tel') };
     if(!datos.nombre){ alert('Falta el nombre del proveedor.'); return; }
-
+    const txt = t.textContent;
     const mandar = function(confirmar){
       t.disabled = true; t.textContent = 'Creando…';
-      google.script.run
-        .withSuccessHandler(function(res){
-          t.disabled = false; t.textContent = 'Crear';
-          if(res && res.ok){ location.reload(); return; }
-          if(res && res.motivo === 'posible duplicado'){
-            const lista = res.similares.map(s => '  · ' + s.nombre + '  (' + s.similitud + '%)').join('\n');
-            if(confirm('Ya hay un proveedor parecido:\n\n' + lista +
-                       '\n\n¿Crear "' + datos.nombre + '" igual?')){
-              mandar(true);
+      encolar('P|' + nrmK(datos.nombre), 'Crear proveedor ' + datos.nombre, function(listo){
+        google.script.run
+          .withSuccessHandler(function(res){
+            listo(); t.disabled = false; t.textContent = txt;
+            if(!res || !res.ok){ avisarError('No se creó el proveedor:\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+            const r = res.resultado || {};
+            if(r.ok){
+              PROV_NUEVOS.push(datos.nombre);
+              ['npr-nom', 'npr-nit', 'npr-con', 'npr-tel'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+              repintarModelo();
+              avisar('Proveedor creado: ' + datos.nombre + '. Ya se puede elegir al cambiar el proveedor de un producto.');
+              return;
             }
-            return;
-          }
-          alert('No se creo: ' + ((res && res.motivo) || (res && res.error) || 'sin respuesta'));
-        })
-        .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Crear'; alert('No se pudo crear: ' + e.message); })
-        .webCrearProveedor(AUTH, datos, confirmar);
+            if(r.motivo === 'posible duplicado'){
+              const lista = (r.similares || []).map(s => '  · ' + s.nombre + '  (' + s.similitud + '%)').join('\n');
+              if(confirm('Ya hay un proveedor parecido:\n\n' + lista +
+                         '\n\n¿Crear "' + datos.nombre + '" igual?')){
+                mandar(true);
+              }
+              return;
+            }
+            avisarError('No se creó el proveedor:\n\n' + (r.motivo || r.error || 'sin respuesta'));
+          })
+          .withFailureHandler(function(e){ listo(); t.disabled = false; t.textContent = txt; avisarError('No se pudo crear el proveedor:\n\n' + e.message); })
+          .webCrearProveedor(AUTH, datos, confirmar);
+      });
     };
     mandar(false);
     return;
@@ -200,47 +365,59 @@ document.addEventListener('click', e => {
 
   // --- agregar una linea. La unidad NO se pide: la pone el Banco.
   if(t.id === 'np-add'){
-    const r = R[+t.dataset.rid];
-    const prod = (document.getElementById('np-prod').value || '').trim();
-    const cant = parseFloat(document.getElementById('np-cant').value);
-    if(!prod){ alert('Elegi un producto del Banco de Datos.'); return; }
-    if(isNaN(cant) || cant <= 0){ alert('La cantidad tiene que ser mayor que cero.'); return; }
-    t.disabled = true; t.textContent = 'Agregando\u2026';
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){
-          t.disabled = false; t.textContent = 'Agregar';
-          alert('No se agrego: ' + ((res && res.error) || 'sin respuesta'));
-          return;
-        }
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + e.message); })
-      .webAgregarLinea(AUTH, r.n, prod, cant, '', r.area);   // unidad vacia: manda el Banco
+    const r = R[+t.dataset.rid]; if(!r) return;
+    const elP = document.getElementById('np-prod'), elC = document.getElementById('np-cant');
+    const prod = (elP.value || '').trim(), cant = parseFloat(elC.value);
+    if(!prod){ alert('Elegi un producto del Banco de Datos.'); elP.focus(); return; }
+    if(isNaN(cant) || cant <= 0){ alert('La cantidad tiene que ser mayor que cero.'); elC.focus(); return; }
+    // El servidor busca en el Banco del area de la ficha: aca se busca en el mismo.
+    const ins = insumoPorClave(r.area + '|' + nrmK(prod));
+    if(!ins){
+      const donde = r.area === 'BARRA' ? 'Barra' : 'Cocina';
+      if(window.PUEDE && window.PUEDE.crearInsumo && AREA_EDITABLE(r.area)){
+        if(confirm('"' + prod + '" no está en el Banco de Datos de ' + donde + '.\n\n¿Crearlo ahora? Queda en el Banco y se agrega a esta receta con ' + cant + '.')) abrirAltaDesdeFicha(r, prod, cant);
+      } else {
+        alert('"' + prod + '" no está en el Banco de Datos de ' + donde + '. Primero hay que darlo de alta como producto.');
+      }
+      return;
+    }
+    elP.value = ''; elC.value = '';
+    agregarLineaEnCola(r, ins, cant);
+    const foco = document.getElementById('np-prod'); if(foco) foco.focus();
     return;
   }
 
   // --- precio de carta
   if(t.id === 'np-menu-save'){
-    const r = R[+t.dataset.rid];
+    const r = R[+t.dataset.rid]; if(!r) return;
     const v = parseFloat(document.getElementById('np-menu').value);
     if(isNaN(v) || v <= 0){ alert('El precio tiene que ser mayor que cero.'); return; }
     if(v === r.precio){ alert('Es el mismo precio que ya tenia.'); return; }
     const motivo = prompt('Por que cambia el precio? (queda en la bitacora, podes dejarlo vacio)', '');
     if(motivo === null) return;
-    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; t.textContent = '\u2713'; alert('No se guardo: ' + ((res && res.error) || 'sin respuesta')); return; }
-        location.reload();
-      })
-      .withFailureHandler(function(e){ t.disabled = false; t.textContent = '\u2713'; alert('No se pudo guardar: ' + e.message); })
-      .webCambiarPrecioMenu(AUTH, r.n, v, motivo, r.area);
+    const k = claveReceta(r), antes = r.precio;
+    const deshacer = () => { const x = recetaPorClave(k); if(x && x.precio === v){ x.precio = antes; memo.clear(); repintarModelo(); } };
+    r.precio = v; memo.clear();
+    encolar(k, 'Precio de carta de ' + Tt(r.n), function(listo){
+      const rr = recetaPorClave(k);
+      if(!rr){ listo(); return; }
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          if(!res || !res.ok){ deshacer(); avisarError('No se guardó el precio de carta:\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+          avisar('Precio de carta de ' + Tt(rr.n) + ': ' + Q0(v));
+        })
+        .withFailureHandler(function(e){ listo(); deshacer(); avisarError('No se pudo guardar el precio de carta:\n\n' + e.message); })
+        .webCambiarPrecioMenu(AUTH, rr.n, v, motivo, rr.area);
+    });
+    repintarModelo();
     return;
   }
 
+  // --- cantidad de una linea
   if(t.classList.contains('qsave')){
-    const fila = +t.dataset.f, r = R[+t.dataset.rid];
+    const fila = +t.dataset.f, r = R[+t.dataset.rid]; if(!r) return;
     const inp = dr.querySelector('.qin[data-f="' + fila + '"]');
     const v = parseFloat(inp && inp.value);
     // El servidor exige cantidad > 0. Se avisa aca con el mismo criterio, para que la
@@ -251,21 +428,27 @@ document.addEventListener('click', e => {
         : 'Escribi una cantidad valida.');
       return;
     }
-    t.disabled = true; t.textContent = '\u00b7\u00b7\u00b7';
-    google.script.run
-      .withSuccessHandler(function(res){
-        if(!res || !res.ok){
-          t.disabled = false; t.textContent = '\u2713';
-          alert('No se guardo: ' + ((res && res.error) || 'sin respuesta del servidor'));
-          return;
-        }
-        location.reload();
-      })
-      .withFailureHandler(function(e){
-        t.disabled = false; t.textContent = '\u2713';
-        alert('No se pudo guardar: ' + e.message);
-      })
-      .webEditarCantidad(AUTH, r.n, fila, v, r.area);   // r.n es el nombre de la pestana
+    const k = claveReceta(r), ln = r.ing.find(x => x.f === fila && !x.pend);
+    if(!ln) return;
+    if(ocupada(k)){ alert('Esta receta todavía se está guardando. En un momento se puede cambiar la cantidad.'); return; }
+    if(v === ln.q) return;
+    const qAntes = ln.q, tAntes = ln.t;
+    const deshacer = () => { ln.q = qAntes; ln.t = tAntes; enlazarModelo(); memo.clear(); repintarModelo(); };
+    ln.q = v; if(ln.t != null && qAntes) ln.t = ln.t * v / qAntes;
+    enlazarModelo(); memo.clear();
+    encolar(k, 'Cantidad de ' + ln.n, function(listo){
+      const rr = recetaPorClave(k);
+      if(!rr){ listo(); return; }
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          if(!res || !res.ok){ deshacer(); avisarError('No se guardó la cantidad de ' + ln.n + ':\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          if(res.cambios) aplicarCambios(res.cambios); else { repintarModelo(); recargarModelo(); }
+        })
+        .withFailureHandler(function(e){ listo(); deshacer(); avisarError('No se pudo guardar la cantidad de ' + ln.n + ':\n\n' + e.message); })
+        .webEditarCantidad(AUTH, rr.n, fila, v, rr.area, ln.n);   // ln.n: el servidor verifica que la fila siga siendo esa
+    });
+    repintarModelo();
     return;
   }
   if(t.id === 'simreset'){ sim.clear(); memo.clear(); cerrar(); pintar(); return; }
@@ -274,6 +457,13 @@ document.addEventListener('click', e => {
 let td;
 document.getElementById('q').addEventListener('input', e => {
   clearTimeout(td); td = setTimeout(() => { q = e.target.value.trim(); pintar(); }, 120);
+});
+/* Enter para cargar rapido: en el producto salta a la cantidad, en la cantidad agrega. */
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || e.isComposing) return;
+  const id = e.target && e.target.id;
+  if(id === 'np-prod'){ e.preventDefault(); const c = document.getElementById('np-cant'); if(c) c.focus(); return; }
+  if(id === 'np-cant'){ e.preventDefault(); const b = document.getElementById('np-add'); if(b) b.click(); return; }
 });
 
 const porArea = a => R.filter(r => r.area===a && r.t==='plato');
@@ -307,6 +497,7 @@ google.script.run
       window.PUEDE.areas = r.resultado.areas;
       window.YO = r.resultado;
       pintar();                       // <- sin esto, la grilla se queda en solo lectura
+      refrescarCajon();               // y un cajon abierto antes de la respuesta, sin botones
     }
   })
   .withFailureHandler(function(){ /* silencio: se queda en solo lectura */ })

@@ -493,7 +493,11 @@ function cargarVentasPorProducto() {
     Logger.log('  escrito. La hoja queda con %s filas.', esc.total);
   }
 
-  CacheService.getScriptCache().remove(COSTEO.cacheKey);
+  // Hasta el 14-sep-2026 aca se borraba el cache del recetario (COSTEO.cacheKey). El
+  // modelo del recetario no lee ventas —construirModelo_ solo abre las fichas y el
+  // Banco—, asi que cada export nuevo del POS mandaba al siguiente que abria el
+  // recetario a esperar ~40 s por nada. El tablero no depende de ese cache: su clave
+  // lleva la huella de SYNC_VENTAS y cambia sola.
   Logger.log('');
   Logger.log('Las copias nativas quedaron en Drive con el prefijo "~nativa ": son');
   Logger.log('desechables, su id esta en %s por si hay que auditar que se leyo.', VENTAS.hojaLog);
