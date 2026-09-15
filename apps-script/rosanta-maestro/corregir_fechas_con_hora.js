@@ -233,7 +233,7 @@ function _fhCorrer(escribir) {
                '. Con zonas distintas cada lector ve otro dia. Avisar antes de seguir.');
     return;
   }
-  var avisos = [], hechas = 0, yaEstaban = 0, fuera = [];
+  var avisos = [], hechas = 0, yaEstaban = 0, fuera = [], pendientes = [], escritas = [];
   LIBROS_FH.forEach(function (L) {
     var sh = ss.getSheetByName(L.hoja);
     if (!sh) { avisos.push('No existe la hoja ' + L.hoja); return; }
@@ -271,13 +271,37 @@ function _fhCorrer(escribir) {
       if (escribir) {
         var p = it[3].split('-');
         sh.getRange(r + 1, L.fecha).setValue(new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])));
+        escritas.push({ sh: sh, nombre: L.nombre, llave: it[0], fila: r + 1, col: L.fecha, meta: it[3] + ' 00:00' });
       }
+      pendientes.push(L.nombre + ' ' + it[0] + ' fila ' + (r + 1) + ' "' + hoy + '" -> ' + it[3]);
       hechas++;
     });
   });
+  // 15-sep-2026: la primera corrida escribio 157 y la revision siguiente encontro 37
+  // todavia con hora. Desde entonces se relee lo escrito y se dice cual no quedo.
+  var noQuedaron = [];
+  if (escritas.length) {
+    SpreadsheetApp.flush();
+    var releida = {};
+    escritas.forEach(function (w) {
+      var clave = w.nombre;
+      if (!releida[clave]) releida[clave] = w.sh.getRange(1, w.col, w.sh.getLastRow(), 1).getValues();
+      var v = releida[clave][w.fila - 1][0];
+      var txt = v instanceof Date ? _fhTexto(v) : String(v);
+      if (txt !== w.meta) noQuedaron.push(w.nombre + ' ' + w.llave + ' fila ' + w.fila + ': se escribio ' + w.meta + ' y la hoja dice "' + txt + '"');
+    });
+  }
   Logger.log(escribir ? '=== ESCRITAS ===' : '=== SIMULACION, no se escribio nada ===');
   Logger.log(hechas + ' filas a corregir (lote: ' + LOTE_FH_FEL.length + ' FEL + ' + LOTE_FH_VENTAS.length + ' ventas)');
   Logger.log('Ya estaban bien: ' + yaEstaban);
+  if (pendientes.length) {
+    Logger.log('--- las que ' + (escribir ? 'se escribieron' : 'faltan') + ' ---');
+    pendientes.forEach(function (x) { Logger.log('   ' + x); });
+  }
+  if (escribir) {
+    Logger.log(noQuedaron.length ? '--- NO QUEDARON (' + noQuedaron.length + ') ---' : 'Releidas: todas quedaron a medianoche.');
+    noQuedaron.forEach(function (x) { Logger.log('   ' + x); });
+  }
   if (fuera.length) {
     Logger.log('--- con hora y FUERA del lote (no se tocan; avisar) ---');
     fuera.forEach(function (x) { Logger.log('   ' + x); });
