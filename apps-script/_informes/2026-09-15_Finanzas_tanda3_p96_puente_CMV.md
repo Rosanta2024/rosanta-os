@@ -134,7 +134,8 @@ Diseño acordado con la sesión de Profit OS, que dio visto bueno para tocar sol
   - **Node, con el código real:** servidor 34 OK, con motor de Finanzas sobre el espejo, POS real, inventarios de la fase 1 y el filtro de dueño. Regresión del puente: 83 OK.
   - **Tarjeta:** dibujada en sus 5 estados; las notas salen escapadas.
   - **HEAD:** verificado con bajada aparte.
-- **Pregunta abierta a Juanma:** ¿cocina y barra pueden ver los quetzales de venta y compra de la tarjeta?
+- **Decisión de Juanma (15-sep):** a quien no es dueño se le muestran **solo porcentajes**. El filtro ya hace eso; el comentario de `_puenteParaQuien_` que dice "hasta que Juanma decida" se actualiza en el próximo cambio de código, para no mover lo que ya se probó.
+- **Batería sobre HEAD con la parte B:** 112 OK · 0 fallas · 0 avisos · 3 saltadas.
 
 ## Pendiente
 

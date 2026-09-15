@@ -42,6 +42,7 @@ Piso Q18,860/mes, objetivo Q27,193/mes.
 Detalles:
 - **Agosto** es el 40% de la brecha: Q21,800 en 18 retiros de cajero sin detalle (del 11 al 29-ago, máximo Q2,000 por retiro), marcados como ALIMENTOS_EFECTIVO.
 - **Base de la venta (regla 14, publicada en la @94):** la venta de Finanzas incluye el 10% de servicio y la ficha no. Desde la @94 el food cost de Finanzas, su móvil 4, la tarjeta de food del RAA y el techo de compra van sobre venta sin servicio: la base de cada ticket es Costo + Ganancia ÷ 1.12. **Prime cost, neto y DRE siguen sobre la venta total** (Juanma). Food cost del año: 34.7% → 38.3%. Batería de la @94: 111 OK · 0 fallas · 3 saltadas.
+- **Tarjeta "CMV real contra teórico" del tablero de Profit OS (parte B):** `getCmvRealTeorico(auth)` en `PuenteCmv.js`, pedida aparte desde `aplicarProfitOS`. Muestra la brecha de los últimos 3 meses cerrados (≤2 merma normal, 2–4 revisar porcionado, >4 fuga; bajo −2 es dato incompleto). **Decisión de Juanma: quien no es dueño ve solo porcentajes, sin quetzales.**
 - **Eventos:** van en los dos lados, su venta y su compra.
 - **No hay comida de personal.**
 - **Herramientas:**
