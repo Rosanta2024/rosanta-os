@@ -33,6 +33,34 @@ Hoy el Sheet está en Guatemala. La hora 22:00 en invierno y 23:00 en verano es 
 - `node --check` de los `.js` y del `<script>` de FinanzasVista, con control negativo; `py_compile`.
 - Seis pruebas nuevas en `PruebasFinanzas.js`. «Ninguna fecha del maestro trae hora» va a dar AVISO hasta que se corra el script de fechas.
 
+## Scripts del maestro, corridos por Juanma el 15-sep
+
+- **Fechas:** 157 filas, espejo regenerado 12:50, ninguna fecha con hora en las cinco hojas. La primera corrida escribió 120 y **37 del FEL no aceptaron `setValue(Date)`, sin error**. El script releyó lo escrito, `diagnosticarFechasFEL` descartó fórmula, formato, merge, validación y protecciones, y la fecha escrita como texto `AAAA-MM-DD` entró a la primera. Regla nueva: en el maestro, una fecha se escribe como texto.
+- **Mercado (p121):** 6 filas a ALIMENTOS_EFECTIVO, verificadas con la revisión (6 «ya estaban bien») y en el espejo. COGS de julio +Q3,019 y de agosto +Q3,586.
+
+## Regla 13: la factura anulada no suma (hallazgo del 15-sep)
+
+El motor y `generar_finanzas.py` no miraban la columna Estado del FEL. Contaban 15 facturas anuladas en SAT por Q7,535 como gasto; las fórmulas del maestro ya las filtraban desde el 2-sep. Ahora quedan fuera en los dos, con prueba en la batería y en la prueba sintética (13 de 13).
+
+- **Con reemplazo:** 13 de las 15 tienen su factura vigente del mismo proveedor el mismo día.
+- **Sin reemplazo dentro de ±5 días:** GRUPO ECO DTE 487473840 (Q1,467.14, 1-abr) y Distribuidora Los Alpes DTE 341132076 (Q1,500, 25-ene). Hay que confirmar con Juanma.
+
+## Números finales sobre el espejo de las 12:50
+
+| | Antes de la tanda | Después |
+|---|---:|---:|
+| Resultado del año | −Q25,713 (−2.0%) | −Q59,972 (−4.7%) |
+| Prime cost | 53.7% | 56.4% |
+| COGS | Q443,816 | Q446,592 |
+
+Cómo se llega a esa diferencia:
+- planilla estimada de septiembre: −Q31,450;
+- Uniformes: −Q2,750;
+- mercado sin factura: −Q6,605;
+- anuladas fuera del cálculo: +Q6,546.
+
+Intranet y Python dan lo mismo al centavo en el total, en los 9 meses, en las 37 semanas y en los días de caja.
+
 ## Pendiente
 
 - Juanma: dry-run de los dos scripts del maestro y batería en `/dev`.
