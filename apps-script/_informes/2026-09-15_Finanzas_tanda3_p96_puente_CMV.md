@@ -81,7 +81,14 @@ Scripts: `scripts/maestro-finanzas/p96_2026-09-15/` (`puente.py` y el registro `
   - inventario mensual de cocina (Inventarios fase 2);
   - el detalle de la compra sin factura (p88).
 
-## 3.4A · Food cost de Finanzas sobre venta sin servicio (subido a HEAD, sin publicar)
+## 3.4A · Food cost de Finanzas sobre venta sin servicio (publicado en la @94)
+
+**Publicado el 15-sep en la @94**, con "publica" de Juanma.
+- **Batería sobre HEAD:** 111 OK · 0 fallas · 0 avisos · 3 saltadas.
+- **Antes de publicar se verificó:**
+  - la cuenta de clasp;
+  - la última versión (@93) era la publicada;
+  - HEAD (58 archivos) idéntico a lo probado y al disco.
 
 Decisiones de Juanma: el techo de compra también va sin servicio; el prime cost sigue sobre la venta total; A se publica sola, antes que B.
 

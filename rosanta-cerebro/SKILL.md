@@ -13,7 +13,7 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
 
-**El equipo está en la @93** (verificado con `clasp list-deployments`; HEAD de 57 archivos idéntico a lo probado). Batería: **108 OK · 0 fallas · 0 avisos · 3 saltadas** (las 5 nuevas son de Caja; las 3 saltadas siguen sin identificar, p162).
+**El equipo está en la @94** (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). Batería: **111 OK · 0 fallas · 0 avisos · 3 saltadas** (las 3 saltadas siguen sin identificar, p162). La @93 trajo la pestaña Caja y la @94 el food cost sin servicio.
 
 Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda2_Caja.md`.
 
@@ -41,7 +41,7 @@ Piso Q18,860/mes, objetivo Q27,193/mes.
 
 Detalles:
 - **Agosto** es el 40% de la brecha: Q21,800 en 18 retiros de cajero sin detalle (del 11 al 29-ago, máximo Q2,000 por retiro), marcados como ALIMENTOS_EFECTIVO.
-- **Base de la venta:** la venta de Finanzas incluye el 10% de servicio y la ficha no. **Decisión de Juanma:** el semáforo de Finanzas pasa a venta sin servicio (pendiente de pantalla).
+- **Base de la venta (regla 14, publicada en la @94):** la venta de Finanzas incluye el 10% de servicio y la ficha no. Desde la @94 el food cost de Finanzas, su móvil 4, la tarjeta de food del RAA y el techo de compra van sobre venta sin servicio: la base de cada ticket es Costo + Ganancia ÷ 1.12. **Prime cost, neto y DRE siguen sobre la venta total** (Juanma). Food cost del año: 34.7% → 38.3%. Batería de la @94: 111 OK · 0 fallas · 3 saltadas.
 - **Eventos:** van en los dos lados, su venta y su compra.
 - **No hay comida de personal.**
 - **Herramientas:**
