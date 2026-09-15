@@ -13,12 +13,13 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
 
-**El equipo está en la @96** (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago) y la @96 la tanda 4. Las 3 saltadas de la batería siguen sin identificar (p162).
+**El equipo está en la @97** · batería 118 OK · 0 fallas · 0 avisos · 3 saltadas. (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago), la @96 la tanda 4 y la @97 la tanda 5. Las 3 saltadas de la batería siguen sin identificar (p162).
 
 ### Tanda 4 (M9, M15, M26)
 
 - **RAA:** `guardarRaa` escribe con `LockService`; sin candado dos guardados a la vez perdían uno.
 - **El año se calcula (M15):** comparativo y metas van contra el **año anterior**, no contra 2025 fijo. `_finVentasAnio_(anio)` lee 2025 de `02b_Ventas_2025` y **2026 en adelante de `02_Ventas_Maestro`**, que sigue acumulando años (decisión de Juanma: en 2027 no se mueve nada). `_finAnio2025_` y `FIN_NOTAS_2025` se quedan porque la Caja los usa.
+- **La batería dibuja las vistas de Finanzas (tanda 5, p142):** las 5 vistas en sus dos modos y el shell en sus 5 pestañas, con control negativo adentro (si dibujar una vista inexistente no falla, lo dice). Antes solo las leía crudas y un scriptlet mal cerrado pasaba en verde. Guardiana de A11: la meta de Metas tiene que ser la de PARAMETROS.
 - **Cachés (M26):** `calentarCaches` calienta Finanzas y la tarjeta real contra teórico. **La respuesta de Finanzas pesa 24 KB de los 100 KB del límite: el riesgo que marcaba la auditoría no existía.**
 
 Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda2_Caja.md`.

@@ -1,6 +1,6 @@
 # Finanzas & Data OS · Tanda 5 · p142 y A11 · 15 sep 2026
 
-Dos guardas de la batería. Subido a HEAD; **no publicado** hasta la batería de Juanma. Un solo archivo tocado: `PruebasFinanzas.js`.
+Dos guardas de la batería. **Publicado en la @97** el 15-sep, con "publica" de Juanma. Batería: **118 OK · 0 fallas · 0 avisos · 3 saltadas · 173 s**. Un solo archivo tocado: `PruebasFinanzas.js`.
 
 ## Decisiones de Juanma (15-sep)
 
@@ -29,5 +29,5 @@ Dos guardas de la batería. Subido a HEAD; **no publicado** hasta la batería de
 
 ## Pendiente
 
-1. Batería de Juanma y "publica".
+1. ~~Batería y publicación~~: hecho (@97).
 2. **p162:** las 3 líneas SALTADA, que siguen sin verse. La prueba nueva no las explica: no salta, falla o pasa.
