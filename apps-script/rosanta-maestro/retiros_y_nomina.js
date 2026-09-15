@@ -52,7 +52,7 @@ var LOTE_RN = [
   ['406439215', '2026-08-07', 'TEF A : 974954208',  100.00, 'PERSONAL', 'Si', 'TRANSFERENCIA'],
   ['406436856', '2026-08-15', 'TEF A : 974954208', 1000.00, 'PERSONAL', 'Si', 'TRANSFERENCIA'],
   ['406473786', '2026-08-27', 'TEF A : 974954208',  850.00, 'PERSONAL', 'Si', 'TRANSFERENCIA'],
-  // total retiros Q14,240.00
+  // total retiros Q15,240.00 (con las dos de nomina, Q16,890.00)
   ['406430175', '2026-08-18', 'TEF A : 974522203',  800.00, 'NOMINA', '', 'TRANSFERENCIA'],   // Fernanda
   ['406430350', '2026-08-18', 'TEF A : 974521858',  850.00, 'NOMINA', '', 'TRANSFERENCIA']    // Jeffry, para cocina
 ];

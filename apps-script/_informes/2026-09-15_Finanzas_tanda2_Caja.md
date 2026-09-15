@@ -1,6 +1,6 @@
 # Finanzas & Data OS · Tanda 2 · Pestaña Caja · 15 sep 2026
 
-Pendientes **p94** (proyección de caja a 30/60/90 días) y **p122** (objetivo operacional). Subido a HEAD de la intranet; **no publicado** hasta la batería. Diseño aprobado por Juanma el 15-sep.
+Pendientes **p94** (proyección de caja a 30/60/90 días) y **p122** (objetivo operacional). Diseño aprobado por Juanma el 15-sep. **Publicado en la @93** el 15-sep, después de la batería: **108 OK · 0 fallas · 0 avisos · 3 saltadas**.
 
 ## Qué hay
 
@@ -90,13 +90,23 @@ Lectura:
 - Color de la línea `#2E7D52` validado con el validador de dataviz: banda, croma y contraste contra blanco.
 - HEAD verificado con bajada aparte: 57 archivos.
 
+## Cierre
+
+- **Maestro:** `retiros_y_nomina.js` corrido. 19 filas por Q16,890: 17 retiros a PERSONAL (Q15,240) y 2 de planilla a NOMINA (Q1,650). Releídas, sin avisos. El comentario del script decía Q14,240 por error de suma; corregido en git, sube con el próximo push del maestro.
+- **Intranet:** pestaña COMPROMISOS instalada (la prueba de compromisos pasó sin aviso). Publicado en la @93 tras verificar la cuenta de clasp, que la última versión era la publicada (@92) y que HEAD (57 archivos) era idéntico a lo probado.
+- **Tablero:** p94 y p89 hechos; p122 sigue activo con el camino decidido; p162 actualizado.
+
+## Decisiones de Juanma del cierre (15-sep)
+
+1. **Estacionalidad por defecto:** sigue la de 2025.
+2. **Camino de p122** (recomendación aceptada):
+   - **Septiembre y octubre:** la meta es no cruzar cero, no el piso. Pide +6.7% de venta, unos Q2,500 más por semana sobre ~Q37,700. Cubrir el piso esos meses pediría +18% y +21%.
+   - **Fecha del piso: noviembre 2026.** Con la estacionalidad de 2025, noviembre deja ~Q51,000 y cubre piso y objetivo sin venta adicional.
+   - **Mezcla:** casi toda venta, porque el problema es tamaño. El costo es respaldo, solo operativo y nunca personal: Q6,464/mes menos equivale al +6.7%.
+   - **Punto de control a mediados de noviembre:** si la venta semanal no sube cerca de 40% (factor 1.42 de 2025), se activa la palanca de costo operativo.
+
 ## Pendiente
 
-1. **Juanma:**
-   - correr `retiros_y_nomina.js` en el maestro (simulación y aplicación) y `generarEspejo()`;
-   - correr `instalarCompromisos()` en el editor de la intranet;
-   - correr la batería.
-2. **Publicar** cuando diga "publica".
-3. **Decidir** si la estacionalidad por defecto sigue siendo la de 2025, a la luz de la prueba contra el pasado.
-4. **p122:** fecha objetivo del piso y la mezcla entre venta y costo. La pestaña ya da los números para decidir.
-5. **Cierre del tablero:** p94, p122 y p89.
+1. **p162:** identificar las 3 saltadas (pedir las líneas SALTADA).
+2. **p122:** revisar el punto de control a mediados de noviembre.
+3. **Tandas siguientes:** 3 (p96 con datos limpios), 4 (M9, M15, M26), 5 (p142, A11).

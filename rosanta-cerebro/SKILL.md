@@ -7,13 +7,43 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 15 sep 2026 (v16).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 15 sep 2026, tarde (v17).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
+
+**El equipo está en la @93** (verificado con `clasp list-deployments`; HEAD de 57 archivos idéntico a lo probado). Batería: **108 OK · 0 fallas · 0 avisos · 3 saltadas** (las 5 nuevas son de Caja; las 3 saltadas siguen sin identificar, p162).
+
+Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda2_Caja.md`.
+
+### 1. Qué es la pestaña Caja (p94 hecho, p89 hecho)
+
+- Intranet › Finanzas › Caja (`CajaDatos.js`, `CajaVista.html`). Calendario día por día desde el último saldo hasta hoy + 90 días, escenarios pesimista/base/optimista, fecha en que cruza cero y el colchón de **7 días de gasto** (exigido desde el día 30), y cuánta venta o costo hace falta.
+- **Compromisos** en la pestaña `COMPROMISOS` de `Rosanta_Intranet_Config` (ya instalada): retiro Q5,000/mes en retiros semanales, alquiler de la casa US$1,800 cuando alcance, Raúl Q100,000 el 15-mar-2027. Aguinaldo 50% el 10-dic y 50% el 20-ene. No hay línea de crédito ni deuda fuera del banco.
+- **Estacionalidad por defecto: la de 2025** (Juanma, 15-sep), con selector.
+- **Es un calendario de riesgo, no una predicción de venta.** La prueba contra el pasado mostró que el costo se proyecta bien (±10%) y que el error viene de la venta.
+- Proyección del 15-sep: el base **cruza cero el 26-oct**; +6.7% de venta o Q6,464/mes menos de costo lo evitan. Saldo de partida Q24,011, ya bajo el colchón.
+
+### 2. Camino al piso decidido (p122, sigue activo)
+
+Piso Q18,860/mes, objetivo Q27,193/mes.
+1. **Septiembre y octubre: no cruzar cero**, no el piso. +6.7% de venta ≈ Q2,500 más por semana.
+2. **Fecha del piso: noviembre 2026.** Con la estacionalidad de 2025 noviembre deja ~Q51,000.
+3. **Mezcla: casi toda venta** (el problema es tamaño). El costo es respaldo, **solo operativo, nunca personal**.
+4. **Punto de control a mediados de noviembre:** si la venta semanal no sube cerca de 40%, se activa la palanca de costo operativo.
+
+### 3. Hechos de datos que no hay que re-investigar
+
+- **La columna Saldo del BI no sirve como serie** (vacía en mayo y casi todo junio, orden intradía distinto al banco). La caja reconstruye el saldo con movimientos, anclado en el último saldo del estado de cuenta.
+- **Traspasos BAC → BI:** "TF: ACH INMEDIATO/PERSONAS 900" del BAC llega el mismo día como "ACH CORSAGA" al BI (Q30,800 abr-ago). No es gasto.
+- **Transferencias a la cuenta 974954208 = retiro de Juanma → PERSONAL.** Corregidas 17 filas (Q15,240). Las del 18-ago a Fernanda y Jeffry (Q1,650) son planilla → NOMINA: algunos de cocina no tienen cuenta y Jeffry les entrega el efectivo.
 
 ---
 
 ## Cierre del 15 sep 2026 (v16): Finanzas & Data OS, tanda 1
 
-**El equipo está en la @92** (verificado: la @92 bajada aparte, idéntica a lo que se probó). Batería sobre esa versión: **103 OK · 0 fallas · 0 avisos · 3 saltadas**. Con la @88 las saltadas eran 2; la nueva no está identificada.
+**El equipo quedó en la @92** (verificado: la @92 bajada aparte, idéntica a lo que se probó). Batería sobre esa versión: **103 OK · 0 fallas · 0 avisos · 3 saltadas**. Con la @88 las saltadas eran 2; la nueva no está identificada.
 
 Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda1.md`.
 
