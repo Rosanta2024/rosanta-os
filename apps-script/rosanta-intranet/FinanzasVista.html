@@ -382,24 +382,28 @@
     }).join('');
 
     // ---- mes a mes
-    var sinPlanilla = 0;
+    // Un mes sin planilla cargada: hasta el 15-sep-2026 la mano de obra entraba en
+    // cero y el mes se pintaba rentable (septiembre leia neto +53.6%), asi que se
+    // dejaba en blanco. Desde esa fecha se ESTIMA con la ultima planilla cargada
+    // (decision de Juanma) y se marca con asterisco: es un resultado provisional.
+    var estimados = [], sinDato = 0;
     document.getElementById('tabla-mes').innerHTML = d.meses.map(function (m) {
-      // Sin planilla del mes, la mano de obra entra en cero y el mes se pinta
-      // rentable. Septiembre 2026 leia prime 30.6% y neto +53.6% por esto: no es
-      // un buen mes, es un mes sin nómina cargada. Se muestra apagado y con
-      // asterisco en vez de dejar que compita con los meses de verdad.
-      if (!m.devengado) sinPlanilla++;
-      var op = m.devengado ? '' : ' style="opacity:.45" title="Sin planilla devengada del mes"';
-      return '<tr><td>' + m.mes + (m.devengado ? '' : ' *') + '</td>' +
+      var origen = m.labor_origen || (m.devengado ? 'planilla' : 'sin dato');
+      var hay = origen !== 'sin dato';
+      if (origen === 'estimada') estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—'));
+      if (!hay) sinDato++;
+      var op = origen === 'planilla' ? '' : ' style="opacity:.6" title="' +
+        (hay ? 'Mano de obra estimada con la planilla de ' + esc(m.labor_desde || '') : 'Sin planilla cargada') + '"';
+      return '<tr><td>' + m.mes + (origen === 'planilla' ? '' : ' *') + '</td>' +
         '<td>' + q(m.ventas) + '</td>' +
         '<td style="opacity:.6">' + (m.eventos ? q(m.eventos) : '—') + '</td>' +
         '<td>' + m.com + '</td>' +
         '<td class="' + letra(zona('food', m.cogsp, d.meta_cogs)) + '">' + pct(m.cogsp) + '</td>' +
-        '<td' + op + '>' + (m.devengado ? pct(m.laborp) : '—') + '</td>' +
-        '<td' + (m.devengado ? ' class="' + letra(zona('prime', m.primep)) + '"' : op) + '>' +
-          (m.devengado ? pct(m.primep) : '—') + '</td>' +
-        '<td' + (m.devengado ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : op) + '>' +
-          (m.devengado ? pct(m.netop) : '—') + '</td></tr>';
+        '<td' + op + '>' + (hay ? pct(m.laborp) : '—') + '</td>' +
+        '<td' + (hay ? ' class="' + letra(zona('prime', m.primep)) + '"' : '') + op + '>' +
+          (hay ? pct(m.primep) : '—') + '</td>' +
+        '<td' + (hay ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : '') + op + '>' +
+          (hay ? pct(m.netop) : '—') + '</td></tr>';
     }).join('') +
       '<tr class="total"><td>Año</td><td>' + q(t.ventas) + '</td>' +
       '<td>' + q(t.eventos) + '</td><td>' + t.com + '</td>' +
@@ -407,12 +411,16 @@
       '<td class="' + letra(zona('prime', t.primep)) + '">' + pct(t.primep) + '</td>' +
       '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>';
 
-    document.getElementById('nota-mes').innerHTML = sinPlanilla
-      ? '* ' + sinPlanilla + ' mes(es) sin planilla devengada cargada: su mano de obra, ' +
-        'su prime cost y su resultado quedan en blanco a propósito. Con la nómina en cero ' +
-        'el mes se pintaría rentable sin serlo. El total del año sí los incluye en ventas ' +
-        'y mercadería.'
-      : '';
+    var notasMes = [];
+    if (estimados.length) {
+      notasMes.push('* ' + esc(estimados.join(' · ')) + ': la planilla del mes todavía no está ' +
+        'cargada. La mano de obra se estima con la última planilla y el resultado es provisional.');
+    }
+    if (sinDato) {
+      notasMes.push('* ' + sinDato + ' mes(es) sin ninguna planilla con que estimar: mano de obra, ' +
+        'prime cost y resultado quedan en blanco a propósito.');
+    }
+    document.getElementById('nota-mes').innerHTML = notasMes.join('<br>');
 
     // ---- la semana
     function tarjeta(z, titulo, valor, meta, cruda) {

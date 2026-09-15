@@ -139,7 +139,9 @@ MAP = {
  'SUMINISTRO DE LIMPIEZA':('Prestadores y honorarios','S'),
  'NOMINA':('Nomina y salarios','S'), 'IGSS':('Nomina y salarios','S'),
  'PROPINAS_AL_EQUIPO':('Propinas al equipo','V'), 'PROPINAS_PASSTHROUGH':('Propinas al equipo','V'),
- 'UNIFORMES':('Nomina y salarios','V'),
+ # UNIFORMES en bloque propio (Juanma, 15-sep-2026). Dentro de Nomina y salarios
+ # se perdia: la nomina del DRE se reemplaza por la planilla devengada.
+ 'UNIFORMES':('Uniformes','V'),
  'IMPUESTOS':('Impuestos','V'), 'TRIBUTO':('Impuestos','V'),
  'COMISIONES_BANCARIAS':('Comisiones y cargos','V'), 'COMISION TARJETA DE CREDITO':('Comisiones y cargos','V'),
  'MARKETING_DIGITAL':('Marketing','S'), 'CUOTAS_Y_SUSCRIPCIONES':('Marketing','F'),
@@ -156,7 +158,8 @@ REF = {'Inmueble y ocupacion':(6,10), 'Tarifas y servicios':(4,6),
        'Prestadores y honorarios':(1,3), 'Nomina y salarios':(25,30),
        'Impuestos':(0,0), 'Comisiones y cargos':(3,5), 'Marketing':(4,8),
        'Mantencion':(2,4), 'Bienes de uso':(3,5),
-       'Propinas al equipo':(0, 0)}   # no tiene banda: es pass-through del cliente
+       'Propinas al equipo':(0, 0),   # no tiene banda: es pass-through del cliente
+       'Uniformes':(0, 0)}            # sin banda del sector
 
 FUERA = {'DEVOLUCION_INVERSION','CARGO_FRAUDULENTO','PAGO_TARJETA_CREDITO','PAGO_TARJETA',
          'TRANSFERENCIA','TRANSFERENCIA_SALIENTE','PERSONAL','SALDO','POR_CLASIFICAR'}
@@ -174,6 +177,59 @@ LIBROS = [('01_FEL_Maestro', 10, 14, 15),
 wb = openpyxl.load_workbook(ESPEJO, data_only=True)
 V = wb['02_Ventas_Maestro']
 ANIO = 2026
+
+
+def dia(d):
+    """El DIA de una fecha del maestro, a medianoche (p120 / A15, 15-sep-2026).
+
+    157 filas se guardaron con 22:00 o 23:00 porque Apps Script escribio la
+    medianoche de Guatemala en un Sheet que estaba en otra zona horaria. Se
+    verifico contra las fuentes (reporte del POS de S37 y de julio, FEL de S37):
+    en TODAS la fecha verdadera es el DIA SIGUIENTE. Una hora de 12:00 o mas se
+    lleva al dia siguiente; una menor, al mismo dia. Mismo criterio que
+    _finDia_ en FinanzasDatos.gs.
+    """
+    if not isinstance(d, datetime.datetime) or not (d.hour or d.minute):
+        return d
+    base = datetime.datetime(d.year, d.month, d.day)
+    return base + datetime.timedelta(days=1) if d.hour >= 12 else base
+
+
+for _h, _c in [('01_FEL_Maestro', 1), ('02_Ventas_Maestro', 2), ('03_Banco_Industrial', 1),
+               ('04_Banco_BAC', 1), ('05_Tarjeta_Credito_BAC', 1)]:
+    _ws = wb[_h]
+    for _r in range(5, _ws.max_row + 1):
+        _v = _ws.cell(_r, _c).value
+        if isinstance(_v, datetime.datetime) and (_v.hour or _v.minute):
+            _ws.cell(_r, _c).value = dia(_v)
+
+
+def ultimo_devengado(m):
+    """(monto, origen) de la mano de obra del mes (A14, decision de Juanma 15-sep-2026).
+
+    La planilla del mes si existe; si no, la del ultimo mes anterior que la tenga
+    ('estimada'); si no hay anterior, la siguiente. Mismo criterio que
+    _finUltimoDevengado_ en FinanzasDatos.gs. Reemplaza al 29000 fijo de la semana.
+    """
+    if PLANILLA.get(m):
+        return PLANILLA[m], 'planilla'
+    for k in list(range(m - 1, 0, -1)) + list(range(m + 1, 13)):
+        if PLANILLA.get(k):
+            return PLANILLA[k], 'estimada'
+    return 0, 'sin dato'
+
+
+def numero(v):
+    """Un numero de celda, aunque venga como texto '1,234.50' (M17). None si no es numero."""
+    if isinstance(v, (int, float)):
+        return v
+    if isinstance(v, str):
+        t = re.sub(r'[Q\s,]', '', v)
+        try:
+            return float(t) if t else None
+        except ValueError:
+            return None
+    return None
 
 
 def es_evento(r):
@@ -215,6 +271,7 @@ def costo(ws, r, col, hoja):
 
 # ==================== 1. DRE mensual ====================
 serie = []
+sin_venta = []   # meses con gasto y sin venta (M20)
 for m in range(1, 13):
     ven = ev = 0.0
     com = 0
@@ -230,9 +287,6 @@ for m in range(1, 13):
             com += int(float(V.cell(r, 9).value or 0))   # Sheets exporta enteros como float
         except (TypeError, ValueError):
             pass
-    if not ven:
-        continue
-
     cog = dev = pers = 0.0
     bl, tip = defaultdict(float), defaultdict(float)
     for hoja, mc, cc, pc in LIBROS:
@@ -266,6 +320,14 @@ for m in range(1, 13):
                 tip[MAP[c][1]] += q
 
     gop = sum(x for k, x in bl.items() if k != 'Impuestos')
+    if not ven:
+        # M20 (15-sep-2026): un mes con gasto y sin venta (los primeros dias del
+        # mes, antes de cargar el POS) no se pinta, pero su dinero SI va al año.
+        if cog or gop:
+            sin_venta.append({'m': m, 'mes': MESES[m-1], 'cogs': round(cog, 2),
+                              'gop': round(gop, 2),
+                              'nomina_banco': round(bl.get('Nomina y salarios', 0), 2)})
+        continue
     serie.append({'mes': MESES[m-1], 'm': m, 'ventas': round(ven, 2),
                   'eventos': round(ev, 2), 'comensales': com,
                   'cogs': round(cog, 2), 'gop': round(gop, 2),
@@ -277,6 +339,9 @@ for m in range(1, 13):
 BLOQUES = [b for b in REF if any(s['bloques'].get(b) for s in serie)]
 tot = {k: round(sum(s[k] for s in serie), 2)
        for k in ['ventas', 'cogs', 'gop', 'imp', 'dev', 'eventos', 'comensales', 'pers']}
+for x in sin_venta:
+    tot['cogs'] = round(tot['cogs'] + x['cogs'], 2)
+    tot['gop'] = round(tot['gop'] + x['gop'], 2)
 tot['bloques'] = {b: round(sum(s['bloques'].get(b, 0) for s in serie), 2) for b in BLOQUES}
 tot['tipo'] = {t: round(sum(s['tipo'][t] for s in serie), 2) for t in 'FSV'}
 tot['res'] = round(tot['ventas'] - tot['cogs'] - tot['gop'], 2)
@@ -305,14 +370,20 @@ for s in serie:
                 cog += q
             elif c == 'IGSS':
                 igss += q
-    dev = PLANILLA.get(m)
-    lab = (dev or 0) + igss
+    lab_mes, origen = ultimo_devengado(m)
+    dev = lab_mes if origen == 'planilla' else None
+    lab = lab_mes + igss
     gop = s['gop'] - s['bloques'].get('Nomina y salarios', 0) + lab
     cinco.append({'mes': s['mes'], 'ventas': s['ventas'], 'cogs': round(cog, 2),
                   'labor': round(lab, 2), 'igss': round(igss, 2),
-                  'devengado': dev is not None, 'gop': round(gop, 2),
+                  'devengado': dev is not None, 'labor_origen': origen, 'gop': round(gop, 2),
                   'neto': round(s['ventas'] - cog - gop, 2)})
 T5 = {k: round(sum(c[k] for c in cinco), 2) for k in ['ventas', 'cogs', 'labor', 'gop', 'neto']}
+for x in sin_venta:   # M20: el dinero de un mes sin venta va al año, sin su nomina de banco
+    _g = x['gop'] - x['nomina_banco']
+    T5['cogs'] = round(T5['cogs'] + x['cogs'], 2)
+    T5['gop'] = round(T5['gop'] + _g, 2)
+    T5['neto'] = round(T5['neto'] - x['cogs'] - _g, 2)
 json.dump({'meses': cinco, 'tot': T5}, open(os.path.join(OUT, 'cinco.json'), 'w'), ensure_ascii=False)
 
 
@@ -321,7 +392,7 @@ sem = defaultdict(lambda: {'v': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, '
 for r, f in filas_venta():
     if es_evento(r):
         continue
-    d = sem[f.isocalendar()[1]]
+    d = sem[tuple(f.isocalendar()[:2])]     # (año ISO, semana), como la clave AAAAWW
     d['v'] += (V.cell(r, 4).value or 0) / 1.12
     d['t'] += 1
     try:
@@ -340,42 +411,52 @@ for hoja, mc, cc, pc in LIBROS:
         if ws.cell(r, pc).value == 'Sí':
             continue
         c = ws.cell(r, cc).value
-        w = d0.isocalendar()[1]
-        if w not in sem:
-            continue
+        w = tuple(d0.isocalendar()[:2])
+        # A13: la compra de una semana sin venta tambien cuenta (antes se saltaba)
         if (c in COGS_CATS and hoja not in BANCOS) or c in EFECTIVO_CATS:
             sem[w]['cogs'] += costo(ws, r, mc, hoja)
 
-# saldo bancario de cierre por semana
-saldo = defaultdict(dict)
+# saldo bancario: el ultimo de cada banco en cada semana; se arrastra al armar S
+saldo_ult = {}
 for hoja, sc, key in [('03_Banco_Industrial', 6, 'bi'), ('04_Banco_BAC', 7, 'bac')]:
     ws = wb[hoja]; last = {}
     for r in range(5, ws.max_row + 1):
         d = ws.cell(r, 1).value
         if isinstance(d, datetime.datetime) and d.year == ANIO:
-            s = ws.cell(r, sc).value
-            if isinstance(s, (int, float)):
-                last[d.isocalendar()[1]] = s
-    prev = 0
-    for w in range(1, 54):
-        prev = last.get(w, prev)
-        if prev:
-            saldo[w][key] = round(prev, 2)
+            s = numero(ws.cell(r, sc).value)
+            if s is not None:
+                last[tuple(d.isocalendar()[:2])] = s
+    saldo_ult[key] = last
 
+# A13 (decision de Juanma, 15-sep-2026): semanas CONSECUTIVAS de la primera a la
+# ultima con venta. Una semana corta o sin venta queda y entra a la movil de 4.
 S = []
-for w in sorted(sem):
-    d = sem[w]
-    if d['v'] < 1000:
-        continue
-    lab = PLANILLA.get(d['ini'].month, 29000) / 4.345    # planilla mensual repartida
-    b = saldo.get(w, {})
-    S.append({'w': w, 'ini': d['ini'].strftime('%d/%m'), 'fin': d['fin'].strftime('%d/%m'),
-              'ventas': round(d['v'], 2), 'com': d['c'], 'tickets': d['t'],
-              'tp': round(d['v'] / d['c'], 2) if d['c'] else 0,
-              'cogs': round(d['cogs'], 2), 'cogsp': round(d['cogs'] / d['v'] * 100, 1),
-              'labor': round(lab, 2), 'laborp': round(lab / d['v'] * 100, 1),
-              'prime': round((d['cogs'] + lab) / d['v'] * 100, 1),
-              'caja': round(b.get('bi', 0) + b.get('bac', 0), 2)})
+con_venta = sorted(k for k, x in sem.items() if x['v'] > 0)
+if con_venta:
+    prev = {'bi': 0, 'bac': 0}
+    orden = {k: sorted(v) for k, v in saldo_ult.items()}
+    pos = {'bi': 0, 'bac': 0}
+    lunes = datetime.date.fromisocalendar(con_venta[0][0], con_venta[0][1], 1)
+    while tuple(lunes.isocalendar()[:2]) <= con_venta[-1]:
+        k = tuple(lunes.isocalendar()[:2])
+        d = sem.get(k) or {'v': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, 'fin': None}
+        ini = d['ini'] or datetime.datetime(lunes.year, lunes.month, lunes.day)
+        fin = d['fin'] or ini + datetime.timedelta(days=6)
+        for b in ('bi', 'bac'):
+            while pos[b] < len(orden[b]) and orden[b][pos[b]] <= k:
+                prev[b] = saldo_ult[b][orden[b][pos[b]]]
+                pos[b] += 1
+        lab = ultimo_devengado(ini.month)[0] / 4.345    # regla 11 (antes: 29000 fijo)
+        v = d['v']
+        S.append({'w': k[1], 'ini': ini.strftime('%d/%m'), 'fin': fin.strftime('%d/%m'),
+                  'ventas': round(v, 2), 'com': d['c'], 'tickets': d['t'],
+                  'tp': round(v / d['c'], 2) if d['c'] else 0,
+                  'cogs': round(d['cogs'], 2),
+                  'cogsp': round(d['cogs'] / v * 100, 1) if v else None,
+                  'labor': round(lab, 2), 'laborp': round(lab / v * 100, 1) if v else None,
+                  'prime': round((d['cogs'] + lab) / v * 100, 1) if v else None,
+                  'caja': round(prev['bi'] + prev['bac'], 2), 'corta': v < 1000})
+        lunes += datetime.timedelta(days=7)
 
 # media movil de 4: cociente de las sumas, NO promedio de porcentajes
 for i, s in enumerate(S):
@@ -385,8 +466,8 @@ for i, s in enumerate(S):
     vv = sum(x['ventas'] for x in w4)
     cc = sum(x['cogs'] for x in w4)
     ll = sum(x['labor'] for x in w4)
-    s['cogs_m4'] = round(cc / vv * 100, 1)
-    s['prime_m4'] = round((cc + ll) / vv * 100, 1)
+    s['cogs_m4'] = round(cc / vv * 100, 1) if vv else None
+    s['prime_m4'] = round((cc + ll) / vv * 100, 1) if vv else None
 
 for i, s in enumerate(S):
     if i == 0:

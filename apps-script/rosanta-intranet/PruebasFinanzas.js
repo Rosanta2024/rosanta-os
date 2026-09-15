@@ -301,6 +301,104 @@ function prFinanzas_(res) {
       FN.length - sinGuarda.length, FN.length);
   });
 
+  // ------------------------------------ 7. tanda 1 de Finanzas, 15-sep-2026
+  prCorrer_(g, 'Toda categoria de mercaderia tiene area', function () {
+    var nombre = 'Toda categoria de mercaderia tiene area';
+    // C6 de la auditoria: LICORES sumaba al food cost y no entraba en ningun techo de
+    // compra, porque _compra() descarta en silencio lo que no tiene area.
+    var cats = FIN_COGS_CATS.concat(FIN_EFECTIVO);
+    if (!cats.length) {
+      prAnotar_(g, nombre, 'FALLA', 'las listas de categorias estan vacias', 0, '>0');
+      return;
+    }
+    var faltan = cats.filter(function (c) { return !FIN_AREA_CAT[c]; });
+    prAnotar_(g, nombre, faltan.length ? 'FALLA' : 'OK',
+      faltan.length ? 'sin area: ' + faltan.join(' · ') : cats.length + ' categorias, todas con area',
+      cats.length - faltan.length, cats.length);
+  });
+
+  prCorrer_(g, 'Un numero escrito como texto se lee', function () {
+    var nombre = 'Un numero escrito como texto se lee';
+    // M17: Number('1,234.50') es NaN y se volvia 0 sin avisar.
+    var casos = [['1,234.50', 1234.5], ['Q 1,000', 1000], [' 250 ', 250], [1234.5, 1234.5],
+                 ['', 0], ['abc', 0]];
+    var mal = casos.filter(function (c) { return _finNum_(c[0]) !== c[1]; })
+      .map(function (c) { return JSON.stringify(c[0]) + ' dio ' + _finNum_(c[0]); });
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? mal.join(' · ') : casos.length + ' casos', casos.length - mal.length, casos.length);
+  });
+
+  prCorrer_(g, 'Una fecha con hora cae en su dia verdadero', function () {
+    var nombre = 'Una fecha con hora cae en su dia verdadero';
+    // p120: las filas guardadas a las 22:00/23:00 son del dia siguiente (verificado
+    // contra el POS y la SAT). Datos de prueba, no del maestro.
+    var casos = [[new Date(2026, 2, 31, 23, 0), '01/04/2026'], [new Date(2026, 0, 24, 22, 0), '25/01/2026'],
+                 [new Date(2026, 8, 7, 0, 0), '07/09/2026'], [new Date(2026, 8, 7, 2, 0), '07/09/2026']];
+    var mal = casos.filter(function (c) { return _finFecha_(_finDia_(c[0])) !== c[1]; })
+      .map(function (c) { return c[1] + ' dio ' + _finFecha_(_finDia_(c[0])); });
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? mal.join(' · ') : casos.length + ' casos', casos.length - mal.length, casos.length);
+  });
+
+  prCorrer_(g, 'Ninguna fecha del maestro trae hora', function () {
+    var nombre = 'Ninguna fecha del maestro trae hora';
+    // El calculo ya las lleva a su dia (regla 10): esto no cambia numeros. Avisa que
+    // hay dato sucio, o que la zona horaria del Sheet dejo de ser la del script.
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+    var total = 0, conHora = [];
+    [['01_FEL_Maestro', 1], ['02_Ventas_Maestro', 2], ['03_Banco_Industrial', 1],
+     ['04_Banco_BAC', 1], ['05_Tarjeta_Credito_BAC', 1]].forEach(function (H) {
+      var sh = ss.getSheetByName(H[0]);
+      if (!sh || sh.getLastRow() < FIN_PRIMERA_FILA) return;
+      var col = sh.getRange(FIN_PRIMERA_FILA, H[1], sh.getLastRow() - FIN_PRIMERA_FILA + 1, 1).getValues();
+      var n = 0;
+      col.forEach(function (x) {
+        if (!_finEsFecha_(x[0])) return;
+        total++;
+        if (x[0].getHours() || x[0].getMinutes()) n++;
+      });
+      if (n) conHora.push(H[0] + ': ' + n);
+    });
+    if (!total) {
+      prAnotar_(g, nombre, 'SALTADA', 'no se leyo ninguna fecha', 0, '>0');
+      return;
+    }
+    prAnotar_(g, nombre, conHora.length ? 'AVISO' : 'OK',
+      conHora.length
+        ? conHora.join(' · ') + ' de ' + total + ' fechas. Correr revisarFechasConHora() en el maestro; ' +
+          'si son casi todas, cambio la zona horaria del Sheet.'
+        : total + ' fechas, todas a medianoche',
+      conHora.length, 0);
+  });
+
+  prCorrer_(g, 'Un mes sin planilla usa la ultima cargada', function () {
+    var nombre = 'Un mes sin planilla usa la ultima cargada';
+    // A14, decision de Juanma del 15-sep-2026. Datos de prueba, no del maestro.
+    var v = { 1: 100, 2: 200, 5: 500 };
+    var casos = [[v, 2, 200, 'planilla'], [v, 3, 200, 'estimada'], [v, 12, 500, 'estimada'],
+                 [{ 4: 40 }, 2, 40, 'estimada'], [{}, 6, 0, 'sin dato']];
+    var mal = casos.filter(function (c) {
+      var r = _finUltimoDevengado_(c[0], c[1]);
+      return r.valor !== c[2] || r.origen !== c[3];
+    }).map(function (c) { return 'mes ' + c[1] + ' dio ' + JSON.stringify(_finUltimoDevengado_(c[0], c[1])); });
+    var est = d.meses.filter(function (m) { return m.labor_origen === 'estimada'; })
+      .map(function (m) { return m.mes + ' con la de ' + m.labor_desde; });
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? mal.join(' · ')
+                 : casos.length + ' casos' + (est.length ? ' · hoy se estima ' + est.join(', ') : ''),
+      casos.length - mal.length, casos.length);
+  });
+
+  prCorrer_(g, 'UNIFORMES es un bloque propio', function () {
+    var nombre = 'UNIFORMES es un bloque propio';
+    // M20: dentro de Nomina y salarios se perdia, porque esa nomina se reemplaza por la
+    // planilla devengada. Juanma, 15-sep-2026: bloque propio.
+    var ok = !!(FIN_MAP.UNIFORMES && FIN_MAP.UNIFORMES[0] === 'Uniformes' && FIN_REF.Uniformes);
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'Uniformes Q' + Math.round((d.total.bloques || {}).Uniformes || 0) + ' en el año'
+         : 'FIN_MAP.UNIFORMES = ' + JSON.stringify(FIN_MAP.UNIFORMES), ok ? 1 : 0, 1);
+  });
+
   // La prueba 'Ninguna vista llama al servidor con corchetes' (5 vistas de este
   // pilar) se retiro el 12-sep-2026 por decision de Juanma: la reemplaza 'Ninguna
   // vista llama al servidor con el nombre en una variable', en Pruebas.js, que usa

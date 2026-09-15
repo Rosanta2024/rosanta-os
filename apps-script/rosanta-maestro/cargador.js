@@ -85,7 +85,13 @@ function _numero(v) {
  *  Si agregas mas archivos a este proyecto, revisa los nombres genericos.
  */
 function _fechaCarga(v) {
-  if (v instanceof Date) return v;
+  // Una fecha que llega con hora (el archivo de origen en otra zona horaria) se
+  // lleva a su dia: 12:00 o mas es el dia siguiente. p120, 15-sep-2026: 157 filas
+  // quedaron a las 22:00/23:00 del dia anterior y la fecha verdadera era la siguiente.
+  if (v instanceof Date) {
+    if (!v.getHours() && !v.getMinutes()) return v;
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate() + (v.getHours() >= 12 ? 1 : 0));
+  }
   var s = _norm(v);
   var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
@@ -191,7 +197,23 @@ function _revisar(nombreCarpeta) {
 
 // ---------- escritura al maestro ----------
 
+/**
+ * Frena la carga si el maestro y el script estan en zonas horarias distintas.
+ * Asi nacieron las 157 fechas de p120: la medianoche de Guatemala escrita en un
+ * Sheet que estaba una o dos horas atras quedo como las 23:00 del dia anterior.
+ * Falla fuerte a proposito: mejor una carga detenida que un mes corrido en silencio.
+ */
+function _zonaCargaIgual_(ss) {
+  var zs = ss.getSpreadsheetTimeZone(), zc = Session.getScriptTimeZone();
+  if (zs !== zc) {
+    throw new Error('El maestro esta en la zona ' + zs + ' y el script en ' + zc + '. ' +
+      'Con zonas distintas las fechas se corren un dia. No se cargo nada: poner el maestro en ' +
+      zc + ' (Archivo > Configuracion) y volver a correr.');
+  }
+}
+
 function _cargarPOS(ss, datos) {
+  _zonaCargaIgual_(ss);
   var sh = ss.getSheetByName('02_Ventas_Maestro');
   var enc = datos[0];
   var c = {
@@ -243,6 +265,7 @@ function _cargarPOS(ss, datos) {
 }
 
 function _cargarFEL(ss, datos, emitidas) {
+  _zonaCargaIgual_(ss);
   var sh = ss.getSheetByName(emitidas ? '01b_FEL_Emitidas' : '01_FEL_Maestro');
   var primera = emitidas ? 4 : 5;
   var enc = datos[0];

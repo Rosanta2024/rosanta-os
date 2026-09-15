@@ -28,7 +28,8 @@
  *      Siguen dentro del gasto porque el cobro ya esta en la venta: el Subtotal
  *      del POS incluye el 10% de servicio. Lo que se evita es que contaminen el
  *      bloque de nomina, que se compara contra la banda de 25-30%.
- *   6. Semana = semana ISO.
+ *   6. Semana = semana ISO, con su año (clave AAAAWW) y CONSECUTIVA: una semana
+ *      corta o sin venta queda en la lista y entra a la movil de 4 (A13).
  *   8. El GAS solo se cuenta por FEL: el movimiento del banco es el pago de esa
  *      misma factura. Sin la regla habia doble conteo (Q12,661 en FEL contra
  *      Q8,456 en Banco Industrial, los dos sumando).
@@ -37,6 +38,15 @@
  *      no trae NIT: el pago se reconoce por su texto. Medido el 14-sep-2026:
  *      Q49,629 del año se contaban dos veces. La bateria vigila que cada uno
  *      siga facturando; si deja de hacerlo, la regla borraria gasto real.
+ *  10. Una fecha del maestro con hora se lleva a su DIA (_finDia_): 12:00 o mas es
+ *      el dia siguiente. 157 filas se guardaron a las 22:00/23:00 del dia anterior
+ *      (zona horaria del Sheet distinta de la del script) y se verifico contra las
+ *      fuentes que la fecha verdadera es el dia siguiente (p120, 15-sep-2026).
+ *  11. Un mes sin planilla cargada usa la ULTIMA planilla cargada, marcada como
+ *      estimada (A14, decision de Juanma del 15-sep-2026). Antes el mes sumaba
+ *      solo el IGSS y se pintaba rentable, y la semana usaba 29000 fijo.
+ *  12. UNIFORMES es su propio bloque (Juanma, 15-sep-2026). Dentro de Nomina y
+ *      salarios se perdia: esa nomina se reemplaza por la planilla devengada.
  *   7. El semaforo se pone SIEMPRE sobre la media movil de 4, nunca sobre la
  *      semana cruda: cruda, el food cost va de 16% a 68% porque la compra no
  *      cae en la semana en que se consume.
@@ -149,11 +159,15 @@ function _finMetaArea_() {
   return { cocina: metaDeArea_('COCINA'), barra: metaDeArea_('BARRA') };
 }
 
-// De que area es cada categoria de mercaderia.
+// De que area es cada categoria de mercaderia. Toda categoria de FIN_COGS_CATS y
+// de FIN_EFECTIVO tiene que estar aca: _compra() descarta en silencio lo que no
+// tiene area (C6 de la auditoria: LICORES sumaba al food cost y a ningun techo).
+// La bateria lo vigila en 'Toda categoria de mercaderia tiene area'.
 var FIN_AREA_CAT = {
   ALIMENTOS: 'cocina', ALIMENTOS_EFECTIVO: 'cocina',
   BEBIDAS: 'barra', BEBIDAS_EFECTIVO: 'barra',
-  COCTELERIA: 'barra', COCTELERIA_EFECTIVO: 'barra'
+  COCTELERIA: 'barra', COCTELERIA_EFECTIVO: 'barra',
+  LICORES: 'barra'
 };
 /**
  * META DE FOOD COST: 28%, leida de PARAMETROS del Sheet de config.
@@ -320,7 +334,8 @@ var FIN_MAP = {
   'SUMINISTRO DE LIMPIEZA': ['Prestadores y honorarios', 'S'],
   'NOMINA': ['Nomina y salarios', 'S'], 'IGSS': ['Nomina y salarios', 'S'],
   'PROPINAS_AL_EQUIPO': ['Propinas al equipo', 'V'], 'PROPINAS_PASSTHROUGH': ['Propinas al equipo', 'V'],
-  'UNIFORMES': ['Nomina y salarios', 'V'],
+  // regla 12: bloque propio. Dentro de Nomina y salarios se perdia (Q2,750 en jul-ago)
+  'UNIFORMES': ['Uniformes', 'V'],
   'IMPUESTOS': ['Impuestos', 'V'], 'TRIBUTO': ['Impuestos', 'V'],
   'COMISIONES_BANCARIAS': ['Comisiones y cargos', 'V'],
   'COMISION TARJETA DE CREDITO': ['Comisiones y cargos', 'V'],
@@ -341,7 +356,8 @@ var FIN_REF = {
   'Prestadores y honorarios': [1, 3], 'Nomina y salarios': [25, 30],
   'Impuestos': [0, 0], 'Comisiones y cargos': [3, 5], 'Marketing': [4, 8],
   'Mantencion': [2, 4], 'Bienes de uso': [3, 5],
-  'Propinas al equipo': [0, 0]   // sin banda: es pass-through del cliente
+  'Propinas al equipo': [0, 0],  // sin banda: es pass-through del cliente
+  'Uniformes': [0, 0]            // sin banda del sector
 };
 
 // Lo que no es gasto de la operacion y no entra al DRE.
@@ -373,7 +389,53 @@ function _finSemanaISO_(d) {
   return Math.ceil((((t - ene1) / 86400000) + 1) / 7);
 }
 function _finEsFecha_(v) { return v instanceof Date && !isNaN(v.getTime()); }
-function _finNum_(v) { var n = Number(v); return isNaN(n) ? 0 : n; }
+
+/**
+ * Un numero de celda, aunque venga escrito como texto: "1,234.50", "Q 1,000".
+ * NaN si no es numero. M17 (15-sep-2026): Number('1,234.50') es NaN y _finNum_
+ * lo volvia 0 sin avisar; una caja escrita como texto daba 0 dias de caja.
+ */
+function _finNumero_(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v !== 'string') return NaN;
+  var t = v.replace(/[Q\s,]/g, '');
+  return t === '' ? NaN : Number(t);
+}
+function _finNum_(v) { var n = _finNumero_(v); return isNaN(n) ? 0 : n; }
+
+/** Regla 10. El dia de una fecha del maestro, a medianoche: 12:00 o mas es el dia siguiente. */
+function _finDia_(v) {
+  if (!_finEsFecha_(v) || (!v.getHours() && !v.getMinutes())) return v;
+  return new Date(v.getFullYear(), v.getMonth(), v.getDate() + (v.getHours() >= 12 ? 1 : 0));
+}
+
+/** La semana ISO con su año, como numero AAAAWW (202637). Ordena bien entre años. */
+function _finClaveSemana_(d) {
+  var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var dia = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dia);
+  var ene1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return t.getUTCFullYear() * 100 + Math.ceil((((t - ene1) / 86400000) + 1) / 7);
+}
+
+/** El lunes de una clave AAAAWW. La semana 1 es la que tiene el 4 de enero. */
+function _finLunesDeClave_(k) {
+  var anio = Math.floor(k / 100), ene4 = new Date(anio, 0, 4);
+  return new Date(anio, 0, 4 - (ene4.getDay() || 7) + 1 + (k % 100 - 1) * 7);
+}
+
+/**
+ * Regla 11. La planilla de un mes: la del mes si esta cargada; si no, la del
+ * ultimo mes anterior que la tenga; si no hay anterior, la siguiente.
+ * Devuelve { valor, origen: 'planilla' | 'estimada' | 'sin dato', desde: mes }.
+ * Mismo criterio que ultimo_devengado() en generar_finanzas.py.
+ */
+function _finUltimoDevengado_(valores, m) {
+  if (valores[m]) return { valor: valores[m], origen: 'planilla', desde: m };
+  for (var k = m - 1; k >= 1; k--) if (valores[k]) return { valor: valores[k], origen: 'estimada', desde: k };
+  for (var j = m + 1; j <= 12; j++) if (valores[j]) return { valor: valores[j], origen: 'estimada', desde: j };
+  return { valor: 0, origen: 'sin dato', desde: 0 };
+}
 function _finDDMM_(d) {
   return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2);
 }
@@ -417,7 +479,10 @@ function getFinanzasData(auth, forzar) {
    el calculo viejo en el acto. */
 function finCacheClave_() {
   var m = metasFoodCost_();
-  return 'finanzas_v5_m' + m.global + '-' + m.BARRA;
+  // v6 (15-sep-2026): semanas con año y consecutivas, planilla estimada, bloque
+  // Uniformes y meses sin venta. Una cache v5 pintaria la pantalla nueva con el
+  // calculo viejo.
+  return 'finanzas_v6_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -475,16 +540,16 @@ function _finCalcular_() {
                             porSemana: {} };
     return mes[m];
   }
-  function _sem(w) {
-    if (!sem[w]) sem[w] = { w: w, v: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
-    return sem[w];
+  function _sem(k) {                                   // k = clave AAAAWW
+    if (!sem[k]) sem[k] = { clave: k, v: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+    return sem[k];
   }
 
   // ---- ventas ----------------------------------------------------------
   var V = ss.getSheetByName('02_Ventas_Maestro').getDataRange().getValues();
   var ultVenta = null;
   for (var r = FIN_PRIMERA_FILA - 1; r < V.length; r++) {
-    var f = V[r][1];                                    // col 2: Fecha
+    var f = _finDia_(V[r][1]);                          // col 2: Fecha (regla 10)
     if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
     if (!ultVenta || f > ultVenta) ultVenta = f;
     var neto = _finNum_(V[r][3]) / 1.12;                 // regla 1: col 4 con IVA
@@ -501,7 +566,7 @@ function _finCalcular_() {
     if (!M.porSemana[wISO]) M.porSemana[wISO] = { v: 0, com: 0 };
     M.porSemana[wISO].v += neto;
     M.porSemana[wISO].com += Math.round(_finNum_(V[r][8]));
-    var S = _sem(_finSemanaISO_(f));
+    var S = _sem(_finClaveSemana_(f));
     S.v += neto; S.tickets += 1; S.com += Math.round(_finNum_(V[r][8]));
     if (!S.ini || f < S.ini) S.ini = f;
     if (!S.fin || f > S.fin) S.fin = f;
@@ -541,7 +606,7 @@ function _finCalcular_() {
   FIN_LIBROS.forEach(function (L) {
     var filas = ss.getSheetByName(L.hoja).getDataRange().getValues();
     for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
-      var f = filas[r][0];
+      var f = _finDia_(filas[r][0]);                    // regla 10
       if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
       if (!ultCarga[L.hoja] || f > ultCarga[L.hoja]) ultCarga[L.hoja] = f;
 
@@ -586,13 +651,13 @@ function _finCalcular_() {
         // que ya vino por FEL. Sumarla seria contarla dos veces.
         if (_finEn_(FIN_BANCOS, L.hoja)) continue;
         M.cogs += costo; felCompra += q;   // costo neto; el ratio de factura va bruto
-        if (sem[_finSemanaISO_(f)]) sem[_finSemanaISO_(f)].cogs += costo;
+        _sem(_finClaveSemana_(f)).cogs += costo;      // A13: tambien en semana sin venta
         _compra(cat, f.getMonth() + 1, L.prov ? filas[r][L.prov - 1] : '', costo);
         continue;
       }
       if (_finEn_(FIN_EFECTIVO, cat)) {                 // compra sin factura
         M.cogs += q; efeCompra += q;
-        if (sem[_finSemanaISO_(f)]) sem[_finSemanaISO_(f)].cogs += q;
+        _sem(_finClaveSemana_(f)).cogs += q;
         _compra(cat, f.getMonth() + 1, '', q);
         continue;
       }
@@ -612,44 +677,54 @@ function _finCalcular_() {
     }
   });
 
-  // ---- caja: ultimo saldo de cada banco en la semana --------------------
-  var saldos = {};
+  // ---- caja: ultimo saldo de cada banco en cada semana ------------------
+  // Por clave AAAAWW. El arrastre de una semana sin movimiento se hace al armar
+  // las semanas, abajo. El saldo tambien se lee si viene como texto (M17).
+  var saldosUlt = { bi: {}, bac: {} };
   [{ hoja: '03_Banco_Industrial', col: 6, k: 'bi' },
    { hoja: '04_Banco_BAC', col: 7, k: 'bac' }].forEach(function (B) {
     var filas = ss.getSheetByName(B.hoja).getDataRange().getValues();
-    var ultimo = {};
     for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
-      var f = filas[r][0];
+      var f = _finDia_(filas[r][0]);
       if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
       if (!ultCarga[B.hoja] || f > ultCarga[B.hoja]) ultCarga[B.hoja] = f;
-      var s = filas[r][B.col - 1];
-      if (typeof s === 'number') ultimo[_finSemanaISO_(f)] = s;
-    }
-    var prev = 0;
-    for (var w = 1; w <= 53; w++) {
-      if (ultimo[w] !== undefined) prev = ultimo[w];
-      if (prev) { saldos[w] = saldos[w] || {}; saldos[w][B.k] = prev; }
+      var s = _finNumero_(filas[r][B.col - 1]);
+      if (!isNaN(s)) saldosUlt[B.k][_finClaveSemana_(f)] = s;
     }
   });
 
   // ---- el mes: DRE y los cinco numeros ---------------------------------
-  var meses = [], bloquesVivos = {};
+  var meses = [], bloquesVivos = {}, sinVenta = [];
   Object.keys(mes).map(Number).sort(function (a, b) { return a - b; }).forEach(function (m) {
     var M = mes[m];
-    if (!M.ventas) return;
     var gop = 0;
     Object.keys(M.bloques).forEach(function (b) {
       if (b !== 'Impuestos') gop += M.bloques[b];
       if (M.bloques[b]) bloquesVivos[b] = true;
     });
+    if (!M.ventas) {
+      // M20 (15-sep-2026): un mes con gasto y sin venta (los primeros dias del
+      // mes, antes de cargar el POS) no se pinta, pero su dinero SI va al año.
+      // Hasta hoy desaparecia. Sin su nomina de banco: la del DRE es la planilla.
+      if (M.cogs || gop) {
+        sinVenta.push({ m: m, mes: FIN_MESES[m - 1], cogs: M.cogs,
+                        gop: gop - (M.bloques['Nomina y salarios'] || 0),
+                        bloques: M.bloques, pers: M.pers, dev: M.dev });
+      }
+      return;
+    }
     // regla 4: la nomina del DRE sale de la planilla, no del banco
-    var devengado = planilla.valores[m] || null;
-    var labor = (devengado || 0) + M.igss;
+    // regla 11: sin planilla del mes, la ultima cargada, marcada como estimada
+    var pl = _finUltimoDevengado_(planilla.valores, m);
+    var devengado = pl.origen === 'planilla' ? pl.valor : null;
+    var labor = pl.valor + M.igss;
     var gopDev = gop - (M.bloques['Nomina y salarios'] || 0) + labor;
     meses.push({
       m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), eventos: _finR_(M.eventos),
       com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
-      devengado: devengado !== null, gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
+      devengado: devengado !== null,
+      labor_origen: pl.origen, labor_desde: pl.desde ? FIN_MESES[pl.desde - 1] : '',
+      gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
       dev: _finR_(M.dev), pers: _finR_(M.pers),
       neto: _finR_(M.ventas - M.cogs - gopDev),
       cogsp: _finR_(M.cogs / M.ventas * 100, 1),
@@ -685,6 +760,14 @@ function _finCalcular_() {
     });
     ['F', 'S', 'V'].forEach(function (t) { anioTot.tipo[t] += x.tipo[t]; });
   });
+  // M20: el dinero de los meses sin venta tambien es del año.
+  sinVenta.forEach(function (x) {
+    anioTot.cogs += x.cogs; anioTot.gop += x.gop; anioTot.neto -= x.cogs + x.gop;
+    anioTot.pers += x.pers; anioTot.dev += x.dev;
+    Object.keys(x.bloques).forEach(function (b) {
+      if (b !== 'Nomina y salarios') anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
+    });
+  });
   ['ventas', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev'].forEach(function (k) {
     anioTot[k] = _finR_(anioTot[k]);
   });
@@ -712,26 +795,50 @@ function _finCalcular_() {
   }).sort(function (a, b) { return b.q - a.q; });
 
   // ---- la semana -------------------------------------------------------
+  // A13 (decision de Juanma, 15-sep-2026): semanas CONSECUTIVAS, de la primera a
+  // la ultima con venta. Una semana corta (bajo Q1,000) o sin venta (un cierre por
+  // vacaciones) queda en la lista y entra a la movil de 4 con su compra. Antes se
+  // descartaba: su COGS no entraba en ninguna semana y la movil saltaba por encima
+  // como si las semanas de al lado fueran seguidas.
   var S = [];
-  Object.keys(sem).map(Number).sort(function (a, b) { return a - b; }).forEach(function (w) {
-    var d = sem[w];
-    if (d.v < 1000) return;                    // semanas a medias no dicen nada
-    var lab = (planilla.valores[d.ini.getMonth() + 1] || 29000) / FIN_SEMANAS_MES;
-    var b = saldos[w] || {};
-    S.push({ w: w, ini: _finDDMM_(d.ini), fin: _finDDMM_(d.fin),
-             ventas: _finR_(d.v), com: d.com, tickets: d.tickets,
-             tp: d.com ? _finR_(d.v / d.com) : 0,
-             cogs: _finR_(d.cogs), cogsp: _finR_(d.cogs / d.v * 100, 1),
-             labor: _finR_(lab), laborp: _finR_(lab / d.v * 100, 1),
-             prime: _finR_((d.cogs + lab) / d.v * 100, 1),
-             caja: _finR_((b.bi || 0) + (b.bac || 0)) });
-  });
+  var conVenta = Object.keys(sem).map(Number)
+    .filter(function (k) { return sem[k].v > 0; }).sort(function (a, b) { return a - b; });
+  if (conVenta.length) {
+    var ordSaldo = {}, iSaldo = { bi: 0, bac: 0 }, prevSaldo = { bi: 0, bac: 0 };
+    ['bi', 'bac'].forEach(function (b) {
+      ordSaldo[b] = Object.keys(saldosUlt[b]).map(Number).sort(function (a, c) { return a - c; });
+    });
+    var ultClave = conVenta[conVenta.length - 1];
+    for (var lunes = _finLunesDeClave_(conVenta[0]); _finClaveSemana_(lunes) <= ultClave;
+         lunes = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7)) {
+      var k = _finClaveSemana_(lunes);
+      var d = sem[k] || { v: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+      var ini = d.ini || lunes;
+      var fin = d.fin || new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
+      ['bi', 'bac'].forEach(function (b) {      // el ultimo saldo hasta esta semana
+        while (iSaldo[b] < ordSaldo[b].length && ordSaldo[b][iSaldo[b]] <= k) {
+          prevSaldo[b] = saldosUlt[b][ordSaldo[b][iSaldo[b]]];
+          iSaldo[b]++;
+        }
+      });
+      // regla 11: sin planilla del mes, la ultima cargada (antes: 29000 fijo)
+      var lab = _finUltimoDevengado_(planilla.valores, ini.getMonth() + 1).valor / FIN_SEMANAS_MES;
+      S.push({ w: k % 100, clave: k, ini: _finDDMM_(ini), fin: _finDDMM_(fin),
+               ventas: _finR_(d.v), com: d.com, tickets: d.tickets,
+               tp: d.com ? _finR_(d.v / d.com) : 0,
+               cogs: _finR_(d.cogs), cogsp: d.v ? _finR_(d.cogs / d.v * 100, 1) : null,
+               labor: _finR_(lab), laborp: d.v ? _finR_(lab / d.v * 100, 1) : null,
+               prime: d.v ? _finR_((d.cogs + lab) / d.v * 100, 1) : null,
+               caja: _finR_(prevSaldo.bi + prevSaldo.bac),
+               corta: d.v < 1000 });
+    }
+  }
   // regla 7: media movil de 4 = cociente de las sumas, NO promedio de porcentajes
   for (var i = 3; i < S.length; i++) {
     var vv = 0, cc = 0, ll = 0;
     for (var j = i - 3; j <= i; j++) { vv += S[j].ventas; cc += S[j].cogs; ll += S[j].labor; }
-    S[i].cogs_m4 = _finR_(cc / vv * 100, 1);
-    S[i].prime_m4 = _finR_((cc + ll) / vv * 100, 1);
+    S[i].cogs_m4 = vv ? _finR_(cc / vv * 100, 1) : null;
+    S[i].prime_m4 = vv ? _finR_((cc + ll) / vv * 100, 1) : null;
   }
   for (var k = 1; k < S.length; k++) {
     var p = S[k - 1];
@@ -779,7 +886,11 @@ function _finCalcular_() {
       fugas: _finFugas_(cob),
       desconocidas: _finRedondear_(desconocidas),
       // regla 9: lo saltado de cada proveedor contra su factura del año
-      pago_factura: _finPagoFacturaResumen_(pagoSaltado, felNit)
+      pago_factura: _finPagoFacturaResumen_(pagoSaltado, felNit),
+      // M20: meses con gasto y sin venta. No se pintan, pero su dinero esta en el año.
+      meses_sin_venta: sinVenta.map(function (x) {
+        return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), gop: _finR_(x.gop) };
+      })
     },
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
   };
