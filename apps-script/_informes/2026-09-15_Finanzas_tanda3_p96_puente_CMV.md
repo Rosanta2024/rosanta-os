@@ -81,6 +81,28 @@ Scripts: `scripts/maestro-finanzas/p96_2026-09-15/` (`puente.py` y el registro `
   - inventario mensual de cocina (Inventarios fase 2);
   - el detalle de la compra sin factura (p88).
 
+## 3.4A · Food cost de Finanzas sobre venta sin servicio (subido a HEAD, sin publicar)
+
+Decisiones de Juanma: el techo de compra también va sin servicio; el prime cost sigue sobre la venta total; A se publica sola, antes que B.
+
+- **Regla 14:**
+  - **Base de cada ticket:** Costo + Ganancia (cols 6 y 7) ÷ 1.12. En 1,797 de 1,902 tickets es exactamente Subtotal ÷ 1.10.
+  - **Excepción:** si la base viene vacía o mayor que el Subtotal (tarjeta de regalo), vale el Subtotal.
+- **Qué cambia:**
+  - food cost de meses, año y semanas, y la móvil 4;
+  - tarjeta de food del RAA: su costo en Q va sobre venta sin servicio;
+  - techo de compra de Metas: se multiplica por la proporción sin servicio del año (0.9058) y baja cerca de 9%. Cocina queda en Q25,436 al mes contra Q28,080, barra en Q5,154 contra Q5,690, sobre el espejo del 15-sep;
+  - rótulos de La semana y Metas;
+  - caché `finanzas_v7`.
+- **Qué no cambia:** venta, mano de obra, prime cost, neto, bloques del DRE, margen de contribución y equilibrio.
+- **Efecto sobre el espejo del 15-sep:** food cost del año de 34.7% a 38.3%. Prime cost se queda en 55.0%. Proporción venta total ÷ sin servicio: 1.104.
+- **Verificación:**
+  - **A/B contra `generar_finanzas.py`** (mismo cambio en el espejo Python): 9 meses y 37 semanas con los mismos porcentajes. Única diferencia: un centavo de redondeo en la venta sin servicio de la S29.
+  - **Pruebas nuevas en el grupo 8:** "El food cost va sobre la venta sin servicio", "Semanas y meses usan la misma venta sin servicio" y "El prime cost sigue sobre la venta total". Con el motor anterior las dos primeras fallan.
+  - **Resto:** tarjeta del RAA y techo de Metas probados en Node contra su fórmula; scripts de las dos vistas compilados, con control negativo.
+  - **HEAD** verificado con bajada aparte: 58 archivos. Commit 280b608.
+- **Profit OS** confirmó que su teórico ya es costo ÷ (precio ÷ 1.12), sin servicio: las dos bases quedan comparables.
+
 ## Pendiente
 
 1. **Tanda de pantalla (3.4):**
