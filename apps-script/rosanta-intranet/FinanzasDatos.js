@@ -125,7 +125,10 @@ var FIN_AREA_CAT = {
 /** Un parametro de la pestana PARAMETROS del Sheet de config. Cachea 10 minutos. */
 function _finParametro(clave, defecto) {
   var cache = CacheService.getScriptCache();
-  var k = 'fin_par_' + clave;
+  // v2 (14-sep-2026): la version anterior guardaba estos valores 6 horas con la clave
+  // 'fin_par_'. Al cambiar la meta a 28 en PARAMETROS, el codigo nuevo seguia leyendo
+  // el 30 que habia dejado la vieja. Clave nueva = ese cache viejo deja de existir.
+  var k = 'fin_par_v2_' + clave;
   var g = cache.get(k);
   if (g !== null && g !== undefined && g !== '') {
     var n = Number(g);
@@ -387,8 +390,8 @@ function refrescarFinanzas(auth) {
   exigirModulo_(auth, 'finanzas');
   // Tambien los parametros: si alguien acaba de cambiar la meta o el tipo de cambio,
   // "Actualizar" tiene que mostrarlo ya.
-  CacheService.getScriptCache().removeAll(['fin_par_food_cost_objetivo_pct',
-    'fin_par_food_cost_barra_pct', 'fin_par_tipo_cambio_usd']);
+  CacheService.getScriptCache().removeAll(['fin_par_v2_food_cost_objetivo_pct',
+    'fin_par_v2_food_cost_barra_pct', 'fin_par_v2_tipo_cambio_usd']);
   METAS_FC_MEMO_ = null;
   return _finDatos(true);
 }
