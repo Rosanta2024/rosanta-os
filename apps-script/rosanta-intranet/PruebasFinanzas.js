@@ -516,6 +516,84 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, kb < 80 ? 'OK' : 'FALLA', kb + ' KB de 100 KB', kb, '<80');
   });
 
+  // ------------------------------------------- 11. tanda 5 (p142 y A11, 15-sep-2026)
+  /* p142: hasta hoy la bateria solo LEIA estas plantillas con getRawContent(), asi que un
+     scriptlet mal cerrado pasaba en verde y la pagina no cargaba en produccion. Paso en la
+     v81 (12-sep-2026) y se cubrio a mano compilando cada plantilla. Aca se EVALUAN con los
+     mismos datos que les pasa doGet, en sus DOS modos: con el boton "Panel principal" y
+     embebidas en el shell, que es como las ve el equipo. */
+  prCorrer_(g, 'Las vistas de Finanzas se dibujan', function () {
+    var nombre = 'Las vistas de Finanzas se dibujan';
+    var u = { email: 'prueba@rosanta.rest', nombre: 'Prueba', rol: 'dueno',
+              modulos: ['finanzas'], puedeEditar: true };
+    var base = urlIntranet_(), tok = 'token-de-prueba';
+
+    function dibujar(vista, datos) {
+      var tpl = HtmlService.createTemplateFromFile(vista);
+      Object.keys(datos).forEach(function (k) { tpl[k] = datos[k]; });
+      return String(tpl.evaluate().getContent() || '');
+    }
+
+    var casos = [];
+    ['FinanzasVista', 'MetasVista', 'ComparativoVista', 'EscenariosVista', 'CajaVista']
+      .forEach(function (v) {
+        [true, false].forEach(function (volver) {
+          casos.push([v + (volver ? ' con boton' : ' embebida'), v,
+                      { usuario: u, urlBase: base, authToken: tok, mostrarVolver: volver }]);
+        });
+      });
+    ['semana', 'metas', 'comparativo', 'escenarios', 'caja'].forEach(function (sub) {
+      casos.push(['SistemaFinanzas sub=' + sub, 'SistemaFinanzas',
+                  { usuario: u, urlBase: base, authToken: tok, sub: sub }]);
+    });
+
+    // El control negativo va PRIMERO: si dibujar una vista que no existe no falla, el
+    // barrido de abajo no esta probando nada y esta prueba quedaria en verde sin mirar.
+    var evaluadorVivo = false;
+    try { dibujar('NoExisteVistaDeFinanzas', {}); } catch (e) { evaluadorVivo = true; }
+    if (!evaluadorVivo) {
+      prAnotar_(g, nombre, 'FALLA',
+        'Dibujar una vista inexistente NO fallo: el evaluador no esta probando nada.',
+        0, casos.length);
+      return;
+    }
+
+    var malas = [];
+    casos.forEach(function (c) {
+      var html = '';
+      try { html = dibujar(c[1], c[2]); }
+      catch (e) { malas.push(c[0] + ': ' + String(e && e.message || e).slice(0, 90)); return; }
+      if (html.length < 500) malas.push(c[0] + ': salio con ' + html.length + ' caracteres');
+      else if (html.indexOf(tok) === -1) malas.push(c[0] + ': la pagina no lleva el token');
+      else if (html.indexOf('<?=') > -1 || html.indexOf('<?!=') > -1) {
+        malas.push(c[0] + ': quedo un scriptlet sin evaluar');
+      }
+    });
+
+    prAnotar_(g, nombre, malas.length ? 'FALLA' : 'OK',
+      malas.length ? malas.join(' · ')
+                   : casos.length + ' dibujos: 5 vistas en sus dos modos y el shell en sus 5 pestañas',
+      casos.length - malas.length, casos.length);
+  });
+
+  prCorrer_(g, 'La meta que muestra Metas es la de PARAMETROS', function () {
+    var nombre = 'La meta que muestra Metas es la de PARAMETROS';
+    // A11: instalarMetas() congelo la meta en la columna META_FOOD_PCT y _finMeta_ la
+    // prefería. Cambiar PARAMETROS movia La semana y el RAA, y la tarjeta de Metas se
+    // quedaba en el numero viejo. Se arreglo el 14-sep-2026 y ninguna prueba lo cuidaba.
+    var par = _finMetaFood_();
+    var mt = getMetasData('', false);
+    if (!mt || mt.error) {
+      prAnotar_(g, nombre, 'FALLA', 'Metas no contesto: ' + ((mt && mt.error) || 'sin dato'), 0, par);
+      return;
+    }
+    var ok = Math.abs(mt.meta_food - par) < 0.001;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      'Metas dice ' + mt.meta_food + '% y PARAMETROS ' + par + '%' +
+      (ok ? '' : '. La columna META_FOOD_PCT de la pestaña METAS volvio a mandar.'),
+      mt.meta_food, par);
+  });
+
   // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)
   var cj = null;
   prCorrer_(g, 'La proyeccion de caja se calcula', function () {
