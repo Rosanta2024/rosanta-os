@@ -63,11 +63,17 @@ function vistaInicio(){
      por eso el rango va en el sub. Si no llego, "Buscando…"; si fallo o no hay bloque,
      queda el "Falta" de antes. Umbrales de Profit OS para la brecha: hasta 2 puntos
      merma normal, de 2 a 4 revisar porcionado, mas de 4 fuga. */
-  const rt = window.__DBCMV__, rb = rt && rt.ok && rt.bloque;
+  /* SIN NUMEROS SANOS NO HAY TARJETA: un null en toFixed tiraba vistaInicio() entera y
+     no se dibujaba ninguna de las seis (revision de la sesion de Profit OS). Cae al "Falta".
+     Y una brecha bajo -2 no es buena noticia sino un dato incompleto: va en --bajo, no en verde. */
+  const rt = window.__DBCMV__, b0 = rt && rt.ok && rt.bloque;
+  const rb = b0 && [b0.brecha_pts, b0.real_pct, b0.teorico_pct].every(n => typeof n === 'number' && isFinite(n)) &&
+             /^\d{4}-\d{2}$/.test(String(b0.desde)) && /^\d{4}-\d{2}$/.test(String(b0.hasta)) ? b0 : null;
   const dbMes = m => ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m.slice(5, 7) - 1];
   const tReal = rb ? dbTile({
     titulo:'CMV real contra teórico',
-    color: rb.brecha_pts <= 2 ? 'var(--meta)'
+    color: rb.brecha_pts < -2 ? 'var(--bajo)'
+         : rb.brecha_pts <= 2 ? 'var(--meta)'
          : rb.brecha_pts <= 4 ? 'color-mix(in srgb, var(--alto) 60%, var(--muted))' : 'var(--alto)',
     valor: (rb.brecha_pts > 0 ? '+' : '') + rb.brecha_pts.toFixed(1) + '<small> pts</small>',
     sub:`${dbMes(rb.desde)}–${dbMes(rb.hasta)} · real ${rb.real_pct.toFixed(1)}% · teórico ${rb.teorico_pct.toFixed(1)}%`,
