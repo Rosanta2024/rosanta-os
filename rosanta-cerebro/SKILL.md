@@ -13,7 +13,14 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
 
-**El equipo está en la @97** · batería 118 OK · 0 fallas · 0 avisos · 3 saltadas. (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago), la @96 la tanda 4 y la @97 la tanda 5. **Las 3 saltadas de la batería están identificadas** (p162, cerrado): RECETARIO_FOTOS_FOLDER_ID sin configurar (Profit OS), "Meta (red)" que se salta a propósito (`PRUEBAS_CFG.incluirRed = true` para incluirla) y el cierre de inventario de barra sin mes abierto. Ninguna es de Finanzas.
+**El equipo está en la @98** · batería 118 OK · 0 fallas · 0 avisos · 3 saltadas. (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago), la @96 la tanda 4, la @97 la tanda 5 y la @98 la categoría MARKETING_HONORARIOS.
+
+### Marketing: honorarios aparte de la pauta (@98)
+
+- **`MARKETING_HONORARIOS`**: mismo bloque Marketing del DRE que la pauta, así que el resultado no cambia; existe para que el CAC excluya honorarios **por categoría** y no por el texto del banco.
+- **Vanessa Wilches** (marketing digital): 4 transferencias "BANCA ELECTRONICA" de abr–jul (~US$207/mes) y PayPal de agosto (US$190) = Q8,032. **No eran pauta.**
+- **Edwin Flores** (agencia, Q2,000/mes): siempre estuvo en `SERVICIOS_PROFESIONALES` y la regla 9 descuenta sus pagos de banco. No tocarlo.
+- **Meta y Google se cobran a la tarjeta del BAC**, en la **columna de dólares**: la pauta 2026 es **Q16,521**, no Q10,800. Quien sume solo quetzales pierde el Google Ads. **Las 3 saltadas de la batería están identificadas** (p162, cerrado): RECETARIO_FOTOS_FOLDER_ID sin configurar (Profit OS), "Meta (red)" que se salta a propósito (`PRUEBAS_CFG.incluirRed = true` para incluirla) y el cierre de inventario de barra sin mes abierto. Ninguna es de Finanzas.
 
 ### Tanda 4 (M9, M15, M26)
 
