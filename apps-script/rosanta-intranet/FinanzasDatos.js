@@ -363,10 +363,19 @@ function getFinanzasData(auth, forzar) {
  * las funciones de este archivo que YA verificaron a quien las llamo. Asi el
  * permiso se pide una vez por peticion y no una vez por capa.
  */
+/* La clave lleva la meta (14-sep-2026). El calculo guarda meta_cogs y meta_area
+   adentro: al pasar la meta de 30 a 28 en PARAMETROS, la bateria leyo 30 de un calculo
+   de hacia minutos, cacheado 3 horas. Con la meta en la clave, cambiarla deja de servir
+   el calculo viejo en el acto. */
+function finCacheClave_() {
+  var m = metasFoodCost_();
+  return 'finanzas_v4_m' + m.global + '-' + m.BARRA;
+}
+
 function _finDatos(forzar) {
   var cache = CacheService.getScriptCache();
   if (!forzar) {
-    var guardado = cache.get('finanzas_v4');
+    var guardado = cache.get(finCacheClave_());
     if (guardado) {
       try { return JSON.parse(guardado); } catch (e) { /* cache corrupta: se recalcula */ }
     }
@@ -378,7 +387,7 @@ function _finDatos(forzar) {
     // v3 (12-sep-2026): el payload cambio (meta de food cost, cobertura,
     // equilibrio) y una cache vieja habria pintado la pantalla nueva con el
     // dato viejo, sin error y sin aviso.
-    cache.put('finanzas_v4', JSON.stringify(datos), 3 * 60 * 60);
+    cache.put(finCacheClave_(), JSON.stringify(datos), 3 * 60 * 60);
   } catch (e) {
     // Si no cabe en cache no es motivo para no devolver los datos.
   }

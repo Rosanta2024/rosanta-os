@@ -47,6 +47,12 @@ var RAA_NOMBRE = {
 
 var RAA_CACHE = 'raa_filas_v1';
 
+/* La clave lleva la meta (14-sep-2026): las zonas del RAA se calculan contra ella. */
+function raaCacheClave_() {
+  var m = metasFoodCost_();
+  return RAA_CACHE + '_m' + m.global + '-' + m.BARRA;
+}
+
 
 /** Una vez. Crea la pestana RAA en el Sheet de config. Idempotente. */
 function instalarRAA() {
@@ -149,7 +155,7 @@ function _raaTarjetas(d) {
 /** Las filas de la hoja RAA. Cachea 30 min; guardarRaa() borra el cache. */
 function _raaFilas() {
   var cache = CacheService.getScriptCache();
-  var g = cache.get(RAA_CACHE);
+  var g = cache.get(raaCacheClave_());
   if (g) {
     try { return JSON.parse(g); } catch (e) { /* cache corrupta: se relee */ }
   }
@@ -175,7 +181,7 @@ function _raaFilas() {
       });
     }
   }
-  try { cache.put(RAA_CACHE, JSON.stringify(out), 30 * 60); } catch (e2) { /* no importa */ }
+  try { cache.put(raaCacheClave_(), JSON.stringify(out), 30 * 60); } catch (e2) { /* no importa */ }
   return out;
 }
 
@@ -278,7 +284,7 @@ function guardarRaa(auth, datos) {
   hoja.getRange(destino, 1, 1, RAA_COLS.length).setValues([fila]);
 
   // Un cache sin su invalidacion es otra regresion: se borra donde se escribe.
-  try { CacheService.getScriptCache().remove(RAA_CACHE); } catch (e) { /* no importa */ }
+  try { CacheService.getScriptCache().remove(raaCacheClave_()); } catch (e) { /* no importa */ }
 
   return getRaaData(auth, false);
 }
