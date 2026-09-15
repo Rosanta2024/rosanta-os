@@ -18,7 +18,7 @@ var FICHA_NUEVA = {
   lineasPlato: 15,          // f5..f19 en las fichas de plato
   lineasPre:   10,          // f5..f14 en los pre-elaborados
   mermaPct:    10,          // la merma estandar de cocina
-  cmvObjetivo: 0.30,        // para la fila "PRECIO SUGERIDO"
+  // la meta de la fila "PRECIO SUGERIDO" sale de PARAMETROS: ver metasFoodCost_
   hojaResumen: 'RESUMEN CMV'
 };
 
@@ -118,12 +118,14 @@ function configArea_(area) {
 
 /**
  * El cuerpo de una ficha de plato. Copiado de ENSALADA ROSANTA.
- * La merma y la meta salen del area: cocina 10% y 30%, barra 3% y 20%. Antes iban
+ * La merma sale del area (cocina 10%, barra 3%) y la meta de PARAMETROS (cocina 28%,
+ * barra 20% al 14-sep-2026). La formula de la hoja sigue siendo sobre precio con IVA,
+ * igual que en las demas fichas: la intranet calcula el suyo sin IVA. Antes iban
  * fijas en 10 y 30, y un coctel nuevo nacia costeado con la vara de cocina.
  */
 function crearCuerpoPlato_(h, nombre, datos, precio, cfg) {
   var mermaPct = cfg ? cfg.merma : FICHA_NUEVA.mermaPct;
-  var cmvObjetivo = cfg ? cfg.cmvObjetivo / 100 : FICHA_NUEVA.cmvObjetivo;
+  var cmvObjetivo = metaDeArea_(cfg ? cfg.area : 'COCINA') / 100;
   var n = FICHA_NUEVA.lineasPlato, prim = 5, ult = prim + n - 1;   // 5..19
   var fSub = ult + 2;                                             // 21
 

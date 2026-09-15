@@ -349,8 +349,8 @@ var AUTH = '<?= authToken ?>';
       '<div class="met-cards">' +
         '<div class="met-card"><h3>Meta de food cost</h3>' +
           '<div class="n">' + pct(d.meta_food) + '</div>' +
-          '<div class="t">Ponderada por el mix de cocina y barra. Se cambia en la misma ' +
-          'pestaña METAS, columna META_FOOD_PCT.</div></div>' +
+          '<div class="t">La misma para todo el restaurante, sobre la venta sin IVA. ' +
+          'Se cambia en el Sheet de configuración, pestaña PARAMETROS, fila food_cost_objetivo_pct.</div></div>' +
         (d.base_2025
           ? '<div class="met-card"><h3>' + esc(d.mes) + ' del año pasado</h3>' +
             '<div class="n">' + q(d.base_2025.ventas) + '</div>' +

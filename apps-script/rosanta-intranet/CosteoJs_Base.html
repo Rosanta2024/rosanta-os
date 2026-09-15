@@ -85,11 +85,15 @@ function costoAhora(r){
   if(r.costoUnit != null && r.base > 0) return r.costoUnit * (b / r.base);
   return r.rinde ? b / r.rinde : b;
 }
+/* SOBRE EL PRECIO SIN IVA desde el 14-sep-2026, igual que el tablero y Finanzas. Antes
+   era costo / precio de carta: el mismo plato decia 26.5% aca y 29.7% en el tablero. */
+const IVA = () => (D.meta && D.meta.iva) || 1.12;
 function cmvAhora(r){
   const c = costoAhora(r);
-  return (c != null && r.precio) ? c / r.precio * 100 : null;
+  return (c != null && r.precio) ? c / (r.precio / IVA()) * 100 : null;
 }
-/* La meta sale de la receta: 30% en cocina, 20% en barra. */
+/* La meta sale de la receta, y a la receta se la pone el servidor desde PARAMETROS:
+   28% en cocina y 20% en barra al 14-sep-2026. */
 function estadoDe(cmv, r){
   if(!r.ing.length) return 'vacia';
   if(r.t !== 'plato') return 'pre';

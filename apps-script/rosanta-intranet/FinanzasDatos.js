@@ -88,16 +88,18 @@ var FIN_SOLO_FEL = ['GAS', 'ALQUILER_EQUIPO'];
 var FIN_MIX = { cocina: 77.9, barra: 22.1 };
 
 /**
- * Meta de food cost de cada area. Estas dos son las que PRODUCEN la mezclada:
- *   77.9% x 30 + 22.1% x 20 = 27.8
- * Cambiar una de aqui mueve la mezclada sola, sin tocar dos numeros a mano.
+ * Meta de food cost de cada area, para el techo de compra.
  *
- * El 30 de cocina es todavia un numero de industria. El recetario, ponderado
- * por lo que de verdad se vende, da 28.3%; queda pendiente hasta que se
- * corrijan los precios de compra del banco de datos, porque esos arreglos
- * mueven el costo teorico. El 20 de barra SI esta verificado contra el POS.
+ * Hasta el 14-sep-2026 era una constante (cocina 30, barra 20) escrita aca, aparte de
+ * la meta global de PARAMETROS. Ahora sale del mismo lugar que todas: metasFoodCost_
+ * en ConfigCosteo.gs. Decision de Juanma: cocina 28, barra 20.
+ *
+ * Siguen siendo dos numeros distintos a proposito: la global mide lo que paso, la de
+ * area limita lo que se compra esta semana.
  */
-var FIN_META_AREA = { cocina: 30, barra: 20 };
+function _finMetaArea() {
+  return { cocina: metaDeArea_('COCINA'), barra: metaDeArea_('BARRA') };
+}
 
 // De que area es cada categoria de mercaderia.
 var FIN_AREA_CAT = {
@@ -106,23 +108,21 @@ var FIN_AREA_CAT = {
   COCTELERIA: 'barra', COCTELERIA_EFECTIVO: 'barra'
 };
 /**
- * META DE FOOD COST: 30% FIJO, leida de PARAMETROS del Sheet de config.
+ * META DE FOOD COST: 28%, leida de PARAMETROS del Sheet de config.
  *
  * Decision de Juanma el 10-sep-2026: la meta NO es la mezclada del mix. Hasta
  * el 12-sep esta pantalla seguia calculando 27.8 (77.9 x 30 + 22.1 x 20)
- * mientras generar_finanzas.py ya usaba 30 y PARAMETROS!food_cost_objetivo_pct
- * ya decia 30. O sea: el semaforo de la intranet era 2.2 puntos mas exigente
- * que el del resto del pilar, y el techo de compra semanal salia mas bajo.
+ * mientras generar_finanzas.py ya usaba 30. Decision del 14-sep-2026: pasa de
+ * 30 a 28, y es la misma para la global y para cocina.
  *
- * Ahora hay UN solo lugar: la celda de PARAMETROS. El 30 del codigo es solo el
- * valor por defecto si la celda no existe.
+ * Hay UN solo lugar: la celda PARAMETROS!food_cost_objetivo_pct. El 28 de
+ * COSTEO.areas es solo el valor por defecto si la celda no existe.
  *
  * El mix se sigue publicando (FIN_MIX) porque dice donde se vende, pero ya no
  * define la meta.
  */
-var FIN_META_COGS_DEF = 30;
 
-/** Un parametro de la pestana PARAMETROS del Sheet de config. Cachea 6 h. */
+/** Un parametro de la pestana PARAMETROS del Sheet de config. Cachea 10 minutos. */
 function _finParametro(clave, defecto) {
   var cache = CacheService.getScriptCache();
   var k = 'fin_par_' + clave;
@@ -148,11 +148,14 @@ function _finParametro(clave, defecto) {
   } catch (e) {
     // Sin Sheet de config la pantalla sigue de pie con el valor por defecto.
   }
-  try { cache.put(k, String(val), 6 * 60 * 60); } catch (e2) { /* no importa */ }
+  // 10 minutos y no 6 horas (14-sep-2026): con 6 h, cambiar la meta en PARAMETROS
+  // tardaba hasta medio dia en verse, y el boton "Actualizar datos" no lo forzaba.
+  // Leer la pestana es una sola lectura chica.
+  try { cache.put(k, String(val), 10 * 60); } catch (e2) { /* no importa */ }
   return val;
 }
 
-function _finMetaFood() { return _finParametro('food_cost_objetivo_pct', FIN_META_COGS_DEF); }
+function _finMetaFood() { return metasFoodCost_().global; }
 
 /**
  * La planilla devengada de los meses del año, leida del Sheet de planilla.
@@ -382,6 +385,11 @@ function _finDatos(forzar) {
 /** Para el boton "actualizar" de la vista: recalcula sin esperar a la cache. */
 function refrescarFinanzas(auth) {
   exigirModulo_(auth, 'finanzas');
+  // Tambien los parametros: si alguien acaba de cambiar la meta o el tipo de cambio,
+  // "Actualizar" tiene que mostrarlo ya.
+  CacheService.getScriptCache().removeAll(['fin_par_food_cost_objetivo_pct',
+    'fin_par_food_cost_barra_pct', 'fin_par_tipo_cambio_usd']);
+  METAS_FC_MEMO_ = null;
   return _finDatos(true);
 }
 
@@ -677,7 +685,7 @@ function _finCalcular() {
     semanas: S,
     ultima: u,
     meta_cogs: metaFood,
-    meta_area: FIN_META_AREA,
+    meta_area: _finMetaArea(),
     usd: usd,
     mix: FIN_MIX,
     compra: compra,
@@ -760,7 +768,10 @@ function _finMeta(anio, m) {
     if (Number(filas[i][0]) === anio && Number(filas[i][1]) === m) {
       var venta = _finNum(filas[i][2]);
       if (!venta) return null;
-      return { venta: venta, food: _finNum(filas[i][3]) || _finMetaFood(),
+      // META_FOOD_PCT de esta pestana se IGNORA desde el 14-sep-2026: era una copia de
+      // la meta congelada por instalarMetas(), y cambiar PARAMETROS no la movia. La
+      // tarjeta de Metas decia un numero y el semaforo de la semana otro.
+      return { venta: venta, food: _finMetaFood(),
                origen: String(filas[i][4] || '').trim(),
                provisional: String(filas[i][4] || '').toUpperCase().indexOf('PROVISIONAL') === 0 };
     }
@@ -978,12 +989,13 @@ function getMetasData(auth, forzar) {
   // toma en tres. Medir la compra de una semana suelta da falsas alarmas.
   var C = d.compra || { cocina: { total: 0, f: {}, mes: {} }, barra: { total: 0, f: {}, mes: {} } };
   out.techo = {};
+  var metaArea = _finMetaArea();
   ['cocina', 'barra'].forEach(function (a) {
     var A = C[a] || { total: 0, f: {}, mes: {} };
     var ventaSem = out.necesario_semana * FIN_MIX[a] / 100;
     var ventaMes = meta.venta * FIN_MIX[a] / 100;
-    var topeSem = _finR(ventaSem * FIN_META_AREA[a] / 100);
-    var topeMes = _finR(ventaMes * FIN_META_AREA[a] / 100);
+    var topeSem = _finR(ventaSem * metaArea[a] / 100);
+    var topeMes = _finR(ventaMes * metaArea[a] / 100);
     var gastado = _finR(A.mes[m] || 0);
 
     // El reparto por familia es el HISTORICO del año, no una regla: dice donde
@@ -998,7 +1010,7 @@ function getMetasData(auth, forzar) {
     });
 
     out.techo[a] = {
-      area: a, mix: FIN_MIX[a], meta: FIN_META_AREA[a],
+      area: a, mix: FIN_MIX[a], meta: metaArea[a],
       venta_semana: _finR(ventaSem), venta_mes: _finR(ventaMes),
       semana: topeSem, mes: topeMes,
       gastado_mes: gastado, saldo_mes: _finR(topeMes - gastado),

@@ -422,7 +422,7 @@ rest = area['COCINA'] + area['BARRA']
 mix_c = round(area['COCINA'] / rest * 100, 1)
 mix_b = round(100 - mix_c, 1)
 
-# META DE FOOD COST: 30% FIJO. Decision de Juanma, 10-sep-2026.
+# META DE FOOD COST: 28% FIJO. Decision de Juanma, 10-sep-2026 (30) y 14-sep-2026 (28).
 #
 # Hasta hoy esto era  mix_c/100*30 + mix_b/100*20,  o sea la meta ponderada por
 # la mezcla de venta cocina/barra, que con el mix real daba 27.8%. Se descarto a
@@ -435,9 +435,9 @@ mix_b = round(100 - mix_c, 1)
 # util para leer el food cost, solo que ya no define la meta.
 #
 # Los otros dos lugares donde vive este numero, y que tienen que decir lo mismo:
-#   · Rosanta_Intranet_Config > PARAMETROS > food_cost_objetivo_pct  (= 30)
-#   · rosanta-intranet/ConfigCosteo.js > COSTEO.areas  (cocina 30, barra 20)
-meta_cogs = 30.0
+#   · Rosanta_Intranet_Config > PARAMETROS > food_cost_objetivo_pct  (= 28)
+#   · la intranet la lee de ahi para todo (metasFoodCost_ en ConfigCosteo.js)
+meta_cogs = 28.0
 
 # integridad del dato
 POR = 0; ult = {}

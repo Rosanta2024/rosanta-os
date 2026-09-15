@@ -160,7 +160,7 @@ function adaptarReceta(r){
 function adaptar(m){
   return {
     meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas,
-          aliasSub:m.meta.aliasSub || {}},
+          aliasSub:m.meta.aliasSub || {}, iva:m.meta.iva || 1.12, metaGlobal:m.meta.metaGlobal},
     proveedores:m.proveedores,
     insumos:m.insumos.map(adaptarInsumo),
     recetas:m.recetas.map(adaptarReceta)

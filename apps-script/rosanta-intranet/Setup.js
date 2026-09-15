@@ -64,14 +64,11 @@ function setupInicial() {
     params.getRange(1, 1, 3, 2).setValues([
       ['parametro', 'valor'],
       ['margen_minimo_pct', 60],
-      // 30 y no 32: decision de Juanma el 11-sep-2026. El 32 venia del setup
-      // original de julio y no correspondia a ninguna meta real del proyecto.
-      //
-      // OJO: hoy NADIE LEE este parametro — es el unico lugar del codigo donde
-      // aparece. Lo que de verdad manda el costeo son COSTEO.metaCocina (0.30) y
-      // COSTEO.metasBarra (por categoria) en ConfigCosteo.gs. Si algun dia una
-      // pantalla empieza a leer este valor, revisar que no contradiga a esos dos.
-      ['food_cost_objetivo_pct', 30]
+      // 28: decision de Juanma el 14-sep-2026 (antes 30, y antes de eso 32).
+      // Es LA meta: la leen Finanzas, el recetario, la ingenieria de menu y el
+      // techo de compra, todos por metasFoodCost_ en ConfigCosteo.gs. Barra va en
+      // food_cost_barra_pct y vale 20 si la fila no existe.
+      ['food_cost_objetivo_pct', 28]
     ]);
     props.setProperty('CONFIG_SHEET_ID', cfg.getId());
     Logger.log('Config creado: ' + cfg.getUrl());

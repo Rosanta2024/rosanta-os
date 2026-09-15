@@ -30,9 +30,11 @@ function getCosteoData(auth) {
   // aplicarCambios en CosteoJs_Base), y un modelo cacheado antes de este cambio no
   // los traeria.
   modelo.meta.areas = COSTEO.areas.map(function (a) {
-    return { area: a.area, cmvObjetivo: a.cmvObjetivo, merma: a.merma };
+    return { area: a.area, cmvObjetivo: metaDeArea_(a.area), merma: a.merma };
   });
   modelo.meta.aliasSub = COSTEO.aliasSubReceta;
+  modelo.meta.iva = COSTEO.iva;                       // el CMV de pantalla es sobre precio sin IVA
+  modelo.meta.metaGlobal = metasFoodCost_().global;
   return modelo;
 }
 
@@ -75,7 +77,7 @@ function construirModelo_() {
     proveedores: [],
     meta: {
       generado: new Date().toISOString(),
-      areas: COSTEO.areas.map(function (a) { return { area: a.area, cmvObjetivo: a.cmvObjetivo }; })
+      areas: COSTEO.areas.map(function (a) { return { area: a.area, cmvObjetivo: metaDeArea_(a.area) }; })
     }
   };
   enlazarModelo_(modelo);
@@ -205,7 +207,7 @@ function leerFicha_(hoja, cfg) {
     area: cfg.area, nombre: hoja.getName().trim(), tipo: 'plato', categoria: '',
     precio: null, subtotal: null, merma: cfg.merma, costo: null, sugerido: null,
     cmv: null, rinde: null, rindeTexto: '', costoUnit: null, unidadCosto: '',
-    nota: '', ingredientes: [], cmvObjetivo: cfg.cmvObjetivo
+    nota: '', ingredientes: [], cmvObjetivo: metaDeArea_(cfg.area)
   };
 
   var enIngredientes = false, colIng = null;
@@ -295,10 +297,44 @@ function leerFicha_(hoja, cfg) {
     if (r.costoUnit === null && r.costo !== null && r.rinde) r.costoUnit = r.costo / r.rinde;
   }
 
-  if (r.cmv === null && r.costo && r.precio) r.cmv = r.costo / r.precio * 100;
+  // El CMV % ACTUAL de la hoja es sobre el precio CON IVA. Si la ficha no trae el costo
+  // pero si ese CMV, el costo sale de ahi, para poder pasarlo a neto abajo.
+  if (r.costo === null && r.cmv !== null && r.precio) r.costo = r.cmv / 100 * r.precio;
 
+  return ajustarRecetaAMeta_(r);
+}
+
+/**
+ * CMV SOBRE PRECIO SIN IVA, CONTRA LA META DEL AREA — 14-sep-2026, decision de Juanma.
+ *
+ * Hasta esta fecha la ficha tomaba el CMV que calcula la hoja (costo / precio de carta
+ * CON IVA) y el tablero lo recalculaba sobre el precio SIN IVA. El mismo plato decia
+ * 26.5% en la ficha y 29.7% en el tablero. Ahora los dos miden sobre neto, igual que
+ * Finanzas (ver COSTEO.iva).
+ *
+ * El precio sugerido es el precio de CARTA, con IVA, que deja el CMV neto en la meta.
+ *
+ * Las formulas de las hojas NO cambian: siguen mostrando su CMV sobre precio con IVA.
+ * La intranet ya no lee esa celda para el CMV.
+ *
+ * Idempotente: corre al leer la ficha y otra vez al servir el modelo cacheado, por si
+ * la meta cambio en PARAMETROS despues de construirlo.
+ */
+function ajustarRecetaAMeta_(r) {
+  var iva = COSTEO.iva || 1.12;
+  r.cmvObjetivo = metaDeArea_(r.area);
+  if (r.tipo === 'plato' && typeof r.costo === 'number' && r.precio) {
+    r.cmv = r.costo / (r.precio / iva) * 100;
+    r.sugerido = r.costo / (r.cmvObjetivo / 100) * iva;
+  }
   r.estado = estadoReceta_(r);
   return r;
+}
+
+/** Aplica la meta vigente a todas las recetas de un modelo (cacheado o recien construido). */
+function conMetasVigentes_(modelo) {
+  modelo.recetas.forEach(function (r) { ajustarRecetaAMeta_(r); });
+  return modelo;
 }
 
 /** El estado de una receta por sus numeros. Uno solo para la lectura y para el parche de precios. */
@@ -438,11 +474,11 @@ function guardarModeloCacheado_(cache, modelo) {
 function modeloCosteo_() {
   var cache = CacheService.getScriptCache();
   var modelo = leerModeloCacheado_(cache);
-  if (modelo) return modelo;
+  if (modelo) return conMetasVigentes_(modelo);
   var gen = cache.get(COSTEO_GEN_);
   modelo = construirModelo_();
   if (cache.get(COSTEO_GEN_) === gen) guardarModeloCacheado_(cache, modelo);
-  return modelo;
+  return conMetasVigentes_(modelo);
 }
 
 /* Lo que va tocando la escritura en curso. null = nadie esta juntando, y las
@@ -731,14 +767,14 @@ function probarCosteo() {
     vacias.forEach(function (r) { Logger.log('  VACIA: %s', r.nombre); });
   });
 
-  // Valores de la v16 (24 ago 2026). Los de la v9 y la v14 ya no aplican.
-  // La ensalada bajo de 15.9 a 15.0 al recalcularse la gremolata (Q0.20498 -> Q0.18719 por g).
+  // Valores de la v16 (24 ago 2026), pasados a precio SIN IVA el 14-sep-2026 (x 1.12):
+  // la ensalada era 15.0 sobre precio con IVA. Los de la v9 y la v14 ya no aplican.
   var control = {
-    'ensalada rosanta'         : 15.0,
-    'tabla de jamones y quesos': 22.6,
-    'gratin de papas'          : 19.8,
-    'mix de fritas'            : 23.6,
-    'peras horneadas'          : 19.7
+    'ensalada rosanta'         : 16.8,
+    'tabla de jamones y quesos': 25.3,
+    'gratin de papas'          : 22.2,
+    'mix de fritas'            : 26.4,
+    'peras horneadas'          : 22.1
   };
   Object.keys(control).forEach(function (k) {
     var r = m.recetas.filter(function (x) { return normalizar_(x.nombre) === k; })[0];

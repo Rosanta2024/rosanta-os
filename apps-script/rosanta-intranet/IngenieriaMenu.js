@@ -181,7 +181,11 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
   var v = ventas || ventasDelRango_(desde, hasta);
   var cmv = leerResumenCMV_();
   var cat = leerCatalogoPOS_();
-  var metas = COSTEO.metasBarra || {};
+  // Que categorias de barra entran, y las dos metas: de PARAMETROS (metasFoodCost_),
+  // no escritas aca. Barra es plana desde el 14-sep-2026.
+  var metas = {};
+  (COSTEO.categoriasBarra || []).forEach(function (c) { metas[c] = true; });
+  var metaCocina = metaDeArea_('COCINA') / 100, metaBarra = metaDeArea_('BARRA') / 100;
 
   // dias del periodo, por calendario: lo que se anualiza es tiempo transcurrido, no
   // dias con venta. x365/dias, no x12/meses: "meses del periodo" no es un numero,
@@ -249,7 +253,7 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
     // BARRA: por nombre + categoria del POS.
     var kc = normalizar_(nombre) + '|' + normalizar_(l.categoria);
     var reg2 = cat.porNombreCat[kc];
-    if (reg2 && metas[reg2.categoria] !== undefined) {
+    if (reg2 && metas[reg2.categoria]) {
       var k2 = 'BARRA|' + kc;
       if (!prod[k2]) prod[k2] = { area: 'BARRA', nombre: reg2.nombre, categoria: reg2.categoria,
                                   precio: reg2.precio, costo: reg2.costo,
@@ -335,7 +339,7 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
     p.mcNorm = g.mcPromedio ? p.mc / g.mcPromedio : 0;
     p.udsAlMes = meses ? p.uds / meses : 0;
 
-    var meta = p.area === 'COCINA' ? (COSTEO.metaCocina || 0.30) : (metas[p.categoria] || 0);
+    var meta = p.area === 'COCINA' ? metaCocina : metaBarra;
     // Q/año contra meta. Positivo = se pierde plata contra el objetivo.
     p.vsMeta = (p.costo - p.precioNeto * meta) * p.uds * 365 / dias;
     p.meta = meta;

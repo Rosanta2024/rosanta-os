@@ -218,7 +218,7 @@ document.addEventListener('click', e => {
        en la hoja por detras, y lo que se cargue mientras tanto espera en fila detras de
        ella. Si la hoja la rechaza, sale de la pantalla y se avisa (descartarLocal). */
     const local = {n: nombre, t: nfTipo, cat: esPlato ? datos.categoria : '', area: nfArea,
-      obj: cfg.cmvObjetivo != null ? cfg.cmvObjetivo : (nfArea === 'BARRA' ? 20 : 30),
+      obj: cfg.cmvObjetivo != null ? cfg.cmvObjetivo : (nfArea === 'BARRA' ? 20 : 28),
       precio: esPlato ? datos.precio : null, costo: null, costoUnit: null, unidadCosto: '', cmv: null,
       merma: cfg.merma != null ? cfg.merma : (nfArea === 'BARRA' ? 3 : 10),
       rinde: esPlato ? null : datos.rinde, rindeTexto: '', nota: datos.nota,
@@ -467,9 +467,10 @@ document.addEventListener('keydown', e => {
 });
 
 const porArea = a => R.filter(r => r.area===a && r.t==='plato');
+const metaDe = a => ((D.meta.areas || []).find(x => x.area === a) || {}).cmvObjetivo;
 document.getElementById('foot').textContent =
-  `Cocina: ${porArea('COCINA').length} fichas de plato, ${porArea('COCINA').filter(r=>cmvAhora(r)!=null).length} con CMV, meta 30%. ` +
-  `Barra: ${porArea('BARRA').length} cócteles y bebidas, meta 20%. ` +
+  `Cocina: ${porArea('COCINA').length} fichas de plato, ${porArea('COCINA').filter(r=>cmvAhora(r)!=null).length} con CMV, meta ${metaDe('COCINA')}% sin IVA. ` +
+  `Barra: ${porArea('BARRA').length} cócteles y bebidas, meta ${metaDe('BARRA')}%. ` +
   `${R.length - porArea('COCINA').length - porArea('BARRA').length} pre-elaborados · ${I.length} productos · ${P.length} proveedores. ` +
   `Fuente: ${D.meta.fuente}, leído el ${D.meta.fecha}.`;
 pintar();

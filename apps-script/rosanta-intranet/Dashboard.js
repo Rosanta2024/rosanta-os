@@ -122,6 +122,13 @@ function huellaDatosCalculada_() {
  */
 var PROFIT_CACHE = { pref: 'profitos_v1_', segs: 21600, trozo: 90000, maxTrozos: 12 };
 
+/* La clave lleva la meta (14-sep-2026). El tablero guarda sus numeros medidos contra la
+   meta, y sin esto cambiar PARAMETROS dejaba el tablero viejo servido hasta 6 horas. */
+function claveProfitOS_(sem, huella) {
+  var m = metasFoodCost_();
+  return PROFIT_CACHE.pref + sem + '_' + huella + '_m' + m.global + '-' + m.BARRA;
+}
+
 function profitGuardado_(clave) {
   var c = CacheService.getScriptCache();
   var n = c.get(clave);
@@ -156,7 +163,7 @@ function getProfitOS(auth, semanas) {
   exigirModulo_(auth, 'recetario');
   var sem = semanas === undefined ? 13 : semanas;
   var huella = huellaDatos_();
-  var clave = huella ? PROFIT_CACHE.pref + sem + '_' + huella : '';
+  var clave = huella ? claveProfitOS_(sem, huella) : '';
   if (clave) {
     var guardado = profitGuardado_(clave);
     if (guardado) { guardado.deCache = true; return guardado; }
@@ -197,9 +204,9 @@ function tableroDesdeR_(r) {
     });
     porArea[a] = {
       cmv: ventaNeta ? costo / ventaNeta : 0,
-      // La meta del area, ponderada por venta. Cocina es 30% y punto; barra tiene una
-      // meta por categoria (un vino por botella no se mide como un coctel de autor),
-      // asi que su "meta" es la mezcla real de lo que vendio, no un 20% de adorno.
+      // La meta del area, ponderada por venta. Desde el 14-sep-2026 las dos son planas
+      // y salen de PARAMETROS (cocina 28, barra 20): la ponderada da el mismo numero,
+      // pero se deja asi por si un area vuelve a tener metas distintas por producto.
       meta: ventaNeta ? metaPorVenta / ventaNeta : 0,
       contribucion: x.contribucion,
       recuperable: recup, recuperableProductos: recupProd,

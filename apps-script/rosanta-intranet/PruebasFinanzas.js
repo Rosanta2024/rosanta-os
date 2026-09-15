@@ -43,7 +43,7 @@ function prFinanzas_(res) {
   prCorrer_(g, 'La meta ya no es la mezclada del mix', function () {
     var nombre = 'La meta ya no es la mezclada del mix';
     // 27.8 = 77.9 x 30 + 22.1 x 20. Era la meta hasta el 10-sep-2026 y quedo
-    // descartada por decision de Juanma: es 30 fijo.
+    // descartada por decision de Juanma: es fija (30, y 28 desde el 14-sep-2026).
     var mezclada = (d.mix.cocina * d.meta_area.cocina + d.mix.barra * d.meta_area.barra) / 100;
     prAnotar_(g, nombre, Math.abs(d.meta_cogs - mezclada) > 0.05 ? 'OK' : 'FALLA',
       'meta ' + d.meta_cogs + '% · la mezclada del mix daria ' + Math.round(mezclada * 10) / 10 + '%',

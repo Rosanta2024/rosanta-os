@@ -13,7 +13,9 @@
 
 var COSTEO = {
   areas: [
-    { clave: 'RECETARIO_COCINA_SHEET_ID', area: 'COCINA', cmvObjetivo: 30, merma: 10 },
+    // cmvObjetivo es solo el valor POR DEFECTO, si PARAMETROS no se puede leer.
+    // La meta que manda sale de metasFoodCost_(), mas abajo.
+    { clave: 'RECETARIO_COCINA_SHEET_ID', area: 'COCINA', cmvObjetivo: 28, merma: 10 },
     { clave: 'RECETARIO_BARRA_SHEET_ID',  area: 'BARRA',  cmvObjetivo: 20, merma: 3  }
   ],
 
@@ -100,10 +102,10 @@ var COSTEO = {
    * Metas de CMV para ingenieria de menu. Aca y no sueltas en el codigo, para que se
    * cambien en un solo lugar y a proposito.
    *
-   * Cocina: 30% unica, la misma que ya usa RESUMEN CMV.
-   * Barra: por categoria del POS. Un vino por botella no tiene el mismo margen
-   * objetivo que un coctel de autor, y compararlos con la misma vara da basura.
-   * OJO: 'Licor Botella' NO esta y es a proposito — no entra al analisis.
+   * Desde el 14-sep-2026 la META no vive aca: sale de PARAMETROS (metasFoodCost_).
+   * Barra dejo de tener una meta por categoria (20 a 35%): es 20% plana, decision
+   * de Juanma. Lo que queda aca es QUE categorias del POS entran al analisis de
+   * barra. OJO: 'Licor Botella' NO esta y es a proposito — no entra al analisis.
    */
   /**
    * EL IVA. El POS factura con IVA incluido, asi que el precio de carta lo trae;
@@ -122,14 +124,13 @@ var COSTEO = {
    */
   iva: 1.12,
 
-  metaCocina: 0.30,
-  metasBarra: {
-    'Coctel Autor': 0.20, 'Coctel Casa': 0.20, 'Coctel Jardín': 0.20,
-    'Refresco & Agua': 0.20, 'Café & Té': 0.20,
-    'Licor Copa': 0.22, 'Digestivo': 0.22,
-    'Vino Copa': 0.25, 'Cerveza': 0.25,
-    'Vino Botella': 0.35, 'Espumante': 0.35
-  },
+  categoriasBarra: [
+    'Coctel Autor', 'Coctel Casa', 'Coctel Jardín',
+    'Refresco & Agua', 'Café & Té',
+    'Licor Copa', 'Digestivo',
+    'Vino Copa', 'Cerveza',
+    'Vino Botella', 'Espumante'
+  ],
 
   cacheKey: 'costeo_indice_v2',
   // 1 hora, no 15 minutos. El modelo tarda ~40 s en construirse: leer las dos hojas
@@ -148,6 +149,44 @@ var COSTEO = {
   // un activador antes de que a alguien le toque pagarlo. Ver CalentarCaches.gs.
   cacheSegs: 3600
 };
+
+/**
+ * LAS METAS DE FOOD COST, DE UN SOLO LUGAR — 14-sep-2026
+ *
+ * Decision de Juanma: 28% global y de cocina, 20% plano en barra, siempre sobre la
+ * venta NETA (sin IVA). Viven en la pestana PARAMETROS del Sheet de config:
+ *   food_cost_objetivo_pct   la global y la de cocina
+ *   food_cost_barra_pct      la de barra (20 si la fila no existe)
+ *
+ * Hasta esta fecha el numero vivia en siete lugares que no se leian entre si: el
+ * semaforo de Finanzas leia PARAMETROS, pero el techo de compra (FIN_META_AREA), la
+ * ficha (COSTEO.areas), la ingenieria de menu (metaCocina, metasBarra), las formulas
+ * de las fichas nuevas y dos textos de pantalla tenian su propio 30 escrito a mano.
+ * Cambiar la meta era cambiar siete cosas, y la ficha y el tablero ya no coincidian.
+ *
+ * Se lee una sola vez por ejecucion: leerFicha_ la pide por cada ficha, y
+ * _finParametro es una llamada al servicio de cache.
+ */
+var METAS_FC_MEMO_ = null;
+function metasFoodCost_() {
+  if (METAS_FC_MEMO_) return METAS_FC_MEMO_;
+  var porDefecto = {};
+  COSTEO.areas.forEach(function (a) { porDefecto[a.area] = a.cmvObjetivo; });
+  var global = _finParametro('food_cost_objetivo_pct', porDefecto.COCINA);
+  METAS_FC_MEMO_ = {
+    global: global,
+    COCINA: global,
+    BARRA: _finParametro('food_cost_barra_pct', porDefecto.BARRA)
+  };
+  return METAS_FC_MEMO_;
+}
+
+/** La meta de un area, en porcentaje (28, no 0.28). */
+function metaDeArea_(area) {
+  var m = metasFoodCost_();
+  var a = String(area || '').trim().toUpperCase();
+  return m.hasOwnProperty(a) ? m[a] : m.global;
+}
 
 /** Normaliza para comparar nombres: sin acentos, sin dobles espacios, minuscula. */
 function normalizar_(s) {

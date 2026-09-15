@@ -29,13 +29,15 @@ var PRUEBAS_CFG = {
     platosMapeadosPOS:   35
   },
 
-  /** CMV de control, en porcentaje. Tolerancia +-0.6 puntos. */
+  /** CMV de control, en porcentaje SOBRE PRECIO SIN IVA. Tolerancia +-0.6 puntos.
+      El 14-sep-2026 la ficha paso a medir sin IVA (decision de Juanma): son los
+      valores de la v16 multiplicados por 1.12. La ensalada era 15.0. */
   control: {
-    'ensalada rosanta'         : 15.0,   // v16: bajo de 15.9 al corregirse la gremolata
-    'tabla de jamones y quesos': 22.6,
-    'gratin de papas'          : 19.8,
-    'mix de fritas'            : 23.6,
-    'peras horneadas'          : 19.7
+    'ensalada rosanta'         : 16.8,   // v16: bajo de 15.9 a 15.0 (con IVA) al corregirse la gremolata
+    'tabla de jamones y quesos': 25.3,
+    'gratin de papas'          : 22.2,
+    'mix de fritas'            : 26.4,
+    'peras horneadas'          : 22.1
   },
   toleranciaCmv: 0.6,
 

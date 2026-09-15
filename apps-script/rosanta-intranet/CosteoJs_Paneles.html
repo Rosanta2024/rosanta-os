@@ -72,9 +72,9 @@ function fichaHTML(r){
         ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area) && !r.local)
           ? `<span class="qedit"><input class="qin" id="np-menu" type="number" step="1" min="0" value="${r.precio}" style="width:92px" aria-label="Precio de carta"><button class="qsave" id="np-menu-save" data-rid="${r.id}" title="Guardar el precio de carta">✓</button></span>`
           : Q0(r.precio)}</dd>
-        <dt>CMV actual</dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
+        <dt>CMV actual <span style="font-weight:400;color:var(--muted)">(sin IVA)</span></dt><dd class="s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</dd>
         <dt>Meta del área</dt><dd style="font-weight:400;color:var(--muted)">${r.obj}%</dd>
-        <dt>Precio para llegar a ${r.obj}%</dt><dd>${c!=null?Q0(c/(r.obj/100)):'—'}</dd>`:''}
+        <dt>Precio de carta para llegar a ${r.obj}%</dt><dd>${c!=null?Q0(c/(r.obj/100)*IVA()):'—'}</dd>`:''}
       </dl>`:''}
     </div>`;
 }

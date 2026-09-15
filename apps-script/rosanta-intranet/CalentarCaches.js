@@ -70,7 +70,7 @@ function calentarCaches() {
   // normal y el que decide si sirve es getProfitOS.
   calentar('tablero', function () {
     var h = huellaDatos_();
-    return !h || !c.get(PROFIT_CACHE.pref + '13_' + h);
+    return !h || !c.get(claveProfitOS_(13, h));   // la misma clave que arma getProfitOS
   }, function () { getProfitOS('', 13); });
 
   // Los avisos: 7 s, casi todo recorriendo Drive.
