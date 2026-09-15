@@ -24,9 +24,9 @@ Pedido de Marketing OS para el CAC mensual (p10). **Publicado en la @98**; maest
 
 ## Nota de proceso
 
-Esta vez se publicó **sin batería previa**: Juanma aplicó el lote en el maestro antes de correrla y pidió publicar. Dejarlo sin publicar habría descuadrado el bloque Marketing del DRE en Q8,032 mientras tanto. La batería queda pendiente de correr sobre la @98.
+Esta vez se publicó **sin batería previa**: Juanma aplicó el lote en el maestro antes de correrla y pidió publicar. Dejarlo sin publicar habría descuadrado el bloque Marketing del DRE en Q8,032 mientras tanto. **La batería se corrió después, sobre la @98: 119 OK · 0 fallas · 0 avisos · 3 saltadas · 223.7 s**, con la prueba nueva en verde. La segunda revisión del maestro dio 0 filas y 6 ya estaban bien.
 
 ## Pendiente
 
-1. **Juanma:** `revisarReclasMarketing()` (0 filas, 6 ya estaban bien), `generarEspejo()` y la batería.
+1. **Juanma:** `generarEspejo()`. La revisión y la batería ya están hechas.
 2. **Marketing OS:** cambiar el numerador del CAC a la categoría `MARKETING_DIGITAL` completa, con la columna de dólares convertida.

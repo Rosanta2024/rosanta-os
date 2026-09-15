@@ -13,7 +13,7 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
 
-**El equipo está en la @98** · batería 118 OK · 0 fallas · 0 avisos · 3 saltadas. (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago), la @96 la tanda 4, la @97 la tanda 5 y la @98 la categoría MARKETING_HONORARIOS.
+**El equipo está en la @98** · batería 119 OK · 0 fallas · 0 avisos · 3 saltadas. (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio, la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago), la @96 la tanda 4, la @97 la tanda 5 y la @98 la categoría MARKETING_HONORARIOS.
 
 ### Marketing: honorarios aparte de la pauta (@98)
 
