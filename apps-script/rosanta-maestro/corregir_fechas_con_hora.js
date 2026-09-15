@@ -269,8 +269,10 @@ function _fhCorrer(escribir) {
         return;
       }
       if (escribir) {
-        var p = it[3].split('-');
-        sh.getRange(r + 1, L.fecha).setValue(new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])));
+        // Como TEXTO 'AAAA-MM-DD', no como Date. 15-sep-2026: en 37 celdas del FEL
+        // setValue(new Date(...)) no cambiaba nada y la hoja seguia a las 23:00, sin
+        // error; con el texto la acepto a la primera (diagnosticarFechasFEL, A984).
+        sh.getRange(r + 1, L.fecha).setValue(it[3]);
         escritas.push({ sh: sh, nombre: L.nombre, llave: it[0], fila: r + 1, col: L.fecha, meta: it[3] + ' 00:00' });
       }
       pendientes.push(L.nombre + ' ' + it[0] + ' fila ' + (r + 1) + ' "' + hoy + '" -> ' + it[3]);
