@@ -176,7 +176,7 @@ function doGet(e) {
   if (pagina === 'finanzas' && usuarioTieneModulo(usuario, 'finanzas')) {
     var subFin = (e && e.parameter && e.parameter.sub) || 'semana';
     // El ?sub= lo escribe quien quiera: si no es uno de los tres, abre el primero.
-    if (['semana', 'metas', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
+    if (['semana', 'metas', 'comparativo', 'escenarios', 'caja'].indexOf(subFin) === -1) subFin = 'semana';
     return render_('SistemaFinanzas', {
       usuario: usuario, urlBase: urlBase, sub: subFin, authToken: authToken
     });
@@ -219,6 +219,15 @@ function doGet(e) {
   // que se pueda desincronizar.
   if (pagina === 'escenarios' && usuarioTieneModulo(usuario, 'finanzas')) {
     return render_('EscenariosVista', {
+      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
+    }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  // Caja: proyeccion del saldo del banco a 90 dias (p94) contra el piso y el objetivo
+  // (p122). Entro el 15-sep-2026. Lee el maestro por su cuenta y los compromisos de la
+  // pestana COMPROMISOS del Sheet de config. Solo lectura.
+  if (pagina === 'caja' && usuarioTieneModulo(usuario, 'finanzas')) {
+    return render_('CajaVista', {
       usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }

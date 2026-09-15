@@ -308,7 +308,7 @@ function prCimientos_(res) {
                   'CosteoJs_Base', 'CosteoJs_Recetas', 'CosteoJs_Insumos', 'CosteoJs_Proveedores',
                   'CosteoJs_Menu', 'CosteoJs_Inicio', 'CosteoJs_HigieneGuia', 'CosteoJs_Pintar',
                   'CosteoJs_Paneles', 'CosteoJs_Acciones', 'CosteoJs_Inventario',
-                  'SistemaFinanzas', 'EscenariosVista'];
+                  'SistemaFinanzas', 'EscenariosVista', 'CajaVista'];
     var MINIMO = 15;
 
     var publicas = [];
@@ -890,7 +890,7 @@ function prPuentePOS_(res) {
                   'CosteoJs_Base', 'CosteoJs_Recetas', 'CosteoJs_Insumos', 'CosteoJs_Proveedores',
                   'CosteoJs_Menu', 'CosteoJs_Inicio', 'CosteoJs_HigieneGuia', 'CosteoJs_Pintar',
                   'CosteoJs_Paneles', 'CosteoJs_Acciones', 'CosteoJs_Inventario',
-                  'SistemaFinanzas', 'EscenariosVista'];
+                  'SistemaFinanzas', 'EscenariosVista', 'CajaVista'];
     // Piso de alarma, no meta: el 10-sep-2026 habia 21. Si de golpe caen a menos de
     // 15, lo que se rompio es el barrido, no es que hayan quitado pantallas.
     var MINIMO = 15;
@@ -982,7 +982,7 @@ function prPuentePOS_(res) {
                   'CosteoJs_Base', 'CosteoJs_Recetas', 'CosteoJs_Insumos', 'CosteoJs_Proveedores',
                   'CosteoJs_Menu', 'CosteoJs_Inicio', 'CosteoJs_HigieneGuia', 'CosteoJs_Pintar',
                   'CosteoJs_Paneles', 'CosteoJs_Acciones', 'CosteoJs_Inventario',
-                  'SistemaFinanzas', 'EscenariosVista',
+                  'SistemaFinanzas', 'EscenariosVista', 'CajaVista',
                   // sin llamadas hoy, pero son vistas: lo que no se lee, no se revisa
                   'CosteoEstilos', 'Estilos', 'Logo'];
     var MINIMO = 25;    // el 12-sep-2026 habia 36 google.script.run en estas vistas

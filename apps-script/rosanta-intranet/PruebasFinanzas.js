@@ -290,7 +290,7 @@ function prFinanzas_(res) {
     // llamaba con notacion de corchetes —run['getFinanzasData']()— y el barrido
     // de Pruebas.gs solo reconoce run.nombre(). Esta prueba mira la funcion.
     var FN = ['getFinanzasData', 'refrescarFinanzas', 'getMetasData',
-              'getComparativoData', 'getRaaData', 'guardarRaa'];
+              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData'];
     var sinGuarda = FN.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;
@@ -411,6 +411,62 @@ function prFinanzas_(res) {
       (ok ? '' : 'destino "' + destino + '" · ') + an.n + ' anuladas fuera del calculo por Q' + Math.round(an.q),
       ok ? 1 : 0, 1);
   });
+
+  // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)
+  var cj = null;
+  prCorrer_(g, 'La proyeccion de caja se calcula', function () {
+    var nombre = 'La proyeccion de caja se calcula';
+    cj = _cajaDatos_(_cajaOpciones_({ forzar: true }));
+    var n = (cj && cj.fechas) ? cj.fechas.length : 0;
+    prAnotar_(g, nombre, (cj && !cj.error && n >= 90) ? 'OK' : 'FALLA',
+      (cj && cj.error) ? cj.error
+        : n + ' dias desde el ' + (cj && cj.corte) + ' · el escenario base ' +
+          ((cj && cj.escenarios.base.cruza_cero) ? 'cruza cero el ' + cj.escenarios.base.cruza_cero : 'no cruza cero'),
+      n, '>=90');
+  });
+  if (cj && !cj.error) {
+    prCorrer_(g, 'La caja arranca del saldo de los bancos', function () {
+      var nombre = 'La caja arranca del saldo de los bancos';
+      // La pantalla de la semana lee la columna Saldo; la caja lo reconstruye con los
+      // movimientos. Si no coinciden, alguna fila del banco quedo sin cargar o fuera de orden.
+      if (!d.caja) { prAnotar_(g, nombre, 'SALTADA', 'la semana no trae saldo con que comparar', 0, '>0'); return; }
+      var dif = Math.abs(cj.saldo_inicial - d.caja);
+      prAnotar_(g, nombre, dif <= 1 ? 'OK' : 'AVISO',
+        'caja Q' + Math.round(cj.saldo_inicial) + ' · semana Q' + Math.round(d.caja) +
+        (dif <= 1 ? '' : ' · la ultima semana con venta puede tener otro dia de cierre'), Math.round(dif), '<=1');
+    });
+
+    prCorrer_(g, 'Cada debito del banco cae en un grupo de la caja', function () {
+      var nombre = 'Cada debito del banco cae en un grupo de la caja';
+      var c = cj.supuestos.cobertura || {};
+      if (!c.debitos) { prAnotar_(g, nombre, 'SALTADA', 'no hay debitos en la ventana de calibracion', 0, '>0'); return; }
+      var dif = Math.abs(c.debitos - c.agrupados);
+      prAnotar_(g, nombre, dif <= 1 ? 'OK' : 'FALLA',
+        'Q' + Math.round(c.debitos) + ' de debitos · Q' + Math.round(c.agrupados) + ' en grupos o fuera', Math.round(dif), '<=1');
+    });
+
+    prCorrer_(g, 'Las semanas de la caja llevan su año', function () {
+      var nombre = 'Las semanas de la caja llevan su año';
+      var s = cj.semanas || [];
+      if (!s.length) { prAnotar_(g, nombre, 'SALTADA', 'la proyeccion no trae semanas', 0, '>0'); return; }
+      var mal = s.filter(function (x) { return x.clave !== x.anio * 100 + x.w || x.anio < 2026; });
+      prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+        mal.length ? 'sin año correcto: ' + mal.map(function (x) { return x.clave; }).join(', ') : s.length + ' semanas con su año',
+        s.length - mal.length, s.length);
+    });
+
+    prCorrer_(g, 'Los compromisos de la caja se leen de su pestana', function () {
+      var nombre = 'Los compromisos de la caja se leen de su pestana';
+      if ((cj.compromisos_avisos || []).length) {
+        prAnotar_(g, nombre, 'FALLA', cj.compromisos_avisos.join(' · '), cj.compromisos_avisos.length, 0);
+      } else if (cj.compromisos_origen !== 'hoja') {
+        prAnotar_(g, nombre, 'AVISO', 'falta la pestana COMPROMISOS: se usan los de por defecto. Correr ' +
+          'instalarCompromisos() una vez desde el editor', 0, 1);
+      } else {
+        prAnotar_(g, nombre, 'OK', cj.compromisos.length + ' compromisos de la pestana', cj.compromisos.length, '>0');
+      }
+    });
+  }
 
   // La prueba 'Ninguna vista llama al servidor con corchetes' (5 vistas de este
   // pilar) se retiro el 12-sep-2026 por decision de Juanma: la reemplaza 'Ninguna
