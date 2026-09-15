@@ -78,6 +78,7 @@ function fechaBit_(d) {
  * cuando estas mirando un numero raro no te acordas del nombre exacto.
  */
 function historialDe(texto) {
+  soloDueno_();
   if (!texto) { Logger.log('historialDe("que"): falta el nombre a buscar.'); return []; }
   var q = normalizar_(texto);
   var todo = leerBitacora_();
@@ -112,6 +113,7 @@ function historialDe(texto) {
  * Lo unico que toca es esa pestana. Se regenera entera cada vez.
  */
 function refrescarResumenBitacora() {
+  soloDueno_();
   var todo = leerBitacora_();
   var ahora = new Date();
   var corte = new Date(ahora.getTime() - BIT.dias * 24 * 60 * 60 * 1000);

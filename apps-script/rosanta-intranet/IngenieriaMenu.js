@@ -387,6 +387,7 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
  * pase es parte de la prueba: la hoja tiene cargado enero-a-agosto.
  */
 function probarIngenieriaMenu(desde, hasta) {
+  soloDueno_();
   desde = desde || '2026-01-02'; hasta = hasta || '2026-07-31';
   var r = ingenieriaDeMenu_(desde, hasta);
 
@@ -527,6 +528,7 @@ function ventasYVentana_(semanas) {
  * `semanas`: 4, 13, o 0/null para todo el historico.
  */
 function getIngenieriaMenu(semanas) {
+  soloDueno_();
   var w = ventasYVentana_(semanas === undefined ? 13 : semanas);
   if (!w) return { ok: false, error: 'Todavia no hay ventas cargadas. Corré cargarVentasPorProducto().' };
   return menuDesdeR_(ingenieriaDeMenu_(w.desde, w.hasta, w.ventas));

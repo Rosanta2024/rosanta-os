@@ -57,7 +57,7 @@ var FIN_USD_DEF = 7.7;
  * RESUELTO el 12-sep-2026. Hasta hoy este objeto ERA la fuente, y estaba
  * copiado igual en generar_finanzas.py: dos lugares que habia que tocar a mano
  * al cerrar cada mes y nada avisaba si uno se quedaba atras. Los dos se
- * quedaron en agosto. Ahora la fuente es el Sheet (_finPlanilla()) y esto es
+ * quedaron en agosto. Ahora la fuente es el Sheet (_finPlanilla_()) y esto es
  * RESPALDO: solo cubre los meses que el Sheet no traiga, y la pantalla dice de
  * donde salio cada mes.
  *
@@ -105,24 +105,24 @@ var FIN_PAGO_DE_FACTURA = [
 ];
 
 /** El proveedor si la fila es el pago de una factura FEL; si no, ''. */
-function _finPagoDeFactura(hoja, texto, cat) {
+function _finPagoDeFactura_(hoja, texto, cat) {
   var t = String(texto || '').toUpperCase().replace(/\s+/g, ' ');
   for (var i = 0; i < FIN_PAGO_DE_FACTURA.length; i++) {
     var P = FIN_PAGO_DE_FACTURA[i];
-    if (!_finEn(P.hojas, hoja)) continue;
+    if (!_finEn_(P.hojas, hoja)) continue;
     if (P.texto && !P.texto.test(t)) continue;
-    if (P.cats && !_finEn(P.cats, cat)) continue;
+    if (P.cats && !_finEn_(P.cats, cat)) continue;
     return P.prov;
   }
   return '';
 }
 
 /** Por proveedor de la regla 9: pago saltado del año contra su factura FEL, por NIT. */
-function _finPagoFacturaResumen(saltado, felNit) {
+function _finPagoFacturaResumen_(saltado, felNit) {
   var out = {};
   FIN_PAGO_DE_FACTURA.forEach(function (P) {
-    out[P.prov] = { nit: P.nit, pago: _finR(saltado[P.prov] || 0),
-                    factura: _finR(felNit[P.nit] || 0) };
+    out[P.prov] = { nit: P.nit, pago: _finR_(saltado[P.prov] || 0),
+                    factura: _finR_(felNit[P.nit] || 0) };
   });
   return out;
 }
@@ -145,7 +145,7 @@ var FIN_MIX = { cocina: 77.9, barra: 22.1 };
  * Siguen siendo dos numeros distintos a proposito: la global mide lo que paso, la de
  * area limita lo que se compra esta semana.
  */
-function _finMetaArea() {
+function _finMetaArea_() {
   return { cocina: metaDeArea_('COCINA'), barra: metaDeArea_('BARRA') };
 }
 
@@ -171,7 +171,7 @@ var FIN_AREA_CAT = {
  */
 
 /** Un parametro de la pestana PARAMETROS del Sheet de config. Cachea 10 minutos. */
-function _finParametro(clave, defecto) {
+function _finParametro_(clave, defecto) {
   var cache = CacheService.getScriptCache();
   // v2 (14-sep-2026): la version anterior guardaba estos valores 6 horas con la clave
   // 'fin_par_'. Al cambiar la meta a 28 en PARAMETROS, el codigo nuevo seguia leyendo
@@ -206,7 +206,7 @@ function _finParametro(clave, defecto) {
   return val;
 }
 
-function _finMetaFood() { return metasFoodCost_().global; }
+function _finMetaFood_() { return metasFoodCost_().global; }
 
 /**
  * La planilla devengada de los meses del año, leida del Sheet de planilla.
@@ -218,7 +218,7 @@ function _finMetaFood() { return metasFoodCost_().global; }
  * 12-sep-2026: la primera version casaba por nombre de mes ("ago", "jul") y no
  * encontro NINGUNA. La bateria lo cazo ("0 meses del Sheet, 8 del respaldo")
  * y la pantalla habria seguido mostrando el respaldo congelado sin decir nada
- * distinto a lo de antes. Ver _finMesDePestana(): se filtra por AÑO, porque el
+ * distinto a lo de antes. Ver _finMesDePestana_(): se filtra por AÑO, porque el
  * dia que exista 2027-08 no puede pisar a 2026-08.
  *
  * Devuelve { valores: {mes: monto}, origen: {mes: 'sheet'|'respaldo'}, error }.
@@ -226,7 +226,7 @@ function _finMetaFood() { return metasFoodCost_().global; }
  * pantalla muestra de donde salio: un numero de respaldo en octubre es un
  * numero viejo, y eso tiene que verse.
  */
-function _finPlanilla() {
+function _finPlanilla_() {
   var out = { valores: {}, origen: {}, error: '' };
   var ss = null;
   try {
@@ -238,9 +238,9 @@ function _finPlanilla() {
     var anio = new Date().getFullYear();
     var hojas = ss.getSheets();
     for (var h = 0; h < hojas.length; h++) {
-      var mes = _finMesDePestana(hojas[h].getName(), anio);
+      var mes = _finMesDePestana_(hojas[h].getName(), anio);
       if (!mes || out.valores[mes]) continue;
-      var v = _finSubTotalSalario(hojas[h]);
+      var v = _finSubTotalSalario_(hojas[h]);
       if (v) { out.valores[mes] = v; out.origen[mes] = 'sheet'; }
     }
   }
@@ -263,8 +263,8 @@ function _finPlanilla() {
  *                                 principio. Se deja como respaldo, pero si el
  *                                 nombre trae OTRO año se descarta.
  */
-function _finMesDePestana(nombre, anio) {
-  var n = _finSinAcentos(String(nombre || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+function _finMesDePestana_(nombre, anio) {
+  var n = _finSinAcentos_(String(nombre || '')).toLowerCase().replace(/\s+/g, ' ').trim();
   var m = n.match(/^(\d{4})\s*[-_\/.]\s*(\d{1,2})$/);
   if (m) return (Number(m[1]) === anio && +m[2] >= 1 && +m[2] <= 12) ? +m[2] : 0;
   m = n.match(/^(\d{1,2})\s*[-_\/.]\s*(\d{4})$/);
@@ -272,19 +272,19 @@ function _finMesDePestana(nombre, anio) {
   var otroAnio = n.match(/\b(\d{4})\b/);
   if (otroAnio && Number(otroAnio[1]) !== anio) return 0;
   for (var i = 1; i <= 12; i++) {
-    if (n.indexOf(_finSinAcentos(FIN_MESES[i - 1]).toLowerCase()) === 0) return i;
+    if (n.indexOf(_finSinAcentos_(FIN_MESES[i - 1]).toLowerCase()) === 0) return i;
   }
   return 0;
 }
 
 /** "Sub total" de la columna "Salario base" de una pestana de la planilla. */
-function _finSubTotalSalario(hoja) {
+function _finSubTotalSalario_(hoja) {
   var filas;
   try { filas = hoja.getDataRange().getValues(); } catch (e) { return 0; }
   var col = -1, fila = -1;
   for (var r = 0; r < filas.length && (col < 0 || fila < 0); r++) {
     for (var c = 0; c < filas[r].length; c++) {
-      var t = _finSinAcentos(String(filas[r][c] || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+      var t = _finSinAcentos_(String(filas[r][c] || '')).toLowerCase().replace(/\s+/g, ' ').trim();
       if (col < 0 && t === 'salario base') col = c;
       if (fila < 0 && (t === 'sub total' || t === 'subtotal')) fila = r;
     }
@@ -294,7 +294,7 @@ function _finSubTotalSalario(hoja) {
   return isNaN(v) ? 0 : v;
 }
 
-function _finSinAcentos(s) {
+function _finSinAcentos_(s) {
   return String(s === null || s === undefined ? '' : s)
     .replace(/[\u00e1\u00e0\u00e4\u00e2]/g, 'a').replace(/[\u00e9\u00e8\u00eb\u00ea]/g, 'e')
     .replace(/[\u00ed\u00ec\u00ef\u00ee]/g, 'i').replace(/[\u00f3\u00f2\u00f6\u00f4]/g, 'o')
@@ -365,24 +365,24 @@ var FIN_LIBROS = [
 
 // ---------------------------------------------------------------- utilidades
 
-function _finSemanaISO(d) {
+function _finSemanaISO_(d) {
   var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   var dia = t.getUTCDay() || 7;             // domingo = 7, no 0
   t.setUTCDate(t.getUTCDate() + 4 - dia);   // al jueves de su semana
   var ene1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
   return Math.ceil((((t - ene1) / 86400000) + 1) / 7);
 }
-function _finEsFecha(v) { return v instanceof Date && !isNaN(v.getTime()); }
-function _finNum(v) { var n = Number(v); return isNaN(n) ? 0 : n; }
-function _finDDMM(d) {
+function _finEsFecha_(v) { return v instanceof Date && !isNaN(v.getTime()); }
+function _finNum_(v) { var n = Number(v); return isNaN(n) ? 0 : n; }
+function _finDDMM_(d) {
   return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2);
 }
-function _finFecha(d) { return _finDDMM(d) + '/' + d.getFullYear(); }
-function _finR(n, dec) {
+function _finFecha_(d) { return _finDDMM_(d) + '/' + d.getFullYear(); }
+function _finR_(n, dec) {
   var f = Math.pow(10, dec === undefined ? 2 : dec);
   return Math.round(n * f) / f;
 }
-function _finEn(lista, v) { return lista.indexOf(v) !== -1; }
+function _finEn_(lista, v) { return lista.indexOf(v) !== -1; }
 
 
 // ------------------------------------------------------------------ el calculo
@@ -403,7 +403,7 @@ function _finEn(lista, v) { return lista.indexOf(v) !== -1; }
  */
 function getFinanzasData(auth, forzar) {
   exigirModulo_(auth, 'finanzas');
-  return _finDatos(forzar);
+  return _finDatos_(forzar);
 }
 
 /**
@@ -420,7 +420,7 @@ function finCacheClave_() {
   return 'finanzas_v5_m' + m.global + '-' + m.BARRA;
 }
 
-function _finDatos(forzar) {
+function _finDatos_(forzar) {
   var cache = CacheService.getScriptCache();
   if (!forzar) {
     var guardado = cache.get(finCacheClave_());
@@ -428,7 +428,7 @@ function _finDatos(forzar) {
       try { return JSON.parse(guardado); } catch (e) { /* cache corrupta: se recalcula */ }
     }
   }
-  var datos = _finCalcular();
+  var datos = _finCalcular_();
   try {
     // v5 (14-sep-2026): regla 9, los pagos a proveedores que facturan por FEL
     // dejan de sumar. Una cache v4 mostraria el DRE con el doble conteo.
@@ -452,18 +452,18 @@ function refrescarFinanzas(auth) {
   CacheService.getScriptCache().removeAll(['fin_par_v2_food_cost_objetivo_pct',
     'fin_par_v2_food_cost_barra_pct', 'fin_par_v2_tipo_cambio_usd']);
   METAS_FC_MEMO_ = null;
-  return _finDatos(true);
+  return _finDatos_(true);
 }
 
 
-function _finCalcular() {
+function _finCalcular_() {
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
   var anio = new Date().getFullYear();
   // Los dos parametros y la planilla se leen UNA vez, antes de las pasadas.
   // Regla 3 de Apps Script: nada de llamadas a servicio dentro de un bucle.
-  var usd = _finParametro('tipo_cambio_usd', FIN_USD_DEF);
-  var metaFood = _finMetaFood();
-  var planilla = _finPlanilla();
+  var usd = _finParametro_('tipo_cambio_usd', FIN_USD_DEF);
+  var metaFood = _finMetaFood_();
+  var planilla = _finPlanilla_();
 
   var mes = {}, sem = {};
   function _mes(m) {
@@ -485,9 +485,9 @@ function _finCalcular() {
   var ultVenta = null;
   for (var r = FIN_PRIMERA_FILA - 1; r < V.length; r++) {
     var f = V[r][1];                                    // col 2: Fecha
-    if (!_finEsFecha(f) || f.getFullYear() !== anio) continue;
+    if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
     if (!ultVenta || f > ultVenta) ultVenta = f;
-    var neto = _finNum(V[r][3]) / 1.12;                 // regla 1: col 4 con IVA
+    var neto = _finNum_(V[r][3]) / 1.12;                 // regla 1: col 4 con IVA
     var M = _mes(f.getMonth() + 1);
     // regla 2: el evento privado es ingreso adicional, no venta de restaurante
     if ((String(V[r][7] || '') + String(V[r][11] || '')).toUpperCase().indexOf('EVENTO') !== -1) {
@@ -496,13 +496,13 @@ function _finCalcular() {
     }
     M.ventas += neto;
     M.tickets += 1;
-    M.com += Math.round(_finNum(V[r][8]));              // col 9: comensales
-    var wISO = _finSemanaISO(f);
+    M.com += Math.round(_finNum_(V[r][8]));              // col 9: comensales
+    var wISO = _finSemanaISO_(f);
     if (!M.porSemana[wISO]) M.porSemana[wISO] = { v: 0, com: 0 };
     M.porSemana[wISO].v += neto;
-    M.porSemana[wISO].com += Math.round(_finNum(V[r][8]));
-    var S = _sem(_finSemanaISO(f));
-    S.v += neto; S.tickets += 1; S.com += Math.round(_finNum(V[r][8]));
+    M.porSemana[wISO].com += Math.round(_finNum_(V[r][8]));
+    var S = _sem(_finSemanaISO_(f));
+    S.v += neto; S.tickets += 1; S.com += Math.round(_finNum_(V[r][8]));
     if (!S.ini || f < S.ini) S.ini = f;
     if (!S.fin || f > S.fin) S.fin = f;
   }
@@ -524,7 +524,7 @@ function _finCalcular() {
   // Compra de mercaderia partida por area y por familia de producto. Es lo que
   // convierte el techo de compra en algo que Jeffry y Jose pueden usar: deja de
   // ser un numero del restaurante y pasa a ser el de cada quien.
-  var fam = _finFamilias();
+  var fam = _finFamilias_();
   var compra = { cocina: { total: 0, f: {}, mes: {} }, barra: { total: 0, f: {}, mes: {} } };
   function _compra(cat, mes, prov, monto) {
     var area = FIN_AREA_CAT[cat];
@@ -535,27 +535,27 @@ function _finCalcular() {
     // Sin factura no hay proveedor con quien casar: se agrupa aparte a
     // proposito. Saber cuanto se compra fuera de factura ES el dato.
     var f = (cat.indexOf('_EFECTIVO') > 0) ? 'SIN_FACTURA'
-          : (fam[_finLlaveProv(prov)] || 'REVISAR');
+          : (fam[_finLlaveProv_(prov)] || 'REVISAR');
     A.f[f] = (A.f[f] || 0) + monto;
   }
   FIN_LIBROS.forEach(function (L) {
     var filas = ss.getSheetByName(L.hoja).getDataRange().getValues();
     for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
       var f = filas[r][0];
-      if (!_finEsFecha(f) || f.getFullYear() !== anio) continue;
+      if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
       if (!ultCarga[L.hoja] || f > ultCarga[L.hoja]) ultCarga[L.hoja] = f;
 
       var cat = String(filas[r][L.cat - 1] || '').trim();
       if (cat === 'POR_CLASIFICAR') porClasificar++;
 
-      var q = _finNum(filas[r][L.monto - 1]);
-      if (L.usd) q += _finNum(filas[r][L.usd - 1]) * usd;
+      var q = _finNum_(filas[r][L.monto - 1]);
+      if (L.usd) q += _finNum_(filas[r][L.usd - 1]) * usd;
 
       // Espeja a proposito las reglas de abajo en vez de reusarlas: si las dos
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
-      var pagoDe = L.desc ? _finPagoDeFactura(L.hoja, filas[r][L.desc - 1], cat) : '';
-      var dest = _finDestino(cat, L.hoja, esPers, pagoDe);
+      var pagoDe = L.desc ? _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat) : '';
+      var dest = _finDestino_(cat, L.hoja, esPers, pagoDe);
       if (L.nit) {
         var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
         felNit[nit] = (felNit[nit] || 0) + q;
@@ -570,7 +570,7 @@ function _finCalcular() {
       // columna vale 0 en las facturas de pequeño contribuyente, asi que restar
       // por ella sirve para los dos casos sin suponer una tasa. La tarjeta no
       // trae columna de IVA: esa mercaderia se queda en bruto.
-      var costo = q - (L.iva ? _finNum(filas[r][L.iva - 1]) : 0);
+      var costo = q - (L.iva ? _finNum_(filas[r][L.iva - 1]) : 0);
       var M = _mes(f.getMonth() + 1);
 
       if (esPers || cat === 'PERSONAL') {
@@ -579,20 +579,20 @@ function _finCalcular() {
       if (cat === 'DEVOLUCION_INVERSION') { M.dev += q; continue; }
       // lo que salio del banco y todavia no se sabe a quien
       if (cat === 'TRANSFERENCIA_SALIENTE') sinIdentificar += q;
-      if (!cat || _finEn(FIN_FUERA, cat) || cat.indexOf('INGRESO') === 0) continue;
+      if (!cat || _finEn_(FIN_FUERA, cat) || cat.indexOf('INGRESO') === 0) continue;
 
-      if (_finEn(FIN_COGS_CATS, cat)) {
+      if (_finEn_(FIN_COGS_CATS, cat)) {
         // regla 3: la mercaderia pagada desde un banco es el pago de la factura
         // que ya vino por FEL. Sumarla seria contarla dos veces.
-        if (_finEn(FIN_BANCOS, L.hoja)) continue;
+        if (_finEn_(FIN_BANCOS, L.hoja)) continue;
         M.cogs += costo; felCompra += q;   // costo neto; el ratio de factura va bruto
-        if (sem[_finSemanaISO(f)]) sem[_finSemanaISO(f)].cogs += costo;
+        if (sem[_finSemanaISO_(f)]) sem[_finSemanaISO_(f)].cogs += costo;
         _compra(cat, f.getMonth() + 1, L.prov ? filas[r][L.prov - 1] : '', costo);
         continue;
       }
-      if (_finEn(FIN_EFECTIVO, cat)) {                 // compra sin factura
+      if (_finEn_(FIN_EFECTIVO, cat)) {                 // compra sin factura
         M.cogs += q; efeCompra += q;
-        if (sem[_finSemanaISO(f)]) sem[_finSemanaISO(f)].cogs += q;
+        if (sem[_finSemanaISO_(f)]) sem[_finSemanaISO_(f)].cogs += q;
         _compra(cat, f.getMonth() + 1, '', q);
         continue;
       }
@@ -600,7 +600,7 @@ function _finCalcular() {
       if ((cat === 'ALQUILERES' || cat === 'ALQUILER') && L.hoja === '01_FEL_Maestro') continue;
       // regla 8: hay categorias que solo se cuentan por FEL; el movimiento del
       // banco es el pago de esa misma factura
-      if (_finEn(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
+      if (_finEn_(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
       // regla 9: pago de un proveedor que siempre factura por FEL
       if (pagoDe) continue;
       if (cat === 'IGSS') M.igss += q;
@@ -620,10 +620,10 @@ function _finCalcular() {
     var ultimo = {};
     for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
       var f = filas[r][0];
-      if (!_finEsFecha(f) || f.getFullYear() !== anio) continue;
+      if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
       if (!ultCarga[B.hoja] || f > ultCarga[B.hoja]) ultCarga[B.hoja] = f;
       var s = filas[r][B.col - 1];
-      if (typeof s === 'number') ultimo[_finSemanaISO(f)] = s;
+      if (typeof s === 'number') ultimo[_finSemanaISO_(f)] = s;
     }
     var prev = 0;
     for (var w = 1; w <= 53; w++) {
@@ -647,15 +647,15 @@ function _finCalcular() {
     var labor = (devengado || 0) + M.igss;
     var gopDev = gop - (M.bloques['Nomina y salarios'] || 0) + labor;
     meses.push({
-      m: m, mes: FIN_MESES[m - 1], ventas: _finR(M.ventas), eventos: _finR(M.eventos),
-      com: M.com, cogs: _finR(M.cogs), labor: _finR(labor), igss: _finR(M.igss),
-      devengado: devengado !== null, gop: _finR(gopDev), imp: _finR(M.bloques['Impuestos'] || 0),
-      dev: _finR(M.dev), pers: _finR(M.pers),
-      neto: _finR(M.ventas - M.cogs - gopDev),
-      cogsp: _finR(M.cogs / M.ventas * 100, 1),
-      laborp: _finR(labor / M.ventas * 100, 1),
-      primep: _finR((M.cogs + labor) / M.ventas * 100, 1),
-      netop: _finR((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
+      m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), eventos: _finR_(M.eventos),
+      com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
+      devengado: devengado !== null, gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
+      dev: _finR_(M.dev), pers: _finR_(M.pers),
+      neto: _finR_(M.ventas - M.cogs - gopDev),
+      cogsp: _finR_(M.cogs / M.ventas * 100, 1),
+      laborp: _finR_(labor / M.ventas * 100, 1),
+      primep: _finR_((M.cogs + labor) / M.ventas * 100, 1),
+      netop: _finR_((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
       tickets: M.tickets,
       // Punto de equilibrio del mes: gasto fijo / margen de contribucion. Lo
       // semivariable entra a la mitad. Es el mismo criterio con el que se
@@ -666,10 +666,10 @@ function _finCalcular() {
       // devengada. Se deja asi para que el numero sea comparable con el del
       // tablero viejo; queda anotado como lo primero que hay que revisar si el
       // equilibrio se usa para decidir.
-      fijo: _finR(M.tipo.F + M.tipo.S * 0.5),
-      mc: _finR((M.ventas - M.cogs) / M.ventas * 100, 1),
+      fijo: _finR_(M.tipo.F + M.tipo.S * 0.5),
+      mc: _finR_((M.ventas - M.cogs) / M.ventas * 100, 1),
       bev: (M.ventas - M.cogs) > 0
-        ? _finR((M.tipo.F + M.tipo.S * 0.5) / ((M.ventas - M.cogs) / M.ventas)) : 0,
+        ? _finR_((M.tipo.F + M.tipo.S * 0.5) / ((M.ventas - M.cogs) / M.ventas)) : 0,
       bloques: M.bloques, tipo: M.tipo, porSemana: M.porSemana
     });
   });
@@ -686,12 +686,12 @@ function _finCalcular() {
     ['F', 'S', 'V'].forEach(function (t) { anioTot.tipo[t] += x.tipo[t]; });
   });
   ['ventas', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev'].forEach(function (k) {
-    anioTot[k] = _finR(anioTot[k]);
+    anioTot[k] = _finR_(anioTot[k]);
   });
-  anioTot.cogsp = _finR(anioTot.cogs / anioTot.ventas * 100, 1);
-  anioTot.laborp = _finR(anioTot.labor / anioTot.ventas * 100, 1);
-  anioTot.primep = _finR((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);
-  anioTot.netop = _finR(anioTot.neto / anioTot.ventas * 100, 1);
+  anioTot.cogsp = _finR_(anioTot.cogs / anioTot.ventas * 100, 1);
+  anioTot.laborp = _finR_(anioTot.labor / anioTot.ventas * 100, 1);
+  anioTot.primep = _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);
+  anioTot.netop = _finR_(anioTot.neto / anioTot.ventas * 100, 1);
 
   // Cada bloque contra su banda del sector. El desvio va en quetzales al mes,
   // que es lo unico que permite compararlos entre si.
@@ -703,10 +703,10 @@ function _finCalcular() {
 
   var bloques = Object.keys(bloquesVivos).map(function (b) {
     var q = anioTot.bloques[b] || 0;
-    var p = _finR(q / anioTot.ventas * 100, 1);
+    var p = _finR_(q / anioTot.ventas * 100, 1);
     var ref = FIN_REF[b] || [0, 0];
-    var sobre = ref[1] ? _finR(Math.max(p - ref[1], 0) / 100 * anioTot.ventas / meses.length) : 0;
-    return { bloque: b, q: _finR(q), pct: p, min: ref[0], max: ref[1],
+    var sobre = ref[1] ? _finR_(Math.max(p - ref[1], 0) / 100 * anioTot.ventas / meses.length) : 0;
+    return { bloque: b, q: _finR_(q), pct: p, min: ref[0], max: ref[1],
              zona: !ref[1] ? 'gris' : (p <= ref[1] ? (p < ref[0] ? 'bajo' : 'verde') : 'rojo'),
              sobre_mes: sobre };
   }).sort(function (a, b) { return b.q - a.q; });
@@ -718,35 +718,35 @@ function _finCalcular() {
     if (d.v < 1000) return;                    // semanas a medias no dicen nada
     var lab = (planilla.valores[d.ini.getMonth() + 1] || 29000) / FIN_SEMANAS_MES;
     var b = saldos[w] || {};
-    S.push({ w: w, ini: _finDDMM(d.ini), fin: _finDDMM(d.fin),
-             ventas: _finR(d.v), com: d.com, tickets: d.tickets,
-             tp: d.com ? _finR(d.v / d.com) : 0,
-             cogs: _finR(d.cogs), cogsp: _finR(d.cogs / d.v * 100, 1),
-             labor: _finR(lab), laborp: _finR(lab / d.v * 100, 1),
-             prime: _finR((d.cogs + lab) / d.v * 100, 1),
-             caja: _finR((b.bi || 0) + (b.bac || 0)) });
+    S.push({ w: w, ini: _finDDMM_(d.ini), fin: _finDDMM_(d.fin),
+             ventas: _finR_(d.v), com: d.com, tickets: d.tickets,
+             tp: d.com ? _finR_(d.v / d.com) : 0,
+             cogs: _finR_(d.cogs), cogsp: _finR_(d.cogs / d.v * 100, 1),
+             labor: _finR_(lab), laborp: _finR_(lab / d.v * 100, 1),
+             prime: _finR_((d.cogs + lab) / d.v * 100, 1),
+             caja: _finR_((b.bi || 0) + (b.bac || 0)) });
   });
   // regla 7: media movil de 4 = cociente de las sumas, NO promedio de porcentajes
   for (var i = 3; i < S.length; i++) {
     var vv = 0, cc = 0, ll = 0;
     for (var j = i - 3; j <= i; j++) { vv += S[j].ventas; cc += S[j].cogs; ll += S[j].labor; }
-    S[i].cogs_m4 = _finR(cc / vv * 100, 1);
-    S[i].prime_m4 = _finR((cc + ll) / vv * 100, 1);
+    S[i].cogs_m4 = _finR_(cc / vv * 100, 1);
+    S[i].prime_m4 = _finR_((cc + ll) / vv * 100, 1);
   }
   for (var k = 1; k < S.length; k++) {
     var p = S[k - 1];
-    S[k].dv = p.ventas ? _finR((S[k].ventas - p.ventas) / p.ventas * 100, 1) : 0;
+    S[k].dv = p.ventas ? _finR_((S[k].ventas - p.ventas) / p.ventas * 100, 1) : 0;
     S[k].dc = S[k].com - p.com;
-    S[k].dtp = _finR(S[k].tp - p.tp);
+    S[k].dtp = _finR_(S[k].tp - p.tp);
   }
 
   // ---- integridad del dato --------------------------------------------
   var u = S[S.length - 1] || {};
   var gastoMes = meses.length ? (anioTot.cogs + anioTot.gop) / meses.length : 0;
-  var gastoDia = _finR(gastoMes / 30);
+  var gastoDia = _finR_(gastoMes / 30);
   var ult = {};
-  Object.keys(ultCarga).forEach(function (h) { ult[h] = _finFecha(ultCarga[h]); });
-  if (ultVenta) ult['02_Ventas_Maestro'] = _finFecha(ultVenta);
+  Object.keys(ultCarga).forEach(function (h) { ult[h] = _finFecha_(ultCarga[h]); });
+  if (ultVenta) ult['02_Ventas_Maestro'] = _finFecha_(ultVenta);
 
   return {
     anio: anio,
@@ -756,30 +756,30 @@ function _finCalcular() {
     semanas: S,
     ultima: u,
     meta_cogs: metaFood,
-    meta_area: _finMetaArea(),
+    meta_area: _finMetaArea_(),
     usd: usd,
     mix: FIN_MIX,
     compra: compra,
     caja: u.caja || 0,
     gasto_dia: gastoDia,
-    dias_caja: gastoDia ? _finR((u.caja || 0) / gastoDia, 1) : 0,
+    dias_caja: gastoDia ? _finR_((u.caja || 0) / gastoDia, 1) : 0,
     integridad: {
       por_clasificar: porClasificar,
-      factura_pct: (felCompra + efeCompra) ? _finR(felCompra / (felCompra + efeCompra) * 100, 1) : 0,
-      fel: _finR(felCompra), efectivo: _finR(efeCompra),
-      sin_mapear: _finR(sinMapear),
-      sin_identificar: _finR(sinIdentificar),
+      factura_pct: (felCompra + efeCompra) ? _finR_(felCompra / (felCompra + efeCompra) * 100, 1) : 0,
+      fel: _finR_(felCompra), efectivo: _finR_(efeCompra),
+      sin_mapear: _finR_(sinMapear),
+      sin_identificar: _finR_(sinIdentificar),
       ult: ult,
       dias_atraso: ultVenta ? Math.floor((new Date() - ultVenta) / 86400000) : 999,
       // De donde salio la planilla de cada mes. Un mes en "respaldo" es un
       // numero congelado en el codigo: tiene que verse, no esconderse.
       planilla: planilla.origen,
       planilla_error: planilla.error,
-      cobertura: _finRedondear(cob),
-      fugas: _finFugas(cob),
-      desconocidas: _finRedondear(desconocidas),
+      cobertura: _finRedondear_(cob),
+      fugas: _finFugas_(cob),
+      desconocidas: _finRedondear_(desconocidas),
       // regla 9: lo saltado de cada proveedor contra su factura del año
-      pago_factura: _finPagoFacturaResumen(pagoSaltado, felNit)
+      pago_factura: _finPagoFacturaResumen_(pagoSaltado, felNit)
     },
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
   };
@@ -814,6 +814,7 @@ var FIN_METAS_COLS = ['ANIO', 'MES', 'META_VENTA', 'META_FOOD_PCT', 'ORIGEN'];
 
 /** Una vez. Crea la pestana METAS con los meses que faltan del año. */
 function instalarMetas() {
+  soloDueno_();
   var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
   var hoja = ss.getSheetByName(FIN_HOJA_METAS);
   if (hoja) return 'La pestana METAS ya existe. No se toco nada.';
@@ -824,7 +825,7 @@ function instalarMetas() {
   var anio = new Date().getFullYear();
   var filas = [];
   for (var m = new Date().getMonth() + 1; m <= 12; m++) {
-    filas.push([anio, m, 154500, _finMetaFood(),
+    filas.push([anio, m, 154500, _finMetaFood_(),
                 'PROVISIONAL: promedio de los ultimos 3 meses +20%. Cambiar cuando entre 2025.']);
   }
   if (filas.length) hoja.getRange(2, 1, filas.length, FIN_METAS_COLS.length).setValues(filas);
@@ -832,19 +833,19 @@ function instalarMetas() {
   return 'Pestana METAS creada con ' + filas.length + ' meses. Edita META_VENTA ahi.';
 }
 
-function _finMeta(anio, m) {
+function _finMeta_(anio, m) {
   var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
   var hoja = ss.getSheetByName(FIN_HOJA_METAS);
   if (!hoja) return null;
   var filas = hoja.getDataRange().getValues();
   for (var i = 1; i < filas.length; i++) {
     if (Number(filas[i][0]) === anio && Number(filas[i][1]) === m) {
-      var venta = _finNum(filas[i][2]);
+      var venta = _finNum_(filas[i][2]);
       if (!venta) return null;
       // META_FOOD_PCT de esta pestana se IGNORA desde el 14-sep-2026: era una copia de
       // la meta congelada por instalarMetas(), y cambiar PARAMETROS no la movia. La
       // tarjeta de Metas decia un numero y el semaforo de la semana otro.
-      return { venta: venta, food: _finMetaFood(),
+      return { venta: venta, food: _finMetaFood_(),
                origen: String(filas[i][4] || '').trim(),
                provisional: String(filas[i][4] || '').toUpperCase().indexOf('PROVISIONAL') === 0 };
     }
@@ -863,7 +864,7 @@ function _finMeta(anio, m) {
  * se hace TICKET contra TICKET y no comensal contra comensal: es lo unico que
  * existe en los dos años.
  */
-function _finAnio2025() {
+function _finAnio2025_() {
   var hoja;
   try {
     hoja = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName(FIN_HOJA_2025);
@@ -874,14 +875,14 @@ function _finAnio2025() {
     var m = Number(filas[r][13]);
     if (!m || m < 1 || m > 12) continue;
     if (!out[m]) out[m] = { ventas: 0, tickets: 0 };
-    out[m].ventas += _finNum(filas[r][12]);
+    out[m].ventas += _finNum_(filas[r][12]);
     out[m].tickets += 1;
   }
-  Object.keys(out).forEach(function (k) { out[k].ventas = _finR(out[k].ventas); });
+  Object.keys(out).forEach(function (k) { out[k].ventas = _finR_(out[k].ventas); });
   return out;
 }
 
-function _finBase2025(m) {
+function _finBase2025_(m) {
   var hoja;
   try {
     hoja = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName(FIN_HOJA_2025);
@@ -889,13 +890,13 @@ function _finBase2025(m) {
   if (!hoja || hoja.getLastRow() < 2) return null;
   var filas = hoja.getDataRange().getValues(), suma = 0, n = 0;
   for (var r = 1; r < filas.length; r++) {
-    if (Number(filas[r][13]) === m) { suma += _finNum(filas[r][12]); n++; }
+    if (Number(filas[r][13]) === m) { suma += _finNum_(filas[r][12]); n++; }
   }
-  return n ? { ventas: _finR(suma), tickets: n } : null;
+  return n ? { ventas: _finR_(suma), tickets: n } : null;
 }
 
 /**
- * El ritmo del mes en curso. Se apoya en _finDatos() para no volver a
+ * El ritmo del mes en curso. Se apoya en _finDatos_() para no volver a
  * leer el maestro entero.
  *
  * Los dias son dias de calendario, no dias de operacion: si el restaurante
@@ -904,7 +905,7 @@ function _finBase2025(m) {
  */
 function getMetasData(auth, forzar) {
   exigirModulo_(auth, 'finanzas');
-  var d = _finDatos(forzar);
+  var d = _finDatos_(forzar);
   // El mes en curso del calendario, NO el ultimo mes con ventas. Si se toma el
   // ultimo con ventas, el dia 4 de septiembre el panel muestra agosto, que ya
   // cerro, y dice que no falta nada.
@@ -913,8 +914,8 @@ function getMetasData(auth, forzar) {
   var mesActual = null;
   d.meses.forEach(function (x) { if (x.m === m) mesActual = x; });
 
-  var meta = _finMeta(anio, m);
-  var base = _finBase2025(m);
+  var meta = _finMeta_(anio, m);
+  var base = _finBase2025_(m);
 
   // El piso: promedio de los ultimos meses cerrados de este año.
   //
@@ -927,8 +928,8 @@ function getMetasData(auth, forzar) {
   d.meses.forEach(function (x) { if (x.m < m) cerrados.push(x); });
   cerrados = cerrados.slice(-FIN_PISO_MESES);
   cerrados.forEach(function (x) { sumaPiso += x.ventas; });
-  var piso = cerrados.length ? _finR(sumaPiso / cerrados.length) : 0;
-  var porAnioPasado = base ? _finR(base.ventas * FIN_CRECIMIENTO) : 0;
+  var piso = cerrados.length ? _finR_(sumaPiso / cerrados.length) : 0;
+  var porAnioPasado = base ? _finR_(base.ventas * FIN_CRECIMIENTO) : 0;
 
   // Una meta escrita a mano en METAS le gana a las dos, salvo que su ORIGEN
   // diga PROVISIONAL: eso marca un tapa-agujeros de cuando no habia con que medir.
@@ -947,7 +948,7 @@ function getMetasData(auth, forzar) {
       texto = '+' + Math.round((FIN_CRECIMIENTO - 1) * 100) + '% sobre ' + FIN_MESES[m - 1] +
               ' 2025, que cerro en Q' + base.ventas.toLocaleString('es-GT') + '.';
     }
-    meta = { venta: Math.max(porAnioPasado, piso), food: (meta && meta.food) || _finMetaFood(),
+    meta = { venta: Math.max(porAnioPasado, piso), food: (meta && meta.food) || _finMetaFood_(),
              origen: texto, provisional: false, automatica: true, manda_piso: mandaPiso };
   }
 
@@ -974,7 +975,7 @@ function getMetasData(auth, forzar) {
   var semanas = [], idx = {};
   for (var dia = 1; dia <= diasMes; dia++) {
     var f = new Date(anio, m - 1, dia);
-    var w = _finSemanaISO(f);
+    var w = _finSemanaISO_(f);
     if (idx[w] === undefined) {
       idx[w] = semanas.length;
       semanas.push({ w: w, dia_ini: dia, dia_fin: dia, dias: 0,
@@ -987,7 +988,7 @@ function getMetasData(auth, forzar) {
   }
   semanas.forEach(function (S) {
     var v = porSem[S.w] || { v: 0, com: 0 };
-    S.ventas = _finR(v.v);
+    S.ventas = _finR_(v.v);
     S.com = v.com;
     S.ini = S.dia_ini + '/' + m;
     S.fin = S.dia_fin + '/' + m;
@@ -1001,11 +1002,11 @@ function getMetasData(auth, forzar) {
     sin_datos_del_mes: !diaCorte,
     meta: meta,
     dias: { total: diasMes, corridos: diaCorte, restantes: Math.max(diasMes - diaCorte, 0) },
-    acumulado: _finR(acumulado),
+    acumulado: _finR_(acumulado),
     comensales: mesActual ? mesActual.com : 0,
     semanas: semanas,
     ultima_carga: ultima,
-    meta_food: (meta && meta.food) || _finMetaFood(),
+    meta_food: (meta && meta.food) || _finMetaFood_(),
     base_2025: base,
     piso: piso,
     por_anio_pasado: porAnioPasado,
@@ -1021,35 +1022,35 @@ function getMetasData(auth, forzar) {
   var falta = Math.max(meta.venta - acumulado, 0);
   var restantes = out.dias.restantes;
 
-  out.esperado = _finR(esperado);
-  out.brecha = _finR(acumulado - esperado);
-  out.avance = _finR(acumulado / meta.venta * 100, 1);
-  out.falta = _finR(falta);
-  out.necesario_dia = restantes ? _finR(falta / restantes) : 0;
-  out.necesario_semana = restantes ? _finR(falta / restantes * Math.min(7, restantes)) : 0;
-  out.proyeccion = diaCorte ? _finR(acumulado / diaCorte * diasMes) : 0;
-  out.proyeccion_pct = _finR(out.proyeccion / meta.venta * 100, 1);
+  out.esperado = _finR_(esperado);
+  out.brecha = _finR_(acumulado - esperado);
+  out.avance = _finR_(acumulado / meta.venta * 100, 1);
+  out.falta = _finR_(falta);
+  out.necesario_dia = restantes ? _finR_(falta / restantes) : 0;
+  out.necesario_semana = restantes ? _finR_(falta / restantes * Math.min(7, restantes)) : 0;
+  out.proyeccion = diaCorte ? _finR_(acumulado / diaCorte * diasMes) : 0;
+  out.proyeccion_pct = _finR_(out.proyeccion / meta.venta * 100, 1);
 
   // La meta de cada semana, proporcional a sus dias dentro del mes, y el
   // acumulado corrido para poder leer la pestaña de arriba hacia abajo.
   var acMeta = 0, acVenta = 0;
   semanas.forEach(function (S) {
-    S.meta = _finR(meta.venta * S.dias / diasMes);
+    S.meta = _finR_(meta.venta * S.dias / diasMes);
     acMeta += S.meta;
     acVenta += S.ventas;
-    S.meta_acum = _finR(acMeta);
-    S.acum = _finR(acVenta);
+    S.meta_acum = _finR_(acMeta);
+    S.acum = _finR_(acVenta);
     // Una semana en curso se juzga contra los dias que lleva, no contra los 7.
-    S.meta_hoy = _finR(meta.venta * S.dias_corridos / diasMes);
-    S.dif = S.futura ? null : _finR(S.ventas - S.meta_hoy);
-    S.cumple = S.futura ? null : _finR(S.ventas / (S.meta_hoy || 1) * 100, 1);
-    S.falta = S.futura ? S.meta : _finR(Math.max(S.meta - S.ventas, 0));
+    S.meta_hoy = _finR_(meta.venta * S.dias_corridos / diasMes);
+    S.dif = S.futura ? null : _finR_(S.ventas - S.meta_hoy);
+    S.cumple = S.futura ? null : _finR_(S.ventas / (S.meta_hoy || 1) * 100, 1);
+    S.falta = S.futura ? S.meta : _finR_(Math.max(S.meta - S.ventas, 0));
   });
 
   // El techo de compra de la semana: lo que se puede comprar sin romper la meta
   // de food cost sobre la venta que hay que hacer. Es un techo de compra, no un
   // costo teorico: medimos base compra contra una meta base receta.
-  out.compra_tope = _finR(out.necesario_semana * out.meta_food / 100);
+  out.compra_tope = _finR_(out.necesario_semana * out.meta_food / 100);
 
   // ---- el techo, partido por area y por familia
   //
@@ -1062,14 +1063,14 @@ function getMetasData(auth, forzar) {
   // toma en tres. Medir la compra de una semana suelta da falsas alarmas.
   var C = d.compra || { cocina: { total: 0, f: {}, mes: {} }, barra: { total: 0, f: {}, mes: {} } };
   out.techo = {};
-  var metaArea = _finMetaArea();
+  var metaArea = _finMetaArea_();
   ['cocina', 'barra'].forEach(function (a) {
     var A = C[a] || { total: 0, f: {}, mes: {} };
     var ventaSem = out.necesario_semana * FIN_MIX[a] / 100;
     var ventaMes = meta.venta * FIN_MIX[a] / 100;
-    var topeSem = _finR(ventaSem * metaArea[a] / 100);
-    var topeMes = _finR(ventaMes * metaArea[a] / 100);
-    var gastado = _finR(A.mes[m] || 0);
+    var topeSem = _finR_(ventaSem * metaArea[a] / 100);
+    var topeMes = _finR_(ventaMes * metaArea[a] / 100);
+    var gastado = _finR_(A.mes[m] || 0);
 
     // El reparto por familia es el HISTORICO del año, no una regla: dice donde
     // suele irse el dinero de esa area, para saber que se puede llevar.
@@ -1077,21 +1078,21 @@ function getMetasData(auth, forzar) {
     FIN_FAM_AREA[a].forEach(function (k) {
       var v = A.f[k] || 0;
       if (!v) return;
-      fams.push({ k: k, nombre: FIN_FAM_NOMBRE[k] || k, anio: _finR(v),
-                  pct: A.total ? _finR(v / A.total * 100, 1) : 0,
-                  semana: A.total ? _finR(topeSem * v / A.total) : 0 });
+      fams.push({ k: k, nombre: FIN_FAM_NOMBRE[k] || k, anio: _finR_(v),
+                  pct: A.total ? _finR_(v / A.total * 100, 1) : 0,
+                  semana: A.total ? _finR_(topeSem * v / A.total) : 0 });
     });
 
     out.techo[a] = {
       area: a, mix: FIN_MIX[a], meta: metaArea[a],
-      venta_semana: _finR(ventaSem), venta_mes: _finR(ventaMes),
+      venta_semana: _finR_(ventaSem), venta_mes: _finR_(ventaMes),
       semana: topeSem, mes: topeMes,
-      gastado_mes: gastado, saldo_mes: _finR(topeMes - gastado),
-      consumo_pct: ventaMes ? _finR(gastado / ventaMes * 100, 1) : null,
+      gastado_mes: gastado, saldo_mes: _finR_(topeMes - gastado),
+      consumo_pct: ventaMes ? _finR_(gastado / ventaMes * 100, 1) : null,
       familias: fams,
       // Cuanta de la compra del area no tiene familia todavia. Sin esto, un
       // reparto a medio clasificar se leeria como si estuviera completo.
-      sin_clasificar: A.total ? _finR((A.f.REVISAR || 0) / A.total * 100, 1) : 0
+      sin_clasificar: A.total ? _finR_((A.f.REVISAR || 0) / A.total * 100, 1) : 0
     };
   });
 
@@ -1114,10 +1115,10 @@ var FIN_NOTAS_2025 = {
 
 function getComparativoData(auth, forzar) {
   exigirModulo_(auth, 'finanzas');
-  var d = _finDatos(forzar);
+  var d = _finDatos_(forzar);
   if (d.error) return { error: d.error };
 
-  var ant = _finAnio2025();
+  var ant = _finAnio2025_();
   if (!ant) return { error: 'No se pudo leer ' + FIN_HOJA_2025 + ' del maestro.' };
 
   var act = {};
@@ -1133,17 +1134,17 @@ function getComparativoData(auth, forzar) {
     var f = {
       m: m, mes: FIN_MESES[m - 1],
       v25: a ? a.ventas : null, t25: a ? a.tickets : null,
-      v26: b ? _finR(b.ventas) : null, t26: b ? b.tickets : null,
+      v26: b ? _finR_(b.ventas) : null, t26: b ? b.tickets : null,
       // El mes en curso todavia no esta completo: compararlo contra el mes
       // ENTERO del año pasado da una caida que no existe.
       parcial: m === mesEnCurso,
       nota: FIN_NOTAS_2025[m] || ''
     };
-    f.tp25 = (a && a.tickets) ? _finR(a.ventas / a.tickets, 2) : null;
-    f.tp26 = (b && b.tickets) ? _finR(b.ventas / b.tickets, 2) : null;
+    f.tp25 = (a && a.tickets) ? _finR_(a.ventas / a.tickets, 2) : null;
+    f.tp26 = (b && b.tickets) ? _finR_(b.ventas / b.tickets, 2) : null;
     if (f.v25 !== null && f.v26 !== null) {
-      f.dif = _finR(f.v26 - f.v25);
-      f.pct = f.v25 ? _finR((f.v26 / f.v25 - 1) * 100, 1) : null;
+      f.dif = _finR_(f.v26 - f.v25);
+      f.pct = f.v25 ? _finR_((f.v26 / f.v25 - 1) * 100, 1) : null;
       f.dif_tk = f.t26 - f.t25;
       // El total del año solo suma meses COMPLETOS de los dos años. Meter el
       // mes en curso inflaria la comparacion a favor de 2025.
@@ -1160,11 +1161,11 @@ function getComparativoData(auth, forzar) {
       return Math.max(mx, f.v25 || 0, f.v26 || 0);
     }, 0),
     total: {
-      v25: _finR(tA), v26: _finR(tB), dif: _finR(tB - tA),
-      pct: tA ? _finR((tB / tA - 1) * 100, 1) : null,
+      v25: _finR_(tA), v26: _finR_(tB), dif: _finR_(tB - tA),
+      pct: tA ? _finR_((tB / tA - 1) * 100, 1) : null,
       t25: tkA, t26: tkB,
-      tp25: tkA ? _finR(tA / tkA, 2) : null,
-      tp26: tkB ? _finR(tB / tkB, 2) : null,
+      tp25: tkA ? _finR_(tA / tkA, 2) : null,
+      tp26: tkB ? _finR_(tB / tkB, 2) : null,
       meses: filas.filter(function (f) {
         return f.v25 !== null && f.v26 !== null && !f.parcial;
       }).length
@@ -1180,7 +1181,7 @@ function getComparativoData(auth, forzar) {
  * corrigen Jeffry y Jose. Si la columna todavia no existe, esto devuelve un
  * mapa vacio y el panel muestra todo como REVISAR: se degrada, no se rompe.
  */
-function _finFamilias() {
+function _finFamilias_() {
   var out = {};
   var hoja;
   try {
@@ -1199,7 +1200,7 @@ function _finFamilias() {
   for (var r = 4; r < filas.length; r++) {
     var nom = String(filas[r][0] || '').trim();
     var f = String(filas[r][col] || '').trim().toUpperCase();
-    if (nom && f) out[_finLlaveProv(nom)] = f;
+    if (nom && f) out[_finLlaveProv_(nom)] = f;
   }
   return out;
 }
@@ -1208,21 +1209,21 @@ function _finFamilias() {
  * Donde termina una fila con esta categoria. Espeja la logica de _finCalcular.
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
-function _finDestino(cat, hoja, esPersonal, pagoDe) {
+function _finDestino_(cat, hoja, esPersonal, pagoDe) {
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
   if (!cat) return 'SIN CATEGORIA';
   if (cat.indexOf('INGRESO') === 0) return 'ingreso';
   if (cat === 'POR_CLASIFICAR') return 'POR CLASIFICAR';
-  if (_finEn(FIN_FUERA, cat)) return 'fuera (a proposito)';
-  if (_finEn(FIN_COGS_CATS, cat)) {
-    return _finEn(FIN_BANCOS, hoja) ? 'REGLA 3: no suma' : 'COGS';
+  if (_finEn_(FIN_FUERA, cat)) return 'fuera (a proposito)';
+  if (_finEn_(FIN_COGS_CATS, cat)) {
+    return _finEn_(FIN_BANCOS, hoja) ? 'REGLA 3: no suma' : 'COGS';
   }
-  if (_finEn(FIN_EFECTIVO, cat)) return 'COGS';
+  if (_finEn_(FIN_EFECTIVO, cat)) return 'COGS';
   if ((cat === 'ALQUILERES' || cat === 'ALQUILER') && hoja === '01_FEL_Maestro') {
     return 'alquiler por banco: no suma';
   }
-  if (_finEn(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
+  if (_finEn_(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
   if (pagoDe) return 'REGLA 9: pago de factura FEL';
   if (FIN_MAP[cat]) return 'DRE \u00b7 ' + FIN_MAP[cat][0];
   return 'CATEGORIA DESCONOCIDA';
@@ -1234,34 +1235,34 @@ function _finDestino(cat, hoja, esPersonal, pagoDe) {
  */
 var FIN_PERDIDO = ['CATEGORIA DESCONOCIDA', 'SIN CATEGORIA', 'POR CLASIFICAR'];
 
-function _finFugas(cob) {
+function _finFugas_(cob) {
   var out = {};
   Object.keys(cob).forEach(function (h) {
     var suma = 0;
     Object.keys(cob[h]).forEach(function (k) {
-      if (_finEn(FIN_PERDIDO, k)) suma += cob[h][k];
+      if (_finEn_(FIN_PERDIDO, k)) suma += cob[h][k];
     });
-    out[h] = _finR(suma);
+    out[h] = _finR_(suma);
   });
   return out;
 }
 
 /** Redondea a dos decimales un mapa plano o un mapa de mapas. */
-function _finRedondear(obj) {
+function _finRedondear_(obj) {
   var out = {};
   Object.keys(obj).forEach(function (k) {
     var v = obj[k];
     if (v && typeof v === 'object') {
       out[k] = {};
-      Object.keys(v).forEach(function (k2) { out[k][k2] = _finR(v[k2]); });
+      Object.keys(v).forEach(function (k2) { out[k][k2] = _finR_(v[k2]); });
     } else {
-      out[k] = _finR(v);
+      out[k] = _finR_(v);
     }
   });
   return out;
 }
 
-function _finLlaveProv(s) {
+function _finLlaveProv_(s) {
   return String(s === null || s === undefined ? '' : s).trim().toUpperCase().replace(/\s+/g, ' ');
 }
 

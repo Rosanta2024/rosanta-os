@@ -19,6 +19,7 @@ var DUENO_ = 'restaurante@rosanta.rest';
 var MODULOS_NUEVOS_ = ['marketing', 'crm', 'consola', 'resenas'];
 
 function habilitarModulosDueno() {
+  soloDueno_();
   var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS');
   var filas = hoja.getDataRange().getValues();
 
@@ -48,6 +49,7 @@ function habilitarModulosDueno() {
 }
 
 function setupInicial() {
+  soloDueno_();
   const props = PropertiesService.getScriptProperties();
 
   // 1. Sheet de configuracion

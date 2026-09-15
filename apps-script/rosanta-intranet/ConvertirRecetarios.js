@@ -18,6 +18,7 @@ const RECETARIO_XLSX = {
 };
 
 function convertirRecetarios() {
+  soloDueno_();
   const props = PropertiesService.getScriptProperties();
 
   if (!props.getProperty('RECETARIO_BARRA_SHEET_ID')) {
@@ -102,6 +103,7 @@ function verificarVlookups_(ss, nombresFicha) {
  *   migrarRecetarioCocina('<id del xlsx en Drive>', 'Rosanta_Recetario_Cocina_2027_v14')
  */
 function migrarRecetarioCocina(fileIdXlsx, nombre, fichasDePrueba) {
+  soloDueno_();
   if (!fileIdXlsx) throw new Error('Falta el ID del .xlsx en Drive.');
   const props = PropertiesService.getScriptProperties();
   const anterior = props.getProperty('RECETARIO_COCINA_SHEET_ID');

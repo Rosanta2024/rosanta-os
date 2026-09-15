@@ -1,5 +1,5 @@
 /**
- * REVERTIR_SYNC.gs — Deshace una corrida de aplicarSincronizacion().
+ * REVERTIR_SYNC.gs — Deshace una corrida de aplicarSincronizacion_().
  *
  * Un archivo con UNA sola funcion, misma razon que APLICAR_SYNC.gs y Diagnostico.gs:
  * el desplegable del editor elige solo, y ya paso que eligiera una funcion que escribe.
@@ -23,6 +23,7 @@ var CORRIDA_A_REVERTIR = '';
 var CONFIRMAR_REVERSION = false;
 
 function REVERTIR_SYNC() {
+  soloDueno_();
   if (!CORRIDA_A_REVERTIR) {
     Logger.log('CORRIDA_A_REVERTIR esta vacia. Corré listarCorridasSync() y pegá una clave.');
     listarCorridasSync();

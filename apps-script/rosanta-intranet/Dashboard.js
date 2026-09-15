@@ -47,6 +47,7 @@ var DASH = {
  * razon (multiplos enteros de semana; ver IM_VENTANAS en CosteoVista.html).
  */
 function getDashboard(semanas) {
+  soloDueno_();
   var w = ventasYVentana_(semanas === undefined ? 13 : semanas);
   if (!w) return { ok: false, error: 'Todavia no hay ventas cargadas. Corré cargarVentasPorProducto().' };
   return tableroDesdeR_(ingenieriaDeMenu_(w.desde, w.hasta, w.ventas));
@@ -402,7 +403,7 @@ function avisoPrecios_() {
   // mano; aca lo paga la pantalla en cada carga, y ademas deja el cache frio para
   // todo lo que venga despues. Se vuelve a calentar aca mismo para que la proxima
   // llamada no pague la reconstruccion otra vez.
-  var r = verificarNombresPOS(id);        // solo lee y devuelve {ok, rotos, precios}
+  var r = verificarNombresPOS_(id);        // solo lee y devuelve {ok, rotos, precios}
   var n = (r.precios || []).length;
   if (!n) return null;
   return {

@@ -310,6 +310,7 @@ function clasificarLinea_(f, idx) {
  * SIEMPRE correr esto antes de importarInventario().
  */
 function previsualizarInventario() {
+  soloDueno_();
   var filas = leerInventarios_();
   var idx = indexarBancos_();
 
@@ -375,6 +376,7 @@ function previsualizarInventario() {
  * se filtra recalcula el CMV de media carta.
  */
 function importarInventario(aplicarSaltos) {
+  soloDueno_();
   var usuario = getUsuarioActual();
   if (!usuarioTieneModulo(usuario, 'recetario')) throw new Error('Sin acceso al recetario');
 

@@ -128,12 +128,12 @@ function doGet(e) {
   if (pagina === 'diag' && usuarioTieneModulo(usuario, 'marketing')) {
     var diag;
     try {
-      diag = metaDiagnosticoJson();
+      diag = metaDiagnosticoJson_();
     } catch (errDiag) {
       diag = { ok: false, error: String(errDiag && errDiag.message || errDiag) };
     }
     try {
-      diag.propiedades = propsDiagnostico();
+      diag.propiedades = propsDiagnostico_();
     } catch (errProps) {
       diag.propiedades = { error: String(errProps && errProps.message || errProps) };
     }

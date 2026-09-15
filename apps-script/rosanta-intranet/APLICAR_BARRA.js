@@ -82,7 +82,8 @@ var CONTROL_BARRA = {
 var CONFIRMAR_BARRA = false;
 
 function APLICAR_BARRA() {
-  var r = sincronizarPreciosDeCierre('BARRA');      // propone, nunca escribe
+  soloDueno_();
+  var r = sincronizarPreciosDeCierre_('BARRA');      // propone, nunca escribe
 
   var ok = [], fuera = [];
   r.cambios.forEach(function (c) {
@@ -143,7 +144,7 @@ function APLICAR_BARRA() {
   }
 
   var quien = Session.getActiveUser().getEmail() || 'APLICAR_BARRA';
-  var res = aplicarSincronizacion('BARRA', ok, quien);
+  var res = aplicarSincronizacion_('BARRA', ok, quien);
   Logger.log('escritos: %s | saltados: %s | corrida %s', res.escritos, res.saltados, res.corrida);
   Logger.log('Queda en SYNC_PRECIOS y en BITACORA.');
   Logger.log('Para deshacer: poné %s en CORRIDA_A_REVERTIR de REVERTIR_SYNC.gs.', res.corrida);

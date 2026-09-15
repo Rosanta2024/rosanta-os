@@ -55,7 +55,14 @@ function raaCacheClave_() {
 
 
 /** Una vez. Crea la pestana RAA en el Sheet de config. Idempotente. */
+/* Para correr desde el EDITOR (con guarda de dueño). El codigo que la usa por dentro
+   —activador, pantalla, bateria— llama a instalarRAA_(), que no tiene guarda. */
 function instalarRAA() {
+  soloDueno_();
+  return instalarRAA_();
+}
+
+function instalarRAA_() {
   var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
   var hoja = ss.getSheetByName(RAA_HOJA);
   if (hoja) return 'La pestana RAA ya existe con ' + Math.max(hoja.getLastRow() - 1, 0) +
@@ -78,7 +85,7 @@ function instalarRAA() {
  * que se guarda en la hoja es este: lo que queda escrito no depende de lo que
  * el navegador haya calculado.
  */
-function _raaZona(ind, v, meta) {
+function _raaZona_(ind, v, meta) {
   if (v === null || v === undefined) return 'gris';
   if (ind === 'food')   return v <= meta ? 'verde' : (v <= meta + 3 ? 'amarillo' : 'rojo');
   if (ind === 'prime')  return v < 60 ? 'verde' : (v <= 65 ? 'amarillo' : 'rojo');
@@ -87,11 +94,11 @@ function _raaZona(ind, v, meta) {
   return 'gris';
 }
 
-function _raaQ(n) {
+function _raaQ_(n) {
   return 'Q' + Math.round(Number(n) || 0).toLocaleString('es-GT');
 }
 
-function _raaPct(n) {
+function _raaPct_(n) {
   return (n === null || n === undefined) ? '—' : Number(n).toFixed(1) + '%';
 }
 
@@ -105,7 +112,7 @@ function _raaPct(n) {
  *                   mensual: es un hueco, y se dice asi.
  *   · ventas        la caida de la semana llevada a mes.
  */
-function _raaTarjetas(d) {
+function _raaTarjetas_(d) {
   var u = d.ultima || {};
   var meta = d.meta_cogs;
   var ventaMes = (u.ventas || 0) * FIN_SEMANAS_MES;
@@ -116,33 +123,33 @@ function _raaTarjetas(d) {
                resultado: resultado, costo: Math.round(costo || 0), costo_txt: costoTxt });
   }
 
-  var zf = _raaZona('food', u.cogs_m4, meta);
+  var zf = _raaZona_('food', u.cogs_m4, meta);
   tarjeta('food', u.cogs_m4, zf,
-    'Food cost móvil 4 de la S' + u.w + ' en ' + _raaPct(u.cogs_m4) +
-    ' contra una meta de ' + _raaPct(meta) + '. Semana cruda ' + _raaPct(u.cogsp) +
-    ' (' + _raaQ(u.cogs) + ' de compra sobre ' + _raaQ(u.ventas) + ' de venta).',
+    'Food cost móvil 4 de la S' + u.w + ' en ' + _raaPct_(u.cogs_m4) +
+    ' contra una meta de ' + _raaPct_(meta) + '. Semana cruda ' + _raaPct_(u.cogsp) +
+    ' (' + _raaQ_(u.cogs) + ' de compra sobre ' + _raaQ_(u.ventas) + ' de venta).',
     Math.max((u.cogs_m4 || 0) - meta, 0) / 100 * ventaMes,
-    'Cada punto sobre la meta son ' + _raaQ(ventaMes / 100) + ' al mes.');
+    'Cada punto sobre la meta son ' + _raaQ_(ventaMes / 100) + ' al mes.');
 
-  var zp = _raaZona('prime', u.prime_m4);
+  var zp = _raaZona_('prime', u.prime_m4);
   tarjeta('prime', u.prime_m4, zp,
-    'Prime cost móvil 4 de la S' + u.w + ' en ' + _raaPct(u.prime_m4) +
-    '. Verde bajo 60%, rojo sobre 65%. Mano de obra de la semana ' + _raaPct(u.laborp) + '.',
+    'Prime cost móvil 4 de la S' + u.w + ' en ' + _raaPct_(u.prime_m4) +
+    '. Verde bajo 60%, rojo sobre 65%. Mano de obra de la semana ' + _raaPct_(u.laborp) + '.',
     Math.max((u.prime_m4 || 0) - 60, 0) / 100 * ventaMes,
     'Medido contra el 60% que separa el verde del amarillo.');
 
-  var zc = _raaZona('caja', d.dias_caja);
+  var zc = _raaZona_('caja', d.dias_caja);
   tarjeta('caja', d.dias_caja, zc,
-    'Caja al cierre de la S' + u.w + ': ' + _raaQ(d.caja) + ', o sea ' +
-    Number(d.dias_caja).toFixed(1) + ' días de gasto a ' + _raaQ(d.gasto_dia) + ' por día.',
+    'Caja al cierre de la S' + u.w + ': ' + _raaQ_(d.caja) + ', o sea ' +
+    Number(d.dias_caja).toFixed(1) + ' días de gasto a ' + _raaQ_(d.gasto_dia) + ' por día.',
     Math.max(21 - (d.dias_caja || 0), 0) * (d.gasto_dia || 0),
     'No es un costo: es lo que falta para el colchón de 21 días.');
 
-  var zv = _raaZona('ventas', u.dv);
+  var zv = _raaZona_('ventas', u.dv);
   tarjeta('ventas', u.dv, zv,
-    'Ventas de la S' + u.w + ': ' + _raaQ(u.ventas) + ', ' +
-    ((u.dv >= 0 ? '+' : '') + _raaPct(u.dv)) + ' contra la semana anterior. ' +
-    u.com + ' comensales, ticket ' + _raaQ(u.tp) + '.',
+    'Ventas de la S' + u.w + ': ' + _raaQ_(u.ventas) + ', ' +
+    ((u.dv >= 0 ? '+' : '') + _raaPct_(u.dv)) + ' contra la semana anterior. ' +
+    u.com + ' comensales, ticket ' + _raaQ_(u.tp) + '.',
     Math.max(-(u.dv || 0), 0) / 100 * ventaMes,
     'La caída de la semana, llevada a un mes.');
 
@@ -153,7 +160,7 @@ function _raaTarjetas(d) {
 // -------------------------------------------------------------------- lectura
 
 /** Las filas de la hoja RAA. Cachea 30 min; guardarRaa() borra el cache. */
-function _raaFilas() {
+function _raaFilas_() {
   var cache = CacheService.getScriptCache();
   var g = cache.get(raaCacheClave_());
   if (g) {
@@ -194,14 +201,14 @@ function _raaFilas() {
  */
 function getRaaData(auth, forzar) {
   var u = exigirModulo_(auth, 'finanzas');
-  var d = _finDatos(forzar);
+  var d = _finDatos_(forzar);
   var sem = (d.ultima && d.ultima.w) || 0;
-  var filas = _raaFilas();
+  var filas = _raaFilas_();
 
   var guardado = {};
   filas.forEach(function (f) { if (f.semana === sem) guardado[f.ind] = f; });
 
-  var tarjetas = _raaTarjetas(d).map(function (t) {
+  var tarjetas = _raaTarjetas_(d).map(function (t) {
     var g = guardado[t.ind];
     t.analisis = g ? g.analisis : '';
     t.accion = g ? g.accion : '';
@@ -259,17 +266,17 @@ function guardarRaa(auth, datos) {
     throw new Error('Falta el responsable. Un nombre, no un equipo.');
   }
 
-  var d = _finDatos(false);
+  var d = _finDatos_(false);
   var sem = (d.ultima && d.ultima.w) || 0;
   if (!sem) throw new Error('No hay semana cerrada en el maestro todavía.');
 
   var tarjeta = null;
-  _raaTarjetas(d).forEach(function (t) { if (t.ind === ind) tarjeta = t; });
+  _raaTarjetas_(d).forEach(function (t) { if (t.ind === ind) tarjeta = t; });
   if (!tarjeta) throw new Error('No pude calcular el resultado de ' + ind + '.');
 
   var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
   var hoja = ss.getSheetByName(RAA_HOJA);
-  if (!hoja) { instalarRAA(); hoja = ss.getSheetByName(RAA_HOJA); }
+  if (!hoja) { instalarRAA_(); hoja = ss.getSheetByName(RAA_HOJA); }
 
   var fila = [sem, ind, tarjeta.zona, tarjeta.resultado, analisis, accion,
               responsable, new Date(), u.nombre || u.email];

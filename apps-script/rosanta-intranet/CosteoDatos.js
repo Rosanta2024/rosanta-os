@@ -40,6 +40,7 @@ function getCosteoData(auth) {
 
 /** Boton "actualizar" de la vista. */
 function refrescarCosteo() {
+  soloDueno_();
   olvidarModeloCosteo_();
   return getCosteoData();
 }
@@ -281,7 +282,7 @@ function leerFicha_(hoja, cfg) {
           unidad: String(fila[colIng + 2] || '').trim(),
           total: typeof fila[colIng + 4] === 'number' ? fila[colIng + 4] : null,
           // fila REAL de la hoja, 1-indexada. Sin esto la vista no puede pedir que se
-          // edite una linea: editarCantidad(ficha, fila, ...) necesita el numero exacto,
+          // edite una linea: editarCantidad_(ficha, fila, ...) necesita el numero exacto,
           // y buscar por nombre seria ambiguo si una ficha repite un ingrediente.
           fila: i + 1
         });
@@ -752,6 +753,7 @@ function copiarJson_(o) { return JSON.parse(JSON.stringify(o)); }
  * no por libra) y el camote (Q9.50 la libra). No es un bug.
  */
 function probarCosteo() {
+  soloDueno_();
   CacheService.getScriptCache().remove(COSTEO.cacheKey);
   var m = construirModelo_();
 

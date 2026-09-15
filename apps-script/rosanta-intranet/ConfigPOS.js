@@ -98,6 +98,7 @@ function mapaPOS_(forzar) {
 
 /** Borra el cache. Correr despues de editar RESUMEN CMV o MAPA POS. */
 function refrescarMapaPOS() {
+  soloDueno_();
   CacheService.getScriptCache().remove(POS_CFG.cacheKey);
   var m = mapaPOS_(true);
   var sinPestana = [];
@@ -160,7 +161,7 @@ function ignorarEnVentas_(nombrePos) {
  * Compara el mapa contra el catalogo real del POS y avisa que se desalineo.
  * Correr cada vez que se reexporte el catalogo.
  */
-function verificarNombresPOS(idCatalogoPOS) {
+function verificarNombresPOS_(idCatalogoPOS) {
   var ss = SpreadsheetApp.openById(idCatalogoPOS);
   var filas = ss.getSheets()[0].getDataRange().getValues();
   var cat = {};
@@ -201,6 +202,7 @@ function verificarNombresPOS(idCatalogoPOS) {
  *   platos 35 · con pestana 35 · resueltos por pestana 35 · rotos 0
  */
 function probarPuentePOS() {
+  soloDueno_();
   var ss = abrirPorClave_('RECETARIO_COCINA_SHEET_ID');
   var m = mapaPOS_(true), rotos = [], ok = 0, sinHoja = [];
   for (var plato in m.platos) {

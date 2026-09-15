@@ -15,6 +15,7 @@
  * Conviene volver a correrla cada vez que cambie la version del recetario.
  */
 function REGENERAR_INDICE() {
+  soloDueno_();
   var n = regenerarIndice();
   Logger.log('INDICE_INSUMO_RECETA regenerado contra el recetario en uso: %s lineas.', n);
   return n;

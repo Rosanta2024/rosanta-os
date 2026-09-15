@@ -12,7 +12,8 @@
  * No escribe nada en ninguna hoja.
  */
 function CORRER_PRUEBAS() {
-  var res = correrPruebas();
+  soloDueno_();
+  var res = correrPruebas_();
   Logger.log(pruebasATexto_(res));
   return res;
 }

@@ -32,6 +32,7 @@
 var CONFIRMAR_APLICAR = false;
 
 function APLICAR_SEMAFORO() {
+  soloDueno_();
   var quien = Session.getActiveUser().getEmail() || 'APLICAR_SEMAFORO';
   var aprobados = aprobadosDelSemaforo_();
   var areas = Object.keys(aprobados);
@@ -49,7 +50,7 @@ function APLICAR_SEMAFORO() {
     Logger.log('--- %s: %s tildado(s) ---', area, tildados.length);
 
     // Se relee la propuesta del cierre. Esta es la fuente de los numeros.
-    var r = sincronizarPreciosDeCierre(area);
+    var r = sincronizarPreciosDeCierre_(area);
     var porNombre = {};
     r.cambios.forEach(function (c) { porNombre[normalizar_(c.producto)] = c; });
 
@@ -84,7 +85,7 @@ function APLICAR_SEMAFORO() {
 
     if (!CONFIRMAR_APLICAR) { totalOk += aplicar.length; continue; }
 
-    var res = aplicarSincronizacion(area, aplicar, quien);
+    var res = aplicarSincronizacion_(area, aplicar, quien);
     Logger.log('  escritos: %s | saltados: %s | corrida %s', res.escritos, res.saltados, res.corrida);
     totalOk += res.escritos;
     totalSaltados += res.saltados;

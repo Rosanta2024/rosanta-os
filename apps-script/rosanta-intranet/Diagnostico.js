@@ -14,5 +14,6 @@
  */
 
 function DIAGNOSTICO() {
+  soloDueno_();
   probarCosteo();
 }

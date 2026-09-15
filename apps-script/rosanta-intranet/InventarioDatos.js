@@ -424,7 +424,7 @@ function invAlta_(area, datos, confirmar, u) {
       if (!(precio > 0)) throw new Error('Para darlo de alta en el Banco de Datos hace falta el precio.');
       if (!presentacion) throw new Error('Falta la presentacion: en el Banco es la unidad de compra (libra, 750 ml, caja...).');
       if (!unidadReceta) throw new Error('Falta la unidad de receta (g, ml, unidad): es como lo pide una receta.');
-      var rb = crearInsumo({ producto: producto, categoria: categoria, precioCompra: precio, unidadCompra: presentacion,
+      var rb = crearInsumo_({ producto: producto, categoria: categoria, precioCompra: precio, unidadCompra: presentacion,
                              unidadReceta: unidadReceta, contenido: contenido, proveedor: proveedor },
                            u.email, u.rol, !!datos.confirmarBanco, area);
       if (!rb.ok) return { creado: false, banco: invRespuestaBanco_(rb) };
@@ -451,7 +451,7 @@ function invAlta_(area, datos, confirmar, u) {
   SpreadsheetApp.flush();
 
   if (provAlBanco) {
-    try { asignarProveedor(enBanco, proveedor, u.email, u.rol, area); }
+    try { asignarProveedor_(enBanco, proveedor, u.email, u.rol, area); }
     catch (e) { avisos.push(enBanco + ': ' + (e && e.message || e)); }
   }
   var provNuevos = [];
@@ -534,7 +534,7 @@ function invClasificar_(area, id, tipo, banco, crear, u) {
       if (!(precio > 0)) throw new Error(prod + ' no tiene precio en el catalogo: cargalo en el conteo antes de crearlo en el Banco.');
       if (!pres) throw new Error(prod + ' no tiene presentacion, que en el Banco es la unidad de compra.');
       if (!ur) throw new Error('Falta la unidad de receta (g, ml, unidad).');
-      var rb = crearInsumo({ producto: prod, categoria: invTexto_(p.fila[cat.c['categoria']]), precioCompra: precio,
+      var rb = crearInsumo_({ producto: prod, categoria: invTexto_(p.fila[cat.c['categoria']]), precioCompra: precio,
                              unidadCompra: pres, unidadReceta: ur, contenido: cont, proveedor: provInv },
                            u.email, u.rol, !!crear.confirmar, area);
       if (!rb.ok) return { cambiado: false, banco: invRespuestaBanco_(rb) };
@@ -570,7 +570,7 @@ function invClasificar_(area, id, tipo, banco, crear, u) {
 
   var avisos = [], provNuevos = [];
   if (provAlBanco) {
-    try { asignarProveedor(enBanco, provInv, u.email, u.rol, area); }
+    try { asignarProveedor_(enBanco, provInv, u.email, u.rol, area); }
     catch (e) { avisos.push(enBanco + ': ' + (e && e.message || e)); }
   }
   if ((bancoNuevo || provAlBanco) && provInv) {
@@ -643,7 +643,7 @@ function invPropagarProveedores_(area, provPorId, u) {
       out.avisos.push(prod + ' esta conectado al Banco de la otra area: ahi no se cambio el proveedor.');
       return;
     }
-    try { asignarProveedor(banco, prov, u.email, u.rol, area); out.banco.push(banco); }
+    try { asignarProveedor_(banco, prov, u.email, u.rol, area); out.banco.push(banco); }
     catch (e) { out.avisos.push(banco + ': ' + (e && e.message || e)); }
   });
   return out;
@@ -667,7 +667,7 @@ function invAsegurarProveedores_(nombres, u) {
     if (ya[k] || alias[k]) return;
     // confirmar=true: la persona ya eligio escribirlo; el aviso de parecidos se lo da la
     // pantalla antes de mandar, con la lista que tiene a mano
-    var r = crearProveedor({ nombre: unicos[k], nota: 'alta desde el inventario' }, u.email, u.rol, true);
+    var r = crearProveedor_({ nombre: unicos[k], nota: 'alta desde el inventario' }, u.email, u.rol, true);
     if (r && r.ok) nuevos.push(unicos[k]);
   });
   return nuevos;
@@ -801,7 +801,7 @@ function invAhora_() {
  *   · todo con registro y con deshacer;
  *   · nunca para PREPARADO (su costo lo da la receta), REVENTA ni LIMPIEZA.
  *
- * NO HAY UN SEGUNDO MOTOR DE PRECIOS. La escritura en el Banco es aplicarSincronizacion()
+ * NO HAY UN SEGUNDO MOTOR DE PRECIOS. La escritura en el Banco es aplicarSincronizacion_()
  * y el deshacer es revertirSync_(), los dos de SincronizarPrecios.gs: mismos candados
  * (la fila se relee, un precio que cambio desde la propuesta se salta), mismo log
  * SYNC_PRECIOS con su CORRIDA y la misma BITACORA. Lo que cambia es de donde sale la
@@ -879,7 +879,7 @@ function invCerrarMes_(area, mes, ceros, u) {
   var prop = invPropuestaPrecios_(area, filas.map(function (k) { return d[k]; }), c, cat);
   var corrida = '', aplicados = [];
   if (prop.auto.length) {
-    corrida = aplicarSincronizacion(area, prop.auto, u.email).corrida;
+    corrida = aplicarSincronizacion_(area, prop.auto, u.email).corrida;
     aplicados = invHistorialPrecios_(area, prop.auto, u, 'cierre de inventario ' + mes + ' · corrida ' + corrida);
     invAnotar_(area, mes, prop.auto, u, 'AUTOMATICO', corrida, aplicados);
   }
@@ -958,7 +958,7 @@ function invCerrarMes_(area, mes, ceros, u) {
 /**
  * Que precios del mes van al Banco. NO escribe. Una sola lectura del Banco del area.
  * Devuelve { auto, aprobar, unidadDistinta, otros, sinConectar, iguales }; auto y
- * aprobar tienen la forma que espera aplicarSincronizacion().
+ * aprobar tienen la forma que espera aplicarSincronizacion_().
  */
 function invPropuestaPrecios_(area, filasMes, c, cat) {
   var out = { auto: [], aprobar: [], unidadDistinta: [], otros: [], sinConectar: 0, iguales: 0 };
@@ -1165,7 +1165,7 @@ function invResolverPrecios_(filas, aprobar, u) {
       filaDe[normalizar_(x.producto)] = r;
     });
     if (!cambios.length) return;
-    var ap = aplicarSincronizacion(area, cambios, u.email);
+    var ap = aplicarSincronizacion_(area, cambios, u.email);
     var hechos = invHistorialPrecios_(area, cambios, u, 'aprobado por ' + quien + ' · corrida ' + ap.corrida);
     res.corridas.push(ap.corrida);
     cambios.forEach(function (x) {

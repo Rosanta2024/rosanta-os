@@ -5,7 +5,7 @@
  * que alguien se acuerde de abrir el editor. El agujero original —el lomito subio 19%
  * y nadie se entero en dos meses— era de atencion, no de capacidad. Esto lo mira solo.
  *
- * Corre `sincronizarPreciosDeCierre()` (que NO escribe) y vuelca el resultado en la
+ * Corre `sincronizarPreciosDeCierre_()` (que NO escribe) y vuelca el resultado en la
  * pestana SEMAFORO_PRECIOS del libro de costeo. La unica celda que toca en todo el
  * sistema es la de esa pestana: no escribe en el Banco, ni en las fichas, ni en el log.
  *
@@ -77,7 +77,7 @@ function refrescarSemaforoPrecios() {
 
     var r = null, err = null;
     try {
-      r = sincronizarPreciosDeCierre(area);
+      r = sincronizarPreciosDeCierre_(area);
     } catch (e) {
       err = e.message || String(e);
     }

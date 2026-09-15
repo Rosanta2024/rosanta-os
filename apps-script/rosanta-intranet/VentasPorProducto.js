@@ -406,13 +406,20 @@ function cargarVentasSiHayPendientes_() {
   if (!candado.tryLock(0)) return null;
   try {
     c.put(VENTAS_AUTO.clave, '1', VENTAS_AUTO.segs);
-    return cargarVentasPorProducto();
+    return cargarVentasPorProducto_();
   } finally {
     candado.releaseLock();
   }
 }
 
+/* Para correr desde el EDITOR (con guarda de dueño). El codigo que la usa por dentro
+   —activador, pantalla, bateria— llama a cargarVentasPorProducto_(), que no tiene guarda. */
 function cargarVentasPorProducto() {
+  soloDueno_();
+  return cargarVentasPorProducto_();
+}
+
+function cargarVentasPorProducto_() {
   var cuando = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm');
   var enDrive = ventasArchivosEnDrive_();
   var yaEstan = ventasYaCargados_();

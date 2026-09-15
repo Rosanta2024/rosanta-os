@@ -7,6 +7,7 @@
  * No escribe nada. Dice, por cada propiedad, si la ID existe y se puede abrir.
  */
 function verEstadoRecetarios() {
+  soloDueno_();
   var props = PropertiesService.getScriptProperties().getProperties();
   var claves = ['RECETARIO_COCINA_SHEET_ID', 'RECETARIO_BARRA_SHEET_ID',
                 'COSTEO_SHEET_ID', 'INVENTARIO_CIERRE_SHEET_ID',

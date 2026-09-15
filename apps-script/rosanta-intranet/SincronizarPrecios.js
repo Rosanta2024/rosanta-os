@@ -5,8 +5,8 @@
  * recetario no se entero durante dos meses. Esto lee la pestana PRECIO PROVEEDORES del
  * cierre de inventario y actualiza el Banco, guardando el historico.
  *
- * NO escribe nada por su cuenta. sincronizarPreciosDeCierre() devuelve una propuesta;
- * hay que aprobarla y recien ahi aplicarSincronizacion() escribe.
+ * NO escribe nada por su cuenta. sincronizarPreciosDeCierre_() devuelve una propuesta;
+ * hay que aprobarla y recien ahi aplicarSincronizacion_() escribe.
  *
  * Depende de ConfigCosteo.gs (COSTEO, normalizar_, abrirPorClave_, hojaCosteo_).
  *
@@ -80,7 +80,7 @@ function mismaUnidad_(a, b) {
  * Devuelve { cambios:[], alertas:[], unidadDistinta:[], sinMatch:[], resumen:{} }.
  * NO escribe.
  */
-function sincronizarPreciosDeCierre(area) {
+function sincronizarPreciosDeCierre_(area) {
   area = area || 'COCINA';
   var cfg = null;
   for (var i = 0; i < COSTEO.areas.length; i++) if (COSTEO.areas[i].area === area) cfg = COSTEO.areas[i];
@@ -186,9 +186,9 @@ function sincronizarPreciosDeCierre(area) {
 
 /**
  * Escribe los cambios aprobados y deja el historico.
- * `cambios` es el arreglo que devolvio sincronizarPreciosDeCierre (o un subconjunto).
+ * `cambios` es el arreglo que devolvio sincronizarPreciosDeCierre_ (o un subconjunto).
  */
-function aplicarSincronizacion(area, cambios, quien) {
+function aplicarSincronizacion_(area, cambios, quien) {
   if (!cambios || !cambios.length) return { escritos: 0 };
   area = area || 'COCINA';
   var cfg = null;
@@ -225,7 +225,7 @@ function aplicarSincronizacion(area, cambios, quien) {
     if (x.proveedor) hBanco.getRange(x.fila, 9).setValue(x.proveedor); // I
     log.push([stamp, area, x.producto, x.precioViejo, x.precioNuevo, x.pct, x.proveedor,
               quien || '', 'OK', dViejo, provViejo, idCorrida]);
-    // Misma forma que cambiarPrecioInsumo() en EdicionRecetario.gs: el sync es otra
+    // Misma forma que cambiarPrecioInsumo_() en EdicionRecetario.gs: el sync es otra
     // manera de cambiar el precio de compra, no un evento de otra especie.
     bita.push([quien, 'sync', 'sincronizarPrecios', 'BANCO DE DATOS', String(x.producto),
                'precio compra', x.precioViejo, x.precioNuevo,
@@ -277,7 +277,8 @@ function convertirCierreANativa_(fileIdXlsx, nombre) {
 
 /** Prueba de escritorio. Corre la comparacion y escribe el resultado en el Log. */
 function probarSincronizacion() {
-  var r = sincronizarPreciosDeCierre('COCINA');
+  soloDueno_();
+  var r = sincronizarPreciosDeCierre_('COCINA');
   Logger.log('RESUMEN %s', JSON.stringify(r.resumen));
   Logger.log('--- cambian (%s) ---', r.cambios.length);
   r.cambios.forEach(function (c) {
@@ -295,7 +296,7 @@ function probarSincronizacion() {
 /* ==========================================================================
    DESHACER
    --------------------------------------------------------------------------
-   aplicarSincronizacion() es lo primero del sistema que escribe EN LOTE. Sus dos
+   aplicarSincronizacion_() es lo primero del sistema que escribe EN LOTE. Sus dos
    candados protegen contra una propuesta VIEJA (la fila se movio, el precio cambio),
    no contra una propuesta EQUIVOCADA: si el .xlsx del cierre viene con una columna
    corrida, los dos candados pasan limpios y escribe decenas de precios malos de un
@@ -425,6 +426,7 @@ function leerCorridas_(permitirMigrar) {
  * desde el desplegable del editor.
  */
 function listarCorridasSync() {
+  soloDueno_();
   var todo = leerCorridas_(false);
   if (!todo.orden.length) { Logger.log('El log SYNC_PRECIOS no tiene corridas.'); return []; }
 
@@ -443,7 +445,7 @@ function listarCorridasSync() {
 }
 
 /**
- * Deshace una corrida de aplicarSincronizacion().
+ * Deshace una corrida de aplicarSincronizacion_().
  *
  *   clave  — la que muestra listarCorridasSync()
  *   quien  — queda en el log
@@ -592,7 +594,7 @@ function revertirSync_(clave, quien, opts) {
 
    BITACORA — la pregunta humana: "quien tocó esto, cuando, de cuanto a cuanto".
      Una fila por celda que efectivamente CAMBIO. Formato identico al de
-     cambiarPrecioInsumo(), porque un sync no es un evento de otra especie: es otra
+     cambiarPrecioInsumo_(), porque un sync no es un evento de otra especie: es otra
      manera de cambiar el precio de compra. Los saltados NO van aca: un salto no es
      un cambio.
      El ROL queda en 'sync' —no es un rol de exigirPermiso_, es la marca de que lo

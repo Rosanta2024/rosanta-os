@@ -563,8 +563,10 @@ INV_MIG.categoriasJunio = {
   'insumos de limpieza (doorways/vijusa)': 'DOORWAYS-VIJUASA'
 };
 
-function migrarJunioCocinaEnSeco() { return invMigJunio_(false); }
-function migrarJunioCocina() { return invMigJunio_(true); }
+function migrarJunioCocinaEnSeco() {
+  soloDueno_(); return invMigJunio_(false); }
+function migrarJunioCocina() {
+  soloDueno_(); return invMigJunio_(true); }
 
 function invMigJunio_(escribir) {
   invMigExigirDueno_();

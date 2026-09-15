@@ -205,6 +205,7 @@ function latSemanaHace_(dias) {
  * Ejecutar a mano desde el editor cuando se cambien umbrales.
  */
 function latidoEnSeco() {
+  soloDueno_();
   try { latido(); Logger.log('Todo al día. No habría avisado.'); }
   catch (e) { Logger.log('Habría avisado con esto:\n' + e.message); }
 }

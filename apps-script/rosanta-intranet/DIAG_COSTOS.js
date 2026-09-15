@@ -15,6 +15,7 @@
  * listan aparte para no confundirlas con un hueco.
  */
 function verCostosFaltantes() {
+  soloDueno_();
   var L = [];
   function log(s) { L.push(s); Logger.log(s); }
 
@@ -35,7 +36,7 @@ function verCostosFaltantes() {
 
       ss.getSheets().forEach(function (h) {
         var nom = h.getName();
-        if (_dcNoEsFicha(nom)) return;
+        if (_dcNoEsFicha_(nom)) return;
 
         var v = h.getRange(1, 1, Math.min(h.getLastRow(), 60),
                            Math.min(h.getLastColumn(), 8)).getValues();
@@ -147,10 +148,10 @@ function verCostosFaltantes() {
         //      el mismo problema: precios distintos es una ambiguedad que ensucia
         //      el costo, precios iguales es solo una fila que sobra.
         if (vistos.hasOwnProperty(k2)) {
-          if (_dcMismoPrecio(vistos[k2], pc)) {
-            duplicados.push(nom2 + '  ->  fila repetida, ambas Q' + _dcQ(pc));
+          if (_dcMismoPrecio_(vistos[k2], pc)) {
+            duplicados.push(nom2 + '  ->  fila repetida, ambas Q' + _dcQ_(pc));
           } else {
-            repetidos.push(nom2 + '  ->  Q' + _dcQ(vistos[k2]) + '  y  Q' + _dcQ(pc));
+            repetidos.push(nom2 + '  ->  Q' + _dcQ_(vistos[k2]) + '  y  Q' + _dcQ_(pc));
           }
         } else {
           vistos[k2] = pc;
@@ -182,7 +183,7 @@ function verCostosFaltantes() {
 }
 
 /** Q con dos decimales, y que se note cuando la celda viene vacia en vez de imprimir "Q". */
-function _dcQ(v) {
+function _dcQ_(v) {
   if (typeof v === 'number') return v.toFixed(2);
   var s = String(v == null ? '' : v).trim();
   return s === '' ? '(vacio)' : s;
@@ -190,12 +191,12 @@ function _dcQ(v) {
 
 /** Dos precios son "el mismo" con tolerancia de medio centavo: comparar numeros
  *  con === falla por decimales que la hoja no muestra. */
-function _dcMismoPrecio(a, b) {
+function _dcMismoPrecio_(a, b) {
   if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) < 0.005;
   return String(a == null ? '' : a).trim() === String(b == null ? '' : b).trim();
 }
 
-function _dcNoEsFicha(nombre) {
+function _dcNoEsFicha_(nombre) {
   var n = String(nombre).toLowerCase().trim();
   var fuera = COSTEO.tabsNoReceta || [];
   for (var i = 0; i < fuera.length; i++) {

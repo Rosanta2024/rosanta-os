@@ -489,7 +489,7 @@ function bloqueFicha_(hoja) {
 }
 
 /** Cambia la cantidad de una linea. Es lo unico que puede hacer cocina. */
-function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area, esperado) {
+function editarCantidad_(ficha, fila, cantidadNueva, quien, rol, area, esperado) {
   exigirPermiso_(rol, 'editarCantidad');
   if (!(cantidadNueva > 0)) throw new Error('La cantidad tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
@@ -509,7 +509,7 @@ function editarCantidad(ficha, fila, cantidadNueva, quien, rol, area, esperado) 
 }
 
 /** Agrega una linea. El producto TIENE que existir en el Banco. */
-function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
+function agregarLinea_(ficha, producto, cantidad, unidad, quien, rol, area) {
   exigirPermiso_(rol, 'agregarLinea');
   if (!(cantidad > 0)) throw new Error('La cantidad tiene que ser mayor que cero.');
 
@@ -570,7 +570,7 @@ function agregarLinea(ficha, producto, cantidad, unidad, quien, rol, area) {
 }
 
 /** Quita una linea. Deja el rastro en la bitacora. */
-function quitarLinea(ficha, fila, quien, rol, area, esperado) {
+function quitarLinea_(ficha, fila, quien, rol, area, esperado) {
   exigirPermiso_(rol, 'quitarLinea');
   var ss = recetarioDe_(area);
   var h = fichaDe_(ss, ficha);
@@ -589,7 +589,7 @@ function quitarLinea(ficha, fila, quien, rol, area, esperado) {
 }
 
 /** Cambia el precio de carta de un plato. */
-function cambiarPrecioMenu(ficha, precioNuevo, quien, rol, motivo, area) {
+function cambiarPrecioMenu_(ficha, precioNuevo, quien, rol, motivo, area) {
   exigirPermiso_(rol, 'cambiarPrecioMenu');
   if (!(precioNuevo > 0)) throw new Error('El precio tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
@@ -623,7 +623,7 @@ function cambiarPrecioMenu(ficha, precioNuevo, quien, rol, motivo, area) {
  *
  * Si hay nombres parecidos y no se manda confirmar:true, NO crea: devuelve los similares.
  */
-function crearInsumo(datos, quien, rol, confirmar, area) {
+function crearInsumo_(datos, quien, rol, confirmar, area) {
   exigirPermiso_(rol, 'crearInsumo');
   if (!datos || !datos.producto) throw new Error('Falta el nombre del producto.');
   if (!(datos.precioCompra > 0)) throw new Error('El precio de compra tiene que ser mayor que cero.');
@@ -666,7 +666,7 @@ function crearInsumo(datos, quien, rol, confirmar, area) {
 }
 
 /** Cambia el precio de compra de un insumo y recalcula su precio por unidad de receta. */
-function cambiarPrecioInsumo(producto, precioNuevo, quien, rol, motivo, area) {
+function cambiarPrecioInsumo_(producto, precioNuevo, quien, rol, motivo, area) {
   exigirPermiso_(rol, 'cambiarPrecio');
   if (!(precioNuevo > 0)) throw new Error('El precio tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
@@ -702,7 +702,7 @@ function cambiarPrecioInsumo(producto, precioNuevo, quien, rol, motivo, area) {
  * hoy conviven "Los Alpes" y "DISTRIBUIDORA DE ALIMENTOS LOS ALPES",
  * y "Licorera", "LICORERA" y "LICORERA NACIONAL".
  */
-function crearProveedor(datos, quien, rol, confirmar) {
+function crearProveedor_(datos, quien, rol, confirmar) {
   exigirPermiso_(rol, 'crearProveedor');
   if (!datos || !datos.nombre) throw new Error('Falta el nombre del proveedor.');
 
@@ -734,7 +734,7 @@ function crearProveedor(datos, quien, rol, confirmar) {
 }
 
 /** Asigna o cambia el proveedor de un insumo. */
-function asignarProveedor(producto, proveedor, quien, rol, area) {
+function asignarProveedor_(producto, proveedor, quien, rol, area) {
   exigirPermiso_(rol, 'crearProveedor');
   var ss = recetarioDe_(area);
   var h = ss.getSheetByName(EDIT.hojaBanco);
@@ -755,6 +755,7 @@ function asignarProveedor(producto, proveedor, quien, rol, area) {
    ========================================================================== */
 
 function probarEdicion() {
+  soloDueno_();
   Logger.log('--- conversion ---');
   [['Libra','g',null],['Onza','g',null],['Litro','ml',null],['750ml','ml',null],
    ['Manojo','g',null],['Manojo','g',50],['Unidad','unidad',null],['Libra','ml',null]].forEach(function (c) {

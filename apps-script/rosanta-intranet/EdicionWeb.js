@@ -4,7 +4,7 @@
  * POR QUE EXISTE, y es lo unico importante de este archivo:
  *
  *   Las funciones de EdicionRecetario.gs reciben el rol COMO PARAMETRO:
- *       editarCantidad(ficha, fila, cantidad, quien, rol)
+ *       editarCantidad_(ficha, fila, cantidad, quien, rol)
  *
  *   Eso esta bien mientras las llame un humano desde el editor. Pero google.script.run
  *   expone al navegador cualquier funcion global, y los parametros los pone el cliente.
@@ -144,28 +144,28 @@ function webEstadoEdicion(auth) {
 function webEditarCantidad(auth, ficha, fila, cantidadNueva, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return editarCantidad(ficha, fila, cantidadNueva, u.email, u.rol, a, producto);
+    return editarCantidad_(ficha, fila, cantidadNueva, u.email, u.rol, a, producto);
   }, 'editarCantidad ' + ficha);
 }
 
 function webAgregarLinea(auth, ficha, producto, cantidad, unidad, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return agregarLinea(ficha, producto, cantidad, unidad, u.email, u.rol, a);
+    return agregarLinea_(ficha, producto, cantidad, unidad, u.email, u.rol, a);
   }, 'agregarLinea ' + ficha + ' · ' + producto);
 }
 
 function webQuitarLinea(auth, ficha, fila, area, producto) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return quitarLinea(ficha, fila, u.email, u.rol, a, producto);
+    return quitarLinea_(ficha, fila, u.email, u.rol, a, producto);
   }, 'quitarLinea ' + ficha);
 }
 
 function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return cambiarPrecioMenu(ficha, precioNuevo, u.email, u.rol, motivo, a);
+    return cambiarPrecioMenu_(ficha, precioNuevo, u.email, u.rol, motivo, a);
   }, 'cambiarPrecioMenu ' + ficha);
 }
 
@@ -176,7 +176,7 @@ function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
 function webCrearFicha(auth, datos, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return crearFicha(datos, u.email, u.rol, a);
+    return crearFicha_(datos, u.email, u.rol, a);
   }, 'crearFicha ' + (datos && datos.nombre || ''));
 }
 
@@ -187,27 +187,27 @@ function webCrearFicha(auth, datos, area) {
 function webCrearInsumo(auth, datos, confirmar, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return crearInsumo(datos, u.email, u.rol, confirmar, a);
+    return crearInsumo_(datos, u.email, u.rol, confirmar, a);
   }, 'crearInsumo ' + (datos && datos.producto || ''));
 }
 
 function webCambiarPrecioInsumo(auth, producto, precioNuevo, motivo, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return cambiarPrecioInsumo(producto, precioNuevo, u.email, u.rol, motivo, a);
+    return cambiarPrecioInsumo_(producto, precioNuevo, u.email, u.rol, motivo, a);
   }, 'cambiarPrecio ' + producto);
 }
 
 function webCrearProveedor(auth, datos, confirmar) {
   return edicionCorrer_(auth, function (u) {
-    return crearProveedor(datos, u.email, u.rol, confirmar);
+    return crearProveedor_(datos, u.email, u.rol, confirmar);
   }, 'crearProveedor ' + (datos && datos.nombre || ''));
 }
 
 function webAsignarProveedor(auth, producto, proveedor, area) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return asignarProveedor(producto, proveedor, u.email, u.rol, a);
+    return asignarProveedor_(producto, proveedor, u.email, u.rol, a);
   }, 'asignarProveedor ' + producto);
 }
 

@@ -20,6 +20,7 @@
  * ------------------------------------------------------------------ */
 
 function crearHojaCosteo() {
+  soloDueno_();
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty('COSTEO_SHEET_ID')) {
     Logger.log('Ya existe COSTEO_SHEET_ID: %s', props.getProperty('COSTEO_SHEET_ID'));
@@ -109,7 +110,7 @@ function registrarPrecio(auth, datos) {
   var usuario = resolverUsuario_(auth);
   if (!usuarioTieneModulo(usuario, 'recetario')) throw new Error('Sin acceso al recetario');
 
-  // Esta funcion escribe EXACTAMENTE las mismas celdas que cambiarPrecioInsumo() en
+  // Esta funcion escribe EXACTAMENTE las mismas celdas que cambiarPrecioInsumo_() en
   // EdicionRecetario.gs, pero hasta el 26-ago-2026 chequeaba distinto: solo pedia el
   // modulo, no el permiso del rol. O sea que un rol que en EDIT.permisos solo puede
   // 'editarCantidad' quedaba bloqueado por un camino y no por el otro, para la misma
@@ -161,7 +162,7 @@ function registrarPrecio(auth, datos) {
       nuevoUnidad, datos.factura || '', quien, datos.nota || ''
     ]);
 
-    // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo() y que el sync.
+    // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo_() y que el sync.
     // Sin esto, "quien tocó el precio del lomito" habia que buscarlo en tres pestanas
     // distintas y ninguna tenia la historia completa. La regla del proyecto es que
     // BITACORA es el registro: un cambio que no aparece ahi es un cambio invisible.
@@ -242,6 +243,7 @@ function ubicarEnBanco_(producto, area) {
 
 /** Vuelca el indice insumo -> receta a una hoja, para consultarlo tambien desde Sheets. */
 function regenerarIndice() {
+  soloDueno_();
   var modelo = construirModelo_();
   var hoja = hojaCosteo_().getSheetByName(COSTEO.hojas.indice);
   if (hoja.getLastRow() > 1) hoja.getRange(2, 1, hoja.getLastRow() - 1, 8).clearContent();
@@ -266,10 +268,10 @@ function regenerarIndice() {
 function getReporteHigiene(auth) {
   var usuario = resolverUsuario_(auth);
   if (!usuarioTieneModulo(usuario, 'recetario')) throw new Error('Sin acceso al recetario');
-  return reporteHigiene();
+  return reporteHigiene_();
 }
 
-function reporteHigiene() {
+function reporteHigiene_() {
   // Del cache, no construido (14-sep-2026). Construirlo eran ~40 s cada vez que alguien
   // abria la pestana Higiene, aunque el recetario estuviera servido.
   var m = modeloCosteo_();

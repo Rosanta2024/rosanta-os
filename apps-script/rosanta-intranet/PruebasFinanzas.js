@@ -12,8 +12,8 @@
  *      Nadie lo vio porque ninguna prueba comparaba las dos.
  *   2. LA PLANILLA EN UN SOLO LUGAR. Estaba a mano aca y en el Python, y los
  *      dos se quedaron en agosto.
- *   3. LAS DOS LOGICAS ESPEJO CUADRAN. _finDestino() repite las reglas de
- *      _finCalcular() para el panel de cobertura. Si se separan, el panel
+ *   3. LAS DOS LOGICAS ESPEJO CUADRAN. _finDestino_() repite las reglas de
+ *      _finCalcular_() para el panel de cobertura. Si se separan, el panel
  *      miente justo sobre el dinero que se cae en silencio. La prueba las
  *      enfrenta en cada corrida.
  *
@@ -26,7 +26,7 @@ function prFinanzas_(res) {
 
   var d = null;
   prCorrer_(g, 'El maestro se lee', function () {
-    d = _finDatos(false);
+    d = _finDatos_(false);
     prAnotar_(g, 'El maestro se lee', (d && d.meses && d.meses.length) ? 'OK' : 'FALLA',
       d && d.meses ? d.meses.length + ' meses con venta · datos al ' + d.gen : 'sin datos',
       d && d.meses ? d.meses.length : 0, '>0');
@@ -35,7 +35,7 @@ function prFinanzas_(res) {
 
   // ---------------------------------------------------------------- 1. meta
   prCorrer_(g, 'La meta de food cost sale de PARAMETROS', function () {
-    var par = _finMetaFood();
+    var par = _finMetaFood_();
     prIgual_(g, 'La meta de food cost sale de PARAMETROS', d.meta_cogs, par,
       'la pantalla usa ' + d.meta_cogs + '% y PARAMETROS dice ' + par + '%');
   });
@@ -53,7 +53,7 @@ function prFinanzas_(res) {
   // ------------------------------------------------------------ 2. planilla
   prCorrer_(g, 'La planilla se lee del Sheet, no del codigo', function () {
     var nombre = 'La planilla se lee del Sheet, no del codigo';
-    var p = _finPlanilla();
+    var p = _finPlanilla_();
     var delSheet = [], delRespaldo = [];
     Object.keys(p.origen).forEach(function (m) {
       (p.origen[m] === 'sheet' ? delSheet : delRespaldo).push(m);
@@ -71,7 +71,7 @@ function prFinanzas_(res) {
 
   prCorrer_(g, 'El Sheet de planilla y el respaldo no se contradicen', function () {
     var nombre = 'El Sheet de planilla y el respaldo no se contradicen';
-    var p = _finPlanilla();
+    var p = _finPlanilla_();
     var choques = [], comunes = 0;
     Object.keys(FIN_PLANILLA_RESPALDO).map(Number).forEach(function (m) {
       if (p.origen[m] !== 'sheet') return;
@@ -136,7 +136,7 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, dif < 1 ? 'OK' : 'FALLA',
       'el calculo dice Q' + Math.round(d.integridad.sin_mapear) +
       ' y la cobertura Q' + Math.round(porEspejo) +
-      (dif >= 1 ? ' — _finDestino() y _finCalcular() se separaron'
+      (dif >= 1 ? ' — _finDestino_() y _finCalcular_() se separaron'
                 : (vacio ? ' (0 contra 0: correcto hoy, pero no ejercita el espejo; ' +
                            'lo mide la prueba siguiente, con dinero de verdad)' : '')),
       Math.round(porEspejo), Math.round(d.integridad.sin_mapear));
@@ -147,7 +147,7 @@ function prFinanzas_(res) {
     // La de arriba compara el dinero PERDIDO, que hoy es cero en los dos
     // caminos: pasa igual si los dos estan bien o si los dos estan rotos.
     // Esta compara cada bloque del DRE, que mueve cientos de miles de
-    // quetzales por las dos logicas. Si _finDestino() y _finCalcular() se
+    // quetzales por las dos logicas. Si _finDestino_() y _finCalcular_() se
     // separan en una sola categoria, aca aparece el bloque y la diferencia.
     //
     // Se excluye Nomina y salarios: en el total del año se reemplaza por la
@@ -246,7 +246,7 @@ function prFinanzas_(res) {
 
   prCorrer_(g, 'Las cuatro tarjetas del RAA se arman', function () {
     var nombre = 'Las cuatro tarjetas del RAA se arman';
-    var t = _raaTarjetas(d);
+    var t = _raaTarjetas_(d);
     var ZONAS = ['verde', 'amarillo', 'rojo', 'gris'];
     var malas = t.filter(function (x) {
       return ZONAS.indexOf(x.zona) === -1 || !x.resultado || x.costo === undefined;
@@ -304,7 +304,7 @@ function prFinanzas_(res) {
   // La prueba 'Ninguna vista llama al servidor con corchetes' (5 vistas de este
   // pilar) se retiro el 12-sep-2026 por decision de Juanma: la reemplaza 'Ninguna
   // vista llama al servidor con el nombre en una variable', en Pruebas.js, que usa
-  // _prLlamadasConCorchetes (abajo) sobre las 25 vistas.
+  // _prLlamadasConCorchetes_ (abajo) sobre las 25 vistas.
 }
 
 
@@ -325,7 +325,7 @@ function prFinanzas_(res) {
  * real. Y sigue cazando el bug original de FinanzasVista, que tenia un
  * withFailureHandler de varias lineas antes del corchete.
  */
-function _prLlamadasConCorchetes(txt) {
+function _prLlamadasConCorchetes_(txt) {
   var out = [], re = /google\.script\.run\b/g, m;
   function linea(i) { return txt.slice(0, i).split('\n').length; }
   while ((m = re.exec(txt))) {

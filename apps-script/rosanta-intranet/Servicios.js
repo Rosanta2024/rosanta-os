@@ -41,8 +41,13 @@ function driveBuscarReportes(auth) {
 /** Devuelve {content:<base64>} — el cliente lo decodifica con b64utf8(). */
 function driveDescargar(fileId, auth) {
   requiereSoloMarketing_(auth);
-  var blob = DriveApp.getFileById(fileId).getBlob();
-  return { content: Utilities.base64Encode(blob.getBytes()) };
+  var f = DriveApp.getFileById(fileId);
+  // Solo los reportes que lista driveBuscarReportes (15-sep-2026). Sin esto, quien tuviera
+  // el modulo de marketing bajaba CUALQUIER archivo del Drive del dueño con solo su id.
+  if (String(f.getName()).indexOf('Rosanta_Reporte_S') !== 0 || f.getMimeType() !== 'text/html') {
+    throw new Error('Ese archivo no es un reporte semanal.');
+  }
+  return { content: Utilities.base64Encode(f.getBlob().getBytes()) };
 }
 
 // ------------------------------------------------------------------- Meta
@@ -160,6 +165,7 @@ function metaEntities(datePreset, auth) {
  * que confirma el mapeo de verdad — el resto es suposición.
  */
 function metaDiagnostico() {
+  soloDueno_();
   var ins = metaInsights_('last_30d');
   Logger.log('INSIGHTS: %s filas | frequency omitido: %s', ins.data.length, ins.sinFrequency);
   Logger.log('INSIGHTS fila[0] CRUDA:\n%s', JSON.stringify(ins.data[0] || null, null, 2));
@@ -179,7 +185,7 @@ function metaDiagnostico() {
  * Devuelve SOLO los nombres y el largo del valor: nunca el valor, que un token
  * no tiene por que aparecer en una pagina web ni en un log.
  */
-function propsDiagnostico() {
+function propsDiagnostico_() {
   var props = PropertiesService.getScriptProperties().getProperties();
   var esperadas = ['META_TOKEN', 'ANTHROPIC_API_KEY', 'CONFIG_SHEET_ID', 'LEADS_SHEET_ID'];
   var lista = Object.keys(props).sort().map(function (k) {
@@ -200,7 +206,7 @@ function propsDiagnostico() {
  * sin depender del editor de Apps Script ni de su cache. Devuelve datos, no
  * texto: la pagina los formatea.
  */
-function metaDiagnosticoJson() {
+function metaDiagnosticoJson_() {
   var salida = { ok: true, pasos: {} };
   try {
     var ins = metaInsights_('last_30d');

@@ -65,7 +65,7 @@ function nombreEnFormula_(n) {
  *
  * Devuelve { ok, pestana, tipo, filaResumen }.
  */
-function crearFicha(datos, quien, rol, area) {
+function crearFicha_(datos, quien, rol, area) {
   exigirPermiso_(rol, 'crearFicha');
   datos = datos || {};
 

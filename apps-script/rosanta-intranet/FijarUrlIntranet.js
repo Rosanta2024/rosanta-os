@@ -24,6 +24,7 @@
  * Valida antes de escribir. Si la URL no sirve, no toca nada y dice por que.
  */
 function fijarUrlIntranet(url) {
+  soloDueno_();
   url = String(url || '').trim().replace(/\/+$/, '');
 
   var problemas = [];

@@ -695,7 +695,7 @@ function prPuentePOS_(res) {
                 'Falta POS_CATALOGO_SHEET_ID. Subir el catalogo del POS y guardar su ID.');
       return;
     }
-    var r = verificarNombresPOS(id);
+    var r = verificarNombresPOS_(id);
     prAnotar_(g, 'Nombres vivos en el POS', r.rotos.length === 0 ? 'OK' : 'FALLA',
               r.rotos.slice(0, 10).join(' · '), r.rotos.length, 0);
     prAnotar_(g, 'Precios iguales', r.precios.length === 0 ? 'OK' : 'AVISO',
@@ -964,7 +964,7 @@ function prPuentePOS_(res) {
      12-sep-2026) y revisa TODAS las vistas: run['nombre']() es invisible para los dos
      barridos de arriba, y asi
      vivio getFinanzasData sin guarda hasta el 12-sep-2026. La deteccion es
-     _prLlamadasConCorchetes (PruebasFinanzas.js), que solo marca un corchete pegado a
+     _prLlamadasConCorchetes_ (PruebasFinanzas.js), que solo marca un corchete pegado a
      google.script.run o al ultimo with...Handler(...), no uno dentro del handler.
 
      UNA EXCEPCION, EXPLICITA: el dispatcher srv() de Marketing.html, que termina en
@@ -986,8 +986,8 @@ function prPuentePOS_(res) {
     var MIN_SRV = 10;   // y 14 llamadas srv('nombre') en Marketing
     var EXCEPCION = /\[\s*fn\s*\]\s*\(\s*\.\.\.\s*args\s*,\s*AUTH\s*\)/;
 
-    if (typeof _prLlamadasConCorchetes !== 'function') {
-      prAnotar_(g, nombre, 'FALLA', 'No existe _prLlamadasConCorchetes (PruebasFinanzas.js): no hay con que buscar.');
+    if (typeof _prLlamadasConCorchetes_ !== 'function') {
+      prAnotar_(g, nombre, 'FALLA', 'No existe _prLlamadasConCorchetes_ (PruebasFinanzas.js): no hay con que buscar.');
       return;
     }
     var culpables = [], ilegibles = [], sitios = 0, excepciones = 0, srvMarketing = 0;
@@ -997,7 +997,7 @@ function prPuentePOS_(res) {
       catch (e) { ilegibles.push(v); return; }
       sitios += (txt.match(/google\.script\.run\b/g) || []).length;
       var lineas = txt.split('\n');
-      _prLlamadasConCorchetes(txt).forEach(function (n) {
+      _prLlamadasConCorchetes_(txt).forEach(function (n) {
         if (v === 'Marketing' && EXCEPCION.test(lineas[n - 1] || '')) { excepciones++; return; }
         culpables.push(v + ' linea ' + n);
       });
@@ -1281,7 +1281,7 @@ function prModulos_(res) {
                 'Falta INVENTARIO_CIERRE_SHEET_ID. Correr PROBAR_SYNC una vez.');
       return;
     }
-    var r = sincronizarPreciosDeCierre('COCINA');   // propone, nunca escribe
+    var r = sincronizarPreciosDeCierre_('COCINA');   // propone, nunca escribe
     var n = r.cambios.length;
     prAnotar_(g, 'Precios del cierre por revisar', n === 0 ? 'OK' : 'AVISO',
       r.cambios.map(function (c) {
@@ -1294,7 +1294,7 @@ function prModulos_(res) {
 
   if (PRUEBAS_CFG.incluirRed) {
     prCorrer_(g, 'Meta (red)', function () {
-      var d = metaDiagnosticoJson();
+      var d = metaDiagnosticoJson_();
       prAnotar_(g, 'Meta (red)', d && d.ok !== false ? 'OK' : 'FALLA',
                 d && d.error ? String(d.error) : 'responde');
     });
@@ -1374,8 +1374,8 @@ function prCapaWeb_(res) {
 
   // Ninguna escritura puede quedar clavada a un recetario: para eso esta recetarioDe_.
   prCorrer_(g, 'Ninguna escritura abre un recetario a mano', function () {
-    var capa = ['editarCantidad', 'agregarLinea', 'quitarLinea', 'cambiarPrecioMenu',
-                'crearFicha', 'crearInsumo', 'cambiarPrecioInsumo', 'asignarProveedor',
+    var capa = ['editarCantidad_', 'agregarLinea_', 'quitarLinea_', 'cambiarPrecioMenu_',
+                'crearFicha_', 'crearInsumo_', 'cambiarPrecioInsumo_', 'asignarProveedor_',
                 'buscarSimilares_', 'contenidosTipicos_'];
     var clavadas = capa.filter(function (n) {
       var fn = globalThis[n];
@@ -1387,6 +1387,47 @@ function prCapaWeb_(res) {
       clavadas.length ? 'CLAVADAS A COCINA: ' + clavadas.join(' · ')
                       : 'las ' + capa.length + ' pasan por recetarioDe_(area)',
       capa.length - clavadas.length, capa.length);
+  });
+
+  /* LA PUERTA TRASERA (15-sep-2026). Las pruebas de arriba miran las funciones que las
+     vistas NOMBRAN. Pero cualquier pagina del despliegue deja llamar a cualquier funcion
+     global sin guion bajo al final, la nombre una vista o no: el 14-sep habia 85 asi, y
+     todas pasaban en verde porque ninguna vista las nombraba. Esta enumera TODAS. */
+  prCorrer_(g, 'Ninguna funcion publica queda abierta', function () {
+    var nombre = 'Ninguna funcion publica queda abierta';
+    var G = (typeof globalThis !== 'undefined') ? globalThis : this;
+    // exigirPermiso_ NO cuenta: mira el rol que le pasan, y si lo pasa el navegador no protege nada.
+    var IDENTIDAD = /(resolverUsuario_|getUsuarioActual|edicionQuien_|edicionCorrer_|exigirModulo_|soloDueno_|invMigExigirDueno_|invExigirDueno_|requiere[A-Z]\w*_)\s*\(/;
+    var LIBRES = {
+      doGet: 'la puerta: decide la pagina con la identidad',
+      include: 'la usan las plantillas; devuelve el HTML de una vista',
+      usuarioTieneModulo: 'pura: no lee nada',
+      getUsuarioActual: 'devuelve solo la fila de quien llama',
+      calentarCaches: 'activador cada 5 minutos',
+      latido: 'activador',
+      refrescarSemaforoPrecios: 'activador mensual; tambien la llama el aviso del tablero'
+    };
+    var abiertas = [], conRol = [], n = 0;
+    Object.keys(G).forEach(function (k) {
+      var fn = G[k];
+      if (typeof fn !== 'function' || k.slice(-1) === '_') return;
+      n++;
+      var s = String(fn).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      var m = s.match(/^function\s+[\w$]+\s*\(([^)]*)\)/);
+      var params = (m ? m[1] : '').split(',').map(function (p) { return p.trim(); });
+      if (params.indexOf('rol') !== -1 || params.indexOf('quien') !== -1) conRol.push(k + ' (recibe el rol del navegador)');
+      if (!LIBRES.hasOwnProperty(k) && !IDENTIDAD.test(s)) abiertas.push(k);
+    });
+    if (n < 40) {
+      prAnotar_(g, nombre, 'FALLA', 'Solo vi ' + n + ' funciones publicas: el barrido no esta leyendo el proyecto.', n, '>40');
+      return;
+    }
+    var mal = abiertas.concat(conRol);
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? 'Se pueden llamar desde cualquier pagina sin identificarse: ' + mal.join(' · ') +
+                   '. Guion bajo al final si nadie la corre desde el editor; si no, soloDueno_() en la primera linea.'
+                 : n + ' funciones publicas: todas con guarda, salvo ' + Object.keys(LIBRES).length + ' libres a proposito',
+      mal.length, 0);
   });
 
   prCorrer_(g, 'La puerta reconoce a quien corre las pruebas', function () {
@@ -1420,7 +1461,14 @@ function prCapaWeb_(res) {
  * Corre todo y devuelve el resultado como objeto. No escribe nada, no imprime nada.
  * La usan PRUEBAS() (editor y clasp run) y la ruta ?page=pruebas del navegador.
  */
+/* Para correr desde el EDITOR (con guarda de dueño). El codigo que la usa por dentro
+   —activador, pantalla, bateria— llama a correrPruebas_(), que no tiene guarda. */
 function correrPruebas() {
+  soloDueno_();
+  return correrPruebas_();
+}
+
+function correrPruebas_() {
   var arranque = new Date().getTime();
   PRUEBAS_MODELO_ = null;                       // modelo fresco en cada corrida
 
@@ -1492,21 +1540,22 @@ function pruebasATexto_(res) {
  * que prueba fallo. No escribe nada.
  */
 function correrPruebasTexto() {
-  return pruebasATexto_(correrPruebas());
+  soloDueno_();
+  return pruebasATexto_(correrPruebas_());
 }
 
 function correrPruebasWeb(auth) {
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('Sin acceso');
   if (String(u.rol || '').toLowerCase() !== 'dueno') throw new Error('Solo direccion');
-  return correrPruebas();
+  return correrPruebas_();
 }
 
 /* ==========================================================================
    7. SYNC DE PRECIOS: DESHACER, SEMAFORO Y RASTRO
    --------------------------------------------------------------------------
    Todo lo de este grupo LEE. Ninguna prueba llama a refrescarSemaforoPrecios(),
-   aplicarSincronizacion() ni a revertirSync_ sin simular: los tres escriben.
+   aplicarSincronizacion_() ni a revertirSync_ sin simular: los tres escriben.
 
    Las dos pruebas de introspeccion son las importantes. No miran datos, miran el
    CODIGO, y existen porque los dos arreglos que cubren son invisibles cuando se
@@ -1532,8 +1581,14 @@ function prSyncPrecios_(res) {
   // El desplegable del editor elige solo y ya corrio una funcion que escribia.
   // Lo que escribe en lote tiene que ser privado y llamarse desde su propio archivo.
   prCorrer_(g, 'Lo que escribe en lote no esta en el desplegable', function () {
-    var deberianSerPrivadas = ['revertirSync_', 'aprobadosDelSemaforo_', 'hojaLogSync_'];
-    var expuestas = deberianSerPrivadas.filter(function (n) { return n.slice(-1) !== '_'; });
+    // Hasta el 15-sep-2026 esta prueba miraba si los nombres DE SU PROPIA LISTA terminaban
+    // en guion bajo, y pasaba siempre. Ahora mira el codigo: la privada tiene que existir y
+    // no puede quedar una publica con el mismo nombre sin el guion.
+    var deberianSerPrivadas = ['revertirSync_', 'aprobadosDelSemaforo_', 'hojaLogSync_',
+                               'aplicarSincronizacion_', 'sincronizarPreciosDeCierre_'];
+    var expuestas = deberianSerPrivadas.filter(function (n) {
+      return typeof globalThis[n] !== 'function' || typeof globalThis[n.slice(0, -1)] === 'function';
+    });
     prAnotar_(g, 'Lo que escribe en lote no esta en el desplegable',
               expuestas.length === 0 ? 'OK' : 'FALLA',
               expuestas.length ? 'expuestas: ' + expuestas.join(' · ')
@@ -1543,7 +1598,7 @@ function prSyncPrecios_(res) {
 
   // INTROSPECCION 1 — el rastro unico.
   prCorrer_(g, 'Todo camino que escribe un precio deja rastro en BITACORA', function () {
-    var caminos = ['registrarPrecio', 'cambiarPrecioInsumo', 'aplicarSincronizacion', 'revertirSync_'];
+    var caminos = ['registrarPrecio', 'cambiarPrecioInsumo_', 'aplicarSincronizacion_', 'revertirSync_'];
     var mudos = caminos.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;

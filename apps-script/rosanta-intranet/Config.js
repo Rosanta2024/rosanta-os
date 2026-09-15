@@ -145,6 +145,34 @@ function exigirModulo_(auth, modulo) {
   return u;
 }
 
+/**
+ * La cerradura de las HERRAMIENTAS DE EDITOR (15-sep-2026).
+ *
+ * El despliegue es access: ANYONE y executeAs: USER_DEPLOYING. Cualquier pagina del
+ * despliegue —tambien "Esta puerta esta cerrada"— le da al navegador google.script.run
+ * contra TODA funcion global cuyo nombre no termine en guion bajo, y esa funcion corre
+ * como Juanma. Hasta esta fecha habia 85 asi. Entre ellas fijarUrlIntranet, que dejaba
+ * redirigir los enlaces con token a otra app, y las de Finanzas con el guion ADELANTE:
+ * _finDatos devolvia el maestro entero. Solo el guion AL FINAL esconde una funcion.
+ *
+ * Una herramienta que se corre desde el editor no puede llevar guion al final: desaparece
+ * del menu Ejecutar. Por eso lleva esto en la primera linea. Desde el editor la sesion es
+ * la de Juanma y pasa; desde el navegador de cualquier otra persona (Gmail con token, o
+ * sin sesion) no lo es y tira.
+ *
+ * NO usar en lo que corre un activador ni en lo que llama una pantalla del equipo: ahi la
+ * identidad va por resolverUsuario_(auth). La bateria vigila que no quede ninguna publica
+ * sin una de las dos: "Ninguna funcion publica queda abierta".
+ */
+var DUENO_CORREO_ = 'restaurante@rosanta.rest';
+function soloDueno_() {
+  var correo = '';
+  try { correo = String(Session.getActiveUser().getEmail() || '').toLowerCase().trim(); } catch (e) { correo = ''; }
+  if (correo !== DUENO_CORREO_) {
+    throw new Error('Esta funcion es una herramienta de editor: solo la corre el dueño, desde el editor de Apps Script.');
+  }
+}
+
 /** Identidad para las llamadas de google.script.run: token si viene, si no la sesión. */
 function resolverUsuario_(auth) {
   return (auth ? getUsuarioPorToken_(auth) : null) || getUsuarioActual();
@@ -152,6 +180,7 @@ function resolverUsuario_(auth) {
 
 /** Genera tokens para quien no tenga. Ejecutar desde el editor y leer el Log. */
 function generarTokensUsuarios() {
+  soloDueno_();
   var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS');
   var filas = hoja.getDataRange().getValues();
   if (String(filas[0][5] || '').trim() !== 'token') {

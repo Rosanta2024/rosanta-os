@@ -172,11 +172,11 @@ function metasFoodCost_() {
   if (METAS_FC_MEMO_) return METAS_FC_MEMO_;
   var porDefecto = {};
   COSTEO.areas.forEach(function (a) { porDefecto[a.area] = a.cmvObjetivo; });
-  var global = _finParametro('food_cost_objetivo_pct', porDefecto.COCINA);
+  var global = _finParametro_('food_cost_objetivo_pct', porDefecto.COCINA);
   METAS_FC_MEMO_ = {
     global: global,
     COCINA: global,
-    BARRA: _finParametro('food_cost_barra_pct', porDefecto.BARRA)
+    BARRA: _finParametro_('food_cost_barra_pct', porDefecto.BARRA)
   };
   return METAS_FC_MEMO_;
 }
