@@ -246,6 +246,14 @@ def es_evento(r):
     return 'EVENTO' in t
 
 
+def sin_servicio(r, n):
+    """Regla 14 (15-sep-2026): venta sin el 10% de servicio, base de la meta de food
+    cost. La base del ticket es Costo + Ganancia (cols 6 y 7); vacia o mayor que el
+    Subtotal, vale el Subtotal. Mismo criterio que FinanzasDatos.gs."""
+    b = ((numero(V.cell(r, 6).value) or 0) + (numero(V.cell(r, 7).value) or 0)) / 1.12
+    return b if 0 < b < n else n
+
+
 def filas_venta():
     for r in range(5, V.max_row + 1):
         f = V.cell(r, 2).value
@@ -282,7 +290,7 @@ def costo(ws, r, col, hoja):
 serie = []
 sin_venta = []   # meses con gasto y sin venta (M20)
 for m in range(1, 13):
-    ven = ev = 0.0
+    ven = ev = ven_ss = 0.0
     com = 0
     for r, f in filas_venta():
         if f.month != m:
@@ -292,6 +300,7 @@ for m in range(1, 13):
             ev += n
             continue
         ven += n
+        ven_ss += sin_servicio(r, n)
         try:
             com += int(float(V.cell(r, 9).value or 0))   # Sheets exporta enteros como float
         except (TypeError, ValueError):
@@ -339,7 +348,7 @@ for m in range(1, 13):
                               'gop': round(gop, 2),
                               'nomina_banco': round(bl.get('Nomina y salarios', 0), 2)})
         continue
-    serie.append({'mes': MESES[m-1], 'm': m, 'ventas': round(ven, 2),
+    serie.append({'mes': MESES[m-1], 'm': m, 'ventas': round(ven, 2), 'ventas_ss': round(ven_ss, 2),
                   'eventos': round(ev, 2), 'comensales': com,
                   'cogs': round(cog, 2), 'gop': round(gop, 2),
                   'imp': round(bl.get('Impuestos', 0), 2),
@@ -349,7 +358,7 @@ for m in range(1, 13):
 
 BLOQUES = [b for b in REF if any(s['bloques'].get(b) for s in serie)]
 tot = {k: round(sum(s[k] for s in serie), 2)
-       for k in ['ventas', 'cogs', 'gop', 'imp', 'dev', 'eventos', 'comensales', 'pers']}
+       for k in ['ventas', 'ventas_ss', 'cogs', 'gop', 'imp', 'dev', 'eventos', 'comensales', 'pers']}
 for x in sin_venta:
     tot['cogs'] = round(tot['cogs'] + x['cogs'], 2)
     tot['gop'] = round(tot['gop'] + x['gop'], 2)
@@ -392,11 +401,11 @@ for s in serie:
         lab_mes = lab_mes * ULT_VENTA.day / calendar.monthrange(ANIO, m)[1]
     lab = lab_mes + igss
     gop = s['gop'] - s['bloques'].get('Nomina y salarios', 0) + lab
-    cinco.append({'mes': s['mes'], 'ventas': s['ventas'], 'cogs': round(cog, 2),
+    cinco.append({'mes': s['mes'], 'ventas': s['ventas'], 'ventas_ss': s['ventas_ss'], 'cogs': round(cog, 2),
                   'labor': round(lab, 2), 'igss': round(igss, 2),
                   'devengado': dev is not None, 'labor_origen': origen, 'gop': round(gop, 2),
                   'neto': round(s['ventas'] - cog - gop, 2)})
-T5 = {k: round(sum(c[k] for c in cinco), 2) for k in ['ventas', 'cogs', 'labor', 'gop', 'neto']}
+T5 = {k: round(sum(c[k] for c in cinco), 2) for k in ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto']}
 for x in sin_venta:   # M20: el dinero de un mes sin venta va al año, sin su nomina de banco
     _g = x['gop'] - x['nomina_banco']
     T5['cogs'] = round(T5['cogs'] + x['cogs'], 2)
@@ -406,12 +415,14 @@ json.dump({'meses': cinco, 'tot': T5}, open(os.path.join(OUT, 'cinco.json'), 'w'
 
 
 # ==================== 3. Pantalla semanal ====================
-sem = defaultdict(lambda: {'v': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, 'fin': None})
+sem = defaultdict(lambda: {'v': 0.0, 'vss': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, 'fin': None})
 for r, f in filas_venta():
     if es_evento(r):
         continue
     d = sem[tuple(f.isocalendar()[:2])]     # (año ISO, semana), como la clave AAAAWW
-    d['v'] += (V.cell(r, 4).value or 0) / 1.12
+    _n = (V.cell(r, 4).value or 0) / 1.12
+    d['v'] += _n
+    d['vss'] += sin_servicio(r, _n)
     d['t'] += 1
     try:
         d['c'] += int(float(V.cell(r, 9).value or 0))
@@ -457,7 +468,7 @@ if con_venta:
     lunes = datetime.date.fromisocalendar(con_venta[0][0], con_venta[0][1], 1)
     while tuple(lunes.isocalendar()[:2]) <= con_venta[-1]:
         k = tuple(lunes.isocalendar()[:2])
-        d = sem.get(k) or {'v': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, 'fin': None}
+        d = sem.get(k) or {'v': 0.0, 'vss': 0.0, 'c': 0, 't': 0, 'cogs': 0.0, 'ini': None, 'fin': None}
         ini = d['ini'] or datetime.datetime(lunes.year, lunes.month, lunes.day)
         fin = d['fin'] or ini + datetime.timedelta(days=6)
         for b in ('bi', 'bac'):
@@ -467,10 +478,10 @@ if con_venta:
         lab = ultimo_devengado(ini.month)[0] / 4.345    # regla 11 (antes: 29000 fijo)
         v = d['v']
         S.append({'w': k[1], 'ini': ini.strftime('%d/%m'), 'fin': fin.strftime('%d/%m'),
-                  'ventas': round(v, 2), 'com': d['c'], 'tickets': d['t'],
+                  'ventas': round(v, 2), 'ventas_ss': round(d['vss'], 2), 'com': d['c'], 'tickets': d['t'],
                   'tp': round(v / d['c'], 2) if d['c'] else 0,
                   'cogs': round(d['cogs'], 2),
-                  'cogsp': round(d['cogs'] / v * 100, 1) if v else None,
+                  'cogsp': round(d['cogs'] / d['vss'] * 100, 1) if d['vss'] else None,   # regla 14
                   'labor': round(lab, 2), 'laborp': round(lab / v * 100, 1) if v else None,
                   'prime': round((d['cogs'] + lab) / v * 100, 1) if v else None,
                   'caja': round(prev['bi'] + prev['bac'], 2), 'corta': v < 1000})
@@ -482,9 +493,10 @@ for i, s in enumerate(S):
         continue
     w4 = S[i-3:i+1]
     vv = sum(x['ventas'] for x in w4)
+    vs = sum(x['ventas_ss'] for x in w4)
     cc = sum(x['cogs'] for x in w4)
     ll = sum(x['labor'] for x in w4)
-    s['cogs_m4'] = round(cc / vv * 100, 1) if vv else None
+    s['cogs_m4'] = round(cc / vs * 100, 1) if vs else None   # regla 14: sin servicio
     s['prime_m4'] = round((cc + ll) / vv * 100, 1) if vv else None
 
 for i, s in enumerate(S):
@@ -619,14 +631,14 @@ json.dump(PANT, open(os.path.join(OUT, 'pant.json'), 'w'), ensure_ascii=False)
 print(f"Espejo: {ESPEJO}")
 print(f"Salida: {OUT}\n")
 print("LOS 5 NUMEROS (nomina devengada)")
-print("  mes | ventas  | COGS%  | labor% | prime% |  neto%")
+print("  mes | ventas  | food%ss| labor% | prime% |  neto%")
 for c in cinco:
     v = c['ventas']
     print("  %s | %7.0f | %5.1f%% | %5.1f%% | %5.1f%% | %6.1f%%" % (
-        c['mes'], v, c['cogs']/v*100, c['labor']/v*100,
+        c['mes'], v, c['cogs']/c['ventas_ss']*100, c['labor']/v*100,
         (c['cogs']+c['labor'])/v*100, c['neto']/v*100))
 print("  AÑO | %7.0f | %5.1f%% | %5.1f%% | %5.1f%% | %6.1f%%" % (
-    T5['ventas'], T5['cogs']/T5['ventas']*100, T5['labor']/T5['ventas']*100,
+    T5['ventas'], T5['cogs']/T5['ventas_ss']*100, T5['labor']/T5['ventas']*100,
     (T5['cogs']+T5['labor'])/T5['ventas']*100, T5['neto']/T5['ventas']*100))
 print(f"\nMIX  cocina {mix_c}% / barra {mix_b}%  ->  meta de food cost {meta_cogs}%")
 u = S[-1]

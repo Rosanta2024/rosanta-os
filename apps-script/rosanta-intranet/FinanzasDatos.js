@@ -487,7 +487,8 @@ function finCacheClave_() {
   // v6 (15-sep-2026): semanas con año y consecutivas, planilla estimada, bloque
   // Uniformes y meses sin venta. Una cache v5 pintaria la pantalla nueva con el
   // calculo viejo.
-  return 'finanzas_v6_m' + m.global + '-' + m.BARRA;
+  // v7 (15-sep-2026): food cost sobre venta sin servicio (ventas_ss, regla 14).
+  return 'finanzas_v7_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -537,7 +538,7 @@ function _finCalcular_() {
 
   var mes = {}, sem = {};
   function _mes(m) {
-    if (!mes[m]) mes[m] = { m: m, ventas: 0, eventos: 0, com: 0, cogs: 0, igss: 0,
+    if (!mes[m]) mes[m] = { m: m, ventas: 0, ventas_ss: 0, eventos: 0, com: 0, cogs: 0, igss: 0,
                             dev: 0, pers: 0, tickets: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
                             // venta por semana ISO contando SOLO los dias que caen en
                             // este mes. Una semana a caballo entre dos meses no puede
@@ -546,7 +547,7 @@ function _finCalcular_() {
     return mes[m];
   }
   function _sem(k) {                                   // k = clave AAAAWW
-    if (!sem[k]) sem[k] = { clave: k, v: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+    if (!sem[k]) sem[k] = { clave: k, v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
     return sem[k];
   }
 
@@ -558,6 +559,13 @@ function _finCalcular_() {
     if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
     if (!ultVenta || f > ultVenta) ultVenta = f;
     var neto = _finNum_(V[r][3]) / 1.12;                 // regla 1: col 4 con IVA
+    // regla 14 (Juanma, 15-sep-2026): el food cost va sobre la venta SIN servicio,
+    // que es la base de la meta y de las fichas. El Subtotal trae el 10% de servicio;
+    // la base del ticket es Costo + Ganancia (cols 6 y 7): Subtotal / 1.10 en 1,797
+    // de 1,902 tickets. Una tarjeta de regalo no lleva servicio: si la base viene
+    // vacia o mayor que el Subtotal, vale el Subtotal.
+    var base = (_finNum_(V[r][5]) + _finNum_(V[r][6])) / 1.12;
+    var sinServ = (base > 0 && base < neto) ? base : neto;
     var M = _mes(f.getMonth() + 1);
     // regla 2: el evento privado es ingreso adicional, no venta de restaurante
     if ((String(V[r][7] || '') + String(V[r][11] || '')).toUpperCase().indexOf('EVENTO') !== -1) {
@@ -565,6 +573,7 @@ function _finCalcular_() {
       continue;
     }
     M.ventas += neto;
+    M.ventas_ss += sinServ;
     M.tickets += 1;
     M.com += Math.round(_finNum_(V[r][8]));              // col 9: comensales
     var wISO = _finSemanaISO_(f);
@@ -572,7 +581,7 @@ function _finCalcular_() {
     M.porSemana[wISO].v += neto;
     M.porSemana[wISO].com += Math.round(_finNum_(V[r][8]));
     var S = _sem(_finClaveSemana_(f));
-    S.v += neto; S.tickets += 1; S.com += Math.round(_finNum_(V[r][8]));
+    S.v += neto; S.v_ss += sinServ; S.tickets += 1; S.com += Math.round(_finNum_(V[r][8]));
     if (!S.ini || f < S.ini) S.ini = f;
     if (!S.fin || f > S.fin) S.fin = f;
   }
@@ -739,7 +748,8 @@ function _finCalcular_() {
     var labor = pl.valor * parte + M.igss;
     var gopDev = gop - (M.bloques['Nomina y salarios'] || 0) + labor;
     meses.push({
-      m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), eventos: _finR_(M.eventos),
+      m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), ventas_ss: _finR_(M.ventas_ss),
+      eventos: _finR_(M.eventos),
       com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
       devengado: devengado !== null,
       labor_origen: pl.origen, labor_desde: pl.desde ? FIN_MESES[pl.desde - 1] : '',
@@ -747,7 +757,7 @@ function _finCalcular_() {
       gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
       dev: _finR_(M.dev), pers: _finR_(M.pers),
       neto: _finR_(M.ventas - M.cogs - gopDev),
-      cogsp: _finR_(M.cogs / M.ventas * 100, 1),
+      cogsp: _finR_(M.cogs / (M.ventas_ss || M.ventas) * 100, 1),   // regla 14: sin servicio
       laborp: _finR_(labor / M.ventas * 100, 1),
       primep: _finR_((M.cogs + labor) / M.ventas * 100, 1),
       netop: _finR_((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
@@ -769,10 +779,10 @@ function _finCalcular_() {
     });
   });
 
-  var anioTot = { ventas: 0, cogs: 0, labor: 0, gop: 0, neto: 0, eventos: 0,
+  var anioTot = { ventas: 0, ventas_ss: 0, cogs: 0, labor: 0, gop: 0, neto: 0, eventos: 0,
                   com: 0, pers: 0, dev: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 } };
   meses.forEach(function (x) {
-    ['ventas', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'com', 'pers', 'dev'].forEach(function (k) {
+    ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'com', 'pers', 'dev'].forEach(function (k) {
       anioTot[k] += x[k];
     });
     Object.keys(x.bloques).forEach(function (b) {
@@ -788,10 +798,10 @@ function _finCalcular_() {
       if (b !== 'Nomina y salarios') anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
     });
   });
-  ['ventas', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev'].forEach(function (k) {
+  ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev'].forEach(function (k) {
     anioTot[k] = _finR_(anioTot[k]);
   });
-  anioTot.cogsp = _finR_(anioTot.cogs / anioTot.ventas * 100, 1);
+  anioTot.cogsp = _finR_(anioTot.cogs / (anioTot.ventas_ss || anioTot.ventas) * 100, 1);   // regla 14
   anioTot.laborp = _finR_(anioTot.labor / anioTot.ventas * 100, 1);
   anioTot.primep = _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);
   anioTot.netop = _finR_(anioTot.neto / anioTot.ventas * 100, 1);
@@ -832,7 +842,7 @@ function _finCalcular_() {
     for (var lunes = _finLunesDeClave_(conVenta[0]); _finClaveSemana_(lunes) <= ultClave;
          lunes = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7)) {
       var k = _finClaveSemana_(lunes);
-      var d = sem[k] || { v: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+      var d = sem[k] || { v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
       var ini = d.ini || lunes;
       var fin = d.fin || new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
       ['bi', 'bac'].forEach(function (b) {      // el ultimo saldo hasta esta semana
@@ -844,9 +854,9 @@ function _finCalcular_() {
       // regla 11: sin planilla del mes, la ultima cargada (antes: 29000 fijo)
       var lab = _finUltimoDevengado_(planilla.valores, ini.getMonth() + 1).valor / FIN_SEMANAS_MES;
       S.push({ w: k % 100, clave: k, ini: _finDDMM_(ini), fin: _finDDMM_(fin),
-               ventas: _finR_(d.v), com: d.com, tickets: d.tickets,
+               ventas: _finR_(d.v), ventas_ss: _finR_(d.v_ss), com: d.com, tickets: d.tickets,
                tp: d.com ? _finR_(d.v / d.com) : 0,
-               cogs: _finR_(d.cogs), cogsp: d.v ? _finR_(d.cogs / d.v * 100, 1) : null,
+               cogs: _finR_(d.cogs), cogsp: d.v_ss ? _finR_(d.cogs / d.v_ss * 100, 1) : null,
                labor: _finR_(lab), laborp: d.v ? _finR_(lab / d.v * 100, 1) : null,
                prime: d.v ? _finR_((d.cogs + lab) / d.v * 100, 1) : null,
                caja: _finR_(prevSaldo.bi + prevSaldo.bac),
@@ -855,9 +865,9 @@ function _finCalcular_() {
   }
   // regla 7: media movil de 4 = cociente de las sumas, NO promedio de porcentajes
   for (var i = 3; i < S.length; i++) {
-    var vv = 0, cc = 0, ll = 0;
-    for (var j = i - 3; j <= i; j++) { vv += S[j].ventas; cc += S[j].cogs; ll += S[j].labor; }
-    S[i].cogs_m4 = vv ? _finR_(cc / vv * 100, 1) : null;
+    var vv = 0, vs = 0, cc = 0, ll = 0;
+    for (var j = i - 3; j <= i; j++) { vv += S[j].ventas; vs += S[j].ventas_ss; cc += S[j].cogs; ll += S[j].labor; }
+    S[i].cogs_m4 = vs ? _finR_(cc / vs * 100, 1) : null;   // regla 14: sin servicio; el prime no
     S[i].prime_m4 = vv ? _finR_((cc + ll) / vv * 100, 1) : null;
   }
   for (var k = 1; k < S.length; k++) {
@@ -1183,7 +1193,12 @@ function getMetasData(auth, forzar) {
   // El techo de compra de la semana: lo que se puede comprar sin romper la meta
   // de food cost sobre la venta que hay que hacer. Es un techo de compra, no un
   // costo teorico: medimos base compra contra una meta base receta.
-  out.compra_tope = _finR_(out.necesario_semana * out.meta_food / 100);
+  // Regla 14: la meta de food cost es sobre venta sin servicio y la venta que hay que
+  // hacer (meta.venta) va con servicio. El techo se mide sobre su parte sin servicio,
+  // con la proporcion del año (Juanma, 15-sep-2026: baja el techo cerca de 9%).
+  var sinServ = (d.total && d.total.ventas && d.total.ventas_ss) ? d.total.ventas_ss / d.total.ventas : 1;
+  out.factor_sin_servicio = _finR_(sinServ, 4);
+  out.compra_tope = _finR_(out.necesario_semana * sinServ * out.meta_food / 100);
 
   // ---- el techo, partido por area y por familia
   //
@@ -1199,8 +1214,8 @@ function getMetasData(auth, forzar) {
   var metaArea = _finMetaArea_();
   ['cocina', 'barra'].forEach(function (a) {
     var A = C[a] || { total: 0, f: {}, mes: {} };
-    var ventaSem = out.necesario_semana * FIN_MIX[a] / 100;
-    var ventaMes = meta.venta * FIN_MIX[a] / 100;
+    var ventaSem = out.necesario_semana * sinServ * FIN_MIX[a] / 100;   // sin servicio
+    var ventaMes = meta.venta * sinServ * FIN_MIX[a] / 100;
     var topeSem = _finR_(ventaSem * metaArea[a] / 100);
     var topeMes = _finR_(ventaMes * metaArea[a] / 100);
     var gastado = _finR_(A.mes[m] || 0);

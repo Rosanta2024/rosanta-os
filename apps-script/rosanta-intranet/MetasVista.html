@@ -289,7 +289,7 @@ var AUTH = '<?= authToken ?>';
     // ---- 3. EL TECHO DE COMPRA, uno por area
     if (d.techo) {
       html += '<section class="met-seccion"><h2>Qué se puede comprar</h2>' +
-        '<p class="met-nota">El techo de cada área sale de su parte de la venta por su meta de ' +
+        '<p class="met-nota">El techo de cada área sale de su parte de la venta sin servicio por su meta de ' +
         'food cost. <strong>El semanal es guía</strong> de qué llevar al mercado; ' +
         '<strong>el que controla es el acumulado del mes</strong>, porque la compra va a saltos ' +
         'y el consumo es parejo: una caja de vino se paga una semana y se toma en tres.</p>' +
@@ -308,7 +308,7 @@ var AUTH = '<?= authToken ?>';
 
           '<div class="sem"><div class="et">Esta semana</div>' +
             '<div class="nn">' + q(A.semana) + '</div>' +
-            '<div class="tt">sobre ' + q(A.venta_semana) + ' de venta</div></div>' +
+            '<div class="tt">sobre ' + q(A.venta_semana) + ' de venta sin servicio</div></div>' +
 
           '<div class="mes">' +
             '<div class="fila"><span>Techo del mes</span><b>' + q(A.mes) + '</b></div>' +

@@ -116,6 +116,9 @@ function _raaTarjetas_(d) {
   var u = d.ultima || {};
   var meta = d.meta_cogs;
   var ventaMes = (u.ventas || 0) * FIN_SEMANAS_MES;
+  // Regla 14 (15-sep-2026): el food cost va sobre la venta sin servicio, y su costo en
+  // quetzales tambien. El prime cost sigue sobre la venta total.
+  var ventaMesSS = (u.ventas_ss || u.ventas || 0) * FIN_SEMANAS_MES;
   var out = [];
 
   function tarjeta(ind, valor, zona, resultado, costo, costoTxt) {
@@ -127,9 +130,9 @@ function _raaTarjetas_(d) {
   tarjeta('food', u.cogs_m4, zf,
     'Food cost móvil 4 de la S' + u.w + ' en ' + _raaPct_(u.cogs_m4) +
     ' contra una meta de ' + _raaPct_(meta) + '. Semana cruda ' + _raaPct_(u.cogsp) +
-    ' (' + _raaQ_(u.cogs) + ' de compra sobre ' + _raaQ_(u.ventas) + ' de venta).',
-    Math.max((u.cogs_m4 || 0) - meta, 0) / 100 * ventaMes,
-    'Cada punto sobre la meta son ' + _raaQ_(ventaMes / 100) + ' al mes.');
+    ' (' + _raaQ_(u.cogs) + ' de compra sobre ' + _raaQ_(u.ventas_ss || u.ventas) + ' de venta sin servicio).',
+    Math.max((u.cogs_m4 || 0) - meta, 0) / 100 * ventaMesSS,
+    'Cada punto sobre la meta son ' + _raaQ_(ventaMesSS / 100) + ' al mes.');
 
   var zp = _raaZona_('prime', u.prime_m4);
   tarjeta('prime', u.prime_m4, zp,

@@ -222,7 +222,7 @@
           <table class="fin">
             <thead><tr>
               <th>Mes</th><th>Ventas netas</th><th>Eventos</th><th>Comensales</th>
-              <th>COGS</th><th>Mano de obra</th><th>Prime</th><th>Neto</th>
+              <th>Food cost</th><th>Mano de obra</th><th>Prime</th><th>Neto</th>
             </tr></thead>
             <tbody id="tabla-mes"></tbody>
           </table>
@@ -341,7 +341,7 @@
     }
     document.getElementById('anio').innerHTML =
       unidad(q(t.ventas), 'Ventas netas del año') +
-      unidad(pct(t.cogsp), 'Mercadería') +
+      unidad(pct(t.cogsp), 'Food cost · sin servicio') +
       unidad(pct(t.laborp), 'Mano de obra') +
       unidad(pct(t.primep), 'Prime cost', t.primep > 65) +
       unidad(pct(t.netop), 'Utilidad neta', t.netop < 0);
@@ -415,7 +415,8 @@
       '<td class="' + letra(zona('prime', t.primep)) + '">' + pct(t.primep) + '</td>' +
       '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>';
 
-    var notasMes = [];
+    var notasMes = ['Food cost sobre la venta sin IVA ni servicio, la misma base de la meta y de las fichas. ' +
+      'Mano de obra, prime cost y neto, sobre la venta total.'];
     if (estimados.length) {
       notasMes.push('* ' + esc(estimados.join(' · ')) + ': la planilla del mes todavía no está ' +
         'cargada. La mano de obra se estima con la última planilla y el resultado es provisional.');
@@ -435,7 +436,7 @@
     }
     document.getElementById('semaforos').innerHTML =
       tarjeta(zona('food', u.cogs_m4, d.meta_cogs), 'Food cost móvil 4', pct(u.cogs_m4),
-        'Meta ' + pct(d.meta_cogs) + ' · mix cocina ' + d.mix.cocina + '%',
+        'Meta ' + pct(d.meta_cogs) + ' · sobre venta sin servicio',
         'Semana cruda ' + pct(u.cogsp) + ' · ' + q(u.cogs)) +
       tarjeta(zona('prime', u.prime_m4), 'Prime cost móvil 4', pct(u.prime_m4),
         'Verde bajo 60% · rojo sobre 65%',

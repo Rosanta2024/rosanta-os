@@ -412,6 +412,51 @@ function prFinanzas_(res) {
       ok ? 1 : 0, 1);
   });
 
+  // ------------------------------- 9. food cost sin servicio (tanda 3, 15-sep-2026)
+  // Regla 14, decision de Juanma: la meta y las fichas no llevan el 10% de servicio y
+  // la venta de Finanzas si. Medido contra la venta total, el food cost salia ~9% corto.
+  prCorrer_(g, 'El food cost va sobre la venta sin servicio', function () {
+    var nombre = 'El food cost va sobre la venta sin servicio';
+    var t = d.total || {};
+    if (!t.ventas_ss) {
+      prAnotar_(g, nombre, 'FALLA', 'el calculo no trae la venta sin servicio (ventas_ss)', 0, '>0');
+      return;
+    }
+    var factor = t.ventas / t.ventas_ss;
+    var mal = d.meses.filter(function (m) {
+      return !m.ventas_ss || Math.abs(m.cogsp - m.cogs / m.ventas_ss * 100) > 0.06;
+    }).map(function (m) { return m.mes + ' ' + m.cogsp + '%'; });
+    var ok = !mal.length && factor > 1.05 && factor < 1.15 &&
+             Math.abs(t.cogsp - t.cogs / t.ventas_ss * 100) <= 0.06;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      (mal.length ? 'meses sobre otra base: ' + mal.join(', ') + ' · ' : '') +
+      'venta total / sin servicio = ' + factor.toFixed(3) + ' · food cost del año ' + t.cogsp + '%',
+      Math.round(factor * 1000) / 1000, '1.05 a 1.15');
+  });
+
+  prCorrer_(g, 'Semanas y meses usan la misma venta sin servicio', function () {
+    var nombre = 'Semanas y meses usan la misma venta sin servicio';
+    var suma = 0, n = 0;
+    (d.semanas || []).forEach(function (s) { if (s.ventas_ss) { suma += s.ventas_ss; n++; } });
+    if (!n) {
+      prAnotar_(g, nombre, 'FALLA', 'ninguna semana trae la venta sin servicio', 0, '>0');
+      return;
+    }
+    var dif = Math.abs(suma - (d.total.ventas_ss || 0));
+    prAnotar_(g, nombre, dif < 5 ? 'OK' : 'FALLA',
+      n + ' semanas · diferencia contra el año Q' + dif.toFixed(2), Math.round(dif * 100) / 100, '<5');
+  });
+
+  prCorrer_(g, 'El prime cost sigue sobre la venta total', function () {
+    var nombre = 'El prime cost sigue sobre la venta total';
+    var mal = d.meses.filter(function (m) {
+      return Math.abs(m.primep - (m.cogs + m.labor) / m.ventas * 100) > 0.06;
+    }).map(function (m) { return m.mes + ' ' + m.primep + '%'; });
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? 'sobre otra base: ' + mal.join(', ') : d.meses.length + ' meses sobre la venta total',
+      d.meses.length - mal.length, d.meses.length);
+  });
+
   // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)
   var cj = null;
   prCorrer_(g, 'La proyeccion de caja se calcula', function () {
