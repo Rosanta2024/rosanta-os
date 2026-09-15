@@ -320,3 +320,53 @@ function revisarFechasConHora() { _fhCorrer(false); }
 
 /** Pone cada fecha del lote en su dia verdadero, a medianoche. */
 function corregirFechasConHora() { _fhCorrer(true); }
+
+/**
+ * Diagnostico del 15-sep-2026. La segunda corrida escribio 37 fechas del FEL y al
+ * releerlas en la misma ejecucion la hoja seguia con la hora vieja; las 119 de
+ * ventas si quedaron. Esto mira que tienen esas celdas: formula, formato, merge,
+ * validacion y protecciones.
+ *
+ * Escribe UNA sola celda, A984, y solo si todavia es la factura 2702920850 a las
+ * 23:00 del 29-jul: la pone como TEXTO '2026-07-30' para ver si asi la acepta. Es
+ * la fecha verdadera de esa fila, asi que no deja nada mal.
+ */
+function diagnosticarFechasFEL() {
+  var ss = SpreadsheetApp.openById(SHEET_ID_FH);
+  var sh = ss.getSheetByName('01_FEL_Maestro');
+  Logger.log('Zona del Sheet ' + ss.getSpreadsheetTimeZone() + ' · del script ' + Session.getScriptTimeZone() +
+             ' · locale ' + ss.getSpreadsheetLocale() + ' · hojas con este nombre: ' +
+             ss.getSheets().filter(function (h) { return h.getName() === '01_FEL_Maestro'; }).length);
+  [983, 984, 988, 996, 1022, 1023, 1047].forEach(function (f) {
+    var c = sh.getRange(f, 1);
+    var dv = c.getDataValidation();
+    Logger.log('A' + f + ' · formula "' + c.getFormula() + '" · valor ' + c.getValue() +
+               ' · se ve "' + c.getDisplayValue() + '" · formato "' + c.getNumberFormat() +
+               '" · merge ' + c.isPartOfMerge() + ' · validacion ' + (dv ? dv.getCriteriaType() : 'no') +
+               ' · DTE ' + sh.getRange(f, 4).getValue());
+  });
+  var prot = sh.getProtections(SpreadsheetApp.ProtectionType.RANGE)
+    .concat(sh.getProtections(SpreadsheetApp.ProtectionType.SHEET));
+  Logger.log('Protecciones: ' + prot.length + prot.map(function (p) {
+    var r = p.getRange();
+    return ' · ' + (r ? r.getA1Notation() : 'hoja') + (p.isWarningOnly() ? ' (solo aviso)' : '');
+  }).join(''));
+  var formulas = sh.getRange(1, 1, sh.getLastRow(), 1).getFormulas();
+  var conFormula = [];
+  formulas.forEach(function (x, i) { if (x[0]) conFormula.push(i + 1); });
+  Logger.log('Columna A con formula: ' + conFormula.length + (conFormula.length ? ' · filas ' + conFormula.slice(0, 30).join(', ') : ''));
+  var cab = sh.getRange(1, 1, 4, sh.getLastColumn()).getFormulas();
+  Logger.log('Formulas en las filas 1-4: ' + JSON.stringify(cab.map(function (r) { return r.filter(String); })));
+
+  var c984 = sh.getRange(984, 1), v = c984.getValue();
+  var dte = String(sh.getRange(984, 4).getValue()).replace(/\.0+$/, '');
+  if (dte === '2702920850' && v instanceof Date && _fhTexto(v) === '2026-07-29 23:00') {
+    c984.setValue('2026-07-30');
+    SpreadsheetApp.flush();
+    var d = c984.getValue();
+    Logger.log('Prueba en A984 con texto "2026-07-30": la hoja dice ahora ' +
+               (d instanceof Date ? '"' + _fhTexto(d) + '"' : 'texto "' + d + '"') + ' · se ve "' + c984.getDisplayValue() + '"');
+  } else {
+    Logger.log('Prueba en A984 no hecha: la celda ya no es la esperada (DTE ' + dte + ', valor ' + v + ')');
+  }
+}
