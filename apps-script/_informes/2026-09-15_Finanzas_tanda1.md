@@ -61,6 +61,18 @@ Cómo se llega a esa diferencia:
 
 Intranet y Python dan lo mismo al centavo en el total, en los 9 meses, en las 37 semanas y en los días de caja.
 
+## Decisiones de Juanma (15-sep, tarde) y lo que se hizo con cada una
+
+1. **Mes en curso sin planilla:** se estima con la última planilla, en proporción a los días con venta cargada. Septiembre lleva 13/30 de la planilla de agosto (Q13,628). Aplicado en el motor y en Python, A/B al centavo; prueba sintética 13 de 13.
+2. **Elder:** son pagos fraccionados de una factura de 2025. La regla 3 ya los deja fuera; no se toca.
+3. **Anuladas sin reemplazo** (GRUPO ECO y Los Alpes): errores del proveedor. Quedan fuera del cálculo.
+4. **Factura de la abogada (Q2,000):** pasa a SERVICIOS PROFESIONALES. Script `abogada_y_torre.js`, que también agrega el proveedor a `00_Proveedores`.
+5. **Q500 «F-TORRE CUIDAD VIEJA» del 28-06:** retiro en efectivo para el mercado. Pasa a ALIMENTOS_EFECTIVO en el mismo script: como ALIMENTOS pagado desde el banco, la regla 3 lo saltaba.
+
+**Batería sobre el HEAD anterior a este cambio:** 103 OK · 0 fallas · 0 avisos · 3 saltadas (181 s). Falta identificar las 3 saltadas: con la @88 eran 2.
+
+**Año con el reparto** (espejo de las 12:50, antes del script de la abogada y la Torre): resultado −Q42,150 (−3.3%) · prime cost 55.0%.
+
 ## Pendiente
 
 - Juanma: dry-run de los dos scripts del maestro y batería en `/dev`.
