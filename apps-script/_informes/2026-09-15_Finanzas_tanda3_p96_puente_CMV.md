@@ -127,8 +127,8 @@ Diseño acordado con la sesión de Profit OS, que dio visto bueno para tocar sol
   - `CosteoJs_Pintar.html`: `pedirCmvReal()`, llamada desde `aplicarProfitOS` al lado de `pedirAvisos()`, para no repetir el bug A22.
   - `CosteoJs_Inicio.html`: solo el bloque `tReal`.
     - **Valor:** la brecha en puntos. **Sub:** rango ("jun–ago"), real y teórico.
-    - **Color:** hasta 2 puntos `--meta`; de 2 a 4, `color-mix(--alto 60%, --muted)`; más de 4, `--alto`.
-    - **Estados:** "Buscando…" mientras no llega; si falla, el "Falta" de antes.
+    - **Color:** bajo −2 puntos `--bajo` (dato incompleto, no buena noticia); de −2 a 2, `--meta`; de 2 a 4, `color-mix(--alto 60%, --muted)`; más de 4, `--alto`.
+    - **Estados:** "Buscando…" mientras no llega; si falla, o si la brecha, el real, el teórico o los meses no vienen válidos, el "Falta" de antes. Así un null no tira `vistaInicio()` ni deja el tablero en blanco (revisión de la sesión de Profit OS).
   - `Dashboard.js` no se tocó.
 - **Verificación:**
   - **Node, con el código real:** servidor 34 OK, con motor de Finanzas sobre el espejo, POS real, inventarios de la fase 1 y el filtro de dueño. Regresión del puente: 83 OK.
