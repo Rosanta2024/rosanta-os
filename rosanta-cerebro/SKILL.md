@@ -13,7 +13,7 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ## Cierre del 15 sep 2026, tarde (v17): pestaña Caja y camino al piso
 
-**El equipo está en la @94** (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). Batería: **111 OK · 0 fallas · 0 avisos · 3 saltadas** (las 3 saltadas siguen sin identificar, p162). La @93 trajo la pestaña Caja y la @94 el food cost sin servicio.
+**El equipo está en la @95** (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). Batería: **112 OK · 0 fallas · 0 avisos · 3 saltadas** (las 3 saltadas siguen sin identificar, p162). La @93 trajo la pestaña Caja, la @94 el food cost sin servicio y la @95 la tarjeta real contra teórico de Profit OS (+12.3 pts jun–ago).
 
 Informe: `~/Dev/Rosanta/apps-script/_informes/2026-09-15_Finanzas_tanda2_Caja.md`.
 

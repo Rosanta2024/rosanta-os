@@ -110,7 +110,13 @@ Decisiones de Juanma: el techo de compra también va sin servicio; el prime cost
   - **HEAD** verificado con bajada aparte: 58 archivos. Commit 280b608.
 - **Profit OS** confirmó que su teórico ya es costo ÷ (precio ÷ 1.12), sin servicio: las dos bases quedan comparables.
 
-## 3.4B · Tarjeta "CMV real contra teórico" en el tablero de Profit OS (subida a HEAD, sin publicar)
+## 3.4B · Tarjeta "CMV real contra teórico" en el tablero de Profit OS (publicada en la @95)
+
+**Publicada el 15-sep en la @95**, con "publica" de Juanma.
+- **Batería sobre HEAD:** 112 OK · 0 fallas · 0 avisos · 3 saltadas.
+- **Prueba visual de Juanma en /dev:** +12.3 puntos entre junio y agosto (real 43.2%, teórico 31.0%), en terracota con "Fuga".
+- **Antes de publicar se verificó:** la cuenta de clasp, que la última versión (@94) era la publicada, y que HEAD (58 archivos) era idéntico a lo probado y al disco.
+- **Dos teóricos en el mismo tablero:** 28.2% en la tarjeta de la izquierda (13 semanas, precio de carta, solo lo firme) y 31.0% en esta (3 meses cerrados, lo cobrado, más la estimación de lo que no tiene ficha). No se contradicen.
 
 Diseño acordado con la sesión de Profit OS, que dio visto bueno para tocar solo la tarjeta y su pedido.
 
