@@ -412,10 +412,16 @@ function invAlta_(area, datos, confirmar, u) {
 
   var vinculo = 'NO APLICA', enBanco = '', bancoNuevo = false, provAlBanco = false, avisos = [];
   if (tipo === 'INSUMO') {
+    var ya = banco ? null : invBuscarEnBanco_(area, producto);
     if (banco) {
       var fb = invFilaDelBanco_(area, banco);
       enBanco = fb.producto; vinculo = 'MANUAL';
       provAlBanco = !fb.proveedor && !!proveedor;
+    } else if (ya) {
+      // El Banco ya tiene ese mismo nombre: se conecta y no se crea otra fila. Pasa al
+      // reintentar un alta que se corto despues de crearlo en el Banco (auditoria M4).
+      enBanco = ya.producto; vinculo = 'EXACTO';
+      provAlBanco = !ya.proveedor && !!proveedor;
     } else {
       // Regla de Juanma (14-sep-2026): lo que entra al inventario tiene que existir en
       // el resto del modulo. Un insumo nuevo entra tambien al Banco de Datos, y con eso
@@ -490,7 +496,7 @@ function invActivo_(area, id, activo, u) {
       nota = 'sale del conteo de ' + abierto.mes;
     }
     if (activo && k < 0) {
-      var previo = invFilaEnMes_(ss, invTexto_(p.fila[cat.c['ultimo mes']]), id);
+      var previo = invFilaEnMes_(ss, invMesDeCelda_(p.fila[cat.c['ultimo mes']]), id);
       var bloque = previo ? previo.bloque : (area === 'COCINA' ? invTexto_(p.fila[cat.c['categoria']]) : '');
       if (!bloque) throw new Error('No encuentro en que bloque de barra iba ' + prod + '. Dalo de alta de nuevo.');
       var precio = invNumero_(p.fila[cat.c['precio actual']]);
@@ -525,7 +531,13 @@ function invClasificar_(area, id, tipo, banco, crear, u) {
   var vinculo = 'NO APLICA', enBanco = '', bancoNuevo = false, provAlBanco = false;
   var provInv = cat.c['proveedor'] != null ? invTexto_(p.fila[cat.c['proveedor']]) : '';
   if (tipo === 'INSUMO') {
-    if (crear) {
+    var ya = crear ? invBuscarEnBanco_(area, prod) : null;
+    if (ya) {
+      // Pidio crearlo, pero el Banco ya tiene ese nombre (reintento, o ya estaba
+      // conectado): se conecta con esa fila y no se crea otra (auditoria M4).
+      enBanco = ya.producto; vinculo = 'EXACTO';
+      provAlBanco = !ya.proveedor && !!provInv;
+    } else if (crear) {
       // No esta en el Banco: se crea ahi con lo que ya sabe el catalogo (regla del 14-sep).
       var precio = cat.c['precio actual'] != null ? invNumero_(p.fila[cat.c['precio actual']]) : null;
       var pres = cat.c['presentacion'] != null ? invTexto_(p.fila[cat.c['presentacion']]) : '';
@@ -584,14 +596,21 @@ function invClasificar_(area, id, tipo, banco, crear, u) {
 
 /** { producto, proveedor } de un producto del Banco de Datos del area, o tira. */
 function invFilaDelBanco_(area, nombre) {
+  var fb = invBuscarEnBanco_(area, nombre);
+  if (fb) return fb;
+  throw new Error('"' + nombre + '" no esta en el Banco de Datos de ' + area.toLowerCase() +
+                  '. Elegilo de la lista, o crealo en el Banco desde este mismo panel.');
+}
+
+/** Lo mismo, pero null si no esta. Nombre identico (normalizado); la primera fila gana. */
+function invBuscarEnBanco_(area, nombre) {
   var k = normalizar_(nombre);
   var f = recetarioDe_(area).getSheetByName(EDIT.hojaBanco).getDataRange().getValues();
   for (var i = EDIT.filaPrimerDato - 1; i < f.length; i++) {
     var p = String(f[i][EDIT.col.producto - 1] || '').trim();
     if (p && normalizar_(p) === k) return { producto: p, proveedor: String(f[i][EDIT.col.proveedor - 1] || '').trim() };
   }
-  throw new Error('"' + nombre + '" no esta en el Banco de Datos de ' + area.toLowerCase() +
-                  '. Elegilo de la lista, o crealo en el Banco desde este mismo panel.');
+  return null;
 }
 
 /** Lo que contesto crearInsumo cuando NO creo, en la forma que entiende la pantalla. */
@@ -781,6 +800,17 @@ function invLetras_(enc) {
   return { precio: letra(c['precio']), existencia: letra(c['existencia']), monto: letra(c['monto']) };
 }
 
+/** AAAA-MM de una celda. Sheets convierte el texto "2026-08" en fecha (auditoria A10). */
+function invMesDeCelda_(v) {
+  return v instanceof Date ? invFecha_(v).slice(0, 7) : invTexto_(v);
+}
+
+/** Dos precios de invNumero_ (numero o null) son el mismo, al centavo. */
+function invMismoPrecio_(a, b) {
+  if (a == null || b == null) return a == null && b == null;
+  return Math.abs(a - b) < 0.005;
+}
+
 function invMesSiguiente_(mes) {
   var p = String(mes).split('-'), a = Number(p[0]), m = Number(p[1]) + 1;
   if (m > 12) { m = 1; a++; }
@@ -822,11 +852,14 @@ INV_DATOS.colsPorAprobar = ['FECHA', 'AREA', 'MES', 'PRODUCTO', 'PRECIO ANTERIOR
                             'UNIDAD', 'PROVEEDOR', 'PROPUSO', 'ESTADO', 'RESOLVIO', 'FECHA RESOLUCION', 'CORRIDA', 'NOTA'];
 INV_DATOS.vinculosConBanco = ['EXACTO', 'ALIAS', 'TIPEO', 'MANUAL'];
 
-/** ceros: true pone en 0 lo que quedo sin contar. Sin eso, si falta algo, devuelve la lista. */
-function webInventarioCerrarMes(auth, area, mes, ceros) {
+/**
+ * ceros: true pone en 0 lo que quedo sin contar. sinPrecio: true cierra aunque haya
+ * productos contados sin precio (su monto queda en Q0). Sin eso, devuelve las listas.
+ */
+function webInventarioCerrarMes(auth, area, mes, ceros, sinPrecio) {
   return edicionCorrer_(auth, function (u) {
     var a = areaDeLaPagina_(area, u);
-    return invConCandado_(function () { return invCerrarMes_(a, String(mes || ''), !!ceros, u); });
+    return invConCandado_(function () { return invCerrarMes_(a, String(mes || ''), !!ceros, u, !!sinPrecio); });
   }, 'inventario cerrar mes ' + area + ' ' + mes);
 }
 
@@ -835,10 +868,11 @@ function webInventarioPrecios(auth) {
   return edicionCorrer_(auth, function (u) { return invPrecios_(u); });
 }
 
-function webInventarioResolverPrecios(auth, filas, aprobar) {
+/** pedidos: [{ fila, area, mes, producto, nuevo }], como los muestra la pantalla. */
+function webInventarioResolverPrecios(auth, pedidos, aprobar) {
   return edicionCorrer_(auth, function (u) {
     invExigirDueno_(u);
-    return invConCandado_(function () { return invResolverPrecios_(filas, !!aprobar, u); });
+    return invConCandado_(function () { return invResolverPrecios_(pedidos, !!aprobar, u); });
   }, 'inventario ' + (aprobar ? 'aprobar' : 'rechazar') + ' precios');
 }
 
@@ -857,26 +891,34 @@ function invExigirDueno_(u) {
 
 /* ------------------------------------------------------------ cerrar ---- */
 
-function invCerrarMes_(area, mes, ceros, u) {
+function invCerrarMes_(area, mes, ceros, u, sinPrecioOk) {
   var ss = invHojaDe_(area), ult = invUltimoMes_(ss);
   if (!ult || ult.mes !== mes) throw new Error('Solo se cierra el ultimo mes de ' + area + (ult ? ' (' + ult.mes + ')' : '') + '.');
   if (invEstado_(ult.d) !== 'ABIERTO') throw new Error('El mes ' + mes + ' ya esta cerrado.');
   var d = ult.d, h = ult.hoja, c = invColumnas_(d[INV_DATOS.filaEncabezadoMes - 1]);
-  var primera = INV_DATOS.filaEncabezadoMes, filas = [], total = -1, sinContar = [];
+  var primera = INV_DATOS.filaEncabezadoMes, filas = [], total = -1, sinContar = [], sinPrecio = [];
   for (var i = primera; i < d.length; i++) {
     var id = invTexto_(d[i][c['id']]);
     if (!id) { if (normalizar_(d[i][c['producto']]) === 'total') { total = i; break; } continue; }
     filas.push(i);
-    if (invNumero_(d[i][c['existencia']]) === null) sinContar.push(invTexto_(d[i][c['producto']]));
+    var prod = invTexto_(d[i][c['producto']]), ex = invNumero_(d[i][c['existencia']]);
+    if (ex === null) sinContar.push(prod);
+    else if (ex > 0 && !(invNumero_(d[i][c['precio']]) > 0)) sinPrecio.push(prod);
   }
   if (total < 0) throw new Error('La pestana ' + mes + ' no tiene la fila TOTAL.');
   if (!filas.length) throw new Error('El mes ' + mes + ' no tiene productos.');
-  if (sinContar.length && !ceros) return { cerrado: false, sinContar: sinContar };
+  // Contado y sin precio: su monto sale Q0 y el total del mes queda corto sin que nadie
+  // lo note. Se pregunta, igual que lo sin contar (auditoria M6, 15-sep-2026).
+  if ((sinContar.length && !ceros) || (sinPrecio.length && !sinPrecioOk)) {
+    return { cerrado: false, sinContar: ceros ? [] : sinContar, sinPrecio: sinPrecioOk ? [] : sinPrecio };
+  }
 
   // 1. precios al Banco. Va primero a proposito: si algo falla aca, el mes sigue abierto
   //    y reintentar es seguro, porque lo ya aplicado vuelve como "igual al Banco".
+  //    Solo van los precios que CAMBIARON en este conteo: ver invPreciosEditados_.
   var cat = invCatalogo_(ss);
-  var prop = invPropuestaPrecios_(area, filas.map(function (k) { return d[k]; }), c, cat);
+  var editados = invPreciosEditados_(ss, area, mes, d, c, filas);
+  var prop = invPropuestaPrecios_(area, filas.map(function (k) { return d[k]; }), c, cat, editados);
   var corrida = '', aplicados = [];
   if (prop.auto.length) {
     corrida = aplicarSincronizacion_(area, prop.auto, u.email).corrida;
@@ -938,6 +980,7 @@ function invCerrarMes_(area, mes, ceros, u) {
   bitacoraLote_([[u.email, u.rol, 'inventario cerrar mes', 'INVENTARIO ' + area, mes, 'ESTADO', 'ABIERTO', 'CERRADO',
                   'total Q' + suma + ' · ' + aplicados.length + ' precio(s) al Banco · ' + prop.aprobar.length +
                   ' por aprobar' + (sinContar.length ? ' · ' + sinContar.length + ' sin contar cerrados en 0' : '') +
+                  (sinPrecio.length ? ' · ' + sinPrecio.length + ' contados sin precio (monto Q0)' : '') +
                   (corrida ? ' · corrida ' + corrida : '')]]);
   SpreadsheetApp.flush();
 
@@ -947,7 +990,8 @@ function invCerrarMes_(area, mes, ceros, u) {
   catch (e) { avisos.push('El mes quedo cerrado, pero no se pudo abrir el siguiente: ' + (e && e.message || e)); }
 
   return {
-    cerrado: true, mes: mes, total: suma, sinContarEnCero: sinContar.length, siguiente: siguiente,
+    cerrado: true, mes: mes, total: suma, sinContarEnCero: sinContar.length, sinPrecio: sinPrecio.length,
+    sinEditar: prop.sinEditar, siguiente: siguiente,
     aplicados: aplicados, corrida: corrida,
     porAprobar: prop.aprobar.map(function (x) { return { producto: x.producto, de: x.precioViejo, a: x.precioNuevo, pct: x.pct }; }),
     unidadDistinta: prop.unidadDistinta, sinConectar: prop.sinConectar, iguales: prop.iguales,
@@ -956,12 +1000,75 @@ function invCerrarMes_(area, mes, ceros, u) {
 }
 
 /**
- * Que precios del mes van al Banco. NO escribe. Una sola lectura del Banco del area.
- * Devuelve { auto, aprobar, unidadDistinta, otros, sinConectar, iguales }; auto y
- * aprobar tienen la forma que espera aplicarSincronizacion_().
+ * Los productos cuyo precio CAMBIO en el conteo de este mes. { id: true }
+ *
+ * Auditoria A5, 15-sep-2026. Abrir el mes copia el precio del mes anterior, y el cierre
+ * proponia al Banco TODO precio distinto del Banco. Si cocina corregia un precio en
+ * Productos a mitad de mes, el cierre lo devolvia al valor viejo del inventario.
+ * Ahora cuenta como cambiado:
+ *   · un producto que estaba en el mes anterior y cuyo precio ya no es el de ese mes
+ *     (da igual si se cambio en la intranet o a mano en la hoja);
+ *   · uno que no estaba (alta o reactivado), solo si la BITACORA de este mes tiene su
+ *     alta o un cambio de precio que no volvio al valor con que entro.
  */
-function invPropuestaPrecios_(area, filasMes, c, cat) {
-  var out = { auto: [], aprobar: [], unidadDistinta: [], otros: [], sinConectar: 0, iguales: 0 };
+function invPreciosEditados_(ss, area, mes, d, c, filas) {
+  var out = {}, previo = {}, bit = null;
+  var nombres = ss.getSheets().map(function (h) { return h.getName().trim(); })
+                  .filter(function (n) { return /^\d{4}-\d{2}$/.test(n) && n < mes; }).sort();
+  if (nombres.length) {
+    var dp = ss.getSheetByName(nombres[nombres.length - 1]).getDataRange().getValues();
+    var cp = invColumnas_(dp[INV_DATOS.filaEncabezadoMes - 1] || []);
+    if (cp['id'] != null && cp['precio'] != null) {
+      for (var i = INV_DATOS.filaEncabezadoMes; i < dp.length; i++) {
+        var idp = invTexto_(dp[i][cp['id']]);
+        if (idp) previo[idp] = invNumero_(dp[i][cp['precio']]);
+      }
+    }
+  }
+  filas.forEach(function (k) {
+    var id = invTexto_(d[k][c['id']]), precio = invNumero_(d[k][c['precio']]);
+    if (Object.prototype.hasOwnProperty.call(previo, id)) {
+      if (!invMismoPrecio_(precio, previo[id])) out[id] = true;
+      return;
+    }
+    if (bit === null) bit = invPreciosDeBitacora_(area, mes);
+    var b = bit[id];
+    if (b && (b.alta || !invMismoPrecio_(precio, b.antes))) out[id] = true;
+  });
+  return out;
+}
+
+/**
+ * { id: { alta, antes } } de la BITACORA, solo de la pestana de este mes. antes es el
+ * precio que tenia ANTES del primer cambio. La bitacora solo crece: sus filas estan en
+ * orden de tiempo. Se leen cinco columnas, no la hoja entera.
+ */
+function invPreciosDeBitacora_(area, mes) {
+  var out = {}, h = hojaCosteo_().getSheetByName(EDIT.hojaBitacora);
+  if (!h || h.getLastRow() < 2) return out;
+  var hoja = normalizar_('INVENTARIO ' + area + ' ' + mes);
+  // D..H: ACCION, HOJA, REFERENCIA, CAMPO, ANTES
+  h.getRange(2, 4, h.getLastRow() - 1, 5).getValues().forEach(function (f) {
+    var accion = String(f[0] || '').trim();
+    if (accion !== 'inventario precio' && accion !== 'inventario alta') return;
+    if (normalizar_(f[1]) !== hoja) return;
+    var id = String(f[2] || '').split(' · ')[0].trim();
+    if (!id) return;
+    var x = out[id] || (out[id] = { alta: false, antes: undefined });
+    if (accion === 'inventario alta') x.alta = true;
+    else if (x.antes === undefined) x.antes = invNumero_(f[4]);
+  });
+  return out;
+}
+
+/**
+ * Que precios del mes van al Banco. NO escribe. Una sola lectura del Banco del area.
+ * Devuelve { auto, aprobar, unidadDistinta, otros, sinConectar, iguales, sinEditar };
+ * auto y aprobar tienen la forma que espera aplicarSincronizacion_(). editados
+ * ({ id: true }) deja afuera lo que no cambio en el conteo; sin el, van todos.
+ */
+function invPropuestaPrecios_(area, filasMes, c, cat, editados) {
+  var out = { auto: [], aprobar: [], unidadDistinta: [], otros: [], sinConectar: 0, iguales: 0, sinEditar: 0 };
   var banco = recetarioDe_(area).getSheetByName(EDIT.hojaBanco).getDataRange().getValues();
   var porNombre = {};
   for (var b = EDIT.filaPrimerDato - 1; b < banco.length; b++) {
@@ -980,6 +1087,7 @@ function invPropuestaPrecios_(area, filasMes, c, cat) {
     if (INV_DATOS.vinculosConBanco.indexOf(vinc) === -1 || !nombreBanco) { out.sinConectar++; return; }
     var precio = invNumero_(f[c['precio']]);
     if (!(precio > 0)) return;
+    if (editados && !editados[invTexto_(f[c['id']])]) { out.sinEditar++; return; }
     var k = normalizar_(nombreBanco), filasB = porNombre[k];
     if (!filasB) { out.otros.push(prod + ': "' + nombreBanco + '" ya no esta en el Banco'); return; }
     if (filasB.length > 1) { out.otros.push(prod + ': hay ' + filasB.length + ' filas "' + nombreBanco + '" en el Banco, no se adivina'); return; }
@@ -1087,6 +1195,32 @@ function invAnotar_(area, mes, cambios, u, estado, corrida, hechos) {
 
 /* ------------------------------------------------- aprobar y deshacer ---- */
 
+/** Las filas (1-based) PENDIENTE de cada pedido, y los pedidos que ya no estan. */
+function invElegirPendientes_(d, c, pedidos) {
+  var filas = [], perdidos = [], usadas = {};
+  var coincide = function (r, x) {
+    var f = d[r - 1];
+    return !!f && !usadas[r] && invTexto_(f[c['estado']]).toUpperCase() === 'PENDIENTE' &&
+      invTexto_(f[c['area']]).toUpperCase() === x.area && invMesDeCelda_(f[c['mes']]) === x.mes &&
+      normalizar_(f[c['producto']]) === normalizar_(x.producto) &&
+      invMismoPrecio_(invNumero_(f[c['precio nuevo']]), x.nuevo);
+  };
+  pedidos.forEach(function (p) {
+    if (!p || typeof p !== 'object') throw new Error('La lista de precios quedo vieja: recarga la pagina y volve a elegir.');
+    var x = { area: String(p.area || '').trim().toUpperCase(), mes: String(p.mes || '').trim(),
+              producto: String(p.producto || '').trim(), nuevo: invNumero_(p.nuevo) };
+    var r = Number(p.fila);
+    if (!(r >= 2 && coincide(r, x))) {
+      r = -1;
+      for (var i = 2; i <= d.length; i++) if (coincide(i, x)) { r = i; break; }
+    }
+    if (r < 0) { perdidos.push((x.producto || '?') + ': ya no esta pendiente (se resolvio o lo reemplazo otro cierre)'); return; }
+    usadas[r] = 1;
+    filas.push(r);
+  });
+  return { filas: filas, perdidos: perdidos };
+}
+
 function invPrecios_(u) {
   var out = { esDueno: normalizar_(u.rol) === 'dueno', pendientes: [], corridas: [] };
   var h = hojaCosteo_().getSheetByName(INV_DATOS.hojaPorAprobar);
@@ -1125,14 +1259,19 @@ function invPrecios_(u) {
   return out;
 }
 
-function invResolverPrecios_(filas, aprobar, u) {
+/**
+ * pedidos: [{ fila, area, mes, producto, nuevo }]. El numero de fila solo no alcanza
+ * (auditoria M8): si alguien ordena o borra filas en la hoja entre que la pantalla leyo
+ * y el clic, apunta a otro producto. Se busca por identidad; la fila es por donde empezar.
+ */
+function invResolverPrecios_(pedidos, aprobar, u) {
   var h = invHojaPorAprobar_(), d = h.getDataRange().getValues(), c = invColumnas_(d[0]);
-  var elegidas = (filas || []).map(Number).filter(function (n) { return n >= 2 && n <= d.length; });
-  if (!elegidas.length) throw new Error('No hay precios elegidos.');
+  if (!Array.isArray(pedidos) || !pedidos.length) throw new Error('No hay precios elegidos.');
+  var sel = invElegirPendientes_(d, c, pedidos);
   var ahora = new Date(), quien = u.nombre || u.email, porArea = {}, marcas = {};
-  var res = { aprobados: 0, rechazados: 0, saltados: [], corridas: [], recetario: false };
+  var res = { aprobados: 0, rechazados: 0, saltados: sel.perdidos, corridas: [], recetario: false };
 
-  elegidas.forEach(function (r) {
+  sel.filas.forEach(function (r) {
     var f = d[r - 1];
     if (invTexto_(f[c['estado']]).toUpperCase() !== 'PENDIENTE') return;
     if (!aprobar) { marcas[r] = ['RECHAZADO', '', '']; return; }

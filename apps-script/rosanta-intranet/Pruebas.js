@@ -1484,6 +1484,7 @@ function correrPruebas_() {
   prModulos_(res);
   prCapaWeb_(res);
   prSyncPrecios_(res);
+  prInventario_(res);
   prFinanzas_(res);           // pilar 3, en PruebasFinanzas.gs
 
   var n = 0, ok = 0, mal = 0, avisos = 0, saltadas = 0;
@@ -1740,5 +1741,97 @@ function prSyncPrecios_(res) {
       estado.indexOf('AL DIA') === 0 ? 'OK' : 'AVISO',
       'estado: ' + (estado || '(vacio)') + ' · ultima corrida: ' + (cuando || '(vacia)'),
       estado);
+  });
+}
+
+// ---------------------------------------------------------------- 8. inventario
+
+/**
+ * Tanda 2 de la auditoria (15-sep-2026): cierre, aprobacion y catalogo del inventario.
+ * SOLO LEE. Las escrituras (cerrar, aprobar, alta, reactivar) se probaron en un
+ * simulador de hojas fuera de la intranet; aca se mira la data real.
+ */
+function prInventario_(res) {
+  var g = prGrupo_(res, '8. Inventario: cierre y precios');
+
+  prCorrer_(g, 'Las piezas del cierre existen', function () {
+    var piezas = ['invPreciosEditados_', 'invPreciosDeBitacora_', 'invPropuestaPrecios_', 'invBuscarEnBanco_',
+                  'invElegirPendientes_', 'invMesDeCelda_', 'invMismoPrecio_'];
+    var faltan = piezas.filter(function (n) { return typeof globalThis[n] !== 'function'; });
+    prAnotar_(g, 'Las piezas del cierre existen', faltan.length === 0 ? 'OK' : 'FALLA',
+              faltan.length ? 'faltan: ' + faltan.join(' · ') : 'las ' + piezas.length,
+              piezas.length - faltan.length, piezas.length);
+  });
+
+  ['COCINA', 'BARRA'].forEach(function (area) {
+    var nombre = 'Inventario de ' + area.toLowerCase() + ': el cierre solo propone precios cambiados en el conteo';
+    var nombreMes = 'Inventario de ' + area.toLowerCase() + ': ULTIMO MES del catalogo se lee como mes';
+    prCorrer_(g, nombre, function () {
+      var ss = abrirPorClave_(INV_DATOS.propiedad[area]);
+      if (!ss) { prAnotar_(g, nombre, 'SALTADA', 'falta ' + INV_DATOS.propiedad[area]); return; }
+      var cat = invCatalogo_(ss);
+
+      // A10: una fecha en ULTIMO MES rompia reactivar un producto de barra
+      var malos = [];
+      if (cat.c['ultimo mes'] != null) {
+        cat.filas.forEach(function (f) {
+          var v = f[cat.c['ultimo mes']];
+          if (v === '' || v == null) return;
+          if (!/^\d{4}-\d{2}$/.test(invMesDeCelda_(v))) malos.push(invTexto_(f[cat.c['id']]) + ' "' + invTexto_(v) + '"');
+        });
+      }
+      prAnotar_(g, nombreMes, malos.length ? 'AVISO' : 'OK',
+                malos.length ? malos.slice(0, 10).join(' · ') : cat.filas.length + ' productos', malos.length, 0);
+
+      var ab = invMesAbierto_(ss);
+      if (!ab) { prAnotar_(g, nombre, 'SALTADA', 'no hay un mes abierto'); return; }
+      var d = ab.d, c = invColumnas_(d[INV_DATOS.filaEncabezadoMes - 1]), filas = [], sinPrecio = 0;
+      for (var i = INV_DATOS.filaEncabezadoMes; i < d.length; i++) {
+        if (!invTexto_(d[i][c['id']])) { if (normalizar_(d[i][c['producto']]) === 'total') break; continue; }
+        filas.push(i);
+        if (invNumero_(d[i][c['existencia']]) > 0 && !(invNumero_(d[i][c['precio']]) > 0)) sinPrecio++;
+      }
+      var delMes = filas.map(function (k) { return d[k]; });
+      var editados = invPreciosEditados_(ss, area, ab.mes, d, c, filas);
+      var ahora = invPropuestaPrecios_(area, delMes, c, cat, editados);
+      var antes = invPropuestaPrecios_(area, delMes, c, cat);        // la regla vieja, para comparar
+      var nAhora = ahora.auto.length + ahora.aprobar.length, nAntes = antes.auto.length + antes.aprobar.length;
+      var viejas = {};
+      antes.auto.concat(antes.aprobar).forEach(function (x) { viejas[normalizar_(x.producto)] = 1; });
+      // lo nuevo tiene que ser un recorte de lo viejo; la unica excepcion legitima son dos
+      // productos del inventario conectados al mismo del Banco
+      var raras = ahora.auto.concat(ahora.aprobar).filter(function (x) { return !viejas[normalizar_(x.producto)]; });
+      var repetidos = antes.otros.filter(function (t) { return t.indexOf('no se adivina') !== -1; });
+      prAnotar_(g, nombre, raras.length || repetidos.length ? 'AVISO' : 'OK',
+        ab.mes + ': ' + Object.keys(editados).length + ' precio(s) cambiados en el conteo · si se cerrara hoy irian ' +
+        nAhora + ' al Banco (' + ahora.auto.length + ' solos, ' + ahora.aprobar.length + ' a aprobar) · con la regla vieja irian ' + nAntes +
+        (sinPrecio ? ' · ' + sinPrecio + ' contados sin precio' : '') +
+        (repetidos.length ? ' · Banco con nombres repetidos: ' + repetidos.slice(0, 5).join(' · ') : '') +
+        (raras.length ? ' · propuestas que la regla vieja no hacia: ' + raras.map(function (x) { return x.producto; }).join(' · ') : ''),
+        nAhora, null);
+    });
+  });
+
+  var nPend = 'Precios por aprobar: cada pendiente se encuentra por su identidad';
+  prCorrer_(g, nPend, function () {
+    var h = hojaCosteo_().getSheetByName(INV_DATOS.hojaPorAprobar);
+    if (!h || h.getLastRow() < 2) { prAnotar_(g, nPend, 'OK', 'no hay nada por aprobar'); return; }
+    var d = h.getDataRange().getValues(), c = invColumnas_(d[0]), pedidos = [], vistos = {}, dobles = [];
+    for (var i = 1; i < d.length; i++) {
+      if (invTexto_(d[i][c['estado']]).toUpperCase() !== 'PENDIENTE') continue;
+      var p = { fila: i + 1, area: invTexto_(d[i][c['area']]).toUpperCase(), mes: invMesDeCelda_(d[i][c['mes']]),
+                producto: invTexto_(d[i][c['producto']]), nuevo: invNumero_(d[i][c['precio nuevo']]) };
+      pedidos.push(p);
+      var k = p.area + '|' + normalizar_(p.producto);
+      if (vistos[k]) dobles.push(p.producto); else vistos[k] = 1;
+    }
+    if (!pedidos.length) { prAnotar_(g, nPend, 'OK', 'no hay nada por aprobar'); return; }
+    var sel = invElegirPendientes_(d, c, pedidos);
+    var bien = !sel.perdidos.length && sel.filas.length === pedidos.length &&
+               sel.filas.every(function (r, j) { return r === pedidos[j].fila; });
+    prAnotar_(g, nPend, !bien ? 'FALLA' : (dobles.length ? 'AVISO' : 'OK'),
+              pedidos.length + ' pendiente(s)' + (dobles.length ? ' · mas de uno pendiente para: ' + dobles.join(' · ') : '') +
+              (sel.perdidos.length ? ' · no encontrados: ' + sel.perdidos.join(' · ') : ''),
+              sel.filas.length, pedidos.length);
   });
 }

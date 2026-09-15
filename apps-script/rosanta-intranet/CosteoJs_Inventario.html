@@ -466,7 +466,7 @@ function invVistaPrecios(){
   if(!d){ pedirPrecios(); return '<p class="empty">Leyendo los precios…</p>'; }
   if(d.error) return `<p class="empty">No se pudo leer: ${esc(d.error)}<br><button class="chip" data-invpreciosre="1" style="margin-top:12px">Reintentar</button></p>`;
   const jefe = d.esDueno, pend = d.pendientes;
-  return `<p class="nota" style="margin:0 0 12px">Al cerrar un mes, los precios de los insumos conectados pasan al Banco de Datos y de ahí a las recetas. Si cambiaron <strong>menos de 10%</strong> entran solos; si cambiaron <strong>10% o más</strong> esperan acá a que Juanma los apruebe. Preparados, reventa y limpieza nunca van al Banco. Cada tanda aplicada se puede deshacer.</p>
+  return `<p class="nota" style="margin:0 0 12px">Al cerrar un mes, los precios de los insumos conectados que se cambiaron en ese conteo pasan al Banco de Datos y de ahí a las recetas. Si cambiaron <strong>menos de 10%</strong> entran solos; si cambiaron <strong>10% o más</strong> esperan acá a que Juanma los apruebe. Preparados, reventa y limpieza nunca van al Banco. Cada tanda aplicada se puede deshacer.</p>
     <div class="sec-t">Por aprobar · ${pend.length}</div>
     ${pend.length ? `${jefe && pend.length > 1 ? `<div class="toolbar"><button class="chip" data-invaprobartodos="1" style="${invBtnVerde}">Aprobar los ${pend.length}</button></div>` : ''}
       <div class="tablewrap"><table>
@@ -557,11 +557,12 @@ document.addEventListener('click', e => {
     const sin = m.filas.filter(f => f[7] == null).length;
     if(!confirm(`¿Cerrar ${invMesNombre(mes)} en ${invNomArea(a)}?\n\n` +
       `· El mes queda congelado: ya no se edita.\n` +
-      `· Los precios de los insumos conectados que cambiaron menos de 10% pasan al Banco de Datos y a las recetas.\n` +
-      `· Los que cambiaron 10% o más esperan la aprobación de Juanma.\n` +
+      `· Los precios que se cambiaron en este conteo pasan al Banco de Datos y a las recetas si la diferencia es menor a 10%.\n` +
+      `· Los de 10% o más esperan la aprobación de Juanma. Un precio que no se tocó en el conteo no cambia el Banco.\n` +
       `· Se abre el conteo de ${invMesNombre(invMesSig(mes))}.` +
       (sin ? `\n\nOJO: hay ${sin} producto${sin === 1 ? '' : 's'} sin contar.` : ''))) return;
-    const mandar = function(ceros){
+    const lista = xs => xs.slice(0, 15).map(n => '  · ' + n).join('\n') + (xs.length > 15 ? '\n  · …' : '');
+    const mandar = function(ceros, sinPrecio){
       t.disabled = true; t.textContent = 'Cerrando…';
       google.script.run
         .withSuccessHandler(function(res){
@@ -569,13 +570,17 @@ document.addEventListener('click', e => {
           if(!res || !res.ok){ alert('No se cerró: ' + ((res && res.error) || 'sin respuesta')); return; }
           const r = res.resultado;
           if(!r.cerrado){
-            if(confirm(`Hay ${r.sinContar.length} producto${r.sinContar.length === 1 ? '' : 's'} sin contar:\n\n` +
-                       r.sinContar.slice(0, 15).map(n => '  · ' + n).join('\n') + (r.sinContar.length > 15 ? '\n  · …' : '') +
-                       '\n\n¿Cerrar poniéndolos en 0?\n\nSi en realidad hay existencia, cancelá y contalos primero.')) mandar(true);
+            const sc = r.sinContar || [], sp = r.sinPrecio || [], partesAviso = [];
+            if(sc.length) partesAviso.push(`Hay ${sc.length} producto${sc.length === 1 ? '' : 's'} sin contar:\n\n` + lista(sc) +
+              '\n\nSe cierran en 0. Si en realidad hay existencia, cancelá y contalos primero.');
+            if(sp.length) partesAviso.push(`Hay ${sp.length} producto${sp.length === 1 ? '' : 's'} contado${sp.length === 1 ? '' : 's'} y sin precio:\n\n` + lista(sp) +
+              '\n\nSu monto queda en Q0 y el total del mes sale corto. Si sabés el precio, cancelá y cargalo primero.');
+            if(confirm(partesAviso.join('\n\n— — —\n\n') + '\n\n¿Cerrar igual?')) mandar(ceros || sc.length > 0, sinPrecio || sp.length > 0);
             return;
           }
           const partes = [`${invMesNombre(r.mes)} cerrado en ${Q(r.total)}.`];
-          partes.push(r.aplicados.length ? `${r.aplicados.length} precio${r.aplicados.length === 1 ? '' : 's'} al Banco.` : 'Ningún precio cambió lo suficiente para ir al Banco.');
+          partes.push(r.aplicados.length ? `${r.aplicados.length} precio${r.aplicados.length === 1 ? '' : 's'} al Banco.` : 'Ningún precio del conteo entró solo al Banco.');
+          if(r.sinPrecio) partes.push(`${r.sinPrecio} contado${r.sinPrecio === 1 ? '' : 's'} sin precio quedaron en Q0.`);
           if(r.porAprobar.length) partes.push(`${r.porAprobar.length} esperan aprobación de Juanma.`);
           if(r.sinConectar) partes.push(`${r.sinConectar} insumo${r.sinConectar === 1 ? '' : 's'} sin conectar no llevaron precio.`);
           if(r.siguiente) partes.push(`${invMesNombre(r.siguiente)} abierto.`);
@@ -591,9 +596,9 @@ document.addEventListener('click', e => {
           invDespues(a, r, partes.join(' '), res.cambios);
         })
         .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Cerrar'; alert('No se pudo cerrar: ' + err.message); })
-        .webInventarioCerrarMes(AUTH, a, mes, ceros);
+        .webInventarioCerrarMes(AUTH, a, mes, ceros, sinPrecio);
     };
-    mandar(false);
+    mandar(false, false);
     return;
   }
 
@@ -602,7 +607,8 @@ document.addEventListener('click', e => {
     if(!INVPRECIOS || !INVPRECIOS.pendientes) return;
     const aprobar = !t.dataset.invrechazar;
     const filas = t.dataset.invaprobartodos ? INVPRECIOS.pendientes.map(x => x.fila) : [+(t.dataset.invaprobar || t.dataset.invrechazar)];
-    const lista = INVPRECIOS.pendientes.filter(x => filas.indexOf(x.fila) !== -1)
+    const elegidos = INVPRECIOS.pendientes.filter(x => filas.indexOf(x.fila) !== -1);
+    const lista = elegidos
       .map(x => `  · ${x.producto}: Q${x.anterior} → Q${x.nuevo} (${x.pct > 0 ? '+' : ''}${x.pct}%)`);
     if(!confirm((aprobar ? '¿Aprobar y llevar al Banco de Datos?\n\n' : '¿Rechazar? El Banco se queda con el precio que tiene.\n\n') +
                 lista.join('\n') + (aprobar ? '\n\nLas recetas se recalculan con el precio nuevo.' : ''))) return;
@@ -617,7 +623,7 @@ document.addEventListener('click', e => {
                                  : `${r.rechazados} precio${r.rechazados === 1 ? '' : 's'} rechazado${r.rechazados === 1 ? '' : 's'}.`, res.cambios);
       })
       .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo: ' + err.message); })
-      .webInventarioResolverPrecios(AUTH, filas, aprobar);
+      .webInventarioResolverPrecios(AUTH, elegidos.map(x => ({ fila: x.fila, area: x.area, mes: x.mes, producto: x.producto, nuevo: x.nuevo })), aprobar);
     return;
   }
 
