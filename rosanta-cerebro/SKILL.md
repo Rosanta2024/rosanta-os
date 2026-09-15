@@ -33,6 +33,22 @@ Piso Q18,860/mes, objetivo Q27,193/mes.
 3. **Mezcla: casi toda venta** (el problema es tamaño). El costo es respaldo, **solo operativo, nunca personal**.
 4. **Punto de control a mediados de noviembre:** si la venta semanal no sube cerca de 40%, se activa la palanca de costo operativo.
 
+### 2b. p96 medido (tanda 3, mismo día)
+
+**Los "9 puntos" de p96 eran real contra META, no contra teórico.** Enero–agosto, sobre venta sin IVA ni servicio: meta 28.0% · **teórico 31.8%** · **real 37.1%**.
+- **3.8 puntos** vienen de las fichas y los precios de carta.
+- **5.3 puntos (Q60,926)** son la brecha real.
+
+Detalles:
+- **Agosto** es el 40% de la brecha: Q23,300 de retiros de cajero sin detalle, marcados como ALIMENTOS_EFECTIVO.
+- **Base de la venta:** la venta de Finanzas incluye el 10% de servicio y la ficha no. **Decisión de Juanma:** el semáforo de Finanzas pasa a venta sin servicio (pendiente de pantalla).
+- **Eventos:** van en los dos lados, su venta y su compra.
+- **No hay comida de personal.**
+- **Herramientas:**
+  - `revisarPuenteCmv()` en `PuenteCmv.js` da el teórico por mes;
+  - el puente está en `scripts/maestro-finanzas/p96_2026-09-15/`.
+- **Informe:** `_informes/2026-09-15_Finanzas_tanda3_p96_puente_CMV.md`.
+
 ### 3. Hechos de datos que no hay que re-investigar
 
 - **La columna Saldo del BI no sirve como serie** (vacía en mayo y casi todo junio, orden intradía distinto al banco). La caja reconstruye el saldo con movimientos, anclado en el último saldo del estado de cuenta.
