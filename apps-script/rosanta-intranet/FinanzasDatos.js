@@ -47,6 +47,9 @@
  *      solo el IGSS y se pintaba rentable, y la semana usaba 29000 fijo.
  *  12. UNIFORMES es su propio bloque (Juanma, 15-sep-2026). Dentro de Nomina y
  *      salarios se perdia: esa nomina se reemplaza por la planilla devengada.
+ *  13. Una factura con Estado "Anulado" en 01_FEL_Maestro no suma a nada. Hasta el
+ *      15-sep-2026 el calculo no miraba esa columna: 15 anuladas, Q7,535 en 2026. Las
+ *      formulas del maestro ya filtraban "Vigente" desde el 2-sep.
  *   7. El semaforo se pone SIEMPRE sobre la media movil de 4, nunca sobre la
  *      semana cruda: cruda, el food cost va de 16% a 68% porque la compra no
  *      cae en la semana en que se consume.
@@ -361,13 +364,15 @@ var FIN_REF = {
 };
 
 // Lo que no es gasto de la operacion y no entra al DRE.
+// ANULADA no es una categoria del maestro: la pone el calculo a la factura con
+// Estado "Anulado" (regla 13).
 var FIN_FUERA = ['DEVOLUCION_INVERSION', 'CARGO_FRAUDULENTO', 'PAGO_TARJETA_CREDITO',
                  'PAGO_TARJETA', 'TRANSFERENCIA', 'TRANSFERENCIA_SALIENTE',
-                 'PERSONAL', 'SALDO', 'POR_CLASIFICAR'];
+                 'PERSONAL', 'SALDO', 'POR_CLASIFICAR', 'ANULADA'];
 
 // Hoja -> columnas. Seccion 3 de la especificacion.
 var FIN_LIBROS = [
-  { hoja: '01_FEL_Maestro',         monto: 10, usd: 0, cat: 14, pers: 15, iva: 11, prov: 7, nit: 5 },
+  { hoja: '01_FEL_Maestro',         monto: 10, usd: 0, cat: 14, pers: 15, iva: 11, prov: 7, nit: 5, estado: 8 },
   { hoja: '03_Banco_Industrial',    monto: 4,  usd: 0, cat: 7,  pers: 8,  desc: 3 },
   { hoja: '04_Banco_BAC',           monto: 5,  usd: 0, cat: 8,  pers: 9,  desc: 4 },
   { hoja: '05_Tarjeta_Credito_BAC', monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 }
@@ -577,6 +582,7 @@ function _finCalcular_() {
   // reclasificacion contra la hoja sin mirar esta capa: si una categoria no
   // esta en el mapa, el dinero se cae en silencio. Aqui se hace visible.
   var porClasificar = 0, ultCarga = {}, felCompra = 0, efeCompra = 0;
+  var anuladasN = 0, anuladasQ = 0;
   var sinMapear = 0, sinIdentificar = 0;
 
   // COBERTURA: que pasa con cada quetzal de cada hoja. No cambia ningun numero;
@@ -611,17 +617,21 @@ function _finCalcular_() {
       if (!ultCarga[L.hoja] || f > ultCarga[L.hoja]) ultCarga[L.hoja] = f;
 
       var cat = String(filas[r][L.cat - 1] || '').trim();
+      // regla 13: la factura anulada en SAT no es gasto, sea cual sea su categoria
+      var anulada = !!L.estado && String(filas[r][L.estado - 1] || '').trim() === 'Anulado';
+      if (anulada) cat = 'ANULADA';
       if (cat === 'POR_CLASIFICAR') porClasificar++;
 
       var q = _finNum_(filas[r][L.monto - 1]);
       if (L.usd) q += _finNum_(filas[r][L.usd - 1]) * usd;
+      if (anulada) { anuladasN++; anuladasQ += q; }
 
       // Espeja a proposito las reglas de abajo en vez de reusarlas: si las dos
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
       var pagoDe = L.desc ? _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat) : '';
       var dest = _finDestino_(cat, L.hoja, esPers, pagoDe);
-      if (L.nit) {
+      if (L.nit && !anulada) {
         var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
         felNit[nit] = (felNit[nit] || 0) + q;
       }
@@ -638,6 +648,7 @@ function _finCalcular_() {
       var costo = q - (L.iva ? _finNum_(filas[r][L.iva - 1]) : 0);
       var M = _mes(f.getMonth() + 1);
 
+      if (anulada) continue;                            // regla 13
       if (esPers || cat === 'PERSONAL') {
         M.pers += q; continue;                          // gasto personal: nunca es del negocio
       }
@@ -890,7 +901,9 @@ function _finCalcular_() {
       // M20: meses con gasto y sin venta. No se pintan, pero su dinero esta en el año.
       meses_sin_venta: sinVenta.map(function (x) {
         return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), gop: _finR_(x.gop) };
-      })
+      }),
+      // regla 13: facturas anuladas en SAT que quedaron fuera del calculo
+      anuladas: { n: anuladasN, q: _finR_(anuladasQ) }
     },
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
   };
@@ -1321,6 +1334,7 @@ function _finFamilias_() {
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
 function _finDestino_(cat, hoja, esPersonal, pagoDe) {
+  if (cat === 'ANULADA') return 'anulada en SAT';
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
   if (!cat) return 'SIN CATEGORIA';

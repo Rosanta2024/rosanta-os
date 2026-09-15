@@ -399,6 +399,19 @@ function prFinanzas_(res) {
          : 'FIN_MAP.UNIFORMES = ' + JSON.stringify(FIN_MAP.UNIFORMES), ok ? 1 : 0, 1);
   });
 
+  prCorrer_(g, 'Una factura anulada no suma', function () {
+    var nombre = 'Una factura anulada no suma';
+    // Regla 13 (15-sep-2026): el calculo leia el FEL sin mirar la columna Estado y
+    // sumaba como gasto las facturas anuladas en SAT. Las formulas del maestro ya
+    // filtraban "Vigente" desde el 2-sep; este motor y generar_finanzas.py no.
+    var destino = _finDestino_('ANULADA', '01_FEL_Maestro', false, '');
+    var ok = _finEn_(FIN_FUERA, 'ANULADA') && destino === 'anulada en SAT';
+    var an = (d.integridad && d.integridad.anuladas) || { n: 0, q: 0 };
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      (ok ? '' : 'destino "' + destino + '" · ') + an.n + ' anuladas fuera del calculo por Q' + Math.round(an.q),
+      ok ? 1 : 0, 1);
+  });
+
   // La prueba 'Ninguna vista llama al servidor con corchetes' (5 vistas de este
   // pilar) se retiro el 12-sep-2026 por decision de Juanma: la reemplaza 'Ninguna
   // vista llama al servidor con el nombre en una variable', en Pruebas.js, que usa

@@ -162,7 +162,8 @@ REF = {'Inmueble y ocupacion':(6,10), 'Tarifas y servicios':(4,6),
        'Uniformes':(0, 0)}            # sin banda del sector
 
 FUERA = {'DEVOLUCION_INVERSION','CARGO_FRAUDULENTO','PAGO_TARJETA_CREDITO','PAGO_TARJETA',
-         'TRANSFERENCIA','TRANSFERENCIA_SALIENTE','PERSONAL','SALDO','POR_CLASIFICAR'}
+         'TRANSFERENCIA','TRANSFERENCIA_SALIENTE','PERSONAL','SALDO','POR_CLASIFICAR',
+         'ANULADA'}   # regla 13
 
 # hoja -> (col monto, col categoria, col es_personal)
 # 04_Banco_BAC entro al calculo el 4-sep-2026. Antes solo se usaba para el saldo
@@ -202,6 +203,14 @@ for _h, _c in [('01_FEL_Maestro', 1), ('02_Ventas_Maestro', 2), ('03_Banco_Indus
         _v = _ws.cell(_r, _c).value
         if isinstance(_v, datetime.datetime) and (_v.hour or _v.minute):
             _ws.cell(_r, _c).value = dia(_v)
+
+# regla 13 (15-sep-2026): una factura ANULADA en SAT no es gasto. Se le pone la
+# categoria ANULADA en memoria (no en el archivo) y ANULADA esta en FUERA. Mismo
+# criterio que FinanzasDatos.gs. Antes se sumaban 15 anuladas, Q7,535 en 2026.
+_fel_an = wb['01_FEL_Maestro']
+for _r in range(5, _fel_an.max_row + 1):
+    if str(_fel_an.cell(_r, 8).value or '').strip() == 'Anulado':
+        _fel_an.cell(_r, 14).value = 'ANULADA'
 
 
 def ultimo_devengado(m):
@@ -297,6 +306,8 @@ for m in range(1, 13):
                 continue
             q = monto(ws, r, mc, hoja)
             c = ws.cell(r, cc).value
+            if c == 'ANULADA':                      # regla 13
+                continue
             if ws.cell(r, pc).value == 'Sí' or c == 'PERSONAL':
                 pers += q; continue
             if c == 'DEVOLUCION_INVERSION':
@@ -667,7 +678,8 @@ for hoja, mc, cc, pc in TODOS_LOS_LIBROS:
         c = ws.cell(r, cc).value
         q = monto(ws, r, mc, hoja)
         prov = pago_de_factura(ws, r, hoja, c)
-        dest = 'personal' if ws.cell(r, pc).value == 'Sí' else _destino(c, hoja, prov)
+        dest = ('anulada en SAT' if c == 'ANULADA'
+                else 'personal' if ws.cell(r, pc).value == 'Sí' else _destino(c, hoja, prov))
         if not hoja in HOJAS_LEIDAS:
             dest = 'HOJA NO LEIDA'
         if dest == 'REGLA 8: pago de factura FEL':
@@ -704,7 +716,7 @@ fel_nit = defaultdict(float)
 _fel = wb['01_FEL_Maestro']
 for r in range(5, _fel.max_row + 1):
     f = _fel.cell(r, 1).value
-    if isinstance(f, datetime.datetime) and f.year == ANIO:
+    if isinstance(f, datetime.datetime) and f.year == ANIO and _fel.cell(r, 14).value != 'ANULADA':
         nit = re.sub(r'\.0$', '', str(_fel.cell(r, 5).value or '').strip())
         fel_nit[nit] += _fel.cell(r, 10).value or 0
 print("\nREGLA 8  pago saltado contra la factura FEL del año, por NIT")
