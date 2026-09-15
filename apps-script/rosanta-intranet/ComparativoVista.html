@@ -5,7 +5,8 @@
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
-    /* Comparativo 2026 contra 2025, mes a mes. Solo lectura.
+    /* Comparativo del año contra el anterior, mes a mes. Solo lectura. El año sale del
+       calculo (M15, tanda 4, 15-sep-2026): hasta esa fecha iba escrito 2026 contra 2025.
        Se compara TICKET contra TICKET: de 2025 el POS no exporta comensales. */
     main.cmp { max-width: 1080px; }
     .cmp-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
@@ -95,7 +96,7 @@
   <main class="cmp">
     <div class="cmp-barra-sup">
       <div>
-        <h1>2026 contra 2025</h1>
+        <h1 id="titulo"><?= new Date().getFullYear() ?> contra <?= new Date().getFullYear() - 1 ?></h1>
         <p class="cmp-sub" id="sub">Cargando…</p>
       </div>
       <button class="cmp-boton" id="btn-refrescar">Actualizar datos</button>
@@ -132,6 +133,11 @@ var AUTH = '<?= authToken ?>';
     if (d.error) { c.innerHTML = '<div class="cmp-error">' + esc(d.error) + '</div>'; return; }
 
     var T = d.total;
+    // El año del calculo y el anterior. Las claves v25/v26 quedan por compatibilidad:
+    // 25 es el año ANTERIOR y 26 el del calculo, cualquiera sea.
+    var A = d.anio || 2026, P = d.anio_ant || 2025;
+    var a2 = String(A).slice(2), p2 = String(P).slice(2);
+    document.getElementById('titulo').textContent = A + ' contra ' + P;
     document.getElementById('sub').textContent =
       T.meses + ' meses completos comparables · actualizado ' + d.gen;
 
@@ -139,7 +145,7 @@ var AUTH = '<?= authToken ?>';
 
     var html =
       '<div class="cmp-hero">' +
-        '<div class="rot">Los ' + T.meses + ' meses cerrados de 2026, contra los mismos de 2025</div>' +
+        '<div class="rot">Los ' + T.meses + ' meses cerrados de ' + A + ', contra los mismos de ' + P + '</div>' +
         '<div class="big">' + pct(T.pct) + '</div>' +
         '<div class="exp">' + q(T.v26) + ' contra ' + q(T.v25) + '. Son ' +
           '<strong>' + q(Math.abs(T.dif)) + '</strong> ' + (T.dif >= 0 ? 'más' : 'menos') +
@@ -154,17 +160,17 @@ var AUTH = '<?= authToken ?>';
     // ---- gráfico
     html += '<div class="cmp-graf">' +
       '<div class="cmp-leyenda">' +
-        '<span><i style="background:rgba(26,26,26,0.18)"></i>2025</span>' +
-        '<span><i style="background:var(--verde-bosque)"></i>2026</span>' +
+        '<span><i style="background:rgba(26,26,26,0.18)"></i>' + P + '</span>' +
+        '<span><i style="background:var(--verde-bosque)"></i>' + A + '</span>' +
         '<span style="opacity:.7">Barra rayada = mes en curso, todavía incompleto</span>' +
       '</div><div class="cmp-cols">';
     d.filas.forEach(function (f) {
       var h25 = d.tope ? (f.v25 || 0) / d.tope * 100 : 0;
       var h26 = d.tope ? (f.v26 || 0) / d.tope * 100 : 0;
       html += '<div class="cmp-col"><div class="cmp-par">' +
-        '<div class="cmp-b a25" style="height:' + h25 + '%" title="' + f.mes + ' 2025: ' + q(f.v25) + '"></div>' +
+        '<div class="cmp-b a25" style="height:' + h25 + '%" title="' + f.mes + ' ' + P + ': ' + q(f.v25) + '"></div>' +
         '<div class="cmp-b a26' + (f.parcial ? ' parcial' : '') + '" style="height:' + h26 +
-          '%" title="' + f.mes + ' 2026: ' + q(f.v26) + '"></div>' +
+          '%" title="' + f.mes + ' ' + A + ': ' + q(f.v26) + '"></div>' +
         '</div></div>';
     });
     html += '</div><div class="cmp-eje">' +
@@ -174,11 +180,12 @@ var AUTH = '<?= authToken ?>';
     // ---- tabla
     html += '<section class="cmp-seccion"><h2>Mes a mes</h2>' +
       '<p class="cmp-nota">Venta neta, sin IVA y sin eventos, igual que en el resto del ' +
-      'sistema. La comparación es <strong>ticket contra ticket</strong>: de 2025 el POS no ' +
-      'exporta comensales, así que el ticket promedio de esta tabla es por cuenta, no por ' +
-      'persona.</p><div class="tabla-scroll"><table class="cmp"><thead><tr>' +
-      '<th>Mes</th><th>2025</th><th>2026</th><th>Diferencia</th><th>Var.</th>' +
-      '<th>Tickets 25</th><th>Tickets 26</th><th>Ticket prom. 25</th><th>Ticket prom. 26</th>' +
+      'sistema. La comparación es <strong>ticket contra ticket</strong>' +
+      (P <= 2025 ? ': de 2025 el POS no exporta comensales, así que el ticket promedio de esta ' +
+        'tabla es por cuenta, no por persona.' : '.') +
+      '</p><div class="tabla-scroll"><table class="cmp"><thead><tr>' +
+      '<th>Mes</th><th>' + P + '</th><th>' + A + '</th><th>Diferencia</th><th>Var.</th>' +
+      '<th>Tickets ' + p2 + '</th><th>Tickets ' + a2 + '</th><th>Ticket prom. ' + p2 + '</th><th>Ticket prom. ' + a2 + '</th>' +
       '</tr></thead><tbody>';
 
     d.filas.forEach(function (f) {

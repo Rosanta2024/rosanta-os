@@ -997,45 +997,58 @@ function _finMeta_(anio, m) {
 }
 
 /**
- * Venta neta del mismo mes de 2025. null mientras esa hoja no exista.
- * Columnas de 02b_Ventas_2025: 13 Venta_Neta, 14 Mes.
- */
-/**
- * Los doce meses de 2025, para la pantalla comparativa.
+ * Venta neta y tickets de cada mes de un AÑO, para el comparativo y la meta de Metas.
  *
- * De 2025 el POS no exporta comensales, solo tickets. Por eso la comparacion
- * se hace TICKET contra TICKET y no comensal contra comensal: es lo unico que
- * existe en los dos años.
+ * M15 (tanda 4, 15-sep-2026): el año ya no va escrito a mano. Hasta esta fecha el
+ * comparativo decia "2026 contra 2025" fijo, y el 1 de enero habria comparado 2027
+ * vacio contra 2025. Cada año se compara contra el anterior:
+ *   2025 y antes      la hoja 02b_Ventas_2025 (columnas 13 Venta_Neta y 14 Mes).
+ *   2026 en adelante  02_Ventas_Maestro, que sigue acumulando años (decision de Juanma),
+ *                     con las mismas reglas que _finCalcular_: Subtotal / 1.12, sin
+ *                     eventos y con el dia verdadero de la regla 10.
+ * De 2025 el POS no exporta comensales, solo tickets. Por eso la comparacion se hace
+ * TICKET contra TICKET: es lo unico que existe en los dos años.
  */
-function _finAnio2025_() {
-  var hoja;
+function _finVentasAnio_(anio) {
+  var out = {};
   try {
-    hoja = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName(FIN_HOJA_2025);
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+    if (anio <= 2025) {
+      var h25 = ss.getSheetByName(FIN_HOJA_2025);
+      if (!h25 || h25.getLastRow() < 2) return null;
+      var f25 = h25.getDataRange().getValues();
+      for (var r = 1; r < f25.length; r++) {
+        var m = Number(f25[r][13]);
+        if (!m || m < 1 || m > 12) continue;
+        if (!out[m]) out[m] = { ventas: 0, tickets: 0 };
+        out[m].ventas += _finNum_(f25[r][12]);
+        out[m].tickets += 1;
+      }
+    } else {
+      var V = ss.getSheetByName('02_Ventas_Maestro').getDataRange().getValues();
+      for (var i = FIN_PRIMERA_FILA - 1; i < V.length; i++) {
+        var f = _finDia_(V[i][1]);                                  // regla 10
+        if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
+        if ((String(V[i][7] || '') + String(V[i][11] || '')).toUpperCase().indexOf('EVENTO') !== -1) continue;
+        var mm = f.getMonth() + 1;
+        if (!out[mm]) out[mm] = { ventas: 0, tickets: 0 };
+        out[mm].ventas += _finNum_(V[i][3]) / 1.12;                 // regla 1
+        out[mm].tickets += 1;
+      }
+    }
   } catch (e) { return null; }
-  if (!hoja || hoja.getLastRow() < 2) return null;
-  var filas = hoja.getDataRange().getValues(), out = {};
-  for (var r = 1; r < filas.length; r++) {
-    var m = Number(filas[r][13]);
-    if (!m || m < 1 || m > 12) continue;
-    if (!out[m]) out[m] = { ventas: 0, tickets: 0 };
-    out[m].ventas += _finNum_(filas[r][12]);
-    out[m].tickets += 1;
-  }
+  if (!Object.keys(out).length) return null;
   Object.keys(out).forEach(function (k) { out[k].ventas = _finR_(out[k].ventas); });
   return out;
 }
 
-function _finBase2025_(m) {
-  var hoja;
-  try {
-    hoja = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName(FIN_HOJA_2025);
-  } catch (e) { return null; }
-  if (!hoja || hoja.getLastRow() < 2) return null;
-  var filas = hoja.getDataRange().getValues(), suma = 0, n = 0;
-  for (var r = 1; r < filas.length; r++) {
-    if (Number(filas[r][13]) === m) { suma += _finNum_(filas[r][12]); n++; }
-  }
-  return n ? { ventas: _finR_(suma), tickets: n } : null;
+/** Los doce meses de 2025. Se queda porque la estacionalidad de la Caja lo usa. */
+function _finAnio2025_() { return _finVentasAnio_(2025); }
+
+/** Venta y tickets del mismo mes del año anterior. null si no hay dato. */
+function _finBaseAnterior_(anio, m) {
+  var v = _finVentasAnio_(anio - 1);
+  return (v && v[m]) ? v[m] : null;
 }
 
 /**
@@ -1058,7 +1071,7 @@ function getMetasData(auth, forzar) {
   d.meses.forEach(function (x) { if (x.m === m) mesActual = x; });
 
   var meta = _finMeta_(anio, m);
-  var base = _finBase2025_(m);
+  var base = _finBaseAnterior_(anio, m);   // M15: el año anterior, no 2025 fijo
 
   // El piso: promedio de los ultimos meses cerrados de este año.
   //
@@ -1083,13 +1096,13 @@ function getMetasData(auth, forzar) {
       texto = 'Promedio de los ultimos ' + cerrados.length + ' meses (Q' +
               piso.toLocaleString('es-GT') + '). Manda el piso porque el +' +
               Math.round((FIN_CRECIMIENTO - 1) * 100) + '% sobre ' + FIN_MESES[m - 1] +
-              ' 2025 daria solo Q' + porAnioPasado.toLocaleString('es-GT') + '.';
+              ' ' + (anio - 1) + ' daria solo Q' + porAnioPasado.toLocaleString('es-GT') + '.';
     } else if (mandaPiso) {
       texto = 'Promedio de los ultimos ' + cerrados.length + ' meses cerrados. ' +
-              'De ' + FIN_MESES[m - 1] + ' 2025 no hay dato con que comparar.';
+              'De ' + FIN_MESES[m - 1] + ' ' + (anio - 1) + ' no hay dato con que comparar.';
     } else {
       texto = '+' + Math.round((FIN_CRECIMIENTO - 1) * 100) + '% sobre ' + FIN_MESES[m - 1] +
-              ' 2025, que cerro en Q' + base.ventas.toLocaleString('es-GT') + '.';
+              ' ' + (anio - 1) + ', que cerro en Q' + base.ventas.toLocaleString('es-GT') + '.';
     }
     meta = { venta: Math.max(porAnioPasado, piso), food: (meta && meta.food) || _finMetaFood_(),
              origen: texto, provisional: false, automatica: true, manda_piso: mandaPiso };
@@ -1150,7 +1163,8 @@ function getMetasData(auth, forzar) {
     semanas: semanas,
     ultima_carga: ultima,
     meta_food: (meta && meta.food) || _finMetaFood_(),
-    base_2025: base,
+    base_2025: base,          // nombre viejo: es el mismo mes del año ANTERIOR
+    base_anterior: base, anio_ant: anio - 1,
     piso: piso,
     por_anio_pasado: porAnioPasado,
     gen: d.gen
@@ -1249,7 +1263,7 @@ function getMetasData(auth, forzar) {
 
 /**
  * ============================================================================
- * COMPARATIVO 2026 contra 2025, mes a mes.
+ * COMPARATIVO: el año del calculo contra el anterior, mes a mes (M15, 15-sep-2026).
  * ============================================================================
  *
  * Notas de meses en los que la comparacion NO se puede leer como crecimiento.
@@ -1260,20 +1274,33 @@ var FIN_NOTAS_2025 = {
   9: 'En 2025 el restaurante estuvo de vacaciones casi todo septiembre: cerró con ' +
      '52 tickets. La variación de este mes no mide crecimiento.'
 };
+// Las notas van por el año ANTERIOR de la comparacion. FIN_NOTAS_2025 se queda con su
+// nombre porque la estacionalidad de la Caja lo lee.
+var FIN_NOTAS_POR_ANIO = { 2025: FIN_NOTAS_2025 };
 
 function getComparativoData(auth, forzar) {
   exigirModulo_(auth, 'finanzas');
   var d = _finDatos_(forzar);
   if (d.error) return { error: d.error };
+  return _finComparativo_(d, new Date());
+}
 
-  var ant = _finAnio2025_();
-  if (!ant) return { error: 'No se pudo leer ' + FIN_HOJA_2025 + ' del maestro.' };
+/**
+ * Separado de la puerta para que la bateria lo pruebe con otra fecha. Las claves v25,
+ * v26, t25, tp25... quedan por compatibilidad: 25 es el año ANTERIOR y 26 el del
+ * calculo, cualquiera sea. La pantalla rotula con anio_ant y anio.
+ */
+function _finComparativo_(d, hoy) {
+  var anio = d.anio, anioAnt = anio - 1;
+  var ant = _finVentasAnio_(anioAnt);
+  if (!ant) return { error: 'No hay ventas de ' + anioAnt + ' en el maestro' +
+                           (anioAnt <= 2025 ? ' (' + FIN_HOJA_2025 + ')' : '') + '.' };
+  var notas = FIN_NOTAS_POR_ANIO[anioAnt] || {};
 
   var act = {};
   d.meses.forEach(function (x) { act[x.m] = x; });
 
-  var hoy = new Date();
-  var mesEnCurso = hoy.getFullYear() === 2026 ? hoy.getMonth() + 1 : 0;
+  var mesEnCurso = hoy.getFullYear() === anio ? hoy.getMonth() + 1 : 0;
 
   var filas = [], tA = 0, tB = 0, tkA = 0, tkB = 0;
   for (var m = 1; m <= 12; m++) {
@@ -1286,7 +1313,7 @@ function getComparativoData(auth, forzar) {
       // El mes en curso todavia no esta completo: compararlo contra el mes
       // ENTERO del año pasado da una caida que no existe.
       parcial: m === mesEnCurso,
-      nota: FIN_NOTAS_2025[m] || ''
+      nota: notas[m] || ''
     };
     f.tp25 = (a && a.tickets) ? _finR_(a.ventas / a.tickets, 2) : null;
     f.tp26 = (b && b.tickets) ? _finR_(b.ventas / b.tickets, 2) : null;
@@ -1302,6 +1329,7 @@ function getComparativoData(auth, forzar) {
   }
 
   return {
+    anio: anio, anio_ant: anioAnt,
     filas: filas,
     mes_en_curso: mesEnCurso,
     // maximo para escalar las barras de las dos series con la misma regla

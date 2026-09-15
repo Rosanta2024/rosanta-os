@@ -31,6 +31,11 @@
 
 var PUENTE_CMV = { prefijo: 'cmv_rt_v1_', cacheSegs: 3 * 60 * 60, mesesBloque: 3 };
 
+/** La clave del cache de la tarjeta. La usan getCmvRealTeorico y calentarCaches. */
+function cmvRealTeoricoClave_(huella) {
+  return PUENTE_CMV.prefijo + huella + '_' + finCacheClave_();
+}
+
 function revisarPuenteCmv(desde, hasta) {
   soloDueno_();
   var out = _puenteTeoricoMeses_(desde, hasta);
@@ -132,7 +137,7 @@ function getCmvRealTeorico(auth) {
   // La clave junta las dos fuentes: la huella de ventas, bitacora y catalogo del POS
   // (el teorico) y la del calculo de Finanzas (el real).
   var huella = huellaDatos_();
-  var clave = huella ? PUENTE_CMV.prefijo + huella + '_' + finCacheClave_() : '';
+  var clave = huella ? cmvRealTeoricoClave_(huella) : '';
   var cache = CacheService.getScriptCache();
   if (clave) {
     try {
@@ -154,8 +159,8 @@ function getCmvRealTeorico(auth) {
 
 /**
  * Los quetzales de venta y compra son dato de Finanzas y el modulo recetario lo tienen
- * tambien cocina y barra. Hasta que Juanma decida (15-sep-2026), quien no es el dueño
- * recibe porcentajes y brecha en puntos, sin montos. El cache guarda la respuesta
+ * tambien cocina y barra. Decision de Juanma (15-sep-2026): quien no es el dueño recibe
+ * porcentajes y brecha en puntos, sin montos. El cache guarda la respuesta
  * completa y se filtra al devolver.
  */
 function _puenteParaQuien_(res, u) {

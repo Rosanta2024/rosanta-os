@@ -285,13 +285,23 @@ function guardarRaa(auth, datos) {
               responsable, new Date(), u.nombre || u.email];
 
   // Una sola fila por semana e indicador: la segunda vez se pisa, no se apila.
-  var destino = 0;
-  var vals = hoja.getDataRange().getValues();
-  for (var i = 1; i < vals.length; i++) {
-    if (Number(vals[i][0]) === sem && String(vals[i][1]).trim() === ind) { destino = i + 1; break; }
+  // M9 (tanda 4, 15-sep-2026): con candado. Sin el, dos guardados a la vez leian la
+  // misma hoja, elegian la misma fila libre y uno de los dos se perdia sin aviso.
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(20000)) {
+    throw new Error('Alguien está guardando el RAA en este momento. Probá de nuevo en unos segundos.');
   }
-  if (!destino) destino = hoja.getLastRow() + 1;
-  hoja.getRange(destino, 1, 1, RAA_COLS.length).setValues([fila]);
+  try {
+    var destino = 0;
+    var vals = hoja.getDataRange().getValues();
+    for (var i = 1; i < vals.length; i++) {
+      if (Number(vals[i][0]) === sem && String(vals[i][1]).trim() === ind) { destino = i + 1; break; }
+    }
+    if (!destino) destino = hoja.getLastRow() + 1;
+    hoja.getRange(destino, 1, 1, RAA_COLS.length).setValues([fila]);
+  } finally {
+    candado.releaseLock();
+  }
 
   // Un cache sin su invalidacion es otra regresion: se borra donde se escribe.
   try { CacheService.getScriptCache().remove(raaCacheClave_()); } catch (e) { /* no importa */ }

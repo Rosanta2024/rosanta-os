@@ -77,6 +77,18 @@ function calentarCaches() {
   calentar('avisos', function () { return !c.get(AVISOS_CACHE.clave); },
            function () { getAvisosDashboard(); });
 
+  // Finanzas (M26, tanda 4, 15-sep-2026): el primero que abria la pestaña pagaba el
+  // calculo del maestro entero. La respuesta pesa ~25 KB, lejos de los 100 KB del cache.
+  calentar('finanzas', function () { return !c.get(finCacheClave_()); },
+           function () { _finDatos_(true); });
+
+  // La tarjeta real contra teorico del tablero: corre ingenieriaDeMenu_ una vez por mes.
+  // Va despues de finanzas porque lee su calculo. Misma clave que getCmvRealTeorico.
+  calentar('real contra teorico', function () {
+    var h = huellaDatos_();
+    return !h || !c.get(cmvRealTeoricoClave_(h));
+  }, function () { getCmvRealTeorico(''); });
+
   var linea = 'calentarCaches · reconstruido: ' + (hecho.join(', ') || 'nada') +
               ' · ya estaba: ' + (ya.join(', ') || 'nada') +
               (fallo.length ? ' · FALLO: ' + fallo.join(' | ') : '');

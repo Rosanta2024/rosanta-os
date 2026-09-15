@@ -472,6 +472,50 @@ function prFinanzas_(res) {
       b.meses, '>=1');
   });
 
+  // ------------------------------------------------ 10. tanda 4 (15-sep-2026)
+  prCorrer_(g, 'El RAA guarda con candado', function () {
+    var nombre = 'El RAA guarda con candado';
+    // M9: dos guardados a la vez elegian la misma fila libre y uno se perdia.
+    var txt = String(guardarRaa);
+    var ok = txt.indexOf('tryLock') !== -1 && txt.indexOf('releaseLock') !== -1;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'guardarRaa toma y suelta el candado' : 'guardarRaa escribe sin LockService', ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'El comparativo compara contra el año anterior', function () {
+    var nombre = 'El comparativo compara contra el año anterior';
+    // M15: el año iba escrito a mano y el 1 de enero habria comparado contra 2025.
+    var cmp = _finComparativo_(d, new Date());
+    if (cmp.error) { prAnotar_(g, nombre, 'FALLA', cmp.error, 0, 'sin error'); return; }
+    var ok = cmp.anio === d.anio && cmp.anio_ant === d.anio - 1 && cmp.filas.length === 12;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      cmp.anio + ' contra ' + cmp.anio_ant + ' · ' + cmp.total.meses + ' meses comparables',
+      cmp.anio_ant, d.anio - 1);
+  });
+
+  prCorrer_(g, 'Las ventas del año se leen igual que el calculo', function () {
+    var nombre = 'Las ventas del año se leen igual que el calculo';
+    // En 2027 el comparativo va a leer 2026 con este mismo lector. Se prueba hoy contra
+    // el año en curso, que el calculo ya tiene.
+    var v = _finVentasAnio_(d.anio);
+    if (!v) { prAnotar_(g, nombre, 'FALLA', 'no leyo ventas de ' + d.anio, 0, d.meses.length); return; }
+    var mal = d.meses.filter(function (m) {
+      var x = v[m.m];
+      return !x || Math.abs(x.ventas - m.ventas) > 0.05 || x.tickets !== m.tickets;
+    }).map(function (m) { return m.mes; });
+    prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
+      mal.length ? 'distintos: ' + mal.join(', ') : d.meses.length + ' meses iguales en venta y tickets',
+      d.meses.length - mal.length, d.meses.length);
+  });
+
+  prCorrer_(g, 'La respuesta de Finanzas cabe en el cache', function () {
+    var nombre = 'La respuesta de Finanzas cabe en el cache';
+    // M26: CacheService topa en 100 KB por clave y cache.put falla en silencio. Hoy pesa
+    // ~25 KB; la alarma salta en 80 KB, antes de que cada apertura recalcule sin avisar.
+    var kb = Math.round(JSON.stringify(d).length / 102.4) / 10;
+    prAnotar_(g, nombre, kb < 80 ? 'OK' : 'FALLA', kb + ' KB de 100 KB', kb, '<80');
+  });
+
   // ------------------------------------------- 8. caja (tanda 2, 15-sep-2026)
   var cj = null;
   prCorrer_(g, 'La proyeccion de caja se calcula', function () {

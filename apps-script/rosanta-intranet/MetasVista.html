@@ -357,8 +357,8 @@ var AUTH = '<?= authToken ?>';
             '<div class="t">' + d.base_2025.tickets + ' tickets. Con +20% da ' +
             q(d.por_anio_pasado) + (d.piso ? '; el piso de los últimos meses es ' +
               q(d.piso) + ', y manda el mayor de los dos' : '') +
-            '. De 2025 el POS no exporta comensales, así que de ahí solo se puede ' +
-            'comparar la venta.</div></div>'
+            ((d.anio_ant || 2025) <= 2025 ? '. De 2025 el POS no exporta comensales, así que de ahí solo se puede ' +
+            'comparar la venta.' : '.') + '</div></div>'
           : '') +
         '<div class="met-card"><h3>Comensales del mes</h3>' +
           '<div class="n">' + d.comensales + '</div>' +
@@ -370,14 +370,13 @@ var AUTH = '<?= authToken ?>';
       html += '<div class="aviso" style="background:#E8F2EA"><b>La meta la calcula el sistema.</b>' +
         esc(m.origen) + ' Son dos candidatos y gana el mayor: el +20% sobre el mismo mes ' +
         'del año pasado, y un piso igual al promedio de los últimos meses cerrados. ' +
-        'El piso existe porque el negocio creció ~65% contra 2025: sin él, en varios meses ' +
+        'El piso existe porque el negocio creció mucho contra el año pasado: sin él, en varios meses ' +
         'la meta quedaría por debajo de lo que ya se hace de rutina. ' +
         'Si quieres fijar otra, escríbela en la pestaña METAS y esa manda.</div>';
     } else if (m.provisional) {
       html += '<div class="aviso"><b>La meta de este mes es provisional.</b>' +
-        'El objetivo es +20% contra el mismo mes del año pasado, pero 2025 todavía no está ' +
-        'cargado en el maestro: solo hay fragmentos de abril y junio, y de septiembre no hay ' +
-        'nada. Mientras tanto el número está puesto a mano. Cuando entre 2025, esta misma ' +
+        'El objetivo es +20% contra el mismo mes del año pasado, pero ese mes todavía no está ' +
+        'cargado en el maestro. Mientras tanto el número está puesto a mano. Cuando entre, esta misma ' +
         'pestaña se llena sola y la pantalla no cambia.</div>';
     }
 

@@ -802,6 +802,8 @@ function prPuentePOS_(res) {
     getCosteoData();          // deja el caro servido
     getProfitOS('', 13);
     getAvisosDashboard();
+    _finDatos_(false);        // tanda 4 de Finanzas (M26): el calentador tambien los calienta
+    getCmvRealTeorico('');
 
     var a = new Date().getTime();
     var linea = String(calentarCaches() || '');
