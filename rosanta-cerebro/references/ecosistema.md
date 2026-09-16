@@ -1,4 +1,4 @@
-# Ecosistema de herramientas de Rosanta (act. 6 sep 2026)
+# Ecosistema de herramientas de Rosanta (act. 16 sep 2026)
 
 Mapa de skills, artefactos y automatizaciones. Usar la herramienta correcta según la tarea; si dos aplican, combinarlas.
 
@@ -65,9 +65,7 @@ Auditoría cerrada en S35 bajo Rosanta OS de 6 pilares: **10 vivos, 9 borrados, 
 | Artefacto (id) | Qué es | Pilar |
 |---|---|---|
 | `rosanta-seguimiento-semanal` | **Memoria operativa**: pendientes por proyecto con niveles N1/N2/N3 e historial de cierres | Back office |
-| `rosanta-dre-mensual` | DRE mensual: 5 números del P&L con semáforo, prime cost, equilibrio, simulador. **Vista Finanzas v1** | Finanzas & Data OS |
-| `rosanta-finanzas-semanal` | Vista semanal de finanzas | Finanzas & Data OS |
-| `rosanta-dashboard-semanal` | Dashboard semanal de ventas/COGS/margen. Se refresca los lunes 11:04 | Finanzas & Data OS |
+| ~~`rosanta-dre-mensual`~~ · ~~`rosanta-finanzas-semanal`~~ · ~~`rosanta-dashboard-semanal`~~ | **RETIRADOS — no están en el manifiesto (verificado 16-sep).** Todo Finanzas vive en la intranet (decisión del 12-sep: una sola superficie). No reconstruirlos como artefacto | Finanzas & Data OS |
 | `panel-operativo-rosanta` | Panel operativo general | Profit OS |
 | `rosanta-inventarios-may-jun-2026` | Inventarios (integrados a Profit OS) | Profit OS |
 | `costeo-barra-rosanta` / `rosanta-costos-compra-barra` | Costeo y costos de compra de barra | Profit OS |
@@ -80,7 +78,9 @@ Auditoría cerrada en S35 bajo Rosanta OS de 6 pilares: **10 vivos, 9 borrados, 
 | `morning-brief-juanma` | Brief diario L–V con los 3 N1 del tablero | Personal |
 | `plan-utg-42k` | Plan de la Ultramaratón Guatemala 42K (21 nov 2026) | Personal |
 
-Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificacion-fijo-variable`, `rosanta-scorecard-7-pasos`, `rosanta-ruta-metas`, `sistema-marketing-rosanta`. Personales: `patagonia-feb-2027`, `mapa-trekkings-chalten`.
+Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificacion-fijo-variable`, `rosanta-scorecard-7-pasos`, `rosanta-ruta-metas`, `sistema-marketing-rosanta`. Personales: `mapa-trekkings-chalten`, `plan-utg-42k` (~~`patagonia-feb-2027`~~ tampoco está en el manifiesto).
+
+**Verificado el 16-sep:** el último artefacto creado es del 2-sep. Dos semanas sin artefactos nuevos no es parálisis: el trabajo se mudó a la intranet.
 
 ## Memoria operativa: el tablero
 
@@ -93,16 +93,17 @@ Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificaci
 - **El cerebro guarda contexto estable; el tablero, el estado semana a semana. No duplicar.**
 - Los pendientes cerrados se podan del JSON; su historia vive en `semanas[].consolidados` y las versiones completas en `versions/`.
 
-## Automatizaciones (tareas programadas, al 6 sep 2026)
+## Automatizaciones (tareas programadas, verificadas con `list_scheduled_tasks` el 16 sep 2026)
 
 | Tarea | Cuándo | Qué hace |
 |---|---|---|
 | `morning-brief-juanma` | L–V 6:02 | Brief diario con los 3 N1 del tablero |
-| `rosanta-seguimiento-offsite` | Lunes 8:05 | Reputación TripAdvisor + listicles |
+| ~~`rosanta-seguimiento-offsite`~~ | ~~Lunes 8:05~~ | **APAGADA** (`enabled: false`). Reputación TripAdvisor + listicles. No asumirla viva |
 | `rosanta-analista-pauta-lunes` | Lunes 8:08 | Campañas Meta vs benchmarks + acciones para Vanessa |
-| `rosanta-reporte-semanal` | Lunes 10:06 | Valida la carga automática, procesa PDF de bancos, genera el PDF semanal |
-| `rosanta-dashboard-refresh` | Lunes 11:04 | Refresca el dashboard semanal. **Movido de 9:04 a 11:04** porque corría antes que el cargador y leía datos viejos |
+| `rosanta-reporte-semanal` | **Lunes 16:06** | Valida la carga automática, procesa PDF de bancos, genera el PDF semanal. **Era 10:06** |
+| ~~`rosanta-dashboard-refresh`~~ | — | **YA NO EXISTE.** El dashboard semanal dejó de ser artefacto: la intranet es la única superficie del pilar 3 |
 | `rosanta-cierre-semanal` | Domingos 18:03 | Cierre de la semana → actualiza el tablero |
+| `rosanta-reporte-mensual` | **Día 3, 9:00** | Verifica que el mes anterior esté completo en el maestro (bancos, ventas, facturas, tarjeta, planilla) y avisa qué falta. **No calcula números ni toca artefactos** |
 | `auditoria-meta-ads-rosanta-mensual` | Día 25, 8:00 | Auditoría mensual de Meta Ads |
 | `rosanta-cerebro-mantenimiento` | Día 1, 9:00 | Propone la versión nueva de esta skill |
 

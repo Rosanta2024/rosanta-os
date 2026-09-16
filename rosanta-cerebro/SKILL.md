@@ -7,48 +7,61 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 15 sep 2026, noche (v18).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 16 sep 2026, tarde (v19).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
-## Cierre del 15 sep 2026, noche (v18): auditoría de la regla 9
+## Cierre del 16 sep 2026, tarde (v19): Creador de pauta en la @99
 
-**Cómo reconoce la regla 9 a un proveedor.** El banco no trae NIT, así que el pago se reconoce por el
-TEXTO del movimiento, y por la categoría donde el texto no alcanza. El NIT sirve para cotejar contra la
-factura, no para encontrar el pago. Los siete, con NIT: EEGSA 326445 (BI y BAC, texto `EEGSA`), Claro
-9929290 (BI, `CLARO`), Doorways 96569239 (BI `DOORWAY`, BAC `TEF A : 902410067`), Posfile 107902699 (BI y
-tarjeta, `POSFILE`), EX Security 104313218 (BI, categoría SERVICIO DE MONITOREO Y ALARMA), Edwin Flores
-82651086 (BI, texto MARKETING/CONTENIDO más categoría SERVICIOS_PROFESIONALES) y Aseguradora La Ceiba
-5022193 (BI, texto SEGURO más categoría SEGUROS_Y_FIANZAS). Mismo listado en `FIN_PAGO_DE_FACTURA`
-(`FinanzasDatos.js`, regla 9) y `PAGO_DE_FACTURA` (`generar_finanzas.py`, allá es la regla 8).
+**El equipo está en la @99** (verificado con `clasp list-deployments`). Trae una sola cosa: el **🎯 Creador de pauta con la Lente Savannah Sanchez**, dentro de ✍️ Creador de Contenido del Marketing OS, para Vanessa. Batería sobre ese HEAD: **118 OK · 0 fallas · 1 aviso · 3 saltadas** (122 pruebas, mismo total que la @98). El aviso es el calentador de cachés (8.3 s, Drive lento) y las 3 saltadas son las de siempre. Prueba funcional hecha por Juanma en el /dev: generó anuncios completos. Commits `c2d42e4` y `2ea5518`.
 
-**Quién queda fuera y por qué.** Tigo, NIT 5498104, paga Q4,049.66 y factura Q1,623 en el año: 2.5 veces.
-Los comercios de tarjeta (PriceSmart, La Torre, gasolineras, Cemaco) quedan fuera porque ahí no toda
-compra trae factura y saltarlas borraría gasto real.
+### 1. Qué es el Creador de pauta
 
-**Lo que la regla no corrigió (p171, N3):** unos Q6,459 de mercadería de tarjeta, Q2,491 de pares de
-confianza media, Q10,970 de confianza baja y el caso de Tigo.
+- Vive en `Marketing.html`, pestaña `gen`, debajo de los tres generadores Kaprica, con su propio `pill-note`. Función `genPauta()`, constante `SAVANNAH`, salida en `#paOut`, borradores en la Biblioteca con 🎯. Manual actualizado (sección propia y "Quién hace qué").
+- **Es un cerebro creativo aparte: KAPRICA no entra en su prompt a propósito; VOZ sí.** El orgánico nace de Kaprica (micro-historias); la pauta nace de la misma Lente Savannah que debate en el Panel de Asesores, aplicada a producir: gancho de los primeros 3 segundos, video nativo estilo UGC, el creativo es el targeting, iterar sobre ganadores, regla Andromeda (cada concepto es un video hermano distinto).
+- Entradas: tema u oferta, objetivo de campaña (awareness, retargeting, conversión, evento), audiencia (turista en inglés, foodie en español, ambas), formato (video UGC 9:16, talking head Jeffry / Maco, foto 4:5, carrusel), 1 a 3 conceptos, ángulo opcional.
+- Salida por concepto: gancho literal, guión con segundos, texto principal (primera línea ≤125 caracteres), titular (≤40), descripción (≤30), botón y destino, utm_content, qué medir a los 7 días (hook rate ≥40%, retención ≥10%, CTR ≥1%, CPE <Q0.05, frecuencia <3) y siguiente iteración. Cierra con nota de producción.
+- **Sin funciones nuevas de servidor:** llega por `askIA → askClaudeSrv`, así que la prueba de guardas no cambió (14 llamadas `srv` revisadas). Prohibiciones dentro del prompt: "de autor", "signature", "Jardín Santa Rosa", "leña de café".
 
-**El hueco de la prueba (p170, N2).** La prueba nueva solo falla cuando un proveedor paga más de 1.3 veces
-lo que factura. Si el banco cambia el formato de la glosa, la regla deja de reconocer esos pagos, el doble
-conteo vuelve en silencio y ninguna prueba se queja. Falta que avise también cuando un proveedor de la
-lista desaparece de los pagos del año.
+### 2. Wilson ya no colabora con Rosanta (Juanma, 16 sep 2026)
 
-**p173 (N3):** el README de `scripts/maestro-finanzas` sigue con la referencia del 12-sep (ventas
-Q1,261,109, neto -7.3%, 3 en POR_CLASIFICAR, fuga Q7,611). El cotejo A/B es la única comprobación
-independiente de los números de la intranet: su referencia tiene que ser la del día o no sirve.
+El cerebro lo tenía como "talento frente a cámara, colaborador externo" en `references/negocio.md` y de ahí se coló al desplegable del creador. **Corregido en el código (HEAD con 0 menciones) y marcado obsoleto en la referencia.** Talento a cámara: **Jeffry** (cocina y parrilla) y **Maco** (barra), o clientes reales. Regla: **los nombres de personas se verifican con lo que Juanma diga hoy, no con el cerebro**; una persona que salió del equipo puede seguir viva en una referencia meses después.
 
-**p159 verificado y cerrado.** Las 24 facturas del NIT 345377 (Distribuidora de Licores) están en
-COCTELERIA por Q11,970.10, ninguna en ALIMENTOS, y `00_Proveedores` fila 161 dice COCTELERIA, familia
-LICOR.
+### 3. Reglas técnicas que dejó el día
 
-**Regla nueva, de un error de hoy: un pendiente se abre contra el espejo del día.** Abrí p172 por Q2,000
-en POR_CLASIFICAR leyendo el espejo del 14-sep 22:11; en el del 15-sep 17:33 ya no queda ninguno y la fuga
-del año es Q0.00. Se cerró el mismo día.
+1. **`invalid_rapt` en clasp = reauth.** `clasp login` lo arregla aunque diga "You seem to already be logged in"; la cuenta se confirma con `tokeninfo` (dio restaurante@rosanta.rest) y con un `list-deployments` que vuelva a contestar.
+2. **La batería tardó 310 s, rozando los 6 minutos de Apps Script.** La primera corrida quedó en "Corriendo…" más de 9 minutos sin disparar el `withFailureHandler`; se recargó y la segunda terminó. Si pasa de 7 minutos, recargar, no esperar.
+3. **Claude in Chrome sí opera el /dev, con límites.** Las pestañas se clican con coordenadas en píxeles CSS del viewport (1470×745 en la MacBook de Juanma), no en los de la captura escalada. **El iframe de Google bloquea el scroll y el teclado** desde la extensión (un `type` colgó el renderer 30 s): lo que queda debajo del pliegue lo prueba Juanma. La batería se lee con clic adentro, ⌘A, ⌘C y `pbpaste`; el texto sale en **latin-1**, no en UTF-8.
+4. **Una plantilla se comprueba compilándola:** quitar los scriptlets `<? ?>`, extraer los `<script>` y pasarlos por `node --check` con un control negativo. Se hizo para la v99 y pasó.
 
-**El tablero cambió de formato.** El bloque `#seguimiento-data` ahora va con `indent=2`. Escribirlo con
-`json.dumps(..., ensure_ascii=False, indent=2)` y comprobar que el archivo no cambió entre leer y
-escribir: hay varias sesiones tocándolo a la vez.
+---
+
+## Cierre del 16 sep 2026 (v18): mantenimiento mensual, deriva corregida
+
+Pasada mensual de `rosanta-cerebro-mantenimiento`. **No hubo jornada de trabajo nueva**: el contenido sustantivo del mes ya entró por las sesiones (v9 → v17, del 6 al 15 de septiembre). Lo que esta versión arregla es la **deriva entre lo que el cerebro dice y lo que existe de verdad**, verificado contra `list_scheduled_tasks` y `list_artifacts`, no contra la memoria.
+
+### 1. Tareas programadas: la tabla de `ecosistema.md` estaba vencida
+
+| Lo que decía el cerebro | Lo que hay de verdad (16-sep) |
+|---|---|
+| `rosanta-reporte-semanal` lunes 10:06 | **Lunes 16:06** (`0 16 * * 1`) |
+| `rosanta-seguimiento-offsite` lunes 8:05, activa | **Apagada** (`enabled: false`) desde antes del 14-sep |
+| `rosanta-dashboard-refresh` lunes 11:04 | **Ya no existe.** Coherente con que la intranet sea la única superficie del pilar 3 |
+| — | **`rosanta-reporte-mensual`, día 3 a las 9:00**, existía y no estaba escrita: verifica que el mes anterior esté completo en el maestro y avisa qué falta. No calcula ni toca artefactos |
+
+Sin cambio: `morning-brief-juanma` (L–V 6:02), `rosanta-analista-pauta-lunes` (lunes 8:08), `rosanta-cierre-semanal` (domingos 18:03), `auditoria-meta-ads-rosanta-mensual` (día 25, 8:00), `rosanta-cerebro-mantenimiento` (día 1, 9:00).
+
+### 2. Artefactos de Finanzas: ya no existen como artefacto
+
+`rosanta-dre-mensual`, `rosanta-finanzas-semanal` y `rosanta-dashboard-semanal` **no están en el manifiesto**. Es la consecuencia de la decisión del 12-sep (v12 §1): **la intranet es la única superficie del pilar 3**. Quedan escritos como retirados para que nadie los busque ni los reconstruya. Tampoco está `patagonia-feb-2027` (sí `mapa-trekkings-chalten`). El último artefacto creado es del 2-sep (`rosanta-honorarios-reclasificacion`): **en dos semanas no se creó ninguno**, señal de que el trabajo migró a la intranet, no de que se haya parado.
+
+### 3. Números obsoletos marcados donde vivían
+
+El `−Q88,205 / −7.2%` de `references/negocio.md` estaba señalado como obsoleto en el SKILL.md desde la v16, pero **seguía escrito sin marcar en la referencia**, que es donde alguien lo iba a leer. Ya está tachado con el número vigente al lado (**Q1,288,737 de venta · COGS 34.7% · prime cost 55.0% · −Q44,650 / −3.5%**, espejo del 15-sep). Mismo tratamiento para el forecast de caja, que era el "primer entregable" del pilar y **está hecho** desde la @93 (pestaña Caja).
+
+### 4. Regla que deja esta pasada
+
+**El cerebro se verifica contra las herramientas, no contra sí mismo.** Tareas programadas y artefactos se leen con `list_scheduled_tasks` y `list_artifacts` antes de darlos por ciertos: las dos tablas se habían quedado en el 6-sep mientras el resto del cerebro iba por el 15-sep. Cuando una sesión retire una tarea o un artefacto, borrarlo de `ecosistema.md` en el mismo movimiento.
 
 ---
 
@@ -1011,18 +1024,18 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 - **Firma de marca: coordenada 14·91.** Forma oficial **14° N · 91° W**; corta **14·91 / #1491**. Igual en cada plato como sello, sin sufijos por platillo.
 - Stack: todo interno con Google (Apps Script, Sheets, Drive) + Claude. Sin n8n, Make ni plataformas externas. GHL y SonTickets cerrados.
 
-## Mapa de proyectos (estado al 14 sep 2026)
+## Mapa de proyectos (estado al 15 sep 2026)
 
 | Pilar / proyecto | Estado | Detalle |
 |---|---|---|
-| **Finanzas & Data OS** | ARRANCADO 2 sep. DRE v1 vivo, maestro nativo validado 8/8 meses. Falta: forecast de caja (N1), RAA, panel de integridad | `references/negocio.md`, `references/proyectos.md` §5 |
+| **Finanzas & Data OS** | ARRANCADO 2 sep. Maestro nativo validado 8/8 meses, cálculo nuevo (reglas 10–14), ~~forecast de caja~~ **HECHO** (pestaña Caja, @93). Falta: panel de integridad, registro de compra de mercado, documentar el cargador | `references/negocio.md`, `references/proyectos.md` §5 |
 | **Profit OS** | En funcionamiento (S35). Recetario v14 nativo, inventarios integrados. Merma y SPLH diferidos | `references/proyectos.md` §2 |
-| **Marketing OS** | En funcionamiento. Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
+| **Marketing OS** | En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 desde el 16 sep.** Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
 | **Back office / Operations Hub** | **11 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), 0 código en Drive, guardián vivo. Abierto: 1,0 GB en duplicados, 374 punteros, credenciales en texto plano | `references/ecosistema.md` |
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **v88 publicada (14 sep): recetario sin recarga, meta 28% sin IVA desde PARAMETROS y regla 9 de Finanzas. Batería 89 OK · 0 fallas · 2 avisos · 2 saltadas (93). Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **El equipo está en la @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas.** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
@@ -1055,5 +1068,6 @@ Antes de trabajar en cualquiera, lee la sección correspondiente de `references/
 - Cuando Juanma diga "actualiza el cerebro", "guarda esto en el cerebro" o al cerrar una sesión con avances importantes: regenerar partiendo de la **instalada**, subir versión y fecha, escribir encima, verificar leyendo desde la ruta instalada, y sincronizar la copia de `~/Dev/Rosanta/rosanta-cerebro/` más el `.skill` de respaldo en `tools/`.
 - Lo hace también la tarea programada **`rosanta-cerebro-mantenimiento`** (día 1 de cada mes, 9:00).
 - Integrar lo nuevo de la memoria automática y del tablero `rosanta-seguimiento-semanal`.
-- Marcar lo obsoleto como obsoleto en vez de borrarlo, para que Juanma vea qué cambió.
+- Marcar lo obsoleto como obsoleto en vez de borrarlo, para que Juanma vea qué cambió, **y marcarlo donde vive el dato** (la referencia), no solo en el SKILL.md.
+- **Verificar contra las herramientas, no contra el propio cerebro:** `list_scheduled_tasks` y `list_artifacts` antes de dar por ciertas las tablas de `ecosistema.md`. Si una sesión retira una tarea o un artefacto, borrarlo de la tabla en el mismo movimiento.
 - Si el cerebro contradice algo que Juanma dice hoy, **gana Juanma**; ofrecer actualizar el cerebro.

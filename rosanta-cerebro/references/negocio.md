@@ -1,4 +1,4 @@
-# El negocio Rosanta — datos maestros (act. 6 sep 2026)
+# El negocio Rosanta — datos maestros (act. 16 sep 2026)
 
 ## Fuente financiera vigente (LEER PRIMERO)
 
@@ -10,14 +10,27 @@
 - **Nómina: usar la planilla DEVENGADA**, no el banco. Sheets nativos: planilla `1dKTJ0KRKTyLyiQEZ2pCUh3i446Cy0S_yvmqp1ac_H_E` (el número es el "Sub total" de la columna "Salario base") y propinas `12wXn91gPp1vkwOsrLfD38wnifPFSz8lKwk2LvnASEEE`. Los .xlsx sueltos de Planilla_y_Propinas están obsoletos.
 - **Validación:** los ocho meses de 2026 están cuadrados **al centavo** contra los PDF originales (8/8 Banco Industrial, 8/8 BAC).
 
-## El DRE 2026 (construido 2–3 sep, ocho meses)
+## El DRE 2026
+
+**VIGENTE (espejo del 15-sep, cálculo nuevo con las reglas 10–14):**
 
 | Concepto | Monto | % de venta |
 |---|---|---|
-| Ventas | Q1,220,487 | 100% |
-| COGS | Q450,227 | 36.9% |
-| Gasto operativo | Q858,465 | 70.3% |
-| **Resultado** | **−Q88,205** | **−7.2%** |
+| Ventas | **Q1,288,737** | 100% |
+| COGS | — | **34.7%** |
+| Prime cost | — | **55.0%** |
+| **Resultado** | **−Q44,650** | **−3.5%** |
+
+Intranet y `generar_finanzas.py` dan lo mismo al centavo. Fugas Q0.
+
+~~**OBSOLETO** — la primera construcción del 2–3 sep, ocho meses con las reglas viejas (fechas sin corregir, facturas anuladas sumando, nómina con el 29000 fijo):~~
+
+| ~~Concepto~~ | ~~Monto~~ | ~~% de venta~~ |
+|---|---|---|
+| ~~Ventas~~ | ~~Q1,220,487~~ | ~~100%~~ |
+| ~~COGS~~ | ~~Q450,227~~ | ~~36.9%~~ |
+| ~~Gasto operativo~~ | ~~Q858,465~~ | ~~70.3%~~ |
+| ~~**Resultado**~~ | ~~**−Q88,205**~~ | ~~**−7.2%**~~ |
 
 - **Punto de equilibrio: Q90,612/mes** contra Q152,561 de venta real. **El problema no es vender, es la estructura de costo.**
 - **Prime cost: 56.9%** en el año (límite 60%). Enero–junio 49–59%; **julio 66.0% y agosto 67.5% se rompieron**.
@@ -43,7 +56,7 @@
 
 ### Alertas de caja y costo
 
-- **Saldo bancario al 31 ago: Q11,196.57** (BI Q11,165.90 + BAC Q30.67) contra ~Q163,000/mes de gasto. A doce meses el problema es la estructura; a treinta días es que **no hay colchón**. El forecast de caja pasa a ser el primer entregable.
+- **Saldo bancario al 31 ago: Q11,196.57** (BI Q11,165.90 + BAC Q30.67) contra ~Q163,000/mes de gasto. A doce meses el problema es la estructura; a treinta días es que **no hay colchón**. ~~El forecast de caja pasa a ser el primer entregable.~~ **HECHO:** es la pestaña Caja de la intranet (@93, 15-sep) — calendario día por día a 90 días, escenarios, fecha de cruce por cero y colchón de 7 días de gasto. Proyección del 15-sep: el escenario base **cruza cero el 26-oct**.
 - **El COGS semanal es ruido, no señal:** semana a semana va de 16.4% a 68.1% (desviación 13.9 puntos) porque la compra no cae en la semana en que se consume. Con **media móvil de 4 semanas** la desviación baja a 4.9 puntos y aparece la señal: food cost en 30–31% en junio/inicio de julio, **47.1% en la S35**.
 - **Brecha de 9 puntos entre CMV real y teórico:** 36.9% (base compra) contra 27.8% (base receta ponderada por mix). El umbral de Profit OS: 0–2 puntos es merma normal, 2–4 revisar porcionado, **más de 4 es fuga real**. Parte es movimiento de inventario, pero no se puede separar sin consolidar compras y contar inventario.
 - **Banda de IVA:** 60.8% de la compra entra con factura. Eso permitió fijar CMV de cocina en 28.0% y de barra en 23.5%.
@@ -97,7 +110,7 @@ Carpeta raíz: `1ndxLpZqr-j4wdlpJN4FQDgWohL-NTlY0` (Drive de restaurante@rosanta
 - **Vanessa** — pauta (Hook Rate, CPC, engagement). Sus pagos son honorarios, no comisiones bancarias.
 - **Daniel** — contenido (orgánico, fatiga de creativo).
 - **Jeffry** — cocina/operación; interlocutor para el registro de compras de mercado.
-- **Wilson** — talento frente a cámara para gastrococtelería. **NO es empleado** (colaborador externo).
+- ~~**Wilson** — talento frente a cámara para gastrococtelería (colaborador externo).~~ **OBSOLETO (Juanma, 16 sep 2026): Wilson ya no colabora con Rosanta y no se nombra en ninguna pieza, guion ni herramienta. Talento a cámara: Jeffry (cocina/parrilla) y Maco (barra).**
 - Otros en planilla: Jose, Nadia, Efraín, Maco, Fernanda, Marvin, Eddy.
 - **Usuarios y roles reales ya cargados en la intranet** (pestaña USUARIOS, 10 ago 2026). Roles: dueno / contador / chef / contenido.
 - SOPs: Drive › 02_OPERATIVO › 04_EMPLEADOS › Procedimientos (Manual_de_Servicio_Rosanta_v2 y Reducido, Manual de Procedimientos de Servicio Supervisores `1TQUM7BzavTqlC38Lu_QsN2XUj5s7F7LbbtlfEmSg1w4` y Empleados `1IuVFTclJnMF-KTAcOhktouqDzilzEEnD7E2LtvERd5g`, SOP Sala, Proceso de Sala, FAQ). También PLANILLAS, Propinas, IGSS.

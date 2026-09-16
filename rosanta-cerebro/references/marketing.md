@@ -12,6 +12,7 @@ Fuente principal: Doc "Plan_Campana_Rosanta_jun-dic2026" (`19qeBduU8QM-7MnMLzP7w
 - Creativos: branding en primeros 3 s, CTA en últimos 2–3 s, todo video subtitulado. Benchmarks: Hook Rate ≥40–45%, retención ≥10–15%, costo por engagement < Q0.05.
 - **Meta (Andromeda): las variantes de un mismo video se tratan como duplicado.** Diversificar = videos conceptualmente distintos sobre UN mismo concepto, jamás el mismo material con otro gancho.
 - Todo copy pasa por `rosanta-kaprica` (formato) + `rosanta-brand-guidelines` (identidad).
+- **Pauta (desde la @99, 16 sep 2026):** los anuncios de Meta nacen del **🎯 Creador de pauta** de la intranet (Marketing OS › ✍️ Creador de Contenido), con la **Lente Savannah Sanchez** y sin Kaprica: gancho literal de 3 s, guión UGC, texto principal, titular, descripción, botón, utm_content, qué medir a 7 días. Lo opera Vanessa. Talento a cámara: Jeffry y Maco (Wilson ya no colabora).
 
 ## Audiencias
 

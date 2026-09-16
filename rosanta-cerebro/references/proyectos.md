@@ -1,4 +1,4 @@
-# Proyectos de Rosanta — detalle (act. 6 sep 2026)
+# Proyectos de Rosanta — detalle (act. 16 sep 2026)
 
 Los proyectos se organizan en el **Rosanta OS de 6 pilares**: Marketing OS, Profit OS, Finanzas & Data OS, Back office/Operations Hub, Web Rosanta, Reservas/Ticketing (WIX). Drive está reorganizado igual.
 
@@ -89,7 +89,9 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.
 
-**Estado al 14 sep 2026: v88 publicada (verificado con `clasp list-deployments`). Batería 89 OK · 0 fallas · 2 avisos · 2 saltadas (93).**
+**Estado al 15 sep 2026: el equipo está en la @98 (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas y ninguna de Finanzas.** Recorrido: @93 pestaña Caja · @94 food cost sin servicio · @95 tarjeta real contra teórico · @96 y @97 tandas 4 y 5 · @98 categoría MARKETING_HONORARIOS. Detalle en SKILL.md v16 y v17.
+
+~~Estado al 14 sep 2026: v88 publicada. Batería 89 OK · 0 fallas · 2 avisos · 2 saltadas (93).~~
 
 - **v83–v85 (14-sep, otras sesiones):** ingredientes en todas las fichas, ventas del POS automáticas, pestaña Inventarios (fases 2 y 3).
 - **v86 (14-sep):** el recetario guarda sin recargar la página. Detalle y reglas en SKILL.md v15 §2 y `_informes/2026-09-14_Recetario_sin_recarga.md`.
@@ -201,10 +203,11 @@ Arrancó el 2 sep 2026. Es el pilar que faltaba montar. Todo el detalle de núme
 - Maestro migrado a Sheet nativo + cargador automático + patrón espejo para Python.
 - Ocho meses validados al centavo contra los PDF del banco.
 - DRE anual, los 5 números del P&L con semáforo, prime cost mensual con nómina devengada, gasto operativo contra rango, punto de equilibrio y simulador de escenarios.
-- Artefacto **`rosanta-dre-mensual`** = vista Finanzas v1. Absorbe los pendientes viejos de "vista Finanzas de la intranet" y "los 5 números del P&L".
+- ~~Artefacto **`rosanta-dre-mensual`** = vista Finanzas v1.~~ **RETIRADO (verificado 16-sep):** Finanzas vive en la intranet, que es la única superficie del pilar. No reconstruirlo como artefacto.
+- **Pestaña Caja** (@93): calendario de riesgo a 90 días con escenarios, cruce por cero y colchón de 7 días.
 
 **Pendientes por orden:**
-1. **Forecast de caja 30/60/90** — pasa a ser el primer entregable por el saldo de Q11,196 al 31 ago. Arranca de cero.
+1. ~~**Forecast de caja 30/60/90**~~ — **HECHO** en la @93 como pestaña Caja de la intranet (15-sep). Base: cruza cero el 26-oct sin cambios.
 2. Automatizar la generación del reporte interno mensual (hoy se arma a mano).
 3. Reclasificar la nómina de febrero (y meses 5 y 6) mal registrada como TRANSFERENCIA_SALIENTE en BAC.
 4. Diseñar con Jeffry un registro simple de compra de mercado (fecha, proveedor, producto, monto) cruzable contra el recetario.
