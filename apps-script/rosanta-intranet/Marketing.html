@@ -364,7 +364,7 @@ a{color:var(--verde)}
 
 <!-- ============ GUIONES Y CARRUSELES ============ -->
 <section id="tab-gen" class="tab">
-  <div class="pill-note">Cerebro creativo: <b>formato Kaprica</b> (micro-historias donde el cliente es el protagonista y Rosanta aparece dentro de la vida real) + reglas de voz de Rosanta. Todo borrador pasa por el <b>Checklist de Piezas</b> antes de entrar al calendario.</div>
+  <div class="pill-note">Cerebro creativo del contenido orgánico: <b>formato Kaprica</b> (micro-historias donde el cliente es el protagonista y Rosanta aparece dentro de la vida real) + reglas de voz de Rosanta. Todo borrador pasa por el <b>Checklist de Piezas</b> antes de entrar al calendario. Más abajo vive el <b>🎯 Creador de pauta</b>, que usa otro cerebro: la Lente Savannah Sanchez, para anuncios.</div>
   <div class="row">
     <div class="card">
       <h2>🎬 Guiones de video (Kaprica)</h2>
@@ -408,6 +408,47 @@ a{color:var(--verde)}
       </div>
       <button class="btn" onclick="genCarrusel()">Generar carrusel</button>
       <div id="caOut" style="margin-top:12px"></div>
+    </div>
+  </div>
+  <div style="height:18px"></div>
+  <!-- ============ CREADOR DE PAUTA · Lente Savannah Sanchez (16-sep-2026) ============
+       Cerebro creativo APARTE del Kaprica: anuncios tradicionales de paid social para
+       Meta Ads, pensados para Vanessa. KAPRICA no entra en su prompt a propósito; VOZ sí. -->
+  <div class="pill-note">🎯 <b>Creador de pauta</b> (Vanessa). Aquí manda la <b>Lente Savannah Sanchez</b>, creativo de paid social: el gancho de los primeros 3 segundos decide, video nativo estilo UGC, el creativo es el targeting, iterar sobre ganadores. Entrega anuncios listos para el administrador de anuncios de Meta: concepto, gancho literal, guión, texto principal, titular, descripción, botón y utm_content por creativo. Cada concepto es un video hermano distinto (regla Andromeda), jamás el mismo material con otro gancho. La voz de marca sigue mandando.</div>
+  <div class="row">
+    <div class="card">
+      <h2>🎯 Creador de pauta (Lente Savannah Sanchez)</h2>
+      <div class="fld"><label>Tema / plato / oferta / evento</label><input id="paTema" placeholder="Ej: Cena Romántica para Dos, Q900: pulpo, dos lomitos, postre y vino"></div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="fld"><label>Objetivo de campaña</label><select id="paObj">
+          <option>Awareness (alcance / VisitasIG)</option>
+          <option>Retargeting (carritos / antojo)</option>
+          <option>Conversión (reserva directa)</option>
+          <option>Evento (cupos limitados)</option>
+        </select></div>
+        <div class="fld"><label>Audiencia</label><select id="paAud">
+          <option>Turista angloparlante (inglés)</option>
+          <option>Foodie local (español)</option>
+          <option>Ambas (versión ES y EN)</option>
+        </select></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="fld"><label>Formato</label><select id="paFmt">
+          <option>Video UGC 9:16 (Reel)</option>
+          <option>Talking head (Wilson / Maco a cámara)</option>
+          <option>Foto estática 4:5</option>
+          <option>Carrusel de anuncio</option>
+        </select></div>
+        <div class="fld"><label>Conceptos distintos</label><select id="paN">
+          <option>1</option><option selected>2</option><option>3</option>
+        </select></div>
+      </div>
+      <div class="fld"><label>Ángulo o prueba a incluir (opcional)</label><input id="paExtra" placeholder="Ej: reseñas 4.9, jardín propio, a tres cuadras del arco, mesa frente al fuego"></div>
+      <button class="btn" onclick="genPauta()">Generar anuncios</button>
+    </div>
+    <div class="card">
+      <h2>Anuncios listos para Meta</h2>
+      <div id="paOut"><p class="muted">Aquí aparecen los conceptos con gancho, guión, texto principal, titular, descripción, botón, utm_content, qué medir a los 7 días y la siguiente iteración. Revisa el texto principal en el ✅ Checklist antes de subirlo al administrador de anuncios.</p></div>
     </div>
   </div>
   <div style="height:12px"></div>
@@ -477,6 +518,9 @@ a{color:var(--verde)}
     <p><b>3 · Ambiente y temporada.</b> Chimenea, lluvia, fogata, refugio. Se graba en banco y se publica cuando el clima acompaña: <b>lo dispara el clima real, jamás el calendario</b>.</p>
     <p><b>Estándar de cámara para los tres:</b> tomas lentas y transiciones suaves. Vertical 9:16, subtítulos siempre, branding en los primeros 3 segundos y CTA en los últimos 2-3.</p>
 
+    <h2 style="margin-top:14px">🎯 Creador de pauta (Lente Savannah Sanchez)</h2>
+    <p>Dentro de <b>✍️ Creador de Contenido</b>, debajo de los generadores Kaprica, vive el creador de anuncios para Meta Ads. Es un cerebro creativo aparte: el contenido orgánico nace de Kaprica (micro-historias); la pauta nace de la <b>Lente Savannah Sanchez</b>, la misma silla del Panel de Asesores, aplicada a producir: el gancho de los primeros 3 segundos decide, video nativo estilo UGC, el creativo es el targeting, iterar sobre ganadores. Se elige tema, objetivo de campaña, audiencia (turista en inglés, foodie en español o ambas), formato y cuántos conceptos. Cada concepto sale con gancho literal, guión con segundos, texto principal, titular, descripción, botón, utm_content, qué medir a los 7 días y la siguiente iteración; cierra con la nota de producción. Cada concepto es un video hermano distinto (regla Andromeda). El texto principal pasa por el ✅ Checklist antes de subirse al administrador de anuncios, y los borradores se guardan en la Biblioteca con 🎯.</p>
+
     <h2 style="margin-top:14px">🔄 Flujo mensual (el ciclo completo)</h2>
     <p><b>Paso 1 · Planear.</b> En <b>📅 Calendario</b>, navega al mes y presiona <b>🪄 Generar plan del mes</b>. El sistema propone una pieza para cada martes y viernes: mínimo la mitad videos, ejes rotados, cada una con título y gancho. Entran como estado <span class="chip off">Idea</span> (se ven atenuadas).</p>
     <p><b>Paso 2 · Desarrollar.</b> Abre cada pieza y presiona <b>✍️ Desarrollar</b>: te lleva al generador correcto (🎬 guión, 📝 post o 🎠 carrusel) con el tema pre-llenado. Genera, ajusta si hace falta, y presiona <b>📌 Guardar en la pieza</b>: el copy completo queda dentro de la pieza y pasa a <span class="chip off">Producción</span>.</p>
@@ -498,7 +542,7 @@ a{color:var(--verde)}
     <p>Para recuperar: el botón <b>💬 Mensaje</b> genera el WhatsApp según los días transcurridos (toque 1 en 24h, toque 2 a las 72h, toque 3 al día 7; máximo 3 toques). Copia, envía desde el WhatsApp del restaurante y actualiza el estado (Contactado → Recuperado/Perdido). Los KPIs calculan la tasa y los Q recuperados del mes. <b>Escribe únicamente a quien tenga permiso "Sí"</b>: es la regla de WhatsApp y protege el número del bot.</p>
 
     <h2 style="margin-top:14px">👥 Quién hace qué</h2>
-    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard y diagnóstico IA semanal, espía antes de cada campaña, ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
+    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard y diagnóstico IA semanal, espía antes de cada campaña, genera los anuncios en el 🎯 Creador de pauta (Lente Savannah Sanchez), ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
 
     <h2 style="margin-top:14px">✍️ Reglas de voz (resumen para todos)</h2>
     <p>Afirmativa siempre (sin la palabra "no") · segunda persona: tu mesa, tu experiencia · prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "cocina/coctelería de autor" y em dashes · conceptos centrales: cocina natural y gastronomía sostenible · emojis estratégicos · hashtags al final sin puntos separadores · personalización solo con el nombre de pila.</p>
@@ -1260,7 +1304,7 @@ function libCopy(id){const x=read('rosanta_lib',[]).find(y=>y.id===id);if(x){nav
 function renderLib(){
   const l=read('rosanta_lib',[]);
   $('genLib').innerHTML=l.length?l.map(x=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
-    '<summary style="cursor:pointer;font-weight:700">'+(x.tipo==='guion'?'🎬':(x.tipo==='post'?'📝':'🎠'))+' '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
+    '<summary style="cursor:pointer;font-weight:700">'+({guion:'🎬',post:'📝',carrusel:'🎠',pauta:'🎯'}[x.tipo]||'📄')+' '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
     '<div style="padding:10px;font-size:12.5px">'+md2html(x.texto)+'</div>'+
     '<button class="btn sec sm" onclick="libCopy(\''+x.id+'\')">Copiar</button> '+
     '<button class="btn danger" onclick="libDel(\''+x.id+'\')">✕</button></details>').join('')
@@ -1292,6 +1336,37 @@ async function genCarrusel(){
     window._lastCa=t;
     $('caOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div><div style="margin-top:8px"><button class="btn sm" onclick="libSave(\'carrusel\',$(\'caTema\').value.trim(),window._lastCa)">Guardar en biblioteca</button>'+piezaBtn('lastCa')+'</div>';
   }catch(e){$('caOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
+}
+/* ===== 🎯 Creador de pauta: Lente Savannah Sanchez (16-sep-2026) =====
+   Cerebro creativo aparte del Kaprica: pauta tradicional de paid social para
+   Meta Ads. Es la misma lente que debate en el Panel de Asesores
+   (thesocialsavannah.com), aplicada a producir anuncios en vez de a opinar.
+   KAPRICA no entra en este prompt a propósito; VOZ sí, la marca siempre manda.
+   Llega al servidor por askIA -> askClaudeSrv, igual que los otros generadores. */
+const SAVANNAH=`LENTE SAVANNAH SANCHEZ (creativo de pauta en paid social). Simulación de su marco publicado (thesocialsavannah.com), jamás citas de la persona real. Metodología:
+1. El gancho de los primeros 1-3 segundos decide el resultado. Cada anuncio abre con un hook LITERAL: qué se ve, qué dice el texto en pantalla y qué se escucha. Se mide con hook rate (vistas de 3 s ÷ impresiones, meta ≥40%) y hold rate (retención, meta ≥10%).
+2. Video nativo estilo orgánico/UGC vence a la producción pulida de anuncio: grabado con teléfono, vertical 9:16, subtítulos siempre, funciona en silencio, cara a cámara o voz en off sobre tomas reales del lugar. Parece contenido, jamás anuncio.
+3. El creativo es el targeting: cada pieza le habla a UNA audiencia con UN ángulo (deseo, problema, objeción, prueba social, curiosidad, oferta con urgencia real). Se segmenta con el mensaje.
+4. Estructura del anuncio: gancho → deseo o problema → prueba (ingredientes, reseñas, el lugar, las personas) → oferta clara → CTA directo. Sin rodeos: 15-30 segundos.
+5. Iterar sobre ganadores antes de apostar a conceptos nuevos; refrescar creativos cuando la frecuencia pasa de 3 (fatiga). Todo anuncio nace con su plan de iteración.
+6. Regla Andromeda de Meta (verificada jul-2026): los videos casi idénticos se agrupan como duplicados y se ahogan. Cada concepto es un VIDEO HERMANO conceptualmente distinto (otras tomas, otro ritmo, otro ángulo), jamás el mismo material con otro gancho.
+Campos del administrador de anuncios de Meta que entrega cada anuncio: texto principal (la primera línea, ≤125 caracteres, es lo único visible antes de "ver más"), titular (≤40 caracteres), descripción (≤30 caracteres), botón (Reservar / Más información / Enviar mensaje) y destino rosanta.rest/reservas con su utm_content.`;
+async function genPauta(){
+  const tema=$('paTema').value.trim();if(!tema){alert('Escribe el tema, plato, oferta o evento');return}
+  $('paOut').innerHTML='<div class="loading"><div class="spin"></div>Generando anuncios…</div>';
+  try{
+    const obj=$('paObj').value,aud=$('paAud').value,fmt=$('paFmt').value,n=+$('paN').value,extra=$('paExtra').value.trim();
+    const esVideo=/Video|Talking/.test(fmt);
+    const idioma=aud.startsWith('Turista')?'inglés natural (turista angloparlante que decide rápido durante el viaje y lee reseñas), sin traducción literal del español'
+      :aud.startsWith('Foodie')?'español (foodie local de Antigua y la capital: antojo, celebraciones, comunidad)'
+      :'español e inglés: cada texto que ve el cliente en las dos versiones, ES para el foodie local y EN para el turista';
+    const t=await askIA(SAVANNAH+'\n\n'+VOZ+`\n\nContexto: Rosanta, restaurante de gastrococtelería en Antigua Guatemala (cocina natural, gastronomía sostenible, jardín propio, parrilla abierta de leña de gravilea, chimenea). Reservas en rosanta.rest/reservas. Jamás delivery ni brunch. Prohibido "de autor", "signature", "Jardín Santa Rosa" y "leña de café". Presupuesto de pauta pequeño: cada anuncio se gana su lugar.\n\nEres la directora creativa de pauta de Rosanta y trabajas con la Lente Savannah Sanchez. Produce ${n} anuncio${n>1?'s':''} para Meta Ads (Instagram y Facebook)${n>1?', cada uno un concepto distinto (regla Andromeda)':''}.\n- Tema / oferta: ${tema}\n- Objetivo de campaña: ${obj}\n- Audiencia e idioma de los textos: ${idioma}\n- Formato: ${fmt}\n${extra?'- Ángulo o prueba a incluir: '+extra+'\n':''}\nEntrega en español (los textos que verá el cliente van en el idioma indicado), sin relleno, máximo ${n>1?'350':'450'} palabras por concepto, exactamente con estas secciones por concepto:\n**Concepto ${n>1?'N':'1'} · nombre corto** ángulo elegido y a quién le habla (1-2 líneas).\n**Gancho (0-3 s)** ${esVideo?'qué se ve + texto en pantalla literal + qué se dice':'imagen literal + texto sobre la imagen'}.\n**${esVideo?'Guión (15-30 s)':'Pieza'}** ${esVideo?'tomas numeradas con segundo, qué se ve y qué se dice o subtitula: gancho → deseo o problema → prueba → oferta → CTA. Estilo UGC con teléfono, subtítulos siempre, funciona en silencio':'descripción de la foto (o de cada tarjeta del carrusel) con el texto que lleva encima'}.\n**Texto principal** primera línea ≤125 caracteres que frena el scroll, 2-4 líneas más y CTA a reservar. Sin hashtags.\n**Titular** ≤40 caracteres.\n**Descripción** ≤30 caracteres.\n**Botón y destino** botón de Meta + rosanta.rest/reservas.\n**utm_content** minúsculas y guión bajo, sin tildes (ej: cena_romantica_ugc_pulpo).\n**Qué medir a los 7 días** contra hook rate ≥40%, retención ≥10%, CTR ≥1%, CPE <Q0.05, frecuencia <3: qué número decide escalar, mantener o apagar este concepto.\n**Siguiente iteración** si gana, los 2 ganchos hermanos que se prueban después (cada uno como video distinto).\nCierra con **Nota de producción** común a todos: quién graba (equipo con teléfono, Wilson o Maco a cámara, cliente real), luz, hora y zona segura 9:16.`);
+    window._lastPa=t;
+    $('paOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div>'+
+      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
+      '<button class="btn sm" onclick="libSave(\'pauta\',$(\'paTema\').value.trim(),window._lastPa)">Guardar en biblioteca</button>'+
+      '<button class="btn sec sm" onclick="navigator.clipboard.writeText(window._lastPa);alert(\'Copiado al portapapeles\')">Copiar todo</button></div>';
+  }catch(e){$('paOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
 }
 /* ================= ROAS / ROI ================= */
 /* REGLA DEL DENOMINADOR — no la cambies sin leer esto (02-sep-2026).
