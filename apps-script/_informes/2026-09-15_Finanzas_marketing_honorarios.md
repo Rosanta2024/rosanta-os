@@ -26,6 +26,20 @@ Pedido de Marketing OS para el CAC mensual (p10). **Publicado en la @98**; maest
 
 Esta vez se publicó **sin batería previa**: Juanma aplicó el lote en el maestro antes de correrla y pidió publicar. Dejarlo sin publicar habría descuadrado el bloque Marketing del DRE en Q8,032 mientras tanto. **La batería se corrió después, sobre la @98: 119 OK · 0 fallas · 0 avisos · 3 saltadas · 223.7 s**, con la prueba nueva en verde. La segunda revisión del maestro dio 0 filas y 6 ya estaban bien.
 
+## Abril: una hipótesis mía, retirada el mismo día
+
+Al revisar la tasa de captura del CRM, Marketing OS vio que abril capturó 8% de los tickets contra una banda normal de 17-21%, y propuso Semana Santa como causa: mucha gente sin reserva. **Aporté datos del POS que parecían confirmarlo y la conclusión era mía y estaba mal.**
+
+- **Lo que mostré, y es correcto:** Pascua cayó el 5-abr; del 1 al 5 de abril se concentra el 24% de los tickets del mes (9.2 por día contra 6.4 de promedio) y el ticket promedio baja — S13 hizo Q39,939 con 55 tickets y S14 Q29,702 con 51. Más gente, gastando menos por cuenta.
+- **Lo que NO se sigue de ahí:** que eso baje la captura. Marketing cruzó día por día tickets del POS contra reservas asistidas: **marzo 18%, la semana de Pascua 18%, el resto de abril 10%**. La caída empieza el 2 de abril y dura el mes; los días 2, 3 y 4 tienen 10, 16 y 9 tickets con cero reservas registradas.
+- **Cómo quedó:** abril vuelve a "no explicado". El CAC de abril y el de agosto se marcan como no legibles en vez de inventarles una causa.
+
+**Dos lecciones, las dos del mismo día:**
+1. **Afluencia no es captura.** Un dato correcto puede sostener una conclusión falsa si mide otra cosa.
+2. **Dos fuentes que salen de la misma plataforma no se contradicen.** El CRM y el export de reservas vienen los dos de SonTickets: que cuadren entre ellos no prueba que el dato exista. Es el mismo error que la "verificación" que baja cero archivos y da verde.
+
+**Nada de esto toca números de Finanzas:** se verificó en el código que ni la intranet ni `generar_finanzas.py` leen el CRM. Comensales y ticket promedio salen de `02_Ventas_Maestro`, columna 9, que es el POS. Queda como aviso por si alguna vez se cuentan clientes desde el CRM: hubo tres episodios de captura caída en 2026 —abril, julio y agosto— y ninguno se ve desde el POS.
+
 ## Pendiente
 
 1. **Juanma:** `generarEspejo()`. La revisión y la batería ya están hechas.
