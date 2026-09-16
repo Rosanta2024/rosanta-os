@@ -7,48 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 15 sep 2026, noche (v18).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
-
----
-
-## Cierre del 15 sep 2026, noche (v18): auditoría de la regla 9
-
-**Cómo reconoce la regla 9 a un proveedor.** El banco no trae NIT, así que el pago se reconoce por el
-TEXTO del movimiento, y por la categoría donde el texto no alcanza. El NIT sirve para cotejar contra la
-factura, no para encontrar el pago. Los siete, con NIT: EEGSA 326445 (BI y BAC, texto `EEGSA`), Claro
-9929290 (BI, `CLARO`), Doorways 96569239 (BI `DOORWAY`, BAC `TEF A : 902410067`), Posfile 107902699 (BI y
-tarjeta, `POSFILE`), EX Security 104313218 (BI, categoría SERVICIO DE MONITOREO Y ALARMA), Edwin Flores
-82651086 (BI, texto MARKETING/CONTENIDO más categoría SERVICIOS_PROFESIONALES) y Aseguradora La Ceiba
-5022193 (BI, texto SEGURO más categoría SEGUROS_Y_FIANZAS). Mismo listado en `FIN_PAGO_DE_FACTURA`
-(`FinanzasDatos.js`, regla 9) y `PAGO_DE_FACTURA` (`generar_finanzas.py`, allá es la regla 8).
-
-**Quién queda fuera y por qué.** Tigo, NIT 5498104, paga Q4,049.66 y factura Q1,623 en el año: 2.5 veces.
-Los comercios de tarjeta (PriceSmart, La Torre, gasolineras, Cemaco) quedan fuera porque ahí no toda
-compra trae factura y saltarlas borraría gasto real.
-
-**Lo que la regla no corrigió (p171, N3):** unos Q6,459 de mercadería de tarjeta, Q2,491 de pares de
-confianza media, Q10,970 de confianza baja y el caso de Tigo.
-
-**El hueco de la prueba (p170, N2).** La prueba nueva solo falla cuando un proveedor paga más de 1.3 veces
-lo que factura. Si el banco cambia el formato de la glosa, la regla deja de reconocer esos pagos, el doble
-conteo vuelve en silencio y ninguna prueba se queja. Falta que avise también cuando un proveedor de la
-lista desaparece de los pagos del año.
-
-**p173 (N3):** el README de `scripts/maestro-finanzas` sigue con la referencia del 12-sep (ventas
-Q1,261,109, neto -7.3%, 3 en POR_CLASIFICAR, fuga Q7,611). El cotejo A/B es la única comprobación
-independiente de los números de la intranet: su referencia tiene que ser la del día o no sirve.
-
-**p159 verificado y cerrado.** Las 24 facturas del NIT 345377 (Distribuidora de Licores) están en
-COCTELERIA por Q11,970.10, ninguna en ALIMENTOS, y `00_Proveedores` fila 161 dice COCTELERIA, familia
-LICOR.
-
-**Regla nueva, de un error de hoy: un pendiente se abre contra el espejo del día.** Abrí p172 por Q2,000
-en POR_CLASIFICAR leyendo el espejo del 14-sep 22:11; en el del 15-sep 17:33 ya no queda ninguno y la fuga
-del año es Q0.00. Se cerró el mismo día.
-
-**El tablero cambió de formato.** El bloque `#seguimiento-data` ahora va con `indent=2`. Escribirlo con
-`json.dumps(..., ensure_ascii=False, indent=2)` y comprobar que el archivo no cambió entre leer y
-escribir: hay varias sesiones tocándolo a la vez.
+**Última actualización: 15 sep 2026, tarde (v17).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
