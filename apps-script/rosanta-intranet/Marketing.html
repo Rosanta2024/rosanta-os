@@ -530,7 +530,7 @@ a{color:var(--verde)}
     <p><b>Paso 4 · Producir y publicar.</b> Presiona <b>📄 Brief de producción (PDF)</b> en el Calendario: genera el documento del mes con las instrucciones obligatorias y todas las piezas con su copy, listo para el equipo de producción. Al publicar cada pieza, cámbiala a <span class="chip on">Publicado</span>.</p>
 
     <h2 style="margin-top:14px">📊 Dashboard de Pauta (uso semanal)</h2>
-    <p>Data en vivo de Meta Ads (cuenta rosanta.rest). Elige el rango, presiona Actualizar y revisa contra los benchmarks propios: <b>Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &gt;3 = fatiga</b>. El botón <b>🧠 Diagnóstico IA</b> entrega veredicto por campaña (escalar/mantener/ajustar/apagar) y 3 acciones con presupuesto sugerido. El panel inferior arma la serie semanal Google + Meta leyendo los reportes que se suben a Drive cada lunes.</p>
+    <p>Data en vivo de Meta Ads (cuenta rosanta.rest). Elige el rango, presiona Actualizar y revisa contra los benchmarks propios: <b>Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &gt;3 = fatiga</b>. El botón <b>🧠 Diagnóstico IA</b> (junto a Actualizar) razona con la <b>Lente Jon Loomer</b> del Panel de Asesores (estructura simple, fase de aprendizaje, creativo como targeting, frecuencia como fatiga) y cierra con el <b>veredicto del AI CMO</b>: por campaña escalar/mantener/ajustar/apagar con el número que lo decide, lo que hay que verificar en plataforma, y 3 acciones de la semana con presupuesto en Q. El resultado se pinta arriba de los KPIs. El panel inferior arma la serie semanal Google + Meta leyendo los reportes que se suben a Drive cada lunes.</p>
     <p><b>Regla de creativos (verificada julio 2026):</b> el sistema de entrega de Meta agrupa como duplicados los videos casi idénticos y ahoga todos menos uno. Por eso <b>jamás se prueba el mismo video con distintos ganchos</b>: para comparar ángulos se producen videos conceptualmente distintos (otras tomas, otro ritmo) sobre un mismo concepto, cada uno con su utm_content.</p>
 
     <h2 style="margin-top:14px">🕵️ Espía (antes de cada campaña)</h2>
@@ -1500,23 +1500,44 @@ function renderUtmHist(){
     '<td><button class="btn sec sm" onclick="utmCopy(\''+x.id+'\')">Copiar</button></td></tr>').join('')+'</tbody></table></div>'
   :'<p class="muted">Sin UTMs generadas aún. Arma la primera arriba.</p>';
 }
-/* ================= DIAGNÓSTICO IA (analista de pauta) ================= */
+/* ================= DIAGNÓSTICO IA (Lente Loomer + AI CMO) =================
+   Antes era un prompt genérico "analista de pauta" contra los benchmarks.
+   Desde el 16-sep-2026 (Juanma) razona con la LENTE JON LOOMER (la silla de
+   media buying del Panel de Asesores, misma metodología escrita allá) y cierra
+   con el veredicto del AI CMO contra el North Star. Simulación del marco
+   publicado del experto, jamás citas de la persona real. */
+const LOOMER=`📊 LENTE JON LOOMER (media buying en Meta; simulación de su marco publicado en jonloomer.com, jamás citas de la persona real). Metodología:
+- Simplicidad de estructura: pocas campañas con presupuesto consolidado; fragmentar presupuestos pequeños mata el aprendizaje del algoritmo.
+- Respetar la fase de aprendizaje: cambios significativos (presupuesto, audiencia, creativo) la reinician; medir en ventanas, sin reaccionar al día a día. Subir presupuesto de a 20% como máximo.
+- Segmentación amplia + creativo como targeting antes que hipersegmentar; el sistema optimiza mejor con señal suficiente.
+- Métricas de negocio (costo por resultado real) sobre métricas de vanidad (CPM, likes); vigilar frecuencia como señal de fatiga.
+- Retargeting: secuencias con ventanas y exclusiones correctas para evitar pagar dos veces por la misma persona.
+- Diversificación creativa real (regla Andromeda, verificada jul-2026): Meta agrupa creativos casi idénticos como duplicados y los ahoga; variar = conceptos de video distintos, jamás el mismo material con otro gancho.`;
 async function diagIA(){
   const rows=window._metaRows;
   if(!rows||!rows.length){alert('Primero carga la data de Meta (Actualizar)');return}
-  $('diagOut').innerHTML='<div class="loading"><div class="spin"></div>Analizando campañas…</div>';
+  $('diagOut').innerHTML='<div class="loading"><div class="spin"></div>Lente Loomer analizando campañas…</div>';
   try{
-    const data=rows.map(x=>`${x.name} [${x.status}] obj:${x.objective} gasto:Q${x.spend} impr:${x.imp} clics:${x.clicks} ctr:${x.ctr}% cpc:Q${x.cpc} cpm:Q${x.cpm} freq:${x.freq}`).join('\n');
-    const t=await askIA(`Eres el analista de pauta de Rosanta (restaurante en Antigua Guatemala, moneda GTQ). Fase actual: awareness; el objetivo de conversión inicia en el mes 4.
-Benchmarks propios: Hook Rate mín 40%, Retención mín 10%, CPE bajo Q0.05, CTR sano ≥1%, frecuencia >3 = fatiga. Insight validado: campañas de VisitasIG superan a transaccionales por 20-100x.
-Campañas (último periodo):
+    const data=rows.map(x=>`${x.name} [${x.status}] obj:${x.objective} gasto:Q${x.spend} impr:${x.imp} alcance:${x.reach} clics:${x.clicks} ctr:${x.ctr}% cpc:Q${x.cpc} cpm:Q${x.cpm} freq:${x.freq}`).join('\n');
+    const rango=$('rango').options[$('rango').selectedIndex].text;
+    const t=await askIA(LOOMER+`
+
+Contexto: Rosanta, restaurante de gastrococtelería en Antigua Guatemala, moneda GTQ, jamás delivery. Cuenta de Meta rosanta.rest. Presupuesto base US$440/mes (awareness ~US$8/día + evento del mes + eventos permanentes), estructura estable para no frenar el algoritmo. Fase actual: awareness; la conversión se enciende en el mes 4. North Star: reservas atribuidas por mes.
+Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia >3 = fatiga. Insight validado: las campañas de VisitasIG rinden 20-100x las transaccionales.
+Campañas con gasto (${rango}):
 ${data}
 
-Entrega en español, máximo 15 líneas:
-**Resumen** (2 líneas)
-**Por campaña**: nombre → escalar / mantener / ajustar creativo / apagar + porqué en una línea.
-**3 acciones para esta semana** con presupuesto sugerido en Q.`);
-    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-bottom:12px">'+md2html(t)+'</div>';
+Eres la Lente Jon Loomer diagnosticando esta cuenta, y al final el AI CMO de Rosanta cierra. Nombra la metodología que aplicas en cada juicio (ej: "fase de aprendizaje", "presupuesto consolidado", "frecuencia como fatiga"). Los datos de arriba no traen hook rate ni retención: si un juicio los necesita, dilo en vez de inventarlos.
+REGLA DE HUMILDAD TEMPORAL: toda afirmación que dependa de la mecánica ACTUAL de Meta (entrega, aprendizaje, formatos, umbrales) se marca "⚠️ verificar en plataforma".
+
+Entrega en español, máximo 22 líneas, exactamente con estas secciones:
+**📊 Lectura Lente Loomer** 3-4 líneas: estructura de la cuenta, dónde se fragmenta o se desperdicia señal, qué está en aprendizaje.
+**Por campaña** nombre corto → escalar / mantener / ajustar creativo / apagar, con el número que lo decide y el principio aplicado, una línea cada una.
+**⚠️ Verificar en plataforma** las afirmaciones marcadas, con quién la valida (Vanessa en Meta). Si no hubo, "Sin dependencias de mecánica actual".
+**🎯 Veredicto AI CMO** 3 acciones para esta semana con presupuesto en Q y a quién le tocan, alineadas al North Star, y qué medir en 7 días para saber si funcionó.`);
+    window._lastDiag=t;
+    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-bottom:12px">'+md2html(t)+
+      '<div style="margin-top:8px"><button class="btn sec sm" onclick="navigator.clipboard.writeText(window._lastDiag);alert(\'Copiado al portapapeles\')">Copiar diagnóstico</button></div></div>';
   }catch(e){$('diagOut').innerHTML='<p class="muted">Error: '+e.message+'</p>'}
 }
 /* ================= ESPÍA (Ad Library) ================= */
