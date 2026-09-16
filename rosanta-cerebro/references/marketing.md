@@ -13,7 +13,7 @@ Fuente principal: Doc "Plan_Campana_Rosanta_jun-dic2026" (`19qeBduU8QM-7MnMLzP7w
 - **Meta (Andromeda): las variantes de un mismo video se tratan como duplicado.** Diversificar = videos conceptualmente distintos sobre UN mismo concepto, jamás el mismo material con otro gancho.
 - Todo copy pasa por `rosanta-kaprica` (formato) + `rosanta-brand-guidelines` (identidad).
 - **Pauta (desde la @99, 16 sep 2026):** los anuncios de Meta nacen del **🎯 Creador de pauta** de la intranet (Marketing OS › ✍️ Creador de Contenido), con la **Lente Savannah Sanchez** y sin Kaprica: gancho literal de 3 s, guión UGC, texto principal, titular, descripción, botón, utm_content, qué medir a 7 días. Lo opera Vanessa. Talento a cámara: Jeffry y Maco (Wilson ya no colabora).
-- **Diagnóstico de pauta (desde la @100, 16 sep 2026):** el botón 🧠 Diagnóstico IA del Dashboard (junto a Actualizar, resultado arriba de los KPIs) razona con la **Lente Jon Loomer** y cierra con el **veredicto del AI CMO**; marca "⚠️ verificar en plataforma" lo que dependa de mecánica actual de Meta. Sigue sin memoria: cada diagnóstico se pierde al recargar (pendiente guardarlo en la Sheet).
+- **Diagnóstico de pauta (desde la @100, 16 sep 2026):** el botón 🧠 Diagnóstico IA del Dashboard (junto a Actualizar, resultado arriba de los KPIs) razona con la **Lente Jon Loomer** y cierra con el **veredicto del AI CMO**; marca "⚠️ verificar en plataforma" lo que dependa de mecánica actual de Meta. Sigue sin memoria: cada diagnóstico se pierde al recargar (pendiente guardarlo en la Sheet). La tarea de los lunes `rosanta-analista-pauta-lunes` **se retiró el 16-sep** a favor de este botón; el hallazgo semanal en `aprendizajes` ya no se escribe solo.
 
 ## Audiencias
 

@@ -7,7 +7,19 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 16 sep 2026, noche (v20).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 16 sep 2026, noche (v21).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 16 sep 2026, noche (v21): se retira la tarea `rosanta-analista-pauta-lunes`
+
+**Juanma la borró desde la app de Cowork (Routines) el 16-sep-2026.** No era un artefacto: era la tarea de los lunes 8:08 que corría el analista de pauta contra Meta y le mandaba acciones a Vanessa. Se retira porque **el mismo análisis vive ahora en la intranet**: botón 🧠 Diagnóstico IA del Dashboard de Pauta, con Lente Loomer + AI CMO desde la @100. Una sola superficie, como en Finanzas.
+
+**Lo que se pierde con ella, y queda como pendiente:** la tarea cerraba el círculo de aprendizaje escribiendo el hallazgo #1 de la semana en la pestaña `aprendizajes` de la Sheet Marketing OS. Desde hoy nadie escribe ese hallazgo solo. Es la misma "memoria del diagnóstico" de la v20 §3: cuando se construya, el botón de la intranet tiene que guardar el diagnóstico y su hallazgo en la Sheet.
+
+Siguen vivas: `morning-brief-juanma`, `rosanta-reporte-semanal`, `rosanta-cierre-semanal`, `rosanta-reporte-mensual`, `auditoria-meta-ads-rosanta-mensual` (la auditoría mensual de Meta **sí** se queda: es otra cosa, mira la cuenta entera cada día 25), `rosanta-cerebro-mantenimiento`. La carpeta `~/Claude/Scheduled/rosanta-analista-pauta-lunes/` puede seguir en disco: es caché de la app y no significa que la tarea exista.
+
+Artefactos de Cowork que quedan como candidatos a borrar (no se tocaron): `sistema-marketing-rosanta` (Marketing OS de julio, pre-intranet) y `rosanta-sistema-consolidado` (foto del 5-ago). Se borran desde la app; el cerebro se actualiza cuando pase.
 
 ---
 
@@ -29,7 +41,7 @@ Hallazgo de Juanma: las recomendaciones **no salían de ninguna lente**. Era un 
 
 ### 3. Pendiente que dejó el día (idea aprobada en principio, no construida)
 
-**Memoria del diagnóstico.** Hoy se genera y se pierde; el del lunes (`rosanta-analista-pauta-lunes`) vive en un chat. Propuesta: guardar cada diagnóstico en una pestaña de la Sheet Marketing OS (fecha, veredicto por campaña, acciones) y mostrar en el Dashboard el último con historial, para cerrar el loop de si la acción de la semana pasada se ejecutó. **No** convertir el análisis en artefacto aparte: sería una tercera superficie del mismo criterio.
+**Memoria del diagnóstico.** Hoy se genera y se pierde; el del lunes (`rosanta-analista-pauta-lunes`, **retirada el mismo día, ver v21**) vivía en un chat. Propuesta: guardar cada diagnóstico en una pestaña de la Sheet Marketing OS (fecha, veredicto por campaña, acciones) y mostrar en el Dashboard el último con historial, para cerrar el loop de si la acción de la semana pasada se ejecutó. **No** convertir el análisis en artefacto aparte: sería una tercera superficie del mismo criterio.
 
 ---
 
@@ -71,7 +83,7 @@ Pasada mensual de `rosanta-cerebro-mantenimiento`. **No hubo jornada de trabajo 
 | `rosanta-dashboard-refresh` lunes 11:04 | **Ya no existe.** Coherente con que la intranet sea la única superficie del pilar 3 |
 | — | **`rosanta-reporte-mensual`, día 3 a las 9:00**, existía y no estaba escrita: verifica que el mes anterior esté completo en el maestro y avisa qué falta. No calcula ni toca artefactos |
 
-Sin cambio: `morning-brief-juanma` (L–V 6:02), `rosanta-analista-pauta-lunes` (lunes 8:08), `rosanta-cierre-semanal` (domingos 18:03), `auditoria-meta-ads-rosanta-mensual` (día 25, 8:00), `rosanta-cerebro-mantenimiento` (día 1, 9:00).
+Sin cambio: `morning-brief-juanma` (L–V 6:02), ~~`rosanta-analista-pauta-lunes` (lunes 8:08)~~ (**retirada la noche del 16-sep, v21**), `rosanta-cierre-semanal` (domingos 18:03), `auditoria-meta-ads-rosanta-mensual` (día 25, 8:00), `rosanta-cerebro-mantenimiento` (día 1, 9:00).
 
 ### 2. Artefactos de Finanzas: ya no existen como artefacto
 
