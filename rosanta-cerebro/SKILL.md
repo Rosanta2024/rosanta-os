@@ -7,7 +7,29 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 16 sep 2026, tarde (v19).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 16 sep 2026, noche (v20).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 16 sep 2026, noche (v20): Diagnóstico IA con Lente Loomer, @100
+
+**El equipo está en la @100** (verificado con `clasp list-deployments`). Dos cambios de vista en `Marketing.html`, pestaña Dashboard de Pauta, ninguno con funciones nuevas de servidor. Commits `d33890f` y `23e38ab`. **La batería no se volvió a correr para la @100** (decisión de Juanma con el aviso dado): la referencia sigue siendo la corrida de la @99, 118 OK · 0 fallas · 1 aviso · 3 saltadas.
+
+### 1. El botón 🧠 Diagnóstico IA se subió al lado de "Actualizar"
+
+Vivía al pie de la tarjeta "Campañas Meta", después de los dos gráficos, y Juanma lo dio por inexistente. Ahora está en la barra superior y su resultado se pinta **arriba de los benchmarks y los KPIs**. Regla: **una herramienta que hay que scrollear tres pantallas para encontrar es una herramienta que no existe.**
+
+### 2. El diagnóstico razona con la Lente Jon Loomer y cierra con el AI CMO
+
+Hallazgo de Juanma: las recomendaciones **no salían de ninguna lente**. Era un prompt genérico "analista de pauta" con los benchmarks de la casa, desconectado del Panel de Asesores. Desde la @100:
+- Constante `LOOMER` en `Marketing.html`, copia de la metodología de la silla del Panel (estructura simple, fase de aprendizaje, creativo como targeting, frecuencia como fatiga, retargeting con exclusiones, regla Andromeda). Nombra el principio en cada juicio.
+- Cierre **🎯 Veredicto AI CMO**: 3 acciones de la semana con presupuesto en Q y responsable, contra el North Star de reservas atribuidas, y qué medir en 7 días.
+- **Regla de humildad temporal** aplicada: lo que dependa de mecánica actual de Meta sale con "⚠️ verificar en plataforma" y Vanessa lo valida. La tabla de campañas no trae hook rate ni retención: el prompt le exige decirlo, no inventarlos.
+- Recibe alcance por campaña y el rango elegido; botón "Copiar diagnóstico" para pasárselo a Vanessa.
+
+### 3. Pendiente que dejó el día (idea aprobada en principio, no construida)
+
+**Memoria del diagnóstico.** Hoy se genera y se pierde; el del lunes (`rosanta-analista-pauta-lunes`) vive en un chat. Propuesta: guardar cada diagnóstico en una pestaña de la Sheet Marketing OS (fecha, veredicto por campaña, acciones) y mostrar en el Dashboard el último con historial, para cerrar el loop de si la acción de la semana pasada se ejecutó. **No** convertir el análisis en artefacto aparte: sería una tercera superficie del mismo criterio.
 
 ---
 
@@ -1030,12 +1052,12 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 |---|---|---|
 | **Finanzas & Data OS** | ARRANCADO 2 sep. Maestro nativo validado 8/8 meses, cálculo nuevo (reglas 10–14), ~~forecast de caja~~ **HECHO** (pestaña Caja, @93). Falta: panel de integridad, registro de compra de mercado, documentar el cargador | `references/negocio.md`, `references/proyectos.md` §5 |
 | **Profit OS** | En funcionamiento (S35). Recetario v14 nativo, inventarios integrados. Merma y SPLH diferidos | `references/proyectos.md` §2 |
-| **Marketing OS** | En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 desde el 16 sep.** Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
+| **Marketing OS** | En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 y Diagnóstico IA con Lente Loomer + AI CMO en la @100, ambos del 16 sep.** Pendiente: memoria del diagnóstico en la Sheet (v20 §3). Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
 | **Back office / Operations Hub** | **11 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), 0 código en Drive, guardián vivo. Abierto: 1,0 GB en duplicados, 374 punteros, credenciales en texto plano | `references/ecosistema.md` |
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **El equipo está en la @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas.** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **El equipo está en la @100 (16 sep, noche): Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
