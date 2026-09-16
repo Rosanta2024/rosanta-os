@@ -141,8 +141,12 @@ a{color:var(--verde)}
       <option value="last_90d">Últimos 90 días</option>
     </select>
     <button class="btn sm" onclick="loadMeta()">Actualizar</button>
+    <button class="btn sm sec" onclick="diagIA()">🧠 Diagnóstico IA</button>
     <span class="muted" id="metaStatus"></span>
   </div>
+  <!-- El diagnostico se pinta aqui arriba, antes de los KPIs (Juanma, 16-sep-2026):
+       antes vivia al pie, en la tarjeta de campañas, y nadie lo encontraba. -->
+  <div id="diagOut"></div>
   <div class="bench">
     <span>Hook Rate mín <b>40%</b></span>
     <span>Retención mín <b>10%</b></span>
@@ -183,10 +187,8 @@ a{color:var(--verde)}
   <div class="card">
     <div class="toolbar">
       <h2 style="margin:0;flex:1">Campañas Meta · rosanta.rest</h2>
-      <button class="btn sm" onclick="diagIA()">🧠 Diagnóstico IA</button>
     </div>
     <div id="metaTable" class="loading"><div class="spin"></div>Cargando data de Meta Ads…</div>
-    <div id="diagOut"></div>
   </div>
 </section>
 
@@ -1514,7 +1516,7 @@ Entrega en español, máximo 15 líneas:
 **Resumen** (2 líneas)
 **Por campaña**: nombre → escalar / mantener / ajustar creativo / apagar + porqué en una línea.
 **3 acciones para esta semana** con presupuesto sugerido en Q.`);
-    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-top:10px">'+md2html(t)+'</div>';
+    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-bottom:12px">'+md2html(t)+'</div>';
   }catch(e){$('diagOut').innerHTML='<p class="muted">Error: '+e.message+'</p>'}
 }
 /* ================= ESPÍA (Ad Library) ================= */
