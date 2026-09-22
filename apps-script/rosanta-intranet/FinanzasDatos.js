@@ -117,6 +117,70 @@ var FIN_PAGO_DE_FACTURA = [
     texto: /SEGURO/, cats: ['SEGUROS_Y_FIANZAS'] }
 ];
 
+// Regla 15 (21-sep-2026, Juanma): LA FACTURA MANDA. "Se le da prioridad a las facturas;
+// si no existe factura, se usan los bancos." Un pago de banco o tarjeta que tiene su
+// factura FEL no suma: es el pago de esa factura. Las reglas 8 y 9 lo resolvian por
+// categoria y por lista de proveedores, y cada proveedor nuevo se contaba dos veces
+// hasta que alguien lo veia (medido el 21-sep: 54 pagos, Q13,950 del año).
+// Se casa cada pago con UNA factura: mismo bloque del DRE, mismo monto y factura
+// emitida entre 45 dias antes y 10 dias despues del pago. Solo en los bloques donde
+// el gasto viene con factura de proveedor: nomina, propinas, impuestos, comisiones e
+// inmueble quedan fuera a proposito. Mismo algoritmo en generar_finanzas.py (casar_pagos).
+var FIN_FACTURA_MANDA_BLOQUES = ['Tarifas y servicios', 'Prestadores y honorarios', 'Marketing',
+                                 'Mantencion', 'Bienes de uso', 'Uniformes'];
+var FIN_FM_DIAS_ANTES = 45, FIN_FM_DIAS_DESPUES = 10;   // la factura, respecto del pago
+
+/**
+ * facturas y pagos: [{ dia (numero de dia), q, bloque, llave, orden }]. Devuelve
+ * { llave del pago: llave de la factura }. Los pagos se recorren por fecha; gana la
+ * factura mas cercana en dias y, a igual distancia, la primera de la hoja. Una factura
+ * casa con un solo pago. Funcion pura: la bateria la prueba con datos de juguete.
+ */
+function _finCasarPagos_(facturas, pagos) {
+  var usadas = {}, casados = {};
+  var enOrden = pagos.slice().sort(function (a, b) { return a.dia - b.dia || a.orden - b.orden; });
+  enOrden.forEach(function (p) {
+    var mejor = null, dist = null;
+    for (var i = 0; i < facturas.length; i++) {
+      var f = facturas[i];
+      if (usadas[f.llave] || f.bloque !== p.bloque) continue;
+      if (Math.abs(f.q - p.q) > 0.011) continue;
+      var dd = p.dia - f.dia;
+      if (dd < -FIN_FM_DIAS_DESPUES || dd > FIN_FM_DIAS_ANTES) continue;
+      if (dist === null || Math.abs(dd) < dist) { mejor = f; dist = Math.abs(dd); }
+    }
+    if (mejor) { usadas[mejor.llave] = true; casados[p.llave] = mejor.llave; }
+  });
+  return casados;
+}
+
+/** Los pagos del año que tienen factura: { 'hoja|fila': llave de la factura }. */
+function _finPagosConFactura_(hojas, anio, usd) {
+  var facturas = [], pagos = [];
+  FIN_LIBROS.forEach(function (L, i) {
+    var filas = hojas[L.hoja];
+    for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
+      var f = _finDia_(filas[r][0]);
+      if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
+      if (L.estado && String(filas[r][L.estado - 1] || '').trim() === 'Anulado') continue;
+      if (String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed') continue;
+      var cat = String(filas[r][L.cat - 1] || '').trim();
+      var d = FIN_MAP[cat];
+      if (!d || !_finEn_(FIN_FACTURA_MANDA_BLOQUES, d[0])) continue;
+      var q = _finNum_(filas[r][L.monto - 1]);
+      if (L.usd) q += _finNum_(filas[r][L.usd - 1]) * usd;
+      q = Math.round(q * 100) / 100;
+      if (q <= 0) continue;
+      var fila = { dia: Math.round(Date.UTC(f.getFullYear(), f.getMonth(), f.getDate()) / 86400000),
+                   q: q, bloque: d[0], llave: L.hoja + '|' + r, orden: i * 1000000 + r };
+      if (L.hoja === '01_FEL_Maestro') facturas.push(fila);
+      else if (!_finEn_(FIN_SOLO_FEL, cat) &&
+               !(L.desc && _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat))) pagos.push(fila);
+    }
+  });
+  return _finCasarPagos_(facturas, pagos);
+}
+
 /** El proveedor si la fila es el pago de una factura FEL; si no, ''. */
 function _finPagoDeFactura_(hoja, texto, cat) {
   var t = String(texto || '').toUpperCase().replace(/\s+/g, ' ');
@@ -244,7 +308,7 @@ function _finMetaFood_() { return metasFoodCost_().global; }
  * numero viejo, y eso tiene que verse.
  */
 function _finPlanilla_() {
-  var out = { valores: {}, origen: {}, error: '' };
+  var out = { valores: {}, origen: {}, detalle: {}, error: '' };
   var ss = null;
   try {
     ss = SpreadsheetApp.openById(FIN_PLANILLA_ID);
@@ -258,7 +322,19 @@ function _finPlanilla_() {
       var mes = _finMesDePestana_(hojas[h].getName(), anio);
       if (!mes || out.valores[mes]) continue;
       var v = _finSubTotalSalario_(hojas[h]);
-      if (v) { out.valores[mes] = v; out.origen[mes] = 'sheet'; }
+      if (v) {
+        out.valores[mes] = v;
+        out.origen[mes] = 'sheet';
+        var det = _finPlanillaDetalle_(hojas[h]);
+        if (det) {
+          // Si la suma de las filas no cuadra con el Sub total de la hoja, el
+          // reparto es de una base distinta del total que usa el DRE. Se marca
+          // en vez de taparlo: la pantalla lo dice.
+          det.subtotal = v;
+          det.cuadra = Math.abs(det.suma - v) < 1;
+          out.detalle[mes] = det;
+        }
+      }
     }
   }
   Object.keys(FIN_PLANILLA_RESPALDO).map(Number).forEach(function (m) {
@@ -292,6 +368,90 @@ function _finMesDePestana_(nombre, anio) {
     if (n.indexOf(_finSinAcentos_(FIN_MESES[i - 1]).toLowerCase()) === 0) return i;
   }
   return 0;
+}
+
+/**
+ * Planilla de una pestana partida en FIJA y EXTRA.
+ *
+ * La hoja de planilla tiene una columna "Puesto" donde el personal variable ya
+ * viene marcado como "Extra" —lo escribe Juanma al armar cada mes—, pero hasta
+ * el 22-sep-2026 nadie la leia: el motor tomaba solo el "Sub total" de "Salario
+ * base" y devolvia UN numero por mes. Sin ese corte no habia forma de mirar
+ * cuanto del personal se mueve con la venta y cuanto no.
+ *
+ * NO reemplaza a _finSubTotalSalario_: ese sigue siendo el total que alimenta
+ * el DRE y el prime cost, y no se toca. Este devuelve el reparto ademas, con
+ * la suma de las filas al lado para que una hoja donde el Sub total no cuadre
+ * con sus filas se vea en vez de pasar desapercibida.
+ *
+ * Devuelve null si la pestana no tiene las dos columnas: sin "Puesto" no se
+ * puede repartir, y repartir a ojo seria inventar.
+ */
+function _finPlanillaDetalle_(hoja) {
+  var filas;
+  try { filas = hoja.getDataRange().getValues(); } catch (e) { return null; }
+  var cPuesto = -1, cBase = -1, rCab = -1, cDev = -1, cBono = -1, cHoras = -1;
+  for (var r = 0; r < filas.length && rCab < 0; r++) {
+    var p = -1, b = -1, dv = -1, bo = -1, ho = -1;
+    for (var c = 0; c < filas[r].length; c++) {
+      var t = _finSinAcentos_(String(filas[r][c] || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+      if (t === 'puesto') p = c;
+      if (t === 'salario base') b = c;
+      if (t === 'salario devengado') dv = c;
+      if (t === 'bono dto') bo = c;
+      if (t === 'horas extras') ho = c;
+    }
+    if (p >= 0 && b >= 0) { cPuesto = p; cBase = b; cDev = dv; cBono = bo; cHoras = ho; rCab = r; }
+  }
+  if (rCab < 0) return null;
+
+  /* Cuanto se le pago a una fila.
+     Hasta el 22-sep-2026 esto era solo "Salario base", y por eso los Q3,000 del
+     finiquito de Marvin —que estan en "Horas extras" con el base VACIO— no los
+     veia nadie: ni el DRE, ni el prime cost, ni esta pantalla.
+     "Salario devengado" entra SOLO si el base esta vacio: en enero los cuatro
+     que lo tienen lleno repiten ahi su propio base, y sumarlo seria contar
+     Q18,000 dos veces. Verificado fila por fila.
+     La propina NO entra: es del cliente y va a su propio bloque del DRE. */
+  function _pago(fila) {
+    var base = _finNum_(fila[cBase]);
+    if (!base && cDev >= 0) base = _finNum_(fila[cDev]);
+    var extra = 0;
+    if (cBono >= 0) extra += _finNum_(fila[cBono]);
+    if (cHoras >= 0) extra += _finNum_(fila[cHoras]);
+    return (base || 0) + extra;
+  }
+
+  var fija = 0, extra = 0, nFija = 0, nExtra = 0;
+  // El area del extra sale del propio puesto: "Extra cocina" / "Extra barra".
+  // Un "Extra" a secas cuenta igual como extra pero sin area, y eso se ve en la
+  // pantalla en vez de repartirse a ojo.
+  var porArea = { cocina: 0, barra: 0, sin_area: 0 };
+  var finiquito = 0;
+  for (var i = rCab + 1; i < filas.length; i++) {
+    var puesto = _finSinAcentos_(String(filas[i][cPuesto] || '')).toLowerCase().trim();
+    if (puesto.indexOf('sub total') === 0 || puesto.indexOf('subtotal') === 0) break;
+    var v = _pago(filas[i]);
+    if (!v) continue;
+    /* El finiquito es costo de nomina pero NO es mano de obra de la operacion:
+       no dice cuanta gente hizo falta ese mes. Va en su propia bolsa para que
+       no ensucie el ratio de extras sobre la venta, que es el que se mira para
+       decidir personal. Igual suma al total. */
+    if (puesto.indexOf('finiquito') === 0) { finiquito += v; continue; }
+    // Se compara por prefijo para que "Extra ", "Extras" y "Extra cocina" entren.
+    if (puesto.indexOf('extra') === 0) {
+      extra += v; nExtra++;
+      var resto = puesto.slice(5).replace(/^s?\s+/, '').trim();
+      // barra y sala son lo mismo (Juanma, 22-sep-2026)
+      if (resto.indexOf('cocina') === 0) porArea.cocina += v;
+      else if (resto.indexOf('barra') === 0 || resto.indexOf('sala') === 0) porArea.barra += v;
+      else porArea.sin_area += v;
+    } else { fija += v; nFija++; }
+  }
+  return { fija: fija, extra: extra, finiquito: finiquito,
+           suma: fija + extra + finiquito, n_fija: nFija, n_extra: nExtra,
+           extra_cocina: porArea.cocina, extra_barra: porArea.barra,
+           extra_sin_area: porArea.sin_area };
 }
 
 /** "Sub total" de la columna "Salario base" de una pestana de la planilla. */
@@ -373,7 +533,10 @@ var FIN_REF = {
 // Estado "Anulado" (regla 13).
 var FIN_FUERA = ['DEVOLUCION_INVERSION', 'CARGO_FRAUDULENTO', 'PAGO_TARJETA_CREDITO',
                  'PAGO_TARJETA', 'TRANSFERENCIA', 'TRANSFERENCIA_SALIENTE',
-                 'PERSONAL', 'SALDO', 'POR_CLASIFICAR', 'ANULADA'];
+                 'PERSONAL', 'SALDO', 'POR_CLASIFICAR', 'ANULADA',
+                 // 21-sep-2026 (Juanma): factura a nombre de la empresa que no es del
+                 // restaurante ni gasto personal. No es gasto ni extraccion.
+                 'FACTURA_AJENA'];
 
 // Hoja -> columnas. Seccion 3 de la especificacion.
 var FIN_LIBROS = [
@@ -493,7 +656,9 @@ function finCacheClave_() {
   // Uniformes y meses sin venta. Una cache v5 pintaria la pantalla nueva con el
   // calculo viejo.
   // v7 (15-sep-2026): food cost sobre venta sin servicio (ventas_ss, regla 14).
-  return 'finanzas_v7_m' + m.global + '-' + m.BARRA;
+  // v8 (21-sep-2026): FACTURA_AJENA fuera a proposito. Una cache v7 la mostraria como fuga.
+  // v9 (21-sep-2026): regla 15, la factura manda. Una cache v8 traeria el doble conteo.
+  return 'finanzas_v9_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -552,7 +717,14 @@ function _finCalcular_() {
     return mes[m];
   }
   function _sem(k) {                                   // k = clave AAAAWW
-    if (!sem[k]) sem[k] = { clave: k, v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+    // area y bloques se agregaron el 22-sep-2026 para la pantalla "El gasto":
+    // hasta entonces la compra por area y las secciones del DRE solo existian
+    // por MES, asi que no habia forma de mirar el gasto semana a semana. No se
+    // lee nada nuevo del maestro: son los mismos montos que ya pasan por este
+    // bucle, guardados ademas por semana.
+    if (!sem[k]) sem[k] = { clave: k, v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0,
+                            area: { cocina: 0, barra: 0 }, bloques: {},
+                            ini: null, fin: null };
     return sem[k];
   }
 
@@ -611,6 +783,16 @@ function _finCalcular_() {
   // ser un numero del restaurante y pasa a ser el de cada quien.
   var fam = _finFamilias_();
   var compra = { cocina: { total: 0, f: {}, mes: {} }, barra: { total: 0, f: {}, mes: {} } };
+  // La misma categoria -> area que usa _compra, pero guardando en la SEMANA.
+  // Va aparte y no dentro de _compra porque _compra agrupa por mes y por
+  // familia de proveedor, y eso no se quiere repetir por semana: infla la
+  // respuesta y nadie lo mira a ese nivel.
+  function _semArea(S, cat, monto) {
+    var area = FIN_AREA_CAT[cat];
+    if (!area) return;                  // sin area no se inventa: igual que _compra
+    S.area[area] += monto;
+  }
+
   function _compra(cat, mes, prov, monto) {
     var area = FIN_AREA_CAT[cat];
     if (!area) return;
@@ -623,8 +805,13 @@ function _finCalcular_() {
           : (fam[_finLlaveProv_(prov)] || 'REVISAR');
     A.f[f] = (A.f[f] || 0) + monto;
   }
+  // Los cuatro libros se leen UNA vez: la regla 15 necesita verlos todos antes de sumar.
+  var hojasFin = {};
+  FIN_LIBROS.forEach(function (L) { hojasFin[L.hoja] = ss.getSheetByName(L.hoja).getDataRange().getValues(); });
+  var conFactura = _finPagosConFactura_(hojasFin, anio, usd);
+  var facturaMandaN = 0, facturaMandaQ = 0;
   FIN_LIBROS.forEach(function (L) {
-    var filas = ss.getSheetByName(L.hoja).getDataRange().getValues();
+    var filas = hojasFin[L.hoja];
     for (var r = FIN_PRIMERA_FILA - 1; r < filas.length; r++) {
       var f = _finDia_(filas[r][0]);                    // regla 10
       if (!_finEsFecha_(f) || f.getFullYear() !== anio) continue;
@@ -644,7 +831,8 @@ function _finCalcular_() {
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
       var pagoDe = L.desc ? _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat) : '';
-      var dest = _finDestino_(cat, L.hoja, esPers, pagoDe);
+      var tieneFactura = !!conFactura[L.hoja + '|' + r];
+      var dest = _finDestino_(cat, L.hoja, esPers, pagoDe, tieneFactura);
       if (L.nit && !anulada) {
         var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
         felNit[nit] = (felNit[nit] || 0) + q;
@@ -676,13 +864,17 @@ function _finCalcular_() {
         // que ya vino por FEL. Sumarla seria contarla dos veces.
         if (_finEn_(FIN_BANCOS, L.hoja)) continue;
         M.cogs += costo; felCompra += q;   // costo neto; el ratio de factura va bruto
-        _sem(_finClaveSemana_(f)).cogs += costo;      // A13: tambien en semana sin venta
+        var Sc = _sem(_finClaveSemana_(f));
+        Sc.cogs += costo;                             // A13: tambien en semana sin venta
+        _semArea(Sc, cat, costo);
         _compra(cat, f.getMonth() + 1, L.prov ? filas[r][L.prov - 1] : '', costo);
         continue;
       }
       if (_finEn_(FIN_EFECTIVO, cat)) {                 // compra sin factura
         M.cogs += q; efeCompra += q;
-        _sem(_finClaveSemana_(f)).cogs += q;
+        var Se = _sem(_finClaveSemana_(f));
+        Se.cogs += q;
+        _semArea(Se, cat, q);
         _compra(cat, f.getMonth() + 1, '', q);
         continue;
       }
@@ -693,12 +885,16 @@ function _finCalcular_() {
       if (_finEn_(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
       // regla 9: pago de un proveedor que siempre factura por FEL
       if (pagoDe) continue;
+      // regla 15: la factura manda. El pago con factura FEL no suma.
+      if (tieneFactura) { facturaMandaN++; facturaMandaQ += q; continue; }
       if (cat === 'IGSS') M.igss += q;
 
       var d = FIN_MAP[cat];
       if (!d) { sinMapear += q; continue; }             // categoria sin mapear: no se inventa
       M.bloques[d[0]] = (M.bloques[d[0]] || 0) + q;
       M.tipo[d[1]] += q;
+      var Sb = _sem(_finClaveSemana_(f));
+      Sb.bloques[d[0]] = (Sb.bloques[d[0]] || 0) + q;
     }
   });
 
@@ -757,6 +953,21 @@ function _finCalcular_() {
       eventos: _finR_(M.eventos),
       com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
       devengado: devengado !== null,
+      // El reparto fijo/extra del mes, cuando la pestana de planilla lo trae.
+      // Va del mes de la planilla que se USO (pl.desde), no del mes del
+      // calendario: un mes estimado con la planilla de agosto muestra el
+      // reparto de agosto, y la pantalla dice que es estimado.
+      planilla: (planilla.detalle && planilla.detalle[pl.desde])
+        ? { fija: _finR_(planilla.detalle[pl.desde].fija),
+            extra: _finR_(planilla.detalle[pl.desde].extra),
+            extra_cocina: _finR_(planilla.detalle[pl.desde].extra_cocina || 0),
+            extra_barra: _finR_(planilla.detalle[pl.desde].extra_barra || 0),
+            extra_sin_area: _finR_(planilla.detalle[pl.desde].extra_sin_area || 0),
+            finiquito: _finR_(planilla.detalle[pl.desde].finiquito || 0),
+            n_extra: planilla.detalle[pl.desde].n_extra,
+            cuadra: planilla.detalle[pl.desde].cuadra,
+            origen: pl.origen, desde: pl.desde }
+        : null,
       labor_origen: pl.origen, labor_desde: pl.desde ? FIN_MESES[pl.desde - 1] : '',
       labor_parte: _finR_(parte, 3),
       gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
@@ -768,18 +979,36 @@ function _finCalcular_() {
       netop: _finR_((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
       tickets: M.tickets,
       // Punto de equilibrio del mes: gasto fijo / margen de contribucion. Lo
-      // semivariable entra a la mitad. Es el mismo criterio con el que se
-      // construyo el tablero del DRE, portado tal cual para poder cotejarlo.
+      // semivariable entra a la mitad, a los dos lados.
       //
-      // OJO: el fijo sale de la clasificacion F/S/V del gasto BANCARIO, o sea
-      // que su nomina es la pagada, no la devengada. El resto de la pantalla va
-      // devengada. Se deja asi para que el numero sea comparable con el del
-      // tablero viejo; queda anotado como lo primero que hay que revisar si el
-      // equilibrio se usa para decidir.
+      // CORREGIDO el 22-sep-2026. Hasta esa fecha el margen era
+      // (ventas - cogs) / ventas: solo restaba la mercaderia. El gasto
+      // operativo que se mueve con la venta —lo variable mas la mitad de lo
+      // semivariable— no estaba ni en el fijo ni restado del margen, o sea que
+      // desaparecia del calculo. El efecto era un equilibrio sistematicamente
+      // bajo: la tabla daba holgura positiva en los NUEVE meses de un año que
+      // cerro en -Q51,014. Un equilibrio que da verde todos los meses de un año
+      // con perdida no es un equilibrio. Lo vio Juanma.
+      //
+      // Que NO cambia: el fijo sigue siendo F + S/2. Y sigue en pie el aviso
+      // viejo: el fijo sale de la clasificacion F/S/V del gasto BANCARIO, o sea
+      // que su nomina es la pagada, no la devengada, mientras el resto de la
+      // pantalla va devengada.
+      //
+      // M.tipo NO incluye la mercaderia: las categorias de FIN_COGS_CATS y
+      // FIN_EFECTIVO hacen continue antes de llegar a FIN_MAP. Verificado al
+      // corregir; si eso cambiara, aca se estaria restando el COGS dos veces.
       fijo: _finR_(M.tipo.F + M.tipo.S * 0.5),
-      mc: _finR_((M.ventas - M.cogs) / M.ventas * 100, 1),
-      bev: (M.ventas - M.cogs) > 0
-        ? _finR_((M.tipo.F + M.tipo.S * 0.5) / ((M.ventas - M.cogs) / M.ventas)) : 0,
+      variable: _finR_(M.tipo.V + M.tipo.S * 0.5),
+      mc: _finR_((M.ventas - M.cogs - (M.tipo.V + M.tipo.S * 0.5)) / M.ventas * 100, 1),
+      // Un margen de contribucion <= 0 significa que el mes no llega al
+      // equilibrio a ningun volumen: cada quetzal vendido trae mas costo
+      // variable del que deja. Se devuelve null, no 0, para que la pantalla
+      // diga "no alcanzable" en vez de dibujar un equilibrio de Q0.
+      bev: (M.ventas - M.cogs - (M.tipo.V + M.tipo.S * 0.5)) > 0
+        ? _finR_((M.tipo.F + M.tipo.S * 0.5) /
+                 ((M.ventas - M.cogs - (M.tipo.V + M.tipo.S * 0.5)) / M.ventas))
+        : null,
       bloques: M.bloques, tipo: M.tipo, porSemana: M.porSemana
     });
   });
@@ -847,7 +1076,9 @@ function _finCalcular_() {
     for (var lunes = _finLunesDeClave_(conVenta[0]); _finClaveSemana_(lunes) <= ultClave;
          lunes = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7)) {
       var k = _finClaveSemana_(lunes);
-      var d = sem[k] || { v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0, ini: null, fin: null };
+      var d = sem[k] || { v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0,
+                          area: { cocina: 0, barra: 0 }, bloques: {},
+                          ini: null, fin: null };
       var ini = d.ini || lunes;
       var fin = d.fin || new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
       ['bi', 'bac'].forEach(function (b) {      // el ultimo saldo hasta esta semana
@@ -862,6 +1093,9 @@ function _finCalcular_() {
                ventas: _finR_(d.v), ventas_ss: _finR_(d.v_ss), com: d.com, tickets: d.tickets,
                tp: d.com ? _finR_(d.v / d.com) : 0,
                cogs: _finR_(d.cogs), cogsp: d.v_ss ? _finR_(d.cogs / d.v_ss * 100, 1) : null,
+               cocina: _finR_((d.area || {}).cocina || 0),
+               barra: _finR_((d.area || {}).barra || 0),
+               bloques: _finRedondear_(d.bloques || {}),
                labor: _finR_(lab), laborp: d.v ? _finR_(lab / d.v * 100, 1) : null,
                prime: d.v ? _finR_((d.cogs + lab) / d.v * 100, 1) : null,
                caja: _finR_(prevSaldo.bi + prevSaldo.bac),
@@ -899,6 +1133,10 @@ function _finCalcular_() {
     ultima: u,
     meta_cogs: metaFood,
     meta_area: _finMetaArea_(),
+    // El presupuesto de gasto por seccion del DRE (pestana PRESUPUESTO del
+    // Sheet de config). Puede no existir: devuelve {existe:false} y la pantalla
+    // cae a la referencia del sector diciendo que lo hace.
+    presupuesto: _finPresupuesto_(),
     usd: usd,
     mix: FIN_MIX,
     compra: compra,
@@ -927,7 +1165,8 @@ function _finCalcular_() {
         return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), gop: _finR_(x.gop) };
       }),
       // regla 13: facturas anuladas en SAT que quedaron fuera del calculo
-      anuladas: { n: anuladasN, q: _finR_(anuladasQ) }
+      anuladas: { n: anuladasN, q: _finR_(anuladasQ) },
+      factura_manda: { n: facturaMandaN, q: _finR_(facturaMandaQ) }   // regla 15
     },
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
   };
@@ -1390,7 +1629,7 @@ function _finFamilias_() {
  * Donde termina una fila con esta categoria. Espeja la logica de _finCalcular.
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
-function _finDestino_(cat, hoja, esPersonal, pagoDe) {
+function _finDestino_(cat, hoja, esPersonal, pagoDe, tieneFactura) {
   if (cat === 'ANULADA') return 'anulada en SAT';
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
@@ -1407,6 +1646,7 @@ function _finDestino_(cat, hoja, esPersonal, pagoDe) {
   }
   if (_finEn_(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
   if (pagoDe) return 'REGLA 9: pago de factura FEL';
+  if (tieneFactura && FIN_MAP[cat]) return 'REGLA 15: tiene factura FEL';
   if (FIN_MAP[cat]) return 'DRE \u00b7 ' + FIN_MAP[cat][0];
   return 'CATEGORIA DESCONOCIDA';
 }

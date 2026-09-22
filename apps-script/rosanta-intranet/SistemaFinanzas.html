@@ -5,7 +5,7 @@
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
 </head>
-<body>
+<body class="sf">
   <header class="app">
     <div class="marca">
       <span class="logo" role="img" aria-label="Rosanta"></span>
@@ -18,41 +18,42 @@
   </header>
 
   <!--
-    Mismo patron que SistemaMarketing, y por la misma razon: el lateral cambia de
-    vista en el CLIENTE, sin recargar. Navegar a ?page=X&sub=Y perdia el query
-    string y terminaba cayendo en el Panel principal. Aca se monta un iframe por
-    vista la primera vez que se abre y se alterna cual esta visible, asi cada una
-    conserva su scroll y sus filtros al ir y volver.
+    Mismo patron que SistemaMarketing —cambiar de vista en el CLIENTE, montando
+    un iframe por vista la primera vez que se abre y alternando cual esta
+    visible, asi cada una conserva su scroll y sus filtros al ir y volver—
+    pero con la navegacion ARRIBA en vez del lateral (22-sep-2026, decision de
+    Juanma). El lateral tenia dos problemas, los dos en el telefono: escondia
+    "Escenarios" y "Caja" fuera de pantalla, y dejaba el iframe sin altura. El
+    detalle del arreglo esta en el bloque .sf-* de Estilos.html.
 
-    Las tres viven en ESTE proyecto, o sea que siempre se dejan embeber: no hace
+    Las seis viven en ESTE proyecto, o sea que siempre se dejan embeber: no hace
     falta el aviso de X-Frame-Options ni el temporizador de 6 s que Marketing
     necesita para la Consola y Reseñas, que son proyectos aparte.
   -->
-  <div class="sm">
-    <nav class="sm-side">
-      <span class="rotulo">Finanzas</span>
-      <button type="button" class="sm-item" data-sub="semana">La semana</button>
-      <button type="button" class="sm-item" data-sub="metas">Metas de la semana</button>
-      <button type="button" class="sm-item" data-sub="comparativo"><?= new Date().getFullYear() ?> contra <?= new Date().getFullYear() - 1 ?></button>
-      <button type="button" class="sm-item" data-sub="escenarios">Escenarios</button>
-      <button type="button" class="sm-item" data-sub="caja">Caja</button>
-    </nav>
-    <main class="sm-main" id="sfMain"></main>
-  </div>
+  <nav class="sf-tabs" aria-label="Secciones de Finanzas">
+    <button type="button" class="sf-tab" data-sub="semana">Cómo vamos</button>
+    <button type="button" class="sf-tab" data-sub="metas">Metas</button>
+    <button type="button" class="sf-tab" data-sub="caja">Caja</button>
+    <button type="button" class="sf-tab" data-sub="gasto">El gasto</button>
+    <button type="button" class="sf-tab" data-sub="comparativo">Mes a mes</button>
+    <button type="button" class="sf-tab" data-sub="escenarios">Escenarios</button>
+  </nav>
+  <main class="sf-main" id="sfMain"></main>
 
 <script>
 (function () {
   // Cada URL lleva el embed y el token. El &embed=1 es lo que esconde el boton
-  // "Panel principal" de la vista de adentro: ahi adentro ese boton se saltaba el
-  // lateral y sacaba al usuario de Finanzas de un clic.
+  // "Panel principal" de la vista de adentro: ahi adentro ese boton se saltaba la
+  // barra de pestañas y sacaba al usuario de Finanzas de un clic.
   var T = <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
   var B = <?!= JSON.stringify(urlBase) ?>;
   var URLS = {
     semana:      B + '?page=finanzas-semana&embed=1' + T,
     metas:       B + '?page=metas&embed=1' + T,
+    caja:        B + '?page=caja&embed=1' + T,
+    gasto:       B + '?page=finanzas-gasto&embed=1' + T,
     comparativo: B + '?page=comparativo&embed=1' + T,
-    escenarios:  B + '?page=escenarios&embed=1' + T,
-    caja:        B + '?page=caja&embed=1' + T
+    escenarios:  B + '?page=escenarios&embed=1' + T
   };
   var main = document.getElementById('sfMain');
   var frames = {};
@@ -70,14 +71,20 @@
 
   function mostrar(sub) {
     if (!URLS.hasOwnProperty(sub)) sub = 'semana';
-    document.querySelectorAll('.sm-item').forEach(function (b) {
-      b.classList.toggle('act', b.dataset.sub === sub);
+    document.querySelectorAll('.sf-tab').forEach(function (b) {
+      var act = b.dataset.sub === sub;
+      b.classList.toggle('act', act);
+      // En el telefono la barra se desliza: si la pestaña activa quedo fuera de
+      // la parte visible, se trae. Es lo que el lateral viejo no hacia.
+      if (act && b.scrollIntoView) {
+        b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
     });
     Object.keys(frames).forEach(function (k) { frames[k].style.display = 'none'; });
     montar(sub).style.display = 'block';
   }
 
-  document.querySelectorAll('.sm-item').forEach(function (b) {
+  document.querySelectorAll('.sf-tab').forEach(function (b) {
     b.addEventListener('click', function () { mostrar(b.dataset.sub); });
   });
 

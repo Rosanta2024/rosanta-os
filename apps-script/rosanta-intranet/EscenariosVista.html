@@ -12,10 +12,10 @@
     main.esc { max-width: 1140px; }
     .esc-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
     .esc-boton { background: transparent; color: var(--verde-bosque);
-      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
       font-family: 'Lato', Arial, sans-serif; }
-    .esc-boton:hover { background: rgba(69,107,80,0.07); }
+    .esc-boton:hover { background: rgba(78,109,90,0.07); }
     .esc-boton.on { background: var(--verde-bosque); color: var(--blanco); }
     .esc-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
       flex-wrap: wrap; gap: 0.75rem; }
@@ -23,12 +23,27 @@
     .esc-anio { background: var(--verde-bosque); color: var(--blanco);
       border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.5rem;
       display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-    .esc-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1rem; }
+    .esc-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
     .esc-anio .u:first-child { border-left: 0; padding-left: 0; }
-    .esc-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem; }
-    .esc-anio .t { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
-      opacity: 0.72; margin-top: 0.2rem; }
+    .esc-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem;
+      line-height: 1.15; margin-top: 0.15rem; }
+    /* 0.85 y no 0.72 por contraste: blanco sobre #4E6D5A en 11-12px necesita
+       0.83 para llegar a 4.5:1. Ver la nota de .fin-kpis .t en FinanzasVista. */
+    .esc-anio .t { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.85; }
+    .esc-anio .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
     .esc-anio .mal { color: #FFB4A2; }
+    .esc-anio .bien { color: #BFE8CE; }
+    @media (max-width: 560px) {
+      /* Dos columnas, con el resultado del año ocupando la fila entera: es el
+         numero que el simulador de abajo mueve. */
+      .esc-anio { padding: 1.1rem 1.15rem; gap: 1rem 1.1rem; grid-template-columns: 1fr 1fr; }
+      .esc-anio .u { border-left: 0; padding-left: 0; }
+      .esc-anio .u:first-child { grid-column: 1 / -1; }
+      .esc-anio .n { font-size: 1.5rem; }
+      .esc-anio .u:first-child .n { font-size: 1.9rem; }
+      .esc-anio .c { font-size: 0.72rem; }
+    }
 
     .esc-seccion { margin-top: 2.4rem; }
     .esc-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
@@ -166,9 +181,14 @@
         <h2>Punto de equilibrio</h2>
         <p class="esc-nota">
           Cuánto hay que vender en el mes para no perder: el gasto fijo dividido entre el
-          margen de contribución. Lo semivariable entra a la mitad. El gasto fijo sale de la
-          clasificación del gasto bancario, así que su nómina es la pagada y no la devengada —
-          es lo primero que hay que revisar si este número se usa para decidir.
+          margen de contribución. El margen descuenta todo lo que se mueve con la venta —la
+          mercadería y el gasto operativo variable— y lo semivariable entra a la mitad de
+          cada lado. <strong>Corregido el 22-sep-2026:</strong> hasta esa fecha el margen solo
+          descontaba la mercadería, así que el gasto variable no estaba en ningún lado del
+          cálculo y el equilibrio salía sistemáticamente bajo — daba holgura en los nueve
+          meses de un año que cerró en pérdida. El gasto fijo sale de la clasificación del
+          gasto bancario, así que su nómina es la pagada y no la devengada: eso sigue sin
+          resolverse y es lo siguiente a revisar si este número se usa para decidir.
         </p>
         <div class="esc-caja esc-be">
           <div>
@@ -340,8 +360,28 @@
   function pintaBE(i) {
     var m = D.meses[i];
     var tk = m.com ? m.ventas / m.com : 0;
-    var falta = m.bev - m.ventas;
     var el = document.getElementById('beVal');
+
+    // Margen de contribucion <= 0: el mes no llega al equilibrio a ningun
+    // volumen, porque cada quetzal vendido trae mas costo variable del que
+    // deja. El motor manda bev null. Antes esto salia como un equilibrio de Q0,
+    // que se leia como "no hacia falta vender nada".
+    if (m.bev === null || m.bev === undefined) {
+      el.textContent = 'No alcanzable';
+      el.className = 'be-n mal';
+      document.getElementById('beTxt').innerHTML =
+        'Con un gasto fijo de <b>' + q(m.fijo) + '</b> y un margen de contribución de <b>' +
+        pct(m.mc) + '</b>, ' + m.mes + ' <b>no tiene punto de equilibrio</b>: el costo que ' +
+        'se mueve con la venta —mercadería más el gasto operativo variable— se come el ' +
+        '100% de cada quetzal vendido, así que vender más no acerca al equilibrio. ' +
+        'Vendió ' + q(m.ventas) + ' con ' + m.com + ' comensales. ' +
+        'Lo que hay que mover es el costo, no el volumen.';
+      document.getElementById('bePista').innerHTML =
+        '<span class="venta" style="width:100%"></span>';
+      return;
+    }
+
+    var falta = m.bev - m.ventas;
     el.textContent = q(m.bev);
     el.className = 'be-n' + (falta > 0 ? ' mal' : '');
     document.getElementById('beTxt').innerHTML =
@@ -366,16 +406,60 @@
     document.getElementById('sub').textContent =
       'Año ' + d.anio + ' · ' + d.meses.length + ' meses con venta · datos al ' + d.gen;
 
-    function unidad(n, tt, mal) {
-      return '<div class="u"><div class="n' + (mal ? ' mal' : '') + '">' + n +
-             '</div><div class="t">' + tt + '</div></div>';
+    function unidad(tt, n, c, clase) {
+      return '<div class="u"><div class="t">' + tt + '</div>' +
+             '<div class="n' + (clase ? ' ' + clase : '') + '">' + n + '</div>' +
+             (c ? '<div class="c">' + c + '</div>' : '') + '</div>';
     }
+    /* La cinta: la brecha, y las dos salidas.
+       Hasta el 22-sep-2026 era el P&L anual (ventas, mercaderia, gasto
+       operativo, resultado, sobre la venta) — la misma cinta que estaba en
+       otras dos pestañas, y que no decia nada sobre lo que esta pantalla
+       contesta. Los cinco de ahora salen de una sola pregunta: cuanto falta
+       para dejar de perder, y por donde se cierra.
+
+       El margen de contribucion se calcula ACA sumando los meses, porque el
+       motor manda fijo y variable por mes pero no su total del año. Usa la
+       formula corregida el 22-sep-2026 (ver FinanzasDatos.js): descuenta la
+       mercaderia MAS el gasto operativo variable. */
+    var fijoAnio = 0, varAnio = 0, bajoBE = 0, conBE = 0;
+    d.meses.forEach(function (m) {
+      fijoAnio += (m.fijo || 0);
+      varAnio += (m.variable || 0);
+      if (m.bev === null || m.bev === undefined) { conBE++; bajoBE++; }   // no alcanzable = bajo
+      else { conBE++; if (m.ventas < m.bev) bajoBE++; }
+    });
+    var mc = T.ventas ? (T.ventas - T.cogs - varAnio) / T.ventas : 0;
+    var falta = -T.neto;                       // lo que falta para cerrar en cero
+    var nMes = d.meses.length || 1;
+    // Vender mas arrastra su propio costo variable: lo que cierra la brecha es
+    // la CONTRIBUCION extra, no la venta extra. De ahi el /mc.
+    var ventaExtra = (mc > 0 && falta > 0) ? falta / mc : null;
+
     document.getElementById('anio').innerHTML =
-      unidad(q(T.ventas), 'Ventas netas del año') +
-      unidad(q(T.cogs), 'Mercadería') +
-      unidad(q(T.gop), 'Gasto operativo') +
-      unidad(q(T.neto), 'Resultado', T.neto < 0) +
-      unidad(pct(T.netop), 'Sobre la venta', T.netop < 0);
+      unidad('Resultado del año', q(T.neto),
+        pct(T.netop) + ' sobre la venta', T.neto < 0 ? 'mal' : 'bien') +
+
+      unidad('Margen de contribución', pct(mc * 100),
+        'de cada Q100 vendidos quedan ' + q(mc * 100) + ' para el gasto fijo',
+        mc <= 0 ? 'mal' : '') +
+
+      (falta <= 0
+        ? unidad('Se cierra con', '—', 'el año ya cierra en positivo', 'bien')
+        : (ventaExtra === null
+            ? unidad('Se cierra con', 'más venta no', 'el margen de contribución no es ' +
+                'positivo: vender más no acerca al cero', 'mal')
+            : unidad('Se cierra con', '+' + pct(ventaExtra / T.ventas * 100) + ' de venta',
+                q(ventaExtra) + ' al año · ' + q(ventaExtra / nMes) + ' al mes'))) +
+
+      (falta <= 0
+        ? unidad('O con', '—', 'no hay brecha que cerrar', 'bien')
+        : unidad('O con', q(falta) + ' menos',
+            'de gasto fijo · ' + q(falta / nMes) + ' al mes')) +
+
+      unidad('Meses bajo el equilibrio', bajoBE + ' de ' + conBE,
+        bajoBE ? 'vendieron menos de lo que su costo pedía' : 'todos cubrieron su costo',
+        bajoBE > conBE / 2 ? 'mal' : (bajoBE === 0 ? 'bien' : ''));
 
     montarSimulador();
 
@@ -388,6 +472,11 @@
     pintaBE(d.meses.length - 1);
 
     document.getElementById('beTabla').innerHTML = d.meses.map(function (m) {
+      if (m.bev === null || m.bev === undefined) {
+        return '<tr><td>' + m.mes + '</td><td>' + q(m.ventas) + '</td>' +
+          '<td class="r">no alcanzable</td><td class="r">' + pct(m.mc) + '</td>' +
+          '<td class="r">—</td></tr>';
+      }
       var h = m.ventas - m.bev;
       return '<tr><td>' + m.mes + '</td><td>' + q(m.ventas) + '</td><td>' + q(m.bev) + '</td>' +
         '<td>' + pct(m.mc) + '</td>' +

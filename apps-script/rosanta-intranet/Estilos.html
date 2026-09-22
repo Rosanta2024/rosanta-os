@@ -1,10 +1,10 @@
 <style>
   :root {
-    --crema: #F0EDE6;
-    --verde-bosque: #456B50;
-    --verde-medio: #4CAF7D;
-    --lila: #A89DC8;
-    --negro: #1A1A1A;
+    --crema: #F2EEEB;
+    --verde-bosque: #4E6D5A;
+    --verde-medio: #57A77F;
+    --lila: #AEAAE2;
+    --negro: #000000;
     --blanco: #FFFFFF;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -124,6 +124,73 @@ header.app .quien { font-size: 0.85rem; opacity: 0.9; display: flex; align-items
   @media (max-width: 700px) {
     .sm { flex-direction: column; height: auto; }
     .sm-side { width: auto; flex-direction: row; overflow-x: auto; }
+  }
+
+
+  /* ===== Shell de Finanzas: pestañas arriba (22-sep-2026) =====
+     Reemplaza al lateral .sm-side para este pilar. El lateral tenia dos
+     problemas en el telefono: se volvia una fila con scroll horizontal donde
+     "Escenarios" y "Caja" quedaban fuera de pantalla sin aviso, y dejaba el
+     iframe sin altura (.sm pasaba a height:auto y el iframe con height:100%
+     colapsaba a los 150px que trae el navegador por defecto), asi que las
+     cinco vistas caian en una franja con media pantalla vacia debajo.
+
+     Aca la pagina entera es una columna de alto fijo: cabecera y pestañas
+     miden lo suyo y el contenido se queda con el resto. Sirve igual en
+     escritorio y en telefono, sin media query que lo desarme.
+     100dvh contempla la barra del navegador movil; 100vh queda de respaldo
+     para los que no lo soportan. */
+  .sf { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .sf > header.app { flex: none; }
+
+  .sf-tabs {
+    flex: none;
+    display: flex; gap: 0.15rem;
+    background: var(--blanco);
+    border-bottom: 1px solid #e4e0d6;
+    padding: 0 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sf-tabs::-webkit-scrollbar { display: none; }
+  /* Son <button>, no <a>: la pestaña cambia de vista sin navegar, asi cada una
+     conserva su scroll y sus filtros al ir y volver. */
+  .sf-tab {
+    flex: none; cursor: pointer;
+    border: 0; background: none; font: inherit;
+    padding: 0.85rem 0.9rem 0.7rem;
+    color: #6f6a61; font-size: 0.92rem; white-space: nowrap;
+    border-bottom: 3px solid transparent;
+  }
+  .sf-tab:hover { color: var(--negro); }
+  .sf-tab.act {
+    color: var(--verde-bosque); font-weight: 700;
+    border-bottom-color: var(--verde-bosque);
+  }
+  /* min-height:0 es lo que deja que el hijo con overflow se encoja dentro del
+     flex en vez de empujar la pagina y reventar el alto fijo de .sf. */
+  /* max-width y margin se anulan a proposito: .sf-main es un <main>, y la regla
+     general "main { max-width:1080px; margin:0 auto }" lo alcanza. Dentro de un
+     flex de COLUMNA ese margin:auto del eje transversal cancela el estirado y la
+     caja se encoge al ancho por contenido — un iframe sin ancho propio son 300px.
+     El lateral viejo no lo sufria porque .sm era un flex de FILA. */
+  .sf-main { flex: 1; min-height: 0; position: relative; background: var(--crema);
+    width: 100%; max-width: none; margin: 0; padding: 0; }
+  .sf-main iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+  @media (max-width: 600px) {
+    /* La cabecera apilada del movil (header.app en columna) come alto; aca se
+       mantiene en una linea y se achica, que en una pantalla de 812px importa.
+       El wordmark baja a 22px y el nombre de la persona se va: en 375px el
+       conjunto no entraba y "Panel principal" quedaba cortado contra el borde. */
+    .sf > header.app { flex-direction: row; text-align: left; padding: 0.6rem 0.8rem; gap: 0.5rem; }
+    .sf > header.app .marca .sec { display: none; }
+    .sf > header.app .marca .logo { height: 22px; }
+    .sf > header.app .quien { font-size: 0.78rem; gap: 0.5rem; }
+    .sf > header.app .quien > span { display: none; }
+    .sf > header.app .volver { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+    .sf-tab { padding: 0.7rem 0.7rem 0.55rem; font-size: 0.88rem; }
   }
 
   /* ===== Vista CRM: contactos arriba, conversacion abajo ===== */

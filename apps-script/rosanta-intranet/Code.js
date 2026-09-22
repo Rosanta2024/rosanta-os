@@ -140,7 +140,7 @@ function doGet(e) {
     return HtmlService.createHtmlOutput(
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<body style="font-family:ui-monospace,Menlo,monospace;background:#1A1A1A;color:#e8e4da;padding:1.5rem">' +
-      '<p style="font-family:Georgia,serif;color:#4CAF7D;font-size:1.1rem;margin:0 0 1rem">' +
+      '<p style="font-family:Georgia,serif;color:#57A77F;font-size:1.1rem;margin:0 0 1rem">' +
       'Diagnóstico Meta · ' + new Date().toLocaleString('es-GT') + '</p>' +
       '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.5">' +
       JSON.stringify(diag, null, 2)
@@ -176,7 +176,7 @@ function doGet(e) {
   if (pagina === 'finanzas' && usuarioTieneModulo(usuario, 'finanzas')) {
     var subFin = (e && e.parameter && e.parameter.sub) || 'semana';
     // El ?sub= lo escribe quien quiera: si no es uno de los tres, abre el primero.
-    if (['semana', 'metas', 'comparativo', 'escenarios', 'caja'].indexOf(subFin) === -1) subFin = 'semana';
+    if (['semana', 'metas', 'caja', 'gasto', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
     return render_('SistemaFinanzas', {
       usuario: usuario, urlBase: urlBase, sub: subFin, authToken: authToken
     });
@@ -192,6 +192,16 @@ function doGet(e) {
   // punta a punta; no captura nada. Las acciones no viven aqui.
   if (pagina === 'finanzas-semana' && usuarioTieneModulo(usuario, 'finanzas')) {
     return render_('FinanzasVista', {
+      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
+    }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  // El gasto: estructura de costo del año. Salio de finanzas-semana el 22-sep-2026,
+  // porque era analisis anual viviendo en la pantalla de la semana y empujaba lo
+  // accionable cinco pantallas hacia abajo. Mismo motor (getFinanzasData), mismo
+  // permiso: no hay un segundo calculo que se pueda desincronizar.
+  if (pagina === 'finanzas-gasto' && usuarioTieneModulo(usuario, 'finanzas')) {
+    return render_('FinanzasGastoVista', {
       usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }

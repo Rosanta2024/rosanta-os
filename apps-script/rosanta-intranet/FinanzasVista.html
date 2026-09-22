@@ -5,37 +5,82 @@
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
-    /* Pantalla de Finanzas · Pilar 3, Finance & Data OS.
-       Es para analizar y decidir. Solo lectura: no captura nada, no escribe
-       nada. Las acciones las define la direccion y se presentan aparte. */
+    /* "Como vamos" · Pilar 3, Finance & Data OS.
+       Es para decidir el lunes: la semana contra su meta, el mes contra el suyo,
+       la caja, y que hay que responder. Solo lectura salvo el bloque RAA, que
+       es lo unico que escribe.
+
+       Hasta el 22-sep-2026 esta pantalla se llamaba "La semana" y cinco de sus
+       siete secciones eran del AÑO: abria con la venta acumulada de 2026 y once
+       bloques de gasto contra la banda del sector, y lo de la semana estaba en
+       la posicion 5 de 7. El analisis anual se fue a "El gasto"
+       (FinanzasGastoVista) y el P&L mensual a "Mes a mes" (ComparativoVista). */
     main.fin { max-width: 1140px; }
     .fin-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
       flex-wrap: wrap; gap: 0.75rem; }
     .fin-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
     .fin-boton { background: transparent; color: var(--verde-bosque);
-      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
       font-family: 'Lato', Arial, sans-serif; }
-    .fin-boton:hover { background: rgba(69,107,80,0.07); }
+    .fin-boton:hover { background: rgba(78,109,90,0.07); }
 
-    /* --- el año en una línea --- */
-    .fin-anio { background: var(--verde-bosque); color: var(--blanco);
-      border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.5rem;
-      display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-    .fin-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1rem; }
-    .fin-anio .u:first-child { border-left: 0; padding-left: 0; }
-    .fin-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem;
-      line-height: 1.15; }
-    .fin-anio .t { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em;
-      opacity: 0.72; margin-top: 0.2rem; }
-    .fin-anio .mal { color: #FFB4A2; }
+    /* --- la cinta de KPIs: la semana, el mes y la caja ---
+       Reemplaza a la cinta del año. minmax(150px,1fr) da 5 columnas en
+       escritorio y 2 en un telefono de 375px, sin media query. */
+    .fin-kpis { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.25rem;
+      display: grid; gap: 1rem 1.25rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .fin-kpis .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
+    .fin-kpis .u:first-child { border-left: 0; padding-left: 0; }
+    /* 0.85 y no 0.68: con el verde bosque vigente (#4E6D5A) el blanco al 68%
+       daba 3.6:1 de contraste sobre 11px, y al 78% daba 4.2:1 sobre 12px. El
+       minimo legible para texto chico es 4.5:1, que se alcanza desde 0.83. */
+    .fin-kpis .t { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.85; }
+    .fin-kpis .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.8rem;
+      line-height: 1.15; margin-top: 0.15rem; }
+    .fin-kpis .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
+    .fin-kpis .mal { color: #FFB4A2; }
+    .fin-kpis .bien { color: #BFE8CE; }
+    @media (max-width: 560px) {
+      /* Dos columnas fijas, con la venta de la semana ocupando la fila entera:
+         es el titular. auto-fit con minmax(150px) caia en UNA columna —por 4px—
+         y la cinta se comia la pantalla entera del telefono, dejando "Que hay
+         que responder" fuera de vista.
+         El borde izquierdo se apaga: en 2 columnas queda colgando al medio. */
+      .fin-kpis { padding: 1.1rem 1.15rem; gap: 1rem 1.1rem;
+        grid-template-columns: 1fr 1fr; }
+      .fin-kpis .u { border-left: 0; padding-left: 0; }
+      .fin-kpis .u:first-child { grid-column: 1 / -1; }
+      .fin-kpis .n { font-size: 1.5rem; }
+      .fin-kpis .u:first-child .n { font-size: 1.9rem; }
+      .fin-kpis .c { font-size: 0.72rem; }
+    }
 
-    .fin-seccion { margin-top: 2.4rem; }
+    /* --- la tira de integridad: una linea, no una seccion --- */
+    /* Los separadores son borde, no el caracter "·" en el texto: al cortar
+       linea un "·" quedaba colgando al final de la fila. */
+    .fin-tira { display: flex; flex-wrap: wrap; align-items: center;
+      font-size: 0.78rem; opacity: 0.7; margin-top: 1rem; row-gap: 0.3rem; }
+    .fin-tira > span { padding: 0 0.7rem; border-left: 1px solid rgba(26,26,26,0.18);
+      line-height: 1.35; }
+    .fin-tira > span:first-child { padding-left: 0; border-left: 0; }
+    .fin-tira .alerta { color: #C4553B; opacity: 1; font-weight: 700; }
+    .fin-tira a { color: inherit; }
+
+    .fin-seccion { margin-top: 2.2rem; }
     .fin-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
     .fin-nota { font-size: 0.84rem; opacity: 0.72; margin-bottom: 1rem; line-height: 1.55;
       max-width: 78ch; }
+    /* Las notas largas de metodo estorban al que ya las leyo. Van plegadas. */
+    .fin-ayuda { font-size: 0.82rem; opacity: 0.72; line-height: 1.55; max-width: 78ch;
+      margin-bottom: 1rem; }
+    .fin-ayuda summary { cursor: pointer; opacity: 0.85; }
+    .fin-ayuda p { margin-top: 0.45rem; }
 
-    /* --- tarjetas de la semana --- */
+    /* --- tarjetas de semaforo --- */
     .fin-semaforos { display: grid; gap: 1rem;
       grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); }
     .fin-card { background: var(--blanco); border-radius: 20px; padding: 1.2rem 1.35rem;
@@ -55,38 +100,6 @@
     .fin-cruda { font-size: 0.76rem; opacity: 0.6; margin-top: 0.55rem;
       padding-top: 0.55rem; border-top: 1px solid rgba(26,26,26,0.08); }
 
-    /* --- bloques contra la banda del sector --- */
-    .fin-bloques { background: var(--blanco); border-radius: 18px; padding: 0.4rem 1.35rem;
-      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-    .bq { display: grid; grid-template-columns: 190px 1fr 96px 108px; gap: 1rem;
-      align-items: center; padding: 0.75rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
-    .bq:last-child { border-bottom: 0; }
-    .bq .nom { font-size: 0.89rem; }
-    .bq .nom small { display: block; opacity: 0.55; font-size: 0.75rem; }
-    .bq .pista { position: relative; height: 12px; background: rgba(26,26,26,0.06);
-      border-radius: 999px; }
-    .bq .banda { position: absolute; top: 0; bottom: 0; background: rgba(76,175,125,0.30);
-      border-radius: 2px; }
-    .bq .val { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px;
-      background: var(--verde-medio); }
-    .bq.rojo .val { background: #C4553B; }
-    .bq.bajo .val { background: var(--lila); }
-    .bq.gris .val { background: #BDBDBD; }
-    .bq .pct { text-align: right; font-family: 'Playfair Display', Georgia, serif;
-      font-size: 1.15rem; }
-    .bq.rojo .pct { color: #C4553B; }
-    .bq .exc { text-align: right; font-size: 0.78rem; opacity: 0.8; line-height: 1.35; }
-    .bq.rojo .exc { color: #C4553B; opacity: 1; }
-    .bq .exc small { opacity: 0.8; }
-
-    /* --- estructura fijo / variable --- */
-    .fin-tipos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-    .tipo { background: var(--blanco); border-radius: 16px; padding: 1.1rem 1.25rem;
-      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-    .tipo .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem;
-      color: var(--verde-bosque); }
-    .tipo .t { font-size: 0.8rem; opacity: 0.72; line-height: 1.45; margin-top: 0.25rem; }
-
     /* --- tablas --- */
     table.fin { width: 100%; border-collapse: collapse; background: var(--blanco);
       border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
@@ -97,20 +110,26 @@
       font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
     table.fin th:first-child, table.fin td:first-child { text-align: left; }
     table.fin tr:last-child td { border-bottom: 0; }
-    table.fin tr.actual td { background: rgba(76,175,125,0.09); font-weight: 700; }
-    table.fin tr.total td { background: rgba(69,107,80,0.07); font-weight: 700; }
+    table.fin tr.actual td { background: rgba(87,167,127,0.09); font-weight: 700; }
+    table.fin tr.total td { background: rgba(78,109,90,0.07); font-weight: 700; }
     .tabla-scroll { overflow-x: auto; }
     td.v { color: #2E7D52; } td.a { color: #A97514; } td.r { color: #C4553B; }
-
-    /* --- integridad --- */
-    .fin-integridad { display: grid; gap: 0.8rem;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-    .fin-int { background: var(--blanco); border-radius: 14px; padding: 0.95rem 1.05rem;
-      box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-    .fin-int .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.45rem;
-      color: var(--verde-bosque); }
-    .fin-int .t { font-size: 0.78rem; opacity: 0.72; line-height: 1.45; }
-    .fin-int.mal .n { color: #C4553B; }
+    /* Columnas de detalle: se esconden en el telefono, donde 9 columnas con
+       nowrap obligaban a arrastrar la tabla a ciegas. El boton las devuelve. */
+    .th-corta { display: none; }
+    @media (max-width: 720px) {
+      table.fin.compacta th.det, table.fin.compacta td.det { display: none; }
+      /* Esconder 4 columnas no alcanzaba: las 5 que quedan median 477px en una
+         pantalla de 375. Se aprieta el relleno, baja la tipografia y los
+         encabezados largos cambian por su version corta. */
+      table.fin.compacta { font-size: 0.78rem; }
+      table.fin.compacta th, table.fin.compacta td { padding: 0.45rem 0.35rem; }
+      table.fin.compacta .th-larga { display: none; }
+      table.fin.compacta .th-corta { display: inline; }
+    }
+    .tabla-pie { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+    .tabla-pie .fin-boton { font-size: 0.76rem; padding: 0.3rem 0.8rem; }
+    @media (min-width: 721px) { .tabla-pie { display: none; } }
 
     /* --- RAA: analisis y accion --- */
     .raa { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
@@ -139,25 +158,9 @@
     .raa-verde-nota { font-size: 0.84rem; opacity: 0.72; line-height: 1.5; }
     .raa-hist td { font-size: 0.82rem; white-space: normal; vertical-align: top; }
 
-    /* --- cobertura del dato --- */
-    .cob { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
-      box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 1rem; }
-    .cob details { border-bottom: 1px solid rgba(26,26,26,0.06); padding: 0.65rem 0; }
-    .cob details:last-child { border-bottom: 0; }
-    .cob summary { cursor: pointer; font-size: 0.88rem; display: flex;
-      justify-content: space-between; gap: 1rem; }
-    .cob summary .fuga { color: #C4553B; font-weight: 700; }
-    .cob .linea { display: flex; justify-content: space-between; gap: 1rem;
-      font-size: 0.82rem; padding: 0.25rem 0 0.25rem 1rem; opacity: 0.85; }
-    .cob .linea.mal { color: #C4553B; opacity: 1; }
-
     .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
     .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
-    @media (max-width: 720px) {
-      .bq { grid-template-columns: 1fr 78px; }
-      .bq .pista, .bq .exc { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -181,7 +184,7 @@
   <main class="fin">
     <div class="fin-barra-sup">
       <div>
-        <h1>Finanzas</h1>
+        <h1>Cómo vamos</h1>
         <p class="fin-sub" id="sub">Cargando…</p>
       </div>
       <button class="fin-boton" id="btn-refrescar">Actualizar datos</button>
@@ -190,74 +193,21 @@
     <div id="cargando" class="fin-cargando">Leyendo el maestro…</div>
 
     <div id="todo" style="display:none">
-      <div class="fin-anio" id="anio"></div>
-
-      <section class="fin-seccion">
-        <h2>Dónde está el dinero</h2>
-        <p class="fin-nota">
-          Cada bloque de gasto del año contra la banda del sector, en porcentaje de la venta.
-          La franja clara es la banda; la barra es dónde estamos. La última columna traduce el
-          exceso a quetzales al mes, que es lo único que permite comparar un bloque con otro.
-        </p>
-        <div class="fin-bloques" id="bloques"></div>
-      </section>
-
-      <section class="fin-seccion">
-        <h2>Estructura del gasto</h2>
-        <p class="fin-nota">
-          Cuánto del gasto operativo no se mueve aunque la venta caiga. Mientras más pese lo
-          fijo, más venta hace falta para llegar al punto de equilibrio.
-        </p>
-        <div class="fin-tipos" id="tipos"></div>
-      </section>
-
-      <section class="fin-seccion">
-        <h2>Mes a mes</h2>
-        <p class="fin-nota">
-          Nómina devengada de la planilla, no del pago bancario: el banco reparte los sueldos
-          de un mes entre dos y el prime cost salta sin que la operación cambie. Las propinas
-          no entran al costo laboral.
-        </p>
-        <div class="tabla-scroll">
-          <table class="fin">
-            <thead><tr>
-              <th>Mes</th><th>Ventas netas</th><th>Eventos</th><th>Comensales</th>
-              <th>Food cost</th><th>Mano de obra</th><th>Prime</th><th>Neto</th>
-            </tr></thead>
-            <tbody id="tabla-mes"></tbody>
-          </table>
-        </div>
-        <p class="fin-nota" id="nota-mes" style="margin-top:.8rem"></p>
-      </section>
-
-      <section class="fin-seccion">
-        <h2>La semana</h2>
-        <p class="fin-nota">
-          El número con semáforo es siempre la media móvil de 4, que es el cociente de las
-          sumas y no el promedio de los porcentajes. La semana cruda va como contexto: sola se
-          mueve entre 16% y 68% porque la compra no cae en la semana en que se consume.
-        </p>
-        <div class="fin-semaforos" id="semaforos"></div>
-        <div class="tabla-scroll" style="margin-top:1.1rem">
-          <table class="fin">
-            <thead><tr>
-              <th>Semana</th><th>Ventas netas</th><th>Δ</th><th>Comensales</th><th>Ticket</th>
-              <th>Food cruda</th><th>Food móvil 4</th><th>Prime móvil 4</th><th>Caja</th>
-            </tr></thead>
-            <tbody id="tabla-sem"></tbody>
-          </table>
-        </div>
-      </section>
+      <div class="fin-kpis" id="kpis"></div>
+      <div class="fin-tira" id="tira"></div>
 
       <section class="fin-seccion">
         <h2>Qué hay que responder</h2>
-        <p class="fin-nota">
-          Todo indicador en amarillo o rojo abre una tarjeta. El resultado y el costo los
-          calcula el sistema; el análisis y la acción se escriben aquí y quedan en la hoja RAA
-          del Sheet de configuración, para poder revisar la semana que viene si la acción
-          funcionó. Una acción sin nombre no es una acción: si todos son responsables, no lo
-          es nadie.
-        </p>
+        <details class="fin-ayuda">
+          <summary>Cómo funciona este bloque</summary>
+          <p>
+            Todo indicador en amarillo o rojo abre una tarjeta. El resultado y el costo los
+            calcula el sistema; el análisis y la acción se escriben aquí y quedan en la hoja RAA
+            del Sheet de configuración, para poder revisar la semana que viene si la acción
+            funcionó. Una acción sin nombre no es una acción: si todos son responsables, no lo
+            es nadie.
+          </p>
+        </details>
         <div id="raa-cargando" class="fin-nota">Cargando el bloque de acciones…</div>
         <div class="raa" id="raa"></div>
         <div id="raa-hist-caja" style="display:none;margin-top:1.4rem">
@@ -274,21 +224,38 @@
       </section>
 
       <section class="fin-seccion">
-        <h2>Integridad del dato</h2>
-        <p class="fin-nota">
-          Es lo que le da credibilidad a todo lo de arriba. Lo comprado sin factura carga el
-          IVA: sube 12% contra el mismo plato comprado con FEL.
-        </p>
-        <div class="fin-integridad" id="integridad"></div>
-        <p class="fin-nota" id="ults" style="margin-top:1rem"></p>
+        <h2>Food cost y prime cost</h2>
+        <details class="fin-ayuda">
+          <summary>Por qué el número con semáforo es la media móvil de 4</summary>
+          <p>
+            La media móvil de 4 es el cociente de las sumas, no el promedio de los porcentajes.
+            La semana cruda va como contexto: sola se mueve entre 16% y 68% porque la compra no
+            cae en la semana en que se consume. El food cost va sobre la venta sin IVA ni
+            servicio, la misma base de la meta y de las fichas.
+          </p>
+        </details>
+        <div class="fin-semaforos" id="semaforos"></div>
+      </section>
 
-        <h3 style="font-size:1rem;margin-top:1.6rem">Qué pasa con cada quetzal</h3>
-        <p class="fin-nota">
-          Dónde termina el dinero de cada hoja del maestro. No cambia ningún número de arriba:
-          sirve para ver lo que se cae en silencio. Una categoría que el cálculo no reconoce no
-          suma en ningún lado y nadie se entera.
-        </p>
-        <div class="cob" id="cobertura"></div>
+      <section class="fin-seccion">
+        <h2>Semana por semana</h2>
+        <div class="tabla-scroll">
+          <table class="fin compacta" id="tabla-sem-caja">
+            <thead><tr>
+              <th>Semana</th>
+              <th><span class="th-larga">Ventas netas</span><span class="th-corta">Ventas</span></th>
+              <th>Δ</th>
+              <th class="det">Comensales</th><th class="det">Ticket</th>
+              <th class="det">Food cruda</th>
+              <th><span class="th-larga">Food móvil 4</span><span class="th-corta">Food m4</span></th>
+              <th class="det">Prime móvil 4</th><th>Caja</th>
+            </tr></thead>
+            <tbody id="tabla-sem"></tbody>
+          </table>
+        </div>
+        <div class="tabla-pie">
+          <button class="fin-boton" id="btn-columnas">Ver todas las columnas</button>
+        </div>
       </section>
     </div>
   </main>
@@ -299,6 +266,7 @@
      nueva y el servidor la vuelve a resolver. Si agregas una llamada, pasale AUTH. */
   var AUTH = '<?= authToken ?>';
   var D = null;
+  var M = null;      // getMetasData: la meta del mes y la de cada semana
   var RAA = null;
 
   function q(n, dec) {
@@ -326,108 +294,116 @@
     return z === 'verde' ? 'v' : (z === 'amarillo' ? 'a' : (z === 'rojo' ? 'r' : ''));
   }
 
+  /* ------------------------------------------------------------ la cinta */
+
+  function unidad(t, n, c, clase) {
+    return '<div class="u"><div class="t">' + t + '</div>' +
+           '<div class="n' + (clase ? ' ' + clase : '') + '">' + n + '</div>' +
+           (c ? '<div class="c">' + c + '</div>' : '') + '</div>';
+  }
+
+  /* La meta de la semana y el ritmo del mes salen de getMetasData, que es el
+     mismo motor de la pestaña Metas: no hay un segundo calculo que se pueda
+     desincronizar. Si esa llamada falla, la cinta se dibuja igual con lo que
+     hay (venta, delta y caja) y las dos celdas de meta dicen que no se pudo. */
+  function pintarKpis() {
+    var t = D.total, u = D.ultima || {};
+    var semMeta = null;
+    if (M && M.semanas) {
+      M.semanas.forEach(function (s) { if (s.w === u.w) semMeta = s; });
+    }
+
+    var html = '';
+
+    // 1) la venta de la semana contra su meta
+    if (semMeta && semMeta.meta_hoy) {
+      var cumple = semMeta.cumple;
+      html += unidad('Venta de la semana', q(u.ventas),
+        pct(cumple) + ' de su meta · ' +
+        (semMeta.dif >= 0 ? 'Q' + Math.abs(semMeta.dif).toLocaleString('es-GT') + ' arriba'
+                          : 'faltaron ' + q(Math.abs(semMeta.dif))),
+        cumple >= 100 ? 'bien' : (cumple >= 90 ? '' : 'mal'));
+    } else {
+      html += unidad('Venta de la semana', q(u.ventas),
+        M && M.sin_meta ? 'sin meta cargada para el mes' : 'meta de la semana no disponible');
+    }
+
+    // 2) contra la semana anterior
+    html += unidad('Contra la semana anterior',
+      (u.dv >= 0 ? '+' : '') + pct(u.dv),
+      'de ' + q(D.semanas.length > 1 ? D.semanas[D.semanas.length - 2].ventas : 0) +
+        ' a ' + q(u.ventas),
+      u.dv >= 0 ? 'bien' : (u.dv >= -10 ? '' : 'mal'));
+
+    // 3) el acumulado del mes contra la meta del mes
+    if (M && !M.sin_meta && M.meta) {
+      html += unidad('Acumulado de ' + esc(M.mes), q(M.acumulado),
+        pct(M.avance) + ' de ' + q(M.meta.venta) + ' · ' +
+          M.dias.corridos + ' de ' + M.dias.total + ' días',
+        M.avance >= 100 ? 'bien' : '');
+    } else {
+      html += unidad('Acumulado del mes', M ? q(M.acumulado) : '—',
+        M && M.sin_meta ? 'sin meta cargada' : 'no disponible');
+    }
+
+    // 4) el ritmo: el acumulado contra lo que deberia llevar a esta altura
+    if (M && !M.sin_meta && M.meta) {
+      html += unidad('Ritmo del mes',
+        (M.brecha >= 0 ? '+' : '−') + q(Math.abs(M.brecha)),
+        (M.brecha >= 0 ? 'sobre' : 'bajo') + ' lo esperado al día ' + M.dias.corridos +
+          ' · proyección ' + pct(M.proyeccion_pct),
+        M.brecha >= 0 ? 'bien' : 'mal');
+    } else {
+      html += unidad('Ritmo del mes', '—', 'necesita la meta del mes');
+    }
+
+    // 5) la caja, que es la alerta de supervivencia
+    html += unidad('Caja', Number(D.dias_caja).toFixed(1) + ' días',
+      q(D.caja) + ' · gasto ' + q(D.gasto_dia) + ' al día · verde con 21',
+      D.dias_caja >= 21 ? 'bien' : (D.dias_caja >= 7 ? '' : 'mal'));
+
+    document.getElementById('kpis').innerHTML = html;
+  }
+
+  /* La integridad del dato vivia en una seccion propia al final, con cinco
+     tarjetas. Lo unico que hay que mirar todas las semanas es si algo se esta
+     cayendo; el detalle completo esta en la pestaña "El gasto". */
+  function pintarTira() {
+    var it = D.integridad, p = [];
+    function trozo(txt, alerta) {
+      return '<span' + (alerta ? ' class="alerta"' : '') + '>' + txt + '</span>';
+    }
+    p.push(trozo('Datos al ' + esc(D.gen)));
+    p.push(it.dias_atraso > 10
+      ? trozo(it.dias_atraso + ' días sin cargar ventas', true)
+      : trozo(it.dias_atraso + ' día(s) desde la última venta cargada'));
+    if (it.por_clasificar) {
+      p.push(trozo(it.por_clasificar + ' en POR_CLASIFICAR', true));
+    }
+    if (it.sin_identificar) {
+      p.push(trozo(q(it.sin_identificar) + ' sin identificar', true));
+    }
+    if (it.sin_mapear) {
+      p.push(trozo(q(it.sin_mapear) + ' en categorías sin mapear', true));
+    }
+    p.push(trozo(pct(it.factura_pct) + ' de la compra con factura'));
+    p.push(trozo('Detalle en <strong>El gasto</strong>'));
+    document.getElementById('tira').innerHTML = p.join('');
+  }
+
+  /* ------------------------------------------------------------ la vista */
+
   function pintar(d) {
     D = d;
-    var t = d.total, u = d.ultima || {};
+    var u = d.ultima || {};
     document.getElementById('sub').textContent =
-      'Año ' + d.anio + ' · ' + d.meses.length + ' meses con venta · ' +
-      (u.w ? 'última semana S' + u.w + ' (' + u.ini + ' al ' + u.fin + ') · ' : '') +
-      'datos al ' + d.gen;
+      (u.w ? 'Semana S' + u.w + ' · ' + u.ini + ' al ' + u.fin : 'Sin semana cerrada') +
+      ' · año ' + d.anio;
 
-    // ---- el año
-    function unidad(n, tt, mal) {
-      return '<div class="u"><div class="n' + (mal ? ' mal' : '') + '">' + n +
-             '</div><div class="t">' + tt + '</div></div>';
-    }
-    document.getElementById('anio').innerHTML =
-      unidad(q(t.ventas), 'Ventas netas del año') +
-      unidad(pct(t.cogsp), 'Food cost · sin servicio') +
-      unidad(pct(t.laborp), 'Mano de obra') +
-      unidad(pct(t.primep), 'Prime cost', t.primep > 65) +
-      unidad(pct(t.netop), 'Utilidad neta', t.netop < 0);
+    pintarKpis();
+    pintarTira();
 
-    // ---- bloques contra la banda
-    var tope = 0;
-    d.bloques.forEach(function (b) { tope = Math.max(tope, b.pct, b.max || 0); });
-    tope = tope * 1.12 || 1;
-    document.getElementById('bloques').innerHTML = d.bloques.map(function (b) {
-      var banda = b.max
-        ? '<span class="banda" style="left:' + (b.min / tope * 100) + '%;width:' +
-          ((b.max - b.min) / tope * 100) + '%"></span>' : '';
-      var exc = b.zona === 'rojo'
-        ? q(b.sobre_mes) + '<br><small>al mes sobre la banda</small>'
-        : (b.max ? 'dentro' : '—');
-      return '<div class="bq ' + b.zona + '">' +
-        '<div class="nom">' + esc(b.bloque) +
-          '<small>' + q(b.q) + ' en el año' +
-          (b.max ? ' · banda ' + b.min + '–' + b.max + '%' : '') + '</small></div>' +
-        '<div class="pista">' + banda +
-          '<span class="val" style="width:' + Math.min(b.pct / tope * 100, 100) + '%"></span></div>' +
-        '<div class="pct">' + pct(b.pct) + '</div>' +
-        '<div class="exc">' + exc + '</div></div>';
-    }).join('');
-
-    // ---- estructura del gasto
-    var tot = t.tipo.F + t.tipo.S + t.tipo.V;
-    var etiquetas = {
-      F: ['Fijo', 'No se mueve aunque no se venda: alquiler, seguros, suscripciones.'],
-      S: ['Semivariable', 'Se mueve, pero no en proporción: nómina base, limpieza, pauta.'],
-      V: ['Variable', 'Sigue a la venta: servicios, comisiones, mantenimiento.']
-    };
-    document.getElementById('tipos').innerHTML = ['F', 'S', 'V'].map(function (k) {
-      return '<div class="tipo"><div class="n">' +
-        (tot ? (t.tipo[k] / tot * 100).toFixed(0) : 0) + '%</div>' +
-        '<div class="t"><strong>' + etiquetas[k][0] + '</strong> · ' + q(t.tipo[k]) +
-        ' en el año<br>' + etiquetas[k][1] + '</div></div>';
-    }).join('');
-
-    // ---- mes a mes
-    // Un mes sin planilla cargada: hasta el 15-sep-2026 la mano de obra entraba en
-    // cero y el mes se pintaba rentable (septiembre leia neto +53.6%), asi que se
-    // dejaba en blanco. Desde esa fecha se ESTIMA con la ultima planilla cargada
-    // (decision de Juanma) y se marca con asterisco: es un resultado provisional.
-    var estimados = [], sinDato = 0;
-    document.getElementById('tabla-mes').innerHTML = d.meses.map(function (m) {
-      var origen = m.labor_origen || (m.devengado ? 'planilla' : 'sin dato');
-      var hay = origen !== 'sin dato';
-      if (origen === 'estimada') {
-        estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—') +
-          (m.labor_parte && m.labor_parte < 1
-            ? ', en proporción a los días cargados (' + Math.round(m.labor_parte * 100) + '% del mes)' : ''));
-      }
-      if (!hay) sinDato++;
-      var op = origen === 'planilla' ? '' : ' style="opacity:.6" title="' +
-        (hay ? 'Mano de obra estimada con la planilla de ' + esc(m.labor_desde || '') : 'Sin planilla cargada') + '"';
-      return '<tr><td>' + m.mes + (origen === 'planilla' ? '' : ' *') + '</td>' +
-        '<td>' + q(m.ventas) + '</td>' +
-        '<td style="opacity:.6">' + (m.eventos ? q(m.eventos) : '—') + '</td>' +
-        '<td>' + m.com + '</td>' +
-        '<td class="' + letra(zona('food', m.cogsp, d.meta_cogs)) + '">' + pct(m.cogsp) + '</td>' +
-        '<td' + op + '>' + (hay ? pct(m.laborp) : '—') + '</td>' +
-        '<td' + (hay ? ' class="' + letra(zona('prime', m.primep)) + '"' : '') + op + '>' +
-          (hay ? pct(m.primep) : '—') + '</td>' +
-        '<td' + (hay ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : '') + op + '>' +
-          (hay ? pct(m.netop) : '—') + '</td></tr>';
-    }).join('') +
-      '<tr class="total"><td>Año</td><td>' + q(t.ventas) + '</td>' +
-      '<td>' + q(t.eventos) + '</td><td>' + t.com + '</td>' +
-      '<td>' + pct(t.cogsp) + '</td><td>' + pct(t.laborp) + '</td>' +
-      '<td class="' + letra(zona('prime', t.primep)) + '">' + pct(t.primep) + '</td>' +
-      '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>';
-
-    var notasMes = ['Food cost sobre la venta sin IVA ni servicio, la misma base de la meta y de las fichas. ' +
-      'Mano de obra, prime cost y neto, sobre la venta total.'];
-    if (estimados.length) {
-      notasMes.push('* ' + esc(estimados.join(' · ')) + ': la planilla del mes todavía no está ' +
-        'cargada. La mano de obra se estima con la última planilla y el resultado es provisional.');
-    }
-    if (sinDato) {
-      notasMes.push('* ' + sinDato + ' mes(es) sin ninguna planilla con que estimar: mano de obra, ' +
-        'prime cost y resultado quedan en blanco a propósito.');
-    }
-    document.getElementById('nota-mes').innerHTML = notasMes.join('<br>');
-
-    // ---- la semana
+    // ---- food y prime
     function tarjeta(z, titulo, valor, meta, cruda) {
       return '<div class="fin-card ' + z + '"><h3><span class="punto"></span>' + titulo + '</h3>' +
         '<div class="fin-valor">' + valor + '</div>' +
@@ -440,14 +416,9 @@
         'Semana cruda ' + pct(u.cogsp) + ' · ' + q(u.cogs)) +
       tarjeta(zona('prime', u.prime_m4), 'Prime cost móvil 4', pct(u.prime_m4),
         'Verde bajo 60% · rojo sobre 65%',
-        'Semana cruda ' + pct(u.prime) + ' · mano de obra ' + pct(u.laborp)) +
-      tarjeta(zona('caja', d.dias_caja), 'Caja', Number(d.dias_caja).toFixed(1) + ' días',
-        q(d.caja) + ' · gasto ' + q(d.gasto_dia) + ' al día',
-        'Verde con 21 días o más') +
-      tarjeta(zona('ventas', u.dv), 'Ventas de la semana', q(u.ventas),
-        (u.dv >= 0 ? '+' : '') + pct(u.dv) + ' contra la semana anterior',
-        u.com + ' comensales · ticket ' + q(u.tp, 2));
+        'Semana cruda ' + pct(u.prime) + ' · mano de obra ' + pct(u.laborp));
 
+    // ---- semana por semana
     document.getElementById('tabla-sem').innerHTML =
       d.semanas.slice(-13).reverse().map(function (s) {
         return '<tr' + (s.w === u.w ? ' class="actual"' : '') + '>' +
@@ -455,76 +426,12 @@
           '<td>' + q(s.ventas) + '</td>' +
           '<td class="' + letra(zona('ventas', s.dv)) + '">' +
             (s.dv === undefined ? '—' : (s.dv >= 0 ? '+' : '') + pct(s.dv)) + '</td>' +
-          '<td>' + s.com + '</td><td>' + q(s.tp) + '</td>' +
-          '<td style="opacity:.55">' + pct(s.cogsp) + '</td>' +
+          '<td class="det">' + s.com + '</td><td class="det">' + q(s.tp) + '</td>' +
+          '<td class="det" style="opacity:.55">' + pct(s.cogsp) + '</td>' +
           '<td class="' + letra(zona('food', s.cogs_m4, d.meta_cogs)) + '">' + pct(s.cogs_m4) + '</td>' +
-          '<td class="' + letra(zona('prime', s.prime_m4)) + '">' + pct(s.prime_m4) + '</td>' +
+          '<td class="det ' + letra(zona('prime', s.prime_m4)) + '">' + pct(s.prime_m4) + '</td>' +
           '<td>' + q(s.caja) + '</td></tr>';
       }).join('');
-
-    // ---- integridad
-    var it = d.integridad;
-    document.getElementById('integridad').innerHTML =
-      '<div class="fin-int' + (it.por_clasificar ? ' mal' : '') + '"><div class="n">' +
-        it.por_clasificar + '</div><div class="t">partidas en POR_CLASIFICAR</div></div>' +
-      '<div class="fin-int"><div class="n">' + pct(it.factura_pct) +
-        '</div><div class="t">de la compra de mercadería con factura</div></div>' +
-      '<div class="fin-int' + (it.dias_atraso > 10 ? ' mal' : '') + '"><div class="n">' +
-        it.dias_atraso + '</div><div class="t">días desde la última venta cargada</div></div>' +
-      '<div class="fin-int' + (it.sin_identificar ? ' mal' : '') + '"><div class="n">' +
-        q(it.sin_identificar) + '</div><div class="t">salieron del banco sin identificar a ' +
-        'quién: siguen fuera del DRE hasta saberlo</div></div>' +
-      (it.sin_mapear
-        ? '<div class="fin-int mal"><div class="n">' + q(it.sin_mapear) +
-          '</div><div class="t">en categorías que el cálculo no reconoce: ese dinero se ' +
-          'cae en silencio y hay que mapearlas</div></div>'
-        : '');
-
-    // ---- cobertura: que pasa con cada quetzal
-    var cobHtml = Object.keys(it.cobertura || {}).map(function (h) {
-      var d2 = it.cobertura[h];
-      var fuga = (it.fugas || {})[h] || 0;
-      var lineas = Object.keys(d2).sort(function (a, b) { return d2[b] - d2[a]; })
-        .map(function (k) {
-          var mal = ['CATEGORIA DESCONOCIDA', 'SIN CATEGORIA', 'POR CLASIFICAR'].indexOf(k) > -1;
-          return '<div class="linea' + (mal ? ' mal' : '') + '"><span>' + esc(k) +
-                 (mal ? ' &nbsp;·&nbsp; fuga' : '') + '</span><span>' + q(d2[k]) + '</span></div>';
-        }).join('');
-      return '<details><summary><span>' + esc(nombreHoja(h)) + '</span>' +
-        '<span' + (fuga ? ' class="fuga"' : '') + '>' +
-        (fuga ? q(fuga) + ' sin destino' : 'todo con destino') + '</span></summary>' +
-        lineas + '</details>';
-    }).join('');
-    var desc = it.desconocidas || {};
-    if (Object.keys(desc).length) {
-      cobHtml += '<details open><summary><span>Categorías que el cálculo no reconoce</span>' +
-        '<span class="fuga">' + Object.keys(desc).length + '</span></summary>' +
-        Object.keys(desc).sort(function (a, b) { return desc[b] - desc[a]; }).map(function (k) {
-          return '<div class="linea mal"><span>' + esc(k) + '</span><span>' + q(desc[k]) +
-                 '</span></div>';
-        }).join('') + '</details>';
-    }
-    document.getElementById('cobertura').innerHTML = cobHtml ||
-      '<p class="fin-nota" style="padding:.8rem 0">Sin datos de cobertura.</p>';
-
-    // ---- de donde salio la planilla de cada mes
-    var resp = Object.keys(it.planilla || {}).filter(function (m) {
-      return it.planilla[m] === 'respaldo';
-    });
-    var avisoPlanilla = '';
-    if (it.planilla_error) {
-      avisoPlanilla = '<br><span style="color:#C4553B">No se pudo leer el Sheet de planilla (' +
-        esc(it.planilla_error) + '): la nómina de todos los meses salió del respaldo del código.</span>';
-    } else if (resp.length) {
-      avisoPlanilla = '<br><span style="color:#A97514">Nómina devengada del respaldo del código en ' +
-        resp.length + ' mes(es): ' + resp.map(function (m) { return 'mes ' + m; }).join(', ') +
-        '. El Sheet de planilla no trae esos meses todavía.</span>';
-    }
-
-    document.getElementById('ults').innerHTML = 'Última fila cargada · ' +
-      Object.keys(it.ult).map(function (h) {
-        return esc(nombreHoja(h)) + ' ' + esc(it.ult[h]);
-      }).join(' · ') + avisoPlanilla;
 
     document.getElementById('cargando').style.display = 'none';
     document.getElementById('todo').style.display = '';
@@ -535,7 +442,7 @@
     var c = document.getElementById('cargando');
     c.style.display = ''; c.textContent = 'Leyendo el maestro…';
     var run = google.script.run
-      .withSuccessHandler(function (d) { pintar(d); cargarRaa(forzar); })
+      .withSuccessHandler(function (d) { pintar(d); cargarMetas(forzar); cargarRaa(forzar); })
       .withFailureHandler(function (e) {
         c.innerHTML = '<div class="fin-error">No se pudo leer el maestro.<br>' +
           esc(e && e.message ? e.message : e) + '</div>';
@@ -543,7 +450,35 @@
     if (forzar) run.refrescarFinanzas(AUTH); else run.getFinanzasData(AUTH, false);
   }
 
+  /* La meta llega despues que el resto: la cinta ya se dibujo con lo que hay y
+     aca se vuelve a dibujar con las dos celdas de meta completas. Si falla, la
+     pantalla NO se rompe; las celdas quedan diciendo que no se pudo. */
+  function cargarMetas(forzar) {
+    google.script.run
+      .withSuccessHandler(function (m) { M = m; if (D) pintarKpis(); })
+      .withFailureHandler(function () { M = { error: true }; if (D) pintarKpis(); })
+      .getMetasData(AUTH, !!forzar);
+  }
+
   /* ------------------------------------------------------------------ RAA */
+
+  /* Cada indicador con su propio texto de ayuda. Hasta el 22-sep-2026 los
+     cuatro repetian el de food cost, asi que la tarjeta de Caja y la de Ventas
+     pedian explicar por que no bajo el food cost. */
+  var PISTAS = {
+    food:   ['Qué específicamente se rompió. No vale «fue una semana ocupada»: una semana ' +
+             'ocupada debería BAJAR el food cost.',
+             'La conducta exacta que cambia la compra de la semana que viene.'],
+    prime:  ['Qué movió el prime: la compra, las horas, o que cayó la venta y el costo fijo ' +
+             'quedó igual.',
+             'La conducta exacta que cambia la semana que viene: horas, turnos o compra.'],
+    caja:   ['Qué se llevó la caja esta semana: un pago grande, una caída de venta, o una ' +
+             'salida que no era de la operación.',
+             'Qué se cobra, se aplaza o se deja de pagar esta semana, con fecha.'],
+    ventas: ['Por qué cayó la venta: menos comensales, menor ticket, o una semana con menos ' +
+             'días de servicio.',
+             'Qué se hace esta semana para traer gente o subir el ticket.']
+  };
 
   function tarjetaRaa(t) {
     var abierta = t.zona === 'amarillo' || t.zona === 'rojo';
@@ -566,16 +501,17 @@
                '>' + esc(n) + '</option>';
       })).join('');
 
+    var pista = PISTAS[t.ind] || PISTAS.food;
+
     return '<div class="raa-card ' + t.zona + '" data-ind="' + t.ind + '">' + cab +
       '<div class="raa-costo">Cuesta <b>' + q(t.costo) + '</b> al mes. ' +
         esc(t.costo_txt) + '</div>' +
       '<label>Análisis</label>' +
-      '<textarea id="an_' + t.ind + '" placeholder="Qué específicamente se rompió. ' +
-        'No vale «fue una semana ocupada»: una semana ocupada debería BAJAR el food cost.">' +
+      '<textarea id="an_' + t.ind + '" placeholder="' + esc(pista[0]) + '">' +
         esc(t.analisis) + '</textarea>' +
       '<label>Acción</label>' +
-      '<textarea id="ac_' + t.ind + '" placeholder="La conducta exacta que cambia la semana ' +
-        'que viene. Si no se puede escribir, no es una acción.">' + esc(t.accion) + '</textarea>' +
+      '<textarea id="ac_' + t.ind + '" placeholder="' + esc(pista[1]) +
+        ' Si no se puede escribir, no es una acción.">' + esc(t.accion) + '</textarea>' +
       '<label>Responsable</label>' +
       '<select id="re_' + t.ind + '">' + opts + '</select>' +
       '<div class="raa-pie">' +
@@ -635,6 +571,11 @@
   }
 
   document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });
+  document.getElementById('btn-columnas').addEventListener('click', function () {
+    var t = document.getElementById('tabla-sem-caja');
+    var compacta = t.classList.toggle('compacta');
+    this.textContent = compacta ? 'Ver todas las columnas' : 'Ver solo lo esencial';
+  });
   cargar(false);
 </script>
 </body>

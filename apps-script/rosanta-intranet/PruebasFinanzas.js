@@ -221,15 +221,130 @@ function prFinanzas_(res) {
   });
 
   // --------------------------------------------------------- 4. equilibrio
+  //
+  // Un mes con margen de contribucion <= 0 NO es un fallo de calculo: es un mes
+  // que no llega al equilibrio a ningun volumen. Desde el 22-sep-2026 el motor
+  // devuelve bev null en ese caso y aca sale como AVISO, para que se vea en vez
+  // de esconderse detras de un Q0.
   prCorrer_(g, 'El punto de equilibrio es un numero usable', function () {
     var nombre = 'El punto de equilibrio es un numero usable';
-    var mal = d.meses.filter(function (m) {
-      return !(m.bev > 0) || !(m.mc > 0 && m.mc < 100) || !(m.fijo > 0);
-    }).map(function (m) { return m.mes; });
+    var rotos = [], inalcanzables = [];
+    d.meses.forEach(function (m) {
+      if (!(m.fijo > 0) || m.mc === null || m.mc === undefined || m.mc >= 100) {
+        rotos.push(m.mes);
+      } else if (m.mc <= 0 || m.bev === null) {
+        inalcanzables.push(m.mes);
+      }
+    });
+    var buenos = d.meses.length - rotos.length - inalcanzables.length;
+    prAnotar_(g, nombre,
+      rotos.length ? 'FALLA' : (inalcanzables.length ? 'AVISO' : 'OK'),
+      rotos.length
+        ? 'meses sin fijo o con margen imposible: ' + rotos.join(', ')
+        : (inalcanzables.length
+            ? 'equilibrio no alcanzable a ningun volumen en: ' + inalcanzables.join(', ') +
+              ' (margen de contribucion <= 0)'
+            : d.meses.length + ' meses con fijo, margen y equilibrio'),
+      buenos, d.meses.length);
+  });
+
+  // La prueba que faltaba, y por la que el error del margen vivio hasta el
+  // 22-sep-2026: la de arriba verifica que el equilibrio sea CALCULABLE, no que
+  // sea COHERENTE. Un mes que vendio por encima de su equilibrio tiene que
+  // haber dado resultado positivo; si vendio por debajo, negativo. Cuando el
+  // margen no restaba el gasto variable, los NUEVE meses daban holgura positiva
+  // en un año que cerro en perdida, y la bateria seguia en verde.
+  prCorrer_(g, 'El equilibrio concuerda con el resultado del mes', function () {
+    var nombre = 'El equilibrio concuerda con el resultado del mes';
+    var comparables = d.meses.filter(function (m) {
+      // Sin equilibrio alcanzable o sin resultado no hay nada que comparar.
+      if (m.bev === null || m.bev === undefined || !(m.bev > 0)) return false;
+      if (m.netop === null || m.netop === undefined) return false;
+      // Un mes que cae justo SOBRE el equilibrio no dice nada...
+      if (Math.abs(m.ventas - m.bev) <= m.ventas * 0.02) return false;
+      // ...y uno cuyo RESULTADO es practicamente cero, tampoco. Falto esta
+      // mitad en la primera version (22-sep-2026): abril cerro en 0.0% —puede
+      // ser +Q80 sobre Q159,917— y la prueba leyo ese signo como si fuera una
+      // señal. Con el resultado en el ruido, el signo no informa nada, igual
+      // que con la venta pegada al equilibrio. El umbral es medio punto de la
+      // venta del mes.
+      if (Math.abs(m.netop) < 0.5) return false;
+      return true;
+    });
+    if (!comparables.length) {
+      prAnotar_(g, nombre, 'SALTADA',
+        'ningun mes tiene equilibrio alcanzable y resultado con que compararlo', 0, 0);
+      return;
+    }
+    var fuera = d.meses.length - comparables.length;
+    var mal = comparables.filter(function (m) {
+      return (m.ventas > m.bev) !== (m.netop > 0);
+    }).map(function (m) {
+      // Con los NUMEROS. Un "vendio bajo el equilibrio y el resultado fue
+      // positivo" sin cifras no se puede diagnosticar: no se sabe si es un mes
+      // pegado al borde o una incoherencia de verdad, y obliga a adivinar.
+      return m.mes + ': vendio Q' + Math.round(m.ventas).toLocaleString('es-GT') +
+             ' contra un equilibrio de Q' + Math.round(m.bev).toLocaleString('es-GT') +
+             ' (' + (m.ventas > m.bev ? '+' : '-') +
+             'Q' + Math.round(Math.abs(m.ventas - m.bev)).toLocaleString('es-GT') + ')' +
+             ' y el resultado fue ' + m.netop + '% (Q' +
+             Math.round(m.ventas * m.netop / 100).toLocaleString('es-GT') + ')' +
+             ' · fijo Q' + Math.round(m.fijo).toLocaleString('es-GT') +
+             ' · margen ' + m.mc + '%';
+    });
     prAnotar_(g, nombre, mal.length === 0 ? 'OK' : 'FALLA',
-      mal.length ? 'meses sin equilibrio calculable: ' + mal.join(', ')
-                 : d.meses.length + ' meses con fijo, margen y equilibrio',
-      d.meses.length - mal.length, d.meses.length);
+      mal.length ? 'meses incoherentes: ' + mal.join(', ')
+                 : comparables.length + ' meses coherentes' +
+                   (fuera ? ' · ' + fuera + ' fuera de comparacion (pegados al ' +
+                            'equilibrio o con resultado en cero)' : ''),
+      comparables.length - mal.length, comparables.length);
+  });
+
+  // -------------------------------------------------------- 4b. presupuesto
+  //
+  // La pestana PRESUPUESTO es OPCIONAL: sin ella la pantalla cae a la banda del
+  // sector y lo dice. Lo que NO puede pasar en silencio es que este puesta y no
+  // se aplique, que es lo que ocurre si el nombre de una seccion no calza
+  // exacto con el bloque del DRE o si nace un bloque nuevo sin su fila.
+  prCorrer_(g, 'El presupuesto por seccion calza con los bloques del DRE', function () {
+    var nombre = 'El presupuesto por seccion calza con los bloques del DRE';
+    var P = d.presupuesto;
+    if (!P) {
+      prAnotar_(g, nombre, 'FALLA',
+        'getFinanzasData no devolvio presupuesto: falta _finPresupuesto_ en la salida', 0, 1);
+      return;
+    }
+    if (P.error) {
+      prAnotar_(g, nombre, 'FALLA', 'no se pudo leer: ' + P.error, 0, 1);
+      return;
+    }
+    if (!P.existe) {
+      prAnotar_(g, nombre, 'SALTADA',
+        'la pestana ' + PRESU_HOJA + ' no existe todavia: correr instalarPresupuesto()', 0, 0);
+      return;
+    }
+    var puestas = Object.keys(P.secciones || {});
+    var bloques = Object.keys(FIN_REF);
+    // Un bloque con gasto en el año y sin presupuesto no es una falla —Juanma
+    // puede decidir no presupuestarlo— pero si es un aviso: se esta midiendo
+    // contra la banda del sector sin haberlo elegido.
+    var conGasto = d.bloques.filter(function (b) { return b.q > 0; })
+      .map(function (b) { return b.bloque; });
+    var sinPresu = conGasto.filter(function (b) { return puestas.indexOf(b) === -1; });
+
+    if (P.desconocidas && P.desconocidas.length) {
+      prAnotar_(g, nombre, 'FALLA',
+        'la hoja tiene secciones que no son bloques del DRE y no se aplican a nada: ' +
+        P.desconocidas.join(', ') + '. Los bloques validos son: ' + bloques.join(', '),
+        puestas.length, puestas.length + P.desconocidas.length);
+      return;
+    }
+    prAnotar_(g, nombre, sinPresu.length ? 'AVISO' : 'OK',
+      sinPresu.length
+        ? sinPresu.length + ' bloque(s) con gasto en el año y sin presupuesto, midiendose ' +
+          'contra la banda del sector: ' + sinPresu.join(', ')
+        : puestas.length + ' secciones presupuestadas, todas calzan con su bloque del DRE',
+      conGasto.length - sinPresu.length, conGasto.length);
   });
 
   // ---------------------------------------------------------------- 5. RAA
@@ -409,6 +524,41 @@ function prFinanzas_(res) {
     var an = (d.integridad && d.integridad.anuladas) || { n: 0, q: 0 };
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
       (ok ? '' : 'destino "' + destino + '" · ') + an.n + ' anuladas fuera del calculo por Q' + Math.round(an.q),
+      ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'Una factura ajena queda fuera a proposito', function () {
+    var nombre = 'Una factura ajena queda fuera a proposito';
+    // 21-sep-2026 (Juanma): FACTURA_AJENA no es del restaurante ni personal. Sin la
+    // categoria en FIN_FUERA caeria en CATEGORIA DESCONOCIDA y saldria como fuga.
+    var destino = _finDestino_('FACTURA_AJENA', '01_FEL_Maestro', false, '');
+    var ok = _finEn_(FIN_FUERA, 'FACTURA_AJENA') && destino === 'fuera (a proposito)';
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA', 'destino "' + destino + '"', ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'La factura manda: el pago con factura no suma', function () {
+    var nombre = 'La factura manda: el pago con factura no suma';
+    // Regla 15 (21-sep-2026, Juanma): prioridad a la factura; el banco solo si no hay
+    // factura. Primero el casador con datos de juguete, con sus controles negativos;
+    // despues el dato real, que no puede venir vacio.
+    var F = [{ dia: 100, q: 2000, bloque: 'Prestadores y honorarios', llave: 'f1', orden: 1 },
+             { dia: 100, q: 550,  bloque: 'Bienes de uso',            llave: 'f2', orden: 2 }];
+    var P = [{ dia: 100, q: 2000, bloque: 'Prestadores y honorarios', llave: 'casa', orden: 1 },
+             { dia: 101, q: 2000, bloque: 'Prestadores y honorarios', llave: 'segundo pago, misma factura', orden: 2 },
+             { dia: 100, q: 550,  bloque: 'Mantencion',               llave: 'otro bloque', orden: 3 },
+             { dia: 100 + FIN_FM_DIAS_ANTES + 1, q: 550, bloque: 'Bienes de uso', llave: 'fuera de ventana', orden: 4 },
+             { dia: 100, q: 551,  bloque: 'Bienes de uso',            llave: 'otro monto', orden: 5 }];
+    var c = _finCasarPagos_(F, P), llaves = Object.keys(c);
+    var juguete = llaves.length === 1 && c['casa'] === 'f1';
+    var fm = (d.integridad && d.integridad.factura_manda) || { n: 0, q: 0 };
+    var destino = _finDestino_('SERVICIOS_PROFESIONALES', '03_Banco_Industrial', false, '', true);
+    var espejo = destino === 'REGLA 15: tiene factura FEL';
+    var ok = juguete && espejo && fm.n > 0;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      !juguete ? 'el casador caso ' + JSON.stringify(c) + ' y debia casar solo "casa" con f1'
+      : !espejo ? 'destino "' + destino + '"'
+      : !fm.n ? 'ningun pago del año caso con su factura: el casador no esta corriendo sobre el maestro'
+      : fm.n + ' pagos con factura fuera del calculo por Q' + Math.round(fm.q),
       ok ? 1 : 0, 1);
   });
 

@@ -13,10 +13,10 @@
     .cmp-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
       flex-wrap: wrap; gap: 0.75rem; }
     .cmp-boton { background: transparent; color: var(--verde-bosque);
-      border: 1px solid rgba(69,107,80,0.35); border-radius: 999px;
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
       font-family: 'Lato', Arial, sans-serif; }
-    .cmp-boton:hover { background: rgba(69,107,80,0.07); }
+    .cmp-boton:hover { background: rgba(78,109,90,0.07); }
 
     .cmp-hero { background: var(--verde-bosque); color: var(--blanco);
       border-radius: 22px; padding: 1.8rem 1.9rem; margin-top: 1.5rem; }
@@ -73,6 +73,26 @@
     .cmp-error { background: #FBEAE9; color: #8C1D18; border-radius: 14px;
       padding: 1rem 1.2rem; font-size: 0.9rem; }
     .tabla-scroll { overflow-x: auto; }
+    /* El P&L de cada mes. Vivia en "La semana" y se mudo aca el 22-sep-2026:
+       es una tabla mensual y su lugar es la pestaña de los meses. Llega de
+       getFinanzasData, el mismo motor de "Como vamos" y "El gasto". */
+    table.pnl { width: 100%; border-collapse: collapse; background: var(--blanco);
+      border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
+      font-size: 0.86rem; }
+    table.pnl th, table.pnl td { padding: 0.55rem 0.7rem; text-align: right;
+      border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
+    table.pnl th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.pnl th:first-child, table.pnl td:first-child { text-align: left; }
+    table.pnl tr:last-child td { border-bottom: 0; }
+    table.pnl tr.total td { background: rgba(78,109,90,0.07); font-weight: 700; }
+    table.pnl td.v { color: #2E7D52; } table.pnl td.a { color: #A97514; }
+    table.pnl td.r { color: #C4553B; }
+    @media (max-width: 720px) {
+      table.pnl { font-size: 0.78rem; }
+      table.pnl th, table.pnl td { padding: 0.45rem 0.35rem; }
+      table.pnl th.det, table.pnl td.det { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -96,7 +116,7 @@
   <main class="cmp">
     <div class="cmp-barra-sup">
       <div>
-        <h1 id="titulo"><?= new Date().getFullYear() ?> contra <?= new Date().getFullYear() - 1 ?></h1>
+        <h1 id="titulo">Mes a mes</h1>
         <p class="cmp-sub" id="sub">Cargando…</p>
       </div>
       <button class="cmp-boton" id="btn-refrescar">Actualizar datos</button>
@@ -104,6 +124,8 @@
 
     <div id="cargando" class="cmp-cargando">Leyendo el maestro…</div>
     <div id="todo" style="display:none"></div>
+    <section class="cmp-seccion" id="pnl-caja"></section>
+    <section class="cmp-seccion" id="personal-caja"></section>
   </main>
 
 <script>
@@ -123,6 +145,14 @@ var AUTH = '<?= authToken ?>';
     if (n === null || n === undefined) return '—';
     return (n >= 0 ? '+' : '−') + Math.abs(Number(n)).toFixed(1) + '%';
   }
+
+  /* pct() lleva signo porque esta hecho para VARIACIONES contra el año pasado.
+     Una proporcion —extras sobre la venta— no es una variacion, y con un "+"
+     delante se lee como si hubiera subido. */
+  function prop(n) {
+    if (n === null || n === undefined) return '—';
+    return Number(n).toFixed(1) + '%';
+  }
   function esc(s) {
     return String(s === null || s === undefined ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -137,9 +167,10 @@ var AUTH = '<?= authToken ?>';
     // 25 es el año ANTERIOR y 26 el del calculo, cualquiera sea.
     var A = d.anio || 2026, P = d.anio_ant || 2025;
     var a2 = String(A).slice(2), p2 = String(P).slice(2);
-    document.getElementById('titulo').textContent = A + ' contra ' + P;
+    // El h1 se queda en "Mes a mes", que es como se llama la pestaña: el
+    // "A contra P" pasa al subtitulo, donde ya vive el resto del contexto.
     document.getElementById('sub').textContent =
-      T.meses + ' meses completos comparables · actualizado ' + d.gen;
+      A + ' contra ' + P + ' · ' + T.meses + ' meses completos comparables · actualizado ' + d.gen;
 
     var claseT = T.dif >= 0 ? 'verde' : 'rojo';
 
@@ -178,7 +209,7 @@ var AUTH = '<?= authToken ?>';
       '</div></div>';
 
     // ---- tabla
-    html += '<section class="cmp-seccion"><h2>Mes a mes</h2>' +
+    html += '<section class="cmp-seccion"><h2>Venta contra ' + P + '</h2>' +
       '<p class="cmp-nota">Venta neta, sin IVA y sin eventos, igual que en el resto del ' +
       'sistema. La comparación es <strong>ticket contra ticket</strong>' +
       (P <= 2025 ? ': de 2025 el POS no exporta comensales, así que el ticket promedio de esta ' +
@@ -221,6 +252,225 @@ var AUTH = '<?= authToken ?>';
     todo.innerHTML = html;
     c.style.display = 'none';
     todo.style.display = '';
+    pintarPnl();
+  }
+
+  /* ---- El resultado de cada mes (P&L mensual) ----
+     Llega de getFinanzasData, aparte del comparativo: son dos preguntas
+     distintas sobre los mismos meses —cuanto se vendio contra el año pasado,
+     y que dejo cada mes— y cada una tiene su motor, los dos ya cacheados.
+     Si esta llamada falla, el comparativo de arriba se ve igual. */
+  var FIN = null;
+
+  function pintarPnl() {
+    var caja = document.getElementById('pnl-caja');
+    if (!caja || !FIN) return;
+    var d = FIN, t = d.total;
+
+    function zonaFood(v) {
+      if (v === null || v === undefined) return '';
+      return v <= d.meta_cogs ? 'v' : (v <= d.meta_cogs + 3 ? 'a' : 'r');
+    }
+    function zonaPrime(v) {
+      if (v === null || v === undefined) return '';
+      return v < 60 ? 'v' : (v <= 65 ? 'a' : 'r');
+    }
+
+    var estimados = [], sinDato = 0;
+    var filas = d.meses.map(function (m) {
+      var origen = m.labor_origen || (m.devengado ? 'planilla' : 'sin dato');
+      var hay = origen !== 'sin dato';
+      if (origen === 'estimada') {
+        estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—') +
+          (m.labor_parte && m.labor_parte < 1
+            ? ', en proporción a los días cargados (' + Math.round(m.labor_parte * 100) +
+              '% del mes)' : ''));
+      }
+      if (!hay) sinDato++;
+      var op = origen === 'planilla' ? '' : ' style="opacity:.6" title="' +
+        (hay ? 'Mano de obra estimada con la planilla de ' + esc(m.labor_desde || '')
+             : 'Sin planilla cargada') + '"';
+      return '<tr><td>' + m.mes + (origen === 'planilla' ? '' : ' *') + '</td>' +
+        '<td>' + q(m.ventas) + '</td>' +
+        '<td class="det" style="opacity:.6">' + (m.eventos ? q(m.eventos) : '—') + '</td>' +
+        '<td class="det">' + m.com + '</td>' +
+        '<td class="' + zonaFood(m.cogsp) + '">' + pct(m.cogsp) + '</td>' +
+        '<td class="det"' + op + '>' + (hay ? pct(m.laborp) : '—') + '</td>' +
+        '<td' + (hay ? ' class="' + zonaPrime(m.primep) + '"' : '') + op + '>' +
+          (hay ? pct(m.primep) : '—') + '</td>' +
+        '<td' + (hay ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : '') + op + '>' +
+          (hay ? pct(m.netop) : '—') + '</td></tr>';
+    }).join('');
+
+    var notas = ['Food cost sobre la venta sin IVA ni servicio, la misma base de la meta y ' +
+      'de las fichas. Mano de obra, prime cost y neto, sobre la venta total.'];
+    if (estimados.length) {
+      notas.push('* ' + esc(estimados.join(' · ')) + ': la planilla del mes todavía no está ' +
+        'cargada. La mano de obra se estima con la última planilla y el resultado es provisional.');
+    }
+    if (sinDato) {
+      notas.push('* ' + sinDato + ' mes(es) sin ninguna planilla con que estimar: mano de obra, ' +
+        'prime cost y resultado quedan en blanco a propósito.');
+    }
+
+    caja.innerHTML =
+      '<h2>El resultado de cada mes</h2>' +
+      '<p class="cmp-nota">Nómina devengada de la planilla, no del pago bancario: el banco ' +
+      'reparte los sueldos de un mes entre dos y el prime cost salta sin que la operación ' +
+      'cambie. Las propinas no entran al costo laboral.</p>' +
+      '<div class="tabla-scroll"><table class="pnl"><thead><tr>' +
+      '<th>Mes</th><th>Ventas netas</th><th class="det">Eventos</th>' +
+      '<th class="det">Comensales</th><th>Food cost</th><th class="det">Mano de obra</th>' +
+      '<th>Prime</th><th>Neto</th></tr></thead><tbody>' + filas +
+      '<tr class="total"><td>Año</td><td>' + q(t.ventas) + '</td>' +
+      '<td class="det">' + q(t.eventos) + '</td><td class="det">' + t.com + '</td>' +
+      '<td>' + pct(t.cogsp) + '</td><td class="det">' + pct(t.laborp) + '</td>' +
+      '<td class="' + zonaPrime(t.primep) + '">' + pct(t.primep) + '</td>' +
+      '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="cmp-nota" style="margin-top:.8rem">' + notas.join('<br>') + '</p>';
+
+    pintarPersonal();
+  }
+
+  /* ---- El personal: fijo contra variable ----
+     La hoja de planilla marca al personal variable con el puesto "Extra". El
+     motor lo lee desde el 22-sep-2026 (_finPlanillaDetalle_ en FinanzasDatos.js);
+     antes solo existia UN numero de planilla por mes y no habia forma de ver
+     cuanto del personal se mueve con la venta.
+
+     Por que MENSUAL y no semanal: la planilla es una pestaña por mes, sin fecha
+     por turno. La mano de obra semanal que muestra el resto del sistema es la
+     planilla del mes dividida entre 4.345 —el mismo numero todas las semanas—,
+     asi que una vista semanal del personal seria una linea plana. Para llegar a
+     la semanal hacen falta los dias o turnos trabajados, que la hoja tiene como
+     columna ("Dia laborados") pero vacia. Es el bloqueo del SPLH. */
+  function pintarPersonal() {
+    var caja = document.getElementById('personal-caja');
+    if (!caja || !FIN) return;
+    var meses = FIN.meses.filter(function (m) { return m.planilla; });
+    if (!meses.length) {
+      caja.innerHTML = '<h2>El personal</h2><p class="cmp-nota">La hoja de planilla no trae ' +
+        'la columna <strong>Puesto</strong> en ningún mes, así que no se puede separar el ' +
+        'personal fijo del variable.</p>';
+      return;
+    }
+
+    var estimados = [], descuadra = [], enCurso = [];
+    var filas = meses.map(function (m) {
+      var P = m.planilla;
+      var tot = P.fija + P.extra;
+      var pExtra = tot ? P.extra / tot * 100 : 0;
+      // El numero de la decision: el personal variable sobre la venta del mes.
+      // Si el personal sigue a la demanda este porcentaje se queda quieto; si
+      // sube mientras la venta baja, se esta pagando gente que no se necesita.
+      //
+      // El mes EN CURSO no se puede medir: la pestaña de planilla es del mes
+      // completo y la venta va solo hasta el ultimo dia cargado. Septiembre
+      // daba 25.5% de planilla sobre venta, contra 17-23% del resto del año,
+      // y el salto era del denominador, no del personal. Se deja en blanco con
+      // su aviso en vez de mostrar un numero que no compara.
+      var parcial = m.labor_parte !== undefined && m.labor_parte !== null && m.labor_parte < 1;
+      var sVenta = (m.ventas && !parcial) ? P.extra / m.ventas * 100 : null;
+      if (P.origen !== 'planilla') estimados.push(m.mes);
+      if (P.cuadra === false) descuadra.push(m.mes);
+      if (parcial) enCurso.push(m.mes);
+      return { mes: m.mes, ventas: m.ventas, fija: P.fija, extra: P.extra, tot: tot,
+               eCocina: P.extra_cocina || 0, eBarra: P.extra_barra || 0,
+               eSinArea: P.extra_sin_area || 0, finiq: P.finiquito || 0,
+               n_extra: P.n_extra, pExtra: pExtra, sVenta: sVenta, parcial: parcial,
+               pTot: (m.ventas && !parcial) ? tot / m.ventas * 100 : null,
+               est: P.origen !== 'planilla' };
+    });
+
+    // La referencia: el mes con menor peso de extras sobre la venta. No es una
+    // meta inventada, es el mejor mes propio.
+    var conV = filas.filter(function (f) { return f.sVenta !== null; });
+    var mejor = null;
+    conV.forEach(function (f) { if (!mejor || f.sVenta < mejor.sVenta) mejor = f; });
+
+    // Cada mes contra el anterior. Es la comparacion que pidio Juanma: lo que
+    // importa de los extras no es su monto suelto sino si subieron mientras la
+    // venta bajaba, que es lo que paso entre junio y agosto.
+    filas.forEach(function (f, i) {
+      var a = i > 0 ? filas[i - 1] : null;
+      f.extraAnt = a ? a.extra : null;
+      f.dExtra = a ? f.extra - a.extra : null;
+      f.ventaAnt = a ? a.ventas : null;
+      f.dVenta = (a && a.ventas) ? (f.ventas - a.ventas) / a.ventas * 100 : null;
+      // La señal: extras arriba con venta abajo. Es la unica combinacion que
+      // no se explica sola.
+      f.alarma = f.dExtra !== null && f.dExtra > 0 && f.dVenta !== null && f.dVenta < 0;
+    });
+
+    // La columna "sin area" solo aparece si de verdad hay extras sin etiquetar:
+    // una columna de puntos en todas las filas es ruido.
+    var haySinArea = filas.some(function (f) { return f.eSinArea > 0; });
+    var conFiniquito = filas.filter(function (f) { return f.finiq > 0; });
+    var sinArea = filas.filter(function (f) { return f.eSinArea > 0; })
+      .map(function (f) { return f.mes; });
+
+    var cuerpo = filas.map(function (f) {
+      return '<tr' + (f.alarma ? ' class="curso"' : '') + '><td>' + esc(f.mes) +
+        (f.est ? ' *' : '') + (f.parcial ? ' <span class="tag">en curso</span>' : '') + '</td>' +
+        '<td>' + (f.eCocina ? q(f.eCocina) : '·') + '</td>' +
+        '<td>' + (f.eBarra ? q(f.eBarra) : '·') + '</td>' +
+        (haySinArea ? '<td>' + (f.eSinArea ? q(f.eSinArea) : '·') + '</td>' : '') +
+        '<td>' + q(f.extra) + '</td></tr>';
+    }).join('');
+
+    // La fila del año: la suma de cada columna. Con nueve meses a la vista, el
+    // total es la pregunta que sigue.
+    var tC = 0, tB = 0, tS = 0, tE = 0;
+    filas.forEach(function (f) { tC += f.eCocina; tB += f.eBarra; tS += f.eSinArea; tE += f.extra; });
+    cuerpo += '<tr class="tot"><td>Total</td>' +
+      '<td>' + q(tC) + '</td><td>' + q(tB) + '</td>' +
+      (haySinArea ? '<td>' + q(tS) + '</td>' : '') +
+      '<td>' + q(tE) + '</td></tr>';
+
+    var notas = [];
+    notas.push('El área de cada extra sale de su <strong>puesto</strong> en la planilla: ' +
+      '«Extra cocina» o «Extra barra». <strong>Barra y sala son lo mismo.</strong>');
+    if (conFiniquito.length) {
+      notas.push('<strong>Finiquitos</strong> en ' +
+        conFiniquito.map(function (f) { return esc(f.mes) + ' ' + q(f.finiq); }).join(' · ') +
+        '. <strong>No entran en esta tabla</strong>: un finiquito es costo de nómina, no mano ' +
+        'de obra de la operación.');
+    }
+    if (sinArea.length) {
+      notas.push('<span style="color:#A97514">En ' + esc(sinArea.join(' · ')) + ' hay extras ' +
+        'cuyo puesto dice «Extra» sin área: suman en el total pero no en cocina ni en barra. ' +
+        'Se etiquetan poniendo «Extra cocina» o «Extra barra» en su puesto.</span>');
+    }
+    if (estimados.length) {
+      notas.push('* ' + esc(estimados.join(' · ')) + ': la planilla de ese mes todavía no ' +
+        'está cargada y el reparto es el de la última cargada.');
+    }
+    if (enCurso.length) {
+      notas.push('<strong>' + esc(enCurso.join(' · ')) + '</strong> está en curso: la ' +
+        'planilla es del mes completo, así que el mes todavía no cierra.');
+    }
+    if (descuadra.length) {
+      notas.push('<span style="color:#C4553B">En ' + esc(descuadra.join(' · ')) +
+        ' la suma de las filas no coincide con el «Sub total» de la hoja: el reparto y el ' +
+        'total del DRE salen de bases distintas. Hay que revisar esa pestaña.</span>');
+    }
+
+    caja.innerHTML =
+      '<h2>Mano de obra extra</h2>' +
+      '<div class="tabla-scroll"><table class="pnl"><thead><tr>' +
+      '<th>Mes</th><th>Extras cocina</th><th>Extras barra</th>' +
+      (haySinArea ? '<th>Extras sin área</th>' : '') +
+      '<th>Total extras</th>' +
+      '</tr></thead><tbody>' + cuerpo + '</tbody></table></div>' +
+      '<p class="cmp-nota" style="margin-top:.8rem">' + notas.join('<br>') + '</p>';
+  }
+
+  function cargarPnl(forzar) {
+    google.script.run
+      .withSuccessHandler(function (d) { FIN = d; pintarPnl(); })
+      .withFailureHandler(function () { FIN = null; })
+      .getFinanzasData(AUTH, !!forzar);
   }
 
   function cargar(forzar) {
@@ -234,6 +484,7 @@ var AUTH = '<?= authToken ?>';
           esc(e && e.message ? e.message : e) + '</div>';
       })
       .getComparativoData(AUTH, !!forzar);
+    cargarPnl(forzar);
   }
 
   document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });

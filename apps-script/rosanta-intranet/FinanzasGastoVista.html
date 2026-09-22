@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* "El gasto" · Pilar 3, Finance & Data OS.
+       Que se gasto ESTA SEMANA: la mercaderia partida en Cocina y Barra contra
+       su techo, y cada seccion del DRE contra su propia media. Solo lectura.
+
+       Historia, para no repetirla: nacio el 22-sep-2026 llevandose la cinta del
+       año y los bloques contra la banda del sector desde "La semana". Juanma la
+       rechazo dos veces y tenia razon las dos: era una pantalla ANUAL para
+       alguien que decide por SEMANA, y de una foto del año no sale ninguna
+       accion. La version de ahora es semanal de punta a punta; el año quedo al
+       final, plegado, como contexto.
+
+       Para esto hubo que tocar el motor: hasta el 22-sep la compra por area y
+       las secciones del DRE solo se acumulaban por MES. Ver _sem() y _semArea()
+       en FinanzasDatos.js. */
+    main.fin { max-width: 1140px; }
+    .fin-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+    .fin-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .fin-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
+      padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
+      font-family: 'Lato', Arial, sans-serif; }
+    .fin-boton:hover { background: rgba(78,109,90,0.07); }
+
+    /* --- la cinta: el gasto de la semana --- */
+    .fin-kpis { background: var(--verde-bosque); color: var(--blanco);
+      border-radius: 20px; padding: 1.35rem 1.5rem; margin-top: 1.25rem;
+      display: grid; gap: 1rem 1.25rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .fin-kpis .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
+    .fin-kpis .u:first-child { border-left: 0; padding-left: 0; }
+    .fin-kpis .t { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+      opacity: 0.85; }
+    .fin-kpis .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.8rem;
+      line-height: 1.15; margin-top: 0.15rem; }
+    .fin-kpis .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
+    .fin-kpis .mal { color: #FFB4A2; }
+    .fin-kpis .bien { color: #BFE8CE; }
+    @media (max-width: 560px) {
+      .fin-kpis { padding: 1.1rem 1.15rem; gap: 1rem 1.1rem; grid-template-columns: 1fr 1fr; }
+      .fin-kpis .u { border-left: 0; padding-left: 0; }
+      .fin-kpis .u:first-child { grid-column: 1 / -1; }
+      .fin-kpis .n { font-size: 1.5rem; }
+      .fin-kpis .u:first-child .n { font-size: 1.9rem; }
+      .fin-kpis .c { font-size: 0.72rem; }
+    }
+
+    .fin-seccion { margin-top: 2.2rem; }
+    .fin-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
+    .fin-nota { font-size: 0.84rem; opacity: 0.75; margin-bottom: 1rem; line-height: 1.55;
+      max-width: 78ch; }
+    .fin-ayuda { font-size: 0.82rem; opacity: 0.75; line-height: 1.55; max-width: 78ch;
+      margin-bottom: 1rem; }
+    .fin-ayuda summary { cursor: pointer; }
+    .fin-ayuda p { margin-top: 0.45rem; }
+
+    /* --- las dos areas --- */
+    .areas { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .area { background: var(--blanco); border-radius: 20px; padding: 1.25rem 1.35rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-top: 6px solid var(--verde-medio); }
+    .area.amarillo { border-top-color: #E0A93B; }
+    .area.rojo { border-top-color: #C4553B; }
+    .area.gris { border-top-color: #BDBDBD; }
+    .area h3 { font-size: 1.05rem; display: flex; align-items: center;
+      justify-content: space-between; gap: 0.5rem; }
+    .area h3 .meta { font-size: 0.74rem; font-family: 'Lato', Arial, sans-serif;
+      text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; }
+    /* El numero grande es el ACUMULADO DEL MES: es el que controla. La compra va
+       a saltos y el consumo es parejo —una caja de vino se paga una semana y se
+       toma en tres—, asi que una semana suelta da falsas alarmas. La semana va
+       abajo, como guia de que llevar al mercado. */
+    .area .saldo { font-family: 'Playfair Display', Georgia, serif; font-size: 2.2rem;
+      line-height: 1.1; margin: 0.55rem 0 0.1rem; color: var(--verde-bosque); }
+    .area.rojo .saldo { color: #C4553B; }
+    .area.amarillo .saldo { color: #A97514; }
+    .area .saldo-t { font-size: 0.82rem; opacity: 0.75; }
+    .area .pista { position: relative; height: 10px; border-radius: 999px;
+      background: rgba(0,0,0,0.07); margin: 0.9rem 0 0.35rem; overflow: hidden; }
+    .area .pista span { position: absolute; top: 0; bottom: 0; left: 0;
+      background: var(--verde-medio); border-radius: 999px; }
+    .area.amarillo .pista span { background: #E0A93B; }
+    .area.rojo .pista span { background: #C4553B; }
+    .area .pista-t { font-size: 0.76rem; opacity: 0.7; display: flex;
+      justify-content: space-between; gap: 0.5rem; }
+    .area .sem { margin-top: 0.9rem; padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,0,0,0.08); font-size: 0.84rem; line-height: 1.55; }
+    .area .sem b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; }
+
+    /* --- tablas --- */
+    table.fin { width: 100%; border-collapse: collapse; background: var(--blanco);
+      border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      font-size: 0.86rem; }
+    table.fin th, table.fin td { padding: 0.55rem 0.7rem; text-align: right;
+      border-bottom: 1px solid rgba(0,0,0,0.06); white-space: nowrap; }
+    table.fin th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.fin th:first-child, table.fin td:first-child { text-align: left; }
+    table.fin tr:last-child td { border-bottom: 0; }
+    table.fin tr.actual td { background: rgba(87,167,127,0.10); font-weight: 700; }
+    table.fin tr.alza td { background: rgba(196,85,59,0.07); }
+    .tabla-scroll { overflow-x: auto; }
+    td.v { color: #2E7D52; } td.a { color: #A97514; } td.r { color: #C4553B; }
+    .th-corta { display: none; }
+    @media (max-width: 720px) {
+      table.fin.compacta th.det, table.fin.compacta td.det { display: none; }
+      table.fin.compacta { font-size: 0.78rem; }
+      table.fin.compacta th, table.fin.compacta td { padding: 0.45rem 0.35rem; }
+      table.fin.compacta .th-larga { display: none; }
+      table.fin.compacta .th-corta { display: inline; }
+      /* La primera columna deja de ser nowrap: "Prestadores y honorarios" en una
+         sola linea empujaba la tabla del DRE a 485px en una pantalla de 375. */
+      table.fin.compacta th:first-child, table.fin.compacta td:first-child {
+        white-space: normal; }
+    }
+    .tabla-pie { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+    .tabla-pie .fin-boton { font-size: 0.76rem; padding: 0.3rem 0.8rem; }
+    @media (min-width: 721px) { .tabla-pie { display: none; } }
+
+    /* --- el año, plegado al final --- */
+    .anio-caja { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .anio-caja > summary { cursor: pointer; padding: 0.9rem 0; font-size: 0.95rem;
+      font-family: 'Playfair Display', Georgia, serif; color: var(--verde-bosque); }
+    .anio-cuerpo { padding-bottom: 1.1rem; }
+    .bq { display: grid; grid-template-columns: 190px 1fr 96px 108px; gap: 1rem;
+      align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .bq:last-child { border-bottom: 0; }
+    .bq .nom { font-size: 0.89rem; }
+    .bq .nom small { display: block; opacity: 0.6; font-size: 0.75rem; }
+    .bq .pista { position: relative; height: 12px; background: rgba(0,0,0,0.06);
+      border-radius: 999px; }
+    .bq .banda { position: absolute; top: 0; bottom: 0; background: rgba(87,167,127,0.30);
+      border-radius: 2px; }
+    .bq .val { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px;
+      background: var(--verde-medio); }
+    .bq.rojo .val { background: #C4553B; }
+    .bq.bajo .val { background: var(--lila); }
+    .bq.gris .val { background: #BDBDBD; }
+    .bq .pct { text-align: right; font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.1rem; }
+    .bq.rojo .pct { color: #C4553B; }
+    .bq .exc { text-align: right; font-size: 0.78rem; opacity: 0.8; line-height: 1.35; }
+    .bq.rojo .exc { color: #C4553B; opacity: 1; }
+    .bq-leyenda { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; font-size: 0.76rem;
+      opacity: 0.75; margin-top: 0.7rem; }
+    .bq-leyenda span { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .bq-leyenda i { width: 22px; height: 8px; border-radius: 999px; display: inline-block; }
+    @media (max-width: 720px) {
+      .bq { grid-template-columns: 1fr 78px; }
+      .bq .pista, .bq .exc { display: none; }
+    }
+
+    /* --- integridad --- */
+    .fin-integridad { display: grid; gap: 0.8rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .fin-int { background: var(--blanco); border-radius: 14px; padding: 0.95rem 1.05rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .fin-int .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.45rem;
+      color: var(--verde-bosque); }
+    .fin-int .t { font-size: 0.78rem; opacity: 0.75; line-height: 1.45; }
+    .fin-int.mal .n { color: #C4553B; }
+    .cob { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-top: 1rem; }
+    .cob details { border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.65rem 0; }
+    .cob details:last-child { border-bottom: 0; }
+    .cob summary { cursor: pointer; font-size: 0.88rem; display: flex;
+      justify-content: space-between; gap: 1rem; }
+    .cob summary .fuga { color: #C4553B; font-weight: 700; }
+    .cob .linea { display: flex; justify-content: space-between; gap: 1rem;
+      font-size: 0.82rem; padding: 0.25rem 0 0.25rem 1rem; opacity: 0.85; }
+    .cob .linea.mal { color: #C4553B; opacity: 1; }
+
+    .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
+    .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+      font-size: 0.9rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <? if (mostrarVolver) { ?>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Finanzas</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+    </div>
+  </header>
+  <? } ?>
+
+  <main class="fin">
+    <div class="fin-barra-sup">
+      <div>
+        <h1>El gasto</h1>
+        <p class="fin-sub" id="sub">Cargando…</p>
+      </div>
+      <button class="fin-boton" id="btn-refrescar">Actualizar datos</button>
+    </div>
+
+    <div id="cargando" class="fin-cargando">Leyendo el maestro…</div>
+
+    <div id="todo" style="display:none">
+      <div class="fin-kpis" id="kpis"></div>
+
+      <section class="fin-seccion">
+        <h2>La compra: Cocina y Barra</h2>
+        <details class="fin-ayuda">
+          <summary>Por qué el número grande es el mes y no la semana</summary>
+          <p>
+            La compra va a saltos y el consumo es parejo: una caja de vino se paga una semana
+            y se toma en tres. Medir una semana suelta contra su techo da falsas alarmas, así
+            que el número que controla es el <strong>acumulado del mes</strong> y la semana va
+            debajo, como guía de qué llevar al mercado. El techo sale de la meta de food cost
+            de cada área —cocina <span id="meta-cocina">—</span>, barra
+            <span id="meta-barra">—</span>— aplicada a la venta que el área tiene que hacer.
+          </p>
+          <p>
+            <strong>La compra sin factura entra en todos estos números</strong>, incluidos los
+            retiros de cajero para mercado: las categorías terminadas en <code>_EFECTIVO</code>
+            están mapeadas a su área y, a diferencia de la mercadería con factura, no se saltan
+            cuando vienen de una hoja de banco. Ojo con el nombre: <code>_EFECTIVO</code> no
+            quiere decir «pagado en efectivo» sino <strong>«sin factura»</strong>. Lo que compra
+            sin factura carga el IVA, así que cuesta 12% más que lo mismo comprado con FEL.
+          </p>
+        </details>
+        <div class="areas" id="areas"></div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Semana por semana</h2>
+        <p class="fin-nota">
+          La compra de mercadería de cada semana, partida por área. El porcentaje va sobre la
+          venta sin IVA ni servicio, la misma base de la meta y de las fichas. Solo la
+          mercadería se mide contra la venta: las secciones del DRE son movimientos de banco
+          —el alquiler cae una vez al mes— y su porcentaje semanal no compara nada.
+        </p>
+        <div class="tabla-scroll">
+          <table class="fin compacta" id="tabla-areas">
+            <thead><tr>
+              <th>Semana</th>
+              <th class="det"><span class="th-larga">Ventas netas</span><span class="th-corta">Ventas</span></th>
+              <th>Cocina</th><th>Barra</th>
+              <th class="det"><span class="th-larga">Mercadería</span><span class="th-corta">Total</span></th>
+              <th>Δ</th>
+              <th class="det">% de la venta</th>
+              <th><span class="th-larga">Food móvil 4</span><span class="th-corta">Food m4</span></th>
+            </tr></thead>
+            <tbody id="cuerpo-areas"></tbody>
+          </table>
+        </div>
+        <div class="tabla-pie">
+          <button class="fin-boton" id="btn-col-areas">Ver todas las columnas</button>
+        </div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Las secciones del DRE, esta semana</h2>
+        <p class="fin-nota" id="nota-dre"></p>
+        <div class="tabla-scroll">
+          <table class="fin compacta" id="tabla-dre">
+            <thead><tr>
+              <th>Sección</th>
+              <th><span class="th-larga">Esta semana</span><span class="th-corta">Semana</span></th>
+              <th><span class="th-larga">Semana anterior</span><span class="th-corta">Anterior</span></th>
+              <th>Δ</th>
+              <th class="det"><span class="th-larga">Media de 4</span><span class="th-corta">Media 4</span></th>
+              <th class="det"><span class="th-larga">Mes contra el presupuesto</span><span class="th-corta">Mes / pres</span></th>
+            </tr></thead>
+            <tbody id="cuerpo-dre"></tbody>
+          </table>
+        </div>
+        <div class="tabla-pie">
+          <button class="fin-boton" id="btn-col-dre">Ver todas las columnas</button>
+        </div>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>El año, para contexto</h2>
+        <p class="fin-nota">
+          Nada de esto cambia semana a semana: sirve para decidir qué renegociar, no qué hacer
+          el lunes.
+        </p>
+        <details class="anio-caja">
+          <summary>Cada bloque de gasto del año contra la banda del sector</summary>
+          <div class="anio-cuerpo">
+            <div id="bloques"></div>
+            <div class="bq-leyenda">
+              <span><i style="background:#C4553B"></i> sobre la banda</span>
+              <span><i style="background:var(--verde-medio)"></i> dentro de la banda</span>
+              <span><i style="background:var(--lila)"></i> bajo la banda</span>
+              <span><i style="background:#BDBDBD"></i> sin banda del sector con que comparar</span>
+            </div>
+            <div id="tipos-txt" class="fin-nota" style="margin:1.1rem 0 0"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="fin-seccion">
+        <h2>Integridad del dato</h2>
+        <p class="fin-nota">
+          Es lo que le da credibilidad a todo lo de arriba. Lo comprado sin factura carga el
+          IVA: sube 12% contra el mismo plato comprado con FEL.
+        </p>
+        <div class="fin-integridad" id="integridad"></div>
+        <p class="fin-nota" id="ults" style="margin-top:1rem"></p>
+        <details class="anio-caja" style="margin-top:1rem">
+          <summary>Qué pasa con cada quetzal</summary>
+          <div class="anio-cuerpo">
+            <p class="fin-nota">
+              Dónde termina el dinero de cada hoja del maestro. No cambia ningún número de
+              arriba: sirve para ver lo que se cae en silencio.
+            </p>
+            <div class="cob" id="cobertura"></div>
+          </div>
+        </details>
+      </section>
+    </div>
+  </main>
+
+<script>
+  /* El token va como PRIMER argumento en TODA llamada a google.script.run. */
+  var AUTH = '<?= authToken ?>';
+  var D = null;    // getFinanzasData
+  var M = null;    // getMetasData: de ahi sale el techo por area
+
+  function q(n, dec) {
+    var d = dec === undefined ? 0 : dec;
+    return 'Q' + Number(n || 0).toLocaleString('es-GT',
+      { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function pct(n) { return (n === null || n === undefined) ? '—' : Number(n).toFixed(1) + '%'; }
+  /* Diferencia con signo. q() sola daria "Q-578", con el menos entre la Q y el
+     numero; el signo va afuera. */
+  function qd(n) {
+    if (n === null || n === undefined) return '—';
+    return (n > 0 ? '+' : (n < 0 ? '−' : '')) + q(Math.abs(n));
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function nombreHoja(h) { return h.replace(/^[0-9]+[a-z]?_/, '').replace(/_/g, ' '); }
+  function zonaFood(v, meta) {
+    if (v === null || v === undefined) return 'gris';
+    return v <= meta ? 'verde' : (v <= meta + 3 ? 'amarillo' : 'rojo');
+  }
+  function letra(z) {
+    return z === 'verde' ? 'v' : (z === 'amarillo' ? 'a' : (z === 'rojo' ? 'r' : ''));
+  }
+
+  /* --------------------------------------------- las secciones del DRE */
+
+  /* Esta semana contra la media de las CUATRO ANTERIORES, no de las cuatro
+     que la incluyen: si la semana se dispara, incluirla en su propia media
+     esconde parte del salto. Devuelve la lista ordenada por diferencia. */
+  function filasDre() {
+    var S = D.semanas, n = S.length;
+    if (!n) return [];
+    var u = S[n - 1];
+    var previas = S.slice(Math.max(0, n - 5), n - 1);
+    var nombres = {};
+    S.slice(Math.max(0, n - 5)).forEach(function (s) {
+      Object.keys(s.bloques || {}).forEach(function (b) { nombres[b] = true; });
+    });
+    // El mes en curso: el mes al que pertenece la ultima semana cargada.
+    var mesActual = null;
+    D.meses.forEach(function (m) { mesActual = m; });
+
+    var ant = n > 1 ? S[n - 2] : null;
+
+    // La referencia del mes: el tope de la banda del sector aplicado a la META
+    // de venta del mes. NO es un presupuesto —en el sistema no existe ninguno—,
+    // es lo que esa seccion costaria si se cumple el plan de venta y la seccion
+    // se queda dentro de la banda. Sin meta de venta no hay referencia y la
+    // columna queda vacia en vez de inventar una.
+    var refPct = {};
+    D.bloques.forEach(function (x) { if (x.max) refPct[x.bloque] = x.max; });
+    var metaVenta = (M && M.meta && !M.sin_meta) ? M.meta.venta : null;
+
+    // El presupuesto de la pestana PRESUPUESTO manda sobre la referencia del
+    // sector. Una seccion puede tener presupuesto y otra no: se resuelve fila
+    // por fila, y cada fila dice con que se esta midiendo.
+    var P = D.presupuesto || { existe: false, secciones: {} };
+    var mesNum = mesActual ? mesActual.m : null;
+    var ventaMes = mesActual ? mesActual.ventas : 0;
+    // El gasto del año por bloque, para los presupuestos anuales.
+    var anioQ = {};
+    D.bloques.forEach(function (x) { anioQ[x.bloque] = x.q; });
+
+    /* Resuelve el presupuesto de una seccion segun su TIPO, y devuelve tambien
+       contra que hay que compararlo. Es la misma logica de _finPresuDe_ en el
+       servidor; vive aca tambien porque la pantalla necesita el par
+       (presupuesto, gasto) ya emparejado para pintar la celda.
+
+         fijo    monto del mes    -> se compara con el gasto del MES
+         %venta  % de la venta    -> se compara con el gasto del MES
+         anual   monto del año    -> se compara con el ACUMULADO del año
+
+       Comparar un presupuesto anual contra el gasto de un mes haria ver todo
+       holgado once meses y disparado el doceavo. */
+    function presuDe(b) {
+      var S = P.secciones && P.secciones[b];
+      if (!S) return null;
+      if (S.tipo === 'anual') {
+        if (S.valor === null || S.valor === undefined) return null;
+        return { monto: S.valor, gasto: anioQ[b] || 0, base: 'anio', tipo: 'anual' };
+      }
+      var v = (mesNum !== null && S.meses && S.meses[mesNum] !== undefined)
+        ? S.meses[mesNum] : S.valor;
+      if (v === null || v === undefined) return null;
+      if (S.tipo === '%venta') {
+        if (!ventaMes) return null;
+        return { monto: ventaMes * v / 100, gasto: null, base: 'mes', tipo: '%venta', pct: v };
+      }
+      return { monto: v, gasto: null, base: 'mes', tipo: 'fijo' };
+    }
+
+    return Object.keys(nombres).map(function (b) {
+      var sem = (u.bloques || {})[b] || 0;
+      var suma = 0;
+      previas.forEach(function (s) { suma += ((s.bloques || {})[b] || 0); });
+      var media = previas.length ? suma / previas.length : null;
+      var semAnt = ant ? ((ant.bloques || {})[b] || 0) : null;
+      return {
+        bloque: b, semana: sem, media: media,
+        dif: media === null ? null : sem - media,
+        anterior: semAnt,
+        difAnt: semAnt === null ? null : sem - semAnt,
+        // La nomina del MES va DEVENGADA, no la del banco.
+        //
+        // meses[].bloques viene del banco: es lo que salio de la cuenta ese mes.
+        // Solo el total del año se reemplaza por lo devengado (FinanzasDatos.js
+        // ~1048), asi que el mes seguia trayendo el pago bancario. Y el banco
+        // reparte los sueldos de un mes entre dos: comparar eso contra un
+        // presupuesto devengado hace saltar la fila sin que cambie la operacion.
+        // La semana SI se queda con el banco —ahi la pregunta es que salio de la
+        // cuenta esta semana— y la nota de la tabla lo dice.
+        mes: (b === 'Nomina y salarios' && mesActual && mesActual.labor !== undefined)
+          ? mesActual.labor
+          : (((mesActual && mesActual.bloques) || {})[b] || 0),
+        presu: presuDe(b),
+        ref: (metaVenta && refPct[b]) ? metaVenta * refPct[b] / 100 : null
+      };
+    }).sort(function (a, b) {
+      return (b.dif === null ? -Infinity : b.dif) - (a.dif === null ? -Infinity : a.dif);
+    });
+  }
+
+  /* ------------------------------------------------------------ pintar */
+
+  function pintarKpis() {
+    var S = D.semanas, u = S[S.length - 1] || {};
+    var cocina = u.cocina || 0, barra = u.barra || 0;
+    var merca = cocina + barra;
+
+    var dre = filasDre();
+    var gastoDre = 0;
+    dre.forEach(function (f) { gastoDre += f.semana; });
+    var sobreMedia = dre.filter(function (f) {
+      return f.media !== null && f.media > 0 && f.semana > f.media * 1.3;
+    });
+    var peor = dre.length && dre[0].dif !== null && dre[0].dif > 0 ? dre[0] : null;
+    var conPresupuesto = dre.filter(function (f) { return !!f.presu; }).length;
+    var excedidas = dre.filter(function (f) {
+      if (!f.presu) return false;
+      var g = f.presu.base === 'anio' ? f.presu.gasto : f.mes;
+      return g > f.presu.monto;
+    }).length;
+
+    // El saldo del techo del mes, sumando las dos areas. Llega de getMetasData.
+    var saldo = null;
+    if (M && M.techo) {
+      saldo = 0;
+      ['cocina', 'barra'].forEach(function (a) {
+        if (M.techo[a]) saldo += (M.techo[a].saldo_mes || 0);
+      });
+    }
+
+    function unidad(t, n, c, clase) {
+      return '<div class="u"><div class="t">' + t + '</div>' +
+             '<div class="n' + (clase ? ' ' + clase : '') + '">' + n + '</div>' +
+             (c ? '<div class="c">' + c + '</div>' : '') + '</div>';
+    }
+
+    // El gasto de la semana contra su propia media de 4. NO contra la venta de
+    // la semana: las secciones del DRE son movimientos de banco y el alquiler
+    // cae una vez al mes, asi que la semana que lo lleva daria 150% de la venta
+    // y las otras 20%. El porcentaje seria ruido, no señal.
+    var previas = S.slice(Math.max(0, S.length - 5), S.length - 1);
+    var mediaGasto = null;
+    if (previas.length) {
+      var suma = 0;
+      previas.forEach(function (s) {
+        var b = 0;
+        Object.keys(s.bloques || {}).forEach(function (k) { b += s.bloques[k]; });
+        suma += (s.cocina || 0) + (s.barra || 0) + b;
+      });
+      mediaGasto = suma / previas.length;
+    }
+    var gastoSem = merca + gastoDre;
+
+    // El gasto de la semana ANTERIOR, con la misma cuenta.
+    var gastoAnt = null;
+    if (S.length > 1) {
+      var a = S[S.length - 2], ba = 0;
+      Object.keys(a.bloques || {}).forEach(function (k) { ba += a.bloques[k]; });
+      gastoAnt = (a.cocina || 0) + (a.barra || 0) + ba;
+    }
+
+    document.getElementById('kpis').innerHTML =
+      unidad('Gasto de la semana', q(gastoSem),
+        'mercadería ' + q(merca) + ' · secciones del DRE ' + q(gastoDre) +
+        (gastoAnt !== null
+          ? ' · la anterior ' + q(gastoAnt) +
+            ' (' + qd(gastoSem - gastoAnt) + ')'
+          : '') +
+        (mediaGasto ? ' · media de 4: ' + q(mediaGasto) : ''),
+        (mediaGasto && gastoSem > mediaGasto * 1.2) ? 'mal' : '') +
+
+      unidad('Mercadería', q(merca),
+        'Cocina ' + q(cocina) + ' · Barra ' + q(barra)) +
+
+      (saldo === null
+        ? unidad('Saldo del techo del mes', '—', 'no se pudo leer la meta del mes')
+        : unidad('Saldo del techo del mes', q(saldo),
+            saldo >= 0 ? 'queda para comprar en lo que resta del mes'
+                       : 'el mes ya se pasó del techo',
+            saldo >= 0 ? '' : 'mal')) +
+
+      (peor
+        ? unidad('Lo que más se movió', '+' + q(peor.dif),
+            esc(peor.bloque) + ' · ' + q(peor.semana) + ' contra ' + q(peor.media) +
+            ' de media', 'mal')
+        : unidad('Lo que más se movió', '—', 'ninguna sección subió contra su media', 'bien')) +
+
+      // Con presupuesto cargado, cuantas secciones se pasaron es mejor pregunta
+      // que cuantas subieron contra su media: la media dice que algo cambio, el
+      // presupuesto dice que algo se paso de lo que decidiste gastar.
+      (conPresupuesto
+        ? unidad('Secciones sobre presupuesto', excedidas + ' de ' + conPresupuesto,
+            excedidas ? 'el mes ya se pasó de lo presupuestado en esas'
+                      : 'ninguna se pasó del presupuesto del mes',
+            excedidas ? 'mal' : 'bien')
+        : unidad('Secciones sobre su media', sobreMedia.length + ' de ' + dre.length,
+            sobreMedia.length ? 'más de 30% arriba de su media de 4'
+                              : 'ninguna se disparó esta semana',
+            sobreMedia.length ? 'mal' : 'bien'));
+  }
+
+  /* Las dos areas. Necesita getMetasData: si no llego, se dice, no se inventa. */
+  function pintarAreas() {
+    var caja = document.getElementById('areas');
+    var S = D.semanas, u = S[S.length - 1] || {};
+
+    if (!M || !M.techo) {
+      caja.innerHTML = '<p class="fin-nota">Compra de la semana: Cocina ' +
+        q(u.cocina || 0) + ' · Barra ' + q(u.barra || 0) + '.<br>' +
+        (M && M.sin_meta
+          ? 'No hay meta cargada para el mes, así que no hay techo con que comparar.'
+          : 'No se pudo leer el techo del mes.') + '</p>';
+      return;
+    }
+
+    document.getElementById('meta-cocina').textContent = pct(M.techo.cocina.meta);
+    document.getElementById('meta-barra').textContent = pct(M.techo.barra.meta);
+
+    var NOMBRE = { cocina: 'Cocina', barra: 'Barra' };
+    caja.innerHTML = ['cocina', 'barra'].map(function (a) {
+      var T = M.techo[a];
+      var gast = T.gastado_mes || 0, tope = T.mes || 0;
+      var usado = tope ? gast / tope * 100 : 0;
+      // Verde hasta el techo, amarillo desde 90%, rojo pasado. Se mide sobre el
+      // MES, no sobre la semana, por la razon de la nota de arriba.
+      var z = !tope ? 'gris' : (usado > 100 ? 'rojo' : (usado >= 90 ? 'amarillo' : 'verde'));
+      var sem = (u[a] || 0), topeSem = T.semana || 0;
+      var semAnt = S.length > 1 ? (S[S.length - 2][a] || 0) : null;
+
+      // Cuanto de la compra del area va sin factura. La compra sin factura SI
+      // entra en todos los numeros de esta pantalla —las categorias _EFECTIVO
+      // estan mapeadas a su area y, a diferencia de la mercaderia con factura,
+      // NO se saltan cuando vienen de una hoja de banco, que es como entran los
+      // retiros de cajero para mercado—. Pero carga el IVA: sube 12% contra el
+      // mismo producto comprado con FEL, asi que cuanto pesa es un dato.
+      var sinFac = null;
+      (T.familias || []).forEach(function (f) {
+        if (f.k === 'SIN_FACTURA') sinFac = f;
+      });
+
+      return '<div class="area ' + z + '">' +
+        '<h3><span>' + NOMBRE[a] + '</span><span class="meta">meta ' + pct(T.meta) + '</span></h3>' +
+        '<div class="saldo">' + (T.saldo_mes < 0 ? '−' + q(Math.abs(T.saldo_mes))
+                                                  : q(T.saldo_mes)) + '</div>' +
+        '<div class="saldo-t">' + (T.saldo_mes >= 0
+          ? 'queda del techo del mes' : 'pasado del techo del mes') + '</div>' +
+        '<div class="pista"><span style="width:' + Math.min(usado, 100) + '%"></span></div>' +
+        '<div class="pista-t"><span>' + q(gast) + ' comprado</span>' +
+          '<span>techo ' + q(tope) + '</span></div>' +
+        '<div class="sem">Esta semana: <b>' + q(sem) + '</b> ' +
+          (topeSem
+            ? (sem <= topeSem
+                ? 'contra una guía de ' + q(topeSem) + '.'
+                : 'contra una guía de ' + q(topeSem) + ', ' +
+                  q(sem - topeSem) + ' por encima.')
+            : '.') +
+          (semAnt === null ? ''
+            : '<br><span style="opacity:.75">La semana anterior: ' + q(semAnt) +
+              (sem === semAnt ? '. Igual.'
+                : ' · ' + qd(sem - semAnt) + ' esta semana.') + '</span>') +
+          (sinFac
+            ? '<br><span style="opacity:.75">Sin factura en el año: <b>' + q(sinFac.anio) +
+              '</b> · ' + pct(sinFac.pct) + ' de la compra del área.</span>'
+            : '') +
+        '</div></div>';
+    }).join('');
+  }
+
+  function pintarDre() {
+    var dre = filasDre();
+    var hayRef = dre.some(function (f) { return f.ref !== null; });
+    var P0 = D.presupuesto || { existe: false };
+    var conPresu = dre.filter(function (f) { return !!f.presu; }).length;
+    document.getElementById('nota-dre').innerHTML =
+      'Cada sección contra la <strong>semana anterior</strong> y contra el promedio de las ' +
+      '<strong>cuatro anteriores</strong> —no de las cuatro que la incluyen, porque una semana ' +
+      'metida en su propia media esconde parte de su salto—. Ordenadas por diferencia contra ' +
+      'la media: lo que se disparó va arriba. Las filas marcadas están más de 30% sobre su media.' +
+      '<br><strong>Nómina:</strong> la columna de la semana es lo que <em>salió del banco</em> ' +
+      'esa semana; la del mes es la <em>planilla devengada</em>. No son la misma base a ' +
+      'propósito: el banco reparte los sueldos de un mes entre dos, así que para el mes manda ' +
+      'la planilla.' +
+      '<br><strong>«Mes contra el presupuesto»:</strong> ' +
+      (!P0.existe
+        ? 'todavía no existe la pestaña <code>PRESUPUESTO</code> en el Sheet de configuración, ' +
+          'así que se compara contra la <em>banda del sector</em>: el tope de la banda aplicado ' +
+          'a la meta de venta del mes. Es un benchmark ajeno, no una decisión de la casa. ' +
+          'Para poner el presupuesto propio: correr <code>instalarPresupuesto()</code> una vez ' +
+          'desde el editor de Apps Script y llenar la columna «Mensual».'
+        : (conPresu + ' de ' + dre.length + ' secciones tienen presupuesto propio' +
+           (conPresu < dre.length
+             ? '; las demás se comparan contra la <em>banda del sector</em> y la celda lo dice ' +
+               'con «(banda)».'
+             : '.') +
+           ' El presupuesto vive en la pestaña <code>PRESUPUESTO</code> del Sheet de ' +
+           'configuración, con tres tipos: <strong>fijo</strong> (monto mensual), ' +
+           '<strong>%venta</strong> (un porcentaje que se recalcula con la venta del mes) y ' +
+           '<strong>anual</strong> (presupuesto del año, comparado contra el acumulado ' +
+           '—marcado «(año)»—, porque uniformes o mantención no se compran todos los meses).')) +
+      (P0.sin_tipo && P0.sin_tipo.length
+        ? '<br><span style="color:#A97514">' + P0.sin_tipo.length + ' fila(s) sin tipo válido ' +
+          '(' + esc(P0.sin_tipo.join(', ')) + '): se están tratando como <strong>fijo</strong>. ' +
+          'Elegí su tipo en la columna «Tipo» de la hoja.</span>'
+        : '') +
+      (P0.desconocidas && P0.desconocidas.length
+        ? '<br><span style="color:#C4553B">La pestaña PRESUPUESTO tiene ' +
+          P0.desconocidas.length + ' fila(s) con un nombre de sección que el cálculo no ' +
+          'reconoce (' + esc(P0.desconocidas.join(', ')) + '): ese presupuesto no se está ' +
+          'aplicando a nada.</span>'
+        : '') +
+      (P0.error ? '<br><span style="color:#C4553B">' + esc(P0.error) + '</span>' : '');
+
+    document.getElementById('cuerpo-dre').innerHTML = dre.length
+      ? dre.map(function (f) {
+          var alza = f.media !== null && f.media > 0 && f.semana > f.media * 1.3;
+          var clsA = f.difAnt === null ? '' : (f.difAnt > 0 ? 'r' : (f.difAnt < 0 ? 'v' : ''));
+          // El mes contra su referencia: pasado de la referencia va en rojo.
+          // El presupuesto manda; la banda del sector es el respaldo. Cada fila
+          // dice contra que se mide, porque no son lo mismo: uno lo decidio
+          // Juanma y el otro es un benchmark ajeno.
+          var mesTxt, clsM = '';
+          if (f.presu) {
+            // Un presupuesto anual se compara contra el acumulado del año; los
+            // otros dos contra el gasto del mes.
+            var gastoComp = f.presu.base === 'anio' ? f.presu.gasto : f.mes;
+            var etiqueta = f.presu.base === 'anio'
+              ? ' <em>(año)</em>'
+              : (f.presu.tipo === '%venta' ? ' <em>(' + f.presu.pct + '% de la venta)</em>' : '');
+            mesTxt = q(gastoComp) + ' <span style="opacity:.7">de ' + q(f.presu.monto) +
+                     etiqueta + '</span>';
+            clsM = gastoComp > f.presu.monto ? 'r' : '';
+          } else if (f.ref !== null) {
+            mesTxt = q(f.mes) + ' <span style="opacity:.7">de ' + q(f.ref) +
+                     ' <em>(banda)</em></span>';
+            clsM = f.mes > f.ref ? 'r' : '';
+          } else {
+            mesTxt = q(f.mes) + ' <span style="opacity:.55">· sin presupuesto ni banda</span>';
+          }
+          return '<tr' + (alza ? ' class="alza"' : '') + '>' +
+            '<td>' + esc(f.bloque) + '</td>' +
+            '<td>' + q(f.semana) + '</td>' +
+            '<td>' + (f.anterior === null ? '—' : q(f.anterior)) + '</td>' +
+            '<td class="' + clsA + '">' + qd(f.difAnt) + '</td>' +
+            '<td class="det">' + (f.media === null ? '—' : q(f.media)) + '</td>' +
+            '<td class="det ' + clsM + '">' + mesTxt + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="6" style="text-align:left;opacity:.7">' +
+        'Ninguna sección del DRE tuvo movimiento en las últimas semanas.</td></tr>';
+
+  }
+
+  function pintar(d) {
+    D = d;
+    var S = d.semanas, u = S[S.length - 1] || {};
+    document.getElementById('sub').textContent =
+      (u.w ? 'Semana S' + u.w + ' · ' + u.ini + ' al ' + u.fin : 'Sin semana cerrada') +
+      ' · año ' + d.anio + ' · datos al ' + d.gen;
+
+    pintarKpis();
+    pintarAreas();
+
+    // ---- semana por semana, por area
+    document.getElementById('cuerpo-areas').innerHTML =
+      S.slice(-13).reverse().map(function (s, i, arr) {
+        var merca = (s.cocina || 0) + (s.barra || 0);
+        // arr esta al reves: la semana anterior es la de ABAJO.
+        var prev = arr[i + 1];
+        var mercaAnt = prev ? ((prev.cocina || 0) + (prev.barra || 0)) : null;
+        var dAnt = mercaAnt === null ? null : merca - mercaAnt;
+        return '<tr' + (s.w === u.w ? ' class="actual"' : '') + '>' +
+          '<td>S' + s.w + ' · ' + s.ini + '</td>' +
+          '<td class="det">' + q(s.ventas) + '</td>' +
+          '<td>' + q(s.cocina || 0) + '</td>' +
+          '<td>' + q(s.barra || 0) + '</td>' +
+          '<td class="det">' + q(merca) + '</td>' +
+          '<td class="' + (dAnt === null ? '' : (dAnt > 0 ? 'r' : (dAnt < 0 ? 'v' : ''))) + '">' +
+            qd(dAnt) + '</td>' +
+          '<td class="det" style="opacity:.6">' + pct(s.cogsp) + '</td>' +
+          '<td class="' + letra(zonaFood(s.cogs_m4, d.meta_cogs)) + '">' +
+            pct(s.cogs_m4) + '</td></tr>';
+      }).join('');
+
+    pintarDre();
+
+    // ---- el año, plegado
+    var t = d.total;
+    var tope = 0;
+    d.bloques.forEach(function (b) { tope = Math.max(tope, b.pct, b.max || 0); });
+    tope = tope * 1.12 || 1;
+    document.getElementById('bloques').innerHTML = d.bloques.map(function (b) {
+      var banda = b.max
+        ? '<span class="banda" style="left:' + (b.min / tope * 100) + '%;width:' +
+          ((b.max - b.min) / tope * 100) + '%"></span>' : '';
+      var exc = b.zona === 'rojo'
+        ? q(b.sobre_mes) + '<br><small>al mes sobre la banda</small>'
+        : (b.max ? 'dentro' : '—');
+      var sub = q(b.q) + ' en el año' + (b.max ? ' · banda ' + b.min + '–' + b.max + '%' : '') +
+        (b.zona === 'rojo' ? ' · ' + q(b.sobre_mes) + ' al mes sobre la banda' : '');
+      return '<div class="bq ' + b.zona + '">' +
+        '<div class="nom">' + esc(b.bloque) + '<small>' + sub + '</small></div>' +
+        '<div class="pista">' + banda +
+          '<span class="val" style="width:' + Math.min(b.pct / tope * 100, 100) + '%"></span></div>' +
+        '<div class="pct">' + pct(b.pct) + '</div>' +
+        '<div class="exc">' + exc + '</div></div>';
+    }).join('');
+
+    var tot = t.tipo.F + t.tipo.S + t.tipo.V;
+    document.getElementById('tipos-txt').innerHTML = tot
+      ? 'Del gasto operativo del año, <strong>' + (t.tipo.F / tot * 100).toFixed(0) +
+        '%</strong> es fijo (' + q(t.tipo.F) + ', no se mueve aunque la venta caiga), ' +
+        '<strong>' + (t.tipo.S / tot * 100).toFixed(0) + '%</strong> semivariable (' +
+        q(t.tipo.S) + ') y <strong>' + (t.tipo.V / tot * 100).toFixed(0) + '%</strong> ' +
+        'variable (' + q(t.tipo.V) + ').'
+      : '';
+
+    // ---- integridad
+    var it = d.integridad;
+    document.getElementById('integridad').innerHTML =
+      '<div class="fin-int' + (it.por_clasificar ? ' mal' : '') + '"><div class="n">' +
+        it.por_clasificar + '</div><div class="t">partidas en POR_CLASIFICAR</div></div>' +
+      '<div class="fin-int"><div class="n">' + pct(it.factura_pct) +
+        '</div><div class="t">de la compra de mercadería con factura</div></div>' +
+      '<div class="fin-int' + (it.dias_atraso > 10 ? ' mal' : '') + '"><div class="n">' +
+        it.dias_atraso + '</div><div class="t">días desde la última venta cargada</div></div>' +
+      '<div class="fin-int' + (it.sin_identificar ? ' mal' : '') + '"><div class="n">' +
+        q(it.sin_identificar) + '</div><div class="t">salieron del banco sin identificar a ' +
+        'quién: siguen fuera del DRE hasta saberlo</div></div>' +
+      (it.sin_mapear
+        ? '<div class="fin-int mal"><div class="n">' + q(it.sin_mapear) +
+          '</div><div class="t">en categorías que el cálculo no reconoce: ese dinero se ' +
+          'cae en silencio y hay que mapearlas</div></div>'
+        : '');
+
+    var cobHtml = Object.keys(it.cobertura || {}).map(function (h) {
+      var d2 = it.cobertura[h];
+      var fuga = (it.fugas || {})[h] || 0;
+      var lineas = Object.keys(d2).sort(function (a, b) { return d2[b] - d2[a]; })
+        .map(function (k) {
+          var mal = ['CATEGORIA DESCONOCIDA', 'SIN CATEGORIA', 'POR CLASIFICAR'].indexOf(k) > -1;
+          return '<div class="linea' + (mal ? ' mal' : '') + '"><span>' + esc(k) +
+                 (mal ? ' &nbsp;·&nbsp; fuga' : '') + '</span><span>' + q(d2[k]) + '</span></div>';
+        }).join('');
+      return '<details><summary><span>' + esc(nombreHoja(h)) + '</span>' +
+        '<span' + (fuga ? ' class="fuga"' : '') + '>' +
+        (fuga ? q(fuga) + ' sin destino' : 'todo con destino') + '</span></summary>' +
+        lineas + '</details>';
+    }).join('');
+    var desc = it.desconocidas || {};
+    if (Object.keys(desc).length) {
+      cobHtml += '<details open><summary><span>Categorías que el cálculo no reconoce</span>' +
+        '<span class="fuga">' + Object.keys(desc).length + '</span></summary>' +
+        Object.keys(desc).sort(function (a, b) { return desc[b] - desc[a]; }).map(function (k) {
+          return '<div class="linea mal"><span>' + esc(k) + '</span><span>' + q(desc[k]) +
+                 '</span></div>';
+        }).join('') + '</details>';
+    }
+    document.getElementById('cobertura').innerHTML = cobHtml ||
+      '<p class="fin-nota" style="padding:.8rem 0">Sin datos de cobertura.</p>';
+
+    var resp = Object.keys(it.planilla || {}).filter(function (m) {
+      return it.planilla[m] === 'respaldo';
+    });
+    var avisoPlanilla = '';
+    if (it.planilla_error) {
+      avisoPlanilla = '<br><span style="color:#C4553B">No se pudo leer el Sheet de planilla (' +
+        esc(it.planilla_error) + '): la nómina de todos los meses salió del respaldo del código.</span>';
+    } else if (resp.length) {
+      avisoPlanilla = '<br><span style="color:#A97514">Nómina devengada del respaldo del código en ' +
+        resp.length + ' mes(es): ' + resp.map(function (m) { return 'mes ' + m; }).join(', ') +
+        '. El Sheet de planilla no trae esos meses todavía.</span>';
+    }
+    document.getElementById('ults').innerHTML = 'Última fila cargada · ' +
+      Object.keys(it.ult).map(function (h) {
+        return esc(nombreHoja(h)) + ' ' + esc(it.ult[h]);
+      }).join(' · ') + avisoPlanilla;
+
+    document.getElementById('cargando').style.display = 'none';
+    document.getElementById('todo').style.display = '';
+  }
+
+  /* La tabla del DRE tambien depende de getMetasData —de ahi sale la meta de
+     venta con que se calcula la referencia del mes—, asi que cuando las metas
+     llegan hay que repintarla, no solo la cinta y las areas. */
+  function repintarConMetas() {
+    pintarKpis();
+    pintarAreas();
+    pintarDre();
+  }
+
+  function cargar(forzar) {
+    document.getElementById('todo').style.display = 'none';
+    var c = document.getElementById('cargando');
+    c.style.display = ''; c.textContent = 'Leyendo el maestro…';
+    var run = google.script.run
+      .withSuccessHandler(function (d) { pintar(d); cargarMetas(forzar); })
+      .withFailureHandler(function (e) {
+        c.innerHTML = '<div class="fin-error">No se pudo leer el maestro.<br>' +
+          esc(e && e.message ? e.message : e) + '</div>';
+      });
+    if (forzar) run.refrescarFinanzas(AUTH); else run.getFinanzasData(AUTH, false);
+  }
+
+  /* El techo por area llega despues: la pantalla ya se dibujo con la compra de
+     la semana y aca se completa con el techo. Si falla, las tarjetas dicen que
+     no se pudo leer el techo en vez de romperse. */
+  function cargarMetas(forzar) {
+    google.script.run
+      .withSuccessHandler(function (m) { M = m; if (D) repintarConMetas(); })
+      .withFailureHandler(function () { M = { error: true }; if (D) repintarConMetas(); })
+      .getMetasData(AUTH, !!forzar);
+  }
+
+  document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });
+  [['btn-col-areas', 'tabla-areas'], ['btn-col-dre', 'tabla-dre']].forEach(function (par) {
+    document.getElementById(par[0]).addEventListener('click', function () {
+      var compacta = document.getElementById(par[1]).classList.toggle('compacta');
+      this.textContent = compacta ? 'Ver todas las columnas' : 'Ver solo lo esencial';
+    });
+  });
+  cargar(false);
+</script>
+</body>
+</html>
