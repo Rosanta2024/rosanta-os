@@ -142,14 +142,27 @@ function enlazarModelo_(modelo) {
   return modelo;
 }
 
-/** Nombre del Banco -> id de la ficha de sub-receta, probando el alias si hace falta. */
+/**
+ * Nombre del Banco -> id de la ficha de sub-receta.
+ *
+ * EL ALIAS VA PRIMERO (22-sep-2026). Un alias de COSTEO.aliasSubReceta es alguien
+ * diciendo a proposito "cuando el Banco dice esto, se refiere a esta pestana". Una
+ * coincidencia de nombre es una casualidad. Cuando las dos aplican, gana la decision.
+ *
+ * Que lo destapo: el Banco dice "Pan de la casa" y hay DOS pestanas, el plato
+ * "Pan de la Casa" —una guarnicion de Q20— y el pre-elaborado "Pan de la Casa1". La
+ * busqueda directa enganchaba con el plato y no llegaba a mirar el alias, asi que el
+ * pre-elaborado no lo alcanzaba nadie: la bateria lo daba por huerfano, el boton
+ * "ver receta" de cada linea saltaba al plato equivocado, y archivar el producto se
+ * negaba creyendo que era un plato. El alias existia justamente para esto y no se usaba.
+ */
 function buscarSubReceta_(area, nombre, porNombreReceta) {
   var k = normalizar_(nombre);
-  if (porNombreReceta.hasOwnProperty(area + '|' + k)) return porNombreReceta[area + '|' + k];
   var alias = COSTEO.aliasSubReceta[k];
   if (alias && porNombreReceta.hasOwnProperty(area + '|' + normalizar_(alias))) {
     return porNombreReceta[area + '|' + normalizar_(alias)];
   }
+  if (porNombreReceta.hasOwnProperty(area + '|' + k)) return porNombreReceta[area + '|' + k];
   return null;
 }
 

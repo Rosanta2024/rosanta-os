@@ -1,3 +1,10 @@
+/* "10 porciones" -> "porciones". El rotulo de la ficha manda: en barra dice ml o
+   gramos producidos, y escribir "porciones" a mano seria mentir en esas. */
+function unidadRinde(r){
+  const t = String(r.rindeTexto || '').replace(/[\d.,]+/g, '').trim();
+  return t || (r.unidadCosto ? r.unidadCosto + 's' : 'porciones');
+}
+
 function fichaHTML(r){
   const cmv = cmvAhora(r), c = costoAhora(r), st = estadoDe(cmv,r), sub = batch(r.id);
   /* Mientras la ficha tiene algo guardandose no se ofrece editar ni quitar lineas: el
@@ -60,13 +67,23 @@ function fichaHTML(r){
           <input id="np-cant" type="number" step="any" min="0" placeholder="Cantidad" style="width:110px">
           <button class="chip" id="np-add" data-rid="${r.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Agregar</button>
         </div>
-        <datalist id="banco-prods">${I.filter(x => x.area === r.area).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+        ${/* Lo archivado no se ofrece como ingrediente. Cubre el "ZZ ARCHIVO · " nuevo y
+              el "ZZ DUP · " que ya llevaban los duplicados: las dos son filas muertas, y
+              ofrecerlas es invitar a que alguien vuelva a costear con una de ellas. */''}
+        <datalist id="banco-prods">${I.filter(x => x.area === r.area && !/^zz\s/i.test(x.p)).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Se agrega en el acto y se guarda en la hoja por detrás: podés cargar uno detrás de otro. <kbd>Enter</kbd> en la cantidad también agrega. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.${puedeCrearInsumo ? ' Si el producto todavía no está en el Banco, escribilo igual: te ofrece crearlo sin salir de la receta.' : ''}</p>
       </div>` : ''}
       ${r.ing.length ? `<dl class="kv">
         <dt>Subtotal materia prima</dt><dd>${Q(sub)}</dd>
         ${r.t==='plato' && r.merma ? `<dt>Variación / merma (${r.merma}%)</dt><dd>${Q(sub*r.merma/100)}</dd>`:''}
-        ${r.t!=='plato' && (r.rindeTexto||r.rinde) ? `<dt>Rinde</dt><dd>${esc(r.rindeTexto||r.rinde)}</dd>`:''}
+        ${/* EL RINDE SE EDITA (22-sep-2026). Era la unica cifra de la ficha que se veia y
+              no se podia tocar, y no es de adorno: el costo por porcion es batch/rinde,
+              asi que un rinde mal anotado se paga en todos los platos que usan ese
+              pre-elaborado. Se pedia abrir la hoja para eso. La unidad NO se edita: sale
+              del rotulo de la ficha, igual que la unidad de un ingrediente sale del Banco. */''}
+        ${r.t!=='plato' && (r.rindeTexto||r.rinde) ? `<dt>Rinde</dt><dd>${(window.PUEDE && window.PUEDE.cambiarRinde && r.rinde && AREA_EDITABLE(r.area) && !r.local)
+          ? `<span class="qedit"><input class="qin" id="np-rinde" type="number" step="any" min="0" value="${r.rinde}" style="width:82px" aria-label="Rinde del batch"><button class="qsave" id="np-rinde-save" data-rid="${r.id}" title="Guardar el rinde">✓</button></span> <span style="color:var(--muted)">${esc(unidadRinde(r))}</span>`
+          : esc(r.rindeTexto||r.rinde)}</dd>`:''}
         <div class="rule"></div>
         <dt>${r.t==='plato'?'Costo del plato':'Costo por '+esc(r.unidadCosto||'porción')}</dt><dd>${r.t==='plato'?Q(c):QU(c)}</dd>
         ${r.precio?`<dt>Precio de carta</dt><dd>${(window.PUEDE && window.PUEDE.cambiarPrecioMenu && r.t==='plato' && AREA_EDITABLE(r.area) && !r.local)
@@ -76,6 +93,14 @@ function fichaHTML(r){
         <dt>Meta del área</dt><dd style="font-weight:400;color:var(--muted)">${r.obj}%</dd>
         <dt>Precio de carta para llegar a ${r.obj}%</dt><dd>${c!=null?Q0(c/(r.obj/100)*IVA()):'—'}</dd>`:''}
       </dl>`:''}
+      ${/* ARCHIVAR, no borrar. La pestaña se renombra y sale de la intranet; el historico
+            de costos queda y volver atras es sacarle el prefijo. Va al fondo del panel y
+            en gris a proposito: es lo ultimo que uno deberia encontrar, no un boton al
+            alcance del codo. */''}
+      ${(window.PUEDE && window.PUEDE.archivarFicha && AREA_EDITABLE(r.area) && !r.local) ? `<div style="margin-top:26px;padding-top:16px;border-top:1px solid var(--linea)">
+        <button class="chip" id="np-archivar" data-rid="${r.id}" style="color:var(--alto);border-color:var(--alto)">Archivar ${r.t==='plato'?'esta receta':'este pre-elaborado'}</button>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Sale de la intranet y de ${r.t==='plato'?'RESUMEN CMV':'el Banco de Datos'}. <strong>No se borra nada</strong>: la pestaña y su fila en ${r.t==='plato'?'RESUMEN CMV':'el Banco'} quedan en la hoja con el prefijo <code>ZZ ARCHIVO</code>, y revivirla es quitárselo. Si alguna receta la usa, te lo dice antes.</p>
+      </div>` : ''}
     </div>`;
 }
 function insumoHTML(i, hist){
@@ -110,14 +135,19 @@ function insumoHTML(i, hist){
           <label for="np" style="font-size:13.5px">Precio de compra${i.uc?' por '+esc(i.uc):''}</label>
           <input id="np" type="number" step="0.01" min="0" value="${(sim.has(i.id) && i.pc && i.pr) ? (sim.get(i.id)/i.pr*i.pc).toFixed(2) : (i.pc!=null?i.pc:'')}" data-i="${i.id}">
           <button class="chip" id="aplicar" data-i="${i.id}">Simular</button>
-          ${(window.PUEDE && window.PUEDE.cambiarPrecio && AREA_EDITABLE(i.area))
+          ${/* Un pre-elaborado no se compra: su precio lo calcula su ficha por formula.
+                Registrarlo como una compra lo desconectaria de la ficha, y el servidor
+                lo rechaza (precioSaleDeLaFicha_). Simular si, que no escribe nada. */''}
+          ${(window.PUEDE && window.PUEDE.cambiarPrecio && AREA_EDITABLE(i.area) && i.sub == null)
             ? (ocupI
               ? `<button class="chip" disabled>Guardando…</button>`
               : `<button class="chip" id="registrar" data-i="${i.id}" style="background:var(--bosque);border-color:var(--bosque);color:var(--surface)">Registrar precio</button>`)
             : ''}
           ${sim.has(i.id)?`<button class="chip" id="quitar" data-i="${i.id}">Quitar</button>`:''}
         </div>
-        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Simular</strong> no guarda nada: sirve para ver el impacto antes de aceptarlo.${(window.PUEDE && window.PUEDE.cambiarPrecio) ? ` <strong>Registrar</strong> escribe el precio en el Banco de Datos y lo deja en el histórico con fecha y factura.` : ` Para registrar el precio hace falta un permiso que tu rol no tiene; simular podés siempre.`}</p>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0"><strong>Simular</strong> no guarda nada: sirve para ver el impacto antes de aceptarlo.${i.sub != null
+          ? ` Este es un <strong>pre-elaborado</strong>: su precio sale de su ficha y baja solo cuando cambian los ingredientes de la receta. Por eso no se registra a mano.`
+          : (window.PUEDE && window.PUEDE.cambiarPrecio) ? ` <strong>Registrar</strong> escribe el precio en el Banco de Datos y lo deja en el histórico con fecha y factura.` : ` Para registrar el precio hace falta un permiso que tu rol no tiene; simular podés siempre.`}</p>
       </div>
       ${(window.PUEDE && window.PUEDE.crearProveedor && AREA_EDITABLE(i.area)) ? `<div>
         <div class="sec-t">Proveedor</div>
@@ -138,6 +168,13 @@ function insumoHTML(i, hist){
           pre.length?`<div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">Pre-elaborados</div>${pre.map(linea).join('')}</div>`:''
         ].join('') : `<p style="color:var(--muted);font-size:13.5px;margin:0">Ninguna ficha lo usa hoy. O sobra en el Banco, o el nombre no coincide con el que escribió cocina.</p>`}
       </div>
+      ${/* Un pre-elaborado (i.sub) no se archiva desde aca: se archiva su FICHA, que ya
+            se lleva esta fila con ella. Ofrecerlo en los dos lados seria dejar la ficha
+            viva y la fila muerta, que es justo el estado roto que esto viene a evitar. */''}
+      ${(window.PUEDE && window.PUEDE.archivarInsumo && AREA_EDITABLE(i.area) && i.sub == null) ? `<div style="margin-top:26px;padding-top:16px;border-top:1px solid var(--linea)">
+        <button class="chip" id="ni-archivar" data-prod="${esc(i.p)}" data-area="${esc(i.area||'COCINA')}" style="color:var(--alto);border-color:var(--alto)">Archivar este producto</button>
+        <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Deja de ofrecerse como ingrediente. <strong>No se borra</strong>: la fila queda en el Banco con el prefijo <code>ZZ ARCHIVO</code>, con su precio y su histórico, y revivirla es quitárselo.${usos.length ? ` <strong style="color:var(--alto)">Ojo: ${usos.length} receta${usos.length===1?'':'s'} lo usa${usos.length===1?'':'n'} hoy</strong> — esas líneas pasarían a valer Q0 y el plato se abarataría solo. Te lo va a preguntar antes.` : ''}</p>
+      </div>` : ''}
     </div>`;
 }
 /* El historial se guarda en CAJON para que un redibujo del cajon (llega un cambio del

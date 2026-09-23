@@ -137,6 +137,12 @@ function registrarPrecio(auth, datos) {
   var hecho = conCambiosDeModelo_(function () { return conCandadoRecetario_(function () {
     var ubic = ubicarEnBanco_(datos.producto, area);
     if (!ubic) throw new Error('El producto "' + datos.producto + '" no esta en el Banco de Datos');
+    // Un pre-elaborado tiene el precio por formula contra su ficha: ver precioSaleDeLaFicha_
+    // en EdicionRecetario.gs. Escribirle un numero lo desconecta de la ficha en silencio.
+    if (precioSaleDeLaFicha_(ubic.hoja, ubic.fila, ubic.col + 3)) {
+      throw new Error('"' + ubic.producto + '" es un pre-elaborado: su precio lo calcula su ficha y no se ' +
+        'registra como una compra. Si esta caro, corregi los ingredientes de la ficha.');
+    }
 
     var antesCompra = ubic.precioCompra;
     var antesUnidad = ubic.precioUnidad;

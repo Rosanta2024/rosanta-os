@@ -232,7 +232,9 @@ document.addEventListener('click', e => {
           listo();
           if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
           const rr = res.resultado || {};
-          avisar('Ficha creada: ' + Tt(nombre) + (rr.filaResumen ? ' · RESUMEN CMV fila ' + rr.filaResumen + ', por costear' : ''));
+          avisar('Ficha creada: ' + Tt(nombre)
+            + (rr.filaResumen ? ' · RESUMEN CMV fila ' + rr.filaResumen + ', por costear' : '')
+            + (rr.filaBanco ? ' · ya está en el Banco: las recetas lo pueden usar' : ''));
         })
         .withFailureHandler(function(e){ descartarLocal(k); listo(); avisarError('No se pudo crear la ficha ' + Tt(nombre) + ':\n\n' + e.message); })
         .webCrearFicha(AUTH, datos, nfArea);
@@ -410,6 +412,107 @@ document.addEventListener('click', e => {
         })
         .withFailureHandler(function(e){ listo(); deshacer(); avisarError('No se pudo guardar el precio de carta:\n\n' + e.message); })
         .webCambiarPrecioMenu(AUTH, rr.n, v, motivo, rr.area);
+    });
+    repintarModelo();
+    return;
+  }
+
+  /* --- archivar una receta o un pre-elaborado, y archivar un producto del Banco.
+
+     Los dos siguen el trato de crearInsumo con los duplicados: el servidor NO escribe
+     si hay recetas en juego, devuelve la lista, y recien con confirmar:true escribe.
+     La pregunta viaja ADENTRO del sobre (res.ok true, res.resultado.ok false): leerla
+     mal fue el bug del 14-sep con los productos parecidos, que se creaban sin preguntar.
+
+     Aca NO se corrige la pantalla en el acto: archivar cambia un nombre de pestaña y
+     mueve el modelo entero, asi que se espera a la hoja y se recarga. Es de las pocas
+     operaciones donde esperar es lo correcto. */
+  function archivarEnCola(etiqueta, clave, pedir, alTerminar){
+    const mandar = function(confirmar){
+      encolar(clave, etiqueta, function(listo){
+        pedir(confirmar,
+          function(res){
+            listo();
+            if(!res || !res.ok){ avisarError('No se archivó:\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+            const r = res.resultado || {};
+            if(r.ok){ if(res.cambios) aplicarCambios(res.cambios); else recargarModelo(); alTerminar(r); return; }
+            if(r.motivo === 'en uso'){
+              const lista = (r.usos || []).map(u => '  · ' + Tt(u.nombre) + (u.costo ? '  (pierde ' + Q(u.costo) + ')' : '')).join('\n');
+              if(confirm('Todavía lo usan ' + r.usos.length + ' receta' + (r.usos.length===1?'':'s') + ':\n\n' + lista +
+                         '\n\nSi seguís, esas líneas quedan SIN COSTO y los platos se abaratan solos, sin ningún error a la vista.\n\n¿Archivar igual?')) mandar(true);
+              return;
+            }
+            avisarError('No se archivó:\n\n' + (r.motivo || r.error || 'sin respuesta'));
+          },
+          function(e){ listo(); avisarError('No se pudo archivar:\n\n' + e.message); });
+      });
+    };
+    mandar(false);
+  }
+
+  if(t.id === 'np-archivar'){
+    const r = R[+t.dataset.rid]; if(!r) return;
+    if(!confirm('Archivar ' + Tt(r.n) + '?\n\nSale de la intranet pero NO SE BORRA NADA: la pestaña y su fila (en RESUMEN CMV o en el Banco) quedan en la hoja con el prefijo ZZ ARCHIVO. Revivirla es quitarles el prefijo.')) return;
+    cerrar();
+    archivarEnCola('Archivar ' + Tt(r.n), claveReceta(r),
+      (confirmar, ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)
+        .webArchivarFicha(AUTH, r.n, confirmar, r.area),
+      (res) => avisar(Tt(r.n) + ' archivada · ahora es "' + res.pestana + '"'));
+    return;
+  }
+
+  if(t.id === 'ni-archivar'){
+    const prod = t.dataset.prod, areaI = t.dataset.area;
+    if(!confirm('Archivar ' + Tt(prod) + '?\n\nDeja de ofrecerse como ingrediente pero NO se borra: la fila queda en el Banco con el prefijo ZZ ARCHIVO, con su precio y su histórico.')) return;
+    cerrar();
+    archivarEnCola('Archivar ' + Tt(prod), 'I|' + areaI + '|' + nrmK(prod),
+      (confirmar, ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)
+        .webArchivarInsumo(AUTH, prod, confirmar, areaI),
+      (res) => avisar(Tt(prod) + ' archivado · ahora es "' + res.producto + '"'));
+    return;
+  }
+
+  /* --- rinde del batch de un pre-elaborado.
+     VA ANTES del bloque generico de .qsave: el boton lleva esa clase por el estilo, y
+     si cayera alla se leeria como "guardar la cantidad de la linea sin numero de fila".
+     Mismo motivo por el que np-menu-save esta arriba.
+
+     El costo por porcion se corrige en el acto sin esperar al servidor: es exactamente
+     costoUnit * (rindeViejo / rindeNuevo), porque costoUnit = batch / rinde y el batch
+     no se toca. Sin esto la pantalla mostraria el rinde nuevo con el costo viejo hasta
+     que vuelva la hoja, que es la clase de contradiccion que nadie reporta y todos
+     recuerdan mal. */
+  if(t.id === 'np-rinde-save'){
+    const r = R[+t.dataset.rid]; if(!r) return;
+    const v = parseFloat(document.getElementById('np-rinde').value);
+    if(isNaN(v) || v <= 0){ alert('El rinde tiene que ser mayor que cero.'); return; }
+    if(v === r.rinde){ alert('Es el mismo rinde que ya tenia.'); return; }
+    if(!confirm('Cambiar el rinde de ' + Tt(r.n) + ' de ' + r.rinde + ' a ' + v + '?\n\n' +
+                'El costo por porcion se recalcula, y con el cambia el costo de cada plato que use este pre-elaborado.')) return;
+
+    const k = claveReceta(r);
+    const antes = { rinde: r.rinde, texto: r.rindeTexto, unit: r.costoUnit };
+    const deshacer = () => {
+      const x = recetaPorClave(k);
+      if(x && x.rinde === v){ x.rinde = antes.rinde; x.rindeTexto = antes.texto; x.costoUnit = antes.unit; memo.clear(); repintarModelo(); }
+    };
+    if(r.costoUnit != null && r.rinde) r.costoUnit = r.costoUnit * (r.rinde / v);
+    r.rindeTexto = String(r.rindeTexto || '').replace(/[\d.,]+/, String(v));
+    r.rinde = v;
+    memo.clear();
+
+    encolar(k, 'Rinde de ' + Tt(r.n), function(listo){
+      const rr = recetaPorClave(k);
+      if(!rr){ listo(); return; }
+      google.script.run
+        .withSuccessHandler(function(res){
+          listo();
+          if(!res || !res.ok){ deshacer(); avisarError('No se guardó el rinde:\n\n' + ((res && res.error) || 'sin respuesta del servidor')); return; }
+          if(res.cambios) aplicarCambios(res.cambios); else recargarModelo();
+          avisar('Rinde de ' + Tt(rr.n) + ': ' + v + ' ' + unidadRinde(rr));
+        })
+        .withFailureHandler(function(e){ listo(); deshacer(); avisarError('No se pudo guardar el rinde:\n\n' + e.message); })
+        .webCambiarRinde(AUTH, rr.n, v, rr.area);
     });
     repintarModelo();
     return;

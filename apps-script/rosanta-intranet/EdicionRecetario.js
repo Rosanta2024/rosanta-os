@@ -56,9 +56,9 @@ var EDIT = {
    * mensaje de error. Le paso a "dueno" y por eso existe esa prueba.
    */
   permisos: {
-    chef:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','crearFicha'],
-    sala:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','crearFicha'],
-    dueno:         ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','crearFicha']
+    chef:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
+    sala:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
+    dueno:         ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo']
   },
   /**
    * SOBRE QUE AREA puede escribir cada rol. La tabla de arriba dice QUE puede hacer
@@ -90,6 +90,13 @@ var EDIT = {
     sala:  ['BARRA'],
     dueno: ['COCINA', 'BARRA']
   },
+
+  /* Como se marca un producto retirado del Banco. Mismo espiritu que el
+     COSTEO.prefijoArchivo de las pestanas y que el "ZZ DUP · " que ya llevan los
+     duplicados: la fila no se borra, se renombra. Renombrar rompe el VLOOKUP de
+     cualquier ficha que todavia lo nombre —asi quedaron "Prejil" y "Pimienta Negra"
+     en Q0 durante semanas— y por eso archivarInsumo_ mira los usos ANTES. */
+  prefijoArchivoBanco: 'ZZ ARCHIVO · ',
 
   umbralSimilitud: 0.82       // arriba de esto se considera posible duplicado
 };
@@ -595,6 +602,98 @@ function quitarLinea_(ficha, fila, quien, rol, area, esperado) {
   return { ok:true, producto:String(producto) };
 }
 
+/**
+ * DONDE VIVE EL RINDE DE UN PRE-ELABORADO. Esta en DOS celdas y no son intercambiables:
+ *
+ *   el NUMERO    la fila "RINDE (porciones)" —o (ml), o (gramos producidos)—. Es por
+ *                el que divide la formula del COSTO POR ..., asi que es el que decide
+ *                cuanto cuesta la porcion y, de rebote, cada plato que la usa.
+ *   el ROTULO    el "RINDE:" de arriba, al lado del titulo, que dice "10 porciones".
+ *                No lo usa ninguna formula: es lo que lee una persona.
+ *
+ * Hay que escribir los dos o la ficha se contradice: la tarjeta diria 10 porciones y el
+ * costo se calcularia sobre 12, sin que nada marque error. Por eso esto devuelve las dos
+ * y cambiarRinde_ se niega si no encuentra la del numero.
+ *
+ * Se busca POR ETIQUETA y nunca por posicion, igual que leerFicha_ y bloqueFicha_: las
+ * fichas viejas las escribio gente distinta y la fila no cae siempre en el mismo lugar
+ * (en barra el costo esta en la columna E y en cocina en la F).
+ */
+function ubicarRinde_(hoja) {
+  var f = hoja.getDataRange().getValues();
+  var enc = { numero: null, rotulo: null };
+
+  for (var i = 0; i < f.length; i++) {
+    for (var j = 0; j < f[i].length; j++) {
+      var celda = normalizar_(f[i][j]);
+      if (!celda) continue;
+
+      if (celda === 'rinde:' || celda === 'rinde') {
+        // el rotulo: la primera celda con algo escrito a la derecha
+        for (var c = j + 1; c < f[i].length && !enc.rotulo; c++) {
+          if (String(f[i][c] === null || f[i][c] === undefined ? '' : f[i][c]).trim()) {
+            enc.rotulo = { fila: i + 1, col: c + 1, valor: f[i][c] };
+          }
+        }
+      } else if (celda.indexOf('rinde') === 0 && !enc.numero) {
+        // "RINDE (porciones)": la primera celda NUMERICA a la derecha
+        for (var c2 = j + 1; c2 < f[i].length; c2++) {
+          if (typeof f[i][c2] === 'number' && !isNaN(f[i][c2])) {
+            enc.numero = { fila: i + 1, col: c2 + 1, valor: f[i][c2],
+                           unidad: String(f[i][j]).replace(/rinde/i, '').replace(/[():]/g, '').trim() };
+            break;
+          }
+        }
+      }
+    }
+  }
+  return enc;
+}
+
+/**
+ * Cambia en cuantas porciones rinde un batch. Solo para pre-elaborados.
+ *
+ * Es la unica cifra de la ficha que la pantalla mostraba y no dejaba tocar, y no es
+ * menor: el costo por porcion es batch / rinde, asi que corregir un rinde mal anotado
+ * mueve el costo de todos los platos que usan ese pre-elaborado. Hasta el 22-sep-2026
+ * habia que abrir la hoja para eso, que es justo lo que esta pantalla existe para evitar.
+ *
+ * El rotulo de arriba se reescribe conservando su texto ("10 porciones" -> "12 porciones"):
+ * si dice "porciones", sigue diciendo "porciones"; si dice otra cosa, se respeta.
+ */
+function cambiarRinde_(ficha, rindeNuevo, quien, rol, area) {
+  exigirPermiso_(rol, 'cambiarRinde');
+  var n = Number(rindeNuevo);
+  if (!(n > 0)) throw new Error('El rinde tiene que ser mayor que cero.');
+
+  var ss = recetarioDe_(area);
+  var h = fichaDe_(ss, ficha);
+  var u = ubicarRinde_(h);
+  if (!u.numero) {
+    throw new Error('No pude ubicar el rinde en la ficha "' + h.getName() + '": no encuentro una fila ' +
+                    '"RINDE (...)" con un numero. Corregilo en la hoja esta vez y avisa, para que no vuelva a pasar.');
+  }
+  var antes = u.numero.valor;
+  if (antes === n) return { ok: true, antes: antes, despues: n, sinCambio: true };
+
+  h.getRange(u.numero.fila, u.numero.col).setValue(n);
+
+  // El rotulo conserva su texto: solo se le cambia el numero. Si no traia numero
+  // —"porciones" a secas— se le antepone, que es como quedan las fichas nuevas.
+  if (u.rotulo) {
+    var texto = String(u.rotulo.valor === null || u.rotulo.valor === undefined ? '' : u.rotulo.valor);
+    var nuevo = /\d+(?:[.,]\d+)?/.test(texto)
+      ? texto.replace(/\d+(?:[.,]\d+)?/, String(n))
+      : (texto.trim() ? n + ' ' + texto.trim() : n + ' ' + (u.numero.unidad || 'porciones'));
+    h.getRange(u.rotulo.fila, u.rotulo.col).setValue(nuevo);
+  }
+
+  bitacora_(quien, rol, 'cambiarRinde', conArea_(ficha, area), h.getName().trim(),
+            'rinde', antes, n, 'el costo por ' + (u.numero.unidad || 'porcion') + ' se recalcula solo');
+  invalidarCache_({ ficha: h.getName(), area: area });
+  return { ok: true, antes: antes, despues: n };
+}
+
 /** Cambia el precio de carta de un plato. */
 function cambiarPrecioMenu_(ficha, precioNuevo, quien, rol, motivo, area) {
   exigirPermiso_(rol, 'cambiarPrecioMenu');
@@ -672,6 +771,22 @@ function crearInsumo_(datos, quien, rol, confirmar, area) {
   return { ok:true, fila:fila, precioReceta:precioReceta, factor:conv.factor };
 }
 
+/**
+ * El precio de esa fila del Banco, ¿lo calcula una formula?
+ *
+ * Es como se reconoce un pre-elaborado desde la capa de escritura: su precio apunta al
+ * COSTO POR PORCION de su ficha (ver altaPreEnBanco_ en CrearFicha.gs). Escribirle un
+ * numero encima no es corregir un precio: es desconectar la ficha, y a partir de ahi
+ * el plato se cuesta con un valor congelado que nadie va a volver a mirar.
+ *
+ * Las dos puertas que escriben precios —esta y registrarPrecio en Proveedores.gs— ya
+ * se negaban, pero por el motivo equivocado ("el precio anterior es cero") y con un
+ * consejo que para un pre-elaborado esta mal ("corregilo a mano una vez").
+ */
+function precioSaleDeLaFicha_(hoja, fila, columna) {
+  return !!String(hoja.getRange(fila, columna).getFormula() || '').trim();
+}
+
 /** Cambia el precio de compra de un insumo y recalcula su precio por unidad de receta. */
 function cambiarPrecioInsumo_(producto, precioNuevo, quien, rol, motivo, area) {
   exigirPermiso_(rol, 'cambiarPrecio');
@@ -683,6 +798,10 @@ function cambiarPrecioInsumo_(producto, precioNuevo, quien, rol, motivo, area) {
     if (normalizar_(f[i][EDIT.col.producto - 1]) === normalizar_(producto)) { fila = i + 1; break; }
   }
   if (!fila) throw new Error('"' + producto + '" no esta en el Banco de Datos.');
+  if (precioSaleDeLaFicha_(h, fila, EDIT.col.precioReceta)) {
+    throw new Error('"' + producto + '" es un pre-elaborado: su precio lo calcula su ficha y no se escribe a mano. ' +
+                    'Si esta caro, corregi los ingredientes de la ficha.');
+  }
 
   var antesCompra = h.getRange(fila, EDIT.col.precioCompra).getValue();
   var antesReceta = h.getRange(fila, EDIT.col.precioReceta).getValue();
@@ -783,4 +902,189 @@ function probarEdicion() {
     Logger.log('  %s: editarCantidad=%s crearInsumo=%s crearProveedor=%s',
                rol, puede_(rol, 'editarCantidad'), puede_(rol, 'crearInsumo'), puede_(rol, 'crearProveedor'));
   });
+}
+
+/* ==========================================================================
+   4. ARCHIVAR — 22-sep-2026
+
+   No se borra nada, se archiva: la pestana se renombra con el prefijo que el lector
+   ya conoce (COSTEO.prefijoArchivo) y desaparece de la intranet, pero el historico de
+   costos sigue ahi y volver atras es sacarle el prefijo. Decision de Juanma.
+
+   LO QUE IMPORTA NO ES ARCHIVAR, ES LO QUE QUEDA COLGANDO. Un pre-elaborado archivado
+   cuya fila del Banco sigue viva es una linea que apunta a una ficha que ya no existe;
+   una fila del Banco borrada mientras alguna receta todavia la nombra hace que esa
+   linea valga Q0 EN SILENCIO —el VLOOKUP de las fichas viene envuelto en
+   IFERROR(...,"") y el SUM ignora los vacios, asi que el plato se abarata solo y nadie
+   se entera—. Por eso las dos funciones de abajo:
+     1. calculan a quien afecta ANTES de tocar nada,
+     2. se niegan si hay recetas en juego y no se confirmo,
+     3. y recien entonces escriben, dejando todo en la BITACORA.
+   ========================================================================== */
+
+/** Las recetas que nombran a esta ficha de pre-elaborado. Solo lee. */
+function usosDeFicha_(modelo, id) {
+  var usos = [];
+  modelo.recetas.forEach(function (r) {
+    if (r.id === id) return;
+    for (var i = 0; i < r.ingredientes.length; i++) {
+      if (r.ingredientes[i].receta === id) {
+        usos.push({ area: r.area, nombre: r.nombre, costo: r.ingredientes[i].total || 0 });
+        return;
+      }
+    }
+  });
+  return usos;
+}
+
+/**
+ * Archiva una receta o un pre-elaborado.
+ *
+ * Sin `confirmar`, si alguna receta lo usa NO archiva: devuelve la lista para que la
+ * pantalla la muestre. Es el mismo trato que crearInsumo_ le da a los duplicados —la
+ * pregunta no es un error, es la pregunta.
+ *
+ * Devuelve { ok, pestana, usos, filaResumen, filaBanco }.
+ */
+function archivarFicha_(ficha, quien, rol, area, confirmar) {
+  exigirPermiso_(rol, 'archivarFicha');
+  var ss = recetarioDe_(area);
+  var h = fichaDe_(ss, ficha);
+  var nombre = h.getName().trim();
+
+  if (normalizar_(nombre).indexOf(COSTEO.prefijoArchivo) === 0) {
+    throw new Error('"' + nombre + '" ya esta archivada.');
+  }
+  var nuevo = 'ZZ ARCHIVO · ' + nombre;
+  if (nuevo.length > 99) {
+    throw new Error('El nombre es demasiado largo para archivarlo (' + nuevo.length +
+                    ' caracteres). Acortalo en la hoja y volve a intentar.');
+  }
+
+  // Modelo CONSTRUIDO, no cacheado: esto decide una escritura que rompe costos.
+  var m = construirModelo_(), id = null, k = normalizar_(nombre);
+  for (var i = 0; i < m.recetas.length; i++) {
+    if (m.recetas[i].area === area && normalizar_(m.recetas[i].nombre) === k) { id = m.recetas[i].id; break; }
+  }
+  var esPlato = id !== null ? (m.recetas[id].tipo === 'plato') : true;
+  var usos = id !== null ? usosDeFicha_(m, id) : [];
+
+  if (usos.length && !confirmar) {
+    return { ok: false, motivo: 'en uso', usos: usos, pestana: nombre };
+  }
+
+  h.setName(nuevo);
+
+  // Lo que queda colgando. Si esto falla, la pestana ya esta renombrada: se avisa, no
+  // se revierte. Una pestana archivada de mas se arregla sacandole el prefijo.
+  var filaResumen = null, filaBanco = null;
+  if (esPlato) filaResumen = archivarEnResumen_(ss, nombre, nuevo);
+  else         filaBanco   = archivarEnBanco_(ss, nombre);
+
+  bitacora_(quien, rol, 'archivarFicha', conArea_(nombre, area), nombre, 'pestana', nombre, nuevo,
+            (filaResumen ? 'RESUMEN CMV fila ' + filaResumen + ' archivada · ' : '') +
+            (filaBanco ? 'BANCO DE DATOS fila ' + filaBanco + ' archivada · ' : '') +
+            (usos.length ? usos.length + ' receta(s) se quedan sin este ingrediente' : 'no lo usaba ninguna receta'));
+  invalidarCache_({ todo: true });   // cambia un nombre de pestana: el modelo entero
+  return { ok: true, pestana: nuevo, usos: usos, filaResumen: filaResumen, filaBanco: filaBanco };
+}
+
+/**
+ * NI UNA FILA SE BORRA. Las dos funciones de abajo renombran, que es lo mismo que le
+ * pasa a la pestana: archivar una receta y de paso DESTRUIR su fila de RESUMEN CMV o
+ * la del Banco seria archivar una mitad y perder la otra. Con el prefijo la fila deja
+ * de enganchar con nada —los dos lectores de RESUMEN CMV la indexan por el nombre del
+ * plato, y las fichas buscan en el Banco por el nombre del producto— y revivirla es
+ * sacarle el prefijo, igual que a la pestana.
+ */
+
+/** Marca como archivada la fila de RESUMEN CMV del plato. Devuelve la fila, o null. */
+function archivarEnResumen_(ss, pestana, pestanaNueva) {
+  var hR = ss.getSheetByName(FICHA_NUEVA.hojaResumen);
+  if (!hR) return null;
+  var f = hR.getDataRange().getValues();
+  for (var i = 0; i < f.length; i++) {
+    if (normalizar_(f[i][10]) !== normalizar_(pestana)) continue;                 // K
+    var fila = i + 1;
+    var plato = String(f[i][1] || '').trim();                                     // B
+    if (plato && normalizar_(plato).indexOf(COSTEO.prefijoArchivo) !== 0) {
+      hR.getRange(fila, 2).setValue(EDIT.prefijoArchivoBanco + plato);
+    }
+    hR.getRange(fila, 10).setValue('ARCHIVADO');
+    // la pestaña cambio de nombre: la columna K la sigue
+    hR.getRange(fila, 11).setValue(pestanaNueva);
+    // H e I (el POS) NO se tocan: el alta y la baja en la caja se manejan aparte,
+    // decision de Juanma del 25-ago-2026.
+    return fila;
+  }
+  return null;
+}
+
+/** Marca como archivada la fila del Banco del pre-elaborado, por nombre o por alias. */
+function archivarEnBanco_(ss, pestana) {
+  var h = ss.getSheetByName(EDIT.hojaBanco);
+  if (!h) return null;
+  var f = h.getDataRange().getValues(), k = normalizar_(pestana);
+  for (var i = EDIT.filaPrimerDato - 1; i < f.length; i++) {
+    var crudo = String(f[i][EDIT.col.producto - 1] || '').trim();
+    var nombreFila = normalizar_(crudo);
+    if (!nombreFila) continue;
+    var alias = COSTEO.aliasSubReceta[nombreFila];
+    if (nombreFila !== k && !(alias && normalizar_(alias) === k)) continue;
+    h.getRange(i + 1, EDIT.col.producto).setValue(EDIT.prefijoArchivoBanco + crudo);
+    return i + 1;
+  }
+  return null;
+}
+
+/**
+ * Archiva un producto del Banco: le pone el prefijo y lo saca de circulacion.
+ *
+ * MISMO CANDADO que archivarFicha_, y aca es todavia mas necesario: renombrar la fila
+ * rompe el VLOOKUP de toda ficha que la nombre y esas lineas pasan a valer Q0 sin un
+ * solo error. Es, literalmente, como se perdieron "Prejil" y "Pimienta Negra".
+ *
+ * Un producto que ES un pre-elaborado (tiene ficha detras) se niega siempre: hay que
+ * archivar la ficha, que ya se lleva su fila del Banco.
+ */
+function archivarInsumo_(producto, quien, rol, area, confirmar) {
+  exigirPermiso_(rol, 'archivarInsumo');
+  var m = construirModelo_(), k = normalizar_(producto), ins = null;
+  for (var i = 0; i < m.insumos.length; i++) {
+    if (m.insumos[i].area === area && normalizar_(m.insumos[i].producto) === k) { ins = m.insumos[i]; break; }
+  }
+  if (!ins) throw new Error('"' + producto + '" no esta en el Banco de Datos de ' + area + '.');
+
+  if (ins.sub !== null) {
+    throw new Error('"' + ins.producto + '" es un pre-elaborado: su precio sale de la ficha "' +
+      m.recetas[ins.sub].nombre + '". Archiva la ficha y esta fila se va con ella.');
+  }
+
+  var usos = (ins.usos || []).map(function (id) {
+    var r = m.recetas[id], costo = 0;
+    r.ingredientes.forEach(function (g) { if (g.insumo === ins.id) costo += (g.total || 0); });
+    return { area: r.area, nombre: r.nombre, costo: costo };
+  });
+  if (usos.length && !confirmar) {
+    return { ok: false, motivo: 'en uso', usos: usos, producto: ins.producto };
+  }
+
+  var ss = recetarioDe_(area);
+  var h = ss.getSheetByName(EDIT.hojaBanco);
+  var f = h.getDataRange().getValues(), fila = null;
+  for (i = EDIT.filaPrimerDato - 1; i < f.length; i++) {
+    if (normalizar_(f[i][EDIT.col.producto - 1]) === k) { fila = i + 1; break; }
+  }
+  if (!fila) throw new Error('"' + producto + '" ya no esta en la hoja.');
+
+  var nuevo = EDIT.prefijoArchivoBanco + String(f[fila - 1][EDIT.col.producto - 1]).trim();
+  h.getRange(fila, EDIT.col.producto).setValue(nuevo);
+
+  bitacora_(quien, rol, 'archivarInsumo', conArea_(EDIT.hojaBanco, area), ins.producto, 'producto',
+            ins.producto, nuevo,
+            usos.length ? (usos.length + ' receta(s) pierden el costo de esta linea: ' +
+                           usos.map(function (u) { return u.nombre; }).slice(0, 8).join(', '))
+                        : 'no lo usaba ninguna receta');
+  invalidarCache_({ todo: true });
+  return { ok: true, producto: nuevo, usos: usos, fila: fila };
 }

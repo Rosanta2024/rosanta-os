@@ -23,9 +23,13 @@ var PRUEBAS_CFG = {
   /** Numeros que deben dar. Actualizar cuando cambie el recetario, a proposito. */
   esperado: {
     platosCocina:        35,
-    preelaboradosCocina: 41,   // 13-sep-2026: +Salsa Romesco, la creo Jeffry desde la intranet
-    conCmvCocina:        26,
-    vaciasCocina:         9,   // las 7 nuevas + Charlotta y Panacotta, todavia sin costear
+    preelaboradosCocina: 45,   // 22-sep-2026: 41 -> 45. Los que Jeffry y Juanma fueron
+                               // creando desde la intranet (Aceite Albahaca, los dos
+                               // yogures, Mousse Receta). No se habia vuelto a medir.
+    conCmvCocina:        28,   // 22-sep-2026: 26 -> 28. Dos platos dejaron de costear en
+                               // cero al entrar al Banco los pre-elaborados que les
+                               // faltaban: MOUSSE DE CHOCOLATE es uno de ellos.
+    vaciasCocina:         7,   // 22-sep-2026: 9 -> 7, por lo mismo
     platosMapeadosPOS:   35
   },
 
@@ -64,7 +68,14 @@ var PRUEBAS_CFG = {
    *               al Banco de barra. Es un trabajo aparte, no una regresion.
    * Si el numero SUBE, algo se rompio. Si BAJA, alguien avanzo: actualizar aca.
    */
-  huerfanos: { COCINA: 2, BARRA: 38 },
+  /* 22-sep-2026. COCINA 2 -> 1: la Crema de Limon del MOUSSE DE CHOCOLATE ya tiene su
+     fila en el Banco; queda la ZANAHORIA BEBE de arriba, que sigue esperando decision.
+     BARRA 38 -> 9: los 16 cordiales y macerados que estaban en el Banco con el precio
+     vacio ahora lo calculan contra su ficha, y 7 mas que ni fila tenian entraron.
+     Los 9 que quedan son nombres que no coinciden con el Banco, no filas faltantes:
+     "Bitter Laurel", "GINSON", "CHLE PASA", "Viuda de Romero"... eso lo arregla quien
+     sepa a que producto apunta cada uno. */
+  huerfanos: { COCINA: 1, BARRA: 9 },
 
   /**
    * Lineas de ficha con cantidad pero SIN costo: la hoja no les puso numero.
@@ -96,7 +107,24 @@ var PRUEBAS_CFG = {
    * las dos pruebas miden cosas independientes y esos 38 no son plata invisible.
    * Con el esperado en 0, cualquier linea de barra que pierda su costo salta a FALLA.
    */
-  lineasSinCosto: { COCINA: 2, BARRA: 0 },
+  /* COCINA 2 -> 0 el 22-sep-2026: las dos lineas del MOUSSE DE CHOCOLATE dejaron de
+     valer cero. La Crema de Limon porque su ficha entro al Banco; el mousse base porque
+     su fila del Banco, que estaba sin precio, se borro — ahora esa linea cuenta como
+     huerfana, que es peor de ver y mejor de tener: un ingrediente "fuera del banco" se
+     nota en la ficha, uno en Q0 no.
+
+     BARRA 0 -> 1 el 23-sep-2026, con motivo y con dueno, no para que la prueba pase:
+     CHARADA > CHILE PIMIENTO Y TE FERMENTADO. Juanma: que productos se retiran lo
+     deciden Jose y Jeffry, y una linea sin precio significa que ese pre-elaborado o
+     esta a medio costear o se va a eliminar. Es un pendiente de ellos, no una
+     regresion del sistema.
+
+     OJO AL CERRARLO: el 22-sep la ficha de CHILE PIMIENTO Y TE FERMENTADO SI tenia
+     costo (Q0.03 por ml) y aun asi la linea de CHARADA vale cero. O sea que el coctel
+     se esta costeando sin ese ingrediente y su CMV sale mas bajo de lo que es. Cuando
+     Jose decida, correr revisarLineasSinCosto() —en este archivo— que abre las celdas
+     y dice por que. Si el pre-elaborado se elimina, este numero vuelve a 0. */
+  lineasSinCosto: { COCINA: 0, BARRA: 1 },
 
   /** Modulos validos en la hoja USUARIOS. Uno fuera de esta lista es un typo. */
   modulosValidos: ['finanzas', 'recetario', 'marketing', 'contenido', 'crm', 'consola', 'resenas'],
@@ -144,13 +172,30 @@ function prAnotar_(grupo, nombre, estado, detalle, leido, esperado) {
   });
 }
 
-/** Envuelve una prueba para que un error adentro no tumbe la bateria completa. */
+/**
+ * Envuelve una prueba para que un error adentro no tumbe la bateria completa, y la
+ * CRONOMETRA.
+ *
+ * El reloj se agrego el 23-sep-2026: la bateria entera tarda cinco minutos y no habia
+ * forma de saber cual prueba se los comia. Optimizar a ojo es adivinar; con el tiempo
+ * de cada una, el informe dice solo donde mirar. Se marca en el texto a partir de 3s,
+ * para no llenarlo de ruido.
+ */
 function prCorrer_(grupo, nombre, fn) {
+  var t0 = new Date().getTime(), desde = grupo.pruebas.length;
   try {
     fn();
   } catch (e) {
     prAnotar_(grupo, nombre, 'FALLA', 'Reviento: ' + String(e && e.message || e));
   }
+  var ms = new Date().getTime() - t0;
+  /* El tiempo es de la LLAMADA, no de cada resultado. Una sola prCorrer_ puede anotar
+     cuatro pruebas —las cuatro salen del mismo modelo— y ponerle los 65s a cada una
+     hacia que el total del grupo dijera 369s cuando la corrida entera tardo 174s.
+     Un numero que se contradice con el de arriba enseña a desconfiar del informe.
+     Va en la PRIMERA de las anotadas, y el grupo suma una sola vez. */
+  grupo.ms = (grupo.ms || 0) + ms;
+  if (grupo.pruebas.length > desde) grupo.pruebas[desde].ms = ms;
 }
 
 function prIgual_(grupo, nombre, leido, esperado, detalle) {
@@ -574,6 +619,23 @@ function prRecetario_(res) {
       basura.length === 0 ? 'OK' : 'FALLA',
       basura.map(function (r) { return r.area + ' > ' + r.nombre; }).join(' · '),
       basura.length, 0);
+  });
+
+  /* Un pre-elaborado con ficha y sin fila en el Banco existe para el recetario y no
+     existe para las recetas: no sale en la lista de ingredientes y agregarLinea_ lo
+     rechaza. Vivio asi hasta el 22-sep-2026, cuando Juanma creo el Aceite Albahaca y
+     no lo pudo poner en ninguna receta. Ninguna prueba lo notaba: la ficha se leia
+     bien, costeaba bien, y el agujero estaba en lo que NO se habia escrito.
+     Se repara con darDeAltaPreelaboradosSinBanco() desde el editor. */
+  prCorrer_(g, 'Pre-elaborados que ninguna receta puede usar', function () {
+    var lista = preelaboradosSinBanco_(prModelo_());
+    prAnotar_(g, 'Pre-elaborados que ninguna receta puede usar',
+      lista.length === 0 ? 'OK' : 'FALLA',
+      lista.length
+        ? (lista.slice(0, 12).map(function (p) { return p.area + ' > ' + p.nombre; }).join(' · ') +
+           ' · se reparan con darDeAltaPreelaboradosSinBanco() desde el editor')
+        : '',
+      lista.length, 0);
   });
 
   // Agregar un ingrediente arranca por bloqueFicha_. Si no ubica el bloque, la ficha
@@ -1358,8 +1420,9 @@ function prCapaWeb_(res) {
   // invisible, porque solo aparece escribiendo y ninguna prueba escribe.
   prCorrer_(g, 'Las que escriben resuelven el area', function () {
     var escriben = ['webEditarCantidad', 'webAgregarLinea', 'webQuitarLinea',
-                    'webCambiarPrecioMenu', 'webCrearFicha', 'webCrearInsumo',
-                    'webCambiarPrecioInsumo', 'webAsignarProveedor'];
+                    'webCambiarPrecioMenu', 'webCambiarRinde', 'webCrearFicha', 'webCrearInsumo',
+                    'webCambiarPrecioInsumo', 'webAsignarProveedor',
+                    'webArchivarFicha', 'webArchivarInsumo'];
     var sinArea = escriben.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;
@@ -1375,7 +1438,8 @@ function prCapaWeb_(res) {
   // Ninguna escritura puede quedar clavada a un recetario: para eso esta recetarioDe_.
   prCorrer_(g, 'Ninguna escritura abre un recetario a mano', function () {
     var capa = ['editarCantidad_', 'agregarLinea_', 'quitarLinea_', 'cambiarPrecioMenu_',
-                'crearFicha_', 'crearInsumo_', 'cambiarPrecioInsumo_', 'asignarProveedor_',
+                'cambiarRinde_', 'crearFicha_', 'crearInsumo_', 'cambiarPrecioInsumo_',
+                'asignarProveedor_', 'archivarFicha_', 'archivarInsumo_',
                 'buscarSimilares_', 'contenidosTipicos_'];
     var clavadas = capa.filter(function (n) {
       var fn = globalThis[n];
@@ -1468,21 +1532,47 @@ function correrPruebas() {
   return correrPruebas_();
 }
 
-function correrPruebas_() {
+/**
+ * Los grupos, por clave. Cada uno es autonomo: arma su propio grupo de resultados y
+ * hace su propia preparacion, asi que se pueden correr sueltos.
+ *
+ * Existe desde el 23-sep-2026 y la razon es de uso, no de diseño: la bateria entera
+ * tarda cinco minutos, y ese dia Juanma la corrio cuatro veces seguidas para mirar dos
+ * numeros del recetario. Una herramienta de control que cuesta cinco minutos se deja
+ * de usar, y una bateria que no se corre no protege nada.
+ */
+var PRUEBAS_GRUPOS_ = {
+  cimientos:  prCimientos_,
+  recetario:  prRecetario_,
+  pos:        prPuentePOS_,
+  accesos:    prAccesos_,
+  modulos:    prModulos_,
+  web:        prCapaWeb_,
+  sync:       prSyncPrecios_,
+  inventario: prInventario_,
+  finanzas:   prFinanzas_        // pilar 3, en PruebasFinanzas.gs
+};
+var PRUEBAS_ORDEN_ = ['cimientos','recetario','pos','accesos','modulos','web','sync','inventario','finanzas'];
+
+/**
+ * `claves` (opcional): lista de grupos a correr. Sin nada, la bateria entera — que es
+ * lo que corre el activador y la pantalla, y lo que hay que mirar antes de publicar.
+ */
+function correrPruebas_(claves) {
   var arranque = new Date().getTime();
   PRUEBAS_MODELO_ = null;                       // modelo fresco en cada corrida
 
   var res = { grupos: [], fecha: new Date().toISOString() };
 
-  prCimientos_(res);
-  prRecetario_(res);
-  prPuentePOS_(res);
-  prAccesos_(res);
-  prModulos_(res);
-  prCapaWeb_(res);
-  prSyncPrecios_(res);
-  prInventario_(res);
-  prFinanzas_(res);           // pilar 3, en PruebasFinanzas.gs
+  var lista = PRUEBAS_ORDEN_;
+  if (claves && claves.length) {
+    lista = [].concat(claves).filter(function (k) { return PRUEBAS_GRUPOS_[k]; });
+    var malas = [].concat(claves).filter(function (k) { return !PRUEBAS_GRUPOS_[k]; });
+    if (malas.length) throw new Error('No existe el grupo de pruebas: ' + malas.join(', ') +
+                                      '. Los que hay: ' + PRUEBAS_ORDEN_.join(', ') + '.');
+    res.parcial = lista.join(', ');
+  }
+  lista.forEach(function (k) { PRUEBAS_GRUPOS_[k](res); });
 
   var n = 0, ok = 0, mal = 0, avisos = 0, saltadas = 0;
   res.grupos.forEach(function (g) {
@@ -1504,12 +1594,16 @@ function correrPruebas_() {
 /** El resultado en texto plano. Lo usan el editor y la vista del navegador. */
 function pruebasATexto_(res) {
   var l = [];
-  l.push(res.sana ? 'INTRANET SANA' : 'HAY ' + res.fallas + ' FALLA(S)');
+  l.push(res.sana ? (res.parcial ? 'SIN FALLAS en lo corrido' : 'INTRANET SANA')
+                  : 'HAY ' + res.fallas + ' FALLA(S)');
+  // Un verde parcial NO es "la intranet esta sana": hay que poder distinguirlos de un
+  // vistazo, o alguien va a publicar confiando en media bateria.
+  if (res.parcial) l.push('CORRIDA PARCIAL · solo: ' + res.parcial);
   l.push(res.ok + ' OK · ' + res.fallas + ' fallas · ' + res.avisos + ' avisos · ' +
          res.saltadas + ' saltadas · ' + (res.ms / 1000).toFixed(1) + 's');
   res.grupos.forEach(function (g) {
     l.push('');
-    l.push(g.nombre);
+    l.push(g.nombre + (g.ms >= 3000 ? '   [' + (g.ms / 1000).toFixed(0) + 's]' : ''));
     g.pruebas.forEach(function (p) {
       var marca = p.estado === 'OK' ? '  OK  ' : p.estado === 'FALLA' ? ' FALLA' :
                   p.estado === 'AVISO' ? ' AVISO' : '  --  ';
@@ -1519,6 +1613,7 @@ function pruebasATexto_(res) {
       } else if (p.leido != null) {
         linea += '   ' + p.leido;
       }
+      if (p.ms >= 3000) linea += '   [' + (p.ms / 1000).toFixed(0) + 's]';
       l.push(linea);
       if (p.detalle) l.push('          ' + p.detalle);
     });
@@ -1543,6 +1638,104 @@ function pruebasATexto_(res) {
 function correrPruebasTexto() {
   soloDueno_();
   return pruebasATexto_(correrPruebas_());
+}
+
+/**
+ * Igual que correrPruebasTexto() pero ESCRIBE el informe en el Log.
+ *
+ * Para correr la bateria DESDE EL EDITOR y poder leerla: el editor muestra el Log,
+ * no lo que la funcion devuelve, asi que correrPruebas() dejaba el informe adentro de
+ * un objeto que nadie veia y correrPruebasTexto() esta hecha para la terminal. Hasta
+ * el 15-sep-2026 eso lo cubria CORRER_PRUEBAS.gs, que se archivo. No escribe nada.
+ *
+ * La ruta ?page=pruebas del navegador sigue siendo la version linda, pero corre la
+ * version PUBLICADA: si se acaba de tocar el codigo y todavia no se saco version
+ * nueva, muestra la bateria vieja. Esta corre lo que hay en el editor.
+ */
+function correrPruebasLog() {
+  soloDueno_();
+  var texto = pruebasATexto_(correrPruebas_());
+  // El Log corta las lineas muy largas: se manda por bloques, no de una.
+  texto.split('\n').forEach(function (linea) { Logger.log(linea); });
+  return texto;
+}
+
+/**
+ * Herramienta de editor: POR QUE una linea con cantidad quedo sin costo. Solo LEE.
+ *
+ * La prueba "Sin costo en ..." dice CUALES son, y con eso no alcanza: el VLOOKUP de las
+ * fichas viene envuelto en IFERROR(...,"") asi que un fallo devuelve VACIO y no #N/A, y
+ * desde afuera no se distingue un producto que no esta en el Banco de uno que esta con
+ * precio cero, de una cantidad escrita como texto, o de una formula que alguien piso a
+ * mano. Esto abre las tres celdas —la de la ficha, su formula, y la fila del Banco— y
+ * las imprime crudas. Nacio el 22-sep-2026 persiguiendo CHARADA > CHILE PIMIENTO Y TE
+ * FERMENTADO, que aparecio despues de tocar el Banco y no se dejaba explicar de lejos.
+ */
+function revisarLineasSinCosto() {
+  soloDueno_();
+  var m = construirModelo_(), casos = [];
+
+  m.recetas.forEach(function (r) {
+    r.ingredientes.forEach(function (g) {
+      if (typeof g.cantidad !== 'number' || !(g.cantidad > 0)) return;
+      if (typeof g.total === 'number' && g.total > 0) return;
+      casos.push({ area: r.area, ficha: r.nombre, fila: g.fila, nombre: g.nombre,
+                   cantidad: g.cantidad, unidad: g.unidad, enBanco: g.insumo !== null });
+    });
+  });
+
+  if (!casos.length) { Logger.log('Ninguna linea con cantidad quedo sin costo.'); return 0; }
+  Logger.log('%s linea(s) con cantidad y sin costo:', casos.length);
+
+  casos.forEach(function (c) {
+    var ss = recetarioDe_(c.area);
+    var h = fichaDe_(ss, c.ficha);
+    var b = bloqueFicha_(h);
+    var rango = h.getRange(c.fila, b.colBase, 1, 5);
+    Logger.log('');
+    Logger.log('%s > %s · fila %s · "%s" %s %s', c.area, c.ficha, c.fila, c.nombre, c.cantidad, c.unidad || '');
+    Logger.log('   la ficha dice:  %s', JSON.stringify(rango.getValues()[0]));
+    Logger.log('   sus formulas:   %s', JSON.stringify(rango.getFormulas()[0]));
+
+    if (!c.enBanco) { Logger.log('   el Banco:       NO tiene ese producto (por eso el precio viene vacio)'); return; }
+    var hb = ss.getSheetByName(EDIT.hojaBanco), rb = hb.getDataRange();
+    var v = rb.getValues(), fx = rb.getFormulas(), k = normalizar_(c.nombre);
+    for (var i = EDIT.filaPrimerDato - 1; i < v.length; i++) {
+      if (normalizar_(v[i][EDIT.col.producto - 1]) !== k) continue;
+      Logger.log('   el Banco fila %s: precio=%s · formula=%s · unidad=%s', i + 1,
+                 JSON.stringify(v[i][EDIT.col.precioReceta - 1]),
+                 fx[i][EDIT.col.precioReceta - 1] || '(no es formula, es un valor)',
+                 JSON.stringify(v[i][EDIT.col.unidadReceta - 1]));
+      return;
+    }
+    Logger.log('   el Banco:       el modelo lo enlazo pero no encuentro la fila por nombre exacto');
+  });
+  return casos.length;
+}
+
+/**
+ * Los dos atajos que se usan de verdad, para no pagar cinco minutos por mirar un
+ * numero. Son los dos frentes donde se trabaja: el recetario y el dinero.
+ *
+ * NO reemplazan a correrPruebasLog(). Un grupo verde no dice que la intranet este
+ * sana —el informe lo avisa con "CORRIDA PARCIAL"— y antes de publicar hay que correr
+ * la bateria entera. Esto es para el ida y vuelta mientras se trabaja.
+ *
+ * Deliberadamente son dos y no nueve: un atajo que nadie usa es una puerta mas que
+ * alguien tiene que mantener y mirar.
+ */
+function pruebasRecetario() {
+  soloDueno_();
+  var texto = pruebasATexto_(correrPruebas_(['recetario']));
+  texto.split('\n').forEach(function (linea) { Logger.log(linea); });
+  return texto;
+}
+
+function pruebasFinanzas() {
+  soloDueno_();
+  var texto = pruebasATexto_(correrPruebas_(['finanzas']));
+  texto.split('\n').forEach(function (linea) { Logger.log(linea); });
+  return texto;
 }
 
 function correrPruebasWeb(auth) {

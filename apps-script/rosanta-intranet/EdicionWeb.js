@@ -124,7 +124,8 @@ function areaLectura_(area, u) {
 function webEstadoEdicion(auth) {
   return edicionCorrer_(auth, function (u) {
     var acciones = ['editarCantidad', 'agregarLinea', 'quitarLinea', 'cambiarPrecio',
-                    'cambiarPrecioMenu', 'crearFicha', 'crearInsumo', 'crearProveedor'];
+                    'cambiarPrecioMenu', 'cambiarRinde', 'crearFicha', 'crearInsumo', 'crearProveedor',
+                    'archivarFicha', 'archivarInsumo'];
     var puede = {};
     acciones.forEach(function (a) { puede[a] = puede_(u.rol, a); });
     // areas: sin esto la pantalla le ofrece a Jose los botones de cocina y el
@@ -191,6 +192,43 @@ function webCambiarPrecioMenu(auth, ficha, precioNuevo, motivo, area) {
     var a = areaDeLaPagina_(area, u);
     return conCandadoRecetario_(function () { return cambiarPrecioMenu_(ficha, precioNuevo, u.email, u.rol, motivo, a); });
   }, 'cambiarPrecioMenu ' + ficha);
+}
+
+/**
+ * Cambiar en cuantas porciones rinde el batch de un pre-elaborado. Mueve el costo por
+ * porcion y, con el, el de todos los platos que lo usan: por eso pasa por el candado
+ * igual que las demas escrituras.
+ */
+function webCambiarRinde(auth, ficha, rindeNuevo, area) {
+  return edicionCorrer_(auth, function (u) {
+    var a = areaDeLaPagina_(area, u);
+    return conCandadoRecetario_(function () { return cambiarRinde_(ficha, rindeNuevo, u.email, u.rol, a); });
+  }, 'cambiarRinde ' + ficha);
+}
+
+/**
+ * Archivar una receta o un pre-elaborado. NO BORRA NADA, EN NINGUN LADO: renombra la
+ * pestaña con el prefijo de archivo y marca igual las filas que quedarian colgando —la
+ * de RESUMEN CMV de un plato, la del Banco de un pre-elaborado—. Las tres se revivien
+ * sacandoles el prefijo.
+ *
+ * Sin `confirmar`, si alguna receta lo usa contesta {ok:true, resultado:{ok:false,
+ * motivo:'en uso', usos:[...]}} y no toca nada. OJO A LA FORMA: la pregunta viaja
+ * ADENTRO del sobre de edicionCorrer_, igual que la de duplicados en webCrearInsumo.
+ */
+function webArchivarFicha(auth, ficha, confirmar, area) {
+  return edicionCorrer_(auth, function (u) {
+    var a = areaDeLaPagina_(area, u);
+    return conCandadoRecetario_(function () { return archivarFicha_(ficha, u.email, u.rol, a, confirmar); });
+  }, 'archivarFicha ' + ficha);
+}
+
+/** Archivar un producto del Banco. Mismo trato que el de arriba. */
+function webArchivarInsumo(auth, producto, confirmar, area) {
+  return edicionCorrer_(auth, function (u) {
+    var a = areaDeLaPagina_(area, u);
+    return conCandadoRecetario_(function () { return archivarInsumo_(producto, u.email, u.rol, a, confirmar); });
+  }, 'archivarInsumo ' + producto);
 }
 
 /**
