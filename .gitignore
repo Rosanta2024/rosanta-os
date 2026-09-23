@@ -18,3 +18,6 @@ Icon?
 # Repo de terceros con su propio .git: tiene su historia aparte y git no
 # lo puede anidar sin convertirlo en submodulo. No es codigo de Rosanta.
 tools/ui-ux-pro-max-skill/
+
+# Salida generada del banco de pruebas de Finanzas: se regenera con construir.py
+tools/preview-finanzas/salida/
