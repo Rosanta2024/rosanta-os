@@ -1,0 +1,7 @@
+# Sin esto, `clasp push` sube TODO lo que haya en la carpeta y, como los .js
+# comparten un solo ambito global, un respaldo redefine funciones sin dar error.
+_backups/**
+*.bak
+*.md
+.git/**
+node_modules/**

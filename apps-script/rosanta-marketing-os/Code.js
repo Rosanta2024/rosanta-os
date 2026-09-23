@@ -285,7 +285,7 @@ function sendToCAPI(email, tel, valor) {
       custom_data:{ currency:'GTQ', value:valor }
     }]};
     var res = UrlFetchApp.fetch(
-      'https://graph.facebook.com/v19.0/'+META_DATASET_ID+'/events?access_token='+encodeURIComponent(tok),
+      'https://graph.facebook.com/v26.0/'+META_DATASET_ID+'/events?access_token='+encodeURIComponent(tok),
       { method:'post', contentType:'application/json', payload:JSON.stringify(payload), muteHttpExceptions:true });
     return res.getResponseCode()===200 ? 'enviado' : ('error '+res.getResponseCode());
   } catch(err){ return 'error '+err; }
