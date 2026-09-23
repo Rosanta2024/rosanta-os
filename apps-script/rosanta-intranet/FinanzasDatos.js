@@ -33,11 +33,10 @@
  *   8. El GAS solo se cuenta por FEL: el movimiento del banco es el pago de esa
  *      misma factura. Sin la regla habia doble conteo (Q12,661 en FEL contra
  *      Q8,456 en Banco Industrial, los dos sumando).
- *   9. Hay proveedores que SIEMPRE facturan por FEL (FIN_PAGO_DE_FACTURA): su
- *      pago de banco o tarjeta es el pago de esa factura y no se suma. El banco
- *      no trae NIT: el pago se reconoce por su texto. Medido el 14-sep-2026:
- *      Q49,629 del año se contaban dos veces. La bateria vigila que cada uno
- *      siga facturando; si deja de hacerlo, la regla borraria gasto real.
+ *   9. RETIRADA el 23-sep-2026. Saltaba el pago de una lista de proveedores
+ *      asumiendo que su factura entraba por FEL, sin verificarlo: lo que cobraban
+ *      de mas desaparecia del DRE (Q5,250 del año, medidos el 22-sep). La cubre
+ *      la regla 15, que casa el pago con su factura antes de saltarlo.
  *  10. Una fecha del maestro con hora se lleva a su DIA (_finDia_): 12:00 o mas es
  *      el dia siguiente. 157 filas se guardaron a las 22:00/23:00 del dia anterior
  *      (zona horaria del Sheet distinta de la del script) y se verifico contra las
@@ -96,26 +95,23 @@ var FIN_EFECTIVO = ['ALIMENTOS_EFECTIVO', 'BEBIDAS_EFECTIVO', 'COCTELERIA_EFECTI
 // Categorias que SIEMPRE vienen con factura: se cuentan por FEL y el movimiento
 // del banco se salta, porque es el pago de esa misma factura.
 var FIN_SOLO_FEL = ['GAS', 'ALQUILER_EQUIPO'];
-// Proveedores que SIEMPRE facturan por FEL: su pago desde banco o tarjeta es el
-// pago de esa misma factura y se salta (regla 9). El banco no trae NIT, asi que
-// el pago se reconoce por el texto del movimiento y, donde el texto no alcanza,
-// tambien por la categoria. El NIT es para cotejar contra la factura.
-// Quedan fuera a proposito: Tigo, que paga 2.5 veces lo que factura, y los
-// comercios de tarjeta (PriceSmart, gasolineras), que no siempre dan FEL.
-// Mismo listado en generar_finanzas.py (PAGO_DE_FACTURA).
-var FIN_PAGO_DE_FACTURA = [
-  { prov: 'EEGSA', nit: '326445', hojas: ['03_Banco_Industrial', '04_Banco_BAC'], texto: /EEGSA/ },
-  { prov: 'Claro', nit: '9929290', hojas: ['03_Banco_Industrial'], texto: /CLARO/ },
-  { prov: 'Doorways', nit: '96569239', hojas: ['03_Banco_Industrial'], texto: /DOORWAY/ },
-  { prov: 'Doorways', nit: '96569239', hojas: ['04_Banco_BAC'], texto: /TEF A ?: ?902410067/ },
-  { prov: 'Posfile', nit: '107902699', hojas: ['03_Banco_Industrial', '05_Tarjeta_Credito_BAC'], texto: /POSFILE/ },
-  { prov: 'EX Security', nit: '104313218', hojas: ['03_Banco_Industrial'],
-    cats: ['SERVICIO DE MONITOREO Y ALARMA'] },
-  { prov: 'Edwin Flores', nit: '82651086', hojas: ['03_Banco_Industrial'],
-    texto: /MARKETING|CONTENIDO/, cats: ['SERVICIOS_PROFESIONALES'] },
-  { prov: 'Aseguradora La Ceiba', nit: '5022193', hojas: ['03_Banco_Industrial'],
-    texto: /SEGURO/, cats: ['SEGUROS_Y_FIANZAS'] }
-];
+/* REGLA 9 RETIRADA — 23-sep-2026, decision de Juanma.
+ *
+ * Saltaba el pago de banco o tarjeta de una lista de proveedores, asumiendo que su
+ * factura ya entraba por FEL. Asumiendo: no lo verificaba. Si el proveedor cobraba mas
+ * de lo que facturaba, la diferencia desaparecia del DRE sin dejar rastro. Medido el
+ * 22-sep sobre el año: Edwin Flores pagaba Q18,500 y facturaba Q14,000, EX Security
+ * Q3,000 contra Q2,250 — Q5,250 de gasto real que no estaba en ningun lado.
+ *
+ * La reemplaza la regla 15 (21-sep, "la factura manda"), que hace lo mismo pero
+ * mirando: casa cada pago con UNA factura por bloque y monto, y solo entonces lo salta.
+ * Un pago sin factura ahora cuenta como gasto, que es lo conservador y lo cierto.
+ *
+ * La lista se va entera: mientras existiera, el proximo que la leyera creeria que
+ * todavia hace algo. Si alguna vez hace falta volver, esta en el historial de versiones.
+ * OJO: generar_finanzas.py tiene el mismo listado (PAGO_DE_FACTURA): si sigue vivo
+ * alla, las dos implementaciones dejan de dar el mismo DRE.
+ */
 
 // Regla 15 (21-sep-2026, Juanma): LA FACTURA MANDA. "Se le da prioridad a las facturas;
 // si no existe factura, se usan los bancos." Un pago de banco o tarjeta que tiene su
@@ -174,35 +170,16 @@ function _finPagosConFactura_(hojas, anio, usd) {
       var fila = { dia: Math.round(Date.UTC(f.getFullYear(), f.getMonth(), f.getDate()) / 86400000),
                    q: q, bloque: d[0], llave: L.hoja + '|' + r, orden: i * 1000000 + r };
       if (L.hoja === '01_FEL_Maestro') facturas.push(fila);
-      else if (!_finEn_(FIN_SOLO_FEL, cat) &&
-               !(L.desc && _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat))) pagos.push(fila);
+      // Los pagos de la regla 9 quedaban FUERA de este emparejamiento: se los saltaba
+      // antes de llegar aca. Retirada la regla, entran como cualquier otro y la 15
+      // decide con la factura en la mano (23-sep-2026).
+      else if (!_finEn_(FIN_SOLO_FEL, cat)) pagos.push(fila);
     }
   });
   return _finCasarPagos_(facturas, pagos);
 }
 
-/** El proveedor si la fila es el pago de una factura FEL; si no, ''. */
-function _finPagoDeFactura_(hoja, texto, cat) {
-  var t = String(texto || '').toUpperCase().replace(/\s+/g, ' ');
-  for (var i = 0; i < FIN_PAGO_DE_FACTURA.length; i++) {
-    var P = FIN_PAGO_DE_FACTURA[i];
-    if (!_finEn_(P.hojas, hoja)) continue;
-    if (P.texto && !P.texto.test(t)) continue;
-    if (P.cats && !_finEn_(P.cats, cat)) continue;
-    return P.prov;
-  }
-  return '';
-}
 
-/** Por proveedor de la regla 9: pago saltado del año contra su factura FEL, por NIT. */
-function _finPagoFacturaResumen_(saltado, felNit) {
-  var out = {};
-  FIN_PAGO_DE_FACTURA.forEach(function (P) {
-    out[P.prov] = { nit: P.nit, pago: _finR_(saltado[P.prov] || 0),
-                    factura: _finR_(felNit[P.nit] || 0) };
-  });
-  return out;
-}
 
 /**
  * Meta de food cost ponderada por el mix: (mix_cocina x 30%) + (mix_barra x 20%).
@@ -658,7 +635,9 @@ function finCacheClave_() {
   // v7 (15-sep-2026): food cost sobre venta sin servicio (ventas_ss, regla 14).
   // v8 (21-sep-2026): FACTURA_AJENA fuera a proposito. Una cache v7 la mostraria como fuga.
   // v9 (21-sep-2026): regla 15, la factura manda. Una cache v8 traeria el doble conteo.
-  return 'finanzas_v9_m' + m.global + '-' + m.BARRA;
+  // v10 (23-sep-2026): retirada la regla 9. Una cache v9 seguiria mostrando el DRE sin
+  // los Q5,250 que la regla borraba, y el cambio no se veria hasta que expirara sola.
+  return 'finanzas_v10_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -775,7 +754,7 @@ function _finCalcular_() {
   // dice donde termina el dinero. Estaba solo en generar_finanzas.py y era la
   // unica parte del pilar que no se podia ver sin correr Python en un Mac.
   var cob = {}, desconocidas = {};
-  var felNit = {}, pagoSaltado = {};   // regla 9: factura por NIT y pago saltado por proveedor
+  var felNit = {};                     // factura por NIT, para cotejar contra los pagos
   FIN_LIBROS.forEach(function (L) { cob[L.hoja] = {}; });
 
   // Compra de mercaderia partida por area y por familia de producto. Es lo que
@@ -830,14 +809,12 @@ function _finCalcular_() {
       // Espeja a proposito las reglas de abajo en vez de reusarlas: si las dos
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
-      var pagoDe = L.desc ? _finPagoDeFactura_(L.hoja, filas[r][L.desc - 1], cat) : '';
       var tieneFactura = !!conFactura[L.hoja + '|' + r];
-      var dest = _finDestino_(cat, L.hoja, esPers, pagoDe, tieneFactura);
+      var dest = _finDestino_(cat, L.hoja, esPers, tieneFactura);
       if (L.nit && !anulada) {
         var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
         felNit[nit] = (felNit[nit] || 0) + q;
       }
-      if (dest === 'REGLA 9: pago de factura FEL') pagoSaltado[pagoDe] = (pagoSaltado[pagoDe] || 0) + q;
       cob[L.hoja][dest] = (cob[L.hoja][dest] || 0) + q;
       if (dest === 'CATEGORIA DESCONOCIDA') {
         var kd = cat || '(sin categoria)';
@@ -883,8 +860,6 @@ function _finCalcular_() {
       // regla 8: hay categorias que solo se cuentan por FEL; el movimiento del
       // banco es el pago de esa misma factura
       if (_finEn_(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
-      // regla 9: pago de un proveedor que siempre factura por FEL
-      if (pagoDe) continue;
       // regla 15: la factura manda. El pago con factura FEL no suma.
       if (tieneFactura) { facturaMandaN++; facturaMandaQ += q; continue; }
       if (cat === 'IGSS') M.igss += q;
@@ -1158,8 +1133,6 @@ function _finCalcular_() {
       cobertura: _finRedondear_(cob),
       fugas: _finFugas_(cob),
       desconocidas: _finRedondear_(desconocidas),
-      // regla 9: lo saltado de cada proveedor contra su factura del año
-      pago_factura: _finPagoFacturaResumen_(pagoSaltado, felNit),
       // M20: meses con gasto y sin venta. No se pintan, pero su dinero esta en el año.
       meses_sin_venta: sinVenta.map(function (x) {
         return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), gop: _finR_(x.gop) };
@@ -1629,7 +1602,7 @@ function _finFamilias_() {
  * Donde termina una fila con esta categoria. Espeja la logica de _finCalcular.
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
-function _finDestino_(cat, hoja, esPersonal, pagoDe, tieneFactura) {
+function _finDestino_(cat, hoja, esPersonal, tieneFactura) {
   if (cat === 'ANULADA') return 'anulada en SAT';
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
@@ -1645,7 +1618,6 @@ function _finDestino_(cat, hoja, esPersonal, pagoDe, tieneFactura) {
     return 'alquiler por banco: no suma';
   }
   if (_finEn_(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
-  if (pagoDe) return 'REGLA 9: pago de factura FEL';
   if (tieneFactura && FIN_MAP[cat]) return 'REGLA 15: tiene factura FEL';
   if (FIN_MAP[cat]) return 'DRE \u00b7 ' + FIN_MAP[cat][0];
   return 'CATEGORIA DESCONOCIDA';

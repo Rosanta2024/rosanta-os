@@ -201,23 +201,18 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, mal.length === 0 ? 'OK' : 'FALLA', mal.join(' · '), mal.length, 0);
   });
 
+  /* La regla 9 se retiro el 23-sep-2026 y con ella esta prueba, que vigilaba su unico
+     modo de falla: un proveedor de la lista que cobrara mas de lo que facturaba hacia
+     desaparecer la diferencia del DRE. Ya no hay lista ni salto — la regla 15 casa cada
+     pago con su factura antes de saltarlo, asi que un pago sin factura cuenta como
+     gasto. Lo que ahora cubre ese terreno es "La factura manda: el pago con factura no
+     suma", mas arriba en este mismo grupo. */
   prCorrer_(g, 'Los proveedores de la regla 9 siguen facturando', function () {
     var nombre = 'Los proveedores de la regla 9 siguen facturando';
-    // La regla 9 salta el pago de banco y tarjeta de estos proveedores porque su
-    // factura ya entra por FEL. Si uno deja de facturar, la regla borra gasto
-    // real sin avisar. El 1.3 deja margen a un pago que cubre una factura del
-    // año anterior (Edwin: Q4,000 de facturas de 2025).
-    var pf = d.integridad.pago_factura || {};
-    var provs = Object.keys(pf);
-    var mal = provs.filter(function (p) { return pf[p].pago > 1.3 * pf[p].factura; })
-      .map(function (p) {
-        return p + ' paga Q' + Math.round(pf[p].pago) + ' y factura Q' + Math.round(pf[p].factura);
-      });
-    prAnotar_(g, nombre, provs.length && !mal.length ? 'OK' : 'FALLA',
-      !provs.length ? 'el calculo no trae el resumen de la regla 9'
-        : mal.length ? mal.join(' · ') + ': sacarlo de FIN_PAGO_DE_FACTURA'
-        : provs.length + ' proveedores · ninguno paga mas de 1.3 veces lo que factura',
-      provs.length - mal.length, provs.length);
+    var viva = typeof FIN_PAGO_DE_FACTURA !== 'undefined';
+    prAnotar_(g, nombre, viva ? 'AVISO' : 'OK',
+      viva ? 'la regla 9 volvio a estar viva: esta prueba hay que reactivarla'
+           : 'retirada el 23-sep-2026: la cubre la regla 15 (la factura manda)');
   });
 
   // --------------------------------------------------------- 4. equilibrio
@@ -519,7 +514,7 @@ function prFinanzas_(res) {
     // Regla 13 (15-sep-2026): el calculo leia el FEL sin mirar la columna Estado y
     // sumaba como gasto las facturas anuladas en SAT. Las formulas del maestro ya
     // filtraban "Vigente" desde el 2-sep; este motor y generar_finanzas.py no.
-    var destino = _finDestino_('ANULADA', '01_FEL_Maestro', false, '');
+    var destino = _finDestino_('ANULADA', '01_FEL_Maestro', false, false);
     var ok = _finEn_(FIN_FUERA, 'ANULADA') && destino === 'anulada en SAT';
     var an = (d.integridad && d.integridad.anuladas) || { n: 0, q: 0 };
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
@@ -531,7 +526,7 @@ function prFinanzas_(res) {
     var nombre = 'Una factura ajena queda fuera a proposito';
     // 21-sep-2026 (Juanma): FACTURA_AJENA no es del restaurante ni personal. Sin la
     // categoria en FIN_FUERA caeria en CATEGORIA DESCONOCIDA y saldria como fuga.
-    var destino = _finDestino_('FACTURA_AJENA', '01_FEL_Maestro', false, '');
+    var destino = _finDestino_('FACTURA_AJENA', '01_FEL_Maestro', false, false);
     var ok = _finEn_(FIN_FUERA, 'FACTURA_AJENA') && destino === 'fuera (a proposito)';
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA', 'destino "' + destino + '"', ok ? 1 : 0, 1);
   });
@@ -551,7 +546,7 @@ function prFinanzas_(res) {
     var c = _finCasarPagos_(F, P), llaves = Object.keys(c);
     var juguete = llaves.length === 1 && c['casa'] === 'f1';
     var fm = (d.integridad && d.integridad.factura_manda) || { n: 0, q: 0 };
-    var destino = _finDestino_('SERVICIOS_PROFESIONALES', '03_Banco_Industrial', false, '', true);
+    var destino = _finDestino_('SERVICIOS_PROFESIONALES', '03_Banco_Industrial', false, true);
     var espejo = destino === 'REGLA 15: tiene factura FEL';
     var ok = juguete && espejo && fm.n > 0;
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
