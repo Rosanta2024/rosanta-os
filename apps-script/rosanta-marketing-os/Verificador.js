@@ -3,16 +3,28 @@
  * Archivo ADITIVO. No modifica Code.gs, CRMSync.gs ni ningun SCHEMA.
  * Todo lo de aqui lleva prefijo vc_ / vc para no chocar con el codigo existente.
  *
- * QUE VIGILA (los tres circuitos vivos del sistema):
+ * QUE VIGILA (los circuitos vivos del sistema):
  *   1. reservas  <- webhook hook=reserva  (Wix -> backend/crmReservas.js -> intakeReserva)
  *   2. carritos  <- webhook de carritos de WIX -> intakeCarrito -> Meta CAPI
  *      (SonTickets quedo fuera del sistema en agosto 2026)
  *   3. pauta_semanal <- Google Ads Script + Apps Script "WIX Reservas" (semanal, lunes)
+ *   4. mesas sin cerrar  (agregado 23-sep-2026)
+ *   5. la URL /exec que usan los consumidores externos  (agregado 23-sep-2026)
  *
  * COMO LO VIGILA: crecimiento de filas guardado en Script Properties.
  * La columna `fecha` de reservas es la fecha DE LA RESERVA, no la de creacion
  * (hay reservas de octubre cargadas en agosto), asi que medir por fecha mas
  * reciente daria verde con el circuito muerto. Por eso se mide por filas nuevas.
+ *
+ * POR QUE SE AGREGARON LOS CHEQUEOS 4 Y 5 (23-sep-2026): los tres primeros miden
+ * que ENTREN datos, no que se COMPLETEN ni que SALGAN. Dos fallas reales vivieron
+ * semanas con el verificador en verde y 0% de error:
+ *   - 66 de 92 mesas pasadas quedaron en SEATED/RESERVED desde el 3-ago. La fila
+ *     entra igual, asi que el conteo crecia. Pero pvEnviar solo manda el Purchase
+ *     al CAPI cuando la mesa se cierra: ~Q69,000 de valor que Meta nunca vio.
+ *   - La skill de pauta escribia a un deployment ARCHIVADO. Un deployment
+ *     archivado no da error: contesta 200 con una pagina HTML de Drive, asi que
+ *     el curl parecia exitoso y el aprendizaje del mes se perdia en silencio.
  *
  * INSTALACION: correr vcInstalar() UNA vez. Crea el trigger diario 9am GT.
  * NO requiere nueva implementacion /exec: los triggers usan el codigo guardado.
@@ -29,6 +41,25 @@ var VC_CHECKS = [
   { tab: 'reservas', label: 'Reservas (Wix, hook=reserva)',     maxDias: 3 },
     { tab: 'carritos', label: 'Carritos (webhook de WIX)',  maxDias: 6 }
 ];
+
+// --- Chequeo 4: mesas sin cerrar ---
+// Una mesa recien pasada sin cerrar es normal (el cierre se hace despues del
+// servicio, a veces al dia siguiente). Deuda es la que lleva dias abierta.
+var VC_MESA_GRACIA = 3;    // dias de gracia antes de contarla como sin cerrar
+var VC_MESA_TOPE   = 10;   // cuantas se toleran abiertas antes de avisar
+var VC_ABIERTOS    = ['SEATED', 'RESERVED'];
+
+// --- Chequeo 5: la URL /exec de los consumidores externos ---
+// Esta es la MISMA URL que tienen configurada la skill de pauta y el snippet
+// de WIX. Si algun dia se archiva el deployment y se publica otro, hay que
+// actualizarla en los tres lugares; este chequeo avisa cuando pasa.
+//
+// NO usar ScriptApp.getService().getUrl() para esto: corrido desde el editor
+// devuelve la URL /dev (la de @HEAD), y /dev SIEMPRE exige login, asi que
+// contesta una pagina de accounts.google.com y el chequeo da falso positivo.
+// Verificado el 23-sep-2026: fue exactamente lo que paso en la primera version.
+var VC_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzEv9C1gZ6-bODUyI2a5TPCtLVQGt5T-7gQs60TP8OYmDgymZTHQuv3hR-232cng7K3/exec';
+var VC_URL_PROP = 'vc_exec_url';   // huerfana desde el 23-sep; se limpia sola
 
 /** Punto de entrada del trigger diario. */
 function vcVerificarCircuito() {
@@ -76,7 +107,90 @@ function vcVerificarCircuito() {
   var p = vcRevisarPauta(ss, ahora);
   if (p) fallas.push(p);
 
+  var m = vcRevisarMesasSinCerrar(ss, ahora);
+  if (m) fallas.push(m);
+
+  var u = vcRevisarEndpoint(props);
+  if (u) fallas.push(u);
+
   vcNotificar(fallas, props, ahora);
+}
+
+/**
+ * Chequeo 4: mesas que ya pasaron y siguen abiertas.
+ *
+ * Cerrar la mesa es lo que dispara el Purchase al CAPI (ver ValorReserva.js):
+ * sin cierre no hay gasto, y sin gasto Meta nunca sabe cuanto valio la reserva.
+ *
+ * OJO con la firma del correo: vcNotificar manda un mail por cada texto de falla
+ * distinto, asi que un mensaje con el conteo exacto avisaria todos los dias al
+ * cambiar de 66 a 67. Por eso el texto redondea a la decena y el numero fino va
+ * solo en vcProbar() y en el resumen.
+ */
+function vcRevisarMesasSinCerrar(ss, ahora) {
+  var sh = ss.getSheetByName('reservas');
+  if (!sh) return null;                     // el chequeo 1 ya avisa si falta
+
+  var n = sh.getLastRow() - 1;
+  if (n < 1) return null;
+
+  var datos = sh.getDataRange().getValues();
+  var enc = datos[0];
+  var iF = enc.indexOf('fecha'), iE = enc.indexOf('estado');
+  if (iF < 0 || iE < 0) return 'reservas: no encuentro las columnas `fecha` y `estado`.';
+
+  var corte = new Date(ahora.getTime() - VC_MESA_GRACIA * 86400000);
+  var abiertas = 0, masVieja = null;
+
+  for (var i = 1; i < datos.length; i++) {
+    var d = datos[i][iF] instanceof Date ? datos[i][iF] : new Date(datos[i][iF]);
+    if (isNaN(d) || d > corte) continue;                       // futura o dentro de la gracia
+    var e = String(datos[i][iE] || '').trim().toUpperCase();
+    if (VC_ABIERTOS.indexOf(e) < 0) continue;                  // cerrada o cancelada
+    abiertas++;
+    if (!masVieja || d < masVieja) masVieja = d;
+  }
+
+  if (abiertas <= VC_MESA_TOPE) return null;
+
+  var banda = Math.floor(abiertas / 10) * 10;
+  return 'Mesas sin cerrar: mas de ' + banda + ' reservas ya pasadas siguen en ' +
+         VC_ABIERTOS.join(' o ') + ' (la mas vieja del ' +
+         Utilities.formatDate(masVieja, 'America/Guatemala', 'yyyy-MM-dd') +
+         '). Mientras no se cierren en Wix no se anota el gasto y no sale el ' +
+         'Purchase al CAPI. Tope tolerado: ' + VC_MESA_TOPE + '.';
+}
+
+/**
+ * Chequeo 5: que la URL /exec que usan los consumidores externos siga viva.
+ *
+ * Un deployment archivado devuelve una pagina HTML de Drive, y el codigo HTTP
+ * varia segun como se lo llame (se han visto 200 y 404), asi que mirar el
+ * codigo no alcanza: hay que exigir JSON. Un endpoint sano contesta JSON
+ * incluso cuando la peticion esta mal, p.ej. {"error":"tab desconocida"}.
+ * Probado el 23-sep-2026 contra las dos URLs reales, la viva y la archivada.
+ */
+function vcRevisarEndpoint(props) {
+  if (props && props.getProperty(VC_URL_PROP)) props.deleteProperty(VC_URL_PROP);
+
+  var cuerpo;
+  try {
+    cuerpo = UrlFetchApp.fetch(VC_EXEC_URL + '?token=' + encodeURIComponent(TOKEN) +
+                               '&tab=reservas', { muteHttpExceptions: true })
+                        .getContentText();
+  } catch (err) {
+    return 'Endpoint /exec: no responde (' + err + ').';
+  }
+
+  try { JSON.parse(cuerpo); } catch (err) {
+    return 'Endpoint /exec: contesta algo que no es JSON. Si menciona accounts.google.com ' +
+           'la URL apunta a /dev y no a /exec; si es una pagina de Drive, el deployment ' +
+           'quedo archivado. En los dos casos la skill de pauta y el snippet de WIX estan ' +
+           'escribiendo al vacio. Primeros 80 caracteres: ' +
+           String(cuerpo).slice(0, 80).replace(/\s+/g, ' ');
+  }
+
+  return null;
 }
 
 /** Linea base al instalar: la fecha real mas reciente que no sea futura. */
@@ -187,7 +301,43 @@ function vcProbar() {
     out.push(c.tab + ': ' + (sh ? sh.getLastRow() - 1 : '?') + ' filas · ultimo movimiento ' +
              (props.getProperty('vc_' + c.tab + '_visto') || 'sin linea base'));
   });
-  out.push('pauta_semanal: ' + (vcRevisarPauta(ss, new Date()) || 'al dia'));
+  var ahora = new Date();
+  out.push('pauta_semanal: ' + (vcRevisarPauta(ss, ahora) || 'al dia'));
+  // Los mensajes de falla ya se explican solos, asi que aqui no se les antepone
+  // etiqueta: hacerlo dejaba "mesas sin cerrar: Mesas sin cerrar: ..." en el log.
+  out.push(vcRevisarMesasSinCerrar(ss, ahora) ||
+           'mesas sin cerrar: bajo el tope de ' + VC_MESA_TOPE);
+  out.push('  [detalle: ' + vcContarAbiertas(ss, ahora) + ']');
+  out.push(vcRevisarEndpoint(props) || 'endpoint /exec: vivo y contestando JSON');
+  // Logger.log y no console.log: un `return` no sale en el registro de ejecucion,
+  // y en el editor nuevo `console.log` a secas tampoco se ve en el panel
+  // "Execution log" (se va a Cloud Logging). Comprobado el 23-sep-2026: con los
+  // dos la salida aparecia duplicada, y con solo console.log el panel quedaba en
+  // "Execution completed" sin una linea. El unico que imprime ahi es Logger.
   Logger.log(out.join('\n'));
   return out.join('\n');
+}
+
+/** Conteo fino de mesas abiertas, para vcProbar. El aviso usa bandas, este no. */
+function vcContarAbiertas(ss, ahora) {
+  var sh = ss.getSheetByName('reservas');
+  if (!sh || sh.getLastRow() < 2) return 'sin datos';
+  var datos = sh.getDataRange().getValues();
+  var enc = datos[0];
+  var iF = enc.indexOf('fecha'), iE = enc.indexOf('estado');
+  if (iF < 0 || iE < 0) return 'sin columnas';
+
+  var corte = new Date(ahora.getTime() - VC_MESA_GRACIA * 86400000);
+  var cuenta = {}, total = 0;
+  for (var i = 1; i < datos.length; i++) {
+    var d = datos[i][iF] instanceof Date ? datos[i][iF] : new Date(datos[i][iF]);
+    if (isNaN(d) || d > corte) continue;
+    var e = String(datos[i][iE] || '').trim().toUpperCase();
+    if (VC_ABIERTOS.indexOf(e) < 0) continue;
+    cuenta[e] = (cuenta[e] || 0) + 1;
+    total++;
+  }
+  return total + ' abiertas · ' + Object.keys(cuenta).map(function (k) {
+    return k + ' ' + cuenta[k];
+  }).join(' · ');
 }
