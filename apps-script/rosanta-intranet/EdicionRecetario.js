@@ -142,11 +142,43 @@ function tipoDeUnidad_(unidadCompra) {
 }
 
 /**
+ * Una unidad tiene que ser una unidad, no un numero.
+ *
+ * POR QUE EXISTE ESTO (23-sep-2026): las dos unicas altas del 22-sep entraron con
+ * un NUMERO en el campo de unidad y el contenido en 1, asi que el factor quedo en 1
+ * y el precio por unidad de receta se guardo igual al precio de compra:
+ *   · chocolate — unidad de receta "454", unidad de compra "g" -> Q45 el GRAMO en vez
+ *     de Q0.09912. La ficha del Mousse de Chocolate paso a costar Q1,299.51, con un
+ *     CMV de ~1,999% sobre un postre de Q65.
+ *   · Coliflor  — unidad de receta "4", unidad de compra "1" -> Q12 por unidad limpia.
+ * Nada fallo: "454" es texto valido, 1 es un contenido valido y el producto quedo
+ * dado de alta sin un solo error. Es la misma familia de los otros candados del
+ * recetario: un numero malo que no se queja vale menos que una alta rechazada.
+ *
+ * OJO AL TOCARLO: "750ml", "165 ml" y "8 onzas" SI son unidades de compra legitimas
+ * —tipoDeUnidad_ las llama rotuladas y les saca el factor del propio nombre—, asi que
+ * aca se rechaza SOLO lo que es unicamente digitos, espacios, punto o coma.
+ */
+function unidadEsNumero_(u) {
+  var s = String(u == null ? '' : u).trim();
+  return s !== '' && /^[\d.,\s]+$/.test(s);
+}
+
+/**
  * Cuantas unidades de receta trae una unidad de compra.
  * `contenido` solo hace falta cuando tipoDeUnidad_ devuelve 'envase'.
  * Devuelve { ok, factor, motivo }.
  */
 function factorConversion_(unidadCompra, unidadReceta, contenido) {
+  if (unidadEsNumero_(unidadReceta)) {
+    return { ok:false, motivo:'"' + unidadReceta + '" no es una unidad de receta, es un numero. ' +
+             'La unidad de receta es g, ml o unidad; el numero va en el campo de contenido.' };
+  }
+  if (unidadEsNumero_(unidadCompra)) {
+    return { ok:false, motivo:'"' + unidadCompra + '" no es una unidad de compra, es un numero. ' +
+             'Escribi la unidad (bolsa, kg, libra, 750ml...) y el numero en el campo de contenido.' };
+  }
+
   var uc = normalizar_(unidadCompra), ur = normalizar_(unidadReceta);
   if (uc === ur) return { ok:true, factor:1 };
 
