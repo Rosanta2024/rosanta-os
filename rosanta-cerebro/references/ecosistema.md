@@ -1,5 +1,17 @@
 # Ecosistema de herramientas de Rosanta (act. 16 sep 2026)
 
+> **ACTUALIZADO EL 23-SEP-2026 — leer esto antes que el resto de este archivo.**
+> Todo se mudó a **Claude Code**. Las tareas programadas son routines en `~/.claude/scheduled-tasks/`
+> (ocho, listadas en el SKILL.md v24); Cowork quedó sin tareas y solo conserva el proyecto SIC.
+> Las 18 skills propias viven en `~/.claude/skills/` y esa es la copia que se edita; la de
+> claude.ai es un caché que se pisa al sincronizar. Los artefactos ya no son archivos de
+> `~/Claude/Artifacts/`: son Artifacts publicados, con enlace propio, listados en
+> `Rosanta 03 Finanzas/_archivo/artefactos-publicados.md`. `update_artifact`, `list_artifacts`,
+> `present_files` y `window.cowork.callMcpTool` **no existen en Code**: los equivalentes son la
+> herramienta Artifact, `SendUserFile` y la capacidad `mcp` del artefacto.
+> Lo que siga abajo y contradiga esto, está viejo.
+
+
 Mapa de skills, artefactos y automatizaciones. Usar la herramienta correcta según la tarea; si dos aplican, combinarlas.
 
 ## Skills instaladas

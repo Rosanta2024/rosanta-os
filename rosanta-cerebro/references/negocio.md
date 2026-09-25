@@ -141,7 +141,7 @@ Estado: ~~Menu Engineering~~ **COMPLETADA**. ~~Mejora 7 (septiembre abierto)~~ *
 ## Clientes y CRM
 
 - CRM vivo: Google Sheet `Rosanta_CRM_Maestra` (`1VHg2GkmhGcVkxw0JZe1cBZzXOrsjzIk570yh7CyYwvM`).
-- Campos: nombre, teléfono, email, idioma (EN turistas / ES foodies), fuente, segmento, última reserva, gasto GTQ. Segmentos: Lead → Cliente que visitó → Carrito abandonado → Cancelado → Reserva histórica.
+- Campos: nombre, teléfono, email, idioma (EN turistas / ES foodies), fuente, segmento, última reserva, gasto GTQ. Segmentos: Lead → Cliente que visitó → Carrito abandonado → Cancelado → Reserva histórica. **Desde el 23 sep 2026, "Cliente que visitó" = consumo tecleado O reserva Seated/Finished en Wix; Reserved y No-show quedan en "Reserva histórica" (sin evidencia). Los No-show de ago–sep 2026 significan "no sabemos", no "no vino".**
 - **Reservas: WIX.** Migración desde SonTickets **ejecutada el 10 ago 2026**. Histórico (~430 reservas, ~50% con teléfono EE.UU./Canadá) incluido.
 - Sheet espejo para Vanessa: `CRM_Export_Vanessa` (`19NEHGKGr4h229l0NmQf3vvw9kxsmxkcF8AizYyhucAo`). Se comparte SOLO ese.
 - Dataset de Meta "Rosanta Reservas" (1107259034759950).

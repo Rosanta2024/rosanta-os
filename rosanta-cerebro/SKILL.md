@@ -7,7 +7,79 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 22 sep 2026 (v23).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 23 sep 2026, tarde (v25 + corrección de p10).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 23 sep 2026, tarde (v25): p163, el CRM mide visitas y el consumo tiene dueño
+
+**Regla nueva en el CRM, publicada (clasp push, proyecto Rosanta Marketing OS, `CRMSync.js`):** una persona pasa a **"Cliente que visitó"** si tiene consumo tecleado **o** si su reserva quedó **Seated/Finished** en Wix. Reserved y No-show siguen en "Reserva histórica" (sin evidencia). Verificado: la corrida de las 14:34 subió exactamente **18 filas** (14 de agosto, 4 de septiembre) y ninguna otra. **El CAC ya no depende del consumo**: se mide por visita, que es lo que Juanma pidió.
+
+**Regla operativa en Wix, acordada con Juanma (pasársela al equipo):**
+1. Al sentarse la mesa → **Seated**. No dispara nada más que el aviso al CRM.
+2. Al terminar el servicio → escribir el total del ticket en "Consumo total de la mesa (Q)" y **dejarla en Seated**. Probado el mismo día con Juanma: la edición posterior del monto llega a la pestaña `reservas` igual (id 71c938e1, 225 → 300).
+3. **Finished solo para pedir la reseña**: `events.js` dispara el correo de TripAdvisor únicamente con FINISHED. Por eso Juanma NO cerraba mesas y usaba No-show para "cerrar".
+4. **No-show solo si de verdad no llegó.** Si no se sabe, se deja en Reserved.
+- **OJO con la historia:** los No-show de agosto y septiembre 2026 **no son ausencias reales**, significan "no sabemos". No leerlos como no-shows. Juanma decidió NO crear un segmento propio para No-show.
+
+**Lista corta semanal (`ConsumoPendiente.js`, mismo proyecto):** cada **lunes a las 8** llega a restaurante@rosanta.rest un correo con las reservas de la semana anterior que siguen Seated/Finished sin consumo o Reserved sin cerrar, cada una con enlace directo a la reserva en Wix; si no falta nada no manda correo; los No-show no salen. Activador instalado por Juanma desde el editor; primer correo recibido a las 14:41. **Juanma es quien lo trabaja.** Complemento de la otra sesión: chequeo 4 de `Verificador.js` (alarma si hay más de 10 mesas abiertas con 3 días de gracia). p186 queda cubierto sin duplicarlo en Latido.
+
+**El cruce con el POS NO sirve para llenar el consumo solo** (corrida en seco, 91 reservas reales del 1-ago al 22-sep): ticket único en 32 (35%), ambiguo en 51, sin ticket en 8; y de 10 con consumo tecleado que resolvió, falló 3. Causa: la hora del POS es la del cierre en caja, no la de la mesa (41% de los tickets se cierran en racimos de 4+ en 10 minutos) y "Comensales" viene vacío 1 de cada 10. Solo se reactiva si caja cierra cada ticket cuando la mesa paga. Archivos en `CRM_y_Retencion/2026-09-23_p163_*`.
+
+**Quién recibe el consumo:** la pestaña CRM de la intranet y la 6ª señal del Latido lo leen solos del CRM. `ValorReserva.js` (Purchase con valor a Meta) **nunca corrió** (no existe `capi_log`) y Meta rechaza eventos de más de 7 días; **decisión de Juanma: se deja así, el frente de pauta queda cerrado.**
+
+**Números para el CAC:** agosto 72 altas Wix / **33 visitas confirmadas** → CAC ~**Q67** como techo (antes Q116 con 19). Septiembre no legible aún: 42 altas, 7 confirmadas, 26 en No-show ("no sabemos"). Desde hoy septiembre arranca medible si el equipo marca Seated.
+
+**De la otra sesión del mismo día (workspace-pauta-b8), para no rehacerlo:**
+- **p164 hecho:** sexta señal en `Latido.js` (rosanta-intranet) con DOS medidas separadas: **captura** = altas del CRM / tickets del POS, avisa bajo 15%; **lectura** = confirmadas / altas, avisa bajo 50%, 3 días de gracia. Calibrado con `latidoCapturaHistorico()`: captura 20% a 180 días y 29% a 30 días (canal sano); lectura 77% a 180 días cayendo a 29% a 30 días. Agosto obliga a separarlas: captura 25% con lectura 57%; con una sola medida parecía canal roto y no lo era.
+- **p10, regla del denominador — DECIDIDO por Juanma el 23-sep, no reabrir** (`_informes/2026-09-23_p10_CAC_regla_denominador.md`): el denominador del CAC son **solo las altas del mes con segmento "Cliente que visitó"**. Quedan fuera carritos abandonados, cancelados **y "Reserva histórica"** (la reserva que llegó al CRM pero cuya mesa nadie marcó, así que no se sabe si vino). Un CAC cuenta clientes que entraron, no reservas. Denominador por mes, leído el 23-sep: ene 47 · feb 47 · mar 41 · abr 15 · may 59 · jun 35 · jul 31 · ago 33 · sep 7. Serie de CAC ya calculada: ene Q47 · feb Q32 · mar Q20 · may Q30 · jun Q58 · jul ~Q98 · ago ~Q67.
+  - **GUARDA OBLIGATORIA, es parte de la regla y no un comentario.** Junto al CAC se publica siempre la **tasa de lectura** del mes = `Cliente que visitó / (Cliente que visitó + Reserva histórica)`. Umbrales: **≥90% comparable · 50-90% se publica advirtiendo que sale inflado · <50% NO se publica**, no hay CAC sino un dato faltante. Sin esta guarda la regla convierte un descuido del salón en una conclusión falsa sobre la pauta. Se vigila sola desde el 23-sep: sexta señal de `Latido.gs` (p164).
+  - **Meses que no son comparables, y por qué cada uno es distinto:** abril (15 clientes con lectura 100% — no es que no se registrara, es que no entraron reservas); julio (reconstruido a mano, sin dato del 23 al 31, el 31 es un piso); **agosto (lectura 57%, su CAC sale cerca del doble del real) y septiembre (lectura 18%, no se publica)**. Agosto y septiembre no son meses caros, son meses mal registrados, y la causa quedó resuelta el 23-sep con la regla de visita de p163.
+  - El argumento descartado (usar visitó + histórica, para que el CAC no se mueva por el hábito del salón) queda escrito al final del informe con su razón. La guarda de lectura existe justamente para administrar ese riesgo.
+
+**Reglas técnicas del día:**
+- **No dejar respaldos dentro de la carpeta de un proyecto clasp**: `clasp push` los sube como archivos del proyecto y duplica funciones (pasó con `_Archive/`; se corrigió con un segundo push; los respaldos van en `apps-script/_Archive/<proyecto>/`). Y `clasp push` nunca borra archivos remotos: para sacar uno hay que hacer un push con un cambio real.
+- **El tablero `rosanta-seguimiento-semanal` ya no está en `~/Claude/Artifacts/`**: se edita bajando el HTML del artifact publicado (`Artifact read` + republicar con `url`). Hoy quedó en la v12.
+- La pestaña `reservas` escapa el guion bajo en el dump de Drive (`NO\_SHOW`): filtrar por estado con eso en cuenta.
+- El formulario web y el bot siguen bien: el latido diario de las 8 corrió el 16-sep (33 franjas, bot ok).
+
+---
+
+## Cierre del 23 sep 2026 (v24): todo se muda a Claude Code
+
+**Decisión de Juanma: el trabajo se hace en Claude Code. En Cowork quedan solo el proyecto SIC y las preguntas sueltas del día a día.** Se vació: sus 12 tareas programadas están borradas y `~/Claude/Scheduled/` quedó sin carpetas.
+
+**Las tareas son ahora routines de Claude Code**, en `~/.claude/scheduled-tasks/`, creadas con `mcp__scheduled-tasks__create_scheduled_task`. Corren como sesión de Code en la Mac, con el Drive montado y las skills locales, y solo con la app abierta. Son ocho:
+
+| Routine | Cuándo |
+|---|---|
+| `rosanta-latido-reservas-web` | diaria 8:10 |
+| `morning-brief-juanma` | L–V 6:06 |
+| `rosanta-analista-pauta-lunes` | **borrada** el mismo día por Juanma |
+| `rosanta-reporte-semanal` | lunes 16:24 |
+| `rosanta-cierre-semanal` | domingos 18:20 |
+| `rosanta-cerebro-mantenimiento` | día 1, 9:07 |
+| `rosanta-reporte-mensual` | día 3, 9:08 |
+| `auditoria-meta-ads-rosanta-mensual` | día 25, 8:11 |
+| `rosanta-seguimiento-offsite` | lunes 8:24, **apagada** hasta que termine la intranet |
+
+**Las 18 skills propias viven en `~/.claude/skills/`.** Las de claude.ai son un caché que se sincroniza y se pisa: de ahora en adelante se edita la copia local. Las 17 de Anthropic (docx, pdf, xlsx, skill-creator…) no se copiaron: Code ya las trae.
+
+**Los 12 artefactos de Cowork se publicaron como Artifacts de Code**, cada uno con su enlace; la lista está en `Rosanta 03 Finanzas/_archivo/artefactos-publicados.md`. Dos novedades técnicas: el **tablero `rosanta-seguimiento-semanal`** dejó el `localStorage` y guarda lo que Juanma marca o agrega en el almacenamiento del propio artefacto (`db`), así que **el cierre del domingo ya puede leer sus marcas**; y el CRM y el panel del bot leen su Google Sheet con la capacidad `mcp` del artefacto, porque `window.cowork.callMcpTool` no existe fuera de Cowork.
+
+**Las memorias de proyecto se rescataron**: 141 archivos importados a `~/.claude/projects/<proyecto>/memory/` (Pauta 33 de 56, Eventos 31, Profit 45, Finanzas 25, Branding 4, Management 3). Se limpiaron 13 con nota fechada y se borraron 3 obsoletas. SIC y Safe Tour quedan fuera: son personales. Las instrucciones de cada espacio de Cowork se escribieron como `CLAUDE.md` en la carpeta de su proyecto.
+
+**El reporte semanal cambió de formato y de casa.** Ya no es el PDF de una página: son **6 páginas** y la especificación única es `Rosanta_Formato_Reporte_Semanal.md` en la carpeta Maestro (la skill `rosanta-reporte-semanal-formato` se borró para no tener dos versiones). Cada reporte vive en la carpeta de su semana, `Reportes 2026 / SXX / Rosanta_SXX_2026.pdf`; si no está ahí, se elimina. Lleva punto de equilibrio semanal y diario (Q35,097 y Q5,014, margen de contribución 43.1%), excluye el gasto de marketing y **no lleva nombres de personas**: los responsables son departamentos. Las reservas salen del Marketing OS, no de SonTickets. En la Mac no hay weasyprint ni Homebrew: el PDF lo imprime **Chrome headless** y el generador verifica solo que no se corte ninguna sección.
+
+**Marca aplicada al reporte:** paleta Segunda Cosecha completa (Verde Bosque `#4E6D5A`, Verde Medio `#57A77F`, Lila Lavanda `#AEAAE2`) y tipografía **Peskia** en titulares y cifras con **Avenir** en cuerpo. Peskia ya está comprada e instalada en `~/Library/Fonts`.
+
+**Precios de evento cerrados este día:**
+- **Barra Libre Q200 → Q225** (a 4 bebidas por persona el CMV estaba en 28.2%; ahora 25%).
+- **Combo Tapas + Barra Libre Q350 → Q375**. El combo nunca tuvo descuento: siempre fue la suma.
+- **Mocktails: Q55 el de la casa (llave POS 153) y Q75 el Plus (llave 179)**, ya cambiados en el POS. Los dos tienen ficha nueva en `Rosanta_Recetario_Barra_v6_2026-09-23.xlsx`: el de la casa son dos ingredientes a base de pulpa (maracuyá o mango) y cuesta Q4.27 a Q7.91; el Plus es la receta completa y cuesta Q2.89 a Q6.23. Ojo con la paradoja: el simple con maracuyá es el más caro de producir.
+- El paquete limitado se queda en **Q150** (22% de CMV). Falta recalcular el **fuerte con postre Q260** de Para Compartir con el tier nuevo (lomito Q225 premium, pollo Q210 estándar).
+
+**Regla nueva sobre los mocktails:** ninguno subió con la carta 2027 hasta hoy; el mix real de barra medido en el POS (S31–S38, 588 unidades) es **54% coctel, 24% vino de copa, 22% cerveza**, con precio de carta medio Q65.55 y costo medio Q14.11.
 
 ---
 
@@ -114,20 +186,36 @@ los extras**, porque no dice cuánta gente hizo falta. **"Salario devengado" ent
 base está vacío:** en enero cuatro personas lo tienen repetido y sumarlo contaría Q18,000 dos
 veces. Verificado fila por fila.
 
-### 5. La regla 9 hay que retirarla, y ya está medido cómo
+### 5. La regla 9 se retiró el 23-sep-2026, y el miedo que la sostenía estaba sobredimensionado
 
-Juanma: *"La regla 9 no tiene sentido. La mayoría de proveedores generan FEL."* Tiene razón, y
-el código lo confirma: la **regla 9 corre ANTES que la 15 y salta el pago sin mirar si la
-factura existe**; la 15 casa contra una factura concreta y solo entonces descarta.
+Juanma: *"La regla 9 no tiene sentido. La mayoría de proveedores generan FEL."* Tenía razón: la
+**regla 9 corría ANTES que la 15 y saltaba el pago sin mirar si la factura existía**. Se retiró
+entera el 23-sep —la lista también, para que nadie crea que sigue haciendo algo— y hoy manda la
+**regla 15**, que casa cada pago con UNA factura (mismo bloque del DRE, monto ±Q0.01, factura de
+45 días antes a 10 después) y sólo entonces lo descarta. Un pago sin factura cuenta como gasto,
+que es lo conservador. La prueba que vigilaba la regla 9 quedó como centinela: avisa si
+`FIN_PAGO_DE_FACTURA` vuelve a estar viva.
 
-Medido sobre los 394 pagos del BI a proveedores, con la regla que dio Juanma —*"siempre es el
-monto exacto o la suma de varias facturas"*—: **319 casados (81%)**, 273 con una factura y 46
-con la suma de varias. Los 75 restantes incluyen pagos de tarjeta (no son gasto) y facturas de
-2025 (Edwin Q4,500 y Elder Q4,670, confirmados por Juanma).
+**Lo que frenaba el retiro era el pago agrupado, y medido vale mucho menos de lo que parecía.**
+La medición vieja —394 pagos del BI a proveedores, con la regla que dio Juanma *"siempre es el
+monto exacto o la suma de varias facturas"*: 319 casados, 273 con una factura y **46 con la suma
+de varias**— tomaba el universo ENTERO de pagos del BI, que incluye nómina, impuestos, inmueble y
+comisiones, bloques donde la regla 15 no aplica a propósito.
 
-**No se retiró todavía**: quitarla hoy contaría dos veces los pagos agrupados, porque la
-regla 15 exige que el monto calce con UNA factura. Primero hay que enseñarle a casar un pago
-contra varias del mismo NIT. Se retira proveedor por proveedor, no de un golpe.
+Acotado al alcance real de la regla (sus seis bloques) y medido el 23-sep sobre el espejo del
+21-sep: **181 pagos, 84 casan uno a uno (Q42,913) y 97 quedan sueltos (Q105,100)**. De esos 97,
+los que son la suma de 2 o 3 facturas del mismo NIT dentro de la ventana son **2, por Q1,027.46**,
+y uno es coincidencia de monto. **El único caso real es Claro: Q388.58 + Q388.88 = Q777.46**,
+pagados el 11-jun por el portal del BI.
+
+O sea: enseñarle a la regla 15 a casar contra varias facturas no vale el trabajo hoy (p192). Y si
+alguna vez se hace, primero hay que fijar el criterio —mismo NIT, ventana, cuántas facturas como
+máximo—, porque combinar montos hasta que sumen es justo como se fabrican pares falsos: 1 de los
+2 candidatos de hoy ya lo es.
+
+**Regla de método que deja esto:** un número medido sobre un universo más grande que el de la
+regla que se está evaluando no mide esa regla. El 46 sobrevivió tres días y volvió a citarse como
+si fuera del alcance de la 15.
 
 ### 6. `COMPRAS_2026` es la pieza que faltaba para el cuadre de proveedores
 
