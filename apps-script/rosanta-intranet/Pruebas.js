@@ -1526,10 +1526,19 @@ function prCapaWeb_(res) {
  * La usan PRUEBAS() (editor y clasp run) y la ruta ?page=pruebas del navegador.
  */
 /* Para correr desde el EDITOR (con guarda de dueño). El codigo que la usa por dentro
-   —activador, pantalla, bateria— llama a correrPruebas_(), que no tiene guarda. */
+   —activador, pantalla, bateria— llama a correrPruebas_(), que no tiene guarda.
+
+   ESCRIBE EL INFORME EN EL LOG desde el 23-sep-2026. Decia "para correr desde el
+   EDITOR" y desde el editor no mostraba nada: devolvia el objeto, y el editor enseña
+   el Log, no lo que una funcion devuelve. Juanma la eligio dos veces del desplegable
+   creyendo que corria la bateria con informe y se quedo esperando cuatro minutos para
+   ver seis lineas sueltas. La culpa no era de el: el nombre y el comentario prometian
+   una cosa y la funcion hacia otra. */
 function correrPruebas() {
   soloDueno_();
-  return correrPruebas_();
+  var res = correrPruebas_();
+  pruebasATexto_(res).split('\n').forEach(function (linea) { Logger.log(linea); });
+  return res;
 }
 
 /**
@@ -1653,11 +1662,14 @@ function correrPruebasTexto() {
  * nueva, muestra la bateria vieja. Esta corre lo que hay en el editor.
  */
 function correrPruebasLog() {
+  // El candado va ACA tambien, aunque correrPruebas() lo tenga: cada funcion publica
+  // se defiende sola. Heredarlo de la que llama funciona hoy y deja la puerta abierta
+  // el dia que alguien toque la de adentro, sin un solo error. La prueba "Ninguna
+  // funcion publica queda abierta" lo exige por eso, y tiene razon (23-sep-2026).
   soloDueno_();
-  var texto = pruebasATexto_(correrPruebas_());
-  // El Log corta las lineas muy largas: se manda por bloques, no de una.
-  texto.split('\n').forEach(function (linea) { Logger.log(linea); });
-  return texto;
+  // Una sola implementacion del informe, no una copia: dos terminan divergiendo y
+  // nadie se entera hasta que dicen cosas distintas.
+  return pruebasATexto_(correrPruebas());
 }
 
 /**

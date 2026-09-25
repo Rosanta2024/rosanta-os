@@ -152,8 +152,11 @@ function sincronizarCRM() {
       var loc = buscarFila_(indice, email, tel);
       if (!loc.claves.length) { res.omitidos++; return; }
 
+      // Visita confirmada: consumo tecleado, o la mesa se marcó Seated/Finished en Wix
+      // (23 sep 2026). Reserved y No-show quedan como "Reserva histórica": sin evidencia.
+      var visito = gasto > 0 || estado === 'SEATED' || estado === 'FINISHED';
       var segmento = (estado.indexOf('CANCEL') > -1) ? 'Cancelado'
-                   : (gasto > 0 ? 'Cliente que visitó' : 'Reserva histórica');
+                   : (visito ? 'Cliente que visitó' : 'Reserva histórica');
 
       if (loc.fila > 0) {
         if (actualizarFila_(crm, loc.fila, datos, {
