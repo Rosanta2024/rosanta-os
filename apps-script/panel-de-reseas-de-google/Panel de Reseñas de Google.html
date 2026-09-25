@@ -41,6 +41,33 @@
   .rev .cm{margin:6px 0 0;font-size:14px;line-height:1.5}
   .rev .rep{margin-top:8px;font-size:13px;color:var(--verde);background:#f4f8f5;border-radius:9px;padding:8px 10px}
   .rev .noreply{margin-top:6px;font-size:12px;color:#b9770a}
+
+  /* Editor de respuesta. Aparece dentro de cada reseña sin responder: el
+     borrador que el bot dejo en la hoja de control se edita y se publica aqui,
+     sin abrir la Sheet ni esperar al trigger de cada 30 min. */
+  .ed{margin-top:10px;border-top:1px dashed #e2ddd2;padding-top:10px}
+  .ed .lab{font-size:12px;font-weight:700;color:var(--verde);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.03em;border-radius:99px;padding:2px 9px;text-transform:none}
+  .pill.pend{background:#fdf1d8;color:#8a5d00}
+  .pill.nuevo{background:#efecf7;color:#5d4f8f}
+  .pill.no{background:#ece9e2;color:#6b6b6b}
+  .ed textarea{width:100%;min-height:96px;margin-top:8px;padding:10px 12px;border:1px solid #d8d3c8;border-radius:11px;background:#fffdf9;color:var(--negro);font-family:'Lato',Arial,sans-serif;font-size:14px;line-height:1.5;resize:vertical}
+  .ed textarea:focus{outline:none;border-color:var(--verde)}
+  .edbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+  .edbar button{border:1px solid var(--verde);background:transparent;color:var(--verde);border-radius:99px;padding:7px 14px;font-size:13px;font-family:'Lato',Arial,sans-serif;cursor:pointer}
+  .edbar button.pri{background:var(--verde);color:var(--crema);font-weight:700}
+  .edbar button.ghost{border-color:#d8d3c8;color:var(--gris)}
+  .edbar button[disabled]{opacity:.45;cursor:default}
+  .chars{font-size:12px;color:var(--gris);margin-left:auto}
+  .edmsg{font-size:12px;color:var(--gris);margin-top:6px;min-height:15px}
+  .edmsg.err{color:#b3261e}
+  .edmsg.ok{color:#2f6b47}
+
+  /* Selector de fuente: Google / TripAdvisor. */
+  .fuentes{display:flex;gap:8px;justify-content:center;margin:0 0 20px}
+  .fuentes button{border:1px solid var(--verde);background:transparent;color:var(--verde);border-radius:99px;padding:6px 18px;font-size:14px;font-family:'Lato',Arial,sans-serif;cursor:pointer}
+  .fuentes button.on{background:var(--verde);color:var(--crema);font-weight:700}
+  #secTA a{color:var(--verde)}
   .center{text-align:center}
   .spin{width:26px;height:26px;border:3px solid #ddd;border-top-color:var(--verde);border-radius:50%;animation:s 1s linear infinite;margin:40px auto;display:none}
   @keyframes s{to{transform:rotate(360deg)}}
@@ -50,7 +77,11 @@
 <body>
 <div class="wrap">
   <h1 class="marca" role="img" aria-label="Rosanta"></h1>
-  <div class="sub">Panel de Reseñas de Google · en vivo</div>
+  <div class="sub">Panel de Reseñas · en vivo</div>
+  <div class="fuentes" id="fuentes">
+    <button type="button" data-fuente="google" class="on">Google</button>
+    <button type="button" data-fuente="ta">TripAdvisor</button>
+  </div>
 
   <div class="spin" id="spin" style="display:block"></div>
   <div id="app" style="display:none">
@@ -86,20 +117,42 @@
     <input id="q" placeholder="Buscar por nombre o texto...">
     <div id="list"></div>
   </div>
+
+  <!-- TripAdvisor va aparte de #app: si la carga de Google falla, esta pestaña
+       tiene que seguir sirviendo. Se carga la primera vez que se abre. -->
+  <div id="secTA" style="display:none"></div>
 </div>
 
 <script>
   var DATA=null, filter='all';
+  var TA=null, taCargando=false, googleListo=false, fuente='google';
+
+  bindFuentes();
 
   google.script.run.withSuccessHandler(function(d){
-    DATA=d; render();
-    document.getElementById('spin').style.display='none';
-    document.getElementById('app').style.display='block';
+    DATA=d; googleListo=true; render(); mostrarFuente(fuente);
   }).withFailureHandler(function(e){
-    document.getElementById('spin').style.display='none';
-    document.getElementById('app').style.display='block';
+    googleListo=true;
     document.getElementById('app').innerHTML='<div class="card">No se pudieron cargar las reseñas: '+e.message+'</div>';
+    mostrarFuente(fuente);
   }).getDatosDashboard();
+
+  function bindFuentes(){
+    document.querySelectorAll('#fuentes button').forEach(function(b){
+      b.onclick=function(){ mostrarFuente(b.getAttribute('data-fuente')); };
+    });
+  }
+
+  function mostrarFuente(f){
+    fuente=f;
+    document.querySelectorAll('#fuentes button').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-fuente')===f);
+    });
+    document.getElementById('app').style.display    = (f==='google' &&  googleListo) ? 'block':'none';
+    document.getElementById('spin').style.display   = (f==='google' && !googleListo) ? 'block':'none';
+    document.getElementById('secTA').style.display  = (f==='ta') ? 'block':'none';
+    if(f==='ta' && !TA && !taCargando) cargarTA();
+  }
 
   function starStr(n){ return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n); }
 
@@ -159,6 +212,10 @@
 
   function renderList(){
     var q=(document.getElementById('q').value||'').toLowerCase();
+    // Indice estable dentro de DATA.reviews: los botones del editor lo usan
+    // para encontrar su reseña aunque el filtro cambie el orden de la lista.
+    DATA.reviews.forEach(function(r,i){ r._i=i; });
+
     var arr=DATA.reviews.filter(function(r){
       if(filter==='noreply' && r.hasReply) return false;
       if(filter!=='all' && filter!=='noreply' && r.stars!=parseInt(filter,10)) return false;
@@ -166,15 +223,307 @@
       return true;
     });
     document.getElementById('cnt').textContent=DATA.reviews.length;
-    var html=arr.map(function(r){
-      var date=r.time? new Date(r.time).toLocaleDateString('es-GT',{year:'numeric',month:'short',day:'numeric'}):'';
-      var rep = r.hasReply ? '<div class="rep"><b>Respuesta:</b> '+esc(r.reply)+'</div>' : '<div class="noreply">Sin responder</div>';
-      return '<div class="rev"><div class="top"><span class="nm">'+esc(r.name)+'</span><span class="st">'+starStr(r.stars)+'</span></div>'+
-             '<div class="date">'+date+'</div>'+
-             (r.comment?'<div class="cm">'+esc(r.comment)+'</div>':'<div class="cm muted">(sin texto)</div>')+
-             rep+'</div>';
-    }).join('');
-    document.getElementById('list').innerHTML=html || '<div class="card">No hay reseñas con ese filtro.</div>';
+    document.getElementById('list').innerHTML =
+      arr.map(tarjeta).join('') || '<div class="card">No hay reseñas con ese filtro.</div>';
+    arr.forEach(function(r){ if(!r.hasReply || r.editando) contar(r._i); });
+    bindLista();
+  }
+
+  function tarjeta(r){
+    var i=r._i;
+    var date=r.time? new Date(r.time).toLocaleDateString('es-GT',{year:'numeric',month:'short',day:'numeric'}):'';
+    var pie;
+    if(r.hasReply && !r.editando){
+      pie = '<div class="rep"><b>Respuesta:</b> '+esc(r.reply)+'</div>'+
+            '<div class="edbar"><button class="ghost" data-act="abrir" data-i="'+i+'">Editar respuesta</button></div>';
+    } else if(r.hasReply){
+      pie = editor(r, true);
+    } else {
+      pie = '<div class="noreply">Sin responder</div>'+editor(r, false);
+    }
+    return '<div class="rev"><div class="top"><span class="nm">'+esc(r.name)+'</span><span class="st">'+starStr(r.stars)+'</span></div>'+
+           '<div class="date">'+date+'</div>'+
+           (r.comment?'<div class="cm">'+esc(r.comment)+'</div>':'<div class="cm muted">(sin texto)</div>')+
+           pie+'</div>';
+  }
+
+  // Un solo editor para los dos casos. `publicada` cambia de qué campo sale el
+  // texto y qué botones se ofrecen: una respuesta que ya está en Google no se
+  // "aprueba", se reemplaza.
+  function editor(r, publicada){
+    var i=r._i;
+    var txt = publicada ? (r.reply||'') : (r.borrador||'');
+    var acciones = publicada
+      ? '<button class="pri" data-act="edit" data-i="'+i+'">Guardar cambios en Google</button>'+
+        '<button data-act="gen" data-i="'+i+'">Regenerar con IA</button>'+
+        '<button class="ghost" data-act="cancel" data-i="'+i+'">Cancelar</button>'
+      : '<button class="pri" data-act="pub" data-i="'+i+'">Aprobar y publicar</button>'+
+        '<button data-act="save" data-i="'+i+'">Guardar</button>'+
+        '<button data-act="gen" data-i="'+i+'">'+(txt?'Regenerar':'Generar')+' con IA</button>'+
+        '<button class="ghost" data-act="skip" data-i="'+i+'">No responder</button>';
+    return '<div class="ed">'+
+      '<div class="lab">'+(publicada?'Respuesta publicada en Google':'Respuesta propuesta')+pastilla(r, publicada)+'</div>'+
+      '<textarea id="t'+i+'" data-i="'+i+'" placeholder="Escrib\u00ed la respuesta, o pedile un borrador a la IA.">'+esc(txt)+'</textarea>'+
+      '<div class="edbar">'+acciones+'<span class="chars" id="c'+i+'"></span></div>'+
+      '<div class="edmsg" id="m'+i+'"></div>'+
+    '</div>';
+  }
+
+  function pastilla(r, publicada){
+    if(publicada){
+      if(r.estado==='PUBLICADA_AUTO')     return '<span class="pill no">la public\u00f3 el bot sola</span>';
+      if(r.estado==='PUBLICADA_EDITADA')  return '<span class="pill no">editada desde el panel</span>';
+      if(r.estado==='PUBLICADA_APROBADA') return '<span class="pill no">publicada con tu aprobaci\u00f3n</span>';
+      return '<span class="pill no">ya respondida en Google</span>';
+    }
+    if(r.estado==='PENDIENTE_APROBAR') return '<span class="pill pend">esperando tu aprobaci\u00f3n</span>';
+    if(r.estado==='NO_RESPONDER')      return '<span class="pill no">marcada como no responder</span>';
+    if(!r.estado)                      return '<span class="pill nuevo">sin borrador del bot</span>';
+    return '<span class="pill no">'+esc(r.estado)+'</span>';
+  }
+
+  // Un solo par de listeners para toda la lista: el innerHTML se rehace en cada
+  // filtro y volver a colgar handlers por tarjeta los duplicaba.
+  var listaLista=false;
+  function bindLista(){
+    if(listaLista) return; listaLista=true;
+    var list=document.getElementById('list');
+    list.addEventListener('input', function(ev){
+      if(ev.target.tagName==='TEXTAREA') contar(ev.target.getAttribute('data-i'));
+    });
+    list.addEventListener('click', function(ev){
+      var b=ev.target.closest && ev.target.closest('button[data-act]');
+      if(b) accion(b.getAttribute('data-act'), Number(b.getAttribute('data-i')));
+    });
+  }
+
+  function contar(i){
+    var ta=document.getElementById('t'+i), c=document.getElementById('c'+i);
+    if(!ta||!c) return;
+    var n=ta.value.trim().length;
+    c.textContent=n+' caracteres';
+    // 600 no es un límite de Google (son 4000): es la señal de que la respuesta
+    // se salió del tono corto de la marca.
+    c.style.color = n>600 ? '#b9770a' : '';
+    c.title = n>600 ? 'Más de 600 caracteres: larga para el tono de Rosanta, pero se puede publicar.' : '';
+  }
+
+  function decir(el, txt, cls){ if(!el) return; el.className='edmsg'+(cls?' '+cls:''); el.textContent=txt; }
+
+  function accion(act, i){
+    var r=DATA.reviews[i];
+
+    // Abrir y cerrar el editor de una respuesta ya publicada no toca el servidor.
+    if(act==='abrir'){  r.editando=true;  renderList(); return; }
+    if(act==='cancel'){ r.editando=false; renderList(); return; }
+
+    var ta=document.getElementById('t'+i);
+    var msg=document.getElementById('m'+i);
+    var texto=(ta?ta.value:'').trim();
+
+    if((act==='pub'||act==='save') && !texto) return decir(msg,'Escribí la respuesta primero.','err');
+    if(act==='edit' && !texto) return decir(msg,'La respuesta no puede quedar vacía.','err');
+    if(act==='edit' && !confirm('Esto REEMPLAZA en Google la respuesta que ya está publicada para '+r.name+'.\n\n¿Guardar el cambio?')) return;
+    if(act==='pub' && !confirm('Esto se publica YA en Google, en la ficha pública de Rosanta, como respuesta a '+r.name+'.\n\n¿Publicar?')) return;
+    if(act==='skip' && !confirm('Marcar esta reseña como "no responder". Deja de salir en el correo de pendientes y no se publica nada.\n\n¿Seguir?')) return;
+
+    var botones=[].slice.call(document.querySelectorAll('button[data-i="'+i+'"]'));
+    botones.forEach(function(b){ b.disabled=true; });
+    decir(msg, act==='pub'?'Publicando en Google...'
+             : act==='edit'?'Reemplazando la respuesta en Google...'
+             : act==='gen'?'Pidiéndole el borrador a la IA...':'Guardando...','');
+
+    var run=google.script.run
+      .withSuccessHandler(function(res){
+        botones.forEach(function(b){ b.disabled=false; });
+        if(act==='pub'){ r.hasReply=true; r.reply=res.texto; r.estado=res.estado; renderList(); return; }
+        if(act==='edit'){ r.reply=res.texto; r.estado=res.estado; r.editando=false; renderList(); return; }
+        if(act==='skip'){ r.estado=res.estado; renderList(); return; }
+        if(act==='gen'){
+          r.borrador=res.texto; if(ta) ta.value=res.texto; contar(i);
+          decir(msg, res.confiable
+            ? 'Borrador nuevo listo. Revisalo antes de publicar.'
+            : 'Borrador nuevo, pero el filtro lo marcó dudoso. Leelo con cuidado.', 'ok');
+          return;
+        }
+        r.borrador=texto; r.estado=res.estado;
+        decir(msg,'Guardado en la hoja. Todavía NO se publicó.','ok');
+      })
+      .withFailureHandler(function(e){
+        botones.forEach(function(b){ b.disabled=false; });
+        decir(msg,'No se pudo: '+((e && e.message) || e),'err');
+      });
+
+    if(act==='pub')  run.publicarDesdePanel(r.id, texto);
+    if(act==='edit') run.editarRespuestaPublicada(r.id, texto);
+    if(act==='save') run.guardarBorrador(r.id, texto);
+    if(act==='gen')  run.regenerarBorrador(r.id);
+    if(act==='skip') run.descartarBorrador(r.id);
+  }
+
+  /* =========================================================
+     TRIPADVISOR
+     Sin botón de publicar a propósito: TripAdvisor no tiene API para
+     responder. El ciclo aquí es copiar -> pegar en el Management Center ->
+     "Ya la pegué". El trigger lo confirma solo en la siguiente corrida,
+     cuando vea la respuesta del dueño en la API.
+     ========================================================= */
+
+  function cargarTA(){
+    taCargando=true;
+    document.getElementById('secTA').innerHTML=
+      '<div class="card center"><div class="spin" style="display:block"></div></div>';
+    google.script.run.withSuccessHandler(function(d){
+      TA=d; taCargando=false; renderTA();
+    }).withFailureHandler(function(e){
+      taCargando=false;
+      document.getElementById('secTA').innerHTML=
+        '<div class="card">No se pudieron cargar las rese\u00f1as de TripAdvisor: '+esc((e&&e.message)||e)+'</div>';
+    }).getDatosTripAdvisor();
+  }
+
+  function renderTA(){
+    var box=document.getElementById('secTA');
+
+    if(!TA.configurada){
+      box.innerHTML='<div class="card"><h2 style="margin-top:0">Falta conectar TripAdvisor</h2>'+
+        '<p>Carg\u00e1 <code>TA_API_KEY</code> en las Propiedades del script y corr\u00e9 una vez '+
+        '<code>instalarTriggerTripAdvisor</code>. Mientras tanto esta pesta\u00f1a queda vac\u00eda.</p>'+
+        '<p class="muted">Para probar la llave sin tocar nada, corr\u00e9 <code>probarTripAdvisor</code> '+
+        'y mir\u00e1 el registro de ejecuci\u00f3n.</p></div>';
+      return;
+    }
+
+    TA.reviews.forEach(function(r,i){ r._i=i; });
+    var pend=TA.reviews.filter(function(r){ return r.estado==='PENDIENTE'; }).length;
+
+    var html='<div class="hl">'+(pend
+      ? '<b>'+pend+'</b> rese\u00f1a(s) de TripAdvisor esperando respuesta. TripAdvisor no deja publicar '+
+        'por API: copi\u00e1 el texto y pegalo en el Management Center.'
+      : 'No hay rese\u00f1as de TripAdvisor pendientes.')+'</div>';
+
+    html+='<h2>Rese\u00f1as de TripAdvisor ('+TA.reviews.length+')</h2>';
+    html+= TA.reviews.length
+      ? TA.reviews.map(tarjetaTA).join('')
+      : '<div class="card">Todav\u00eda no se guard\u00f3 ninguna. El bot consulta cada hora y va acumulando '+
+        'desde hoy; hacia atr\u00e1s TripAdvisor solo entrega las 5 m\u00e1s recientes.</div>';
+
+    html+='<div class="muted" style="margin-top:14px">Contenido de Tripadvisor. Para responder hay que entrar al '+
+          '<a href="https://www.tripadvisor.com/Owners" target="_blank" rel="noopener">Management Center</a>.</div>';
+
+    box.innerHTML=html;
+    TA.reviews.forEach(function(r){ if(r.estado!=='RESPONDIDA') contarTA(r._i); });
+    bindTA();
+  }
+
+  function tarjetaTA(r){
+    var date=r.time? new Date(r.time).toLocaleDateString('es-GT',{year:'numeric',month:'short',day:'numeric'}):'';
+    var link=r.url? ' \u00b7 <a href="'+esc(r.url)+'" target="_blank" rel="noopener">Ver en Tripadvisor</a>':'';
+    var cuerpo = r.estado==='RESPONDIDA'
+      ? '<div class="rep"><b>Respuesta en Tripadvisor:</b> '+esc(r.respuesta)+'</div>'
+      : editorTA(r);
+    return '<div class="rev"><div class="top"><span class="nm">'+esc(r.name)+'</span><span class="st">'+starStr(r.stars)+'</span></div>'+
+      '<div class="date">'+date+link+'</div>'+
+      (r.title?'<div class="cm"><b>'+esc(r.title)+'</b></div>':'')+
+      (r.comment?'<div class="cm">'+esc(r.comment)+'</div>':'<div class="cm muted">(sin texto)</div>')+
+      cuerpo+'</div>';
+  }
+
+  function editorTA(r){
+    var i=r._i;
+    return '<div class="ed">'+
+      '<div class="lab">Respuesta sugerida'+pastillaTA(r)+'</div>'+
+      '<textarea id="ta_t'+i+'" data-i="'+i+'" placeholder="Escrib\u00ed la respuesta, o pedile un borrador a la IA.">'+esc(r.borrador||'')+'</textarea>'+
+      '<div class="edbar">'+
+        '<button class="pri" data-ta="copiar" data-i="'+i+'">Copiar</button>'+
+        '<button data-ta="save" data-i="'+i+'">Guardar</button>'+
+        '<button data-ta="gen" data-i="'+i+'">'+(r.borrador?'Regenerar':'Generar')+' con IA</button>'+
+        '<button data-ta="hecho" data-i="'+i+'">Ya la pegu\u00e9</button>'+
+        '<button class="ghost" data-ta="skip" data-i="'+i+'">No responder</button>'+
+        '<span class="chars" id="ta_c'+i+'"></span>'+
+      '</div>'+
+      '<div class="edmsg" id="ta_m'+i+'"></div>'+
+    '</div>';
+  }
+
+  function pastillaTA(r){
+    if(r.estado==='PENDIENTE')           return '<span class="pill pend">sin responder en Tripadvisor</span>';
+    if(r.estado==='MARCADA_RESPONDIDA')  return '<span class="pill no">marcada como respondida</span>';
+    if(r.estado==='NO_RESPONDER')        return '<span class="pill no">marcada como no responder</span>';
+    return '';
+  }
+
+  var taBound=false;
+  function bindTA(){
+    if(taBound) return; taBound=true;
+    var box=document.getElementById('secTA');
+    box.addEventListener('input', function(ev){
+      if(ev.target.tagName==='TEXTAREA') contarTA(ev.target.getAttribute('data-i'));
+    });
+    box.addEventListener('click', function(ev){
+      var b=ev.target.closest && ev.target.closest('button[data-ta]');
+      if(b) accionTA(b.getAttribute('data-ta'), Number(b.getAttribute('data-i')));
+    });
+  }
+
+  function contarTA(i){
+    var ta=document.getElementById('ta_t'+i), c=document.getElementById('ta_c'+i);
+    if(!ta||!c) return;
+    c.textContent=ta.value.trim().length+' caracteres';
+  }
+
+  // execCommand est\u00e1 obsoleto pero es el que funciona dentro del iframe con
+  // sandbox de Apps Script; navigator.clipboard ah\u00ed suele estar bloqueado.
+  function copiarTA(i){
+    var ta=document.getElementById('ta_t'+i), msg=document.getElementById('ta_m'+i);
+    if(!ta) return;
+    if(!ta.value.trim()) return decir(msg,'No hay nada que copiar.','err');
+    ta.focus(); ta.select();
+    var ok=false;
+    try{ ok=document.execCommand('copy'); }catch(e){}
+    if(ok) return decir(msg,'Copiado. Pegalo en el Management Center de Tripadvisor.','ok');
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(ta.value).then(
+        function(){ decir(msg,'Copiado. Pegalo en el Management Center de Tripadvisor.','ok'); },
+        function(){ decir(msg,'No se pudo copiar solo: el texto ya qued\u00f3 seleccionado, us\u00e1 \u2318+C.','err'); });
+      return;
+    }
+    decir(msg,'No se pudo copiar solo: el texto ya qued\u00f3 seleccionado, us\u00e1 \u2318+C.','err');
+  }
+
+  function accionTA(act,i){
+    var r=TA.reviews[i];
+    if(act==='copiar') return copiarTA(i);
+
+    var ta=document.getElementById('ta_t'+i), msg=document.getElementById('ta_m'+i);
+    var texto=(ta?ta.value:'').trim();
+    if(act==='save' && !texto) return decir(msg,'Escrib\u00ed la respuesta primero.','err');
+    if(act==='skip' && !confirm('Marcar esta rese\u00f1a como "no responder". Deja de salir en el correo de pendientes.\n\n\u00bfSeguir?')) return;
+
+    var botones=[].slice.call(document.querySelectorAll('#secTA button[data-i="'+i+'"]'));
+    botones.forEach(function(b){ b.disabled=true; });
+    decir(msg, act==='gen'?'Pidi\u00e9ndole el borrador a la IA...':'Guardando...','');
+
+    var run=google.script.run
+      .withSuccessHandler(function(res){
+        botones.forEach(function(b){ b.disabled=false; });
+        if(act==='gen'){
+          r.borrador=res.texto; if(ta) ta.value=res.texto; contarTA(i);
+          decir(msg, res.confiable?'Borrador nuevo listo.':'Borrador nuevo, pero el filtro lo marc\u00f3 dudoso. Leelo con cuidado.','ok');
+          return;
+        }
+        if(act==='save'){ r.borrador=texto; decir(msg,'Guardado en la hoja.','ok'); return; }
+        r.estado=res.estado; renderTA();
+      })
+      .withFailureHandler(function(e){
+        botones.forEach(function(b){ b.disabled=false; });
+        decir(msg,'No se pudo: '+((e&&e.message)||e),'err');
+      });
+
+    if(act==='save')  run.guardarBorradorTA(r.id, texto);
+    if(act==='gen')   run.regenerarBorradorTA(r.id);
+    if(act==='hecho') run.marcarRespondidaTA(r.id);
+    if(act==='skip')  run.descartarTA(r.id);
   }
 
   function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

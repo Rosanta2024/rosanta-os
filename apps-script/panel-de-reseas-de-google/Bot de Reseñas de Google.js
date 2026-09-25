@@ -406,7 +406,17 @@ function notificarPendientes_(sheet) {
     cuerpo += '  Reseña: ' + (f[cRes] || '(sin texto)') + '\n';
     cuerpo += '  Borrador propuesto: ' + f[cResp] + '\n\n';
   });
-  cuerpo += 'Para publicar: abre la hoja, ajusta el texto si quieres y escribe SI en la columna "Aprobar".\n';
+  // Desde el 24-sep-2026 el camino corto es el panel: ahí se edita el borrador
+  // y se publica de una. La hoja queda como respaldo del flujo viejo.
+  var panel = getProp_('PANEL_URL') || urlDelPanel_();
+  if (panel) {
+    cuerpo += 'Para publicar: abrí el panel de reseñas, filtrá por "Sin responder", ajustá el\n';
+    cuerpo += 'texto en la caja y dale "Aprobar y publicar".\n';
+    cuerpo += 'Panel: ' + panel + '\n\n';
+    cuerpo += 'También sirve la hoja: escribí SI en la columna "Aprobar" (tarda hasta 30 min).\n';
+  } else {
+    cuerpo += 'Para publicar: abre la hoja, ajusta el texto si quieres y escribe SI en la columna "Aprobar".\n';
+  }
   cuerpo += 'Hoja de control: ' + url + '\n';
 
   MailApp.sendEmail(CONFIG.OWNER_EMAIL,
@@ -416,6 +426,13 @@ function notificarPendientes_(sheet) {
 // ===================== UTILES =====================
 function getProp_(key) {
   return PropertiesService.getScriptProperties().getProperty(key);
+}
+
+// URL /exec de este mismo proyecto. Devuelve null si aún no hay despliegue
+// como Web App; por eso el correo la usa solo si existe.
+function urlDelPanel_() {
+  try { return ScriptApp.getService().getUrl() || ''; }
+  catch (e) { return ''; }
 }
 
 // Ejecuta esto UNA vez a mano para crear los triggers programados.
