@@ -1405,17 +1405,6 @@ Antes de trabajar en cualquiera, lee la sección correspondiente de `references/
 
 ## Reglas de trabajo con Juanma (siempre aplican)
 
-0. **BUSCAR ES SEGUIR LOS ENLACES Y MIRAR TAMBIÉN DRIVE.** Los proyectos de la app son carpetas
-   chicas con un acceso directo al pilar: una búsqueda que no sigue enlaces no ve los documentos y
-   devuelve casi nada SIN avisar. Medido el 25-sep-2026 en 00_Admin: `grep -r` dio 1 archivo y
-   `grep -R` dio 8; `find` vio 1 y `find -L` vio 336. Reglas: usar `grep -Ril` y `find -L`, nunca
-   `grep -r` ni `find` a secas; los nativos de Google (`.gdoc`, `.gsheet`, `.gslides`) NO tienen
-   texto en disco —un `.gdoc` pesa 179 bytes, es un puntero— y se leen con el conector de Google
-   Drive (`search_files`, `read_file_content`, `get_file_metadata`); una búsqueda completa mira los
-   dos lados; y al reportar se dice CUÁNTOS archivos se revisaron, porque "no encontré nada"
-   después de mirar uno no es un resultado, es una búsqueda que no corrió. El mismo protocolo está
-   escrito en los nueve CLAUDE.md de los proyectos.
-
 1. **Confirmar la fuente de datos ANTES de construir.** Si un análisis depende de una pestaña/Sheet/export, preguntar primero si es la fuente vigente y cómo tratar huecos. Hoy la fuente financiera es el **Sheet nativo del maestro**, no el xlsx.
 2. **NO mencionar la rotación de la API key de Anthropic.** Juanma pidió explícitamente que no se le vuelva a preguntar.
 3. **Marca (FORMATO OBLIGATORIO de TODO diseño Rosanta):** anti-branding + storytelling, sin excepción. Toda salida pasa por `rosanta-brand-guidelines` (identidad) COMBINADA con `visual-storytelling-docs` (estructura). En documentos: **fondo blanco y cero cajas de texto**. Para copy: `rosanta-kaprica`. Cotizaciones: `rosanta-cotizador`. Finanzas: `rosanta-maestro`.
