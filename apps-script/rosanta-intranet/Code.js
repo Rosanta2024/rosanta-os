@@ -241,6 +241,15 @@ function doGet(e) {
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
+  // Reporte semanal de operacion, en vivo (25-sep-2026): las 8 secciones del formato
+  // S38 calculadas desde los motores. Reemplaza al PDF armado a mano. Mismo permiso
+  // que el resto de Finanzas; el tablero global lo embebe con ?embed=1.
+  if (pagina === 'reporte-semanal' && usuarioTieneModulo(usuario, 'finanzas')) {
+    return render_('ReporteSemanalVista', {
+      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
+    }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   // Caja: proyeccion del saldo del banco a 90 dias (p94) contra el piso y el objetivo
   // (p122). Entro el 15-sep-2026. Lee el maestro por su cuenta y los compromisos de la
   // pestana COMPROMISOS del Sheet de config. Solo lectura.

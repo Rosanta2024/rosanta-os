@@ -199,23 +199,26 @@
         (DOCS && DOCS.avisos && DOCS.avisos.length ? '<br>' + DOCS.avisos.map(esc).join('<br>') : '') + '</div>';
       return;
     }
-    var ops = DOCS.reportes.map(function (r, i) {
-      return '<option value="' + i + '">S' + r.semana + ' · ' + esc(r.anio) + ' · ' + esc(r.modificado) + '</option>';
+    /* Decision de Juanma (25-sep, noche): aqui NO se muestra el PDF. Esta pestaña va a ser
+       el reporte semanal EN VIVO (sus 8 secciones desde los motores) y el PDF queda solo
+       como descarga para mandarlo al equipo. Mientras el reporte en vivo no exista, la
+       pestaña lista las semanas con su descarga. */
+    var tarjetas = DOCS.reportes.map(function (r, i) {
+      var descarga = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(r.id);
+      return '<div class="tb-card ' + (i === 0 ? 'verde' : 'gris') + '">' +
+        '<div class="et"><span class="k">' + (i === 0 ? 'ULTIMA SEMANA' : 'SEMANA') + '</span><span>' + esc(r.modificado) + '</span></div>' +
+        '<div class="per">Reporte semanal de operacion</div>' +
+        '<div class="val">S' + esc(r.semana) + '<small>' + esc(r.anio) + '</small></div>' +
+        '<div class="nota">' + esc(r.nombre) + ' · carpeta ' + esc(r.carpeta) + '</div>' +
+        '<div class="tb-docbar" style="margin:0.6rem 0 0"><a class="tb-boton" href="' + descarga + '" rel="noopener">Descargar PDF</a>' +
+        '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Abrir en Drive</a></div>' +
+        '</div>';
     }).join('');
-    el.innerHTML = '<div class="tb-docbar"><label>Semana <select id="sel-reporte">' + ops + '</select></label>' +
-      '<a id="lnk-reporte" href="#" target="_blank" rel="noopener">Abrir en Drive</a>' +
-      '<span id="txt-reporte"></span></div>' +
-      '<div class="tb-doc"><iframe id="ifr-reporte" title="Reporte semanal" allow="autoplay"></iframe></div>' +
-      '<p class="tb-leyenda">Es el PDF que se revisa con los jefes de departamento: lo genera la tarea del lunes en la carpeta de su semana. El tablero no lo recalcula; si el reporte y una tarjeta de arriba dicen distinto, el reporte usa sus propios objetivos (cocina 26%, barra ponderada) y el tablero los de PARAMETROS.</p>';
-    var sel = document.getElementById('sel-reporte');
-    function ver() {
-      var r = DOCS.reportes[Number(sel.value)];
-      document.getElementById('ifr-reporte').src = r.preview;
-      document.getElementById('lnk-reporte').href = r.url;
-      document.getElementById('txt-reporte').textContent = r.nombre + ' · carpeta ' + r.carpeta;
-    }
-    sel.addEventListener('change', ver);
-    ver();
+    // El reporte en vivo (ReporteSemanalVista, las 8 secciones desde los motores) va
+    // embebido; abajo, los PDF de cada semana para descargar y mandar al equipo.
+    el.innerHTML = '<div class="tb-doc"><iframe id="ifr-reporte" title="Reporte semanal en vivo" src="' + B + '?page=reporte-semanal&embed=1' + T + '"></iframe></div>' +
+      '<div class="tb-docs"><h3>PDF de cada semana, para mandar al equipo</h3><div class="tb-grid">' + tarjetas + '</div></div>' +
+      '<p class="tb-leyenda">Cada PDF vive en la carpeta de su semana (Reportes 2026 / SXX); si una semana no aparece, es que su carpeta no tiene Rosanta_SXX_2026.pdf. El PDF generado desde la pantalla de arriba es la siguiente tanda.</p>';
   }
   function pintarPlanes() {
     var el = document.getElementById('p-marketing');

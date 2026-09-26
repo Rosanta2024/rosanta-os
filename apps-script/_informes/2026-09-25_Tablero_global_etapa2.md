@@ -59,6 +59,30 @@ Pedido de Juanma después de ver el tablero: (1) el reporte semanal como pestañ
 - `TableroVista.html`: pestaña "Reporte semanal" (selector de semana + visor de Drive embebido + enlace) y tarjetas del plan de Meta Ads al pie de 05 Marketing (últimos tres, el último en verde). "Actualizar" no duplica las tarjetas.
 - `PruebasFinanzas.js`: prueba "El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive".
 - Pendiente de decisión: para que la auditoría sea un KPI con semáforo (score y grado A–F), la tarea del día 3 tendría que escribir una fila en una pestaña `AUDITORIA_META` de `Rosanta Marketing OS`. Es un cambio al prompt de la tarea.
+- Push a HEAD verificado (62 archivos idénticos). Batería: **Intranet sana · 127 OK · 0 fallas · 4 avisos · 3 saltadas (216 s)**; la prueba nueva de documentos en OK. Los 4 avisos, los mismos de la corrida anterior. La pestaña "Reporte semanal" y las tarjetas del plan las revisa Juanma en su Chrome (los clics de la automatización no llegan). Sin publicar hasta su "publica".
+
+## Tercera tanda (25-sep, noche): el reporte semanal EN VIVO
+
+Decisiones de Juanma: (1) el reporte se calcula con las reglas de la intranet, no con las del PDF; (2) el PDF lo genera el servidor y lo guarda en la carpeta `SXX` (pendiente, tanda siguiente). Hallazgo previo: `generar_reporte_semanal.py` no calcula nada, es una plantilla con los numeros de la semana escritos como constantes por la sesion del lunes.
+
+- **`ReporteSemanalDatos.js` (nuevo):** `getReporteSemanal(auth, clave)` arma las 8 secciones del formato S38 desde `_finDatos_` (semana, cuatro semanas, compra por area, secciones del DRE, nomina devengada, prime, equilibrio del ultimo mes cerrado) y agrega lo que no existia por semana: serie diaria (02_Ventas_Maestro), reservas de la semana (pestaña `reservas` de Marketing OS: validas, personas, canceladas, sin cerrar en RESERVED, walk-ins por dia), platos mas vendidos por area (VENTAS x PLATO via `ventasDelRango_` + `esCocinaPOS_`) y acciones de la semana (pestaña nueva `REPORTE_ACCIONES` del config: SEMANA · ACCION · RESPONSABLE por departamento · PORQUE · FECHA · ESCRITO_POR; `guardarAccionReporte` con candado, `borrarAccionReporte` solo dueño; la pestaña se crea sola al guardar la primera).
+- **`ReporteSemanalVista.html` (nueva):** `?page=reporte-semanal` (modulo finanzas; `&embed=1` dentro del tablero), selector de las ultimas 12 semanas, Actualizar, Imprimir/PDF (impresion del navegador mientras no exista el PDF del servidor), formulario de acciones.
+- **Tablero:** la pestaña "Reporte semanal" embebe la pantalla y abajo deja los PDF de cada semana para descargar.
+- **Pruebas:** la vista en las tres listas `VISTAS` y en el dibujo de vistas de Finanzas; prueba "El reporte semanal en vivo cuadra con la semana del motor" (suma de dias = venta de la semana, comensales, compra por area, gasto del P&L; AVISO si falta la pestaña de acciones).
+- **Harness (espejo del 21-sep, reservas sinteticas):** S38: suma de dias Q19,309.36 contra Q19,309.38 de la semana; 82 comensales en los dos lados; reservas 3 validas / 1 cancelada / 1 sin cerrar; P&L gasto Q15,290, resultado Q4,020. Los platos salen vacios en el harness (VENTAS x PLATO no esta en los mocks).
+- **Lo que el reporte en vivo NO trae todavia:** personal extra por semana pagada (la planilla es mensual; se muestra el reparto del mes), comision de tarjeta separada del bloque Comisiones y cargos, y el PDF del servidor.
+
+## Publicado: @125 (25-sep, noche, con "publica" de Juanma)
+
+`create-version` → 125 · `update-deployment -V 125` · releído tres veces · la @125 bajada aparte es idéntica al disco (64 archivos). Batería previa sobre este mismo HEAD (salvo el ajuste de la prueba nueva, que solo baja su costo): 126 OK · 0 fallas · 6 avisos · 3 saltadas.
+
+## Correccion despues de la @125 (25-sep, noche): equilibrio semanal y estados de reservas
+
+Al leer la @125 en produccion, dos numeros no servian:
+- **Equilibrio semanal Q155,894.** Salia del equilibrio mensual del motor (Escenarios) del ultimo mes cerrado: agosto tiene margen de contribucion 8.3% (fijo Q55,919 con variable del banco Q57,607) y el cociente explota; con base de 4 meses daba Q89,543. Ese calculo es coherente mes a mes ("7 de 9 meses bajo el equilibrio"), pero no sirve como vara semanal. **Ahora el equilibrio semanal se arma con el PRESUPUESTO** que Juanma definio el 22-sep: fijos (Inmueble Q20,212.50 · Nomina Q29,000 · Tarifas Q6,600 · Prestadores Q5,500 · Marketing Q5,700, con el mes si lo trae) = Q67,012.50 al mes = Q15,423 por semana; variables = %venta del presupuesto (comisiones 6.5, propinas 4.24) mas la mercaderia con la movil de 4 (compra ÷ venta de las 4 semanas). Harness: margen 50.3%, **PE Q30,641 por semana** (el PDF de la S38 tenia Q35,097 con su propia estructura). El mensual del motor queda como referencia en la seccion 8. **Decision pendiente de Juanma: confirmar que esta es la vara semanal.**
+- **Reservas de la S38: 13 canceladas de 14.** El PDF de esa semana decia 4 de 14. La pantalla ahora muestra el desglose de estados de la pestaña `reservas` para esa semana, para ver si la diferencia es de datos (estados cambiados en Wix despues del 23-sep) o del criterio (cuentan como canceladas CANCEL, DECLIN y NO SHOW; sin cerrar, RESERVED).
+
+**Batería sobre este HEAD corregido (25-sep, noche):** 127 OK · 0 fallas · 5 avisos · 3 saltadas · 237 s. Los avisos son los ya conocidos (la caja arranca del saldo de los bancos; falta la pestaña REPORTE_ACCIONES, se crea al guardar la primera acción; 13 metas en defecto). Ninguna falla. Queda sin publicar hasta el "publica" de Juanma (sería la @126).
 
 ## Cómo se publicó (para la próxima vez)
 

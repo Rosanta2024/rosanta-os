@@ -1,0 +1,477 @@
+/**
+ * ReporteSemanalDatos.gs — el REPORTE SEMANAL DE OPERACION, en vivo. Pilar 3.
+ *
+ * Decision de Juanma (25-sep-2026): el reporte que se revisa cada semana con los jefes
+ * de departamento deja de ser un PDF armado a mano (generar_reporte_semanal.py, que
+ * tenia los numeros de la semana escritos como constantes) y pasa a ser una pantalla
+ * de la intranet, con el PDF como descarga. Las 8 secciones y su orden son los del
+ * formato cerrado el 23-sep sobre la S38 (rosanta-reporte-semanal-formato).
+ *
+ * CON LAS REGLAS DE LA INTRANET, no las del PDF (Juanma, 25-sep): venta neta =
+ * Subtotal / 1.12 sin eventos; food cost sobre venta sin servicio contra la meta de
+ * PARAMETROS (metasFoodCost_); nomina DEVENGADA de la planilla; compra con la regla 15;
+ * equilibrio con el fijo y el margen de contribucion del motor. Si el PDF viejo y esta
+ * pantalla dicen distinto, manda esta.
+ *
+ * NO CALCULA DE NUEVO lo que ya calcula FinanzasDatos: la semana (ventas, comensales,
+ * compra por area, secciones del DRE, nomina, prime) sale de d.semanas[]; el mes de
+ * d.meses[]. Lo que agrega, porque no existia por semana: la serie DIARIA de la
+ * semana (02_Ventas_Maestro), las RESERVAS de la semana (pestana reservas de Rosanta
+ * Marketing OS), los PLATOS mas vendidos por area (VENTAS x PLATO, via ventasDelRango_)
+ * y las ACCIONES de la semana (pestana REPORTE_ACCIONES del Sheet de config, que se
+ * escribe desde la pantalla).
+ *
+ * AMBITO GLOBAL: todo empieza con rep / _rep. Solo guardarAccionReporte escribe.
+ */
+
+var REP_HOJA_ACCIONES = 'REPORTE_ACCIONES';
+var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', 'ESCRITO_POR'];
+// Responsables por DEPARTAMENTO, no por persona: es un documento interno de operacion
+// y el formato no lleva nombres propios (decision de Juanma, 23-sep-2026).
+var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala', 'Reservas', 'Administración'];
+var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
+var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
+var REP_CACHE = 'rep_sem_v1_';
+var REP_CACHE_SEGS = 30 * 60;
+
+// ------------------------------------------------------------------ entradas
+
+function getReporteSemanal(auth, clave) {
+  exigirModulo_(auth, 'finanzas');
+  return _repDatos_(Number(clave) || 0, false);
+}
+
+function refrescarReporteSemanal(auth, clave) {
+  exigirModulo_(auth, 'finanzas');
+  return _repDatos_(Number(clave) || 0, true);
+}
+
+function _repDatos_(clave, forzar) {
+  var cache = CacheService.getScriptCache();
+  var k = REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_();
+  if (!forzar) {
+    var g = cache.get(k);
+    if (g) { try { return JSON.parse(g); } catch (e) { /* se recalcula */ } }
+  }
+  var out = _repCalcular_(clave);
+  try { cache.put(k, JSON.stringify(out), REP_CACHE_SEGS); } catch (e2) { /* si no cabe, igual se devuelve */ }
+  return out;
+}
+
+// ------------------------------------------------------------------ utilidades
+
+function _repIso_(d) {
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+
+/** Una fecha de una hoja: Date, o texto AAAA-MM-DD (con o sin hora). null si no. */
+function _repFecha_(v) {
+  if (v instanceof Date && !isNaN(v.getTime())) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || '').trim());
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  var m2 = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(v || '').trim());
+  if (m2) return new Date(Number(m2[3]), Number(m2[2]) - 1, Number(m2[1]));
+  return null;
+}
+
+var REP_DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+// ------------------------------------------------------------------ el calculo
+
+function _repCalcular_(clave) {
+  var d = _finDatos_(false);
+  var S = d.semanas || [];
+  if (!S.length) throw new Error('El maestro no tiene semanas con venta todavia.');
+  var idx = S.length - 1;
+  if (clave) {
+    for (var i = 0; i < S.length; i++) if (S[i].clave === clave) { idx = i; break; }
+  }
+  var s = S[idx];
+  var lunes = _finLunesDeClave_(s.clave);
+  var domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
+  var jueves = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 3);
+  var mesN = jueves.getMonth() + 1;
+  var mes = null, ultimoCerrado = null;
+  (d.meses || []).forEach(function (x) {
+    if (x.m === mesN) mes = x;
+    if (x.m < (new Date()).getMonth() + 1) ultimoCerrado = x;
+  });
+  var metas = metasFoodCost_();
+  var notas = [];
+
+  // ---- 1. la semana y las cuatro ----------------------------------------
+  var ant = idx > 0 ? S[idx - 1] : null;
+  var cuatro = S.slice(Math.max(0, idx - 3), idx + 1);
+
+  // ---- 2. equilibrio semanal -------------------------------------------------
+  // Con el PRESUPUESTO que Juanma definio el 22-sep (Rosanta_Intranet_Config ›
+  // PRESUPUESTO), que es la estructura de costos de la casa, no un benchmark:
+  //   fijos     las secciones tipo "fijo", el monto del mes de la semana si lo trae
+  //             y si no el Valor mensual; entre 4.345 = fijos por semana
+  //   variables las secciones tipo "%venta" (comisiones, propinas) mas la mercaderia,
+  //             que va con la MOVIL DE 4 de compra sobre venta (regla 7: la semana
+  //             cruda no es señal) — cociente de sumas de las 4 semanas
+  //   PE        fijos por semana / (1 - variables)
+  // El equilibrio MENSUAL del motor (Escenarios: fijo F + S/2 del gasto bancario,
+  // margen con lo variable del banco) se deja como referencia: el 25-sep dio Q155,894
+  // por semana con el margen de 8.3% de agosto, un numero que no sirve para decidir
+  // la semana. Queda anotado como decision pendiente de Juanma cual de los dos manda.
+  var pe = null;
+  var presu = d.presupuesto && d.presupuesto.existe ? d.presupuesto.secciones : null;
+  if (presu) {
+    var fijos = [], fijoMes = 0, pctVenta = [], pctTotal = 0;
+    Object.keys(presu).forEach(function (k) {
+      var x = presu[k];
+      if (x.tipo === 'fijo') {
+        var v = (x.meses && x.meses[mesN] !== undefined) ? x.meses[mesN] : x.valor;
+        if (v) { fijos.push({ seccion: k, mensual: _finR_(v), del_mes: !!(x.meses && x.meses[mesN] !== undefined) }); fijoMes += v; }
+      } else if (x.tipo === '%venta' && x.valor) {
+        pctVenta.push({ seccion: k, pct: x.valor }); pctTotal += x.valor;
+      }
+    });
+    var vC = 0, cC = 0;
+    cuatro.forEach(function (x) { vC += x.ventas; cC += x.cogs; });
+    var mercPct = vC ? cC / vC * 100 : null;          // movil de 4, sobre venta total
+    var mc = mercPct === null ? null : 100 - mercPct - pctTotal;
+    if (fijoMes && mc && mc > 0) {
+      var fijoSem = fijoMes / FIN_SEMANAS_MES;
+      pe = { fijos: fijos, fijo_mes: _finR_(fijoMes), fijo_semana: _finR_(fijoSem),
+             variables: pctVenta.concat([{ seccion: 'Mercaderia (compra, movil de 4 semanas)', pct: _finR_(mercPct, 1) }]),
+             variables_pct: _finR_(mercPct + pctTotal, 1), mc: _finR_(mc, 1),
+             pe_semana: _finR_(fijoSem / (mc / 100)), pe_mes: _finR_(fijoMes / (mc / 100)),
+             base: 'PRESUPUESTO · mercaderia movil de 4 (S' + cuatro[0].w + ' a S' + s.w + ')' };
+    } else {
+      notas.push('Sin equilibrio: el presupuesto no tiene fijos o el margen de contribucion no es positivo (mercaderia ' +
+                 (mercPct === null ? '—' : _finR_(mercPct, 1) + '%') + ' + ' + pctTotal + '% de venta).');
+    }
+  } else {
+    notas.push('Sin punto de equilibrio: falta la pestaña PRESUPUESTO del Sheet de config (instalarPresupuesto).');
+  }
+  // referencia: el equilibrio mensual del motor (Escenarios), del ultimo mes cerrado
+  var mesPE = (ultimoCerrado && ultimoCerrado.bev) ? ultimoCerrado : null;
+  var peMotor = mesPE ? { mes: mesPE.mes, fijo_mes: mesPE.fijo, mc: mesPE.mc, pe_mes: mesPE.bev,
+                          pe_semana: _finR_(mesPE.bev / FIN_SEMANAS_MES) } : null;
+  var peDia = pe ? _finR_(pe.pe_semana / 7) : null;
+
+  // ---- 3. la serie diaria (02_Ventas_Maestro, mismas reglas 1, 2 y 10) ------------
+  var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+  var V = ss.getSheetByName('02_Ventas_Maestro').getDataRange().getValues();
+  var dias = [];
+  for (var k = 0; k < 7; k++) {
+    var f = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + k);
+    dias.push({ iso: _repIso_(f), dia: REP_DIAS[f.getDay()] + ' ' + f.getDate(), ventas: 0, com: 0, tickets: 0,
+                reservas: 0, personas: 0, canceladas: 0, walkins: null, eventos: 0 });
+  }
+  var porIso = {};
+  dias.forEach(function (x) { porIso[x.iso] = x; });
+  for (var r = FIN_PRIMERA_FILA - 1; r < V.length; r++) {
+    var fv = _finDia_(V[r][1]);
+    if (!_finEsFecha_(fv) || fv < lunes || fv > domingo) continue;
+    var dd = porIso[_repIso_(fv)];
+    if (!dd) continue;
+    var neto = _finNum_(V[r][3]) / 1.12;
+    if ((String(V[r][7] || '') + String(V[r][11] || '')).toUpperCase().indexOf('EVENTO') !== -1) {
+      dd.eventos += neto; continue;
+    }
+    dd.ventas += neto; dd.tickets += 1; dd.com += Math.round(_finNum_(V[r][8]));
+  }
+
+  // ---- 4. reservas de la semana (Rosanta Marketing OS › reservas) ----------------
+  var reservas = { total: 0, validas: 0, personas: 0, canceladas: 0, personas_canceladas: 0,
+                   sin_cerrar: 0, con_estado: {}, error: '' };
+  try {
+    var hr = SpreadsheetApp.openById(MKT_SHEET_ID).getSheetByName('reservas');
+    if (!hr) throw new Error('no existe la pestana reservas');
+    var RV = hr.getDataRange().getValues();
+    var cab = (RV[0] || []).map(function (c) { return _finSinAcentos_(String(c || '')).toLowerCase().trim(); });
+    var cF = cab.indexOf('fecha'), cP = cab.indexOf('personas'), cE = cab.indexOf('estado');
+    if (cF < 0) throw new Error('la pestana reservas no tiene columna fecha');
+    for (var j = 1; j < RV.length; j++) {
+      var fr = _repFecha_(RV[j][cF]);
+      if (!fr || fr < lunes || fr > domingo) continue;
+      var dr = porIso[_repIso_(fr)];
+      var estado = String(cE >= 0 ? RV[j][cE] : '').toUpperCase().trim();
+      var personas = cP >= 0 ? Math.round(_finNum_(RV[j][cP])) : 0;
+      reservas.total += 1;
+      reservas.con_estado[estado || '(sin estado)'] = (reservas.con_estado[estado || '(sin estado)'] || 0) + 1;
+      var cancelada = /CANCEL|DECLIN|NO.?SHOW/.test(estado);
+      if (cancelada) {
+        reservas.canceladas += 1; reservas.personas_canceladas += personas;
+        if (dr) dr.canceladas += 1;
+        continue;
+      }
+      reservas.validas += 1; reservas.personas += personas;
+      if (/^RESERV/.test(estado)) reservas.sin_cerrar += 1;
+      if (dr) { dr.reservas += 1; dr.personas += personas; }
+    }
+  } catch (e) {
+    reservas.error = String(e && e.message || e);
+    notas.push('Reservas: ' + reservas.error);
+  }
+  dias.forEach(function (x) {
+    x.ventas = _finR_(x.ventas); x.eventos = _finR_(x.eventos);
+    // walk-ins = comensales del POS que no vinieron con reserva. Si las personas
+    // reservadas superan a los comensales, se marca: alguien reservo y no se registro
+    // en el POS, o la reserva se conto dos veces.
+    x.walkins = reservas.error ? null : Math.max(x.com - x.personas, 0);
+    x.reservas_superan = !reservas.error && x.personas > x.com;
+    x.sobre_equilibrio = peDia !== null ? x.ventas >= peDia : null;
+  });
+  var comSemana = dias.reduce(function (a, x) { return a + x.com; }, 0);
+  reservas.walkins = reservas.error ? null : Math.max(comSemana - reservas.personas, 0);
+  reservas.walkins_pct = (!reservas.error && comSemana) ? _finR_(reservas.walkins / comSemana * 100, 1) : null;
+  reservas.canceladas_pct = reservas.total ? _finR_(reservas.canceladas / reservas.total * 100, 1) : null;
+
+  // ---- 5. platos y venta por area (VENTAS x PLATO) -------------------------------
+  var areas = { cocina: { venta: 0, uds: 0, productos: {} }, barra: { venta: 0, uds: 0, productos: {} } };
+  var sinArea = 0, ventaPlatos = 0;
+  var platosError = '';
+  try {
+    var vr = ventasDelRango_(_repIso_(lunes), _repIso_(domingo));
+    (vr.lineas || []).forEach(function (l) {
+      if (!l.producto || ignorarEnVentas_(l.producto)) return;
+      var a = esCocinaPOS_(l.categoria) ? 'cocina' : 'barra';
+      var A = areas[a];
+      A.venta += l.total; A.uds += l.cantidad; ventaPlatos += l.total;
+      var P = A.productos[l.producto] || (A.productos[l.producto] = { nombre: l.producto, uds: 0, venta: 0 });
+      P.uds += l.cantidad; P.venta += l.total;
+    });
+  } catch (e2) {
+    platosError = String(e2 && e2.message || e2);
+    notas.push('Platos: ' + platosError);
+  }
+  function topDe(A) {
+    var lista = Object.keys(A.productos).map(function (n) { return A.productos[n]; })
+      .sort(function (x, y) { return y.venta - x.venta; });
+    var top = lista.slice(0, REP_TOP).map(function (p) {
+      return { nombre: p.nombre, uds: p.uds, venta: _finR_(p.venta), pct: A.venta ? _finR_(p.venta / A.venta * 100, 1) : 0 };
+    });
+    var resto = lista.slice(REP_TOP);
+    if (resto.length) {
+      var rv = resto.reduce(function (a, p) { return a + p.venta; }, 0), ru = resto.reduce(function (a, p) { return a + p.uds; }, 0);
+      top.push({ nombre: 'Otros ' + resto.length + ' productos', uds: ru, venta: _finR_(rv), pct: A.venta ? _finR_(rv / A.venta * 100, 1) : 0, otros: true });
+    }
+    return top;
+  }
+  // La venta por plato del POS trae IVA; la base del food cost es sin IVA ni servicio
+  // (regla 14). Se divide por 1.12 igual que hace el puente CMV.
+  var ventaCocina = _finR_(areas.cocina.venta / 1.12), ventaBarra = _finR_(areas.barra.venta / 1.12);
+  var mix = (ventaCocina + ventaBarra) ? _finR_(ventaCocina / (ventaCocina + ventaBarra) * 100, 1) : null;
+
+  // ---- 6. food cost: compra de la semana por area (motor) contra la venta del area --
+  function fc(costo, venta, meta) {
+    return { costo: _finR_(costo), venta: venta, meta: meta,
+             real_pct: venta ? _finR_(costo / venta * 100, 1) : null,
+             a_meta: _finR_(venta * meta / 100),
+             // sin venta del area (VENTAS x PLATO sin cargar) no hay exceso que medir
+             exceso: venta ? _finR_(costo - venta * meta / 100) : null,
+             desvio_pts: venta ? _finR_(costo / venta * 100 - meta, 1) : null };
+  }
+  var foodcost = {
+    semana_pct: s.cogsp, movil4_pct: s.cogs_m4 === undefined ? null : s.cogs_m4,
+    mes_pct: mes ? mes.cogsp : null, mes_nombre: mes ? mes.mes : '',
+    meta_global: metas.global,
+    cocina: fc(s.cocina, ventaCocina, metas.COCINA),
+    barra: fc(s.barra, ventaBarra, metas.BARRA),
+    mes: mes ? { cocina: _finR_(((d.compra || {}).cocina || { mes: {} }).mes[mesN] || 0),
+                 barra: _finR_(((d.compra || {}).barra || { mes: {} }).mes[mesN] || 0),
+                 ventas_ss: mes.ventas_ss } : null,
+    aviso_barra: 'El costo de barra es compra contra venta de la misma semana, no costo de consumo: una ' +
+                 'compra de inventario cae entera en la semana en que se paga.'
+  };
+
+  // ---- 7. personal y P&L semanal ------------------------------------------------
+  var bloques = s.bloques || {};
+  var secciones = [];
+  var gastoSecciones = 0;
+  Object.keys(bloques).sort(function (a, b) { return bloques[b] - bloques[a]; }).forEach(function (b) {
+    if (b === 'Nomina y salarios') return;      // la nomina del banco se reemplaza por la devengada
+    secciones.push({ seccion: b, q: _finR_(bloques[b]) });
+    gastoSecciones += bloques[b];
+  });
+  var comisiones = _finR_(bloques['Comisiones y cargos'] || 0);
+  var marketing = _finR_(bloques['Marketing'] || 0);
+  var gasto = _finR_(s.cogs + gastoSecciones + s.labor);
+  var resultado = _finR_(s.ventas - gasto);
+  var pl = {
+    ventas: s.ventas, cogs: s.cogs, cogs_cocina: s.cocina, cogs_barra: s.barra,
+    labor: s.labor, labor_pct: s.laborp, secciones: secciones, comisiones: comisiones, marketing: marketing,
+    gasto: gasto, gasto_pct: s.ventas ? _finR_(gasto / s.ventas * 100, 1) : null,
+    resultado: resultado, resultado_pct: s.ventas ? _finR_(resultado / s.ventas * 100, 1) : null,
+    resultado_sin_marketing: _finR_(resultado + marketing),
+    nota_nomina: 'Nomina devengada: la planilla del mes entre ' + FIN_SEMANAS_MES + ' (regla 4), no el pago bancario de la semana.'
+  };
+  var planillaMes = mes && mes.planilla ? mes.planilla : null;
+  var personal = {
+    labor_semana: s.labor, labor_pct: s.laborp, prime: s.prime, prime_m4: s.prime_m4 === undefined ? null : s.prime_m4,
+    planilla_mes: planillaMes ? { fija: planillaMes.fija, extra: planillaMes.extra, extra_cocina: planillaMes.extra_cocina,
+                                  extra_barra: planillaMes.extra_barra, n_extra: planillaMes.n_extra,
+                                  origen: planillaMes.origen, desde: planillaMes.desde ? FIN_MESES[planillaMes.desde - 1] : '' } : null,
+    nota: 'El personal extra por semana pagada no existe en el motor: la planilla es mensual (Dias laborados vacio). Se muestra el reparto del mes.'
+  };
+
+  // ---- 8. acciones de la semana ------------------------------------------------
+  var acciones = _repAcciones_(s.clave);
+
+  // ---- las semanas que se pueden elegir ---------------------------------------
+  var lista = S.slice(Math.max(0, S.length - REP_SEMANAS_LISTA)).reverse().map(function (x) {
+    return { clave: x.clave, w: x.w, ini: x.ini, fin: x.fin, ventas: x.ventas };
+  });
+
+  return {
+    semana: { clave: s.clave, w: s.w, ini: s.ini, fin: s.fin, anio: Math.floor(s.clave / 100),
+              lunes: _repIso_(lunes), domingo: _repIso_(domingo), mes: mes ? mes.mes : FIN_MESES[mesN - 1],
+              corta: !!s.corta, es_ultima: idx === S.length - 1 },
+    kpis: {
+      ventas: s.ventas, tickets: s.tickets, com: s.com, ticket: s.tp,
+      ticket_ant: ant ? ant.tp : null, ticket_dif_pct: (ant && ant.tp) ? _finR_((s.tp - ant.tp) / ant.tp * 100, 1) : null,
+      ventas_dif_pct: s.dv === undefined ? null : s.dv,
+      gasto: gasto, gasto_pct: pl.gasto_pct, resultado: resultado, resultado_pct: pl.resultado_pct
+    },
+    cuatro: cuatro.map(function (x) {
+      return { w: x.w, clave: x.clave, ini: x.ini, fin: x.fin, ventas: x.ventas, com: x.com, tp: x.tp,
+               cogsp: x.cogsp, prime: x.prime, actual: x.clave === s.clave,
+               sobre_equilibrio: pe ? x.ventas >= pe.pe_semana : null };
+    }),
+    equilibrio: pe ? {
+      pe_semana: pe.pe_semana, pe_dia: peDia, pe_mes: pe.pe_mes, base: pe.base,
+      fijo_mes: pe.fijo_mes, fijo_semana: pe.fijo_semana, fijos: pe.fijos,
+      variables: pe.variables, variables_pct: pe.variables_pct, mc: pe.mc,
+      venta_pct: _finR_(s.ventas / pe.pe_semana * 100, 1), brecha: _finR_(s.ventas - pe.pe_semana),
+      semanas_sobre: cuatro.filter(function (x) { return x.ventas >= pe.pe_semana; }).length, de: cuatro.length,
+      motor: peMotor,
+      nota: 'Fijos y porcentajes de venta del PRESUPUESTO (22-sep-2026); mercaderia con la movil de 4 semanas. ' +
+            'El equilibrio mensual de Escenarios (fijo y variable del gasto bancario) queda como referencia.'
+    } : null,
+    dias: dias,
+    reservas: reservas,
+    foodcost: foodcost,
+    areas: {
+      cocina: { venta: ventaCocina, venta_pct: s.ventas ? _finR_(ventaCocina / s.ventas * 100, 1) : null,
+                costo: _finR_(s.cocina), costo_pct: ventaCocina ? _finR_(s.cocina / ventaCocina * 100, 1) : null,
+                margen: _finR_(ventaCocina - s.cocina), margen_pct: ventaCocina ? _finR_((ventaCocina - s.cocina) / ventaCocina * 100, 1) : null,
+                uds: areas.cocina.uds, top: topDe(areas.cocina) },
+      barra: { venta: ventaBarra, venta_pct: s.ventas ? _finR_(ventaBarra / s.ventas * 100, 1) : null,
+               costo: _finR_(s.barra), costo_pct: ventaBarra ? _finR_(s.barra / ventaBarra * 100, 1) : null,
+               margen: _finR_(ventaBarra - s.barra), margen_pct: ventaBarra ? _finR_((ventaBarra - s.barra) / ventaBarra * 100, 1) : null,
+               uds: areas.barra.uds, top: topDe(areas.barra) },
+      mix_cocina: mix, venta_platos: _finR_(ventaPlatos / 1.12), error: platosError,
+      nota: 'Venta por plato del POS sin IVA; no cuadra exacto con el ticket total: la diferencia son descuentos, servicio y partidas sin producto.'
+    },
+    personal: personal,
+    pl: pl,
+    acciones: acciones,
+    departamentos: REP_DEPARTAMENTOS,
+    semanas: lista,
+    metas: { food_global: metas.global, food_cocina: metas.COCINA, food_barra: metas.BARRA },
+    notas: notas,
+    fuentes: 'POS (02_Ventas_Maestro y VENTAS x PLATO), FEL y bancos via FinanzasDatos, planilla devengada, reservas de Wix (Marketing OS).',
+    gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')
+  };
+}
+
+/** Los fijos de la pestaña PRESUPUESTO, si existe: referencia al lado del fijo del motor. */
+function _repFijosPresupuesto_(p) {
+  if (!p || !p.existe || !p.secciones) return null;
+  var lista = [], total = 0;
+  Object.keys(p.secciones).forEach(function (k) {
+    var x = p.secciones[k];
+    if (!x || String(x.tipo || '').toLowerCase() !== 'fijo') return;
+    var v = Number(x.valor || x.mensual || 0);
+    if (!v) return;
+    lista.push({ seccion: k, mensual: _finR_(v) }); total += v;
+  });
+  return lista.length ? { secciones: lista, total_mes: _finR_(total), total_semana: _finR_(total / FIN_SEMANAS_MES) } : null;
+}
+
+// ------------------------------------------------------------------ acciones
+
+function _repHojaAcciones_(crear) {
+  var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
+  var h = ss.getSheetByName(REP_HOJA_ACCIONES);
+  if (!h && crear) {
+    h = ss.insertSheet(REP_HOJA_ACCIONES);
+    h.getRange(1, 1, 1, REP_COLS_ACCIONES.length).setValues([REP_COLS_ACCIONES]).setFontWeight('bold');
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
+/** Herramienta de editor: crea la pestaña REPORTE_ACCIONES una vez. */
+function instalarReporteAcciones() {
+  soloDueno_();
+  var h = _repHojaAcciones_(true);
+  Logger.log('REPORTE_ACCIONES lista: ' + h.getLastRow() + ' filas.');
+}
+
+function _repAcciones_(clave) {
+  var out = { lista: [], existe: false };
+  try {
+    var h = _repHojaAcciones_(false);
+    if (!h) return out;
+    out.existe = true;
+    var vals = h.getDataRange().getValues();
+    for (var i = 1; i < vals.length; i++) {
+      if (Number(vals[i][0]) !== clave) continue;
+      out.lista.push({ fila: i + 1, accion: String(vals[i][1] || ''), responsable: String(vals[i][2] || ''),
+                       porque: String(vals[i][3] || ''),
+                       fecha: vals[i][4] instanceof Date ? _finFecha_(vals[i][4]) : String(vals[i][4] || ''),
+                       escrito_por: String(vals[i][5] || '') });
+    }
+  } catch (e) { out.error = String(e && e.message || e); }
+  return out;
+}
+
+/**
+ * Guarda una accion de la semana. Una fila por accion; se apilan (una semana suele
+ * tener entre 4 y 8). Con candado, como el RAA (M9).
+ */
+function guardarAccionReporte(auth, datos) {
+  var u = exigirModulo_(auth, 'finanzas');
+  datos = datos || {};
+  var clave = Number(datos.clave) || 0;
+  var accion = String(datos.accion || '').trim();
+  var responsable = String(datos.responsable || '').trim();
+  var porque = String(datos.porque || '').trim();
+  if (!clave) throw new Error('Falta la semana.');
+  if (!accion) throw new Error('Falta la accion: que se hace distinto.');
+  if (REP_DEPARTAMENTOS.indexOf(responsable) === -1) throw new Error('El responsable es un departamento: ' + REP_DEPARTAMENTOS.join(', ') + '.');
+  if (!porque) throw new Error('Falta el porque, con el dato que lo respalda.');
+
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(20000)) throw new Error('Alguien esta guardando una accion. Proba de nuevo en unos segundos.');
+  try {
+    var h = _repHojaAcciones_(true);
+    h.getRange(h.getLastRow() + 1, 1, 1, REP_COLS_ACCIONES.length)
+      .setValues([[clave, accion, responsable, porque, new Date(), u.nombre || u.email]]);
+    SpreadsheetApp.flush();
+  } finally { candado.releaseLock(); }
+  // la pantalla vuelve a pedir el reporte: se invalida su cache
+  try {
+    CacheService.getScriptCache().removeAll([REP_CACHE + clave + '_' + finCacheClave_(), REP_CACHE + 'ultima_' + finCacheClave_()]);
+  } catch (e) { /* no importa */ }
+  return _repAcciones_(clave);
+}
+
+/** Borra una accion por su fila (solo dueño). */
+function borrarAccionReporte(auth, fila) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  fila = Number(fila) || 0;
+  if (fila < 2) throw new Error('Fila invalida.');
+  var candado = LockService.getScriptLock();
+  if (!candado.tryLock(20000)) throw new Error('Alguien esta guardando una accion. Proba de nuevo en unos segundos.');
+  var clave = 0;
+  try {
+    var h = _repHojaAcciones_(false);
+    if (!h) throw new Error('No existe la pestaña ' + REP_HOJA_ACCIONES + '.');
+    clave = Number(h.getRange(fila, 1).getValue()) || 0;
+    h.deleteRow(fila);
+    SpreadsheetApp.flush();
+  } finally { candado.releaseLock(); }
+  try {
+    CacheService.getScriptCache().removeAll([REP_CACHE + clave + '_' + finCacheClave_(), REP_CACHE + 'ultima_' + finCacheClave_()]);
+  } catch (e) { /* no importa */ }
+  return _repAcciones_(clave);
+}

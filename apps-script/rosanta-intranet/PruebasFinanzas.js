@@ -680,7 +680,7 @@ function prFinanzas_(res) {
     }
 
     var casos = [];
-    ['FinanzasVista', 'MetasVista', 'ComparativoVista', 'EscenariosVista', 'CajaVista']
+    ['FinanzasVista', 'MetasVista', 'ComparativoVista', 'EscenariosVista', 'CajaVista', 'ReporteSemanalVista']
       .forEach(function (v) {
         [true, false].forEach(function (volver) {
           casos.push([v + (volver ? ' con boton' : ' embebida'), v,
@@ -885,6 +885,32 @@ function prFinanzas_(res) {
     // la pagina la sirve doGet solo al rol dueno (Code.js), igual que 'pruebas'
     prAnotar_(g, nombre, rechazo ? 'OK' : 'FALLA',
       rechazo ? 'invExigirDueno_ tira con rol chef; getTableroPilar pasa por ahi' : 'un chef entro al tablero', rechazo ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'El reporte semanal en vivo cuadra con la semana del motor', function () {
+    var nombre = 'El reporte semanal en vivo cuadra con la semana del motor';
+    // Sin forzar: la corrida del 25-sep con forzar=true tardo 327 s en total (limite 360).
+    // El reporte se cachea 30 min y la prueba mira lo mismo que la pantalla.
+    var rp = _repDatos_(0, false);
+    var malos = [];
+    var s = d.ultima || {};
+    if (rp.semana.clave !== s.clave) malos.push('semana ' + rp.semana.clave + ' vs ultima del motor ' + s.clave);
+    if (rp.dias.length !== 7) malos.push(rp.dias.length + ' dias');
+    var sumaDias = rp.dias.reduce(function (a, x) { return a + x.ventas; }, 0);
+    if (Math.abs(sumaDias - s.ventas) > 1) malos.push('la suma de los dias (' + Math.round(sumaDias) + ') no es la venta de la semana (' + Math.round(s.ventas) + ')');
+    var sumaCom = rp.dias.reduce(function (a, x) { return a + x.com; }, 0);
+    if (sumaCom !== s.com) malos.push('comensales por dia ' + sumaCom + ' vs semana ' + s.com);
+    if (rp.kpis.ventas !== s.ventas) malos.push('kpis.ventas no es semanas[].ventas');
+    if (rp.foodcost.cocina.costo !== s.cocina || rp.foodcost.barra.costo !== s.barra) malos.push('la compra por area no es la del motor');
+    if (Math.abs(rp.pl.gasto - (s.cogs + s.labor + rp.pl.secciones.reduce(function (a, x) { return a + x.q; }, 0))) > 1) malos.push('el gasto del P&L no suma');
+    if (rp.reservas.error) malos.push('reservas: ' + rp.reservas.error);
+    if (rp.areas.error) malos.push('platos: ' + rp.areas.error);
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : (rp.acciones.existe ? 'OK' : 'AVISO'),
+      malos.length ? malos.join(' · ')
+        : ('S' + rp.semana.w + ' · ' + rp.dias.length + ' dias · ' + rp.reservas.validas + ' reservas · ' +
+           rp.areas.cocina.top.length + '+' + rp.areas.barra.top.length + ' productos' +
+           (rp.acciones.existe ? '' : ' · falta la pestaña REPORTE_ACCIONES: se crea al guardar la primera accion')),
+      malos.length, 0);
   });
 
   prCorrer_(g, 'El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive', function () {
