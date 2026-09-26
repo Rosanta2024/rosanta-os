@@ -637,7 +637,9 @@ function finCacheClave_() {
   // v9 (21-sep-2026): regla 15, la factura manda. Una cache v8 traeria el doble conteo.
   // v10 (23-sep-2026): retirada la regla 9. Una cache v9 seguiria mostrando el DRE sin
   // los Q5,250 que la regla borraba, y el cambio no se veria hasta que expirara sola.
-  return 'finanzas_v10_m' + m.global + '-' + m.BARRA;
+  // v11 (25-sep-2026): campos del tablero global (ebitda, eventos_n, sin_factura,
+  // mb_comensal, com_lmx_dia, medios). Una cache v10 dejaria el tablero sin ellos.
+  return 'finanzas_v11_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -687,7 +689,14 @@ function _finCalcular_() {
 
   var mes = {}, sem = {};
   function _mes(m) {
-    if (!mes[m]) mes[m] = { m: m, ventas: 0, ventas_ss: 0, eventos: 0, com: 0, cogs: 0, igss: 0,
+    // Tablero global (25-sep-2026): eventos_n cuenta los tickets de evento; com_lmx y
+    // dias_lmx dan los comensales por dia de lunes a miercoles; sin_factura es la
+    // compra de mercaderia SIN FEL (FIN_EFECTIVO, en bruto); medios es la pauta
+    // (MARKETING_DIGITAL de la tarjeta, dolares convertidos). Son los mismos montos
+    // que ya pasan por este bucle, guardados ademas por mes: el tablero no calcula.
+    if (!mes[m]) mes[m] = { m: m, ventas: 0, ventas_ss: 0, eventos: 0, eventos_n: 0,
+                            com: 0, com_lmx: 0, dias_lmx: {}, sin_factura: 0, medios: 0,
+                            cogs: 0, igss: 0,
                             dev: 0, pers: 0, tickets: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
                             // venta por semana ISO contando SOLO los dias que caen en
                             // este mes. Una semana a caballo entre dos meses no puede
@@ -726,12 +735,18 @@ function _finCalcular_() {
     // regla 2: el evento privado es ingreso adicional, no venta de restaurante
     if ((String(V[r][7] || '') + String(V[r][11] || '')).toUpperCase().indexOf('EVENTO') !== -1) {
       M.eventos += neto;
+      M.eventos_n += 1;
       continue;
     }
     M.ventas += neto;
     M.ventas_ss += sinServ;
     M.tickets += 1;
     M.com += Math.round(_finNum_(V[r][8]));              // col 9: comensales
+    // lunes (1), martes (2) y miercoles (3): la ocupacion entre semana (tablero global)
+    if (f.getDay() >= 1 && f.getDay() <= 3) {
+      M.com_lmx += Math.round(_finNum_(V[r][8]));
+      M.dias_lmx[_finDDMM_(f)] = true;
+    }
     var wISO = _finSemanaISO_(f);
     if (!M.porSemana[wISO]) M.porSemana[wISO] = { v: 0, com: 0 };
     M.porSemana[wISO].v += neto;
@@ -835,6 +850,11 @@ function _finCalcular_() {
       // lo que salio del banco y todavia no se sabe a quien
       if (cat === 'TRANSFERENCIA_SALIENTE') sinIdentificar += q;
       if (!cat || _finEn_(FIN_FUERA, cat) || cat.indexOf('INGRESO') === 0) continue;
+      // Medios (Meta y Google) para el CAC y el ROAS: solo la tarjeta del BAC, que es
+      // donde se cobran, con los dolares ya convertidos arriba. MARKETING_HONORARIOS
+      // queda fuera por categoria (p10, 15-sep-2026). Se anota ANTES de la regla 15:
+      // un cargo de pauta que casara por monto con una factura seguiria siendo pauta.
+      if (cat === 'MARKETING_DIGITAL' && L.hoja === '05_Tarjeta_Credito_BAC') M.medios += q;
 
       if (_finEn_(FIN_COGS_CATS, cat)) {
         // regla 3: la mercaderia pagada desde un banco es el pago de la factura
@@ -849,6 +869,7 @@ function _finCalcular_() {
       }
       if (_finEn_(FIN_EFECTIVO, cat)) {                 // compra sin factura
         M.cogs += q; efeCompra += q;
+        M.sin_factura += q;                             // tablero global: por mes, en bruto
         var Se = _sem(_finClaveSemana_(f));
         Se.cogs += q;
         _semArea(Se, cat, q);
@@ -905,7 +926,8 @@ function _finCalcular_() {
       if (M.cogs || gop) {
         sinVenta.push({ m: m, mes: FIN_MESES[m - 1], cogs: M.cogs,
                         gop: gop - (M.bloques['Nomina y salarios'] || 0),
-                        bloques: M.bloques, pers: M.pers, dev: M.dev });
+                        bloques: M.bloques, pers: M.pers, dev: M.dev,
+                        sin_factura: M.sin_factura, medios: M.medios });
       }
       return;
     }
@@ -953,6 +975,32 @@ function _finCalcular_() {
       primep: _finR_((M.cogs + labor) / M.ventas * 100, 1),
       netop: _finR_((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
       tickets: M.tickets,
+      // ---- campos del tablero global (25-sep-2026, decision de Juanma) ----
+      // EBITDA = neto + Impuestos + venta de eventos. Sin depreciacion (el maestro es
+      // base caja y no registra ninguna) ni intereses (no hay deuda). Bienes de uso NO
+      // se suma de vuelta: mezcla gasto corriente con compras de equipo y hasta que el
+      // maestro no tenga una categoria de inversion, sumarlo inflaria el EBITDA. La
+      // venta de eventos entra porque su compra ya esta en el COGS (regla 2 la deja
+      // fuera de `ventas`, no del negocio).
+      ebitda: _finR_(M.ventas - M.cogs - gopDev + (M.bloques['Impuestos'] || 0) + M.eventos),
+      ebitdap: _finR_((M.ventas - M.cogs - gopDev + (M.bloques['Impuestos'] || 0) + M.eventos)
+                      / (M.ventas + M.eventos) * 100, 1),
+      eventos_n: M.eventos_n,
+      // Compra sin factura del mes, en bruto, y el IVA que se pierde por comprar asi:
+      // ese 12% viene embebido y no es credito. Es la razon de que el mismo plato
+      // comprado sin factura cueste 12% mas (regla 3).
+      sin_factura: _finR_(M.sin_factura),
+      sin_factura_iva: _finR_(M.sin_factura * 12 / 112),
+      // Margen bruto por comensal: venta sin servicio menos COGS real, por persona.
+      // Misma base que el food cost (regla 14). null si el mes no trae comensales.
+      mb_comensal: M.com ? _finR_((M.ventas_ss - M.cogs) / M.com) : null,
+      // Comensales por dia de lunes a miercoles: solo los dias de esos tres con venta.
+      com_lmx: M.com_lmx,
+      com_lmx_dias: Object.keys(M.dias_lmx).length,
+      com_lmx_dia: Object.keys(M.dias_lmx).length
+        ? _finR_(M.com_lmx / Object.keys(M.dias_lmx).length, 1) : null,
+      // Pauta del mes (numerador del CAC y del ROAS): MARKETING_DIGITAL de la tarjeta.
+      medios: _finR_(M.medios),
       // Punto de equilibrio del mes: gasto fijo / margen de contribucion. Lo
       // semivariable entra a la mitad, a los dos lados.
       //
@@ -989,9 +1037,11 @@ function _finCalcular_() {
   });
 
   var anioTot = { ventas: 0, ventas_ss: 0, cogs: 0, labor: 0, gop: 0, neto: 0, eventos: 0,
-                  com: 0, pers: 0, dev: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 } };
+                  com: 0, pers: 0, dev: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
+                  ebitda: 0, eventos_n: 0, sin_factura: 0, medios: 0 };
   meses.forEach(function (x) {
-    ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'com', 'pers', 'dev'].forEach(function (k) {
+    ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'com', 'pers', 'dev',
+     'ebitda', 'eventos_n', 'sin_factura', 'medios'].forEach(function (k) {
       anioTot[k] += x[k];
     });
     Object.keys(x.bloques).forEach(function (b) {
@@ -1003,13 +1053,19 @@ function _finCalcular_() {
   sinVenta.forEach(function (x) {
     anioTot.cogs += x.cogs; anioTot.gop += x.gop; anioTot.neto -= x.cogs + x.gop;
     anioTot.pers += x.pers; anioTot.dev += x.dev;
+    // el EBITDA del año baja igual que el neto, sin el bloque de impuestos
+    anioTot.ebitda -= x.cogs + x.gop - (x.bloques['Impuestos'] || 0);
+    anioTot.sin_factura += x.sin_factura || 0; anioTot.medios += x.medios || 0;
     Object.keys(x.bloques).forEach(function (b) {
       if (b !== 'Nomina y salarios') anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
     });
   });
-  ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev'].forEach(function (k) {
+  ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev',
+   'ebitda', 'sin_factura', 'medios'].forEach(function (k) {
     anioTot[k] = _finR_(anioTot[k]);
   });
+  anioTot.ebitdap = (anioTot.ventas + anioTot.eventos)
+    ? _finR_(anioTot.ebitda / (anioTot.ventas + anioTot.eventos) * 100, 1) : 0;
   anioTot.cogsp = _finR_(anioTot.cogs / (anioTot.ventas_ss || anioTot.ventas) * 100, 1);   // regla 14
   anioTot.laborp = _finR_(anioTot.labor / anioTot.ventas * 100, 1);
   anioTot.primep = _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);

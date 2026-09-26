@@ -1,0 +1,380 @@
+Pruebas de la intranet
+Ninguna de estas pruebas escribe nada. Solo leen y comparan.
+Correr de nuevo
+Intranet sana
+126 OK á 0 fallas á 4 avisos á 3 saltadas á 176.9 s
+1. Cimientos
+OK
+CONFIG_SHEET_ID Rosanta_Intranet_Config
+OK
+RECETARIO_COCINA_SHEET_ID Rosanta_Recetario_Cocina_2027_v16
+OK
+RECETARIO_BARRA_SHEET_ID Rosanta_Recetario_Barra
+OK
+COSTEO_SHEET_ID Rosanta_Costeo_Proveedores
+OK
+POS_CATALOGO_SHEET_ID Inventario_8_24_2026_202050
+OK
+POS_CATALOGO_FOLDER_ID Carta_y_Precios_POS
+OK
+INTRANET_URL https://script.google.com/macros/s/AKfycby814wYbLt784xWEZThfi0SgRn_afPV3KlLAecu7g9iKqgKINqlH5MqcM77PhT38oYb/exec
+https://script.google.com/macros/s/AKfycby814wYbLt784xWEZThfi0SgRn_afPV3KlLAecu7g9iKqgKINqlH5MqcM77PhT38oYb/exec
+SALTADA
+RECETARIO_FOTOS_FOLDER_ID
+Sin configurar
+OK
+Version del recetario leido Rosanta_Recetario_Cocina_2027_v16, esperado v16
+OK
+Las tarjetas del panel conservan el token 4
+4 tarjetas, todas con el token intacto
+OK
+Los enlaces viejos con el token pegado siguen entrando
+El enlace viejo se rescata y abre el recetario
+OK
+Las llamadas de las vistas pasan el token 63
+los 63 sitios de llamada pasan el token
+OK
+La web app esta desplegada
+https://script.google.com/a/rosanta.rest/macros/s/AKfycbxw_iBKkb80hvTvZ7bMNyJKDeSn3AysJGzmypiVRCU/dev
+OK
+Los enlaces internos apuntan al despliegue publicado leido https://script.google.com/macros/s/AKfycby814wYbLt784xWEZThfi0SgRn_afPV3KlLAecu7g9iKqgKINqlH5MqcM77PhT38oYb/exec, esperado una URL /exec en INTRANET_URL
+https://script.google.com/macros/s/AKfycby814wYbLt784xWEZThfi0SgRn_afPV3KlLAecu7g9iKqgKINqlH5MqcM77PhT38oYb/exec
+OK
+Las URLs escritas en Config apuntan fuera del dominio leido las 2 bien, esperado CONSOLA_URL y RESENAS_URL sin /a/ y terminadas en /exec
+CONSOLA_URL y RESENAS_URL: /exec y sin /a/
+2. Recetario de cocina
+OK
+Fichas de plato 35
+OK
+Pre-elaborados 45
+OK
+Platos con CMV 28
+OK
+Platos sin costear 7
+BROCOLI CON NDUJA á VEGETALES FERMENTADOS á ARROZ MELOSO á LOMITO DE LA CASA á ESTOFADO DE RABO á CHARLOTTA á PANACOTTA MARACUYA
+OK
+CMV ensalada rosanta leido 17.2, esperado 16.8
+OK
+CMV tabla de jamones y quesos 25.3
+OK
+CMV gratin de papas 22.2
+OK
+CMV mix de fritas leido 26.5, esperado 26.4
+OK
+CMV peras horneadas 22.1
+OK
+Sin match en el Banco de COCINA 1
+Zanahorias Rostizadas > ZANAHORIA BEBE
+AVISO
+Sin match en el Banco de BARRA leido 7, esperado 9
+Bajaron. Actualizar el numero en PRUEBAS_CFG. ROSE COLLINS > GINSON á ROSE COLLINS > MINERAL á BOTRAN TAMARINDO > BOTRAN 8 A„OS á MERME. DE PI„A, ESPECIES VINO > CHLE PASA á BITTER CARDAMOMO > CARDAMOMO á FATWASH DE CERDO > GRASA DE COSTILLA DE CERDO á TEQUILA MACERADO EN HIGOS > Viuda de Romero
+OK
+Sin costo en COCINA 0
+AVISO
+Sin costo en BARRA leido 0, esperado 1
+Bajaron. Actualizar el numero en PRUEBAS_CFG.
+OK
+Hojas de control leidas como receta 0
+OK
+Pre-elaborados que ninguna receta puede usar 0
+OK
+Todas las fichas aceptan ingredientes 0
+127 fichas en cocina y barra
+OK
+Formulas rotas en las fichas 0
+3. Puente con el POS
+OK
+Platos mapeados 35
+OK
+Todos tienen pestana (columna K) 0
+OK
+Nombres resueltos 35
+OK
+La pestana existe en el documento 0
+OK
+La vuelta: del POS a la ficha 35
+0 platos comparten boton en el POS (los postres)
+OK
+Nombres vivos en el POS 0
+OK
+Precios iguales 0
+OK
+fechaVenta_ no llama al servicio y da la fecha de Guatemala 7
+los 7 casos, incluida la medianoche de Guatemala
+OK
+El cache de avisos dice lo mismo y se limpia al resolverlos 1
+1 avisos, iguales desde el cache, y se limpian al cargar ventas
+OK
+El calentador no reconstruye si el cache ya esta caliente
+no reconstruyo nada y tardo 0.16 s
+OK
+Un reporte ya nativo se lee sin copiarlo 8
+8 reportes vistos á 3 nativos (se leen directo) á 5 en .xlsx (se convierten)
+OK
+Toda llamada de las vistas verifica identidad 52
+las 52 llamadas de las vistas tienen cerradura
+OK
+Ninguna vista llama al servidor con el nombre en una variable 0
+60 google.script.run en 29 vistas á 1 excepcion: srv() de Marketing, cubierto (14 llamadas srv revisadas)
+4. Accesos
+OK
+La hoja USUARIOS 5
+5 personas
+OK
+Todos con rol
+OK
+Todos con modulos
+OK
+Sin modulos con typo
+OK
+Cuentas de Gmail con token
+OK
+Cada token resuelve a su persona 5
+OK
+Cada rol tiene su area, y solo la suya chef=COCINA sala=BARRA dueno=COCINA+BARRA
+OK
+Ninguna escritura resuelve el area por su cuenta 8
+8 escrituras, todas por el mismo lugar
+OK
+Los roles de USUARIOS existen en la capa de escritura 0
+OK
+Quien corre las pruebas se identifica
+restaurante@rosanta.rest á dueno
+5. Los modulos responden
+OK
+Recetario (getCosteoData) 127
+127 recetas
+OK
+Proveedores (getReporteHigiene)
+responde
+OK
+CRM (crmContactos) 3571
+3571 contactos
+OK
+Precios del Excel del cierre
+retirado: los precios entran por el cierre de inventario (grupo 8)
+SALTADA
+Meta (red)
+Tarda y depende de terceros. PRUEBAS_CFG.incluirRed = true para incluirla.
+6. Puerta del navegador
+OK
+Las funciones web existen 13
+OK
+Ninguna acepta el rol del cliente 0
+la identidad se resuelve en el servidor
+OK
+Las que escriben resuelven el area 11
+las 11 resuelven el area antes de escribir
+OK
+Ninguna escritura abre un recetario a mano 13
+las 13 pasan por recetarioDe_(area)
+OK
+Ninguna funcion publica queda abierta 0
+108 funciones publicas: todas con guarda, salvo 7 libres a proposito
+OK
+La puerta reconoce a quien corre las pruebas dueno
+restaurante@rosanta.rest á dueno á 11 acciones permitidas
+OK
+Un token inventado no entra
+cae en la sesion del editor, que es lo correcto
+7. Sync de precios: deshacer y rastro
+OK
+Las piezas nuevas existen 13
+las 13
+OK
+Lo que escribe en lote no esta en el desplegable 0
+revertirSync_ solo se llama desde webInventarioDeshacerPrecios, con guarda de dueno
+OK
+Todo camino que escribe un precio deja rastro en BITACORA 4
+los 4 escriben en BITACORA
+OK
+registrarPrecio exige el permiso del rol, no solo el modulo 1
+modulo + exigirPermiso_(cambiarPrecio)
+OK
+Las pestanas de servicio no se leen como recetas 4
+SYNC_PRECIOS á SEMAFORO_PRECIOS á BITACORA á BITACORA_RESUMEN
+OK
+El log del sync tiene las columnas del deshacer 12
+12 columnas
+OK
+Las corridas del sync se pueden listar y deshacer 5
+5 corrida(s), 5 reversible(s)
+OK
+La bitacora se puede leer de vuelta 222
+222 movimientos á el mas nuevo: cambiarPrecioMenu sobre MIMOSA DE LA CASA
+OK
+El indice insumo-receta cubre las mismas areas que el modelo 2
+COCINA: 365 filas de indice / 80 recetas á BARRA: 226 filas de indice / 47 recetas
+OK
+El semaforo del Excel quedo retirado 0
+sin APLICAR_SEMAFORO ni APLICAR_BARRA; el activador mensual ya no lee el Excel
+8. Inventario: cierre y precios
+OK
+Las piezas del cierre existen 7
+las 7
+OK
+Inventario de cocina: ULTIMO MES del catalogo se lee como mes 0
+216 productos
+OK
+Inventario de cocina: el cierre solo propone precios cambiados en el conteo 0
+2026-08: 0 precio(s) cambiados en el conteo á si se cerrara hoy irian 0 al Banco (0 solos, 0 a aprobar) á con la regla vieja irian 3
+OK
+Inventario de barra: ULTIMO MES del catalogo se lee como mes 0
+93 productos
+SALTADA
+Inventario de barra: el cierre solo propone precios cambiados en el conteo
+no hay un mes abierto
+OK
+Precios por aprobar: cada pendiente se encuentra por su identidad
+no hay nada por aprobar
+8. Finanzas & Data OS
+OK
+El maestro se lee leido 9, esperado >0
+9 meses con venta á datos al 25/09/2026 17:51
+OK
+La meta de food cost sale de PARAMETROS 28
+la pantalla usa 28% y PARAMETROS dice 28%
+OK
+La meta ya no es la mezclada del mix leido 28, esperado distinta de 26.2
+meta 28% á la mezclada del mix daria 26.2%
+OK
+La planilla se lee del Sheet, no del codigo leido 9, esperado al menos 1 mes
+9 mes(es) del Sheet á 0 del respaldo del codigo
+OK
+El Sheet de planilla y el respaldo no se contradicen 0
+8 mes(es) comparados, todos coinciden
+OK
+Un mes sin planilla no se cuenta como rentable 0
+todos los meses traen su planilla
+OK
+La cobertura cubre todas las hojas del calculo 4
+las 4 hojas
+OK
+Las dos logicas espejo dan el mismo dinero perdido 0
+el calculo dice Q0 y la cobertura Q0 (0 contra 0: correcto hoy, pero no ejercita el espejo; lo mide la prueba siguiente, con dinero de verdad)
+OK
+El espejo cuadra bloque por bloque con dinero real 10
+10 bloques á Q718,188 pasaron por las dos logicas y cuadran
+OK
+Las fugas son la suma de lo que nadie decidio 0
+OK
+Los proveedores de la regla 9 siguen facturando
+retirada el 23-sep-2026: la cubre la regla 15 (la factura manda)
+OK
+El punto de equilibrio es un numero usable 9
+9 meses con fijo, margen y equilibrio
+OK
+El equilibrio concuerda con el resultado del mes 7
+7 meses coherentes á 2 fuera de comparacion (pegados al equilibrio o con resultado en cero)
+OK
+El presupuesto por seccion calza con los bloques del DRE 11
+11 secciones presupuestadas, todas calzan con su bloque del DRE
+OK
+La pestana RAA existe SEMANA,INDICADOR,ZONA,RESULTADO,ANALISIS,ACCION,RESPONSABLE,FECHA,ESCRITO_POR
+0 filas
+OK
+Las cuatro tarjetas del RAA se arman 4
+food:rojo á prime:amarillo á caja:rojo á ventas:rojo
+OK
+El RAA no acepta una accion sin responsable rechazado
+Falta el responsable. Un nombre, no un equipo.
+OK
+El RAA no acepta un indicador inventado rechazado
+Indicador desconocido: loquesea
+OK
+Las funciones de finanzas piden el token primero 8
+8 funciones
+OK
+Toda categoria de mercaderia tiene area 7
+7 categorias, todas con area
+OK
+Un numero escrito como texto se lee 6
+6 casos
+OK
+Una fecha con hora cae en su dia verdadero 4
+4 casos
+OK
+Ninguna fecha del maestro trae hora 0
+4755 fechas, todas a medianoche
+OK
+Un mes sin planilla usa la ultima cargada 5
+5 casos
+OK
+UNIFORMES es un bloque propio 1
+Uniformes Q2750 en el a–o
+OK
+Una factura anulada no suma 1
+15 anuladas fuera del calculo por Q7536
+OK
+Una factura ajena queda fuera a proposito 1
+destino "fuera (a proposito)"
+OK
+La factura manda: el pago con factura no suma 1
+83 pagos con factura fuera del calculo por Q42663
+OK
+El food cost va sobre la venta sin servicio leido 1.104, esperado 1.05 a 1.15
+venta total / sin servicio = 1.104 á food cost del a–o 38.9%
+OK
+Semanas y meses usan la misma venta sin servicio leido 0.01, esperado <5
+38 semanas á diferencia contra el a–o Q0.01
+OK
+El prime cost sigue sobre la venta total 9
+9 meses sobre la venta total
+OK
+El CMV real contra teorico se calcula leido 3, esperado >=1
+2026-06 a 2026-08 á real 43.2% á te—rico 28% á brecha 15.2 pts
+OK
+El RAA guarda con candado 1
+guardarRaa toma y suelta el candado
+OK
+El comparativo compara contra el a–o anterior 2025
+2026 contra 2025 á 8 meses comparables
+OK
+Las ventas del a–o se leen igual que el calculo 9
+9 meses iguales en venta y tickets
+OK
+La respuesta de Finanzas cabe en el cache leido 36.9, esperado <80
+36.9 KB de 100 KB
+OK
+Las vistas de Finanzas se dibujan 15
+15 dibujos: 5 vistas en sus dos modos y el shell en sus 5 pesta–as
+OK
+La meta que muestra Metas es la de PARAMETROS 28
+Metas dice 28% y PARAMETROS 28%
+OK
+Los honorarios de marketing van al bloque Marketing 2
+las dos van a "Marketing" á el bloque lleva Q51807 en el a–o
+OK
+La proyeccion de caja se calcula leido 95, esperado >=90
+95 dias desde el 20/09/2026 á el escenario base cruza cero el 26/09/2026
+AVISO
+La caja arranca del saldo de los bancos leido 10193, esperado <=1
+caja Q13818 á semana Q24011 á la ultima semana con venta puede tener otro dia de cierre
+OK
+Cada debito del banco cae en un grupo de la caja leido 0, esperado <=1
+Q556336 de debitos á Q556336 en grupos o fuera
+OK
+Las semanas de la caja llevan su a–o 14
+14 semanas con su a–o
+OK
+Los compromisos de la caja se leen de su pestana leido 3, esperado >0
+3 compromisos de la pestana
+OK
+EBITDA = neto + Impuestos + eventos, en cada mes 0
+9 meses á a–o Q54227.18 (4%)
+OK
+La compra sin factura del mes cabe dentro del COGS 0
+Q220484 en 9 meses, igual a integridad.efectivo
+OK
+Los medios del a–o son la pauta de la tarjeta leido 16521.34, esperado <= 51807
+medios Q16521.34 dentro del bloque Marketing Q51807
+OK
+El tablero global no calcula: cada valor es el campo de su motor 0
+7 tarjetas de Finanzas, cada una identica a su campo
+OK
+El tablero global rechaza a quien no es due–o 1
+invExigirDueno_ tira con rol chef; getTableroPilar pasa por ahi
+AVISO
+Las metas del tablero salen de PARAMETROS o dicen que son defecto leido 13, esperado 0
+13 metas en defecto (falta la fila en PARAMETROS): caja_colchon_dias, caja_dias_verde, prime_cost_max_pct, prime_cost_rojo_pct, ebitda_meta_pct, brecha_cmv_revisar_pts, brecha_cmv_auditar_pts, inventario_cierre_dia, ticket_promedio_meta_q, comensales_lmx_meta, eventos_mes_meta, roas_meta, food_cost_barra_pct
+Los numeros que se esperan viven en PRUEBAS_CFG, arriba de Pruebas.gs. Se cambian a proposito cuando hay una decision tomada, nunca para que algo deje de salir en rojo.

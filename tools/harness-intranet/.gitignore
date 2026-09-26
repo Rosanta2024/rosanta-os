@@ -1,0 +1,3 @@
+# datos derivados de Drive, no van al repo
+*.json
+*.xlsx

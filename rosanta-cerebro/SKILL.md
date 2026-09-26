@@ -7,7 +7,50 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 23 sep 2026, tarde (v25 + corrección de p10).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 25 sep 2026, noche (v26).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 25 sep 2026 (v26): el tablero global, publicado en la @124
+
+**El equipo está en la @124** (verificado: `list-deployments` releído tres veces y la @124 bajada aparte idéntica al disco, 62 archivos). Batería sobre HEAD: **126 OK · 0 fallas · 4 avisos · 3 saltadas** (177 s). Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md`; catálogo en `Rosanta OS/03_Finance_Data_OS/KPIs/KPI_Definiciones.md`.
+
+### 1. Qué es el tablero global
+
+`?page=tablero`, **solo rol dueño** (misma guarda que `pruebas`), puerta "Tablero global" en el panel principal. Seis pestañas, una por pilar, con tarjetas: valor · semáforo contra su meta · tendencia contra el mes anterior · enlace a la pestaña del pilar. **Regla que lo hace funcionar: NO CALCULA NADA.** Cada valor es el campo del motor de su pilar (`FinanzasDatos`, `CajaDatos`, `Dashboard` + `PuenteCmv`, `InventarioDatos`, `MarketingDatos` + `CrmDatos`); `TableroDatos.js` solo elige el campo, lee la meta de `PARAMETROS`, compara y pone al lado el mes anterior. La batería lo vigila ("El tablero global no calcula: cada valor es el campo de su motor"). Una llamada por pilar (`getTableroPilar`), para que Profit OS no frene a los otros cinco.
+
+19 KPIs en catálogo: 9 ya existían, 7 se construyeron en el motor de su pilar, 3 esperan dato (comisión de tarjeta, reseñas, clientes que vuelven). Fuera de alcance por decisión de Juanma: rotación de mesa, SPLH, merma como registro propio.
+
+### 2. Lo que se construyó en los motores (25-sep)
+
+- **`FinanzasDatos.js`**, por mes: `ebitda`, `ebitdap`, `eventos_n`, `sin_factura`, `sin_factura_iva`, `mb_comensal`, `com_lmx_dia`, `medios`; totales del año; caché `finanzas_v11`. Espejo en `generar_finanzas.py`: **motor == Python en los 9 campos, los 9 meses**.
+- **EBITDA (decisión de Juanma, 25-sep): `neto + Impuestos + venta de eventos`.** Sin depreciación (el maestro no la registra) ni intereses (no hay deuda). **Bienes de uso NO se suma de vuelta** hasta que exista una categoría de inversión. En vivo: año Q54,227 (4.0%).
+- **`InventarioDatos.js`** › `invEstadoCierre_`: el mes anterior al actual, por área, contra el día límite (`inventario_cierre_dia`, 5 por defecto). Al 25-sep: barra agosto cerrado (verde); cocina agosto abierto desde el 14-sep (rojo). **Los inventarios se cierran desde la intranet** (Juanma, 25-sep).
+- **`CrmDatos.js`** › `crmAltasPorMes_`: solo "Cliente que visitó" (regla del 23-sep) con la tasa de lectura al lado; **`MarketingDatos.js`** › `mktKpisMes_`: CAC (medios de Finanzas ÷ altas), ROAS proxy de `pauta_semanal` y eventos por mes.
+- **Metas:** `PARAMETROS` sigue con dos filas. El tablero propone 15 más (tabla §8 del catálogo) y las marca "defecto" en rojo hasta que existan. `_finParametro_` trata el 0 como fila vacía: una meta de cero no se puede guardar ahí.
+
+### 3. Decisiones y hallazgos del día
+
+- **Archivados con el sí de Juanma:** `Rosanta_Tablero_de_Metas.xlsx`, `rosanta_ruta_metas.html` y `PnL_5_Numeros/` → `Rosanta OS/_Archive/Tablero_Metas_2026-09-25/`. Verificado antes: nada los referenciaba. El artefacto `rosanta-ruta-metas` ya no existía.
+- **Sin decidir:** meta del año y curva H2 en `METAS` (recomendación: la curva, ~Q1.95M; la automática es un piso); fuente de la comisión de tarjeta (recomendación: liquidaciones de VISANET y BAC Credomatic, que traen bruto, comisión, ISR e IVA; el POS solo da el bruto); **y cuál meta de food cost manda: el reporte semanal S38 usa cocina 26% y barra ponderada, `PARAMETROS` e intranet 28 y 20.**
+- **El despliegue estaba en la @123, no en la @101** que decía el cerebro: 22 versiones entre el 22 y el 25-sep. Y **git iba por delante de lo publicado** en `EdicionRecetario.js` (candado "una unidad no es un número") y `Latido.js` (sexta señal, p164): la @124 los lleva.
+- **La regla 9 ya no existe** en `FinanzasDatos.js` (retirada el 23-sep, la reemplaza la 15). Cualquier catálogo o informe que la cite quedó viejo.
+
+### 4. Reglas nuevas
+
+1. **`clasp login` con la autorización vencida dice "You are logged in" y no renueva nada.** El archivo `~/.clasprc.json` conserva la fecha vieja y `push` sale con código 0 sin subir. Arreglo: `clasp logout` y `clasp login`; verificar la **fecha del archivo** y `tokeninfo` antes de creerle.
+2. **Probar sin clasp:** `tools/harness-intranet/` corre el código real de la intranet en Node sobre el espejo (mocks de Apps Script). No cubre Profit OS, HtmlService ni la planilla externa. Sirvió para probar el tablero entero antes de que Juanma pudiera renovar clasp.
+3. **Los clics de Claude in Chrome no llegan a las páginas de Apps Script** (ni botones ni enlaces dentro del sandbox), y las pestañas vivas se leen estirando el iframe con JS y capturando pantalla. La revisión visual de una pantalla nueva la hace Juanma en su Chrome.
+4. **Antes de un push, bajar la versión publicada aparte y compararla con git:** si otra sesión versionó desde un disco distinto, el push la pisaría. Hoy la comparación mostró lo contrario (git más nuevo), pero es lo que hay que mirar.
+5. **`generar_finanzas.py` no lee el Sheet de planilla:** su respaldo en código se queda en el último mes cargado y el prime cost difiere 1-2 puntos de la intranet sin que sea error del motor. Comparar primero food cost y ventas.
+
+### 5. Pendientes que deja
+
+- Filas de `PARAMETROS` y pestaña `METAS` (`instalarMetas()`), con los números que Juanma decida.
+- K08 comisión de tarjeta (fuente), K18 reseñas (`RESENAS_SHEET_ID` + pestaña `RESENAS_TA`), K19 retención (p163).
+- Revisar en Chrome las seis pestañas del tablero en producción.
+- Commit en git del trabajo del 25-sep (13 archivos, sin commitear hasta que Juanma lo pida).
+- Meta de food cost: 26/ponderado (reporte semanal) contra 28/20 (`PARAMETROS`).
 
 ---
 
@@ -1387,7 +1430,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **El equipo está en la @100 (16 sep, noche): Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |

@@ -29,6 +29,14 @@
     <h1>Panel principal</h1>
     <p>Elige un modulo para empezar.</p>
     <div class="tarjetas">
+      <? if (String(usuario.rol || '').toLowerCase() === 'dueno') { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=tablero<?!= qs ?>">
+          <h3>Tablero global</h3>
+          <p>La foto grande: un numero por decision de cada uno de los 6 pilares, con su
+             semaforo y su tendencia. Cada tarjeta lleva a la pestaña de su pilar.</p>
+          <span class="chip">solo dueño</span>
+        </a>
+      <? } ?>
       <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
         <a class="tarjeta" href="<?= urlBase ?>?page=finanzas<?!= qs ?>">
           <h3>Finanzas &amp; Data</h3>

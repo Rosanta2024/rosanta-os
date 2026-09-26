@@ -250,3 +250,51 @@ function crmImportarContactos(auth, filas) {
     lock.releaseLock();
   }
 }
+
+/* ------------------------------------------------------ altas por mes (p10) ----
+ * El DENOMINADOR del CAC, por mes del año. Decision de Juanma del 23-sep-2026:
+ * cuentan solo las altas con segmento "Cliente que visitó". Al lado va la tasa de
+ * lectura = visitó / (visitó + Reserva histórica), que dice si el mes se puede leer:
+ *   >= 90%  comparable · 50-90%  inflado, publicar con aviso · < 50%  no se publica.
+ * Solo LEE la maestra; el mes sale de fecha_alta (col K). Sin acentos ni mayusculas al
+ * comparar el segmento: la hoja la escriben personas y el sync.
+ */
+function crmAltasPorMes_(anio) {
+  var ss = SpreadsheetApp.openById(CRM_SHEET_ID);
+  var hojas = ss.getSheets(), sh = null;
+  for (var i = 0; i < hojas.length; i++) {
+    var h = hojas[i].getRange(1, 1, 1, hojas[i].getLastColumn()).getValues()[0].map(String);
+    if (h.indexOf('first_name') >= 0 && h.indexOf('fecha_alta') >= 0) { sh = hojas[i]; break; }
+  }
+  if (!sh) throw new Error('No encontré la hoja maestra con fecha_alta.');
+  var vals = sh.getDataRange().getValues();
+  var head = vals.shift().map(function (x) { return String(x).trim(); });
+  var iSeg = head.indexOf('segmento'), iAlta = head.indexOf('fecha_alta');
+  var out = {};
+  for (var m = 1; m <= 12; m++) out[m] = { visito: 0, historica: 0, otras: 0, lectura: null };
+  for (var j = 0; j < vals.length; j++) {
+    var f = vals[j][iAlta];
+    var d = (f instanceof Date) ? f
+          : (/^\d{4}-\d{2}-\d{2}/.test(String(f || '')) ? new Date(String(f).slice(0, 10) + 'T12:00:00') : null);
+    if (!d || isNaN(d.getTime()) || d.getFullYear() !== anio) continue;
+    var seg = _finSinAcentos_(String(vals[j][iSeg] || '')).toLowerCase().trim();
+    var M = out[d.getMonth() + 1];
+    if (seg === 'cliente que visito') M.visito++;
+    else if (seg === 'reserva historica') M.historica++;
+    else M.otras++;
+  }
+  Object.keys(out).forEach(function (m) {
+    var M = out[m], base = M.visito + M.historica;
+    M.lectura = base ? Math.round(M.visito / base * 1000) / 10 : null;
+    M.publicable = M.lectura === null ? false : M.lectura >= 50;
+    M.comparable = M.lectura !== null && M.lectura >= 90;
+  });
+  return out;
+}
+
+/** Para el tablero global: finanzas + rol dueno. */
+function getCrmAltasMes(auth) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  return crmAltasPorMes_(new Date().getFullYear());
+}

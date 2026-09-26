@@ -161,6 +161,14 @@ function doGet(e) {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
 
+  // Tablero global (25-sep-2026): la foto grande de los 6 pilares, SOLO para el rol
+  // due\u00f1o, misma regla que 'pruebas'. No calcula nada: cada numero viene del motor de
+  // su pilar (TableroDatos.js) y cada tarjeta lleva a la pesta\u00f1a de ese pilar.
+  if (pagina === 'tablero' && String(usuario.rol || '').toLowerCase() === 'dueno') {
+    return render_('TableroVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   // Vista CRM: contactos de la maestra arriba, conversación del bot abajo.
   if (pagina === 'crm' && usuarioTieneModulo(usuario, 'crm')) {
     return render_('CrmVista', {

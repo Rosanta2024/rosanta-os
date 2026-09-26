@@ -814,6 +814,91 @@ function prFinanzas_(res) {
   // pilar) se retiro el 12-sep-2026 por decision de Juanma: la reemplaza 'Ninguna
   // vista llama al servidor con el nombre en una variable', en Pruebas.js, que usa
   // _prLlamadasConCorchetes_ (abajo) sobre las 25 vistas.
+
+  // ---------------------------------------------------- tablero global (25-sep-2026)
+  prCorrer_(g, 'EBITDA = neto + Impuestos + eventos, en cada mes', function () {
+    var nombre = 'EBITDA = neto + Impuestos + eventos, en cada mes';
+    var malos = [];
+    d.meses.forEach(function (x) {
+      var esperado = Math.round((x.neto + x.imp + x.eventos) * 100) / 100;
+      if (Math.abs((x.ebitda || 0) - esperado) > 0.02) malos.push(x.mes + ': ' + x.ebitda + ' vs ' + esperado);
+    });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : d.meses.length + ' meses · año Q' + d.total.ebitda + ' (' + d.total.ebitdap + '%)',
+      malos.length, 0);
+  });
+
+  prCorrer_(g, 'La compra sin factura del mes cabe dentro del COGS', function () {
+    var nombre = 'La compra sin factura del mes cabe dentro del COGS';
+    var malos = [], suma = 0;
+    d.meses.forEach(function (x) {
+      suma += x.sin_factura || 0;
+      if ((x.sin_factura || 0) > (x.cogs || 0) + 0.01) malos.push(x.mes + ': sin factura ' + x.sin_factura + ' > COGS ' + x.cogs);
+      if ((x.sin_factura || 0) < 0) malos.push(x.mes + ': negativa');
+    });
+    // y la suma de los meses tiene que ser lo mismo que ya medía la integridad del año
+    var integridad = (d.integridad && d.integridad.efectivo) || 0;
+    if (Math.abs(suma + (d.integridad.meses_sin_venta || []).reduce(function (a, x) { return a + (x.sin_factura || 0); }, 0) - integridad) > 1) {
+      malos.push('la suma de los meses (' + Math.round(suma) + ') no es la compra sin factura del año (' + Math.round(integridad) + ')');
+    }
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : 'Q' + Math.round(suma) + ' en ' + d.meses.length + ' meses, igual a integridad.efectivo',
+      malos.length, 0);
+  });
+
+  prCorrer_(g, 'Los medios del año son la pauta de la tarjeta', function () {
+    var nombre = 'Los medios del año son la pauta de la tarjeta';
+    // MARKETING_DIGITAL cae en el bloque Marketing: los medios no pueden superarlo.
+    var mkt = (d.total.bloques && d.total.bloques['Marketing']) || 0;
+    var ok = (d.total.medios || 0) >= 0 && (d.total.medios || 0) <= mkt + 0.01;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      'medios Q' + d.total.medios + ' dentro del bloque Marketing Q' + Math.round(mkt), d.total.medios, '<= ' + Math.round(mkt));
+  });
+
+  prCorrer_(g, 'El tablero global no calcula: cada valor es el campo de su motor', function () {
+    var nombre = 'El tablero global no calcula: cada valor es el campo de su motor';
+    var u = { email: DUENO_CORREO_, nombre: 'Prueba', rol: 'dueno', modulos: ['finanzas', 'recetario'], puedeEditar: true };
+    var P = tabParametros_();
+    var out = { kpis: [], avisos: [] };
+    _tabFinanzas_(out, P, new Date(), null);
+    var porClave = {};
+    out.kpis.forEach(function (k) { porClave[k.clave] = k; });
+    var mc = tabMesCerrado_(d, new Date());
+    var malos = [];
+    if (!porClave.K04 || porClave.K04.valor !== d.dias_caja) malos.push('K04 ' + (porClave.K04 && porClave.K04.valor) + ' vs dias_caja ' + d.dias_caja);
+    if (!porClave.K06 || porClave.K06.valor !== d.ultima.prime_m4) malos.push('K06 vs semanas[].prime_m4');
+    if (mc.ultimo) {
+      if (!porClave.K07 || porClave.K07.valor !== mc.ultimo.neto) malos.push('K07 vs meses[].neto');
+      if (!porClave.K09 || porClave.K09.valor !== mc.ultimo.sin_factura) malos.push('K09 vs meses[].sin_factura');
+      if (!porClave.K10 || porClave.K10.valor !== mc.ultimo.ebitda) malos.push('K10 vs meses[].ebitda');
+    }
+    if (!porClave.K08 || porClave.K08.estado !== 'falta_dato') malos.push('K08 tiene que decir FALTA DATO');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : out.kpis.length + ' tarjetas de Finanzas, cada una identica a su campo',
+      malos.length, 0);
+  });
+
+  prCorrer_(g, 'El tablero global rechaza a quien no es dueño', function () {
+    var nombre = 'El tablero global rechaza a quien no es dueño';
+    var rechazo = false;
+    try { invExigirDueno_({ rol: 'chef' }); } catch (e) { rechazo = true; }
+    // la pagina la sirve doGet solo al rol dueno (Code.js), igual que 'pruebas'
+    prAnotar_(g, nombre, rechazo ? 'OK' : 'FALLA',
+      rechazo ? 'invExigirDueno_ tira con rol chef; getTableroPilar pasa por ahi' : 'un chef entro al tablero', rechazo ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'Las metas del tablero salen de PARAMETROS o dicen que son defecto', function () {
+    var nombre = 'Las metas del tablero salen de PARAMETROS o dicen que son defecto';
+    var P = tabParametros_(), sinOrigen = [], defecto = [];
+    Object.keys(P).forEach(function (k) {
+      if (!P[k].origen) sinOrigen.push(k);
+      if (P[k].origen === 'defecto') defecto.push(k);
+    });
+    prAnotar_(g, nombre, sinOrigen.length ? 'FALLA' : (defecto.length ? 'AVISO' : 'OK'),
+      sinOrigen.length ? 'sin origen: ' + sinOrigen.join(', ')
+        : (defecto.length ? defecto.length + ' metas en defecto (falta la fila en PARAMETROS): ' + defecto.join(', ') : 'todas en PARAMETROS'),
+      defecto.length, 0);
+  });
 }
 
 

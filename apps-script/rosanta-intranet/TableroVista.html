@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* Tablero global (25-sep-2026). Solo dueño. No calcula: pinta lo que manda
+       TableroDatos.gs, un pilar por llamada, en paralelo. */
+    main.tab { max-width: 1180px; }
+    .tb-barra { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .tb-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; line-height: 1.5; }
+    .tb-boton { background: transparent; color: var(--verde-bosque); border: 1px solid rgba(78,109,90,0.35);
+      border-radius: 999px; padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; font-family: 'Lato', Arial, sans-serif; }
+    .tb-boton:hover { background: rgba(78,109,90,0.07); }
+    .tb-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 1.2rem 0 1rem; border-bottom: 1px solid rgba(26,26,26,0.12); }
+    .tb-tab { background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 0.55rem 0.8rem;
+      font-family: 'Lato', Arial, sans-serif; font-size: 0.86rem; color: #52514e; cursor: pointer; }
+    .tb-tab.act { color: var(--negro); border-bottom-color: var(--verde-bosque); font-weight: 700; }
+    .tb-tab .pt { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.4rem; background: #c9c6c0; vertical-align: middle; }
+    .tb-panel { display: none; }
+    .tb-panel.act { display: block; }
+    .tb-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .tb-card { background: var(--blanco); border-radius: 18px; padding: 1rem 1.15rem 0.9rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06);
+      border-left: 6px solid #c9c6c0; text-decoration: none; color: inherit; display: block; }
+    .tb-card:hover { box-shadow: 0 4px 16px rgba(26,26,26,0.10); }
+    .tb-card.verde { border-left-color: #2E6B3F; }
+    .tb-card.amarillo { border-left-color: #C89A3C; }
+    .tb-card.rojo { border-left-color: #A33A2A; }
+    .tb-card .et { font-size: 0.78rem; color: #52514e; display: flex; justify-content: space-between; gap: 0.5rem; }
+    .tb-card .et .k { font-weight: 700; color: var(--verde-bosque); }
+    .tb-card .val { font-family: 'Lato', Arial, sans-serif; font-weight: 700; font-size: 1.8rem; line-height: 1.15; margin: 0.35rem 0 0.15rem; color: var(--negro); }
+    .tb-card .val small { font-size: 0.9rem; font-weight: 400; color: #52514e; margin-left: 0.3rem; }
+    .tb-card .per { font-size: 0.78rem; color: #52514e; }
+    .tb-card .meta { font-size: 0.8rem; margin-top: 0.5rem; color: #333; }
+    .tb-card .meta .o { color: #8a8780; }
+    .tb-card .meta .o.def { color: #A33A2A; }
+    .tb-card .ten { font-size: 0.8rem; margin-top: 0.35rem; color: #52514e; }
+    .tb-card .ten b.up { color: #2E6B3F; } .tb-card .ten b.dn { color: #A33A2A; }
+    .tb-card .nota { font-size: 0.78rem; color: #52514e; margin-top: 0.45rem; line-height: 1.45; }
+    .tb-card .fuente { font-size: 0.7rem; color: #8a8780; margin-top: 0.5rem; }
+    .tb-card.falta .val { font-size: 1.05rem; color: #A33A2A; }
+    .tb-cargando { padding: 2.5rem 0; text-align: center; opacity: 0.6; }
+    .tb-error { background: #F6E4DF; border-radius: 14px; padding: 0.9rem 1.1rem; font-size: 0.88rem; line-height: 1.5; margin-top: 0.8rem; }
+    .tb-avisos { background: #FBF3E2; border-radius: 12px; padding: 0.7rem 1rem; font-size: 0.84rem; line-height: 1.5; margin-bottom: 0.9rem; }
+    .tb-texto { background: var(--blanco); border-radius: 18px; padding: 1.2rem 1.4rem; font-size: 0.95rem; line-height: 1.6; max-width: 70ch; }
+    .tb-leyenda { font-size: 0.78rem; color: #52514e; margin-top: 1.4rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">Tablero global</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+    </div>
+  </header>
+
+  <main class="tab">
+    <div class="tb-barra">
+      <div>
+        <h1>Tablero global</h1>
+        <p class="tb-sub">La foto grande de los 6 pilares. Ningun numero se calcula aqui: cada tarjeta es el campo del motor de su pilar, con su meta de PARAMETROS y su tendencia. Clic en la tarjeta para ir a su pestaña.</p>
+      </div>
+      <button class="tb-boton" id="btn-actualizar" type="button">Actualizar</button>
+    </div>
+
+    <div class="tb-tabs" id="tabs">
+      <button type="button" class="tb-tab act" data-p="fundamentos"><span class="pt"></span>01 Fundamentos</button>
+      <button type="button" class="tb-tab" data-p="management"><span class="pt"></span>02 Management</button>
+      <button type="button" class="tb-tab" data-p="finanzas"><span class="pt"></span>03 Finanzas</button>
+      <button type="button" class="tb-tab" data-p="profit"><span class="pt"></span>04 Profit</button>
+      <button type="button" class="tb-tab" data-p="marketing"><span class="pt"></span>05 Marketing</button>
+      <button type="button" class="tb-tab" data-p="expansion"><span class="pt"></span>06 Expansion</button>
+    </div>
+
+    <div class="tb-panel act" id="p-fundamentos"><div class="tb-cargando">Leyendo Finanzas y Caja…</div></div>
+    <div class="tb-panel" id="p-management"><div class="tb-cargando">Leyendo los inventarios…</div></div>
+    <div class="tb-panel" id="p-finanzas"><div class="tb-cargando">Leyendo el maestro…</div></div>
+    <div class="tb-panel" id="p-profit"><div class="tb-cargando">Leyendo Profit OS (puede tardar medio minuto en frio)…</div></div>
+    <div class="tb-panel" id="p-marketing"><div class="tb-cargando">Leyendo Marketing OS y el CRM…</div></div>
+    <div class="tb-panel" id="p-expansion"><div class="tb-cargando">…</div></div>
+
+    <p class="tb-leyenda">Verde, amarillo y rojo salen de comparar el valor contra su meta. "defecto" en rojo al lado de una meta significa que la fila no existe en PARAMETROS y el sistema usa el valor de respaldo: hay que agregar la fila. "FALTA DATO" es un KPI que todavia no tiene fuente.</p>
+  </main>
+
+<script>
+(function () {
+  /* El token va como PRIMER argumento en TODA llamada a google.script.run. */
+  var AUTH = '<?= authToken ?>';
+  var B = <?!= JSON.stringify(urlBase) ?>;
+  var T = <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
+  var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion'];
+
+  function q(n, dec) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return 'Q' + Number(n).toLocaleString('es-GT', { maximumFractionDigits: dec === undefined ? 0 : dec });
+  }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function valor(k) {
+    if (k.estado === 'falta_dato') return 'FALTA DATO';
+    if (k.valor === null || k.valor === undefined) return '—';
+    var u = k.unidad;
+    if (u === 'Q' || u === 'Q/cliente') return q(k.valor) + (u === 'Q/cliente' ? '<small>por cliente</small>' : '');
+    if (u === '%') return k.valor + '%';
+    if (u === 'x') return k.valor + 'x';
+    if (u === 'pts') return (k.valor > 0 ? '+' : '') + k.valor + '<small>pts</small>';
+    if (u === 'dias') return k.valor + '<small>dias</small>';
+    if (u === 'mes') return esc(k.valor);
+    return k.valor + (u ? '<small>' + esc(u) + '</small>' : '');
+  }
+
+  function tendencia(t, unidad) {
+    if (!t) return '';
+    var signo = t.dif > 0 ? '+' : '';
+    var cls = t.dif > 0 ? 'up' : (t.dif < 0 ? 'dn' : '');
+    var txt = (unidad === 'Q' || unidad === 'Q/cliente') ? signo + q(t.dif) : signo + t.dif + (unidad === '%' || unidad === 'pts' ? ' pts' : '');
+    return '<div class="ten">Contra ' + esc(t.etiqueta) + ': <b class="' + cls + '">' + txt + '</b>' +
+           (t.pct !== null && t.pct !== undefined && unidad !== '%' ? ' (' + (t.pct > 0 ? '+' : '') + t.pct + '%)' : '') + '</div>';
+  }
+
+  function tarjeta(k) {
+    var cls = 'tb-card ' + (k.zona || 'gris') + (k.estado === 'falta_dato' ? ' falta' : '');
+    var href = k.enlace ? (B + '?page=' + k.enlace + T) : '#';
+    var metaTxt = k.meta_texto ? esc(k.meta_texto) : (k.meta !== null && k.meta !== undefined ? 'meta ' + esc(k.meta) : 'sin meta');
+    var origen = k.meta_origen ? '<span class="o' + (k.meta_origen === 'defecto' ? ' def' : '') + '"> · ' + esc(k.meta_origen) + '</span>' : '';
+    return '<a class="' + cls + '" href="' + href + '">' +
+      '<div class="et"><span class="k">' + esc(k.clave) + '</span><span>' + esc(k.periodo) + '</span></div>' +
+      '<div class="per">' + esc(k.nombre) + '</div>' +
+      '<div class="val">' + valor(k) + '</div>' +
+      '<div class="meta">' + metaTxt + origen + '</div>' +
+      tendencia(k.tendencia, k.unidad) +
+      (k.nota ? '<div class="nota">' + esc(k.nota) + '</div>' : '') +
+      '<div class="fuente">' + esc(k.fuente) + '</div>' +
+      '</a>';
+  }
+
+  function punto(p, zona) {
+    var b = document.querySelector('.tb-tab[data-p="' + p + '"] .pt');
+    if (!b) return;
+    b.style.background = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A' }[zona] || '#c9c6c0';
+  }
+
+  function pintar(p, r) {
+    var el = document.getElementById('p-' + p);
+    if (!r) { el.innerHTML = '<div class="tb-error">Sin respuesta.</div>'; return; }
+    var html = '';
+    if (r.error) html += '<div class="tb-error">' + esc(r.error) + '</div>';
+    if (r.avisos && r.avisos.length) html += '<div class="tb-avisos">' + r.avisos.map(esc).join('<br>') + '</div>';
+    if (p === 'expansion') {
+      html += '<div class="tb-texto">' + esc(r.texto || '') + '</div>';
+    } else {
+      html += '<div class="tb-grid">' + (r.kpis || []).map(tarjeta).join('') + '</div>';
+    }
+    html += '<p class="tb-leyenda">Calculado ' + esc(r.gen || '') + '</p>';
+    el.innerHTML = html;
+    // el punto de la pestaña: el peor semaforo del pilar
+    var peor = 'gris';
+    (r.kpis || []).forEach(function (k) {
+      if (k.zona === 'rojo') peor = 'rojo';
+      else if (k.zona === 'amarillo' && peor !== 'rojo') peor = 'amarillo';
+      else if (k.zona === 'verde' && peor === 'gris') peor = 'verde';
+    });
+    punto(p, peor);
+  }
+
+  function cargar(p) {
+    google.script.run
+      .withSuccessHandler(function (r) { pintar(p, r); })
+      .withFailureHandler(function (e) {
+        document.getElementById('p-' + p).innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>';
+      })
+      .getTableroPilar(AUTH, p);
+  }
+
+  function mostrar(p) {
+    document.querySelectorAll('.tb-tab').forEach(function (b) { b.classList.toggle('act', b.dataset.p === p); });
+    document.querySelectorAll('.tb-panel').forEach(function (x) { x.classList.toggle('act', x.id === 'p-' + p); });
+  }
+
+  document.querySelectorAll('.tb-tab').forEach(function (b) {
+    b.addEventListener('click', function () { mostrar(b.dataset.p); });
+  });
+  document.getElementById('btn-actualizar').addEventListener('click', function () {
+    PILARES.forEach(function (p) {
+      document.getElementById('p-' + p).innerHTML = '<div class="tb-cargando">Actualizando…</div>';
+      cargar(p);
+    });
+  });
+
+  PILARES.forEach(cargar);
+})();
+</script>
+</body>
+</html>

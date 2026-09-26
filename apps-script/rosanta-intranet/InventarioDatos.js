@@ -1340,3 +1340,82 @@ function invResolverPrecios_(pedidos, aprobar, u) {
   res.recetario = res.aprobados > 0;
   return res;
 }
+
+/* ------------------------------------------------------- inventario al dia ----
+ * KPI del pilar 2 (Management OS) para el tablero global, 25-sep-2026. Solo LEE.
+ *
+ * Pregunta que contesta: ¿el mes anterior al actual esta CERRADO en cada area?
+ *   verde     cerrado
+ *   amarillo  abierto (o sin pestana) y todavia dentro del plazo: hoy <= dia limite
+ *   rojo      fuera del plazo y sin cerrar
+ * El dia limite es inventario_cierre_dia de PARAMETROS (5 si la fila no existe).
+ * Lee las mismas hojas y el mismo ESTADO de la fila 1 que la pestana Inventarios:
+ * no hay un segundo criterio de "cerrado" que se pueda desincronizar.
+ */
+function invEstadoCierre_(hoy, diaLimite) {
+  hoy = hoy || new Date();
+  diaLimite = Number(diaLimite) || 5;
+  var a = hoy.getFullYear(), m = hoy.getMonth();            // m: 0-11, el mes en curso
+  var espY = m === 0 ? a - 1 : a, espM = m === 0 ? 12 : m;   // el mes anterior al actual
+  var esperado = espY + '-' + (espM < 10 ? '0' : '') + espM;
+  var dentroDePlazo = hoy.getDate() <= diaLimite;
+  var out = { esperado: esperado, dia_limite: diaLimite, hoy: invFecha_(hoy), areas: {} };
+  ['COCINA', 'BARRA'].forEach(function (area) {
+    var r = { area: area, ultimo_cerrado: null, ultimo_total: null, estado_esperado: 'SIN PESTANA',
+              total_esperado: null, cerrado_por: '', zona: 'gris', dias_atraso: null, error: '' };
+    try {
+      var ss = invHojaDe_(area);
+      ss.getSheets().forEach(function (h) {
+        var nombre = h.getName().trim();
+        if (!/^\d{4}-\d{2}$/.test(nombre)) return;
+        var d = h.getDataRange().getValues();
+        var estado = invEstado_(d);
+        if (estado === 'CERRADO' && (!r.ultimo_cerrado || nombre > r.ultimo_cerrado)) {
+          r.ultimo_cerrado = nombre;
+          r.ultimo_total = invTotalMes_(d);
+        }
+        if (nombre === esperado) {
+          r.estado_esperado = estado || 'SIN ESTADO';
+          r.total_esperado = invTotalMes_(d);
+          var meta = d[0] || [];
+          for (var j = 0; j < meta.length - 1; j++) {
+            if (normalizar_(meta[j]) === 'cerrado por') r.cerrado_por = invTexto_(meta[j + 1]);
+          }
+        }
+      });
+      var cerrado = r.estado_esperado === 'CERRADO';
+      r.zona = cerrado ? 'verde' : (dentroDePlazo ? 'amarillo' : 'rojo');
+      // dias de atraso: desde el dia limite del mes en curso, solo si sigue sin cerrar
+      r.dias_atraso = cerrado ? 0 : Math.max(hoy.getDate() - diaLimite, 0);
+    } catch (e) {
+      r.error = String(e && e.message || e);
+      r.zona = 'gris';
+    }
+    out.areas[area] = r;
+  });
+  return out;
+}
+
+/** El TOTAL de una pestana de mes: la fila sin ID cuyo PRODUCTO dice TOTAL. */
+function invTotalMes_(d) {
+  // El encabezado vive en la fila 3 (INV_DATOS.filaEncabezadoMes); se busca en las
+  // primeras filas por si una copia o un export corrio la fila en blanco.
+  var enc = -1;
+  for (var k = 0; k < Math.min(d.length, 6); k++) {
+    var ck = invColumnas_(d[k] || []);
+    if (ck['producto'] != null && ck['monto'] != null) { enc = k; break; }
+  }
+  if (enc < 0) return null;
+  var c = invColumnas_(d[enc]);
+  for (var i = d.length - 1; i > enc; i--) {
+    if (normalizar_(d[i][c['producto']]) === 'total') return invNumero_(d[i][c['monto']]);
+  }
+  return null;
+}
+
+/** Para el tablero global: pide finanzas y rol dueno, como todo lo del tablero. */
+function getInventarioCierre(auth) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  return invEstadoCierre_(new Date(), _finParametro_('inventario_cierre_dia', 5));
+}

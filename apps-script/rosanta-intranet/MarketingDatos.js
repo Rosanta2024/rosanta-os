@@ -224,3 +224,65 @@ function mktDelete(tab, id, auth) {
     lock.releaseLock();
   }
 }
+
+/* ------------------------------------------------- KPIs mensuales del pilar 5 ----
+ * CAC y ROAS por mes, para el tablero global (25-sep-2026). Es el motor del pilar:
+ * el tablero no divide nada. Las dos puntas ya existen en otros motores y aca solo
+ * se juntan:
+ *   medios     FinanzasDatos › meses[].medios (MARKETING_DIGITAL de la tarjeta, USD
+ *              convertidos). Honorarios fuera por categoria.
+ *   altas      CrmDatos › crmAltasPorMes_ (solo "Cliente que visitó", con tasa de
+ *              lectura; regla del 23-sep-2026).
+ *   ROAS       proxy: ingreso = comensales x ticket de pauta_semanal, por mes de
+ *              fecha_registro, contra los mismos medios del maestro. Es ESTIMADO
+ *              hasta que Wix mande el consumo por reserva (p163).
+ * Solo LEE.
+ */
+function mktKpisMes_(anio, finanzas) {
+  var d = finanzas || _finDatos_(false);
+  var altas = null, altasError = '';
+  try { altas = crmAltasPorMes_(anio); } catch (e) { altasError = String(e && e.message || e); }
+  var pauta = {};
+  try {
+    var vals = mktSheet_('pauta_semanal').getDataRange().getValues();
+    var head = SCHEMA.pauta_semanal;
+    for (var i = 1; i < vals.length; i++) {
+      var r = {};
+      head.forEach(function (h, k) { r[h] = vals[i][k]; });
+      var f = r.fecha_registro instanceof Date ? r.fecha_registro
+            : (/^\d{4}-\d{2}-\d{2}/.test(String(r.fecha_registro || ''))
+               ? new Date(String(r.fecha_registro).slice(0, 10) + 'T12:00:00') : null);
+      if (!f || isNaN(f.getTime()) || f.getFullYear() !== anio) continue;
+      var m = f.getMonth() + 1;
+      if (!pauta[m]) pauta[m] = { ingreso: 0, semanas: 0, comensales: 0 };
+      var com = Number(r.comensales) || 0, tk = Number(r.ticket) || 0;
+      pauta[m].ingreso += com * tk;
+      pauta[m].comensales += com;
+      pauta[m].semanas += 1;
+    }
+  } catch (e2) { /* sin pauta_semanal no hay ROAS: la tarjeta lo dice */ }
+
+  var meses = {};
+  (d.meses || []).forEach(function (x) {
+    var A = altas ? altas[x.m] : null, P = pauta[x.m] || null;
+    meses[x.m] = {
+      m: x.m, mes: x.mes, medios: x.medios,
+      altas: A ? A.visito : null, historicas: A ? A.historica : null,
+      lectura: A ? A.lectura : null,
+      publicable: A ? A.publicable : false, comparable: A ? A.comparable : false,
+      cac: (A && A.visito && x.medios) ? Math.round(x.medios / A.visito * 100) / 100 : null,
+      roas_ingreso: P ? Math.round(P.ingreso * 100) / 100 : null,
+      roas_semanas: P ? P.semanas : 0,
+      roas: (P && P.ingreso && x.medios) ? Math.round(P.ingreso / x.medios * 100) / 100 : null,
+      eventos_n: x.eventos_n, eventos_q: x.eventos
+    };
+  });
+  return { anio: anio, meses: meses, altas_error: altasError, gen: d.gen };
+}
+
+/** Para el tablero global: finanzas + rol dueno. */
+function getMarketingKpisMes(auth) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  return mktKpisMes_(new Date().getFullYear(), null);
+}

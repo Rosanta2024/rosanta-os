@@ -335,21 +335,27 @@ serie = []
 sin_venta = []   # meses con gasto y sin venta (M20)
 for m in range(1, 13):
     ven = ev = ven_ss = 0.0
-    com = 0
+    com = ev_n = com_lmx = 0
+    dias_lmx = set()        # tablero global: dias de lunes a miercoles con venta
     for r, f in filas_venta():
         if f.month != m:
             continue
         n = (V.cell(r, 4).value or 0) / 1.12
         if es_evento(r):
             ev += n
+            ev_n += 1
             continue
         ven += n
         ven_ss += sin_servicio(r, n)
         try:
-            com += int(float(V.cell(r, 9).value or 0))   # Sheets exporta enteros como float
+            c_r = int(float(V.cell(r, 9).value or 0))   # Sheets exporta enteros como float
         except (TypeError, ValueError):
-            pass
-    cog = dev = pers = 0.0
+            c_r = 0
+        com += c_r
+        if f.weekday() in (0, 1, 2):                    # lunes, martes, miercoles
+            com_lmx += c_r
+            dias_lmx.add(f.date())
+    cog = dev = pers = sinf = medios = 0.0
     bl, tip = defaultdict(float), defaultdict(float)
     for hoja, mc, cc, pc in LIBROS:
         ws = wb[hoja]
@@ -367,12 +373,15 @@ for m in range(1, 13):
                 dev += q; continue
             if c in FUERA or not c or str(c).startswith('INGRESO'):
                 continue
+            # medios (Meta y Google) de la tarjeta, para el CAC: igual que FinanzasDatos.gs
+            if c == 'MARKETING_DIGITAL' and hoja == '05_Tarjeta_Credito_BAC':
+                medios += q
             if c in COGS_CATS:
                 if hoja not in BANCOS:              # regla 3
                     cog += costo(ws, r, mc, hoja)   # neto de IVA
                 continue
             if c in EFECTIVO_CATS:
-                cog += q; continue
+                cog += q; sinf += q; continue      # sinf: compra sin factura, en bruto
             if c in ('ALQUILERES', 'ALQUILER') and hoja == '01_FEL_Maestro':
                 continue                             # el alquiler se cuenta por banco
             if c in SOLO_FEL and hoja != '01_FEL_Maestro':
@@ -394,6 +403,9 @@ for m in range(1, 13):
         continue
     serie.append({'mes': MESES[m-1], 'm': m, 'ventas': round(ven, 2), 'ventas_ss': round(ven_ss, 2),
                   'eventos': round(ev, 2), 'comensales': com,
+                  # tablero global (25-sep-2026): espejo de los campos nuevos de FinanzasDatos.gs
+                  'eventos_n': ev_n, 'sin_factura': round(sinf, 2), 'medios': round(medios, 2),
+                  'com_lmx': com_lmx, 'com_lmx_dias': len(dias_lmx),
                   'cogs': round(cog, 2), 'gop': round(gop, 2),
                   'imp': round(bl.get('Impuestos', 0), 2),
                   'dev': round(dev, 2), 'pers': round(pers, 2),
@@ -445,11 +457,26 @@ for s in serie:
         lab_mes = lab_mes * ULT_VENTA.day / calendar.monthrange(ANIO, m)[1]
     lab = lab_mes + igss
     gop = s['gop'] - s['bloques'].get('Nomina y salarios', 0) + lab
+    neto = s['ventas'] - cog - gop
+    # EBITDA = neto + Impuestos + venta de eventos (decision de Juanma, 25-sep-2026).
+    # Sin depreciacion ni intereses; Bienes de uso no se suma de vuelta. Mismo calculo
+    # que FinanzasDatos.gs: si se separan, el A/B lo tiene que decir.
+    ebitda = neto + s['imp'] + s['eventos']
     cinco.append({'mes': s['mes'], 'ventas': s['ventas'], 'ventas_ss': s['ventas_ss'], 'cogs': round(cog, 2),
                   'labor': round(lab, 2), 'igss': round(igss, 2),
                   'devengado': dev is not None, 'labor_origen': origen, 'gop': round(gop, 2),
-                  'neto': round(s['ventas'] - cog - gop, 2)})
-T5 = {k: round(sum(c[k] for c in cinco), 2) for k in ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto']}
+                  'neto': round(neto, 2),
+                  'ebitda': round(ebitda, 2),
+                  'ebitdap': round(ebitda / (s['ventas'] + s['eventos']) * 100, 1),
+                  'eventos': s['eventos'], 'eventos_n': s['eventos_n'],
+                  'sin_factura': s['sin_factura'], 'sin_factura_iva': round(s['sin_factura'] * 12 / 112, 2),
+                  'mb_comensal': round((s['ventas_ss'] - cog) / s['comensales'], 2) if s['comensales'] else None,
+                  # redondeo "medio hacia arriba" como _finR_ de Apps Script: round() de
+                  # Python redondea al par (14.25 -> 14.2) y el motor da 14.3.
+                  'com_lmx_dia': (int(s['com_lmx'] / s['com_lmx_dias'] * 10 + 0.5) / 10) if s['com_lmx_dias'] else None,
+                  'medios': s['medios']})
+T5 = {k: round(sum(c[k] for c in cinco), 2)
+      for k in ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'ebitda', 'sin_factura', 'medios']}
 for x in sin_venta:   # M20: el dinero de un mes sin venta va al año, sin su nomina de banco
     _g = x['gop'] - x['nomina_banco']
     T5['cogs'] = round(T5['cogs'] + x['cogs'], 2)
