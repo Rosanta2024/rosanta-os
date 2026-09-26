@@ -48,7 +48,7 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 - Filas de `PARAMETROS` y pestaña `METAS` (`instalarMetas()`), con los números que Juanma decida.
 - K08 comisión de tarjeta (fuente), K18 reseñas (`RESENAS_SHEET_ID` + pestaña `RESENAS_TA`), K19 retención (p163).
-- Revisar en Chrome las seis pestañas del tablero en producción.
+- ~~Revisar en Chrome las seis pestañas del tablero en producción.~~ Hecho por Juanma el 25-sep: "se ven bien las seis".
 - Commit en git del trabajo del 25-sep (13 archivos, sin commitear hasta que Juanma lo pida).
 - Meta de food cost: 26/ponderado (reporte semanal) contra 28/20 (`PARAMETROS`).
 
