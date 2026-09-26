@@ -30,7 +30,7 @@ La @125 mostraba **Q155,894 por semana**: salía del equilibrio mensual del moto
 
 ### 3. Lo que quedó abierto
 
-- **Reservas S38: 13 canceladas de 14** en la pestaña `reservas`; el PDF decía 4 de 14. La sección 4 muestra el desglose por estado (canceladas = CANCEL, DECLIN, NO SHOW; sin cerrar = RESERVED). Falta que Juanma diga si es dato (estados cambiados en Wix después del 23-sep) o criterio.
+- **Reservas S38: 13 canceladas de 14** en la pestaña `reservas`; el PDF decía 4 de 14. La sección 4 muestra el desglose por estado (canceladas = CANCEL, DECLIN, NO SHOW; sin cerrar = RESERVED). **Cerrado el 26-sep: son dato real, Juanma mismo canceló esas reservas en Wix después del PDF. El criterio de estados queda como está.**
 - **PDF desde el servidor** guardado en la carpeta SXX (decisión "me parece bien, recomendado"), personal extra por semana pagada, comisión de tarjeta separada (K08 FALTA DATO), y retirar después la tarea del lunes que hace el PDF con Chrome headless.
 - Siguen las 13 metas en defecto en `PARAMETROS` y las decisiones listadas en la v26 §4.
 
