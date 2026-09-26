@@ -1,0 +1,14 @@
+# Foto del estado BUENO, tomada el 2026-09-25 19:04:05 antes de reiniciar la app.
+# Si despues del reinicio esto no coincide, la app piso el cambio: volver a correr --aplicar.
+md5  41d26b5a24a66f1e5640e33b7255090f
+mtime 2026-09-25 19:02:41
+
+rosanta-latido-reservas-web          /Users/juanmalemus/Documents/Claude/Projects/05_Marketing_OS/Workspace_Pauta
+rosanta-reporte-semanal              /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
+morning-brief-juanma                 /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
+rosanta-cierre-semanal               /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
+rosanta-cerebro-mantenimiento        /Users/juanmalemus/Documents/Claude/Projects/02_Management_OS
+rosanta-reporte-mensual              /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
+auditoria-meta-ads-rosanta-mensual   /Users/juanmalemus/Documents/Claude/Projects/05_Marketing_OS/Workspace_Pauta
+rosanta-seguimiento-offsite          /Users/juanmalemus/Documents/Claude/Projects/05_Marketing_OS/Workspace_Pauta
+rosanta-latido-repo                  /Users/juanmalemus/Documents/Claude/Projects/02_Management_OS
