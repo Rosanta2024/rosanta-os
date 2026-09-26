@@ -89,9 +89,7 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.
 
-**Estado al 26 sep 2026: el equipo está en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería 127 OK · 0 fallas · 5 avisos · 3 saltadas. La @126 trae el **reporte semanal en vivo** (`?page=reporte-semanal` y séptima pestaña del tablero, con descarga del PDF de la semana) y el equilibrio semanal por PRESUPUESTO. Detalle en SKILL.md v28.
-
-~~**Estado al 25 sep 2026: el equipo está en la @124** (verificado: `list-deployments` releído y la @124 bajada aparte idéntica al disco, 62 archivos). Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. La @124 trae el **tablero global** (`?page=tablero`, solo dueño; `TableroDatos.js` + `TableroVista.html`; catálogo en `03_Finance_Data_OS/KPIs/KPI_Definiciones.md`) y los campos nuevos de los motores (EBITDA, compra sin factura, comensales L–X, medios, CAC, cierre de inventario). Detalle en SKILL.md v26. (superado por la @126)~~
+**Estado al 25 sep 2026: el equipo está en la @124** (verificado: `list-deployments` releído y la @124 bajada aparte idéntica al disco, 62 archivos). Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. La @124 trae el **tablero global** (`?page=tablero`, solo dueño; `TableroDatos.js` + `TableroVista.html`; catálogo en `03_Finance_Data_OS/KPIs/KPI_Definiciones.md`) y los campos nuevos de los motores (EBITDA, compra sin factura, comensales L–X, medios, CAC, cierre de inventario). Detalle en SKILL.md v26.
 
 ~~**Estado al 15 sep 2026: el equipo está en la @98 (verificado con `clasp list-deployments`; HEAD de 58 archivos idéntico a lo probado). Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas y ninguna de Finanzas.** Recorrido: @93 pestaña Caja · @94 food cost sin servicio · @95 tarjeta real contra teórico · @96 y @97 tandas 4 y 5 · @98 categoría MARKETING_HONORARIOS. Detalle en SKILL.md v16 y v17.~~ (superado por la @124)
 

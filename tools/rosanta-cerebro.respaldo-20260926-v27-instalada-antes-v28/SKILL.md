@@ -7,36 +7,9 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 26 sep 2026 (v28).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 25 sep 2026, noche (v27).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
-
-## Cierre del 26 sep 2026 (v28): el reporte semanal vive en la intranet, publicado en la @126
-
-**El equipo está en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería sobre ese HEAD: **127 OK · 0 fallas · 5 avisos · 3 saltadas** (237 s). Commits `c0a0cb7` y `a03479b` en `rosanta-os/main`. Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md` (secciones @125, corrección y @126).
-
-### 1. Qué cambió: el reporte semanal ya no es solo el PDF
-
-Juanma (25-sep): "Yo no quiero ver el pdf. Quiero mover el artefacto completo a esta sección y agregar la descarga del pdf para poder enviar al equipo." Y sobre las reglas: "Usa las reglas de la intranet".
-
-- **`?page=reporte-semanal`** (módulo finanzas; `&embed=1` sin cabecera) y la **séptima pestaña "Reporte semanal" del tablero global**, que lo embebe y debajo pone las tarjetas de descarga de `Reportes 2026 / SXX / Rosanta_SXX_2026.pdf` (para mandar al equipo).
-- **`ReporteSemanalDatos.js`** arma las 8 secciones del formato S38 **con los motores, sin calcular aparte**: semana de `getFinanzasData` (selector de 12 semanas), serie diaria de `02_Ventas_Maestro`, reservas de la pestaña `reservas` del Marketing OS, platos por `ventasDelRango_` (venta de área ÷ 1.12, top 6 + otros), food cost por área contra `metasFoodCost_()`, personal (labor, planilla del mes), P&L del mes y acciones en la pestaña `REPORTE_ACCIONES` del config (se crea sola al guardar la primera; responsables = departamentos, nunca nombres). Caché `rep_sem_v1_…`, botón Actualizar, Imprimir/PDF con `window.print`.
-- **`ReporteSemanalVista.html`**: 8 secciones en el orden del S38, formulario de acciones, CSS de impresión. Dos pruebas nuevas en `PruebasFinanzas.js` ("El reporte semanal en vivo cuadra con la semana del motor": Σ días = venta de la semana y comensales; "El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive").
-- **Marketing OS**: la pestaña 05 del tablero muestra los planes `Plan_Meta_Ads_*.docx` de la carpeta de planes (la auditoría de Meta Ads como puntaje sigue sin fila: pendiente `AUDITORIA_META`).
-
-### 2. El equilibrio semanal se arma con el PRESUPUESTO (decisión de Juanma, 26-sep: "sí, por presupuesto")
-
-La @125 mostraba **Q155,894 por semana**: salía del equilibrio mensual del motor del último mes cerrado, y agosto tiene margen de contribución 8.3%, así que el cociente explota. Es coherente mes a mes pero no sirve como vara semanal. **Desde la @126**: fijos del PRESUPUESTO del 22-sep (Inmueble Q20,212.50 · Nómina Q29,000 · Tarifas Q6,600 · Prestadores Q5,500 · Marketing Q5,700 = Q67,012.50 al mes, con el mes si lo trae) ÷ 4.345 semanas = Q15,423; variables = filas %venta del presupuesto (comisiones 6.5, propinas 4.24) + mercadería con la **móvil de 4** (Σcompra ÷ Σventa de las 4 semanas). Margen 50.3%, **PE Q30,641 por semana**. El PDF de la S38 traía Q35,097 con su propia estructura; el mensual del motor queda como referencia en la sección 8.
-
-### 3. Lo que quedó abierto
-
-- **Reservas S38: 13 canceladas de 14** en la pestaña `reservas`; el PDF decía 4 de 14. La sección 4 muestra el desglose por estado (canceladas = CANCEL, DECLIN, NO SHOW; sin cerrar = RESERVED). Falta que Juanma diga si es dato (estados cambiados en Wix después del 23-sep) o criterio.
-- **PDF desde el servidor** guardado en la carpeta SXX (decisión "me parece bien, recomendado"), personal extra por semana pagada, comisión de tarjeta separada (K08 FALTA DATO), y retirar después la tarea del lunes que hace el PDF con Chrome headless.
-- Siguen las 13 metas en defecto en `PARAMETROS` y las decisiones listadas en la v26 §4.
-
-### 4. clasp vuelve a morir cada día
-
-`invalid_rapt` apareció el 25 y otra vez el 26 (credenciales de la noche anterior). Es la política de reautenticación del Workspace, no un error de clasp. La cura es siempre la misma y solo la hace Juanma: `clasp logout` y `clasp login`, y **`clasp login` solo, sin el logout, dice "already logged in" y deja el push fallando en silencio**. Verificar `~/.clasprc.json` con fecha de hoy antes de publicar.
 
 ## Cierre del 25 sep 2026, noche (v27): el sitio pasa a Git, el código sale de la Mac
 
