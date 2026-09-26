@@ -51,6 +51,15 @@ Lo que el harness NO cubre: Profit OS (`getProfitOS`, `getCmvRealTeorico`) porqu
 
 `clasp create-version` → 124 · `clasp update-deployment -V 124` sobre `AKfycby814w…` · `list-deployments` releído tres veces: @124 · la @124 bajada aparte es idéntica al disco (62 archivos) · el panel principal en producción muestra la puerta "Tablero global" (solo dueño). Queda sin commitear en git hasta que Juanma lo pida.
 
+## Segunda tanda (25-sep, noche): el reporte semanal y la auditoría de Meta Ads
+
+Pedido de Juanma después de ver el tablero: (1) el reporte semanal como pestaña adicional; (2) la auditoría de Meta Ads en los KPIs de Marketing. Ninguno se recalcula: son documentos que ya existen.
+
+- `TableroDatos.js` › `getTableroDocumentos(auth)`: lista con Drive v3 (`drivesListar_`) los `Rosanta_SXX_2026.pdf` de las carpetas `SXX` de Reportes 2026 y los `Plan_Meta_Ads_*.docx` del Workspace de Marketing OS. Caché 10 min. Guarda de dueño.
+- `TableroVista.html`: pestaña "Reporte semanal" (selector de semana + visor de Drive embebido + enlace) y tarjetas del plan de Meta Ads al pie de 05 Marketing (últimos tres, el último en verde). "Actualizar" no duplica las tarjetas.
+- `PruebasFinanzas.js`: prueba "El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive".
+- Pendiente de decisión: para que la auditoría sea un KPI con semáforo (score y grado A–F), la tarea del día 3 tendría que escribir una fila en una pestaña `AUDITORIA_META` de `Rosanta Marketing OS`. Es un cambio al prompt de la tarea.
+
 ## Cómo se publicó (para la próxima vez)
 
 1. `clasp login` con restaurante@rosanta.rest (solo Juanma; abre el navegador).

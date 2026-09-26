@@ -420,3 +420,58 @@ function _tabExpansion_(out) {
               'mide expansion mientras la caja no tenga colchon, el food cost no este en meta y el ' +
               'inventario no cierre a tiempo.';
 }
+
+// ------------------------------------------------------------- documentos
+/**
+ * Los DOCUMENTOS que el tablero muestra tal cual, sin recalcular nada (pedido de
+ * Juanma, 25-sep-2026):
+ *   · el reporte semanal de operacion: Rosanta_SXX_2026.pdf, uno por carpeta SXX de
+ *     Reportes 2026 (regla de Juanma: si un reporte no esta en la carpeta de su semana,
+ *     no existe). Lo genera la tarea rosanta-reporte-semanal cada lunes.
+ *   · el plan mensual de Meta Ads: Plan_Meta_Ads_<Mes>_<Año>_Vanessa.docx en el
+ *     Workspace de Marketing OS. Lo deja la auditoria mensual (dia 3).
+ * Se listan con el servicio avanzado Drive v3 (drivesListar_, VentasPorProducto.gs),
+ * que es lo unico que funciona en esas carpetas. Solo LEE.
+ */
+var TAB_DOCS = {
+  reportes: { carpeta: '1PlWKHpl40qPIGkyF3Ej9rrDjHZFQ4SYP', patron: /^Rosanta_S(\d{2})_(\d{4})\.pdf$/i },   // Reportes 2026
+  planes:   { carpeta: '18T6Ik4MJ8DroQGBdiYEM56hHHVkF0Skj', patron: /^Plan_Meta_Ads_(.+)\.docx$/i },      // Workspace_Marketing OS
+  cacheSegs: 10 * 60
+};
+
+function getTableroDocumentos(auth) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  var cache = CacheService.getScriptCache(), k = 'tab_docs_v1';
+  var g = cache.get(k);
+  if (g) { try { return JSON.parse(g); } catch (e) { /* se recalcula */ } }
+  var out = { reportes: [], planes: [], avisos: [],
+              gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm') };
+  try {
+    // las subcarpetas SXX, y adentro el PDF de esa semana
+    drivesListar_("'" + TAB_DOCS.reportes.carpeta + "' in parents and trashed = false").forEach(function (f) {
+      if (f.mimeType !== 'application/vnd.google-apps.folder' || !/^S\d{2}$/i.test(String(f.name))) return;
+      drivesListar_("'" + f.id + "' in parents and trashed = false").forEach(function (p) {
+        var m = TAB_DOCS.reportes.patron.exec(String(p.name));
+        if (!m) return;
+        out.reportes.push({ id: p.id, nombre: p.name, semana: Number(m[1]), anio: Number(m[2]),
+                            carpeta: f.name, modificado: String(p.modifiedTime || '').slice(0, 10),
+                            url: 'https://drive.google.com/file/d/' + p.id + '/view',
+                            preview: 'https://drive.google.com/file/d/' + p.id + '/preview' });
+      });
+    });
+    out.reportes.sort(function (a, b) { return (b.anio - a.anio) || (b.semana - a.semana); });
+  } catch (e) { out.avisos.push('Reportes semanales: ' + String(e && e.message || e)); }
+  try {
+    drivesListar_("'" + TAB_DOCS.planes.carpeta + "' in parents and trashed = false").forEach(function (p) {
+      var m = TAB_DOCS.planes.patron.exec(String(p.name));
+      if (!m) return;
+      out.planes.push({ id: p.id, nombre: p.name, titulo: m[1].replace(/_/g, ' '),
+                        modificado: String(p.modifiedTime || '').slice(0, 10),
+                        url: 'https://drive.google.com/file/d/' + p.id + '/view' });
+    });
+    out.planes.sort(function (a, b) { return a.modificado < b.modificado ? 1 : -1; });
+  } catch (e2) { out.avisos.push('Planes de Meta Ads: ' + String(e2 && e2.message || e2)); }
+  try { cache.put(k, JSON.stringify(out), TAB_DOCS.cacheSegs); } catch (e3) { /* no importa */ }
+  return out;
+}

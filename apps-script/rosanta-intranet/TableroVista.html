@@ -44,6 +44,13 @@
     .tb-error { background: #F6E4DF; border-radius: 14px; padding: 0.9rem 1.1rem; font-size: 0.88rem; line-height: 1.5; margin-top: 0.8rem; }
     .tb-avisos { background: #FBF3E2; border-radius: 12px; padding: 0.7rem 1rem; font-size: 0.84rem; line-height: 1.5; margin-bottom: 0.9rem; }
     .tb-texto { background: var(--blanco); border-radius: 18px; padding: 1.2rem 1.4rem; font-size: 0.95rem; line-height: 1.6; max-width: 70ch; }
+    .tb-docbar { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.86rem; }
+    .tb-docbar select { font-family: 'Lato', Arial, sans-serif; font-size: 0.9rem; padding: 0.35rem 0.5rem; border: 1px solid rgba(26,26,26,0.18); border-radius: 8px; background: #fff; }
+    .tb-docbar a { color: var(--verde-bosque); }
+    .tb-doc { background: var(--blanco); border-radius: 18px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); overflow: hidden; }
+    .tb-doc iframe { display: block; width: 100%; height: 80vh; min-height: 520px; border: 0; }
+    .tb-docs { margin-top: 1.2rem; }
+    .tb-docs h3 { font-size: 1rem; margin: 0 0 0.5rem; color: var(--verde-bosque); }
     .tb-leyenda { font-size: 0.78rem; color: #52514e; margin-top: 1.4rem; line-height: 1.5; }
   </style>
 </head>
@@ -75,6 +82,7 @@
       <button type="button" class="tb-tab" data-p="profit"><span class="pt"></span>04 Profit</button>
       <button type="button" class="tb-tab" data-p="marketing"><span class="pt"></span>05 Marketing</button>
       <button type="button" class="tb-tab" data-p="expansion"><span class="pt"></span>06 Expansion</button>
+      <button type="button" class="tb-tab" data-p="reporte"><span class="pt"></span>Reporte semanal</button>
     </div>
 
     <div class="tb-panel act" id="p-fundamentos"><div class="tb-cargando">Leyendo Finanzas y Caja…</div></div>
@@ -83,6 +91,7 @@
     <div class="tb-panel" id="p-profit"><div class="tb-cargando">Leyendo Profit OS (puede tardar medio minuto en frio)…</div></div>
     <div class="tb-panel" id="p-marketing"><div class="tb-cargando">Leyendo Marketing OS y el CRM…</div></div>
     <div class="tb-panel" id="p-expansion"><div class="tb-cargando">…</div></div>
+    <div class="tb-panel" id="p-reporte"><div class="tb-cargando">Buscando los reportes en Reportes 2026…</div></div>
 
     <p class="tb-leyenda">Verde, amarillo y rojo salen de comparar el valor contra su meta. "defecto" en rojo al lado de una meta significa que la fila no existe en PARAMETROS y el sistema usa el valor de respaldo: hay que agregar la fila. "FALTA DATO" es un KPI que todavia no tiene fuente.</p>
   </main>
@@ -93,7 +102,7 @@
   var AUTH = '<?= authToken ?>';
   var B = <?!= JSON.stringify(urlBase) ?>;
   var T = <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
-  var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion'];
+  var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion', 'reporte'];
 
   function q(n, dec) {
     if (n === null || n === undefined || isNaN(n)) return '—';
@@ -159,6 +168,7 @@
     }
     html += '<p class="tb-leyenda">Calculado ' + esc(r.gen || '') + '</p>';
     el.innerHTML = html;
+    if (p === 'marketing') pintarPlanes();   // el plan de Meta Ads va al pie de este pilar
     // el punto de la pestaña: el peor semaforo del pilar
     var peor = 'gris';
     (r.kpis || []).forEach(function (k) {
@@ -170,12 +180,71 @@
   }
 
   function cargar(p) {
+    if (p === 'reporte') { cargarDocs(); return; }
     google.script.run
       .withSuccessHandler(function (r) { pintar(p, r); })
       .withFailureHandler(function (e) {
         document.getElementById('p-' + p).innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>';
       })
       .getTableroPilar(AUTH, p);
+  }
+
+  /* Los documentos: el PDF del reporte semanal (pestaña propia) y el plan mensual de
+     Meta Ads (tarjeta al final de 05 Marketing). Se muestran tal cual, desde Drive. */
+  var DOCS = null;
+  function pintarReporte() {
+    var el = document.getElementById('p-reporte');
+    if (!DOCS || !DOCS.reportes || !DOCS.reportes.length) {
+      el.innerHTML = '<div class="tb-error">No hay ningun Rosanta_SXX_2026.pdf en las carpetas SXX de Reportes 2026.' +
+        (DOCS && DOCS.avisos && DOCS.avisos.length ? '<br>' + DOCS.avisos.map(esc).join('<br>') : '') + '</div>';
+      return;
+    }
+    var ops = DOCS.reportes.map(function (r, i) {
+      return '<option value="' + i + '">S' + r.semana + ' · ' + esc(r.anio) + ' · ' + esc(r.modificado) + '</option>';
+    }).join('');
+    el.innerHTML = '<div class="tb-docbar"><label>Semana <select id="sel-reporte">' + ops + '</select></label>' +
+      '<a id="lnk-reporte" href="#" target="_blank" rel="noopener">Abrir en Drive</a>' +
+      '<span id="txt-reporte"></span></div>' +
+      '<div class="tb-doc"><iframe id="ifr-reporte" title="Reporte semanal" allow="autoplay"></iframe></div>' +
+      '<p class="tb-leyenda">Es el PDF que se revisa con los jefes de departamento: lo genera la tarea del lunes en la carpeta de su semana. El tablero no lo recalcula; si el reporte y una tarjeta de arriba dicen distinto, el reporte usa sus propios objetivos (cocina 26%, barra ponderada) y el tablero los de PARAMETROS.</p>';
+    var sel = document.getElementById('sel-reporte');
+    function ver() {
+      var r = DOCS.reportes[Number(sel.value)];
+      document.getElementById('ifr-reporte').src = r.preview;
+      document.getElementById('lnk-reporte').href = r.url;
+      document.getElementById('txt-reporte').textContent = r.nombre + ' · carpeta ' + r.carpeta;
+    }
+    sel.addEventListener('change', ver);
+    ver();
+  }
+  function pintarPlanes() {
+    var el = document.getElementById('p-marketing');
+    if (!DOCS || !el || el.querySelector('.tb-cargando')) return;
+    var previo = el.querySelector('.tb-docs');      // "Actualizar" vuelve a pintar: sin esto se duplica
+    if (previo) previo.parentNode.removeChild(previo);
+    var html = '<div class="tb-docs"><h3>Auditoria mensual de Meta Ads</h3>';
+    if (!DOCS.planes || !DOCS.planes.length) {
+      html += '<div class="tb-avisos">No hay ningun Plan_Meta_Ads_*.docx en el Workspace de Marketing OS.</div>';
+    } else {
+      html += '<div class="tb-grid">' + DOCS.planes.slice(0, 3).map(function (p, i) {
+        return '<a class="tb-card ' + (i === 0 ? 'verde' : 'gris') + '" href="' + esc(p.url) + '" target="_blank" rel="noopener">' +
+          '<div class="et"><span class="k">' + (i === 0 ? 'ULTIMO' : 'ANTERIOR') + '</span><span>' + esc(p.modificado) + '</span></div>' +
+          '<div class="per">Plan de Meta Ads para Vanessa</div>' +
+          '<div class="val" style="font-size:1.2rem">' + esc(p.titulo) + '</div>' +
+          '<div class="nota">Lo deja la auditoria del dia 3 (salud de la cuenta, dataset, campañas, audiencias y top 3 de acciones). Se abre en Drive.</div>' +
+          '<div class="fuente">' + esc(p.nombre) + '</div></a>';
+      }).join('') + '</div>';
+    }
+    html += '</div>';
+    el.insertAdjacentHTML('beforeend', html);
+  }
+  function cargarDocs() {
+    google.script.run
+      .withSuccessHandler(function (d) { DOCS = d; pintarReporte(); pintarPlanes(); })
+      .withFailureHandler(function (e) {
+        document.getElementById('p-reporte').innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>';
+      })
+      .getTableroDocumentos(AUTH);
   }
 
   function mostrar(p) {

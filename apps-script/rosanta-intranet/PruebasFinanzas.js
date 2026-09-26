@@ -887,6 +887,21 @@ function prFinanzas_(res) {
       rechazo ? 'invExigirDueno_ tira con rol chef; getTableroPilar pasa por ahi' : 'un chef entro al tablero', rechazo ? 1 : 0, 1);
   });
 
+  prCorrer_(g, 'El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive', function () {
+    var nombre = 'El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive';
+    var docs = getTableroDocumentos('');
+    var malos = [];
+    if (!docs.reportes.length) malos.push('ningun Rosanta_SXX_2026.pdf en las carpetas SXX de Reportes 2026');
+    if (!docs.planes.length) malos.push('ningun Plan_Meta_Ads_*.docx en el Workspace de Marketing OS');
+    (docs.avisos || []).forEach(function (a) { malos.push(a); });
+    var ultimo = docs.reportes[0];
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ')
+        : docs.reportes.length + ' reportes (ultimo S' + ultimo.semana + ' ' + ultimo.anio + ', ' + ultimo.carpeta + ') · ' +
+          docs.planes.length + ' planes (ultimo ' + docs.planes[0].titulo + ')',
+      docs.reportes.length, '>0');
+  });
+
   prCorrer_(g, 'Las metas del tablero salen de PARAMETROS o dicen que son defecto', function () {
     var nombre = 'Las metas del tablero salen de PARAMETROS o dicen que son defecto';
     var P = tabParametros_(), sinOrigen = [], defecto = [];
