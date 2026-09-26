@@ -7,293 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 25 sep 2026, noche (v27).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
-
----
-
-## Cierre del 25 sep 2026, noche (v27): el sitio pasa a Git, el código sale de la Mac
-
-Esta versión recoge lo que la v26 no vio: la v26 se escribió desde la sesión del tablero
-global y solo cubre la intranet. El mismo día hubo otras tres sesiones —el sitio, el orden
-de Drive y el repo, y el morning brief— y nada de eso estaba escrito.
-
-### 1. El sitio quedó CONECTADO a Git Integration de Wix (p168 cerrado)
-
-**Se acabaron las dos copias del backend.** El repo manda y el panel de código del Editor
-quedó en **solo lectura**: "You're viewing the latest code from origin/main as read-only".
-
-- **Repo nuevo: `Rosanta2024/rosanta-wix`**, privado, clonado en **`~/Dev/rosanta-wix`**.
-  Wix NO adopta un repo existente: crea uno. El paso 2 venía precargado con el nombre
-  `rosanta`, que es el repo VIEJO, y hubo que corregirlo a mano.
-- **El botón NO está en el Dashboard**, como decían las notas viejas: está en el
-  **Editor › barra de código › ícono de GitHub › Connect to GitHub**, en tres pasos.
-- **Ciclo completo probado:** `wix publish --source remote -y` corrió bien desde el clon
-  ("UI version 2191 · Your site has been published successfully"). Es exactamente el
-  comando que en julio devolvía `NOT_CONNECTED_TO_GIT`. Verificado contra el sitio en vivo,
-  no contra el editor: `/_functions/slots` devuelve horarios a +1, +60 y +200 días.
-- **El CLI pide una autorización de dispositivo aparte de `wix whoami`.** Da un código de un
-  solo uso que se pega en `https://users.wix.com/login/device-login`. **En la terminal se
-  aprieta ENTER, no espacio**: el espacio abre el registro de una cuenta nueva. El código
-  vence rápido; si vence, se vuelve a correr el comando.
-
-**EL HALLAZGO QUE IMPORTA, y era una bomba armada desde julio.** Al comparar el repo nuevo
-(lo que el Editor tenía publicado de verdad) contra `~/Dev/rosanta-site`: `http-functions.js`
-tenía **55 líneas con UNA función** en el repo viejo contra **437 con nueve** en producción,
-entre ellas `get_slots` y `post_reservar`, que son los dos endpoints del formulario de
-reservas. `events.js` 53 contra 140, `capi.js` 84 contra 56, y `crmReservas.js` y
-`jobs.config` directamente no existían. **Publicar desde el repo viejo no habría
-"desincronizado" nada: habría BORRADO la API de reservas del sitio.** No un formulario que
-miente — reservas caídas del todo.
-
-**LO QUE GIT NO CUBRE, para que nadie se confunda:** el repo lleva solo `src/backend`,
-`src/pages` y `src/public`. **El componente HTML del formulario de reservas (43 KB) vive en
-la configuración del elemento** y se sigue editando a mano en el Editor, que sigue siendo
-editable para todo lo que no sea código.
-
-**`~/Dev/rosanta-site` y `Rosanta2024/rosanta` son HISTÓRICOS** (p199): su README ya lo
-avisa en bloque, con la tabla del diff y la frase que importa. `notes/wix-deploy-setup.md`
-quedó marcado DESACTUALIZADO. **No confundirse de repo: el vivo es `rosanta-wix`.**
-
-### 2. El formulario de reservas: dejó de mentir y llega a 12 meses
-
-- **p166 cerrado.** `loadSlots()` ahora mira `r.ok`, `j.error` y `Array.isArray(j.slots)`
-  ANTES del `if` de longitud, y muestra un mensaje nuevo **`T.roto`** ("No pudimos cargar los
-  horarios… escribinos por WhatsApp al +502 3082 6935") en vez del de noche llena. Verificado
-  sobre el archivo ya publicado en los cinco casos: backend 500, cuerpo no-JSON, sin red, día
-  realmente lleno y backend sano (37 horarios).
-- **p198: calendario de 12 meses.** El síntoma era que en el teléfono la última fecha
-  ofrecida era el 23 de noviembre. No era un bug: `buildDates()` generaba exactamente 60
-  opciones. **Antes de tocar nada se probó el backend con curl a +60, +75, +90, +120, +180,
-  +270 y +365 días: los siete dan 200 con horarios reales**, o sea que el tope era solo del
-  formulario. El `<select>` pasó a botón + panel de calendario flotante (no inline: el
-  componente de Wix tiene altura fija y uno inline se habría cortado), con el horizonte en una
-  sola constante, `MESES_VISIBLES`. Se conservó un `<input type="hidden" id="date">` con el
-  mismo ISO de siempre, así que validación, confirmación y carritos abandonados no se tocaron.
-- **La URL del componente cambia con cada publicación.** Hoy es
-  `3de38d_f57f2495ccd58105fc33080f44ff1cb6.html`; la vieja `3de38d_9a4a77a3…` ya no es la
-  viva. **Cualquier nota que fije un hash queda vieja sola.**
-- **Trampa que costó un pegado:** `pbcopy` metió el archivo al portapapeles como **MacRoman**
-  y rompió todos los acentos en el Editor. Se detectó porque el editor reportaba 36660
-  caracteres cuando el archivo tiene 36660 **bytes** pero 36593 caracteres. **Copiar siempre
-  con `LANG=en_US.UTF-8` y comparar CARACTERES, no bytes.**
-
-### 3. El código de Rosanta tiene respaldo fuera de la Mac por primera vez
-
-`~/Dev/Rosanta` tenía git desde el 12-sep pero **no tenía remoto**: 104 commits vivían solo en
-el disco. Se subió a **`github.com/Rosanta2024/rosanta-os`** (privado) después de barrer los
-104 commits buscando secretos —las 31 coincidencias eran nombres de campo OAuth e IDs de
-hojas, no valores, y `clasp-creds.json` nunca entró al historial—. Quedó en **111 commits**, y
-el repo del sitio en 57.
-
-Se cerraron además **21 cambios sin commitear** que llevaban días en el disco, de sesiones ya
-terminadas, en cinco tandas por área. **El disco no era trabajo a medias: era el estado real
-que nadie había registrado.**
-
-**Routine nueva: `rosanta-latido-repo`, diaria 8:24.** Avisa si algo lleva más de un día sin
-commitear o si hay commits sin subir. **NUNCA hace commit, push ni pull**: con varias sesiones
-escribiendo a la vez, una tarea que guarde sola es la forma más rápida de perder trabajo ajeno.
-
-### 4. Drive y las carpetas, ordenados de punta a punta
-
-- **`_Archive` pasó de 822 MB a 16 MB**, pero cada archivo se verificó por contenido contra su
-  original vivo, y otra vez en el momento de borrar. Aparecieron dos capturas (EEGSA y Claro)
-  que no eran duplicados de nada y se devolvieron a su carpeta.
-- **`00_Admin` dejó de ser el cajón de sastre:** de 366 a 276 archivos.
-- **`~/Claude` quedó VACÍA.** Era el almacén de Cowork. `_App` se repuntó de `~/Claude` a
-  **`~/.claude`**, que es donde está lo vivo.
-- **Los proyectos de la app se llaman como su pilar** (`02_Management_OS`, no "Rosanta 02
-  Management"). El prefijo "Rosanta 0X" nunca lo aprobó Juanma: salió de la migración de
-  Cowork. Son **once espacios, nueve carpetas, cero rutas rotas**.
-- **SIC y SafeTour son PERSONALES**, no del pilar 1 (corrección de Juanma).
-- **REGLA NUEVA DE JUANMA: los expedientes NO se deduplican.** Un trámite guarda el juego
-  completo que se presentó, aunque repita patente, RTU o DPI. Lo que sí se deduplica son las
-  copias sueltas.
-- **Los nombres con espacios sobrantes rompen los movimientos**, y costó tres fallos antes de
-  atacarlo: una carpeta con espacio al final se lee como vacía. Se normalizaron **124 nombres**.
-- **Hallazgo al repartir:** los tres "recibos de servicios del local" eran del **IGSS** —cuotas
-  patronales de mayo a julio sobre Q11,450.70 de salarios, o sea planilla, no luz ni internet—.
-  Se abrió `03_Finance_Data_OS/Planilla_y_Propinas/IGSS_2026`.
-
-### 5. Las tareas programadas son NUEVE, verificadas con la herramienta hoy
-
-**OBSOLETA la tabla de ocho de la v24.** Leído con `list_scheduled_tasks` el 25-sep:
-
-| Routine | Cuándo | Estado |
-|---|---|---|
-| `rosanta-latido-reservas-web` | diaria 8:10 | activa |
-| `rosanta-latido-repo` | diaria 8:24 | activa, **nueva** |
-| `morning-brief-juanma` | L–V 6:06 | activa |
-| `rosanta-reporte-semanal` | lunes 16:24 | activa |
-| `rosanta-cierre-semanal` | domingos 18:20 | activa |
-| `rosanta-cerebro-mantenimiento` | día 1, 9:07 | activa |
-| `rosanta-reporte-mensual` | día 3, 9:08 | activa |
-| `auditoria-meta-ads-rosanta-mensual` | **día 3, 8:11** | activa (se movió del día 25) |
-| `rosanta-seguimiento-offsite` | lunes 8:24 | **apagada** hasta que termine la intranet |
-
-`rosanta-analista-pauta-lunes` sigue **borrada**; su carpeta en disco no significa nada.
-
-### 6. Tres routines apuntaban a una carpeta que ya no existe
-
-Consecuencia directa del renombrado del punto 4, y **nadie se iba a enterar**: la carpeta vieja
-`Projects/Rosanta 03 Finanzas` **todavía existe pero está vacía**, así que ninguna habría
-fallado con "no existe" — habrían leído nada y seguido de largo.
-
-- `morning-brief-juanma` y `rosanta-cierre-semanal`: la ruta del tablero.
-- `rosanta-reporte-mensual`: mandaba a correr `.venv/bin/python` desde la carpeta vieja, y ese
-  venv vive en la nueva.
-
-Las tres corregidas a `Projects/03_Finance_Data_OS`, con respaldo `SKILL.md.antes-ruta-25sep`.
-Verificado después: cero menciones a la ruta vieja en `~/.claude/scheduled-tasks` y las dos
-rutas nuevas resuelven en disco.
-
-**REGLA: renombrar una carpeta de proyecto no avisa a las tareas programadas que la tienen
-escrita. Después de un renombrado hay que barrer `~/.claude/scheduled-tasks` igual que se
-barren los alias.**
-
-### 7. Un conteo de fallos sin denominador no es un hallazgo
-
-El morning brief del 25-sep levantó tres cosas y **dos no sobrevivieron a su propia
-verificación**. Vale escribirlas porque el error es repetible:
-
-1. **`calentarCaches` NO "lleva cinco días fallando".** Corre **cada 5 minutos** (documentado
-   en la cabecera de `CalentarCaches.js` y verificado en p107), o sea ~288 corridas por día:
-   cinco fallos en seis días son **5 de ~1,730, el 0.3%**. La corrida que muere a las 04:23 la
-   reemplaza la de las 04:28. Y **la función no puede lanzar esos errores**: cada bloque va en
-   su propio try/catch y termina en `Logger.log`; no lanza a propósito, porque no es un monitor
-   sino una comodidad (Latido es el que avisa). Los dos mensajes que llegan por correo son de
-   la plataforma matando la ejecución antes de que el código atrape nada, así que **un
-   reintento con espera no tendría dónde ir**. No se tocó código.
-   - Lo único real, y es chico: esos fallos transitorios mandan correo de "activador fallido",
-     que es **el mismo canal** por el que avisa Latido. Ruido inofensivo en el canal de las
-     alarmas de verdad. La palanca, si algún día molesta, es bajar la frecuencia del activador.
-2. **La colección `tablero` del artefacto está vacía y NO es un defecto.** Cero documentos:
-   `marcas` y `manuales` no existen, no es que existan vacíos. El JS del tablero escribe en
-   `db.doc('tablero/marcas')` y `db.doc('tablero/manuales')`, exactamente las direcciones que
-   lee el brief, así que el cableado está bien. Está vacía porque **desde que el tablero dejó el
-   localStorage (23-sep) nadie ha marcado nada desde la página**. El día que Juanma marque una
-   tarea, el documento nace.
-
-### 8. Decisiones de Juanma del día
-
-- **La colaboración de Ingrid Altamirano (actriz e influencer, viaje a Antigua del 8 al 10 de
-  octubre) NO interesa**, y **no se envió ningún correo**. El hilo queda sin contestar.
-- **El seguimiento del depósito de Krystal Nwankwo sale del tablero** y se lleva en el directo.
-  Estado al cerrar: prueba de Q73.89 confirmada, faltan Q10,851.11 de los Q10,925.
-
----
-
-## Cierre del 25 sep 2026 (v26): el tablero global, publicado en la @124
-
-**El equipo está en la @124** (verificado: `list-deployments` releído tres veces y la @124 bajada aparte idéntica al disco, 62 archivos). Batería sobre HEAD: **126 OK · 0 fallas · 4 avisos · 3 saltadas** (177 s). Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md`; catálogo en `Rosanta OS/03_Finance_Data_OS/KPIs/KPI_Definiciones.md`.
-
-### 1. Qué es el tablero global
-
-`?page=tablero`, **solo rol dueño** (misma guarda que `pruebas`), puerta "Tablero global" en el panel principal. Seis pestañas, una por pilar, con tarjetas: valor · semáforo contra su meta · tendencia contra el mes anterior · enlace a la pestaña del pilar. **Regla que lo hace funcionar: NO CALCULA NADA.** Cada valor es el campo del motor de su pilar (`FinanzasDatos`, `CajaDatos`, `Dashboard` + `PuenteCmv`, `InventarioDatos`, `MarketingDatos` + `CrmDatos`); `TableroDatos.js` solo elige el campo, lee la meta de `PARAMETROS`, compara y pone al lado el mes anterior. La batería lo vigila ("El tablero global no calcula: cada valor es el campo de su motor"). Una llamada por pilar (`getTableroPilar`), para que Profit OS no frene a los otros cinco.
-
-19 KPIs en catálogo: 9 ya existían, 7 se construyeron en el motor de su pilar, 3 esperan dato (comisión de tarjeta, reseñas, clientes que vuelven). Fuera de alcance por decisión de Juanma: rotación de mesa, SPLH, merma como registro propio.
-
-### 2. Lo que se construyó en los motores (25-sep)
-
-- **`FinanzasDatos.js`**, por mes: `ebitda`, `ebitdap`, `eventos_n`, `sin_factura`, `sin_factura_iva`, `mb_comensal`, `com_lmx_dia`, `medios`; totales del año; caché `finanzas_v11`. Espejo en `generar_finanzas.py`: **motor == Python en los 9 campos, los 9 meses**.
-- **EBITDA (decisión de Juanma, 25-sep): `neto + Impuestos + venta de eventos`.** Sin depreciación (el maestro no la registra) ni intereses (no hay deuda). **Bienes de uso NO se suma de vuelta** hasta que exista una categoría de inversión. En vivo: año Q54,227 (4.0%).
-- **`InventarioDatos.js`** › `invEstadoCierre_`: el mes anterior al actual, por área, contra el día límite (`inventario_cierre_dia`, 5 por defecto). Al 25-sep: barra agosto cerrado (verde); cocina agosto abierto desde el 14-sep (rojo). **Los inventarios se cierran desde la intranet** (Juanma, 25-sep).
-- **`CrmDatos.js`** › `crmAltasPorMes_`: solo "Cliente que visitó" (regla del 23-sep) con la tasa de lectura al lado; **`MarketingDatos.js`** › `mktKpisMes_`: CAC (medios de Finanzas ÷ altas), ROAS proxy de `pauta_semanal` y eventos por mes.
-- **Metas:** `PARAMETROS` sigue con dos filas. El tablero propone 15 más (tabla §8 del catálogo) y las marca "defecto" en rojo hasta que existan. `_finParametro_` trata el 0 como fila vacía: una meta de cero no se puede guardar ahí.
-
-### 3. Decisiones y hallazgos del día
-
-- **Archivados con el sí de Juanma:** `Rosanta_Tablero_de_Metas.xlsx`, `rosanta_ruta_metas.html` y `PnL_5_Numeros/` → `Rosanta OS/_Archive/Tablero_Metas_2026-09-25/`. Verificado antes: nada los referenciaba. El artefacto `rosanta-ruta-metas` ya no existía.
-- **Sin decidir:** meta del año y curva H2 en `METAS` (recomendación: la curva, ~Q1.95M; la automática es un piso); fuente de la comisión de tarjeta (recomendación: liquidaciones de VISANET y BAC Credomatic, que traen bruto, comisión, ISR e IVA; el POS solo da el bruto); **y cuál meta de food cost manda: el reporte semanal S38 usa cocina 26% y barra ponderada, `PARAMETROS` e intranet 28 y 20.**
-- **El despliegue estaba en la @123, no en la @101** que decía el cerebro: 22 versiones entre el 22 y el 25-sep. Y **git iba por delante de lo publicado** en `EdicionRecetario.js` (candado "una unidad no es un número") y `Latido.js` (sexta señal, p164): la @124 los lleva.
-- **La regla 9 ya no existe** en `FinanzasDatos.js` (retirada el 23-sep, la reemplaza la 15). Cualquier catálogo o informe que la cite quedó viejo.
-
-### 4. Reglas nuevas
-
-1. **`clasp login` con la autorización vencida dice "You are logged in" y no renueva nada.** El archivo `~/.clasprc.json` conserva la fecha vieja y `push` sale con código 0 sin subir. Arreglo: `clasp logout` y `clasp login`; verificar la **fecha del archivo** y `tokeninfo` antes de creerle.
-2. **Probar sin clasp:** `tools/harness-intranet/` corre el código real de la intranet en Node sobre el espejo (mocks de Apps Script). No cubre Profit OS, HtmlService ni la planilla externa. Sirvió para probar el tablero entero antes de que Juanma pudiera renovar clasp.
-3. **Los clics de Claude in Chrome no llegan a las páginas de Apps Script** (ni botones ni enlaces dentro del sandbox), y las pestañas vivas se leen estirando el iframe con JS y capturando pantalla. La revisión visual de una pantalla nueva la hace Juanma en su Chrome.
-4. **Antes de un push, bajar la versión publicada aparte y compararla con git:** si otra sesión versionó desde un disco distinto, el push la pisaría. Hoy la comparación mostró lo contrario (git más nuevo), pero es lo que hay que mirar.
-5. **`generar_finanzas.py` no lee el Sheet de planilla:** su respaldo en código se queda en el último mes cargado y el prime cost difiere 1-2 puntos de la intranet sin que sea error del motor. Comparar primero food cost y ventas.
-
-### 5. Pendientes que deja
-
-- Filas de `PARAMETROS` y pestaña `METAS` (`instalarMetas()`), con los números que Juanma decida.
-- K08 comisión de tarjeta (fuente), K18 reseñas (`RESENAS_SHEET_ID` + pestaña `RESENAS_TA`), K19 retención (p163).
-- ~~Revisar en Chrome las seis pestañas del tablero en producción.~~ Hecho por Juanma el 25-sep: "se ven bien las seis".
-- Commit en git del trabajo del 25-sep (13 archivos, sin commitear hasta que Juanma lo pida).
-- Meta de food cost: 26/ponderado (reporte semanal) contra 28/20 (`PARAMETROS`).
-
----
-
-## Cierre del 23 sep 2026, tarde (v25): p163, el CRM mide visitas y el consumo tiene dueño
-
-**Regla nueva en el CRM, publicada (clasp push, proyecto Rosanta Marketing OS, `CRMSync.js`):** una persona pasa a **"Cliente que visitó"** si tiene consumo tecleado **o** si su reserva quedó **Seated/Finished** en Wix. Reserved y No-show siguen en "Reserva histórica" (sin evidencia). Verificado: la corrida de las 14:34 subió exactamente **18 filas** (14 de agosto, 4 de septiembre) y ninguna otra. **El CAC ya no depende del consumo**: se mide por visita, que es lo que Juanma pidió.
-
-**Regla operativa en Wix, acordada con Juanma (pasársela al equipo):**
-1. Al sentarse la mesa → **Seated**. No dispara nada más que el aviso al CRM.
-2. Al terminar el servicio → escribir el total del ticket en "Consumo total de la mesa (Q)" y **dejarla en Seated**. Probado el mismo día con Juanma: la edición posterior del monto llega a la pestaña `reservas` igual (id 71c938e1, 225 → 300).
-3. **Finished solo para pedir la reseña**: `events.js` dispara el correo de TripAdvisor únicamente con FINISHED. Por eso Juanma NO cerraba mesas y usaba No-show para "cerrar".
-4. **No-show solo si de verdad no llegó.** Si no se sabe, se deja en Reserved.
-- **OJO con la historia:** los No-show de agosto y septiembre 2026 **no son ausencias reales**, significan "no sabemos". No leerlos como no-shows. Juanma decidió NO crear un segmento propio para No-show.
-
-**Lista corta semanal (`ConsumoPendiente.js`, mismo proyecto):** cada **lunes a las 8** llega a restaurante@rosanta.rest un correo con las reservas de la semana anterior que siguen Seated/Finished sin consumo o Reserved sin cerrar, cada una con enlace directo a la reserva en Wix; si no falta nada no manda correo; los No-show no salen. Activador instalado por Juanma desde el editor; primer correo recibido a las 14:41. **Juanma es quien lo trabaja.** Complemento de la otra sesión: chequeo 4 de `Verificador.js` (alarma si hay más de 10 mesas abiertas con 3 días de gracia). p186 queda cubierto sin duplicarlo en Latido.
-
-**El cruce con el POS NO sirve para llenar el consumo solo** (corrida en seco, 91 reservas reales del 1-ago al 22-sep): ticket único en 32 (35%), ambiguo en 51, sin ticket en 8; y de 10 con consumo tecleado que resolvió, falló 3. Causa: la hora del POS es la del cierre en caja, no la de la mesa (41% de los tickets se cierran en racimos de 4+ en 10 minutos) y "Comensales" viene vacío 1 de cada 10. Solo se reactiva si caja cierra cada ticket cuando la mesa paga. Archivos en `CRM_y_Retencion/2026-09-23_p163_*`.
-
-**Quién recibe el consumo:** la pestaña CRM de la intranet y la 6ª señal del Latido lo leen solos del CRM. `ValorReserva.js` (Purchase con valor a Meta) **nunca corrió** (no existe `capi_log`) y Meta rechaza eventos de más de 7 días; **decisión de Juanma: se deja así, el frente de pauta queda cerrado.**
-
-**Números para el CAC:** agosto 72 altas Wix / **33 visitas confirmadas** → CAC ~**Q67** como techo (antes Q116 con 19). Septiembre no legible aún: 42 altas, 7 confirmadas, 26 en No-show ("no sabemos"). Desde hoy septiembre arranca medible si el equipo marca Seated.
-
-**De la otra sesión del mismo día (workspace-pauta-b8), para no rehacerlo:**
-- **p164 hecho:** sexta señal en `Latido.js` (rosanta-intranet) con DOS medidas separadas: **captura** = altas del CRM / tickets del POS, avisa bajo 15%; **lectura** = confirmadas / altas, avisa bajo 50%, 3 días de gracia. Calibrado con `latidoCapturaHistorico()`: captura 20% a 180 días y 29% a 30 días (canal sano); lectura 77% a 180 días cayendo a 29% a 30 días. Agosto obliga a separarlas: captura 25% con lectura 57%; con una sola medida parecía canal roto y no lo era.
-- **p10, regla del denominador — DECIDIDO por Juanma el 23-sep, no reabrir** (`_informes/2026-09-23_p10_CAC_regla_denominador.md`): el denominador del CAC son **solo las altas del mes con segmento "Cliente que visitó"**. Quedan fuera carritos abandonados, cancelados **y "Reserva histórica"** (la reserva que llegó al CRM pero cuya mesa nadie marcó, así que no se sabe si vino). Un CAC cuenta clientes que entraron, no reservas. Denominador por mes, leído el 23-sep: ene 47 · feb 47 · mar 41 · abr 15 · may 59 · jun 35 · jul 31 · ago 33 · sep 7. Serie de CAC ya calculada: ene Q47 · feb Q32 · mar Q20 · may Q30 · jun Q58 · jul ~Q98 · ago ~Q67.
-  - **GUARDA OBLIGATORIA, es parte de la regla y no un comentario.** Junto al CAC se publica siempre la **tasa de lectura** del mes = `Cliente que visitó / (Cliente que visitó + Reserva histórica)`. Umbrales: **≥90% comparable · 50-90% se publica advirtiendo que sale inflado · <50% NO se publica**, no hay CAC sino un dato faltante. Sin esta guarda la regla convierte un descuido del salón en una conclusión falsa sobre la pauta. Se vigila sola desde el 23-sep: sexta señal de `Latido.gs` (p164).
-  - **Meses que no son comparables, y por qué cada uno es distinto:** abril (15 clientes con lectura 100% — no es que no se registrara, es que no entraron reservas); julio (reconstruido a mano, sin dato del 23 al 31, el 31 es un piso); **agosto (lectura 57%, su CAC sale cerca del doble del real) y septiembre (lectura 18%, no se publica)**. Agosto y septiembre no son meses caros, son meses mal registrados, y la causa quedó resuelta el 23-sep con la regla de visita de p163.
-  - El argumento descartado (usar visitó + histórica, para que el CAC no se mueva por el hábito del salón) queda escrito al final del informe con su razón. La guarda de lectura existe justamente para administrar ese riesgo.
-
-**Reglas técnicas del día:**
-- **No dejar respaldos dentro de la carpeta de un proyecto clasp**: `clasp push` los sube como archivos del proyecto y duplica funciones (pasó con `_Archive/`; se corrigió con un segundo push; los respaldos van en `apps-script/_Archive/<proyecto>/`). Y `clasp push` nunca borra archivos remotos: para sacar uno hay que hacer un push con un cambio real.
-- **El tablero `rosanta-seguimiento-semanal` ya no está en `~/Claude/Artifacts/`**: se edita bajando el HTML del artifact publicado (`Artifact read` + republicar con `url`). Hoy quedó en la v12.
-- La pestaña `reservas` escapa el guion bajo en el dump de Drive (`NO\_SHOW`): filtrar por estado con eso en cuenta.
-- El formulario web y el bot siguen bien: el latido diario de las 8 corrió el 16-sep (33 franjas, bot ok).
-
----
-
-## Cierre del 23 sep 2026 (v24): todo se muda a Claude Code
-
-**Decisión de Juanma: el trabajo se hace en Claude Code. En Cowork quedan solo el proyecto SIC y las preguntas sueltas del día a día.** Se vació: sus 12 tareas programadas están borradas y `~/Claude/Scheduled/` quedó sin carpetas.
-
-**OBSOLETA la tabla de abajo desde el 25-sep-2026: son NUEVE routines, no ocho, y hay una nueva (`rosanta-latido-repo`). La tabla verificada con `list_scheduled_tasks` está en la v27 §5.** **Las tareas son ahora routines de Claude Code**, en `~/.claude/scheduled-tasks/`, creadas con `mcp__scheduled-tasks__create_scheduled_task`. Corren como sesión de Code en la Mac, con el Drive montado y las skills locales, y solo con la app abierta. Son ocho:
-
-| Routine | Cuándo |
-|---|---|
-| `rosanta-latido-reservas-web` | diaria 8:10 |
-| `morning-brief-juanma` | L–V 6:06 |
-| `rosanta-analista-pauta-lunes` | **borrada** el mismo día por Juanma |
-| `rosanta-reporte-semanal` | lunes 16:24 |
-| `rosanta-cierre-semanal` | domingos 18:20 |
-| `rosanta-cerebro-mantenimiento` | día 1, 9:07 |
-| `rosanta-reporte-mensual` | día 3, 9:08 |
-| `auditoria-meta-ads-rosanta-mensual` | día 25, 8:11 |
-| `rosanta-seguimiento-offsite` | lunes 8:24, **apagada** hasta que termine la intranet |
-
-**Las 18 skills propias viven en `~/.claude/skills/`.** Las de claude.ai son un caché que se sincroniza y se pisa: de ahora en adelante se edita la copia local. Las 17 de Anthropic (docx, pdf, xlsx, skill-creator…) no se copiaron: Code ya las trae.
-
-**Los 12 artefactos de Cowork se publicaron como Artifacts de Code**, cada uno con su enlace; la lista está en `Rosanta 03 Finanzas/_archivo/artefactos-publicados.md`. Dos novedades técnicas: el **tablero `rosanta-seguimiento-semanal`** dejó el `localStorage` y guarda lo que Juanma marca o agrega en el almacenamiento del propio artefacto (`db`), así que **el cierre del domingo ya puede leer sus marcas**; y el CRM y el panel del bot leen su Google Sheet con la capacidad `mcp` del artefacto, porque `window.cowork.callMcpTool` no existe fuera de Cowork.
-
-**Las memorias de proyecto se rescataron**: 141 archivos importados a `~/.claude/projects/<proyecto>/memory/` (Pauta 33 de 56, Eventos 31, Profit 45, Finanzas 25, Branding 4, Management 3). Se limpiaron 13 con nota fechada y se borraron 3 obsoletas. SIC y Safe Tour quedan fuera: son personales. Las instrucciones de cada espacio de Cowork se escribieron como `CLAUDE.md` en la carpeta de su proyecto.
-
-**El reporte semanal cambió de formato y de casa.** Ya no es el PDF de una página: son **6 páginas** y la especificación única es `Rosanta_Formato_Reporte_Semanal.md` en la carpeta Maestro (la skill `rosanta-reporte-semanal-formato` se borró para no tener dos versiones). Cada reporte vive en la carpeta de su semana, `Reportes 2026 / SXX / Rosanta_SXX_2026.pdf`; si no está ahí, se elimina. Lleva punto de equilibrio semanal y diario (Q35,097 y Q5,014, margen de contribución 43.1%), excluye el gasto de marketing y **no lleva nombres de personas**: los responsables son departamentos. Las reservas salen del Marketing OS, no de SonTickets. En la Mac no hay weasyprint ni Homebrew: el PDF lo imprime **Chrome headless** y el generador verifica solo que no se corte ninguna sección.
-
-**Marca aplicada al reporte:** paleta Segunda Cosecha completa (Verde Bosque `#4E6D5A`, Verde Medio `#57A77F`, Lila Lavanda `#AEAAE2`) y tipografía **Peskia** en titulares y cifras con **Avenir** en cuerpo. Peskia ya está comprada e instalada en `~/Library/Fonts`.
-
-**Precios de evento cerrados este día:**
-- **Barra Libre Q200 → Q225** (a 4 bebidas por persona el CMV estaba en 28.2%; ahora 25%).
-- **Combo Tapas + Barra Libre Q350 → Q375**. El combo nunca tuvo descuento: siempre fue la suma.
-- **Mocktails: Q55 el de la casa (llave POS 153) y Q75 el Plus (llave 179)**, ya cambiados en el POS. Los dos tienen ficha nueva en `Rosanta_Recetario_Barra_v6_2026-09-23.xlsx`: el de la casa son dos ingredientes a base de pulpa (maracuyá o mango) y cuesta Q4.27 a Q7.91; el Plus es la receta completa y cuesta Q2.89 a Q6.23. Ojo con la paradoja: el simple con maracuyá es el más caro de producir.
-- El paquete limitado se queda en **Q150** (22% de CMV). Falta recalcular el **fuerte con postre Q260** de Para Compartir con el tier nuevo (lomito Q225 premium, pollo Q210 estándar).
-
-**Regla nueva sobre los mocktails:** ninguno subió con la carta 2027 hasta hoy; el mix real de barra medido en el POS (S31–S38, 588 unidades) es **54% coctel, 24% vino de copa, 22% cerveza**, con precio de carta medio Q65.55 y costo medio Q14.11.
+**Última actualización: 22 sep 2026 (v23).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
@@ -400,36 +114,20 @@ los extras**, porque no dice cuánta gente hizo falta. **"Salario devengado" ent
 base está vacío:** en enero cuatro personas lo tienen repetido y sumarlo contaría Q18,000 dos
 veces. Verificado fila por fila.
 
-### 5. La regla 9 se retiró el 23-sep-2026, y el miedo que la sostenía estaba sobredimensionado
+### 5. La regla 9 hay que retirarla, y ya está medido cómo
 
-Juanma: *"La regla 9 no tiene sentido. La mayoría de proveedores generan FEL."* Tenía razón: la
-**regla 9 corría ANTES que la 15 y saltaba el pago sin mirar si la factura existía**. Se retiró
-entera el 23-sep —la lista también, para que nadie crea que sigue haciendo algo— y hoy manda la
-**regla 15**, que casa cada pago con UNA factura (mismo bloque del DRE, monto ±Q0.01, factura de
-45 días antes a 10 después) y sólo entonces lo descarta. Un pago sin factura cuenta como gasto,
-que es lo conservador. La prueba que vigilaba la regla 9 quedó como centinela: avisa si
-`FIN_PAGO_DE_FACTURA` vuelve a estar viva.
+Juanma: *"La regla 9 no tiene sentido. La mayoría de proveedores generan FEL."* Tiene razón, y
+el código lo confirma: la **regla 9 corre ANTES que la 15 y salta el pago sin mirar si la
+factura existe**; la 15 casa contra una factura concreta y solo entonces descarta.
 
-**Lo que frenaba el retiro era el pago agrupado, y medido vale mucho menos de lo que parecía.**
-La medición vieja —394 pagos del BI a proveedores, con la regla que dio Juanma *"siempre es el
-monto exacto o la suma de varias facturas"*: 319 casados, 273 con una factura y **46 con la suma
-de varias**— tomaba el universo ENTERO de pagos del BI, que incluye nómina, impuestos, inmueble y
-comisiones, bloques donde la regla 15 no aplica a propósito.
+Medido sobre los 394 pagos del BI a proveedores, con la regla que dio Juanma —*"siempre es el
+monto exacto o la suma de varias facturas"*—: **319 casados (81%)**, 273 con una factura y 46
+con la suma de varias. Los 75 restantes incluyen pagos de tarjeta (no son gasto) y facturas de
+2025 (Edwin Q4,500 y Elder Q4,670, confirmados por Juanma).
 
-Acotado al alcance real de la regla (sus seis bloques) y medido el 23-sep sobre el espejo del
-21-sep: **181 pagos, 84 casan uno a uno (Q42,913) y 97 quedan sueltos (Q105,100)**. De esos 97,
-los que son la suma de 2 o 3 facturas del mismo NIT dentro de la ventana son **2, por Q1,027.46**,
-y uno es coincidencia de monto. **El único caso real es Claro: Q388.58 + Q388.88 = Q777.46**,
-pagados el 11-jun por el portal del BI.
-
-O sea: enseñarle a la regla 15 a casar contra varias facturas no vale el trabajo hoy (p192). Y si
-alguna vez se hace, primero hay que fijar el criterio —mismo NIT, ventana, cuántas facturas como
-máximo—, porque combinar montos hasta que sumen es justo como se fabrican pares falsos: 1 de los
-2 candidatos de hoy ya lo es.
-
-**Regla de método que deja esto:** un número medido sobre un universo más grande que el de la
-regla que se está evaluando no mide esa regla. El 46 sobrevivió tres días y volvió a citarse como
-si fuera del alcance de la 15.
+**No se retiró todavía**: quitarla hoy contaría dos veces los pagos agrupados, porque la
+regla 15 exige que el monto calce con UNA factura. Primero hay que enseñarle a casar un pago
+contra varias del mismo NIT. Se retira proveedor por proveedor, no de un golpe.
 
 ### 6. `COMPRAS_2026` es la pieza que faltaba para el cuadre de proveedores
 
@@ -1601,7 +1299,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **El equipo está en la @100 (16 sep, noche): Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
@@ -1618,17 +1316,6 @@ Antes de trabajar en cualquiera, lee la sección correspondiente de `references/
 `references/ecosistema.md` tiene el mapa de skills instaladas, herramientas locales, artefactos vivos, tareas programadas y el flujo que los conecta. Leerlo antes de crear contenido, paneles o documentos, para reutilizar en vez de duplicar.
 
 ## Reglas de trabajo con Juanma (siempre aplican)
-
-0. **BUSCAR ES SEGUIR LOS ENLACES Y MIRAR TAMBIÉN DRIVE.** Los proyectos de la app son carpetas
-   chicas con un acceso directo al pilar: una búsqueda que no sigue enlaces no ve los documentos y
-   devuelve casi nada SIN avisar. Medido el 25-sep-2026 en 00_Admin: `grep -r` dio 1 archivo y
-   `grep -R` dio 8; `find` vio 1 y `find -L` vio 336. Reglas: usar `grep -Ril` y `find -L`, nunca
-   `grep -r` ni `find` a secas; los nativos de Google (`.gdoc`, `.gsheet`, `.gslides`) NO tienen
-   texto en disco —un `.gdoc` pesa 179 bytes, es un puntero— y se leen con el conector de Google
-   Drive (`search_files`, `read_file_content`, `get_file_metadata`); una búsqueda completa mira los
-   dos lados; y al reportar se dice CUÁNTOS archivos se revisaron, porque "no encontré nada"
-   después de mirar uno no es un resultado, es una búsqueda que no corrió. El mismo protocolo está
-   escrito en los nueve CLAUDE.md de los proyectos.
 
 1. **Confirmar la fuente de datos ANTES de construir.** Si un análisis depende de una pestaña/Sheet/export, preguntar primero si es la fuente vigente y cómo tratar huecos. Hoy la fuente financiera es el **Sheet nativo del maestro**, no el xlsx.
 2. **NO mencionar la rotación de la API key de Anthropic.** Juanma pidió explícitamente que no se le vuelva a preguntar.
