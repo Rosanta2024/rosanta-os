@@ -164,9 +164,9 @@ function vigiaReglas_(ctx) {
   // V3 · mesas por cerrar en Wix y lectura del mes
   if (ctx.mesas) {
     var n = ctx.mesas.falta_consumo.length + ctx.mesas.sin_cerrar.length;
-    if (n) aviso('sala', n + ' mesas de los últimos 7 días sin cerrar en Wix (' + ctx.mesas.sin_cerrar.length + ' en Reserved, ' + ctx.mesas.falta_consumo.length + ' sin consumo).', n >= 5);
+    if (n) aviso('sala', (n === 1 ? '1 mesa' : n + ' mesas') + ' de los últimos 7 días sin cerrar en Wix (' + ctx.mesas.sin_cerrar.length + ' en Reserved, ' + ctx.mesas.falta_consumo.length + ' sin consumo).', n >= 5);
     var lect = ctx.mkt ? ctx.mkt.lectura : null;
-    if (lect !== null && lect < 50 && n) sugerir('V3-wix', 'management', 'José', 'Cerrar en Wix las ' + n + ' mesas pendientes (Seated y consumo): la lectura del mes está en ' + lect + '% y sin ella no hay CAC.');
+    if (lect !== null && lect < 50 && n) sugerir('V3-wix', 'management', 'José', 'Cerrar en Wix ' + (n === 1 ? 'la mesa pendiente' : 'las ' + n + ' mesas pendientes') + ' (Seated y consumo): la lectura del mes está en ' + lect + '% y sin ella no hay CAC.');
   }
   // V4 · food cost sobre el tramo dos semanas seguidas
   var S = (d.semanas || []).filter(function (s) { return !s.corta; }), tramo = M.food.valor || d.meta_cogs;

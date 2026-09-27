@@ -319,7 +319,7 @@
       (r.previa || []).map(function (x) {
         return '<tr><td>' + esc(x.nombre) + '</td><td class="n">' + (x.meta === null || x.meta === undefined ? '—' : Number(x.meta).toLocaleString('es-GT')) + '</td><td class="n">' +
           (x.reales || []).map(function (v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('es-GT'); }).join(' · ') +
-          '</td><td class="n">' + (x.promedio === null ? '—' : Number(x.promedio).toLocaleString('es-GT')) + '</td><td>' + pill(x.zona, x.propuesta) + '</td></tr>';
+          '</td><td class="n">' + (x.promedio === null || x.promedio === undefined || isNaN(x.promedio) ? '—' : Number(x.promedio).toLocaleString('es-GT')) + '</td><td>' + pill(x.zona, x.propuesta) + '</td></tr>';
       }).join('') + '</table></div>' +
       '<p class="tb-leyenda">Es una vista previa: la regla formal corre en cada recalibración y solo sobre meses que ya tenían meta en METAS. Un cambio se escribe a mano en METAS con fecha, de cuánto a cuánto y por qué; la fila vieja no se borra.</p>';
     h += '<div class="md-h">El vigía · la intranet proactiva</div><div id="vig"><div class="tb-cargando">Armando los mensajes de hoy…</div></div>';
