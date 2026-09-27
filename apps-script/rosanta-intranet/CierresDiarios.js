@@ -90,6 +90,19 @@ function _cieComensalesReserva_(fechaIso) {
  * Lee los cierres de los ultimos `dias` dias y los guarda. Un dia ya guardado se
  * reemplaza solo si el correo es mas nuevo. Devuelve lo que hizo.
  */
+/**
+ * Los bytes del adjunto. El servicio avanzado de Gmail NO siempre entrega att.data como el
+ * texto base64url de la API REST: en Apps Script llega como arreglo de bytes, y
+ * base64DecodeWebSafe falla con "Could not decode string" (27-sep-2026, 38 de 38 correos).
+ * Se aceptan las dos formas; el texto se normaliza a base64 comun con su relleno.
+ */
+function _cieBytes_(data) {
+  if (data && typeof data !== 'string' && data.length !== undefined) return data;
+  var t = String(data || '').replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+  while (t.length % 4) t += '=';
+  return Utilities.base64Decode(t);
+}
+
 function cieLeer_(dias) {
   dias = dias || 7;
   var lista = Gmail.Users.Messages.list('me', { q: CIE_QUERY_ + ' newer_than:' + dias + 'd', maxResults: 60 });
@@ -112,7 +125,7 @@ function cieLeer_(dias) {
       while (cola.length) { var p = cola.shift(); if (p.parts) cola = cola.concat(p.parts); if (p.filename && /\.pdf$/i.test(p.filename) && p.body && p.body.attachmentId) partes.push(p); }
       if (!partes.length) throw new Error('sin PDF adjunto');
       var att = Gmail.Users.Messages.Attachments.get('me', mm.id, partes[0].body.attachmentId);
-      var blob = Utilities.newBlob(Utilities.base64DecodeWebSafe(att.data), 'application/pdf', partes[0].filename);
+      var blob = Utilities.newBlob(_cieBytes_(att.data), 'application/pdf', partes[0].filename);
       var c = cieParsear_(_ciePdfTexto_(blob));
       if (!c.fecha || c.gran_total === null) throw new Error('no pude leer la fecha o el total');
       var row = [c.fecha, c.gran_total, c.sin_propina, c.propina, c.tarjeta, c.efectivo, c.transferencia, c.pedidos_ya,
