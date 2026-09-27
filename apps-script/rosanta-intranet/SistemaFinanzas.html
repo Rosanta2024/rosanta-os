@@ -4,6 +4,21 @@
   <base target="_top">
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
+  <style>
+    /* MODULOS EN EL LATERAL, HERRAMIENTAS ARRIBA (Juanma, 27-sep-2026, regla para toda la
+       intranet; el lateral es el mismo .sm-side del Sistema de Marketing). La pagina sigue
+       siendo una columna de alto fijo (.sf); lo que cambia es que debajo de las
+       herramientas va una FILA: lateral + contenido. */
+    .sf-tabs { padding-left: calc(208px + 0.5rem); }
+    .sf-cuerpo { flex: 1; min-height: 0; display: flex; }
+    .sf-cuerpo .sf-main { flex: 1; min-width: 0; height: 100%; }
+    @media (max-width: 700px) {
+      .sf-tabs { padding-left: 0.5rem; }
+      .sf-cuerpo { flex-direction: column; }
+      .sf-cuerpo .sm-side { flex: none; }
+      .sf-cuerpo .sf-main { height: auto; flex: 1; }
+    }
+  </style>
 </head>
 <body class="sf">
   <header class="app">
@@ -21,7 +36,8 @@
     Mismo patron que SistemaMarketing —cambiar de vista en el CLIENTE, montando
     un iframe por vista la primera vez que se abre y alternando cual esta
     visible, asi cada una conserva su scroll y sus filtros al ir y volver—
-    pero con la navegacion ARRIBA en vez del lateral (22-sep-2026, decision de
+    (27-sep-2026, Juanma: los modulos en el lateral y las herramientas arriba, igual
+    en toda la intranet). Del 22 al 27-sep todo estuvo arriba (decision de
     Juanma). El lateral tenia dos problemas, los dos en el telefono: escondia
     "Escenarios" y "Caja" fuera de pantalla, y dejaba el iframe sin altura. El
     detalle del arreglo esta en el bloque .sf-* de Estilos.html.
@@ -30,16 +46,21 @@
     falta el aviso de X-Frame-Options ni el temporizador de 6 s que Marketing
     necesita para la Consola y Reseñas, que son proyectos aparte.
   -->
-  <nav class="sf-tabs" aria-label="Secciones de Finanzas">
-    <button type="button" class="sf-tab" data-sub="semana">Cómo vamos</button>
-    <button type="button" class="sf-tab" data-sub="reporte">La semana</button>
-    <button type="button" class="sf-tab" data-sub="metas">Metas</button>
-    <button type="button" class="sf-tab" data-sub="caja">Caja</button>
+  <nav class="sf-tabs" aria-label="Herramientas de Finanzas">
     <button type="button" class="sf-tab" data-sub="gasto">El gasto</button>
     <button type="button" class="sf-tab" data-sub="comparativo">Mes a mes</button>
     <button type="button" class="sf-tab" data-sub="escenarios">Escenarios</button>
   </nav>
-  <main class="sf-main" id="sfMain"></main>
+  <div class="sf-cuerpo">
+    <nav class="sm-side" aria-label="Módulos de Finanzas">
+      <span class="rotulo">Módulos</span>
+      <button type="button" class="sm-item" data-sub="semana">Cómo vamos</button>
+      <button type="button" class="sm-item" data-sub="reporte">La semana</button>
+      <button type="button" class="sm-item" data-sub="caja">Caja</button>
+      <button type="button" class="sm-item" data-sub="metas">Metas</button>
+    </nav>
+    <main class="sf-main" id="sfMain"></main>
+  </div>
 
 <script>
 (function () {
@@ -75,7 +96,7 @@
 
   function mostrar(sub) {
     if (!URLS.hasOwnProperty(sub)) sub = 'semana';
-    document.querySelectorAll('.sf-tab').forEach(function (b) {
+    document.querySelectorAll('[data-sub]').forEach(function (b) {
       var act = b.dataset.sub === sub;
       b.classList.toggle('act', act);
       // En el telefono la barra se desliza: si la pestaña activa quedo fuera de
@@ -88,7 +109,7 @@
     montar(sub).style.display = 'block';
   }
 
-  document.querySelectorAll('.sf-tab').forEach(function (b) {
+  document.querySelectorAll('[data-sub]').forEach(function (b) {
     b.addEventListener('click', function () { mostrar(b.dataset.sub); });
   });
 

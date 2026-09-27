@@ -20,6 +20,29 @@
       font-family: 'Lato', Arial, sans-serif; font-size: 0.86rem; color: #52514e; cursor: pointer; }
     .tb-tab.act { color: var(--negro); border-bottom-color: var(--verde-bosque); font-weight: 700; }
     .tb-tab .pt { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.4rem; background: #c9c6c0; vertical-align: middle; }
+    /* MODULOS EN EL LATERAL, HERRAMIENTAS ARRIBA (Juanma, 27-sep-2026, regla para toda la
+       intranet). Los seis pilares van en el lateral (mismo molde que .sm-side de Marketing,
+       con el punto de color de su semaforo); Metas y ajustes y el Reporte semanal, arriba.
+       Siguen siendo .tb-tab con data-p: mostrar() no cambia. */
+    .tb-arriba { display: flex; gap: 0.15rem; background: var(--blanco); border-bottom: 1px solid #e4e0d6; padding: 0 0.5rem 0 calc(208px + 0.5rem); overflow-x: auto; }
+    .tb-arriba .tb-tab { padding: 0.85rem 0.9rem 0.7rem; font-size: 0.92rem; white-space: nowrap; color: #6f6a61; }
+    .tb-arriba .tb-tab.act { color: var(--verde-bosque); border-bottom-color: var(--verde-bosque); }
+    .tb-arriba .tb-tab .pt { display: none; }
+    .tb-cuerpo { display: flex; align-items: flex-start; }
+    .tb-lat { width: 208px; min-width: 208px; background: var(--blanco); border-right: 1px solid #e4e0d6; padding: 1rem 0.7rem;
+      display: flex; flex-direction: column; gap: 0.25rem; position: sticky; top: 0; min-height: calc(100vh - 7rem); }
+    .tb-lat .rotulo { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8377; padding: 0.2rem 0.6rem 0.5rem; }
+    .tb-lat .tb-tab { display: block; width: 100%; text-align: left; border: 0; border-radius: 9px; padding: 0.55rem 0.7rem; font-size: 0.9rem; color: var(--negro); }
+    .tb-lat .tb-tab:hover { background: #f2efe7; }
+    .tb-lat .tb-tab.act { background: var(--verde-bosque); color: var(--blanco); font-weight: 700; }
+    .tb-cuerpo > main.tab { flex: 1; min-width: 0; }
+    @media (max-width: 700px) {
+      .tb-arriba { padding-left: 0.5rem; }
+      .tb-cuerpo { flex-direction: column; align-items: stretch; }
+      .tb-lat { width: auto; min-width: 0; min-height: 0; position: static; flex-direction: row; overflow-x: auto; }
+      .tb-lat .rotulo { display: none; }
+      .tb-lat .tb-tab { width: auto; white-space: nowrap; flex: none; }
+    }
     .tb-panel { display: none; }
     .tb-panel.act { display: block; }
     .tb-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
@@ -104,6 +127,20 @@
     </div>
   </header>
 
+  <nav class="tb-arriba" aria-label="Herramientas del tablero">
+    <button type="button" class="tb-tab" data-p="metas"><span class="pt"></span>Metas y ajustes</button>
+    <button type="button" class="tb-tab" data-p="reporte"><span class="pt"></span>Reporte semanal</button>
+  </nav>
+  <div class="tb-cuerpo">
+  <nav class="tb-lat" id="tabs" aria-label="Pilares">
+    <span class="rotulo">Pilares</span>
+    <button type="button" class="tb-tab act" data-p="fundamentos"><span class="pt"></span>01 Cascada</button>
+    <button type="button" class="tb-tab" data-p="management"><span class="pt"></span>02 Management</button>
+    <button type="button" class="tb-tab" data-p="finanzas"><span class="pt"></span>03 Finanzas</button>
+    <button type="button" class="tb-tab" data-p="profit"><span class="pt"></span>04 Profit</button>
+    <button type="button" class="tb-tab" data-p="marketing"><span class="pt"></span>05 Marketing</button>
+    <button type="button" class="tb-tab" data-p="expansion"><span class="pt"></span>06 Expansión</button>
+  </nav>
   <main class="tab">
     <div class="tb-barra">
       <div>
@@ -113,16 +150,6 @@
       <button class="tb-boton" id="btn-actualizar" type="button">Actualizar</button>
     </div>
 
-    <div class="tb-tabs" id="tabs">
-      <button type="button" class="tb-tab act" data-p="fundamentos"><span class="pt"></span>01 Cascada</button>
-      <button type="button" class="tb-tab" data-p="management"><span class="pt"></span>02 Management</button>
-      <button type="button" class="tb-tab" data-p="finanzas"><span class="pt"></span>03 Finanzas</button>
-      <button type="button" class="tb-tab" data-p="profit"><span class="pt"></span>04 Profit</button>
-      <button type="button" class="tb-tab" data-p="marketing"><span class="pt"></span>05 Marketing</button>
-      <button type="button" class="tb-tab" data-p="expansion"><span class="pt"></span>06 Expansion</button>
-      <button type="button" class="tb-tab" data-p="metas"><span class="pt"></span>Metas y ajustes</button>
-      <button type="button" class="tb-tab" data-p="reporte"><span class="pt"></span>Reporte semanal</button>
-    </div>
 
     <div class="tb-panel act" id="p-fundamentos"><div class="tb-cargando">Armando la cascada: Finanzas, Caja, CRM e inventarios…</div></div>
     <div class="tb-panel" id="p-management"><div class="tb-cargando">Leyendo los inventarios…</div></div>
@@ -143,6 +170,7 @@
 
     <p class="tb-leyenda">Verde, amarillo y rojo salen de comparar el valor contra su meta. "defecto" en rojo al lado de una meta significa que la fila no existe en PARAMETROS y el sistema usa el valor de respaldo: hay que agregar la fila. "FALTA DATO" es un KPI que todavia no tiene fuente.</p>
   </main>
+  </div>
 
 <script>
 (function () {

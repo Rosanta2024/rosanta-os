@@ -57,10 +57,10 @@
 <?!= incluirCrudo_('ReporteSemanalEstilo') ?>
 <?!= incluirCrudo_('ProfitAreaEstilo') ?>
 <style>
-/* BARRA LATERAL (Juanma, 27-sep-2026: "en la barra superior se pierde; cada uno tiene su
-   propio intranet"). Arriba: Profit OS entero (cocina y barra). Despues, el area de quien
-   entra (Jeffry ve Cocina, José ve Barra y Sala, el dueño las dos). Abajo, las herramientas.
-   Los botones siguen siendo .nav button[data-view]: el ruteo de pintar() no cambia. */
+/* MODULOS EN EL LATERAL, HERRAMIENTAS ARRIBA (Juanma, 27-sep-2026, regla para toda la
+   intranet). Lateral: Profit OS (cocina y barra juntas) y el area de quien entra (Jeffry
+   Cocina, José Barra y Sala, el dueño las dos). Arriba: las herramientas del recetario.
+   Los dos son .nav button[data-view]: el ruteo de pintar() no cambia. */
 /* Mismo molde que el Sistema de Marketing (Juanma, 27-sep-2026: "se tiene que ver como
    los modulos de marketing"): lateral blanco pegado a la izquierda, rotulos en versalitas,
    el item activo en verde bosque. Medidas de .sm-side (Estilos.html). */
@@ -78,7 +78,6 @@ header.top .wrap{max-width:none;padding:0 28px}
 .pf-lat .nav button small{display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:1px}
 .pf-lat .nav button[aria-selected="true"] small{color:var(--surface);opacity:.8}
 .pf-layout > main{padding:24px 28px 40px;min-width:0;width:100%;max-width:1236px;justify-self:center}
-.topbar .areas{margin-left:0}
 @media (max-width:860px){
   .pf-layout{grid-template-columns:1fr}
   .pf-lat{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem .7rem}
@@ -102,13 +101,24 @@ header.top .wrap{max-width:none;padding:0 28px}
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Buscar plato, ingrediente o proveedor…" autocomplete="off" aria-label="Buscar">
       </div>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
+    <!-- LAS HERRAMIENTAS VAN ARRIBA y los modulos en el lateral (Juanma, 27-sep-2026; la
+         misma regla para toda la intranet). -->
+    <nav class="nav" role="tablist" aria-label="Herramientas">
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
+      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
+      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
       <span class="areas" role="group" aria-label="Área de recetas y productos">
         <button data-area="COCINA" aria-pressed="true">Cocina</button>
         <button data-area="BARRA" aria-pressed="false">Barra</button>
         <button data-area="" aria-pressed="false">Todo</button>
       </span>
-      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
-    </div>
+    </nav>
   </div>
   <div class="simbar" id="simbar" role="status">
     <span id="simtext"></span>
@@ -122,20 +132,11 @@ header.top .wrap{max-width:none;padding:0 28px}
 </div>
 <div class="pf-layout">
   <aside class="pf-lat">
-    <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Secciones">
-      <div class="pf-grupo">Profit OS</div>
-      <button role="tab" data-view="inicio" aria-selected="true">Inicio<small>cocina y barra juntas</small></button>
-      <? if (rol === 'chef' || rol === 'sala' || rol === 'dueno') { ?><div class="pf-grupo"><?= rol === 'dueno' ? 'Por área' : 'Tu área' ?></div><? } ?>
-      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" class="pf-mia" data-view="cocina" aria-selected="false">Cocina<small>food cost, compras en efectivo</small></button><? } ?>
-      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" class="pf-mia" data-view="barrasala" aria-selected="false">Barra y Sala<small>barra, mesas, reservas</small></button><? } ?>
-      <div class="pf-grupo">Herramientas</div>
-      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
-      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
-      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
-      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
-      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
-      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
-      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
+    <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
+      <div class="pf-grupo">Módulos</div>
+      <button role="tab" data-view="inicio" aria-selected="true">Profit OS</button>
+      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
+      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
     </nav>
   </aside>
 <main>
