@@ -11,9 +11,15 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 
 ---
 
-## Cierre del 26 sep 2026 (v28): el reporte semanal vive en la intranet, publicado en la @126
+## Cierre del 26 sep 2026 (v28): el reporte semanal vive en la intranet, publicado en la @126 y la @127
 
-**El equipo está en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería sobre ese HEAD: **127 OK · 0 fallas · 5 avisos · 3 saltadas** (237 s). Commits `c0a0cb7` y `a03479b` en `rosanta-os/main`. Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md` (secciones @125, corrección y @126).
+**Tarde del 26-sep: @127.** Juanma revisó la @126 y pidió cuatro cosas, más una nueva; todo salió en la @127 (batería 128 OK · 0 fallas · 4 avisos; 67 archivos, idéntica al disco):
+- **El reporte ya no va en iframe:** tres parciales crudos sin scriptlets (`ReporteSemanalEstilo`, `ReporteSemanalCuerpo`, `ReporteSemanalJs`) que pegan con `incluirCrudo_` tanto `ReporteSemanalVista` como la pestaña del tablero. Cada página declara `window.RP_CFG` (token, urlBase, embebido) antes del JS; ids con prefijo `rp-`. En el tablero el botón es "Abrir para imprimir / PDF" y "Actualizar" llama `RP.recargar(true)`. Los tres parciales están en las tres listas `VISTAS` de `Pruebas.js`.
+- **Gráfico de cuatro semanas:** barras y línea del equilibrio en la misma escala (140 px sobre un área de 170), etiquetas en fila aparte. `.rp-barra` estaba definida dos veces: ahora `.rp-cab` (cabecera) y `.rp-col` (columna).
+- **Compras contra su techo (pedido de Juanma):** en la sección 5, por área y para las cuatro semanas, compra del motor contra techo = venta del área × meta, barra en rojo si se pasó, y la **venta extra que exige** el exceso (× 100 ÷ margen de contribución, hoy ×1.99). La venta por área de cada semana sale de UNA lectura de VENTAS x PLATO sobre las cuatro semanas (`ventasDelRango_` devuelve ahora `fecha` por línea). Caché `rep_sem_v2_`. En la S38: cocina +Q2,091 sobre el techo (exige Q4,160 de venta), barra +Q161.
+- **La S37 no tiene PDF** en `Reportes 2026/S37`: es dato, no código.
+
+**El equipo estuvo en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería sobre ese HEAD: **127 OK · 0 fallas · 5 avisos · 3 saltadas** (237 s). Commits `c0a0cb7` y `a03479b` en `rosanta-os/main`. Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md` (secciones @125, corrección y @126).
 
 ### 1. Qué cambió: el reporte semanal ya no es solo el PDF
 
@@ -32,7 +38,7 @@ La @125 mostraba **Q155,894 por semana**: salía del equilibrio mensual del moto
 
 - **Reservas S38: 13 canceladas de 14** en la pestaña `reservas`; el PDF decía 4 de 14. La sección 4 muestra el desglose por estado (canceladas = CANCEL, DECLIN, NO SHOW; sin cerrar = RESERVED). **Cerrado el 26-sep: son dato real, Juanma mismo canceló esas reservas en Wix después del PDF. El criterio de estados queda como está.**
 - **PDF desde el servidor** guardado en la carpeta SXX (decisión "me parece bien, recomendado"), personal extra por semana pagada, comisión de tarjeta separada (K08 FALTA DATO), y retirar después la tarea del lunes que hace el PDF con Chrome headless.
-- Siguen las 13 metas en defecto en `PARAMETROS` y las decisiones listadas en la v26 §4.
+- **Las 16 filas de `PARAMETROS` ya existen (Juanma las pegó el 26-sep):** las 13 con su defecto más `meta_venta_anio` 1,950,000 (real ene–ago + curva H2), `compra_sin_factura_max_pct` 40 (el año va en 45%; bajar a 30 en enero) y `cac_max_q` 60 (CAC del año Q53.6). Batería: 128 OK · 0 fallas · 4 avisos, "todas en PARAMETROS". Sin fila todavía: `comision_tarjeta_max_pct` (K08), `resenas_rating_meta` (K18), la pestaña `METAS`. El resto de decisiones de la v26 §4 sigue.
 
 ### 4. clasp vuelve a morir cada día
 

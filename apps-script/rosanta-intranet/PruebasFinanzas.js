@@ -902,6 +902,16 @@ function prFinanzas_(res) {
     if (sumaCom !== s.com) malos.push('comensales por dia ' + sumaCom + ' vs semana ' + s.com);
     if (rp.kpis.ventas !== s.ventas) malos.push('kpis.ventas no es semanas[].ventas');
     if (rp.foodcost.cocina.costo !== s.cocina || rp.foodcost.barra.costo !== s.barra) malos.push('la compra por area no es la del motor');
+    // 26-sep-2026: el grafico de compras contra su techo (cocina y barra, 4 semanas)
+    var cp = rp.compras;
+    if (!cp || !cp.semanas || cp.semanas.length !== rp.cuatro.length) malos.push('compras: no trae las ' + rp.cuatro.length + ' semanas');
+    else {
+      var ult = cp.semanas[cp.semanas.length - 1];
+      if (ult.cocina.compra !== s.cocina || ult.barra.compra !== s.barra) malos.push('compras: la compra del grafico no es semanas[].cocina/.barra');
+      if (Math.abs(ult.cocina.techo - rp.foodcost.cocina.a_meta) > 1) malos.push('compras: el techo de cocina no es el costo a objetivo de la seccion 5');
+      if (Math.abs(ult.barra.techo - rp.foodcost.barra.a_meta) > 1) malos.push('compras: el techo de barra no es el costo a objetivo de la seccion 5');
+      if (cp.factor && Math.abs(cp.factor - 100 / rp.equilibrio.mc) > 0.02) malos.push('compras: el factor no es 100 / margen de contribucion');
+    }
     if (Math.abs(rp.pl.gasto - (s.cogs + s.labor + rp.pl.secciones.reduce(function (a, x) { return a + x.q; }, 0))) > 1) malos.push('el gasto del P&L no suma');
     if (rp.reservas.error) malos.push('reservas: ' + rp.reservas.error);
     if (rp.areas.error) malos.push('platos: ' + rp.areas.error);

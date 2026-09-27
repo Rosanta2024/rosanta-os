@@ -156,7 +156,9 @@ function ventasDelRango_(desde, hasta) {
     var fecha = fechaVenta_(f[cFecha]);      // puede volver como Date desde Sheets
     if (!fecha || fecha < desde || fecha > hasta) continue;
     var cant = Number(f[cCant]) || 0, total = Number(f[cTotal]) || 0;
-    lineas.push({ producto: String(f[cProd] || '').trim(),
+    // fecha (AAAA-MM-DD) desde el 26-sep-2026: el reporte semanal lee las cuatro
+    // semanas de una vez y reparte las lineas por semana sin releer la hoja.
+    lineas.push({ producto: String(f[cProd] || '').trim(), fecha: fecha,
                   categoria: String(f[cCat] || '').trim(), cantidad: cant, total: total });
     tickets[String(f[cDoc])] = true; dias[fecha] = true; venta += total;
     if (!min || fecha < min) min = fecha;

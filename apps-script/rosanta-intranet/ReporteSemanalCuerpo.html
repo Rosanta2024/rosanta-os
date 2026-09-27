@@ -1,0 +1,23 @@
+  <!-- Reporte semanal de operacion, en vivo: cuerpo compartido. Lo pegan tal cual
+       (incluirCrudo_) ReporteSemanalVista.html, que es la pagina sola, y TableroVista.html,
+       que lo muestra como pestaña. Por eso NO lleva scriptlets ni variables: lo unico que
+       necesita (token, urlBase, si esta embebido) lo declara la pagina en RP_CFG antes de
+       pegar ReporteSemanalJs. Todos los ids llevan el prefijo rp- para no chocar con los
+       del tablero. -->
+  <div class="rp-cab">
+    <div>
+      <h1>Reporte semanal de operación</h1>
+      <p class="rp-sub" id="rp-sub">Revisión con jefes de departamento · cargando…</p>
+    </div>
+    <div class="rp-controles no-print">
+      <select id="rp-sel" title="Semana"></select>
+      <button class="rp-boton" id="rp-actualizar" type="button">Actualizar</button>
+      <button class="rp-boton lleno" id="rp-imprimir" type="button">Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div id="rp-cargando" class="rp-cargando">Leyendo el maestro, las reservas y las ventas por plato…</div>
+  <div id="rp-error" class="rp-error" hidden></div>
+  <div id="rp-todo" hidden></div>
+
+  <p class="rp-pie">Rosanta · CORSAGA, S.A. · <span id="rp-fuentes"></span></p>

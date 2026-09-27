@@ -1,0 +1,279 @@
+<script>
+(function () {
+  /* Parcial SIN scriptlets: lo pega incluirCrudo_ en la pagina sola y en el tablero.
+     La pagina declara window.RP_CFG = { auth, base, t, embebido } antes de pegarlo.
+     El token va como PRIMER argumento en TODA llamada a google.script.run. */
+  var CFG = window.RP_CFG || {};
+  var AUTH = CFG.auth || '';
+  var D = null, CLAVE = 0;
+  var RP_ALTO = 140;   // px de la barra mas alta; el area mide 170 y deja sitio al valor
+
+  function q(n, dec) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return 'Q' + Number(n).toLocaleString('es-GT', { maximumFractionDigits: dec === undefined ? 0 : dec, minimumFractionDigits: dec === undefined ? 0 : dec });
+  }
+  function pct(n, dec) { return (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toFixed(dec === undefined ? 1 : dec) + '%'; }
+  function num(n) { return (n === null || n === undefined) ? '—' : Number(n).toLocaleString('es-GT'); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function signo(n) { return n > 0 ? '+' : ''; }
+  function kpi(cls, et, val, det) {
+    return '<div class="rp-kpi ' + (cls || '') + '"><div class="et">' + esc(et) + '</div><div class="val">' + val + '</div><div class="det">' + (det || '') + '</div></div>';
+  }
+  function zonaCosto(real, meta) {
+    if (real === null || real === undefined) return '';
+    return real <= meta ? 'verde' : (real <= meta + 3 ? 'amarillo' : 'rojo');
+  }
+
+  function pintar(d) {
+    D = d; CLAVE = d.semana.clave;
+    document.getElementById('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
+      ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
+    document.getElementById('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;
+    var sel = document.getElementById('rp-sel');
+    sel.innerHTML = d.semanas.map(function (s) {
+      return '<option value="' + s.clave + '"' + (s.clave === d.semana.clave ? ' selected' : '') + '>S' + s.w + ' · ' + esc(s.ini) + ' al ' + esc(s.fin) + '</option>';
+    }).join('');
+
+    var k = d.kpis, pe = d.equilibrio, h = '';
+    if (d.notas && d.notas.length) h += '<div class="rp-aviso no-print">' + d.notas.map(esc).join('<br>') + '</div>';
+
+    // ---- 1. la semana
+    h += '<section class="rp"><h2>1 · La semana</h2><div class="rp-kpis">' +
+      kpi('', 'Ventas', q(k.ventas), num(k.tickets) + ' tickets · ' + num(k.com) + ' comensales' + (k.ventas_dif_pct !== null ? ' · ' + signo(k.ventas_dif_pct) + pct(k.ventas_dif_pct) + ' vs semana anterior' : '')) +
+      kpi(k.gasto_pct > 100 ? 'rojo' : '', 'Gasto total', q(k.gasto), pct(k.gasto_pct) + ' sobre ventas') +
+      kpi(k.resultado >= 0 ? 'verde' : 'rojo', 'Resultado del período', q(k.resultado), pct(k.resultado_pct) + ' sobre ventas') +
+      kpi(k.ticket_dif_pct === null ? '' : (k.ticket_dif_pct >= 0 ? 'verde' : 'rojo'), 'Ticket promedio por comensal', q(k.ticket), k.ticket_ant !== null ? signo(k.ticket_dif_pct) + pct(k.ticket_dif_pct) + ' contra Q' + num(k.ticket_ant) + ' la semana anterior' : '') +
+      '</div></section>';
+
+    // ---- 2. cuatro semanas
+    var tope = Math.max.apply(null, d.cuatro.map(function (x) { return x.ventas; }).concat([pe ? pe.pe_semana : 0, 1]));
+    h += '<section class="rp"><h2>2 · Cuatro semanas: ventas, comensales y ticket</h2>' +
+      '<p class="rp-nota">La semana en curso en rojo. La línea punteada es el punto de equilibrio semanal' + (pe ? ' (' + q(pe.pe_semana) + ')' : '') + '.</p>' +
+      '<div class="rp-graf"><div class="rp-area">' +
+      (pe ? '<div class="rp-pe" style="bottom:' + Math.round(pe.pe_semana / tope * RP_ALTO) + 'px"><span>equilibrio ' + q(pe.pe_semana) + '</span></div>' : '') +
+      d.cuatro.map(function (x) {
+        return '<div class="rp-col' + (x.actual ? ' act' : '') + '"><b>' + q(x.ventas) + '</b><i style="height:' + Math.max(Math.round(x.ventas / tope * RP_ALTO), 3) + 'px"></i></div>';
+      }).join('') + '</div><div class="rp-labs">' +
+      d.cuatro.map(function (x) {
+        return '<span>S' + x.w + '<br>' + num(x.com) + ' com · ' + q(x.tp) + '</span>';
+      }).join('') + '</div></div>';
+    if (pe) {
+      h += '<div class="rp-kpis" style="margin-top:0.9rem">' +
+        kpi('', 'Punto de equilibrio semanal', q(pe.pe_semana), 'fijos ' + q(pe.fijo_semana) + ' por semana ÷ margen ' + pct(pe.mc) + ' · ' + esc(pe.base)) +
+        kpi(pe.venta_pct >= 100 ? 'verde' : 'rojo', 'Venta de la semana', pct(pe.venta_pct), 'del equilibrio') +
+        kpi(pe.brecha >= 0 ? 'verde' : 'rojo', 'Brecha al equilibrio', (pe.brecha >= 0 ? '+' : '−') + q(Math.abs(pe.brecha)), pe.brecha >= 0 ? 'por encima' : 'faltaron para llegar') +
+        kpi(pe.semanas_sobre === pe.de ? 'verde' : (pe.semanas_sobre ? 'amarillo' : 'rojo'), 'Semanas sobre equilibrio', pe.semanas_sobre + ' de ' + pe.de, 'últimas ' + pe.de) +
+        '</div>';
+    }
+    h += '</section>';
+
+    // ---- 3. ritmo de la semana
+    h += '<section class="rp"><h2>3 · Ritmo de la semana</h2>' +
+      '<p class="rp-nota">Venta y comensales por día, comensales que vinieron con reserva y el equilibrio diario (semanal ÷ 7' + (pe ? ' = ' + q(pe.pe_dia) : '') + ').</p>' +
+      '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Venta</th><th>Comensales</th><th>Con reserva</th><th>Walk-ins</th><th>Tickets</th><th>Equilibrio diario</th></tr></thead><tbody>' +
+      d.dias.map(function (x) {
+        return '<tr><td>' + esc(x.dia) + '</td><td class="' + (x.sobre_equilibrio === false ? 'neg' : (x.sobre_equilibrio ? 'pos' : '')) + '">' + q(x.ventas) + '</td><td>' + num(x.com) + '</td>' +
+          '<td' + (x.reservas_superan ? ' class="neg"' : '') + '>' + (d.reservas.error ? '—' : num(x.personas) + (x.reservas_superan ? ' *' : '')) + '</td>' +
+          '<td>' + (x.walkins === null ? '—' : num(x.walkins)) + '</td><td>' + num(x.tickets) + '</td>' +
+          '<td>' + (x.sobre_equilibrio === null ? '—' : (x.sobre_equilibrio ? '✓ sobre' : '✗ bajo')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (d.dias.some(function (x) { return x.reservas_superan; }) ? '<p class="rp-nota">* Las personas reservadas superan a los comensales del POS ese día: alguien reservó y no quedó en el POS, o la reserva se contó dos veces.</p>' : '') +
+      '</section>';
+
+    // ---- 4. comensales y reservas
+    var r = d.reservas;
+    h += '<section class="rp"><h2>4 · Comensales y reservas</h2>';
+    if (r.error) {
+      h += '<div class="rp-error">No se pudieron leer las reservas: ' + esc(r.error) + '</div>';
+    } else {
+      var estados = Object.keys(r.con_estado || {}).map(function (k) { return esc(k) + ' ' + r.con_estado[k]; }).join(' · ');
+      h += '<p class="rp-nota">Estados en la pestaña reservas esta semana: ' + (estados || 'ninguno') + '. Cuentan como canceladas CANCEL, DECLIN y NO SHOW; como sin cerrar, RESERVED.</p>' +
+        '<div class="rp-kpis">' +
+        kpi('', 'Reservas de la semana', num(r.validas), num(r.personas) + ' personas · ' + num(r.total) + ' recibidas') +
+        kpi(r.canceladas_pct > 20 ? 'rojo' : (r.canceladas ? 'amarillo' : 'verde'), 'Canceladas', num(r.canceladas), pct(r.canceladas_pct) + ' · ' + num(r.personas_canceladas) + ' personas perdidas') +
+        kpi('', 'Walk-ins', r.walkins === null ? '—' : num(r.walkins), pct(r.walkins_pct) + ' de los comensales') +
+        kpi(r.sin_cerrar ? 'amarillo' : 'verde', 'Reservas sin cerrar', num(r.sin_cerrar), 'siguen en RESERVED: el estado sin cerrar rompe el seguimiento post-visita') +
+        '</div>' +
+        '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Reservas</th><th>Personas</th><th>Comensales POS</th><th>Walk-ins</th><th>Canceladas</th></tr></thead><tbody>' +
+        d.dias.map(function (x) {
+          return '<tr><td>' + esc(x.dia) + '</td><td>' + num(x.reservas) + '</td><td' + (x.reservas_superan ? ' class="neg"' : '') + '>' + num(x.personas) + (x.reservas_superan ? ' *' : '') + '</td><td>' + num(x.com) + '</td><td>' + (x.walkins === null ? '—' : num(x.walkins)) + '</td><td>' + num(x.canceladas) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    h += '</section>';
+
+    // ---- 5. food cost
+    var fc = d.foodcost;
+    h += '<section class="rp"><h2>5 · Food cost</h2>' +
+      '<p class="rp-nota">Sobre venta sin IVA ni servicio, contra las metas de PARAMETROS: global ' + pct(fc.meta_global, 0) + ', cocina ' + pct(fc.cocina.meta, 0) + ', barra ' + pct(fc.barra.meta, 0) + '. ' + esc(fc.aviso_barra) + '</p>' +
+      '<div class="rp-kpis">' +
+      kpi(zonaCosto(fc.semana_pct, fc.meta_global), 'Food cost de la semana', pct(fc.semana_pct), 'móvil de 4 semanas: ' + pct(fc.movil4_pct)) +
+      kpi(zonaCosto(fc.mes_pct, fc.meta_global), 'Food cost del mes a la fecha', pct(fc.mes_pct), esc(fc.mes_nombre) + (fc.mes ? ' · cocina ' + q(fc.mes.cocina) + ' · barra ' + q(fc.mes.barra) : '')) +
+      kpi(fc.cocina.exceso > 0 ? 'rojo' : 'verde', 'Cocina: exceso sobre objetivo', (fc.cocina.exceso > 0 ? '+' : '') + q(fc.cocina.exceso), pct(fc.cocina.real_pct) + ' real contra ' + pct(fc.cocina.meta, 0)) +
+      kpi(fc.barra.exceso > 0 ? 'rojo' : 'verde', 'Barra: exceso sobre objetivo', (fc.barra.exceso > 0 ? '+' : '') + q(fc.barra.exceso), pct(fc.barra.real_pct) + ' real contra ' + pct(fc.barra.meta, 0)) +
+      '</div>' +
+      '<div class="rp-tabla"><table class="rp"><thead><tr><th>Área</th><th>Venta del área</th><th>Costo real</th><th>Costo a objetivo</th><th>Exceso</th><th>Real %</th><th>Objetivo %</th><th>Desvío</th></tr></thead><tbody>' +
+      [['Cocina', fc.cocina], ['Barra', fc.barra]].map(function (p) {
+        var x = p[1];
+        return '<tr><td>' + p[0] + '</td><td>' + q(x.venta) + '</td><td>' + q(x.costo) + '</td><td>' + q(x.a_meta) + '</td><td class="' + (x.exceso > 0 ? 'neg' : 'pos') + '">' + (x.exceso > 0 ? '+' : '') + q(x.exceso) + '</td><td>' + pct(x.real_pct) + '</td><td>' + pct(x.meta, 0) + '</td><td class="' + (x.desvio_pts > 0 ? 'neg' : 'pos') + '">' + (x.desvio_pts === null ? '—' : signo(x.desvio_pts) + x.desvio_pts + ' pp') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<p class="rp-nota">Mix de ventas: cocina ' + pct(d.areas.mix_cocina) + ' · barra ' + pct(d.areas.mix_cocina === null ? null : 100 - d.areas.mix_cocina) + '. ' + esc(d.areas.nota) + '</p>';
+    // compras contra su techo, por area y semana (Juanma, 26-sep-2026)
+    var cp = d.compras;
+    if (cp && cp.semanas && cp.semanas.length) {
+      function grafCompras(nombre, area, meta) {
+        var filas = cp.semanas.map(function (x) { return x[area]; });
+        var topeC = Math.max.apply(null, filas.map(function (t) { return Math.max(t.compra, t.techo); }).concat([1]));
+        var imp = cp.impacto[area];
+        return '<div><h3 style="margin:0.6rem 0 0.4rem">' + nombre + ' · compra contra su techo (' + pct(meta, 0) + ')</h3>' +
+          '<div class="rp-graf compras"><div class="rp-area">' +
+          cp.semanas.map(function (x, i) {
+            var t = filas[i], sobre = t.exceso !== null && t.exceso > 0;
+            return '<div class="rp-col' + (sobre ? ' sobre' : '') + (x.actual ? ' act' : '') + '"><b>' + q(t.compra) + '</b>' +
+              '<i style="height:' + Math.max(Math.round(t.compra / topeC * RP_ALTO), 3) + 'px"></i>' +
+              (t.venta ? '<u style="bottom:' + Math.round(t.techo / topeC * RP_ALTO) + 'px" title="techo ' + q(t.techo) + '"></u>' : '') + '</div>';
+          }).join('') + '</div><div class="rp-labs">' +
+          cp.semanas.map(function (x, i) {
+            var t = filas[i];
+            return '<span>S' + x.w + '<br>techo ' + q(t.techo) + (t.exceso === null ? '' : '<br><span class="' + (t.exceso > 0 ? 'neg' : 'pos') + '">' + (t.exceso > 0 ? '+' : '') + q(t.exceso) + '</span>') + '</span>';
+          }).join('') + '</div></div>' +
+          '<div class="rp-kpis" style="margin-top:0.7rem">' +
+          kpi(imp.exceso > 0 ? 'rojo' : 'verde', 'Exceso de compra esta semana', (imp.exceso > 0 ? '+' : '') + q(imp.exceso), 'sobre el techo de ' + q(filas[filas.length - 1].techo)) +
+          kpi(imp.exceso > 0 ? 'rojo' : 'verde', 'Venta extra que exige', imp.venta_extra === null ? '—' : q(imp.venta_extra), 'para volver al equilibrio (× ' + (cp.factor === null ? '—' : cp.factor) + ')') +
+          '</div></div>';
+      }
+      h += '<h3 style="margin:1.2rem 0 0.2rem">Compras contra su techo, cuatro semanas</h3>' +
+        '<p class="rp-nota">' + esc(cp.nota) + ' La raya negra de cada barra es el techo de esa semana; la barra en rojo se pasó.</p>' +
+        '<div class="rp-dos">' + grafCompras('Cocina', 'cocina', cp.meta_cocina) + grafCompras('Barra', 'barra', cp.meta_barra) + '</div>';
+    }
+    h += '</section>';
+
+    // ---- 6. cocina y barra
+    function bloqueArea(nombre, a) {
+      var tabla = a.top.length ? '<div class="rp-tabla"><table class="rp"><thead><tr><th>Producto</th><th>Unidades</th><th>Venta</th><th>% del área</th></tr></thead><tbody>' +
+        a.top.map(function (p) { return '<tr' + (p.otros ? ' style="opacity:0.7"' : '') + '><td class="txt">' + esc(p.nombre) + '</td><td>' + num(p.uds) + '</td><td>' + q(p.venta) + '</td><td>' + pct(p.pct) + '</td></tr>'; }).join('') +
+        '<tr class="total"><td>Total ' + nombre.toLowerCase() + '</td><td>' + num(a.uds) + '</td><td>' + q(a.venta) + '</td><td>100%</td></tr></tbody></table></div>'
+        : '<div class="rp-aviso">Sin ventas por plato cargadas para esta semana.</div>';
+      return '<div><h3 style="margin:0.6rem 0 0.4rem">' + nombre + '</h3><div class="rp-kpis">' +
+        kpi('', 'Venta del área', q(a.venta), pct(a.venta_pct) + ' de la venta de la semana') +
+        kpi('', 'Costo del área', q(a.costo), 'compra de la semana (motor de Finanzas)') +
+        kpi(zonaCosto(a.costo_pct, nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra), 'Costo / venta', pct(a.costo_pct), 'objetivo ' + pct(nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra, 0)) +
+        kpi(a.margen >= 0 ? 'verde' : 'rojo', 'Margen bruto', q(a.margen), pct(a.margen_pct) + ' del área') +
+        '</div>' + tabla + '</div>';
+    }
+    h += '<section class="rp"><h2>6 · Cocina y Barra</h2>' + (d.areas.error ? '<div class="rp-error">' + esc(d.areas.error) + '</div>' : '') +
+      '<div class="rp-dos">' + bloqueArea('Cocina', d.areas.cocina) + bloqueArea('Barra', d.areas.barra) + '</div></section>';
+
+    // ---- 7. personal y P&L
+    var pl = d.pl, pe2 = d.personal, pm = pe2.planilla_mes;
+    h += '<section class="rp"><h2>7 · Personal y P&amp;L semanal</h2>' +
+      '<div class="rp-kpis">' +
+      kpi(pe2.prime < 60 ? 'verde' : (pe2.prime <= 65 ? 'amarillo' : 'rojo'), 'Prime cost', pct(pe2.prime), 'móvil de 4: ' + pct(pe2.prime_m4)) +
+      kpi('', 'Nómina devengada de la semana', q(pe2.labor_semana), pct(pe2.labor_pct) + ' de la venta · planilla del mes ÷ 4.345') +
+      kpi('', 'Sueldos fijos del mes', pm ? q(pm.fija) : '—', pm ? ('planilla ' + esc(pm.desde) + (pm.origen === 'estimada' ? ' (estimada)' : '')) : 'sin planilla') +
+      kpi('', 'Personal extra del mes', pm ? q(pm.extra) : '—', pm ? ('cocina ' + q(pm.extra_cocina) + ' · barra y sala ' + q(pm.extra_barra) + ' · ' + num(pm.n_extra) + ' personas') : '') +
+      '</div><p class="rp-nota">' + esc(pe2.nota) + '</p>' +
+      '<div class="rp-tabla"><table class="rp"><thead><tr><th>Concepto</th><th>Monto</th><th>% del gasto</th><th>% de ventas</th></tr></thead><tbody>';
+    function fila(nombre, monto, cls) {
+      return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td class="txt">' + esc(nombre) + '</td><td>' + q(monto) + '</td><td>' + (pl.gasto ? pct(monto / pl.gasto * 100) : '—') + '</td><td>' + (pl.ventas ? pct(monto / pl.ventas * 100) : '—') + '</td></tr>';
+    }
+    h += fila('Mercadería cocina (alimentos, con y sin factura)', pl.cogs_cocina) + fila('Mercadería barra (bebidas, coctelería, licores)', pl.cogs_barra) + fila('COGS total', pl.cogs, 'total') +
+      fila('Nómina devengada', pl.labor) +
+      pl.secciones.map(function (s) { return fila(s.seccion, s.q); }).join('') +
+      fila('GASTO TOTAL', pl.gasto, 'total') +
+      '<tr class="total"><td class="txt">Resultado</td><td class="' + (pl.resultado >= 0 ? 'pos' : 'neg') + '">' + q(pl.resultado) + '</td><td></td><td>' + pct(pl.resultado_pct) + '</td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="rp-nota">' + esc(pl.nota_nomina) + ' Marketing va incluido (' + q(pl.marketing) + '); sin marketing el resultado sería ' + q(pl.resultado_sin_marketing) + '.</p></section>';
+
+    // ---- 8. equilibrio y acciones
+    h += '<section class="rp"><h2>8 · Cómo se construye el equilibrio, y las acciones</h2>';
+    if (pe) {
+      h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO)</th><th>Al mes</th></tr></thead><tbody>' +
+        pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
+        '<tr class="total"><td class="txt">Fijos del mes</td><td>' + q(pe.fijo_mes) + '</td></tr>' +
+        '<tr class="total"><td class="txt">Fijos por semana (÷ 4.345)</td><td>' + q(pe.fijo_semana) + '</td></tr></tbody></table></div></div>' +
+        '<div><div class="rp-tabla"><table class="rp"><thead><tr><th>Variables, % de la venta</th><th></th></tr></thead><tbody>' +
+        pe.variables.map(function (x) { return '<tr><td class="txt">' + esc(x.seccion) + '</td><td>' + pct(x.pct) + '</td></tr>'; }).join('') +
+        '<tr><td class="txt">Total variable</td><td>' + pct(pe.variables_pct) + '</td></tr>' +
+        '<tr><td class="txt">Margen de contribución</td><td>' + pct(pe.mc) + '</td></tr>' +
+        '<tr class="total"><td class="txt">Punto de equilibrio</td><td>' + q(pe.pe_semana) + ' / semana · ' + q(pe.pe_dia) + ' / día</td></tr></tbody></table></div>' +
+        '<p class="rp-nota">' + esc(pe.nota) + (pe.motor ? ' Referencia del motor: ' + esc(pe.motor.mes) + ' fijo ' + q(pe.motor.fijo_mes) + ', margen ' + pct(pe.motor.mc) + ', equilibrio ' + q(pe.motor.pe_semana) + ' por semana.' : '') + '</p></div></div>';
+    }
+    h += '<h3 style="margin:1.2rem 0 0.3rem">Acciones de la semana</h3>';
+    var ac = d.acciones;
+    if (!ac.existe) h += '<div class="rp-aviso">La pestaña REPORTE_ACCIONES del Sheet de config todavía no existe: se crea sola al guardar la primera acción.</div>';
+    h += '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Por qué (el dato)</th><th class="no-print"></th></tr></thead><tbody id="acciones">' +
+      (ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>') +
+      '</tbody></table></div>' +
+      '<div class="rp-form no-print"><div class="fila"><div><label>Acción</label><input id="ac-accion" placeholder="Qué se hace distinto la semana que viene"></div>' +
+      '<div><label>Responsable</label><select id="ac-resp">' + d.departamentos.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select></div></div>' +
+      '<label>Por qué</label><textarea id="ac-porque" placeholder="El dato que respalda la acción: el número, la semana, el desvío"></textarea>' +
+      '<div style="margin-top:0.7rem;display:flex;gap:0.6rem;align-items:center"><button class="rp-boton lleno" id="ac-guardar" type="button">Guardar acción</button><span id="ac-msg" style="font-size:0.82rem;color:#52514e"></span></div></div>' +
+      '</section>';
+
+    document.getElementById('rp-todo').innerHTML = h;
+    document.getElementById('rp-todo').hidden = false;
+    document.getElementById('rp-cargando').hidden = true;
+    document.getElementById('ac-guardar').addEventListener('click', guardarAccion);
+    document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+  }
+
+  function filaAccion(a) {
+    return '<tr><td class="txt"><b>' + esc(a.accion) + '</b></td><td>' + esc(a.responsable) + '</td><td class="txt">' + esc(a.porque) + '</td>' +
+      '<td class="no-print"><button class="rp-boton ac-borrar" data-fila="' + a.fila + '" type="button" title="Borrar">×</button></td></tr>';
+  }
+
+  function guardarAccion() {
+    var msg = document.getElementById('ac-msg');
+    msg.textContent = 'Guardando…';
+    google.script.run
+      .withSuccessHandler(function (ac) {
+        msg.textContent = 'Guardada.';
+        document.getElementById('ac-accion').value = ''; document.getElementById('ac-porque').value = '';
+        document.getElementById('acciones').innerHTML = ac.lista.map(filaAccion).join('');
+        document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+      })
+      .withFailureHandler(function (e) { msg.textContent = String(e && e.message || e); })
+      .guardarAccionReporte(AUTH, { clave: CLAVE, accion: document.getElementById('ac-accion').value,
+                                    responsable: document.getElementById('ac-resp').value, porque: document.getElementById('ac-porque').value });
+  }
+  function borrarAccion(fila) {
+    if (!window.confirm('¿Borrar esta acción?')) return;
+    google.script.run
+      .withSuccessHandler(function (ac) {
+        document.getElementById('acciones').innerHTML = ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>';
+        document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+      })
+      .withFailureHandler(function (e) { window.alert(String(e && e.message || e)); })
+      .borrarAccionReporte(AUTH, Number(fila));
+  }
+
+  function cargar(clave, forzar) {
+    document.getElementById('rp-cargando').hidden = false;
+    document.getElementById('rp-todo').hidden = true;
+    document.getElementById('rp-error').hidden = true;
+    var run = google.script.run
+      .withSuccessHandler(pintar)
+      .withFailureHandler(function (e) {
+        document.getElementById('rp-cargando').hidden = true;
+        var el = document.getElementById('rp-error');
+        el.textContent = String(e && e.message || e); el.hidden = false;
+      });
+    if (forzar) run.refrescarReporteSemanal(AUTH, clave || 0); else run.getReporteSemanal(AUTH, clave || 0);
+  }
+
+  document.getElementById('rp-sel').addEventListener('change', function () { cargar(Number(this.value), false); });
+  document.getElementById('rp-actualizar').addEventListener('click', function () { cargar(CLAVE, true); });
+  // Dentro del tablero, imprimir la pagina imprimiria las siete pestañas: se abre la
+  // pagina sola del reporte (?page=reporte-semanal) y desde ahi se imprime.
+  var imprimir = document.getElementById('rp-imprimir');
+  if (CFG.embebido) {
+    imprimir.textContent = 'Abrir para imprimir / PDF';
+    imprimir.addEventListener('click', function () { window.open(CFG.base + '?page=reporte-semanal' + (CFG.t || ''), '_blank'); });
+  } else {
+    imprimir.addEventListener('click', function () { window.print(); });
+  }
+  // El tablero llama RP.recargar(true) desde su boton "Actualizar".
+  window.RP = { recargar: function (forzar) { cargar(CLAVE, !!forzar); } };
+  cargar(0, false);
+})();
+</script>

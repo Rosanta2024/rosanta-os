@@ -1,0 +1,74 @@
+  <!-- Estilo del reporte semanal en vivo. Parcial crudo, sin scriptlets, compartido por
+       ReporteSemanalVista.html y TableroVista.html. Todo lleva el prefijo rp-. -->
+  <style>
+    /* Reporte semanal de operacion, en vivo. Pilar 3. Las 8 secciones y el orden son
+       los del formato cerrado con Juanma el 23-sep-2026 (S38). Solo lectura salvo las
+       acciones de la semana, que se escriben en REPORTE_ACCIONES. */
+    main.rep { max-width: 1080px; }
+    .tb-panel .rp-cab h1 { font-size: 1.35rem; }
+    .rp-cab { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+    .rp-cab h1 { margin: 0; }
+    .rp-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; line-height: 1.5; }
+    .rp-controles { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    .rp-controles select { font-family: 'Lato', Arial, sans-serif; font-size: 0.9rem; padding: 0.35rem 0.5rem;
+      border: 1px solid rgba(26,26,26,0.18); border-radius: 8px; background: #fff; }
+    .rp-boton { background: transparent; color: var(--verde-bosque); border: 1px solid rgba(78,109,90,0.35);
+      border-radius: 999px; padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer; font-family: 'Lato', Arial, sans-serif; }
+    .rp-boton:hover { background: rgba(78,109,90,0.07); }
+    .rp-boton.lleno { background: var(--verde-bosque); color: var(--blanco); border-color: var(--verde-bosque); }
+    section.rp { margin-top: 2.2rem; page-break-inside: avoid; }
+    section.rp > h2 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .rp-nota { font-size: 0.82rem; opacity: 0.78; line-height: 1.55; max-width: 84ch; margin: 0.3rem 0 0.9rem; }
+    .rp-kpis { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .rp-kpi { background: var(--blanco); border-radius: 16px; padding: 0.9rem 1.05rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-left: 5px solid #c9c6c0; }
+    .rp-kpi.verde { border-left-color: #2E6B3F; } .rp-kpi.amarillo { border-left-color: #C89A3C; } .rp-kpi.rojo { border-left-color: #A33A2A; }
+    .rp-kpi .et { font-size: 0.76rem; color: #52514e; }
+    .rp-kpi .val { font-family: 'Lato', Arial, sans-serif; font-weight: 700; font-size: 1.55rem; line-height: 1.15; margin: 0.3rem 0 0.15rem; }
+    .rp-kpi .det { font-size: 0.78rem; color: #52514e; line-height: 1.45; }
+    .rp-tabla { overflow-x: auto; margin-top: 0.6rem; }
+    table.rp { width: 100%; border-collapse: collapse; background: var(--blanco); border-radius: 14px; overflow: hidden; font-size: 0.84rem; }
+    table.rp th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600; text-align: right; padding: 0.5rem 0.7rem; white-space: nowrap; }
+    table.rp td { padding: 0.45rem 0.7rem; text-align: right; border-bottom: 1px solid rgba(26,26,26,0.06); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    table.rp th:first-child, table.rp td:first-child { text-align: left; }
+    table.rp td.txt { text-align: left; white-space: normal; }
+    table.rp tr.total td { font-weight: 700; border-top: 2px solid rgba(26,26,26,0.2); }
+    table.rp tr.act td { background: rgba(87,167,127,0.10); }
+    td.neg, .neg { color: #A33A2A; } td.pos, .pos { color: #2E6B3F; }
+    /* Grafico de cuatro semanas. El AREA de las barras mide RP_ALTO px (la misma escala
+       para las barras y para la linea del equilibrio, las dos desde el piso del area);
+       el valor va dentro de la columna sobre su barra y las etiquetas en una fila aparte
+       debajo, para que nada se monte sobre las tarjetas de abajo. */
+    .rp-graf { background: var(--blanco); border-radius: 16px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); padding: 0.9rem 0.8rem 0.7rem; }
+    .rp-area { position: relative; height: 170px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; align-items: end; }
+    .rp-col { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-size: 0.8rem; }
+    .rp-col i { display: block; width: 62%; background: var(--verde-bosque); border-radius: 6px 6px 0 0; }
+    .rp-col.act i { background: #A33A2A; }
+    /* compras contra su techo: la raya es el techo de la semana; en rojo si se paso */
+    .rp-col { position: relative; }
+    .rp-col u { position: absolute; left: 10%; right: 10%; border-top: 3px solid var(--negro); z-index: 3; }
+    .rp-graf.compras .rp-col i { background: var(--verde-bosque); }
+    .rp-graf.compras .rp-col.sobre i { background: #A33A2A; }
+    .rp-col b { color: var(--negro); margin-bottom: 0.25rem; white-space: nowrap; position: relative; z-index: 2;
+      background: rgba(255,255,255,0.9); padding: 0 0.3rem; border-radius: 4px; }   /* legible cuando la linea del equilibrio lo cruza */
+    .rp-labs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; text-align: center; font-size: 0.74rem; color: #52514e; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid rgba(26,26,26,0.10); line-height: 1.4; }
+    .rp-pe { position: absolute; left: 0; right: 0; border-top: 2px dashed #A33A2A; pointer-events: none; z-index: 1; }
+    .rp-pe span { position: absolute; right: 0.4rem; top: -1.05rem; font-size: 0.7rem; color: #A33A2A; background: rgba(255,255,255,0.85); padding: 0 0.25rem; border-radius: 4px; }
+    .rp-dos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .rp-form { background: var(--blanco); border-radius: 16px; padding: 1rem 1.1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.9rem; }
+    .rp-form label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #52514e; margin-top: 0.6rem; }
+    .rp-form input, .rp-form textarea, .rp-form select { width: 100%; font-family: 'Lato', Arial, sans-serif; font-size: 0.9rem; padding: 0.45rem 0.55rem; border: 1px solid rgba(26,26,26,0.18); border-radius: 8px; background: #fff; }
+    .rp-form textarea { min-height: 4rem; }
+    .rp-form .fila { display: grid; gap: 0.8rem; grid-template-columns: 2fr 1fr; }
+    .rp-aviso { background: #FBF3E2; border-radius: 12px; padding: 0.7rem 1rem; font-size: 0.84rem; line-height: 1.5; margin: 0.6rem 0; }
+    .rp-error { background: #F6E4DF; border-radius: 14px; padding: 0.9rem 1.1rem; font-size: 0.88rem; line-height: 1.5; margin-top: 0.8rem; }
+    .rp-cargando { padding: 3rem 0; text-align: center; opacity: 0.6; }
+    .rp-pie { font-size: 0.74rem; color: #8a8780; margin-top: 2rem; line-height: 1.5; }
+    .rp-chip { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(78,109,90,0.12); color: var(--verde-bosque); margin-left: 0.4rem; vertical-align: middle; }
+    @media print {
+      header.app, .rp-controles, .rp-form, .no-print, .tb-tabs, .tb-barra, .tb-leyenda, .tb-docs { display: none !important; }
+      body { background: #fff; }
+      main.rep { max-width: none; padding: 0; }
+      section.rp { margin-top: 1.2rem; }
+      .rp-kpi, table.rp, .rp-graf { box-shadow: none; }
+    }
+  </style>

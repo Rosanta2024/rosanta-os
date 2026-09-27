@@ -4,6 +4,7 @@
   <base target="_top">
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
+  <?!= incluirCrudo_('ReporteSemanalEstilo') ?>
   <style>
     /* Tablero global (25-sep-2026). Solo dueño. No calcula: pinta lo que manda
        TableroDatos.gs, un pilar por llamada, en paralelo. */
@@ -47,8 +48,7 @@
     .tb-docbar { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.86rem; }
     .tb-docbar select { font-family: 'Lato', Arial, sans-serif; font-size: 0.9rem; padding: 0.35rem 0.5rem; border: 1px solid rgba(26,26,26,0.18); border-radius: 8px; background: #fff; }
     .tb-docbar a { color: var(--verde-bosque); }
-    .tb-doc { background: var(--blanco); border-radius: 18px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); overflow: hidden; }
-    .tb-doc iframe { display: block; width: 100%; height: 80vh; min-height: 520px; border: 0; }
+    .tb-rep { max-width: 1080px; }
     .tb-docs { margin-top: 1.2rem; }
     .tb-docs h3 { font-size: 1rem; margin: 0 0 0.5rem; color: var(--verde-bosque); }
     .tb-leyenda { font-size: 0.78rem; color: #52514e; margin-top: 1.4rem; line-height: 1.5; }
@@ -91,7 +91,15 @@
     <div class="tb-panel" id="p-profit"><div class="tb-cargando">Leyendo Profit OS (puede tardar medio minuto en frio)…</div></div>
     <div class="tb-panel" id="p-marketing"><div class="tb-cargando">Leyendo Marketing OS y el CRM…</div></div>
     <div class="tb-panel" id="p-expansion"><div class="tb-cargando">…</div></div>
-    <div class="tb-panel" id="p-reporte"><div class="tb-cargando">Buscando los reportes en Reportes 2026…</div></div>
+    <!-- El reporte semanal en vivo va aqui como secciones de la pagina, no en un iframe
+         (Juanma, 26-sep-2026). Es el mismo cuerpo que ReporteSemanalVista.html; su JS se
+         pega al final. Debajo, los PDF de cada semana para mandar al equipo. -->
+    <div class="tb-panel" id="p-reporte">
+      <div class="tb-rep">
+        <?!= incluirCrudo_('ReporteSemanalCuerpo') ?>
+      </div>
+      <div id="tb-pdfs"><div class="tb-cargando">Buscando los reportes en Reportes 2026…</div></div>
+    </div>
 
     <p class="tb-leyenda">Verde, amarillo y rojo salen de comparar el valor contra su meta. "defecto" en rojo al lado de una meta significa que la fila no existe en PARAMETROS y el sistema usa el valor de respaldo: hay que agregar la fila. "FALTA DATO" es un KPI que todavia no tiene fuente.</p>
   </main>
@@ -103,6 +111,7 @@
   var B = <?!= JSON.stringify(urlBase) ?>;
   var T = <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
   var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion', 'reporte'];
+  /* El reporte semanal en vivo (ReporteSemanalJs) se carga solo y se recarga con RP.recargar(true). */
 
   function q(n, dec) {
     if (n === null || n === undefined || isNaN(n)) return '—';
@@ -193,16 +202,15 @@
      Meta Ads (tarjeta al final de 05 Marketing). Se muestran tal cual, desde Drive. */
   var DOCS = null;
   function pintarReporte() {
-    var el = document.getElementById('p-reporte');
+    var el = document.getElementById('tb-pdfs');
     if (!DOCS || !DOCS.reportes || !DOCS.reportes.length) {
       el.innerHTML = '<div class="tb-error">No hay ningun Rosanta_SXX_2026.pdf en las carpetas SXX de Reportes 2026.' +
         (DOCS && DOCS.avisos && DOCS.avisos.length ? '<br>' + DOCS.avisos.map(esc).join('<br>') : '') + '</div>';
       return;
     }
-    /* Decision de Juanma (25-sep, noche): aqui NO se muestra el PDF. Esta pestaña va a ser
-       el reporte semanal EN VIVO (sus 8 secciones desde los motores) y el PDF queda solo
-       como descarga para mandarlo al equipo. Mientras el reporte en vivo no exista, la
-       pestaña lista las semanas con su descarga. */
+    /* Decision de Juanma (25-sep, noche): aqui NO se muestra el PDF. El reporte en vivo va
+       arriba como secciones de la pagina (26-sep: sin iframe) y el PDF queda solo como
+       descarga para mandarlo al equipo. */
     var tarjetas = DOCS.reportes.map(function (r, i) {
       var descarga = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(r.id);
       return '<div class="tb-card ' + (i === 0 ? 'verde' : 'gris') + '">' +
@@ -214,11 +222,8 @@
         '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Abrir en Drive</a></div>' +
         '</div>';
     }).join('');
-    // El reporte en vivo (ReporteSemanalVista, las 8 secciones desde los motores) va
-    // embebido; abajo, los PDF de cada semana para descargar y mandar al equipo.
-    el.innerHTML = '<div class="tb-doc"><iframe id="ifr-reporte" title="Reporte semanal en vivo" src="' + B + '?page=reporte-semanal&embed=1' + T + '"></iframe></div>' +
-      '<div class="tb-docs"><h3>PDF de cada semana, para mandar al equipo</h3><div class="tb-grid">' + tarjetas + '</div></div>' +
-      '<p class="tb-leyenda">Cada PDF vive en la carpeta de su semana (Reportes 2026 / SXX); si una semana no aparece, es que su carpeta no tiene Rosanta_SXX_2026.pdf. El PDF generado desde la pantalla de arriba es la siguiente tanda.</p>';
+    el.innerHTML = '<div class="tb-docs"><h3>PDF de cada semana, para mandar al equipo</h3><div class="tb-grid">' + tarjetas + '</div></div>' +
+      '<p class="tb-leyenda">Cada PDF vive en la carpeta de su semana (Reportes 2026 / SXX); si una semana no aparece (la S37, por ejemplo), es que su carpeta no tiene Rosanta_SXX_2026.pdf. El PDF generado desde el reporte de arriba es la siguiente tanda.</p>';
   }
   function pintarPlanes() {
     var el = document.getElementById('p-marketing');
@@ -245,7 +250,7 @@
     google.script.run
       .withSuccessHandler(function (d) { DOCS = d; pintarReporte(); pintarPlanes(); })
       .withFailureHandler(function (e) {
-        document.getElementById('p-reporte').innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>';
+        document.getElementById('tb-pdfs').innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>';
       })
       .getTableroDocumentos(AUTH);
   }
@@ -260,7 +265,13 @@
   });
   document.getElementById('btn-actualizar').addEventListener('click', function () {
     PILARES.forEach(function (p) {
-      document.getElementById('p-' + p).innerHTML = '<div class="tb-cargando">Actualizando…</div>';
+      if (p === 'reporte') {
+        // el reporte en vivo se recarga solo (sin borrar su cuerpo); los PDF, aparte
+        if (window.RP) window.RP.recargar(true);
+        document.getElementById('tb-pdfs').innerHTML = '<div class="tb-cargando">Actualizando…</div>';
+      } else {
+        document.getElementById('p-' + p).innerHTML = '<div class="tb-cargando">Actualizando…</div>';
+      }
       cargar(p);
     });
   });
@@ -268,5 +279,11 @@
   PILARES.forEach(cargar);
 })();
 </script>
+<script>
+  /* Lo que el reporte semanal embebido necesita; su JS va pegado crudo debajo. */
+  var RP_CFG = { auth: '<?= authToken ?>', base: <?!= JSON.stringify(urlBase) ?>,
+                 t: <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>, embebido: true };
+</script>
+<?!= incluirCrudo_('ReporteSemanalJs') ?>
 </body>
 </html>

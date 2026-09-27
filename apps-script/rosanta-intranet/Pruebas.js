@@ -359,7 +359,9 @@ function prCimientos_(res) {
                   'SistemaFinanzas', 'EscenariosVista', 'CajaVista', 'FinanzasGastoVista',
                   // TableroVista: el tablero global (25-sep-2026), solo dueño;
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
-                  'TableroVista', 'ReporteSemanalVista'];
+                  'TableroVista', 'ReporteSemanalVista',
+                  // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
+                  'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     var MINIMO = 15;
 
     var publicas = [];
@@ -966,7 +968,9 @@ function prPuentePOS_(res) {
                   'SistemaFinanzas', 'EscenariosVista', 'CajaVista', 'FinanzasGastoVista',
                   // TableroVista: el tablero global (25-sep-2026), solo dueño;
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
-                  'TableroVista', 'ReporteSemanalVista'];
+                  'TableroVista', 'ReporteSemanalVista',
+                  // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
+                  'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     // Piso de alarma, no meta: el 10-sep-2026 habia 21. Si de golpe caen a menos de
     // 15, lo que se rompio es el barrido, no es que hayan quitado pantallas.
     var MINIMO = 15;
@@ -1060,6 +1064,7 @@ function prPuentePOS_(res) {
                   'CosteoJs_Paneles', 'CosteoJs_Acciones', 'CosteoJs_Inventario',
                   'SistemaFinanzas', 'EscenariosVista', 'CajaVista', 'FinanzasGastoVista', 'TableroVista',
                   'ReporteSemanalVista',
+                  'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs',
                   // sin llamadas hoy, pero son vistas: lo que no se lee, no se revisa
                   'CosteoEstilos', 'Estilos', 'Logo'];
     var MINIMO = 25;    // el 12-sep-2026 habia 36 google.script.run en estas vistas

@@ -89,7 +89,7 @@ Recetas, precios, costos, fichas y productos faltantes son responsabilidad de co
 
 Web app Apps Script; Sheets/Drive como fuente de verdad; responsive.
 
-**Estado al 26 sep 2026: el equipo está en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería 127 OK · 0 fallas · 5 avisos · 3 saltadas. La @126 trae el **reporte semanal en vivo** (`?page=reporte-semanal` y séptima pestaña del tablero, con descarga del PDF de la semana) y el equilibrio semanal por PRESUPUESTO. Detalle en SKILL.md v28.
+**Estado al 26 sep 2026 (tarde): el equipo está en la @127** (verificado: `list-deployments` releído tres veces y la @127 bajada aparte idéntica al disco, 67 archivos). Batería 128 OK · 0 fallas · 4 avisos · 3 saltadas. La @126 trajo el **reporte semanal en vivo** (`?page=reporte-semanal` y séptima pestaña del tablero, con descarga del PDF de la semana) y el equilibrio semanal por PRESUPUESTO; la @127 lo muestra como secciones de la página (sin iframe), arregla el gráfico y agrega **compras contra su techo** para cocina y barra. Las 16 filas de PARAMETROS ya existen. Detalle en SKILL.md v28.
 
 ~~**Estado al 25 sep 2026: el equipo está en la @124** (verificado: `list-deployments` releído y la @124 bajada aparte idéntica al disco, 62 archivos). Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. La @124 trae el **tablero global** (`?page=tablero`, solo dueño; `TableroDatos.js` + `TableroVista.html`; catálogo en `03_Finance_Data_OS/KPIs/KPI_Definiciones.md`) y los campos nuevos de los motores (EBITDA, compra sin factura, comensales L–X, medios, CAC, cierre de inventario). Detalle en SKILL.md v26. (superado por la @126)~~
 

@@ -88,6 +88,17 @@ Al leer la @125 en produccion, dos numeros no servian:
 
 `clasp logout` + `clasp login` (la sesión había vencido otra vez con `invalid_rapt`) · HEAD de Apps Script idéntico al disco (64 archivos) · `create-version` → 126 · `update-deployment -V 126` · releído tres veces · la @126 bajada aparte es idéntica al disco. Commit `c0a0cb7` en `main` con los siete archivos del reporte semanal.
 
+## Tanda del 26-sep (tarde): el reporte como secciones, el gráfico arreglado y las compras contra su techo
+
+Juanma miró la @126 y marcó cuatro cosas: la línea del equilibrio a una altura equivocada, el reporte metido en un iframe, contenido montado uno sobre otro, y la S37 sin PDF.
+
+- **Sin iframe.** El reporte se partió en tres parciales crudos sin scriptlets: `ReporteSemanalEstilo.html`, `ReporteSemanalCuerpo.html` y `ReporteSemanalJs.html`. Los pegan con `incluirCrudo_` tanto la página sola (`ReporteSemanalVista.html`, `?page=reporte-semanal`) como la pestaña "Reporte semanal" del tablero, que ahora lo muestra como secciones de la misma página. Lo que cada página necesita (token, urlBase, si está embebido) va en `window.RP_CFG` declarado antes del JS; todos los ids llevan `rp-` para no chocar con los del tablero. En el tablero el botón pasa a "Abrir para imprimir / PDF" (abre la página sola, porque imprimir el tablero imprimiría las siete pestañas) y "Actualizar" recarga el reporte con `RP.recargar(true)` sin borrar su cuerpo. Los tres parciales entraron en las tres listas `VISTAS` de `Pruebas.js`.
+- **El gráfico de cuatro semanas.** La línea y las barras usaban escalas distintas (la línea sumaba 40 px a ojo para las etiquetas) y el contenedor de 190 px no cabía valor + barra + dos líneas de etiqueta: por eso se montaba sobre las tarjetas. Ahora el área mide 170 px, barras y línea escalan sobre los mismos 140 px desde el mismo piso, y las etiquetas van en una fila aparte. Además `.rp-barra` estaba definida dos veces (cabecera y columna): la cabecera es `.rp-cab` y la columna `.rp-col`.
+- **S37 sin PDF: es dato, no código.** La carpeta `Reportes 2026/S37` (id `1G4tn8lge-qF4TOn4zbg2dzE6i9Q8SMa_`) tiene las hojas de FEL y de ventas y un PDF de FEL, pero ningún `Rosanta_S37_2026.pdf`. La pestaña lo dice en su leyenda.
+- **Compras contra su techo (pedido de Juanma, 26-sep: "cocina y barra tengan una gráfica visual sobre el punto de equilibrio de compras").** Nueva en la sección 5: por área, las cuatro semanas, barra = compra del motor (`semanas[].cocina/.barra`), raya negra = techo (venta del área de esa semana × su meta), barra en rojo si se pasó; abajo el exceso de la semana y la **venta extra que exige**: exceso × (100 ÷ margen de contribución del equilibrio), hoy × 1.99. La venta por área de cada semana sale de UNA lectura de VENTAS x PLATO sobre el rango de las cuatro semanas, repartida por la fecha de cada línea (`ventasDelRango_` ahora devuelve `fecha` en cada línea); antes se leía solo la semana en curso. Caché del reporte `rep_sem_v2_`. La prueba del reporte comprueba que la compra del gráfico es la del motor, que el techo de la última semana es el "costo a objetivo" de la sección 5 y que el factor es 100 ÷ mc. En vivo (S38): cocina se pasó del techo las cuatro semanas (S35 +Q5,695 · S36 +Q3,170 · S37 +Q6,699 · S38 +Q2,091, que exige Q4,160 de venta extra); barra bajo el techo en S35 y S36, pasada en S37 y S38.
+
+**Batería sobre este HEAD (26-sep, tarde): 128 OK · 0 fallas · 4 avisos · 3 saltadas · 174 s.** Los cuatro avisos son los conocidos. HEAD == disco, 67 archivos. Juanma: "publica y commit". **Publicado: @127** (`create-version` → 127 · `update-deployment -V 127` · releído tres veces · la @127 bajada aparte idéntica al disco, 67 archivos).
+
 ## Cómo se publicó (para la próxima vez)
 
 1. `clasp login` con restaurante@rosanta.rest (solo Juanma; abre el navegador).
@@ -100,7 +111,7 @@ Al leer la @125 en produccion, dos numeros no servian:
 
 ## Pendientes que deja
 
-- Filas de `PARAMETROS` (13 en defecto + `meta_venta_anio`, `compra_sin_factura_max_pct`, `cac_max_q` sin meta) y la pestaña `METAS` (`instalarMetas()`).
+- ~~Filas de `PARAMETROS`~~ **Hecho el 26-sep:** Juanma pegó las 16 filas (13 con el defecto + `meta_venta_anio` 1,950,000, `compra_sin_factura_max_pct` 40, `cac_max_q` 60). Batería después: 128 OK · 0 fallas · 4 avisos · 3 saltadas; la prueba de metas dice "todas en PARAMETROS". Queda la pestaña `METAS` (`instalarMetas()`).
 - K08 comisión de tarjeta: elegir fuente (liquidaciones de VISANET y BAC Credomatic, recomendada).
 - K18 reseñas: `RESENAS_SHEET_ID` y pestaña `RESENAS_TA`.
 - Conflicto de meta de food cost entre el reporte semanal (26 / ponderado) y `PARAMETROS` (28 / 20).

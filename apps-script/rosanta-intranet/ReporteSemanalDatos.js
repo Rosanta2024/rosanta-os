@@ -31,7 +31,7 @@ var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', '
 var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala', 'Reservas', 'Administración'];
 var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
 var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
-var REP_CACHE = 'rep_sem_v1_';
+var REP_CACHE = 'rep_sem_v2_';
 var REP_CACHE_SEGS = 30 * 60;
 
 // ------------------------------------------------------------------ entradas
@@ -227,11 +227,21 @@ function _repCalcular_(clave) {
   var areas = { cocina: { venta: 0, uds: 0, productos: {} }, barra: { venta: 0, uds: 0, productos: {} } };
   var sinArea = 0, ventaPlatos = 0;
   var platosError = '';
+  // Venta por area de CADA una de las cuatro semanas (para el grafico de compras contra
+  // su techo, 26-sep-2026): UNA lectura de VENTAS x PLATO sobre el rango de las cuatro,
+  // repartida por semana con la fecha de cada linea. La semana en curso (la ultima)
+  // alimenta ademas los platos y el mix, con las mismas lineas que antes.
+  var lunes0 = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() - 7 * (cuatro.length - 1));
+  var ventaSem = cuatro.map(function () { return { cocina: 0, barra: 0 }; });
   try {
-    var vr = ventasDelRango_(_repIso_(lunes), _repIso_(domingo));
+    var vr = ventasDelRango_(_repIso_(lunes0), _repIso_(domingo));
     (vr.lineas || []).forEach(function (l) {
       if (!l.producto || ignorarEnVentas_(l.producto)) return;
       var a = esCocinaPOS_(l.categoria) ? 'cocina' : 'barra';
+      var fl = _repFecha_(l.fecha);
+      var iSem = fl ? Math.floor((fl - lunes0) / 864e5 / 7) : -1;
+      if (iSem >= 0 && iSem < ventaSem.length) ventaSem[iSem][a] += l.total;
+      if (iSem !== cuatro.length - 1) return;      // platos y mix: solo la semana en curso
       var A = areas[a];
       A.venta += l.total; A.uds += l.cantidad; ventaPlatos += l.total;
       var P = A.productos[l.producto] || (A.productos[l.producto] = { nombre: l.producto, uds: 0, venta: 0 });
@@ -279,6 +289,39 @@ function _repCalcular_(clave) {
                  ventas_ss: mes.ventas_ss } : null,
     aviso_barra: 'El costo de barra es compra contra venta de la misma semana, no costo de consumo: una ' +
                  'compra de inventario cae entera en la semana en que se paga.'
+  };
+
+  // ---- 6b. compras contra su techo, cuatro semanas (pedido de Juanma, 26-sep-2026) --
+  // Para que cocina y barra VEAN que la compra pega directo en el equilibrio. Techo =
+  // venta del area de esa semana x su meta. Lo comprado por encima del techo hay que
+  // venderlo de vuelta: cada quetzal de exceso exige 1 / (margen de contribucion) de
+  // venta extra para quedar en equilibrio. Compra por area = semanas[].cocina/.barra
+  // del motor (la misma de la seccion 6); venta por area = VENTAS x PLATO sin IVA.
+  function techoDe(compra, venta, meta) {
+    var v = _finR_(venta / 1.12), techo = _finR_(v * meta / 100);
+    return { compra: _finR_(compra), venta: v, techo: techo,
+             exceso: v ? _finR_(compra - techo) : null,
+             real_pct: v ? _finR_(compra / v * 100, 1) : null };
+  }
+  var factor = (pe && pe.mc > 0) ? _finR_(100 / pe.mc, 2) : null;
+  function impactoDe(t) {
+    var ex = t.exceso !== null && t.exceso > 0 ? t.exceso : 0;
+    return { exceso: ex, venta_extra: factor ? _finR_(ex * factor) : null };
+  }
+  var comprasSem = cuatro.map(function (x, i) {
+    return { w: x.w, actual: x.clave === s.clave,
+             cocina: techoDe(x.cocina, ventaSem[i].cocina, metas.COCINA),
+             barra: techoDe(x.barra, ventaSem[i].barra, metas.BARRA) };
+  });
+  var compras = {
+    semanas: comprasSem, meta_cocina: metas.COCINA, meta_barra: metas.BARRA,
+    mc: pe ? pe.mc : null, factor: factor,
+    impacto: { cocina: impactoDe(comprasSem[comprasSem.length - 1].cocina),
+               barra: impactoDe(comprasSem[comprasSem.length - 1].barra) },
+    nota: 'El techo de compra es la venta del area de esa semana por su meta (' + metas.COCINA + '% cocina, ' +
+          metas.BARRA + '% barra). Lo comprado por encima del techo no es un porcentaje: es venta que hay que ' +
+          'recuperar. Con margen de contribucion ' + (pe ? pe.mc : '—') + '%, cada quetzal de exceso exige ' +
+          (factor ? 'Q' + factor : '—') + ' de venta extra para volver al equilibrio.'
   };
 
   // ---- 7. personal y P&L semanal ------------------------------------------------
@@ -347,6 +390,7 @@ function _repCalcular_(clave) {
     dias: dias,
     reservas: reservas,
     foodcost: foodcost,
+    compras: compras,
     areas: {
       cocina: { venta: ventaCocina, venta_pct: s.ventas ? _finR_(ventaCocina / s.ventas * 100, 1) : null,
                 costo: _finR_(s.cocina), costo_pct: ventaCocina ? _finR_(s.cocina / ventaCocina * 100, 1) : null,
