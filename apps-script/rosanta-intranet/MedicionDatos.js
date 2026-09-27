@@ -329,6 +329,23 @@ function medCascadaResumen_(d, P, M, hoy) {
   r.dia_corte = diaCorte; r.dias_mes = diasMes;
   r.venta_rest = cur.ventas || 0;
   r.venta_eventos = cur.eventos || 0;
+  // Los cierres diarios de PosFile (CierresDiarios.gs) adelantan la venta de los dias que
+  // la carga del lunes todavia no trae. Misma base que el motor: GRAN TOTAL (con el 10%
+  // de servicio) / 1.12. El cierre no separa eventos: entran como restaurante.
+  r.cierres_dias = 0; r.cierres_venta = 0; r.cierre_ultimo = null;
+  try {
+    var cies = cieTodos_(), mesTxt = hoy.getFullYear() + '-' + (hoy.getMonth() < 9 ? '0' : '') + (hoy.getMonth() + 1);
+    var corteIso = diaCorte ? mesTxt + '-' + (diaCorte < 10 ? '0' : '') + diaCorte : mesTxt + '-00';
+    Object.keys(cies).sort().forEach(function (f) {
+      if (f.slice(0, 7) !== mesTxt) return;
+      r.cierre_ultimo = f;
+      if (f <= corteIso) return;
+      r.cierres_venta += cies[f].gran_total / 1.12; r.cierres_dias++;
+      diaCorte = Math.max(diaCorte, Number(f.slice(8, 10)));
+    });
+    r.venta_rest += r.cierres_venta;
+    r.dia_corte = diaCorte;
+  } catch (eC) { /* sin cierres: queda la carga del lunes */ }
   r.venta_acum = r.venta_rest + r.venta_eventos;
   // el restaurante se proyecta por dias; los eventos no (ya cerrados, no son ritmo)
   r.venta_proy = diaCorte ? Math.round(r.venta_rest / diaCorte * diasMes + r.venta_eventos) : null;

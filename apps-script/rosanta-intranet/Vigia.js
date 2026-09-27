@@ -114,6 +114,7 @@ function _vigContexto_(hoy) {
   try { ctx.resenas = medResenas_(hoy); } catch (e5) { ctx.resenas = null; }
   try { var k = mktKpisMes_(d.anio, d); ctx.mkt = k.meses[hoy.getMonth() + 1] || null; } catch (e6) { ctx.mkt = null; }
   try { ctx.acciones = medAcciones_(null); } catch (e7) { ctx.acciones = []; }
+  try { ctx.cierres = cieTodos_(); } catch (e8) { ctx.cierres = {}; }
   return ctx;
 }
 
@@ -219,6 +220,12 @@ function vigiaReglas_(ctx) {
       if (dia === 1) sugerir('V9-clientes', 'marketing', 'Vanessa', 'Clientes nuevos van a ' + ritmo + ' contra ' + M.clientes.valor + ': revisar en ⚖️ Decisiones qué conjunto optimiza a reserva real y mover el gasto ahí.');
     }
   }
+  // V11 · el cierre diario de PosFile de ayer no llego (el sistema de PosFile a veces se cae)
+  if (ctx.cierres) {
+    var ayer = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
+    var fechas = Object.keys(ctx.cierres).sort(), ult = fechas.length ? fechas[fechas.length - 1] : null;
+    if (ult && !ctx.cierres[ayer]) aviso('dueno', 'No llegó el cierre de PosFile de ayer (el último es del ' + ult + '). La venta del mes queda hasta ese día.');
+  }
   // V10 · reseñas de la semana, desde el jueves
   if (ctx.resenas && dia >= 4 && ctx.resenas.esta_semana < M.resenas.valor) {
     aviso('sala', 'Reseñas de Google esta semana: ' + ctx.resenas.esta_semana + ' de ' + M.resenas.valor + '. Pedirlas en el huddle de hoy.');
@@ -266,8 +273,16 @@ function vigiaMensaje_(dest, ctx, reglas) {
   var link = urlIntranet_() + '?page=' + (VIG_PAGINA_[rol] || 'tablero');
   var dias = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'][_vigDia_(hoy)];
   var lineas = [];
+  var ayerIso = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
+  var cAyer = ctx.cierres && ctx.cierres[ayerIso];
   lineas.push('Hola ' + dest.nombre + ', tu resumen del ' + dias + ' ' + hoy.getDate() + '/' + (hoy.getMonth() + 1) + '.');
   lineas.push('');
+  if (cAyer && (rol === 'dueno' || rol === 'sala')) {
+    lineas.push('Ayer: ' + medQ_(cAyer.sin_propina) + ' sin propina' + (cAyer.tickets ? ' en ' + cAyer.tickets + ' mesas' : '') +
+      (cAyer.comensales_reserva ? ' · ' + cAyer.comensales_reserva + ' comensales con reserva' : '') +
+      (rol === 'dueno' ? ' · tarjeta ' + medQ_(cAyer.tarjeta) + ' · efectivo ' + medQ_(cAyer.efectivo) : '') + '.');
+    lineas.push('');
+  }
   items.forEach(function (x) { lineas.push((x.zona === 'verde' ? '🟢 ' : x.zona === 'amarillo' ? '🟡 ' : x.zona === 'rojo' ? '🔴 ' : '⚪ ') + x.nombre + ': ' + x.valor + ' — ' + x.texto); });
   if (avisos.length) { lineas.push(''); lineas.push('Lo importante hoy:'); avisos.slice(0, 5).forEach(function (a) { lineas.push((a.urgente ? '⚠️ ' : '• ') + a.texto); }); }
   if (mias.length) { lineas.push(''); lineas.push('Tus acciones de la semana:'); mias.slice(0, 5).forEach(function (a) { lineas.push('☐ ' + a.accion + ' (' + a.fecha + ')'); }); }
@@ -369,6 +384,7 @@ function vigiaCadaHora() {
   var ya = _vigYaHoy_();
   var toca = destinos.filter(function (x) { return x.hora === hora && _vigTocaHoy_(x.dias, dia) && !ya[x.nombre]; });
   if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
+  if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }
   var ctx = _vigContexto_(hoy), reglas = vigiaReglas_(ctx);
   if (hora === 6 || hora === 7) { _vigSugerir_(reglas.sugerencias); ctx.acciones = medAcciones_(null); }
   var log = [];

@@ -1041,6 +1041,20 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'retiros: solo chef y dueño · Sala: solo sala y dueño', malos.length, 0);
   });
 
+  prCorrer_(g, 'El cierre de PosFile se lee: venta, tarjeta, propina y mesas', function () {
+    var nombre = 'El cierre de PosFile se lee: venta, tarjeta, propina y mesas';
+    // el texto real del cierre del 20-sep-2026, cruzado contra el maestro: 5 tickets, Q4,191
+    var c = cieParsear_(" \n-----CIERRE DE CAJA----- - CORSAGA \n \nRESUMEN  \nT-Crédito: 4191.00  \nEfectivo: 0.00  \nVenta Total: 4191.00 \n  \nTransferencia: 0.00  \nPedidos Ya: 0.00  \nUber Eats: 0.00  \nTOTAL: 0.00 \n  \nGRAN TOTAL: 4191.00 \n  \nPropina: 381.00  \nTotal s/propina: 3810.00  \nCortesia: -0.00  \n \nVENTAS POR VENDEDOR \nTotal: 3810.00\nPROPINA POR VENDEDOR \nTotal: 381.00\nVENTAS POR DOCUMENTO \nTotal: 3810.00\nVENTAS POR PRODUCTOS \nFecha inicio: 09/20/2026 00:00:00:000  Fecha final: 09/20/2026 20:44:59:000\n Cierre generado por: Administrador\nNombre Total\nAdmin 3810.00\nNombre Total\nAdmin 381.00\nNo. Cliente Total\n7560 cf cf | CF 425.00\n7561 cf cf | CF 605.00\n7562 cf cf | CF 980.00\n7563 cf cf | CF 345.00\n7564 cf cf | CF 1455.00\nProducto Cantidad Descuento Total\nLomito de la Casa 2 0.00 360.00\nPollo en Salsa de\nTamarindo 3 0.00 495.00\nTotal 3810.00\nTotal de productos: 24\nKombucha 1 0.00 40.00\nSoda del día 1 0.00 40.00\nTartar de Hongos 1 0.00 100.00\nBrisket de Res 2 0.00 360.00\nPescado del día 1 0.00 185.00\nLimonada 1 0.00 40.00\nTés - Gengibre con\nLemongrass 500ml 1 0.00 35.00\nPeras Horneadas 1 0.00 65.00\nPulpo a la Parrilla 1 0.00 150.00\nMix de Fritas 1 0.00 45.00\nLomito ROSANTA 3 0.00 570.00\nArroz Meloso 1 0.00 165.00\nInfusiones - Jade negro 2 0.00 70.00\nColiflor en Romesco 1 0.00 115.00\nNaranjada 4 0.00 160.00\nQueso Horneado 1 0.00 140.00\nCostilla de Cerdo Salda\nde Cafe y Cardamomo 1 0.00 180.00\nPasta con Lomito 1 0.00 185.00\nPasta con Camarones 1 0.00 195.00\nMockTails 2 0.00 90.00\nCafé Americano 1 0.00 25.00\nPostre Cumpleañero 1 0.00 0.00");
+    var malos = [];
+    if (c.fecha !== '2026-09-20') malos.push('fecha ' + c.fecha);
+    if (c.gran_total !== 4191) malos.push('gran total ' + c.gran_total);
+    if (c.tarjeta !== 4191) malos.push('tarjeta ' + c.tarjeta);
+    if (c.propina !== 381) malos.push('propina ' + c.propina);
+    if (c.sin_propina !== 3810) malos.push('sin propina ' + c.sin_propina);
+    if (c.tickets !== 5 || !c.cuadra) malos.push('mesas ' + c.tickets + ' (cuadra: ' + c.cuadra + ')');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : '20-sep: Q4,191 en 5 mesas, tarjeta Q4,191, propina Q381', malos.length, 0);
+  });
+
   prCorrer_(g, 'Las fuentes nuevas se leen: reseñas, repeticion y retiros', function () {
     var nombre = 'Las fuentes nuevas se leen: reseñas, repeticion y retiros';
     var hoy = new Date(), malos = [], ok = [];

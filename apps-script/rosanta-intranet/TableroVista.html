@@ -354,7 +354,8 @@
       'Cada día manda a cada persona, por correo, su número y lo que tiene que hacer (Juanma 7:00 L–V · José y Jeffry 12:00 · Vanessa lunes 9:00) y deja acciones sugeridas para aprobar. ' +
       'Canal: <b>correo</b>' + (v.whatsapp_activo ? ' y WhatsApp (plantilla <code>' + esc(v.plantilla) + '</code>).' : '. WhatsApp está apagado; se enciende con la propiedad VIGIA_WHATSAPP = SI cuando haya una plantilla aprobada.') +
       '<div><button type="button" class="tb-boton" id="vig-inst">' + (v.instalado ? 'Revisar instalación' : 'Instalar el vigía') + '</button>' +
-      '<button type="button" class="tb-boton" id="vig-sug">Escribir las sugerencias de hoy</button></div><div class="md-rep" id="vig-rep"></div></div>';
+      '<button type="button" class="tb-boton" id="vig-sug">Escribir las sugerencias de hoy</button>' +
+      '<button type="button" class="tb-boton" id="vig-cie">Leer los cierres de PosFile (40 días)</button></div><div class="md-rep" id="vig-rep"></div></div>';
     if (v.destinos.length) {
       h += '<div class="md-tbl"><table><tr><th>Persona</th><th>Hora</th><th>Días</th><th>Canal</th><th>WhatsApp</th><th>Correo</th><th></th></tr>' +
         v.destinos.map(function (d) { return '<tr><td>' + esc(d.nombre) + '</td><td>' + esc(d.hora) + ':00</td><td>' + esc(d.dias) + '</td><td>' + esc(d.canal) + '</td><td>' +
@@ -380,6 +381,13 @@
       rep.textContent = 'Escribiendo…';
       google.script.run.withSuccessHandler(function (r) { rep.textContent = r.escritas + ' sugerencias nuevas (de ' + r.total + '; las repetidas de esta semana no se duplican). Están en "Qué hacemos esta semana" de cada pestaña.'; })
         .withFailureHandler(function (e) { rep.textContent = e && e.message || e; }).vigiaSugerirAhora(AUTH);
+    };
+    document.getElementById('vig-cie').onclick = function () {
+      rep.textContent = 'Leyendo los correos de PosFile… puede tardar un minuto.';
+      google.script.run.withSuccessHandler(function (r) {
+          rep.innerHTML = 'Correos: ' + r.correos + ' · días guardados: ' + r.nuevos + ' · ya leídos: ' + r.repetidos +
+            (r.errores.length ? '<br><span style="color:#A33A2A">' + r.errores.map(esc).join('<br>') + '</span>' : '') + '<br>Quedan en la pestaña CIERRES_DIARIOS.';
+        }).withFailureHandler(function (e) { rep.textContent = e && e.message || e; }).leerCierresAhora(AUTH, 40);
     };
     el.querySelectorAll('button[data-env]').forEach(function (b) {
       b.onclick = function () {
