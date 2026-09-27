@@ -680,8 +680,12 @@ const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){re
    así que ningún módulo de arriba cambia. */
 /* calendario NO va aquí a propósito: se sincroniza fila por fila (calUpsertRemoto/
    calBorrarRemoto), nunca por replace masivo. El replace de un localStorage viejo
-   sobre la Sheet fue lo que borró el plan aprobado el 4-ago-2026. */
-const OS_MAP={rosanta_pz:'piezas',rosanta_carr:'carritos',rosanta_apr:'aprendizajes',rosanta_prop:'propuestas',rosanta_deb:'debates'};
+   sobre la Sheet fue lo que borró el plan aprobado el 4-ago-2026.
+   aprendizajes y carritos tampoco: los escriben por fuera (skill de pauta,
+   psUpsertAprendizaje_, webhook de WIX, CRMSync) y un replace desde un navegador
+   viejo borraba esas filas. Van fila por fila (filaUpsertRemoto/filaBorrarRemoto)
+   y mktReplace los rechaza en el servidor. */
+const OS_MAP={rosanta_pz:'piezas',rosanta_prop:'propuestas',rosanta_deb:'debates'};
 function osConnected(){return true}  // servido por Apps Script: siempre conectado
 function srv(fn,...args){
   return new Promise((res,rej)=>{
@@ -739,6 +743,21 @@ async function calPull(){
   if(r&&r.rows) localStorage.setItem('rosanta_cal',JSON.stringify(r.rows));
   return (r&&r.rows)?r.rows:[];
 }
+/* ===== Aprendizajes y carritos: misma regla que el calendario =====
+   La Sheet manda. Se leen al arrancar y cada cambio viaja como una sola fila.
+   Las filas externas llegan en otro orden (append al final, o nuevo arriba en
+   carritos), así que se ordenan por fecha: lo más reciente primero. */
+function filaUpsertRemoto(tab,row){ return srv('mktUpsert',tab,row); }
+function filaBorrarRemoto(tab,id){ return srv('mktDelete',tab,id); }
+async function tabPull(tab,k){
+  var r=await osGet(tab);
+  if(!r||!r.rows) return read(k,[]);
+  var rows=r.rows.slice().reverse().sort(function(a,b){return String(b.fecha||'').localeCompare(String(a.fecha||''));});
+  localStorage.setItem(k,JSON.stringify(rows));
+  return rows;
+}
+function aprPull(){ return tabPull('aprendizajes','rosanta_apr'); }
+function carrPull(){ return tabPull('carritos','rosanta_carr'); }
 /* ===== Puente window.cowork -> Apps Script =====
    En Cowork, Meta / Drive / Ad Library / Claude llegaban por window.cowork.
    Ese puente no existe aquí, así que lo reimplementamos contra Servicios.gs
@@ -963,13 +982,17 @@ function valPieza(){
 }
 /* ===== Aprendizajes (paso 4: círculo de aprendizaje) ===== */
 function aprIcon(t){return t==='funciona'?'✅':(t==='evitar'?'🚫':'💡')}
-function addApr(){
+async function addApr(){
   const txt=$('aprIn').value.trim();if(!txt){return}
-  const a=read('rosanta_apr',[]);
-  a.unshift({id:'a'+Date.now(),fecha:todayISO(),fuente:$('aprTipo').value,hallazgo:txt,accion:''});
-  store('rosanta_apr',a.slice(0,60));$('aprIn').value='';renderApr();
+  const row={id:'a'+Date.now(),fecha:todayISO(),fuente:$('aprTipo').value,hallazgo:txt,accion:''};
+  const a=read('rosanta_apr',[]);a.unshift(row);
+  localStorage.setItem('rosanta_apr',JSON.stringify(a));$('aprIn').value='';renderApr();
+  try{await filaUpsertRemoto('aprendizajes',row);}catch(e){alert('Guardado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));}
 }
-function delApr(id){store('rosanta_apr',read('rosanta_apr',[]).filter(x=>x.id!==id));renderApr()}
+async function delApr(id){
+  localStorage.setItem('rosanta_apr',JSON.stringify(read('rosanta_apr',[]).filter(x=>x.id!==id)));renderApr();
+  try{await filaBorrarRemoto('aprendizajes',id);}catch(e){alert('Borrado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));}
+}
 function renderApr(){
   const a=read('rosanta_apr',[]);
   $('aprList').innerHTML=a.length?a.slice(0,15).map(x=>'<div class="ckitem"><span style="flex:1">'+aprIcon(x.fuente)+' '+x.hallazgo+' <span class="muted">· '+x.fecha+'</span></span><button class="btn danger" onclick="delApr(\''+x.id+'\')">✕</button></div>').join(''):'<p class="muted">Sin aprendizajes aún. Agrega el primero o espera el reporte del lunes.</p>';
@@ -983,7 +1006,7 @@ async function genPlan(){
   let cal;
   try{ cal=await calPull(); }
   catch(e){ $('planStatus').textContent='No pude leer la Sheet: '+e.message; return; }
-  try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));renderApr();}catch(e){}
+  try{await aprPull();renderApr();}catch(e){}
 
   // Regenerables = solo Idea/Aprobada. Todo lo demás (Generada, Lista, Publicado,
   // legadas) es intocable: se conserva y su fecha queda ocupada.
@@ -1159,19 +1182,27 @@ function renderPz(){
 function openCarr(){$('cDate').value=todayISO();$('cNombre').value='';$('cValor').value='';$('cEstado').value='Pendiente';$('ovCarr').classList.add('act')}
 function saveCarr(){
   if(!$('cNombre').value.trim()){alert('Nombre del contacto');return}
-  const c=read('rosanta_carr',[]);
-  c.unshift({id:'c'+Date.now(),fecha:$('cDate').value,nombre:$('cNombre').value.trim(),canal:$('cCanal').value,valor:parseFloat($('cValor').value)||0,estado:$('cEstado').value,consentimiento:'',contacto:''});
-  store('rosanta_carr',c);closeOv('ovCarr');renderCarr();
+  const row={id:'c'+Date.now(),fecha:$('cDate').value,nombre:$('cNombre').value.trim(),canal:$('cCanal').value,valor:parseFloat($('cValor').value)||0,estado:$('cEstado').value,consentimiento:'',contacto:''};
+  const c=read('rosanta_carr',[]);c.unshift(row);
+  localStorage.setItem('rosanta_carr',JSON.stringify(c));closeOv('ovCarr');renderCarr();
+  filaUpsertRemoto('carritos',row).catch(function(e){alert('Guardado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));});
 }
-function carrEstado(id,val){const c=read('rosanta_carr',[]);const x=c.find(y=>y.id===id);if(x){x.estado=val;store('rosanta_carr',c);renderCarr()}}
-function delCarr(id){store('rosanta_carr',read('rosanta_carr',[]).filter(x=>x.id!==id));renderCarr()}
+function carrEstado(id,val){
+  const c=read('rosanta_carr',[]);const x=c.find(y=>y.id===id);if(!x)return;
+  x.estado=val;localStorage.setItem('rosanta_carr',JSON.stringify(c));renderCarr();
+  filaUpsertRemoto('carritos',x).catch(function(e){alert('Guardado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));});
+}
+function delCarr(id){
+  localStorage.setItem('rosanta_carr',JSON.stringify(read('rosanta_carr',[]).filter(x=>x.id!==id)));renderCarr();
+  filaBorrarRemoto('carritos',id).catch(function(e){alert('Borrado local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));});
+}
 function renderCarr(){
   const c=read('rosanta_carr',[]);
   const mes=todayISO().slice(0,7);
   const delMes=c.filter(x=>x.fecha&&x.fecha.startsWith(mes));
   const rec=delMes.filter(x=>x.estado==='Recuperado');
   const cont=delMes.filter(x=>x.estado!=='Pendiente');
-  const qRec=rec.reduce((a,x)=>a+x.valor,0);
+  const qRec=rec.reduce((a,x)=>a+(Number(x.valor)||0),0);
   const k=[
     ['Registrados (mes)',delMes.length,'de ~184 abandonos/mes'],
     ['Contactados',cont.length,delMes.length?Math.round(cont.length/delMes.length*100)+'% del total':'—'],
@@ -1636,7 +1667,7 @@ const EST_CONTEXT=`Rosanta: restaurante de gastrococtelería en Antigua Guatemal
 async function estRegen(){
   $('estRegenOut').innerHTML='<div class="loading"><div class="spin"></div>Regenerando la estrategia con los aprendizajes…</div>';
   try{
-    if(osConnected()){try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));}catch(e){}}
+    try{await aprPull();}catch(e){}
     const apr=read('rosanta_apr',[]).slice(0,15);
     const aprBlock=apr.length?('\nAPRENDIZAJES ACUMULADOS (incorpóralos, son evidencia real):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'\n(Aún sin aprendizajes registrados; usa la estrategia base.)';
     const props=read('rosanta_prop',[]).filter(p=>p.estado!=='Descartada').slice(0,5);
@@ -1808,7 +1839,7 @@ async function debatir(){
     :'\n\n(Investigación en vivo no disponible en este debate: aplicar la regla de humildad temporal con máximo rigor y marcar TODA mecánica de plataforma como ⚠️ verificar.)';
   $('debOut').innerHTML='<div class="loading"><div class="spin"></div>El panel está debatiendo…</div>';
   try{
-    if(osConnected()){try{const r=await osGet('aprendizajes');if(r.rows)localStorage.setItem('rosanta_apr',JSON.stringify(r.rows));}catch(e){}}
+    try{await aprPull();}catch(e){}
     const apr=read('rosanta_apr',[]).slice(0,12);
     const aprBlock=apr.length?('\n\nAPRENDIZAJES ACUMULADOS DE ROSANTA (evidencia real, úsenla en el debate):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'';
     const t=await askIA(EST_CONTEXT+aprBlock+invBlock+'\n\n'+PANEL_PROMPT+'\n\nTEMA DEL DEBATE: '+tema+cont+(libre&&sel!=='libre'?('\n\nCONTEXTO ADICIONAL DE JUANMA (dueño): '+libre):''));
@@ -1866,21 +1897,22 @@ async function osPushAll(){
   $('osSyncStatus').textContent='Enviando…';
   try{
     for(const k in OS_MAP){await osPost({tab:OS_MAP[k],action:'replace',rows:read(k,[])})}
-    $('osSyncStatus').textContent='✅ Calendario, piezas y carritos enviados a la Sheet.';
+    $('osSyncStatus').textContent='✅ Piezas, propuestas y debates enviados a la Sheet (calendario, aprendizajes y carritos ya viajan fila por fila).';
   }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
 }
 async function osPullAll(){
-  if(!confirm('Traer de la Sheet reemplaza los datos locales de calendario, piezas y carritos. ¿Continuar?'))return;
+  if(!confirm('Traer de la Sheet reemplaza los datos locales de calendario, piezas, carritos, aprendizajes, propuestas y debates. ¿Continuar?'))return;
   $('osSyncStatus').textContent='Trayendo…';
   try{
-    await calPull(); // calendario va aparte: fila por fila, no en OS_MAP
+    await calPull(); // calendario, aprendizajes y carritos van aparte: fila por fila, no en OS_MAP
+    await aprPull();await carrPull();
     for(const k in OS_MAP){const r=await osGet(OS_MAP[k]);if(r.rows)localStorage.setItem(k,JSON.stringify(r.rows))}
     renderCal();renderPz();renderCarr();renderApr();seedProps();renderProps();renderDebHist();renderPanel();
     $('osSyncStatus').textContent='✅ Datos traídos de la Sheet.';
   }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
 }
 function osExport(){
-  const data={calendario:read('rosanta_cal',[]),piezas:read('rosanta_pz',[]),carritos:read('rosanta_carr',[]),biblioteca:read('rosanta_lib',[]),propuestas:read('rosanta_prop',[]),debates:read('rosanta_deb',[]),exportado:new Date().toISOString()};
+  const data={calendario:read('rosanta_cal',[]),piezas:read('rosanta_pz',[]),carritos:read('rosanta_carr',[]),aprendizajes:read('rosanta_apr',[]),biblioteca:read('rosanta_lib',[]),propuestas:read('rosanta_prop',[]),debates:read('rosanta_deb',[]),exportado:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rosanta_marketing_os_'+todayISO()+'.json';a.click();
   $('osSyncStatus').textContent='💾 Respaldo JSON descargado.';
@@ -1889,9 +1921,11 @@ function osExport(){
 $('poEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
 ckUpd();renderPz();renderLib();renderApr();
 calPull().then(renderCal).catch(function(){}); // calendario siempre fresco desde la Sheet
+aprPull().then(renderApr).catch(function(){}); // aprendizajes también: la Sheet manda, no el localStorage
 if(FULL){
   osRenderConn();seedProps();
   renderCarr();renderProps();renderDebHist();renderPanel();renderUtmHist();loadMeta();loadGads();
+  carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
 }else{
   renderCal(); // para contenido, Calendario es el tab inicial
 }

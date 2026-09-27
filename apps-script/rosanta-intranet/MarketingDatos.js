@@ -183,11 +183,28 @@ function mktUpsert(tab, row, auth) {
   }
 }
 
+/**
+ * Pestañas que NUNCA se reemplazan completas: tienen escritores fuera del navegador
+ * y un localStorage viejo las borraría en silencio (así se perdió el calendario el
+ * 4-ago-2026). Se escriben solo con mktUpsert / mktDelete.
+ *   calendario    Plan del mes y el propio sistema, fila por fila.
+ *   aprendizajes  skill rosanta-analista-pauta (endpoint Marketing OS) y
+ *                 psUpsertAprendizaje_ al cerrar pruebas de pauta.
+ *   carritos      webhook de carritos de WIX (intakeCarrito) y CRMSync, que los
+ *                 pasa a Completado.
+ * El guard vive aquí y no solo en la vista: una pestaña abierta con el HTML viejo
+ * sigue llamando a mktReplace hasta que se recarga.
+ */
+var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1 };
+
 /** Lo que usa el auto-sync del sistema (osAutoPush -> action:'replace'). */
 function mktReplace(tab, rows, auth) {
   requiereEdicionMarketing_(tab, auth);
   var head = SCHEMA[tab];
   if (!head) throw new Error('Pestaña desconocida: ' + tab);
+  if (TABS_SIN_REPLACE[tab]) {
+    throw new Error('La pestaña ' + tab + ' se sincroniza fila por fila; reemplazarla completa borraría filas escritas por fuera.');
+  }
   rows = rows || [];
 
   var lock = LockService.getScriptLock();
