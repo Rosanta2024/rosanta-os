@@ -319,10 +319,19 @@ function _vigLog_(dest, canal, res, msg) {
   } catch (e) { /* sin log no se frena el envio */ }
 }
 
+/* Decision de Juanma (27-sep-2026): el vigia manda por CORREO. WhatsApp queda apagado
+   (sin plantilla aprobada Meta acepta el mensaje pero no lo entrega) y se enciende con la
+   propiedad del script VIGIA_WHATSAPP = SI, cuando exista una plantilla aprobada. Los
+   numeros de VIGIA_DESTINOS se quedan guardados para ese dia. */
+function _vigWhatsAppActivo_() {
+  return String(PropertiesService.getScriptProperties().getProperty('VIGIA_WHATSAPP') || '').toUpperCase().trim() === 'SI';
+}
+
 function _vigEnviar_(dest, msg) {
   var res = [];
-  if (dest.canal === 'ambos' || dest.canal === 'whatsapp') { var w = _vigWhatsApp_(dest, msg); _vigLog_(dest, 'whatsapp', w, msg); res.push('WhatsApp: ' + (w.ok ? 'enviado' : 'NO · ' + w.detalle)); }
-  if (dest.canal === 'ambos' || dest.canal === 'correo' || (dest.canal === 'whatsapp' && !dest.whatsapp)) { var c = _vigCorreo_(dest, msg); _vigLog_(dest, 'correo', c, msg); res.push('Correo: ' + (c.ok ? 'enviado' : 'NO · ' + c.detalle)); }
+  var wa = _vigWhatsAppActivo_();
+  if (wa && (dest.canal === 'ambos' || dest.canal === 'whatsapp')) { var w = _vigWhatsApp_(dest, msg); _vigLog_(dest, 'whatsapp', w, msg); res.push('WhatsApp: ' + (w.ok ? 'enviado' : 'NO · ' + w.detalle)); }
+  if (!wa || dest.canal === 'ambos' || dest.canal === 'correo' || (dest.canal === 'whatsapp' && !dest.whatsapp)) { var c = _vigCorreo_(dest, msg); _vigLog_(dest, 'correo', c, msg); res.push('Correo: ' + (c.ok ? 'enviado' : 'NO · ' + c.detalle)); }
   return res;
 }
 
@@ -383,6 +392,7 @@ function vigiaVistaPrevia(auth) {
   return {
     instalado: destinos.length > 0,
     whatsapp_listo: !!(p.getProperty('WHATSAPP_TOKEN') && p.getProperty('WA_PHONE_NUMBER_ID')),
+    whatsapp_activo: _vigWhatsAppActivo_(),
     plantilla: p.getProperty('WA_PLANTILLA_RESUMEN') || 'rosanta_resumen',
     destinos: destinos.map(function (x) { return { nombre: x.nombre, rol: x.rol, hora: x.hora, dias: x.dias, canal: x.canal,
       whatsapp: x.whatsapp ? '…' + x.whatsapp.slice(-4) : '', correo: x.correo }; }),

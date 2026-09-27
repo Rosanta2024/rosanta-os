@@ -351,8 +351,8 @@
   }
   function pintarVigia(el, v) {
     var h = '<div class="md-inst"><b>' + (v.instalado ? 'El vigía está instalado.' : 'Falta instalar el vigía.') + '</b> ' +
-      'Cada día manda a cada persona su número y lo que tiene que hacer (Juanma 7:00 L–V · José y Jeffry 12:00 · Vanessa lunes 9:00) y deja acciones sugeridas para aprobar. ' +
-      'WhatsApp: ' + (v.whatsapp_listo ? 'credenciales listas · plantilla <code>' + esc(v.plantilla) + '</code>.' : '<b style="color:#A33A2A">faltan las credenciales</b>: sale solo el correo.') +
+      'Cada día manda a cada persona, por correo, su número y lo que tiene que hacer (Juanma 7:00 L–V · José y Jeffry 12:00 · Vanessa lunes 9:00) y deja acciones sugeridas para aprobar. ' +
+      'Canal: <b>correo</b>' + (v.whatsapp_activo ? ' y WhatsApp (plantilla <code>' + esc(v.plantilla) + '</code>).' : '. WhatsApp está apagado; se enciende con la propiedad VIGIA_WHATSAPP = SI cuando haya una plantilla aprobada.') +
       '<div><button type="button" class="tb-boton" id="vig-inst">' + (v.instalado ? 'Revisar instalación' : 'Instalar el vigía') + '</button>' +
       '<button type="button" class="tb-boton" id="vig-sug">Escribir las sugerencias de hoy</button></div><div class="md-rep" id="vig-rep"></div></div>';
     if (v.destinos.length) {
