@@ -919,7 +919,7 @@ function prFinanzas_(res) {
       malos.length ? malos.join(' · ')
         : ('S' + rp.semana.w + ' · ' + rp.dias.length + ' dias · ' + rp.reservas.validas + ' reservas · ' +
            rp.areas.cocina.top.length + '+' + rp.areas.barra.top.length + ' productos' +
-           (rp.acciones.existe ? '' : ' · falta la pestaña REPORTE_ACCIONES: se crea al guardar la primera accion')),
+           (rp.acciones.existe ? '' : ' · falta la pestaña ACCIONES: se crea al guardar la primera accion')),
       malos.length, 0);
   });
 

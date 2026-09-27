@@ -203,7 +203,7 @@
     }
     h += '<h3 style="margin:1.2rem 0 0.3rem">Acciones de la semana</h3>';
     var ac = d.acciones;
-    if (!ac.existe) h += '<div class="rp-aviso">La pestaña REPORTE_ACCIONES del Sheet de config todavía no existe: se crea sola al guardar la primera acción.</div>';
+    if (!ac.existe) h += '<div class="rp-aviso">La pestaña ACCIONES del Sheet de config todavía no existe: se crea sola al guardar la primera acción (es la misma lista que usan el tablero y el vigía).</div>';
     h += '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Por qué (el dato)</th><th class="no-print"></th></tr></thead><tbody id="acciones">' +
       (ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>') +
       '</tbody></table></div>' +

@@ -918,3 +918,57 @@ function getLecturaPauta(auth) {
   if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
   return getLecturaPilar(auth, 'marketing');
 }
+
+// ============================================================================
+// UNA SOLA LISTA DE ACCIONES (27-sep-2026, decision de Juanma)
+// ============================================================================
+/*
+ * El reporte semanal tenia su propia lista (REPORTE_ACCIONES, responsable por
+ * departamento) y los pilares la suya (ACCIONES, dueño con nombre). Dos listas de
+ * "que hacemos esta semana" es el problema que el Sistema de Medicion vino a quitar.
+ * Ahora todo vive en ACCIONES. El reporte muestra el DEPARTAMENTO (su regla del
+ * 23-sep: sin nombres propios) y el tablero y los mensajes muestran la PERSONA.
+ */
+var MED_DEPTO_A_PERSONA_ = { 'Cocina': 'Jeffry', 'Barra': 'José', 'Sala': 'José', 'Reservas': 'Vanessa', 'Administración': 'Juanma' };
+var MED_DEPTO_A_PILAR_ = { 'Cocina': 'profit', 'Barra': 'profit', 'Sala': 'management', 'Reservas': 'marketing', 'Administración': 'finanzas' };
+var MED_PERSONA_A_DEPTO_ = { 'Jeffry': 'Cocina', 'José': 'Sala', 'Efraín': 'Sala', 'Vanessa': 'Reservas', 'Juanma': 'Administración', 'Nadia': 'Administración' };
+
+function medClaveATexto_(clave) { clave = Number(clave); return Math.floor(clave / 100) + '-S' + ((clave % 100) < 10 ? '0' : '') + (clave % 100); }
+
+/** Las acciones de UNA semana (clave AAAAWW), en la forma que usa el reporte semanal. */
+function medAccionesReporte_(clave) {
+  var out = { lista: [], existe: false };
+  var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(MED_ACC_HOJA_);
+  if (!sh) return out;
+  out.existe = true;
+  var v = sh.getDataRange().getValues(), head = v[0].map(String), iP = head.indexOf('PORQUE'), sem = medClaveATexto_(clave);
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][0]) !== sem) continue;
+    var est = String(v[i][5] || '');
+    if (est === 'descartada' || est === 'sugerida') continue;       // el reporte muestra lo aprobado
+    out.lista.push({ fila: i + 1, accion: String(v[i][2] || ''),
+                     responsable: MED_PERSONA_A_DEPTO_[String(v[i][3])] || String(v[i][3] || ''),
+                     porque: iP >= 0 ? String(v[i][iP] || '') : '',
+                     fecha: v[i][7] instanceof Date ? _finFecha_(v[i][7]) : String(v[i][7] || ''),
+                     escrito_por: String(v[i][6] || ''), estado: est });
+  }
+  return out;
+}
+
+/** Guarda una accion que viene del reporte (departamento + por que) en ACCIONES. */
+function medGuardarDesdeReporte_(clave, accion, depto, porque, u) {
+  var sh = _vigHoja_(MED_ACC_HOJA_, MED_ACC_COLS_);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  var iP = head.indexOf('PORQUE');
+  if (iP === -1) { iP = head.length; sh.getRange(1, iP + 1).setValue('PORQUE').setFontWeight('bold'); }
+  // fecha limite: el domingo de esa semana ISO
+  var anio = Math.floor(clave / 100), w = clave % 100;
+  var ene4 = new Date(anio, 0, 4), lunes1 = new Date(anio, 0, 4 - ((ene4.getDay() || 7) - 1));
+  var domingo = new Date(lunes1.getFullYear(), lunes1.getMonth(), lunes1.getDate() + (w - 1) * 7 + 6);
+  var fila = [medClaveATexto_(clave), MED_DEPTO_A_PILAR_[depto] || 'finanzas', accion, MED_DEPTO_A_PERSONA_[depto] || 'Juanma',
+              medFechaIso_(domingo), 'pendiente', u.nombre || u.email || '', new Date(), ''];
+  while (fila.length < iP) fila.push('');
+  fila[iP] = porque;
+  sh.appendRow(fila);
+  SpreadsheetApp.flush();
+}

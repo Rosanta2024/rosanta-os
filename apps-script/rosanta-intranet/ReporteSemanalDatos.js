@@ -442,7 +442,8 @@ function _repHojaAcciones_(crear) {
   return h;
 }
 
-/** Herramienta de editor: crea la pestaña REPORTE_ACCIONES una vez. */
+/** OBSOLETA desde el 27-sep-2026: las acciones viven en ACCIONES (MedicionDatos). Queda
+    solo por si alguien la corre desde el editor; ya no la lee nadie. */
 function instalarReporteAcciones() {
   soloDueno_();
   var h = _repHojaAcciones_(true);
@@ -450,21 +451,10 @@ function instalarReporteAcciones() {
 }
 
 function _repAcciones_(clave) {
-  var out = { lista: [], existe: false };
-  try {
-    var h = _repHojaAcciones_(false);
-    if (!h) return out;
-    out.existe = true;
-    var vals = h.getDataRange().getValues();
-    for (var i = 1; i < vals.length; i++) {
-      if (Number(vals[i][0]) !== clave) continue;
-      out.lista.push({ fila: i + 1, accion: String(vals[i][1] || ''), responsable: String(vals[i][2] || ''),
-                       porque: String(vals[i][3] || ''),
-                       fecha: vals[i][4] instanceof Date ? _finFecha_(vals[i][4]) : String(vals[i][4] || ''),
-                       escrito_por: String(vals[i][5] || '') });
-    }
-  } catch (e) { out.error = String(e && e.message || e); }
-  return out;
+  // Una sola lista (27-sep-2026): las acciones viven en ACCIONES, compartidas con los
+  // pilares del tablero y con el vigia. Aqui se leen con el DEPARTAMENTO como responsable.
+  try { return medAccionesReporte_(clave); }
+  catch (e) { return { lista: [], existe: false, error: String(e && e.message || e) }; }
 }
 
 /**
@@ -486,10 +476,7 @@ function guardarAccionReporte(auth, datos) {
   var candado = LockService.getScriptLock();
   if (!candado.tryLock(20000)) throw new Error('Alguien esta guardando una accion. Proba de nuevo en unos segundos.');
   try {
-    var h = _repHojaAcciones_(true);
-    h.getRange(h.getLastRow() + 1, 1, 1, REP_COLS_ACCIONES.length)
-      .setValues([[clave, accion, responsable, porque, new Date(), u.nombre || u.email]]);
-    SpreadsheetApp.flush();
+    medGuardarDesdeReporte_(clave, accion, responsable, porque, u);   // una sola lista: ACCIONES
   } finally { candado.releaseLock(); }
   // la pantalla vuelve a pedir el reporte: se invalida su cache
   try {
@@ -508,10 +495,15 @@ function borrarAccionReporte(auth, fila) {
   if (!candado.tryLock(20000)) throw new Error('Alguien esta guardando una accion. Proba de nuevo en unos segundos.');
   var clave = 0;
   try {
-    var h = _repHojaAcciones_(false);
-    if (!h) throw new Error('No existe la pestaña ' + REP_HOJA_ACCIONES + '.');
-    clave = Number(h.getRange(fila, 1).getValue()) || 0;
-    h.deleteRow(fila);
+    var h = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(MED_ACC_HOJA_);
+    if (!h) throw new Error('No existe la pestaña ' + MED_ACC_HOJA_ + '.');
+    var sem = String(h.getRange(fila, 1).getValue() || '');
+    var m = /^(\d{4})-S(\d{2})$/.exec(sem);
+    if (!m) throw new Error('Esa fila no es una accion.');
+    clave = Number(m[1]) * 100 + Number(m[2]);
+    // no se borra: se marca descartada, asi el tablero y el vigia ven lo mismo
+    h.getRange(fila, 6).setValue('descartada');
+    h.getRange(fila, 9).setValue(new Date());
     SpreadsheetApp.flush();
   } finally { candado.releaseLock(); }
   try {
