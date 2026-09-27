@@ -115,6 +115,7 @@ a{color:var(--verde)}
   <button data-tab="estrategia">🎯 Estrategia</button>
   <button data-tab="panel">🧠 Panel de Asesores</button>
   <button class="act" data-tab="pauta">📊 Dashboard de Pauta</button>
+  <button data-tab="decis">⚖️ Decisiones de pauta</button>
   <button data-tab="espia">🕵️ Espía</button>
   <button data-tab="utm">🔗 UTMs</button>
 <? } ?>
@@ -141,17 +142,16 @@ a{color:var(--verde)}
       <option value="last_90d">Últimos 90 días</option>
     </select>
     <button class="btn sm" onclick="loadMeta()">Actualizar</button>
-    <button class="btn sm sec" onclick="diagIA()">🧠 Diagnóstico IA</button>
     <span class="muted" id="metaStatus"></span>
   </div>
-  <!-- El diagnostico se pinta aqui arriba, antes de los KPIs (Juanma, 16-sep-2026):
-       antes vivia al pie, en la tarjeta de campañas, y nadie lo encontraba. -->
-  <div id="diagOut"></div>
+  <!-- El Diagnostico IA (Lente Loomer + AI CMO) se retiro el 27-sep-2026: decidia con
+       CTR y CPC sin ver una sola reserva. Las decisiones salen de la pestaña
+       ⚖️ Decisiones de pauta (PautaSistema.gs): hechos, validacion y reglas. -->
   <div class="bench">
     <span>Hook Rate mín <b>40%</b></span>
     <span>Retención mín <b>10%</b></span>
     <span>CPE bajo <b>Q0.05</b></span>
-    <span>Insight: VisitasIG supera transaccionales <b>20–100x</b></span>
+    <span>Mover dinero: solo en <b>⚖️ Decisiones</b>, juzgado por reservas</span>
   </div>
   <div style="height:12px"></div>
   <div id="metaKpis" class="grid kpis"></div>
@@ -192,6 +192,58 @@ a{color:var(--verde)}
   </div>
 </section>
 
+<!-- ============ DECISIONES DE PAUTA (PautaSistema.gs) ============
+     Hechos -> validacion -> reglas -> una decision -> aprendizaje. Sin juicio de IA
+     (Juanma, 27-sep-2026). Todo se lee de la Sheet; Meta solo se consulta al capturar. -->
+<section id="tab-decis" class="tab">
+  <div class="toolbar">
+    <select id="psSemana"></select>
+    <button class="btn sm" onclick="psCargar()">Ver</button>
+    <button class="btn sm sec" id="psBtnCaptura" onclick="psCapturar()">📥 Capturar semana</button>
+    <span class="muted" id="psStatus"></span>
+  </div>
+  <div id="psDecision"></div>
+  <div style="height:12px"></div>
+  <div id="psKpis" class="grid kpis"></div>
+  <div style="height:12px"></div>
+  <div id="psAlertas"></div>
+  <div class="card">
+    <h2>Conjuntos de anuncios · qué cuenta cada uno y qué dicen las reglas</h2>
+    <div id="psTabla" class="muted">Elige una semana y presiona Ver.</div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>Bitácora de pruebas</h2>
+    <p class="muted" style="margin-bottom:10px">Toda decisión que mueve dinero es una prueba: hipótesis, un solo cambio, métrica juez y fecha de lectura. Cualquiera con edición propone; solo el dueño la arranca, la cierra con veredicto o la descarta. Una prueba en curso a la vez.</p>
+    <div class="row">
+      <div class="fld"><label>Hipótesis</label><input id="psHip" placeholder="Si pasamos X a NewReservation, las reservas suben de 17 a 20 por semana"></div>
+      <div class="fld"><label>Cambio (uno solo)</label><input id="psCambio" placeholder="Cambiar el evento de optimización del conjunto X"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>Conjunto</label><select id="psConj"></select></div>
+      <div class="fld"><label>Métrica juez</label><select id="psMetrica"></select></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>Supuesto que pone a prueba (opcional)</label><select id="psSup"></select></div>
+      <div class="fld" style="display:flex;align-items:flex-end"><button class="btn sm" onclick="psProponer()">Registrar prueba</button></div>
+    </div>
+    <div id="psPruebas"></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>Supuestos</h2>
+    <p class="muted" style="margin-bottom:10px">Ninguna cifra entra a una decisión ni a un prompt si no está verificada aquí. Las mecánicas de Meta vencen: al pasar la fecha, el supuesto deja de contarse como verificado.</p>
+    <div id="psSupuestos"></div>
+    <div id="psSupNuevo"></div>
+  </div>
+  <div style="height:12px"></div>
+  <div class="card">
+    <h2>Reglas</h2>
+    <p class="muted" style="margin-bottom:10px">Umbrales del motor. Solo el dueño los cambia; si alguien más quiere moverlos, lo propone como prueba.</p>
+    <div id="psReglas"></div>
+  </div>
+</section>
+
 <!-- ============ ESTRATEGIA ANUAL (AI CMO) ============ -->
 <section id="tab-estrategia" class="tab">
   <div class="toolbar">
@@ -217,7 +269,7 @@ a{color:var(--verde)}
     <h2 style="margin-top:16px">🗓️ Las 4 fases del año</h2>
 
     <h3 style="margin-top:10px;color:var(--verde)">Fase 1 · Ago–Sep 2026 — Awareness sostenido</h3>
-    <p>Cierre de la fase de awareness. Ampliar alcance y recuerdo en las dos audiencias con la campaña de VisitasIG (rinde 20–100x la transaccional) más creativo Kaprica nuevo. Temporada de lluvia: fogata, chimenea y platos de temporada como protagonistas.<br>
+    <p>Cierre de la fase de awareness. Ampliar alcance y recuerdo en las dos audiencias con la campaña de VisitasIG más creativo Kaprica nuevo. Temporada de lluvia: fogata, chimenea y platos de temporada como protagonistas.<br>
     <b>KPIs:</b> alcance mensual creciente · Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &lt;3.</p>
 
     <h3 style="margin-top:10px;color:var(--verde)">Fase 2 · Oct–Dic 2026 — Giro a conversión + temporada alta</h3>
@@ -233,7 +285,7 @@ a{color:var(--verde)}
     <b>KPIs:</b> volumen de reseñas nuevas · posición en búsquedas de turista ("best restaurant antigua") · LTV / recurrencia · reservas de fin de semana sostenidas.</p>
 
     <h2 style="margin-top:16px">🧩 Cómo cada sistema ejecuta la estrategia</h2>
-    <p><b>Creador de Contenido (Kaprica)</b> produce las piezas del mes en la voz de marca. <b>Calendario + Plan del mes</b> baja la estrategia a martes y viernes (video primero), rotando ejes y respetando la fase. <b>Checklist</b> es el filtro de calidad: sin 8/8 no se publica. <b>Dashboard de Pauta + Diagnóstico IA</b> mide contra los benchmarks y ajusta inversión. <b>Espía</b> abre ángulos libres antes de cada campaña. <b>Carritos</b> recupera los ~184/mes. Las <b>skills de agencia</b> (reseñas, SEO local, retención) cubren reputación, descubrimiento y CRM. La <b>capa de datos (Marketing OS)</b> es la fuente única, y el <b>círculo de aprendizaje</b> hace que la estrategia mejore mes a mes.</p>
+    <p><b>Creador de Contenido (Kaprica)</b> produce las piezas del mes en la voz de marca. <b>Calendario + Plan del mes</b> baja la estrategia a martes y viernes (video primero), rotando ejes y respetando la fase. <b>Checklist</b> es el filtro de calidad: sin 8/8 no se publica. <b>Dashboard de Pauta</b> muestra la data de Meta y <b>⚖️ Decisiones de pauta</b> decide con hechos, validación y reglas, juzgando todo contra reservas. <b>Espía</b> abre ángulos libres antes de cada campaña. <b>Carritos</b> trabaja la recuperación de reservas abandonadas. Las <b>skills de agencia</b> (reseñas, SEO local, retención) cubren reputación, descubrimiento y CRM. La <b>capa de datos (Marketing OS)</b> es la fuente única, y el <b>círculo de aprendizaje</b> hace que la estrategia mejore mes a mes.</p>
 
     <h2 style="margin-top:14px">📈 KPIs maestros (revisión mensual)</h2>
     <p>North Star: <b>reservas atribuidas/mes</b>. Por motor: Eventos → ocupación en fechas ancla; Ventas → ticket promedio; Crecimiento → alcance de calidad y seguidores. Salud de pauta: Hook Rate, retención, CPE, CTR, frecuencia. Palancas: tasa de recuperación de carritos, % tráfico directo, match quality. Cada lunes el analista de pauta reporta y deja su hallazgo en aprendizajes.</p>
@@ -530,8 +582,11 @@ a{color:var(--verde)}
     <p><b>Paso 4 · Producir y publicar.</b> Presiona <b>📄 Brief de producción (PDF)</b> en el Calendario: genera el documento del mes con las instrucciones obligatorias y todas las piezas con su copy, listo para el equipo de producción. Al publicar cada pieza, cámbiala a <span class="chip on">Publicado</span>.</p>
 
     <h2 style="margin-top:14px">📊 Dashboard de Pauta (uso semanal)</h2>
-    <p>Data en vivo de Meta Ads (cuenta rosanta.rest). Elige el rango, presiona Actualizar y revisa contra los benchmarks propios: <b>Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &gt;3 = fatiga</b>. El botón <b>🧠 Diagnóstico IA</b> (junto a Actualizar) razona con la <b>Lente Jon Loomer</b> del Panel de Asesores (estructura simple, fase de aprendizaje, creativo como targeting, frecuencia como fatiga) y cierra con el <b>veredicto del AI CMO</b>: por campaña escalar/mantener/ajustar/apagar con el número que lo decide, lo que hay que verificar en plataforma, y 3 acciones de la semana con presupuesto en Q. El resultado se pinta arriba de los KPIs. El panel inferior arma la serie semanal Google + Meta leyendo los reportes que se suben a Drive cada lunes.</p>
+    <p>Data en vivo de Meta Ads (cuenta rosanta.rest). Elige el rango, presiona Actualizar y revisa contra los benchmarks propios: <b>Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &gt;3 = fatiga</b>. El Dashboard muestra, no decide: las decisiones de presupuesto se toman en <b>⚖️ Decisiones de pauta</b>. El panel inferior arma la serie semanal Google + Meta leyendo los reportes que se suben a Drive cada lunes.</p>
     <p><b>Regla de creativos (verificada julio 2026):</b> el sistema de entrega de Meta agrupa como duplicados los videos casi idénticos y ahoga todos menos uno. Por eso <b>jamás se prueba el mismo video con distintos ganchos</b>: para comparar ángulos se producen videos conceptualmente distintos (otras tomas, otro ritmo) sobre un mismo concepto, cada uno con su utm_content.</p>
+
+    <h2 style="margin-top:14px">⚖️ Decisiones de pauta (cada lunes)</h2>
+    <p>El proceso es <b>hechos → validación → reglas → una decisión → aprendizaje</b>, sin opinión de IA. Cada lunes el sistema captura la semana cerrada: por conjunto de anuncios, <b>qué cuenta realmente como resultado</b> (reserva, vista de página, visita al perfil, alcance), gasto, audiencia y su tamaño; del pixel, cuántas reservas y vistas de la página de reservas hubo; y del negocio, reservas y comensales de pauta_semanal. Luego un <b>semáforo</b> detecta las trampas conocidas (vista de página disfrazada de reserva, audiencia chica que Meta expande a frío, evento que dispara en la home, CTR alto con CPC bajo). Un conjunto en rojo no se juzga hasta corregirlo. Las <b>reglas</b> (umbrales que solo edita Juanma) dan el estado de cada conjunto y <b>una sola decisión</b> para la semana. Esa decisión se registra como <b>prueba</b> en la bitácora, con hipótesis, métrica juez y fecha de lectura; al leerla, el veredicto actualiza los <b>supuestos</b> y los aprendizajes. Awareness y tráfico nunca se escalan por su propia métrica: su presupuesto solo se mueve con una prueba juzgada por reservas.</p>
 
     <h2 style="margin-top:14px">🕵️ Espía (antes de cada campaña)</h2>
     <p>Busca en la Biblioteca de Anuncios de Meta qué está pautando la competencia de Antigua ahora mismo. <b>Analizar patrones</b> resume quién invierte más y qué ángulos quedan libres para Rosanta. Úsalo antes de lanzar una campaña nueva para diferenciarla.</p>
@@ -544,7 +599,7 @@ a{color:var(--verde)}
     <p>Para recuperar: el botón <b>💬 Mensaje</b> genera el WhatsApp según los días transcurridos (toque 1 en 24h, toque 2 a las 72h, toque 3 al día 7; máximo 3 toques). Copia, envía desde el WhatsApp del restaurante y actualiza el estado (Contactado → Recuperado/Perdido). Los KPIs calculan la tasa y los Q recuperados del mes. <b>Escribe únicamente a quien tenga permiso "Sí"</b>: es la regla de WhatsApp y protege el número del bot.</p>
 
     <h2 style="margin-top:14px">👥 Quién hace qué</h2>
-    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard y diagnóstico IA semanal, espía antes de cada campaña, genera los anuncios en el 🎯 Creador de pauta (Lente Savannah Sanchez), ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
+    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard, ⚖️ Decisiones de pauta de cada lunes (ejecuta la decisión y la registra en la bitácora), espía antes de cada campaña, genera los anuncios en el 🎯 Creador de pauta (Lente Savannah Sanchez), ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
 
     <h2 style="margin-top:14px">✍️ Reglas de voz (resumen para todos)</h2>
     <p>Afirmativa siempre (sin la palabra "no") · segunda persona: tu mesa, tu experiencia · prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "cocina/coctelería de autor" y em dashes · conceptos centrales: cocina natural y gastronomía sostenible · emojis estratégicos · hashtags al final sin puntos separadores · personalización solo con el nombre de pila.</p>
@@ -1204,7 +1259,7 @@ function renderCarr(){
   const cont=delMes.filter(x=>x.estado!=='Pendiente');
   const qRec=rec.reduce((a,x)=>a+(Number(x.valor)||0),0);
   const k=[
-    ['Registrados (mes)',delMes.length,'de ~184 abandonos/mes'],
+    ['Registrados (mes)',delMes.length,'abandonos/mes: por verificar'],
     ['Contactados',cont.length,delMes.length?Math.round(cont.length/delMes.length*100)+'% del total':'—'],
     ['Recuperados',rec.length,delMes.length?Math.round(rec.length/delMes.length*100)+'% de recuperación':'—'],
     ['Q recuperados',fmtQ(qRec),'ingresos rescatados este mes']
@@ -1531,45 +1586,127 @@ function renderUtmHist(){
     '<td><button class="btn sec sm" onclick="utmCopy(\''+x.id+'\')">Copiar</button></td></tr>').join('')+'</tbody></table></div>'
   :'<p class="muted">Sin UTMs generadas aún. Arma la primera arriba.</p>';
 }
-/* ================= DIAGNÓSTICO IA (Lente Loomer + AI CMO) =================
-   Antes era un prompt genérico "analista de pauta" contra los benchmarks.
-   Desde el 16-sep-2026 (Juanma) razona con la LENTE JON LOOMER (la silla de
-   media buying del Panel de Asesores, misma metodología escrita allá) y cierra
-   con el veredicto del AI CMO contra el North Star. Simulación del marco
-   publicado del experto, jamás citas de la persona real. */
-const LOOMER=`📊 LENTE JON LOOMER (media buying en Meta; simulación de su marco publicado en jonloomer.com, jamás citas de la persona real). Metodología:
-- Simplicidad de estructura: pocas campañas con presupuesto consolidado; fragmentar presupuestos pequeños mata el aprendizaje del algoritmo.
-- Respetar la fase de aprendizaje: cambios significativos (presupuesto, audiencia, creativo) la reinician; medir en ventanas, sin reaccionar al día a día. Subir presupuesto de a 20% como máximo.
-- Segmentación amplia + creativo como targeting antes que hipersegmentar; el sistema optimiza mejor con señal suficiente.
-- Métricas de negocio (costo por resultado real) sobre métricas de vanidad (CPM, likes); vigilar frecuencia como señal de fatiga.
-- Retargeting: secuencias con ventanas y exclusiones correctas para evitar pagar dos veces por la misma persona.
-- Diversificación creativa real (regla Andromeda, verificada jul-2026): Meta agrupa creativos casi idénticos como duplicados y los ahoga; variar = conceptos de video distintos, jamás el mismo material con otro gancho.`;
-async function diagIA(){
-  const rows=window._metaRows;
-  if(!rows||!rows.length){alert('Primero carga la data de Meta (Actualizar)');return}
-  $('diagOut').innerHTML='<div class="loading"><div class="spin"></div>Lente Loomer analizando campañas…</div>';
+/* ================= DECISIONES DE PAUTA (PautaSistema.gs) =================
+   La pantalla solo muestra lo que devuelve psTablero y manda los cambios a
+   psGuardarPrueba / psGuardarSupuesto / psGuardarRegla. Ninguna regla vive aqui:
+   si se calcula en el navegador, dos pantallas terminan diciendo cosas distintas. */
+let PS=null;
+const psEsc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PS_SEM={rojo:['🔴','warn'],amarillo:['🟡','off'],verde:['🟢','on']};
+const PS_EST={verificado:['✅ verificado','on'],por_verificar:['⚠️ por verificar','off'],falso:['❌ falso','warn']};
+async function psCargar(){
+  $('psStatus').textContent='Cargando…';
   try{
-    const data=rows.map(x=>`${x.name} [${x.status}] obj:${x.objective} gasto:Q${x.spend} impr:${x.imp} alcance:${x.reach} clics:${x.clicks} ctr:${x.ctr}% cpc:Q${x.cpc} cpm:Q${x.cpm} freq:${x.freq}`).join('\n');
-    const rango=$('rango').options[$('rango').selectedIndex].text;
-    const t=await askIA(LOOMER+`
-
-Contexto: Rosanta, restaurante de gastrococtelería en Antigua Guatemala, moneda GTQ, jamás delivery. Cuenta de Meta rosanta.rest. Presupuesto base US$440/mes (awareness ~US$8/día + evento del mes + eventos permanentes), estructura estable para no frenar el algoritmo. Fase actual: awareness; la conversión se enciende en el mes 4. North Star: reservas atribuidas por mes.
-Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia >3 = fatiga. Insight validado: las campañas de VisitasIG rinden 20-100x las transaccionales.
-Campañas con gasto (${rango}):
-${data}
-
-Eres la Lente Jon Loomer diagnosticando esta cuenta, y al final el AI CMO de Rosanta cierra. Nombra la metodología que aplicas en cada juicio (ej: "fase de aprendizaje", "presupuesto consolidado", "frecuencia como fatiga"). Los datos de arriba no traen hook rate ni retención: si un juicio los necesita, dilo en vez de inventarlos.
-REGLA DE HUMILDAD TEMPORAL: toda afirmación que dependa de la mecánica ACTUAL de Meta (entrega, aprendizaje, formatos, umbrales) se marca "⚠️ verificar en plataforma".
-
-Entrega en español, máximo 22 líneas, exactamente con estas secciones:
-**📊 Lectura Lente Loomer** 3-4 líneas: estructura de la cuenta, dónde se fragmenta o se desperdicia señal, qué está en aprendizaje.
-**Por campaña** nombre corto → escalar / mantener / ajustar creativo / apagar, con el número que lo decide y el principio aplicado, una línea cada una.
-**⚠️ Verificar en plataforma** las afirmaciones marcadas, con quién la valida (Vanessa en Meta). Si no hubo, "Sin dependencias de mecánica actual".
-**🎯 Veredicto AI CMO** 3 acciones para esta semana con presupuesto en Q y a quién le tocan, alineadas al North Star, y qué medir en 7 días para saber si funcionó.`);
-    window._lastDiag=t;
-    $('diagOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px;margin-bottom:12px">'+md2html(t)+
-      '<div style="margin-top:8px"><button class="btn sec sm" onclick="navigator.clipboard.writeText(window._lastDiag);alert(\'Copiado al portapapeles\')">Copiar diagnóstico</button></div></div>';
-  }catch(e){$('diagOut').innerHTML='<p class="muted">Error: '+e.message+'</p>'}
+    PS=await srv('psTablero',$('psSemana').value||'');
+    psPintar();
+    $('psStatus').textContent='Semana '+PS.semana+' ('+PS.desde+' a '+PS.hasta+')';
+  }catch(e){$('psStatus').textContent='❌ '+e.message}
+}
+async function psCapturar(){
+  const sem=$('psSemana').value||'';
+  if(!confirm('Capturar de Meta la semana '+(sem||'cerrada')+'. Reemplaza lo capturado antes para esa semana. ¿Seguir?'))return;
+  $('psStatus').textContent='Capturando de Meta… (puede tardar un minuto)';
+  try{
+    const r=await srv('psCapturarManual',sem);
+    $('psStatus').textContent='✅ '+r.semana+': '+r.conjuntos+' conjuntos, '+r.eventosPixel+' eventos del pixel'+(r.pixelError?' · pixel: '+r.pixelError:'');
+    $('psSemana').value=r.semana;await psCargar();
+  }catch(e){$('psStatus').textContent='❌ '+e.message}
+}
+function psNum(v,d){return v===null||v===''||v===undefined?'—':Number(v).toLocaleString('es-GT',{maximumFractionDigits:d??1})}
+function psPintar(){
+  const t=PS,c=t.cuenta;
+  const sems=[...new Set([t.semana_cerrada].concat(t.semanas))].sort().reverse();
+  $('psSemana').innerHTML=sems.map(x=>'<option'+(x===t.semana?' selected':'')+'>'+x+'</option>').join('');
+  $('psBtnCaptura').style.display=t.puedeEditar?'':'none';
+  const d=t.decision;
+  $('psDecision').innerHTML='<div class="card" style="border:2px solid var(--verde)"><div class="kpi"><div class="lbl">La decisión de la semana · '+psEsc(d.regla)+'</div>'+
+    '<div style="font-size:18px;font-weight:800;color:var(--verde);margin:4px 0">'+psEsc(d.tipo)+'</div><div>'+psEsc(d.texto)+'</div>'+
+    (d.razon?'<div class="det">Por qué: '+psEsc(d.razon)+'</div>':'')+
+    (t.puedeEditar&&d.conjunto_id&&d.tipo!=='NO MOVER NADA'?'<div style="margin-top:8px"><button class="btn sm sec" onclick="psPrellenar()">Registrar como prueba</button></div>':'')+'</div></div>';
+  const vs=(v,b)=>b===null||b===''||v===null?'':' · base '+psNum(b);
+  const k=[
+    ['Reservas (Wix)',psNum(c.reservas,0),'Juez del negocio'+vs(c.reservas,c.reservas_base)],
+    ['Comensales (POS)',psNum(c.comensales,0),'Juez del negocio'+vs(c.comensales,c.comensales_base)],
+    ['Reservas del pixel',psNum(c.newreservation,0),'NewReservation'],
+    ['Vistas pág. reservas',psNum(c.vistas_reservas,0),c.tasa!==null?'Conversión '+psNum(c.tasa,2)+'%':'Conversión —'],
+    ['Reservas atribuidas',psNum(c.reservas_atribuidas,0),'Meta, todos los conjuntos'],
+    ['Gasto Meta',fmtQ(Number(c.gasto_meta)||0),'Semana '+t.semana]
+  ];
+  $('psKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
+  $('psAlertas').innerHTML=c.alertas.length?'<div class="card" style="margin-bottom:12px"><h2>Alertas de la cuenta</h2>'+c.alertas.map(a=>'<div style="margin:4px 0">'+(a.nivel==='rojo'?'🔴 ':'🟡 ')+psEsc(a.texto)+'</div>').join('')+'</div>':'';
+  $('psTabla').innerHTML=t.conjuntos.length?'<div style="overflow-x:auto"><table><thead><tr><th>Conjunto</th><th>Qué cuenta como resultado</th><th>Resultados</th><th>Reservas atrib.</th><th>Gasto</th><th>Audiencia</th><th>Semáforo</th><th>Estado</th><th>Regla · por qué</th></tr></thead><tbody>'+
+    t.conjuntos.map(x=>{const s=PS_SEM[x.semaforo]||['',''];return '<tr><td><b>'+psEsc(x.conjunto)+'</b><div class="muted">'+psEsc(x.campana)+'</div></td>'+
+      '<td>'+psEsc(x.resultado_nombre)+'</td><td>'+psNum(x.resultados,0)+'</td><td>'+psNum(x.reservas_atribuidas,0)+'</td><td>'+fmtQ(Number(x.gasto)||0)+'</td>'+
+      '<td>'+(x.audiencia_tam!==''?psNum(x.audiencia_tam,0):'amplia')+'</td>'+
+      '<td><span class="chip '+s[1]+'" title="'+psEsc(x.alertas)+'">'+s[0]+' '+psEsc(x.semaforo)+'</span></td>'+
+      '<td><b>'+psEsc(x.estado)+'</b></td><td><div>'+psEsc(x.regla)+'</div><div class="muted">'+psEsc(x.razon)+'</div><div>'+psEsc(x.accion)+'</div>'+
+      (x.alertas?'<details><summary class="muted">alertas</summary><div style="white-space:pre-line">'+psEsc(x.alertas)+'</div></details>':'')+'</td></tr>'}).join('')+
+    '</tbody></table></div>':'<p class="muted">Sin hechos para '+t.semana+'. Presiona 📥 Capturar semana.</p>';
+  $('psConj').innerHTML='<option value="">(toda la cuenta)</option>'+t.conjuntos.map(x=>'<option value="'+psEsc(x.conjunto_id)+'">'+psEsc(x.conjunto)+'</option>').join('');
+  $('psMetrica').innerHTML=Object.entries(t.metricas_juez).map(([k,v])=>'<option value="'+k+'">'+psEsc(v)+' · base '+psNum(t.linea_base[k])+'</option>').join('');
+  $('psSup').innerHTML='<option value="">(ninguno)</option>'+t.supuestos.map(x=>'<option value="'+psEsc(x.id)+'">'+psEsc(x.afirmacion)+'</option>').join('');
+  psPintarPruebas();psPintarSupuestos();psPintarReglas();
+}
+function psPrellenar(){
+  const d=PS.decision;
+  $('psConj').value=d.conjunto_id||'';$('psCambio').value=d.texto||'';
+  $('psHip').value='';$('psHip').focus();
+}
+async function psProponer(){
+  const conj=$('psConj');
+  const row={hipotesis:$('psHip').value.trim(),cambio:$('psCambio').value.trim(),conjunto_id:conj.value,
+    conjunto:conj.value?conj.options[conj.selectedIndex].text:'Toda la cuenta',metrica_juez:$('psMetrica').value,supuesto_id:$('psSup').value};
+  if(!row.hipotesis||!row.cambio){alert('Falta la hipótesis o el cambio.');return}
+  try{await srv('psGuardarPrueba',row);$('psHip').value='';$('psCambio').value='';await psCargar()}catch(e){alert(e.message)}
+}
+async function psMover(id,estado){
+  const row={id,estado};
+  if(estado==='leida'){
+    const v=prompt('Veredicto: funcionó / no funcionó / no concluyente');if(!v)return;
+    row.veredicto=v.trim();
+    row.aprendizaje=(prompt('Aprendizaje en una frase (va a la pestaña aprendizajes):')||'').trim();
+    const p=PS.pruebas.find(x=>x.id===id);
+    if(p&&p.supuesto_id){const q=(prompt('El supuesto ligado queda: verificado / falso / (vacío = sin cambio)')||'').trim();if(q)row.supuesto_queda=q}
+  }else if(!confirm('¿Pasar la prueba a "'+estado+'"?'))return;
+  try{await srv('psGuardarPrueba',row);await psCargar()}catch(e){alert(e.message)}
+}
+function psPintarPruebas(){
+  const t=PS,ps=t.pruebas;
+  if(!ps.length){$('psPruebas').innerHTML='<p class="muted">Sin pruebas registradas.</p>';return}
+  $('psPruebas').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Estado</th><th>Hipótesis · cambio</th><th>Juez</th><th>Base → resultado</th><th>Lectura</th><th>Veredicto</th><th></th></tr></thead><tbody>'+
+    ps.map(p=>{
+      const acc=!t.esDueno?'':p.estado==='propuesta'?'<button class="btn sm" onclick="psMover(\''+p.id+'\',\'en_curso\')">Arrancar</button> <button class="btn sm sec" onclick="psMover(\''+p.id+'\',\'descartada\')">Descartar</button>'
+        :p.estado==='en_curso'?'<button class="btn sm" onclick="psMover(\''+p.id+'\',\'leida\')">Cerrar</button>':'';
+      return '<tr><td><span class="chip '+(p.estado==='en_curso'?'on':p.estado==='leida'?'on':'off')+'">'+psEsc(p.estado)+'</span></td>'+
+        '<td><b>'+psEsc(p.hipotesis)+'</b><div class="muted">'+psEsc(p.cambio)+' · '+psEsc(p.conjunto)+'</div></td>'+
+        '<td>'+psEsc(t.metricas_juez[p.metrica_juez]||p.metrica_juez)+'</td><td>'+psNum(p.linea_base)+' → '+psNum(p.resultado)+'</td>'+
+        '<td>'+psEsc(p.fecha_lectura||'—')+'</td><td>'+psEsc(p.veredicto)+(p.aprendizaje?'<div class="muted">'+psEsc(p.aprendizaje)+'</div>':'')+'</td><td>'+acc+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+function psPintarSupuestos(){
+  const t=PS,hoy=t.hoy;
+  $('psSupuestos').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Afirmación</th><th>Estado</th><th>Fuente</th><th>Vence</th><th>Cómo se verifica</th></tr></thead><tbody>'+
+    t.supuestos.map(x=>{
+      const e=PS_EST[x.estado]||[x.estado,'off'],vencido=x.vence_el&&String(x.vence_el)<hoy;
+      const est=t.esDueno?'<select onchange="psSupEstado(\''+x.id+'\',this.value)">'+Object.keys(PS_EST).map(k=>'<option value="'+k+'"'+(k===x.estado?' selected':'')+'>'+PS_EST[k][0]+'</option>').join('')+'</select>'
+        :'<span class="chip '+e[1]+'">'+e[0]+'</span>';
+      return '<tr><td>'+psEsc(x.afirmacion)+'</td><td>'+est+(vencido?'<div class="muted">⏰ vencido</div>':'')+'</td><td>'+psEsc(x.fuente)+'</td><td>'+psEsc(x.vence_el||'—')+'</td><td>'+psEsc(x.como_verificar)+'</td></tr>'}).join('')+'</tbody></table></div>';
+  $('psSupNuevo').innerHTML=t.esDueno?'<div class="row" style="margin-top:10px"><div class="fld"><label>Nuevo supuesto</label><input id="psSupAf" placeholder="Afirmación"></div><div class="fld"><label>Cómo se verifica</label><input id="psSupCv"></div></div><button class="btn sm sec" onclick="psSupAgregar()">Agregar como por verificar</button>':'';
+}
+async function psSupEstado(id,estado){
+  const fuente=estado==='por_verificar'?'':(prompt('Fuente o evidencia de este cambio:')||'');
+  try{await srv('psGuardarSupuesto',{id,estado,fuente:fuente||undefined});await psCargar()}catch(e){alert(e.message)}
+}
+async function psSupAgregar(){
+  const af=$('psSupAf').value.trim();if(!af){alert('Falta la afirmación');return}
+  try{await srv('psGuardarSupuesto',{afirmacion:af,estado:'por_verificar',como_verificar:$('psSupCv').value.trim()});await psCargar()}catch(e){alert(e.message)}
+}
+function psPintarReglas(){
+  const t=PS;
+  $('psReglas').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Regla</th><th>Valor</th><th>Qué hace</th><th>Último cambio</th></tr></thead><tbody>'+
+    t.reglas.map(r=>'<tr><td><b>'+psEsc(r.id)+'</b></td><td>'+(t.esDueno?'<input style="width:110px" value="'+psEsc(r.valor)+'" onchange="psRegla(\''+r.id+'\',this.value)">':psEsc(r.valor))+'</td><td>'+psEsc(r.descripcion)+'</td><td class="muted">'+psEsc(r.editado_por)+' '+psEsc(r.editado_el)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+async function psRegla(id,valor){
+  try{await srv('psGuardarRegla',id,valor);$('psStatus').textContent='✅ Regla '+id+' = '+valor+'. Presiona Ver para recalcular.'}catch(e){alert(e.message);await psCargar()}
 }
 /* ================= ESPÍA (Ad Library) ================= */
 /* La Ad Library API de Meta no se abre con solo tener token: exige que la app
@@ -1663,7 +1800,12 @@ async function genPost(){
   }catch(e){$('poOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
 }
 /* ===== Estrategia Anual (AI CMO) ===== */
-const EST_CONTEXT=`Rosanta: restaurante de gastrococtelería en Antigua Guatemala (cocina natural, gastronomía sostenible, jardín, sin delivery). 3 años en operación. 3 motores financieros: Eventos, Ventas, Crecimiento. Audiencias reales por datos: turista angloparlante (Google/inglés, decide por reseñas y por lo que recomiendan las IAs) y foodie local (Instagram/español, antojo y comunidad); de ~430 reservas la mitad con teléfono EE.UU./Canadá; núcleo 25-54, 57% mujeres. Presupuesto base $440/mes (awareness $240 ~$8/día + evento del mes + eventos permanentes), estructura estable para no frenar el algoritmo. Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia <3; VisitasIG rinde 20-100x la transaccional. Palancas: recuperar ~184 carritos/mes, bajar ~43% de tráfico directo con UTMs, subir match quality con email/teléfono hasheado. Semana Santa en Antigua (Pascua 28-mar-2027) es el pico anual. Sistemas propios ya montados: Creador de Contenido con formato Kaprica, Calendario con Plan del mes, Checklist de piezas, Dashboard de pauta Meta, Espía de Ad Library, Tracker de carritos, skills de reseñas/SEO local/retención, capa de datos Marketing OS en Google Sheet, círculo de aprendizaje y loop de pauta semanal.`;
+/* EST_CONTEXT alimenta Estrategia Anual y Panel de Asesores. Desde el 27-sep-2026 no
+   lleva cifras de pauta escritas a mano: "US$440/mes", "VisitasIG 20-100x" y "184
+   carritos" viajaban aqui como hechos sin serlo y el Panel los repetia. Las cifras
+   entran solo desde la pestaña supuestos (estado verificado), via psSupuestosVerificados. */
+const EST_BASE=`Rosanta: restaurante de gastrococtelería en Antigua Guatemala (cocina natural, gastronomía sostenible, jardín, sin delivery). 3 años en operación. 3 motores financieros: Eventos, Ventas, Crecimiento. Audiencias reales por datos: turista angloparlante (Google/inglés, decide por reseñas y por lo que recomiendan las IAs) y foodie local (Instagram/español, antojo y comunidad); de ~430 reservas la mitad con teléfono EE.UU./Canadá; núcleo 25-54, 57% mujeres. Estructura de pauta estable para no frenar el algoritmo. Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia <3. Palancas: recuperar reservas abandonadas, bajar ~43% de tráfico directo con UTMs, subir match quality con email/teléfono hasheado. Semana Santa en Antigua (Pascua 28-mar-2027) es el pico anual. Sistemas propios ya montados: Creador de Contenido con formato Kaprica, Calendario con Plan del mes, Checklist de piezas, Dashboard de pauta Meta, Espía de Ad Library, Tracker de carritos, skills de reseñas/SEO local/retención, capa de datos Marketing OS en Google Sheet, círculo de aprendizaje y loop de pauta semanal.`;
+let EST_CONTEXT=EST_BASE;
 async function estRegen(){
   $('estRegenOut').innerHTML='<div class="loading"><div class="spin"></div>Regenerando la estrategia con los aprendizajes…</div>';
   try{
@@ -1926,6 +2068,10 @@ if(FULL){
   osRenderConn();seedProps();
   renderCarr();renderProps();renderDebHist();renderPanel();renderUtmHist();loadMeta();loadGads();
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
+  // Decisiones de pauta: se carga al abrir su pestaña, no en cada arranque.
+  document.querySelector('nav button[data-tab="decis"]').addEventListener('click',()=>{if(!PS)psCargar()});
+  // Estrategia y Panel solo reciben cifras verificadas en la pestaña supuestos.
+  srv('psSupuestosVerificados').then(t=>{EST_CONTEXT=EST_BASE+(t||'')}).catch(()=>{});
 }else{
   renderCal(); // para contenido, Calendario es el tab inicial
 }

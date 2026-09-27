@@ -1481,7 +1481,8 @@ function prCapaWeb_(res) {
       getUsuarioActual: 'devuelve solo la fila de quien llama',
       calentarCaches: 'activador cada 5 minutos',
       latido: 'activador',
-      refrescarSemaforoPrecios: 'activador mensual; tambien la llama el aviso del tablero'
+      refrescarSemaforoPrecios: 'activador mensual; tambien la llama el aviso del tablero',
+      psCapturaLunes: 'activador semanal de pauta; solo lee Meta y reescribe la semana cerrada, con candado de una hora'
     };
     var abiertas = [], conRol = [], n = 0;
     Object.keys(G).forEach(function (k) {
@@ -1571,9 +1572,12 @@ var PRUEBAS_GRUPOS_ = {
   web:        prCapaWeb_,
   sync:       prSyncPrecios_,
   inventario: prInventario_,
-  finanzas:   prFinanzas_        // pilar 3, en PruebasFinanzas.gs
+  finanzas:   prFinanzas_,       // pilar 3, en PruebasFinanzas.gs
+  // Envuelta a proposito: PruebasPauta.gs es un archivo nuevo y puede cargar DESPUES
+  // de este. Una referencia directa se resolveria al cargar y tumbaria el proyecto entero.
+  pauta:      function (res) { return prPauta_(res); }
 };
-var PRUEBAS_ORDEN_ = ['cimientos','recetario','pos','accesos','modulos','web','sync','inventario','finanzas'];
+var PRUEBAS_ORDEN_ = ['cimientos','recetario','pos','accesos','modulos','web','sync','inventario','finanzas','pauta'];
 
 /**
  * `claves` (opcional): lista de grupos a correr. Sin nada, la bateria entera — que es
