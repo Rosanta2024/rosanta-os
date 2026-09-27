@@ -1068,7 +1068,8 @@ function prPuentePOS_(res) {
                   // sin llamadas hoy, pero son vistas: lo que no se lee, no se revisa
                   'CosteoEstilos', 'Estilos', 'Logo'];
     var MINIMO = 25;    // el 12-sep-2026 habia 36 google.script.run en estas vistas
-    var MIN_SRV = 10;   // y 14 llamadas srv('nombre') en Marketing
+    var MIN_SRV = 10;   // Marketing tenia 14 llamadas srv('nombre') el 12-sep y 23 el 27-sep-2026,
+                        // despues de retirar el Panel de Asesores (sale panelInvestigar)
     var EXCEPCION = /\[\s*fn\s*\]\s*\(\s*\.\.\.\s*args\s*,\s*AUTH\s*\)/;
 
     if (typeof _prLlamadasConCorchetes_ !== 'function') {

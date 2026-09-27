@@ -322,40 +322,5 @@ function askClaudeSrv(prompt, auth) {
   return (body.content || []).map(function (b) { return b.text || ''; }).join('').trim();
 }
 
-/**
- * Investigación en vivo para el 🧠 Panel de Asesores.
- *
- * Corre ANTES del debate, en su propia llamada de google.script.run (así el
- * timeout de 60s de UrlFetch no se suma al del debate). Usa la búsqueda web
- * nativa de la API de Claude (máx 3 búsquedas) para verificar HOY lo que
- * dependa de mecánica actual de plataforma. Si falla o tarda de más, el
- * cliente lo tolera: el debate corre igual y lo declara, y aplica la regla
- * de humildad temporal con máximo rigor.
- */
-function panelInvestigar(tema, auth) {
-  requiereSoloMarketing_(auth);
-  var key = prop_('ANTHROPIC_API_KEY');
-  if (!key) throw new Error('Falta ANTHROPIC_API_KEY en Propiedades del script.');
-
-  var payload = {
-    model: 'claude-opus-4-8',
-    max_tokens: 1500,
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
-    messages: [{ role: 'user', content:
-      'Eres el investigador del panel de asesores de marketing de Rosanta (restaurante de gastrococtelería en Antigua Guatemala; pauta en Meta Ads con presupuesto pequeño). Tema del debate de hoy:\n' + String(tema) +
-      '\n\nBusca en la web SOLO lo que dependa de mecánica o datos ACTUALES relevantes al tema: algoritmos de entrega y tratamiento de creativos en Meta, formatos y políticas vigentes, benchmarks recientes, cambios de plataforma de los últimos meses. Máximo 3 búsquedas; si el tema depende de cero mecánica actual, responde "Sin dependencias de mecánica actual" y nada más.\nEntrega en español, máximo 15 líneas: **Hallazgos verificados hoy**, cada hallazgo en 1-2 líneas CON su fuente y URL visible entre paréntesis. Distingue documentación oficial de blogs de agencias. Si algo relevante quedó sin poder verificarse, dilo. Solo evidencia, sin recomendaciones.' }]
-  };
-  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
-    method: 'post',
-    contentType: 'application/json',
-    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
-  var body = JSON.parse(res.getContentText() || '{}');
-  if (res.getResponseCode() !== 200) {
-    throw new Error('Investigación en vivo falló: ' +
-      ((body.error && body.error.message) || ('HTTP ' + res.getResponseCode())));
-  }
-  return (body.content || []).map(function (b) { return b.text || ''; }).join('').trim();
-}
+/* panelInvestigar (investigación web del Panel de Asesores) se retiró el 27-sep-2026
+   junto con el Panel: decisión de Juanma. */

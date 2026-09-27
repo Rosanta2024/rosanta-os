@@ -21,8 +21,10 @@ var SCHEMA = {
      este orden. clientes_nuevos la llena solo el script de Wix (primeras reservas). */
   pauta_semanal: ['wk','gCosto','gClics','gImp','mCosto','mAlcance','reservas','fecha_registro','comensales','comensalesReserva','ticket','clientes_nuevos'],
   aprendizajes:  ['id','fecha','fuente','hallazgo','accion'],
-  propuestas:    ['id','fecha','autor','titulo','estado','contenido'],
-  debates:       ['id','fecha','tema','participantes','resultado']
+  propuestas:    ['id','fecha','autor','titulo','estado','contenido']
+  /* debates salió el 27-sep-2026 con el Panel de Asesores (decisión de Juanma). Su
+     pestaña queda en la Sheet como historial OBSOLETO; fuera de SCHEMA, mktRead,
+     mktUpsert y mktReplace ya no la pueden tocar. */
 };
 
 /**

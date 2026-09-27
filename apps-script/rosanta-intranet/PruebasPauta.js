@@ -125,6 +125,17 @@ function prPauta_(res) {
       psDecisionSemana_(conj, [], hoy, [{ nivel: 'rojo', texto: 'falta' }]).tipo, 'NO MOVER NADA');
   });
 
+  /* El Panel de Asesores se retiró el 27-sep-2026 (Juanma): sus debates eran una tercera
+     voz que contradecía a este sistema y al de Medición. Si vuelve a aparecer, falla. */
+  prCorrer_(g, 'El Panel de Asesores sigue retirado', function () {
+    var txt = HtmlService.createTemplateFromFile('Marketing').getRawContent();
+    var restos = ['panelInvestigar', 'PANEL_PROMPT', 'data-tab="panel"', "'debates'", 'rosanta_deb', 'estRegen', 'LOOMER']
+      .filter(function (x) { return txt.indexOf(x) !== -1; });
+    if (typeof panelInvestigar === 'function') restos.push('panelInvestigar en el servidor');
+    if (SCHEMA.debates) restos.push('debates en SCHEMA');
+    prIgual_(g, 'El Panel de Asesores sigue retirado', restos.join(', '), '', restos.length ? 'vuelve a estar: ' + restos.join(', ') : '');
+  });
+
   prCorrer_(g, 'Semana ISO', function () {
     var s = psSemanaDe_(new Date(2026, 8, 27, 12));
     prIgual_(g, 'Semana ISO', s.id + ' ' + s.desde + ' ' + s.hasta, '2026-W39 2026-09-21 2026-09-27');

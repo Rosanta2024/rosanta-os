@@ -118,7 +118,6 @@ a{color:var(--verde)}
 <nav>
 <? if (esFull) { ?>
   <button data-tab="estrategia">🎯 Estrategia</button>
-  <button data-tab="panel">🧠 Panel de Asesores</button>
   <button class="act" data-tab="pauta">📊 Dashboard de Pauta</button>
   <button data-tab="decis">⚖️ Decisiones de pauta</button>
   <button data-tab="espia">🕵️ Espía</button>
@@ -152,7 +151,7 @@ a{color:var(--verde)}
   <!-- Sistema de Medicion (27-sep-2026): la palanca de Vanessa contra su meta del mes.
        Los numeros los calcula el servidor (MedicionDatos.gs › getMiPalancaPauta). -->
   <div id="miPalanca" class="mipal" style="display:none"></div>
-  <!-- El Diagnostico IA (Lente Loomer + AI CMO) se retiro el 27-sep-2026: decidia con
+  <!-- El Diagnostico IA se retiro el 27-sep-2026: decidia con
        CTR y CPC sin ver una sola reserva. Las decisiones salen de la pestaña
        ⚖️ Decisiones de pauta (PautaSistema.gs): hechos, validacion y reglas. -->
   <div class="bench">
@@ -252,18 +251,17 @@ a{color:var(--verde)}
   </div>
 </section>
 
-<!-- ============ ESTRATEGIA ANUAL (AI CMO) ============ -->
+<!-- ============ ESTRATEGIA ANUAL ============ -->
 <section id="tab-estrategia" class="tab">
   <div class="toolbar">
-    <h2 style="margin:0;flex:1">Estrategia Anual · AI CMO</h2>
-    <button class="btn sm" onclick="estRegen()">🔄 Regenerar con aprendizajes</button>
+    <h2 style="margin:0;flex:1">Estrategia Anual</h2>
     <button class="btn sec sm" onclick="estPDF()">📄 Descargar PDF</button>
   </div>
-  <div class="pill-note">Estrategia maestra de <b>Agosto 2026 a Julio 2027</b>. Ordena todo el sistema en una sola dirección, por fases y meses, con KPIs. Se regenera cuando se acumulan aprendizajes: el plan de cada mes baja de aquí, y lo que aprendes cada semana vuelve a subir.</div>
+  <div class="pill-note">Estrategia maestra de <b>Agosto 2026 a Julio 2027</b>. Ordena el sistema en una sola dirección, por fases. <b>Las metas no viven aquí:</b> las fija el Sistema de Medición (comensales del mes, clientes nuevos y CAC), y las decisiones de dinero salen de <b>⚖️ Decisiones de pauta</b>. Este documento se reescribe a mano cuando Juanma lo decide.</div>
   <div class="card" id="estBody" style="font-size:13px;line-height:1.65">
 
-    <h2>🌟 North Star</h2>
-    <p>Construir una base amplia de gente que conoce y recuerda a Rosanta, y convertirla en <b>reservas medibles</b> de las dos audiencias reales: turistas angloparlantes y foodies locales. El indicador que manda: <b>reservas atribuidas por mes</b> (SonTickets con UTM), sostenidas por alcance de calidad.</p>
+    <h2>🌟 El número de Marketing</h2>
+    <p><b>Comensales del mes</b> (venta del restaurante ÷ ticket por comensal), del Sistema de Medición. Metas: octubre 580 · noviembre 630 · diciembre 800. Las palancas de pauta son los <b>clientes nuevos</b> del mes (octubre 40 · noviembre 50 · diciembre 55) y el <b>CAC ≤ Q60</b>, que solo se publica con lectura de Wix ≥ 50%. "Reservas atribuidas" quedó descartada como meta el 27-sep-2026 porque hoy no se puede medir.</p>
 
     <h2 style="margin-top:14px">⚙️ Los 3 motores financieros</h2>
     <p>Toda pieza alimenta uno de estos tres motores; si no mueve ninguno, no entra al calendario. <b>Eventos</b> (ocupación y flujo con experiencias temáticas de alta conversión), <b>Ventas</b> (ticket promedio más alto con paquetes plato + cóctel + postre en sala) y <b>Crecimiento</b> (clientes nuevos y autoridad de marca que sostiene la demanda).</p>
@@ -272,17 +270,17 @@ a{color:var(--verde)}
     <p>De ~430 reservas, la mitad llegó con teléfono de EE. UU. o Canadá. <b>Turista angloparlante:</b> entra por Google y en inglés, decide por reseñas y por lo que las IAs recomiendan. <b>Foodie local:</b> entra por Instagram y en español, decide por antojo y comunidad. Núcleo demográfico 25–54 (pico 25–44), 57% mujeres, Antigua y Ciudad de Guatemala. Cada pieza define su idioma y canal según a quién le habla.</p>
 
     <h2 style="margin-top:14px">💰 Presupuesto e inversión</h2>
-    <p>Base $440/mes (Opción 2): awareness $240 (~$8/día, el mínimo que el algoritmo necesita), evento puntual del mes y eventos permanentes activos. La estructura se mantiene estable para no frenar el aprendizaje del algoritmo; el creativo se renueva de forma progresiva. Revisión de presupuesto al cerrar cada fase.</p>
+    <p>El presupuesto aprobado está <b>por verificar</b> (pestaña supuestos): el plan hablaba de US$440/mes y el gasto real de Meta del 28-ago al 26-sep fue Q2,262 (unos US$290). La estructura se mantiene estable para no frenar el aprendizaje del algoritmo; cualquier cambio de presupuesto pasa por ⚖️ Decisiones de pauta, un cambio a la vez.</p>
 
     <h2 style="margin-top:16px">🗓️ Las 4 fases del año</h2>
 
     <h3 style="margin-top:10px;color:var(--verde)">Fase 1 · Ago–Sep 2026 — Awareness sostenido</h3>
-    <p>Cierre de la fase de awareness. Ampliar alcance y recuerdo en las dos audiencias con la campaña de VisitasIG más creativo Kaprica nuevo. Temporada de lluvia: fogata, chimenea y platos de temporada como protagonistas.<br>
+    <p>Cierre de la fase de awareness. Ampliar alcance y recuerdo en las dos audiencias con creativo Kaprica nuevo. Temporada de lluvia: fogata, chimenea y platos de temporada como protagonistas.<br>
     <b>KPIs:</b> alcance mensual creciente · Hook Rate ≥40% · Retención ≥10% · CPE &lt;Q0.05 · CTR ≥1% · frecuencia &lt;3.</p>
 
     <h3 style="margin-top:10px;color:var(--verde)">Fase 2 · Oct–Dic 2026 — Giro a conversión + temporada alta</h3>
     <p>Con la audiencia caliente y la data más limpia, la optimización gira a reservas. Temporada alta de Antigua y fin de año: eventos, cenas de fin de año, regalos de experiencia. Se enciende la recuperación de carritos como palanca comercial y el retargeting con Custom Audience hasheada.<br>
-    <b>KPIs:</b> reservas atribuidas por mes · tasa de recuperación de carritos · reducción del ~43% de tráfico directo (UTMs propios) · match quality (email/teléfono hasheado + click ID).</p>
+    <b>KPIs:</b> comensales y clientes nuevos del mes contra su meta · tasa de recuperación de carritos · reducción del ~43% de tráfico directo (UTMs propios) · match quality (email/teléfono hasheado + click ID).</p>
 
     <h3 style="margin-top:10px;color:var(--verde)">Fase 3 · Ene–Mar 2027 — Retención y camino a Semana Santa</h3>
     <p>Enero–febrero: re-enganchar la base del CRM tras las fiestas (segmentos B y C) y sostener ocupación en temporada baja. Marzo culmina en <b>Semana Santa</b> (Pascua 28 de marzo 2027), la semana más fuerte de Antigua: reservas anticipadas, experiencias para turistas y prueba social. Todo el año construye hacia este pico.<br>
@@ -296,47 +294,19 @@ a{color:var(--verde)}
     <p><b>Creador de Contenido (Kaprica)</b> produce las piezas del mes en la voz de marca. <b>Calendario + Plan del mes</b> baja la estrategia a martes y viernes (video primero), rotando ejes y respetando la fase. <b>Checklist</b> es el filtro de calidad: sin 8/8 no se publica. <b>Dashboard de Pauta</b> muestra la data de Meta y <b>⚖️ Decisiones de pauta</b> decide con hechos, validación y reglas, juzgando todo contra reservas. <b>Espía</b> abre ángulos libres antes de cada campaña. <b>Carritos</b> trabaja la recuperación de reservas abandonadas. Las <b>skills de agencia</b> (reseñas, SEO local, retención) cubren reputación, descubrimiento y CRM. La <b>capa de datos (Marketing OS)</b> es la fuente única, y el <b>círculo de aprendizaje</b> hace que la estrategia mejore mes a mes.</p>
 
     <h2 style="margin-top:14px">📈 KPIs maestros (revisión mensual)</h2>
-    <p>North Star: <b>reservas atribuidas/mes</b>. Por motor: Eventos → ocupación en fechas ancla; Ventas → ticket promedio; Crecimiento → alcance de calidad y seguidores. Salud de pauta: Hook Rate, retención, CPE, CTR, frecuencia. Palancas: tasa de recuperación de carritos, % tráfico directo, match quality. Cada lunes el analista de pauta reporta y deja su hallazgo en aprendizajes.</p>
+    <p>Los del Sistema de Medición: <b>comensales del mes</b> (Juanma), <b>clientes nuevos</b> y <b>CAC con su lectura</b> (Vanessa). Hook rate, retención, CTR y frecuencia diagnostican un anuncio; no deciden dinero.</p>
 
     <h2 style="margin-top:14px">🔄 Cómo aprende e itera</h2>
-    <p>Cada semana, los hallazgos entran a la pestaña <b>Aprendizajes</b> (manual y por el loop de los lunes). Cada mes, el <b>Plan del mes</b> los lee antes de proponer piezas: repite lo que funciona, evita lo que no. Al cerrar cada fase (trimestral), se regenera esta estrategia incorporando lo aprendido. Así el año no se ejecuta a ciegas: se corrige solo con evidencia.</p>
+    <p>Cada cambio de pauta entra como prueba en la <b>bitácora</b> de ⚖️ Decisiones, con hipótesis, un solo cambio y la métrica que la juzga (reservas o clientes nuevos). Al leerla, el veredicto actualiza los supuestos y deja su aprendizaje en la pestaña <b>Aprendizajes</b>, que leen el Plan del mes y el Creador de pauta.</p>
   </div>
-  <div id="estRegenOut"></div>
   <div style="height:12px"></div>
   <div class="card">
     <div class="toolbar">
       <h2 style="margin:0;flex:1">📥 Propuestas del equipo</h2>
       <button class="btn sm" onclick="openProp()">+ Cargar propuesta</button>
     </div>
-    <p class="muted" style="margin-bottom:8px">Documentos de estrategia que entrega el equipo (Vanessa, agencia, asesores externos). Cada propuesta se debate en el <b>🧠 Panel de Asesores</b> antes de aprobar presupuesto, y el botón "Regenerar con aprendizajes" toma en cuenta las que siguen sobre la mesa.</p>
+    <p class="muted" style="margin-bottom:8px">Documentos de estrategia que entrega el equipo (Vanessa, agencia). Juanma los revisa y marca su estado; lo que mueve presupuesto se vuelve una prueba en la bitácora de ⚖️ Decisiones de pauta.</p>
     <div id="propList"></div>
-  </div>
-</section>
-
-<!-- ============ PANEL DE ASESORES ============ -->
-<section id="tab-panel" class="tab">
-  <div class="pill-note">Consejo de marketing digital de Rosanta: seis lentes basadas en el <b>marco publicado de expertos reales</b> (el link de cada tarjeta lleva a su contenido, para corroborar y aprender de la fuente) debaten cada ruta antes de invertir. Cada lente aplica su metodología por nombre (Value Equation, See-Think-Do-Care, hook rate, 60/40...) para que puedas verificarla contra la fuente. Es una simulación de su criterio público; la persona real está fuera de esto. El <b>AI CMO</b> modera y cierra con veredicto. Tú tienes la última palabra: contra-argumenta y el panel te responde.</div>
-  <div class="grid kpis" id="asesorCards"></div>
-  <div style="height:12px"></div>
-  <div class="card">
-    <div class="toolbar">
-      <h2 style="margin:0;flex:1">🎙️ Mesa de debate</h2>
-      <span class="muted" id="debStatus"></span>
-    </div>
-    <div class="fld"><label>Qué debate el panel</label><select id="debSel" style="width:100%"></select></div>
-    <div class="fld"><label>Tema libre o contexto adicional (opcional si elegiste una propuesta)</label><textarea id="debLibre" rows="2" placeholder="Ej: ¿duplicamos el retargeting a Q16/día en septiembre o esperamos los datos de agosto?"></textarea></div>
-    <button class="btn" onclick="debatir()">🎙️ Iniciar debate</button>
-    <div id="debOut"></div>
-    <div id="debReplicaBox" style="display:none;margin-top:12px">
-      <div class="fld"><label>Tu respuesta al panel (contra-argumento, duda o decisión)</label><textarea id="debCom" rows="2" placeholder="Ej: el presupuesto extra de octubre me incomoda, ¿qué recortarían?"></textarea></div>
-      <button class="btn sec sm" onclick="debReplica()">↩️ Responder al panel</button>
-    </div>
-  </div>
-  <div style="height:12px"></div>
-  <div class="card">
-    <h2>📚 Historial de debates</h2>
-    <p class="muted" style="margin-bottom:6px">Cada debate queda guardado aquí y en la pestaña <b>debates</b> de la Sheet.</p>
-    <div id="debHist"></div>
   </div>
 </section>
 
@@ -599,22 +569,19 @@ a{color:var(--verde)}
     <h2 style="margin-top:14px">🕵️ Espía (antes de cada campaña)</h2>
     <p>Busca en la Biblioteca de Anuncios de Meta qué está pautando la competencia de Antigua ahora mismo. <b>Analizar patrones</b> resume quién invierte más y qué ángulos quedan libres para Rosanta. Úsalo antes de lanzar una campaña nueva para diferenciarla.</p>
 
-    <h2 style="margin-top:14px">🧠 Panel de Asesores (antes de decidir rutas)</h2>
-    <p>Seis lentes basadas en el marco publicado de expertos reales debaten cualquier ruta antes de aprobar presupuesto: <b>Jon Loomer</b> (media buying Meta), <b>Savannah Sanchez</b> (creativo de pauta), <b>Rev Ciancio</b> (marketing de restaurantes), <b>Avinash Kaushik</b> (datos y medición), <b>Mark Ritson</b> (estrategia y abogado del diablo) y <b>Alex Hormozi</b> (ofertas y monetización, entra fuerte en paquetes, precios y eventos); el <b>AI CMO</b> de Rosanta modera y cierra con veredicto y decisiones. Cada lente aplica su metodología por nombre (Value Equation, See-Think-Do-Care, hook rate, 60/40 marca/activación), citable contra la fuente. Cada tarjeta enlaza al contenido real del experto para corroborar y aprender de la fuente; el debate es una simulación de su criterio público. Las propuestas del equipo (por ejemplo el plan de medios de Vanessa) se cargan en <b>🎯 Estrategia → Propuestas del equipo</b> y desde ahí se mandan al panel. Puedes contra-argumentar y el panel responde. Cada debate queda en el historial y en la Sheet, y "Regenerar con aprendizajes" toma en cuenta las propuestas sobre la mesa.</p>
-
     <h2 style="margin-top:14px">🛒 Carritos (uso diario/semanal)</h2>
     <p>El formulario de reservas de rosanta.rest detecta solo a quien escribió su nombre y contacto y se fue sin completar: a los 4 minutos (o al cerrar la página) el carrito llega aquí con su valor estimado, su teléfono y su <b>permiso de contacto</b>. Ese mismo abandono viaja a Meta como evento AddToCart con los datos hasheados, así que alimenta el retargeting sin trabajo extra.</p>
     <p>Para recuperar: el botón <b>💬 Mensaje</b> genera el WhatsApp según los días transcurridos (toque 1 en 24h, toque 2 a las 72h, toque 3 al día 7; máximo 3 toques). Copia, envía desde el WhatsApp del restaurante y actualiza el estado (Contactado → Recuperado/Perdido). Los KPIs calculan la tasa y los Q recuperados del mes. <b>Escribe únicamente a quien tenga permiso "Sí"</b>: es la regla de WhatsApp y protege el número del bot.</p>
 
     <h2 style="margin-top:14px">👥 Quién hace qué</h2>
-    <p><b>Juanma:</b> genera el plan del mes, lleva las propuestas al Panel de Asesores, aprueba piezas y presupuestos, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard, ⚖️ Decisiones de pauta de cada lunes (ejecuta la decisión y la registra en la bitácora), espía antes de cada campaña, genera los anuncios en el 🎯 Creador de pauta (Lente Savannah Sanchez), ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
+    <p><b>Juanma:</b> genera el plan del mes, revisa las propuestas del equipo, aprueba piezas, arranca y cierra las pruebas de pauta, y trabaja la recuperación de carritos. <b>Vanessa (pauta):</b> dashboard, ⚖️ Decisiones de pauta de cada lunes (ejecuta la decisión y la registra en la bitácora), espía antes de cada campaña, genera los anuncios en el 🎯 Creador de pauta (Lente Savannah Sanchez), ejecuta en Meta con la convención UTM (minúsculas + guión bajo, sin tildes, mismo utm_campaign en toda la serie, utm_content por creativo) y sube sus propuestas a 🎯 Estrategia. <b>Daniel (producción):</b> recibe el brief, produce las piezas cumpliendo el estándar de cámara y las specs de video, y toda pieza pasa el checklist antes de publicarse. <b>Jeffry (jefe de cocina):</b> avisa qué entra de temporada, qué llega del huerto y qué platos nuevos salen, que es la materia prima del eje Cocina con corazón; talento en cámara para cocina y parrilla. <b>Maco (barra):</b> cócteles de temporada y maridajes para el eje Gastrococtelería; talento en cámara en barra.</p>
 
     <h2 style="margin-top:14px">✍️ Reglas de voz (resumen para todos)</h2>
     <p>Afirmativa siempre (sin la palabra "no") · segunda persona: tu mesa, tu experiencia · prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "cocina/coctelería de autor" y em dashes · conceptos centrales: cocina natural y gastronomía sostenible · emojis estratégicos · hashtags al final sin puntos separadores · personalización solo con el nombre de pila.</p>
 
     <h2 style="margin-top:14px">⚙️ Notas técnicas</h2>
-    <p>El sistema vive dentro de la intranet de Rosanta y la fuente única de verdad es la Google Sheet "Rosanta Marketing OS" (calendario, piezas, carritos, aprendizajes, propuestas y debates). La data de Meta y del Espía llega en vivo; la serie semanal de Google Ads se lee de los reportes que se suben a Drive cada lunes. Los carritos entran solos desde el formulario de reservas.</p>
-    <p>Los textos generados con IA son borradores de primera pasada: revísalos siempre contra el checklist. El Panel de Asesores investiga en la web antes de cada debate y marca con ⚠️ lo que dependa de mecánica actual de plataforma: eso se verifica antes de ejecutar, jamás se da por cierto.</p>
+    <p>El sistema vive dentro de la intranet de Rosanta y la fuente única de verdad es la Google Sheet "Rosanta Marketing OS" (calendario, piezas, carritos, aprendizajes y propuestas). La data de Meta y del Espía llega en vivo; la serie semanal de Google Ads se lee de los reportes que se suben a Drive cada lunes. Los carritos entran solos desde el formulario de reservas.</p>
+    <p>Los textos generados con IA son borradores de primera pasada: revísalos siempre contra el checklist. Lo que dependa de mecánica actual de Meta (algoritmo, formatos, umbrales) se verifica en la plataforma antes de ejecutar; en la pestaña supuestos solo cuenta lo verificado.</p>
     <p>Cada quien entra con su enlace personal. Lo que ves depende de tu rol en la hoja USUARIOS; si necesitas una pestaña que no aparece, pídesela a Juanma.</p>
   </div>
 </section>
@@ -748,7 +715,9 @@ const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){re
    psUpsertAprendizaje_, webhook de WIX, CRMSync) y un replace desde un navegador
    viejo borraba esas filas. Van fila por fila (filaUpsertRemoto/filaBorrarRemoto)
    y mktReplace los rechaza en el servidor. */
-const OS_MAP={rosanta_pz:'piezas',rosanta_prop:'propuestas',rosanta_deb:'debates'};
+/* debates salió el 27-sep-2026 con el Panel de Asesores: su pestaña quedó archivada
+   como historial y ya no está en SCHEMA, así que nadie la reescribe. */
+const OS_MAP={rosanta_pz:'piezas',rosanta_prop:'propuestas'};
 function osConnected(){return true}  // servido por Apps Script: siempre conectado
 function srv(fn,...args){
   return new Promise((res,rej)=>{
@@ -857,7 +826,6 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   b.classList.add('act');$('tab-'+b.dataset.tab).classList.add('act');
   if(b.dataset.tab==='cal')renderCal();
   if(b.dataset.tab==='carr')renderCarr();
-  if(b.dataset.tab==='panel')renderPanel();
 });
 function closeOv(id){$(id).classList.remove('act')}
 
@@ -1146,7 +1114,7 @@ async function genPlan(){
     }
     localStorage.setItem('rosanta_cal',JSON.stringify(cal));
     renderCal();
-    $('planStatus').textContent='✅ '+n+' piezas propuestas como Idea'+(errores?(' · '+errores+' con error'):'')+'. Apruébalas en el Panel y luego usa ✍️ Generar contenido.';
+    $('planStatus').textContent='✅ '+n+' piezas propuestas como Idea'+(errores?(' · '+errores+' con error'):'')+'. Apruébalas en el Calendario y luego usa ✍️ Generar contenido.';
   }catch(e){$('planStatus').textContent='Error generando el plan: '+(e&&e.message?e.message:e)}
 }
 
@@ -1159,7 +1127,7 @@ async function genContenido(){
   try{ cal=await calPull(); }
   catch(e){ $('planStatus').textContent='No pude leer la Sheet: '+e.message; return; }
   const aprobadas=cal.filter(p=>p.date&&p.date.indexOf(pref)===0&&p.estado==='Aprobada');
-  if(!aprobadas.length){$('planStatus').textContent='No hay piezas en estado Aprobada este mes. Apruébalas en el Panel de Asesores primero (solo esas reciben copy).';return}
+  if(!aprobadas.length){$('planStatus').textContent='No hay piezas en estado Aprobada este mes. Apruébalas primero en el Calendario (solo esas reciben copy).';return}
 
   const REGLAS='REGLAS DE ESCRITURA (obligatorias):\n- Segunda persona, el cliente protagonista, tono conversacional.\n- Prohibido empezar con "En Rosanta".\n- Prohibidos los posesivos de marca: nunca "nuestro/a/os".\n- Prohibidos los em dash (—) y el vocabulario de IA (sumérgete, descubre un mundo de, elevar la experiencia, deleita tu paladar).\n- Máximo 1-2 emojis, al final.\n- Estructura: gancho, cuerpo, CTA (reservar en rosanta.rest), y al final los hashtags tras un salto de línea, sin puntos separadores.\n- Hashtags: usa la base '+HASHTAGS_BASE+' más 3-5 relevantes al eje. Nunca #JardinSantaRosa.';
 
@@ -1807,32 +1775,17 @@ async function genPost(){
     $('poOut').innerHTML='<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:12px">'+md2html(t)+'</div><div style="margin-top:8px"><button class="btn sm" onclick="libSave(\'post\',$(\'poTema\').value.trim(),window._lastPo)">Guardar en biblioteca</button>'+piezaBtn('lastPo')+'</div>';
   }catch(e){$('poOut').innerHTML='<p class="muted">Error generando: '+e.message+'</p>'}
 }
-/* ===== Estrategia Anual (AI CMO) ===== */
-/* EST_CONTEXT alimenta Estrategia Anual y Panel de Asesores. Desde el 27-sep-2026 no
-   lleva cifras de pauta escritas a mano: "US$440/mes", "VisitasIG 20-100x" y "184
-   carritos" viajaban aqui como hechos sin serlo y el Panel los repetia. Las cifras
-   entran solo desde la pestaña supuestos (estado verificado), via psSupuestosVerificados. */
-const EST_BASE=`Rosanta: restaurante de gastrococtelería en Antigua Guatemala (cocina natural, gastronomía sostenible, jardín, sin delivery). 3 años en operación. 3 motores financieros: Eventos, Ventas, Crecimiento. Audiencias reales por datos: turista angloparlante (Google/inglés, decide por reseñas y por lo que recomiendan las IAs) y foodie local (Instagram/español, antojo y comunidad); de ~430 reservas la mitad con teléfono EE.UU./Canadá; núcleo 25-54, 57% mujeres. Estructura de pauta estable para no frenar el algoritmo. Benchmarks propios: Hook Rate ≥40%, retención ≥10%, CPE <Q0.05, CTR ≥1%, frecuencia <3. Palancas: recuperar reservas abandonadas, bajar ~43% de tráfico directo con UTMs, subir match quality con email/teléfono hasheado. Semana Santa en Antigua (Pascua 28-mar-2027) es el pico anual. Sistemas propios ya montados: Creador de Contenido con formato Kaprica, Calendario con Plan del mes, Checklist de piezas, Dashboard de pauta Meta, Espía de Ad Library, Tracker de carritos, skills de reseñas/SEO local/retención, capa de datos Marketing OS en Google Sheet, círculo de aprendizaje y loop de pauta semanal.`;
-let EST_CONTEXT=EST_BASE;
-async function estRegen(){
-  $('estRegenOut').innerHTML='<div class="loading"><div class="spin"></div>Regenerando la estrategia con los aprendizajes…</div>';
-  try{
-    try{await aprPull();}catch(e){}
-    const apr=read('rosanta_apr',[]).slice(0,15);
-    const aprBlock=apr.length?('\nAPRENDIZAJES ACUMULADOS (incorpóralos, son evidencia real):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'\n(Aún sin aprendizajes registrados; usa la estrategia base.)';
-    const props=read('rosanta_prop',[]).filter(p=>p.estado!=='Descartada').slice(0,5);
-    const propBlock=props.length?('\n\nPROPUESTAS DEL EQUIPO SOBRE LA MESA (evalúalas: integra lo que suma a la estrategia, señala qué descartas y por qué):\n'+props.map(p=>'--- '+p.titulo+' · '+p.autor+' · estado: '+p.estado+'\n'+String(p.contenido||'').slice(0,1600)).join('\n')):'';
-    const t=await askIA(EST_CONTEXT+'\n'+aprBlock+propBlock+`\n\nEres el AI Chief Marketing Officer de Rosanta. Regenera la ESTRATEGIA ANUAL (Agosto 2026 a Julio 2027) incorporando los aprendizajes acumulados y las propuestas del equipo sobre la mesa. Mantén coherencia con los 3 motores, las 2 audiencias, el presupuesto y las 4 fases (Ago-Sep awareness; Oct-Dic conversión + temporada alta; Ene-Mar retención + Semana Santa; Abr-Jul consolidación). Entrega en español, conciso y accionable:\n**Qué cambia este ciclo** (2-3 líneas según aprendizajes y propuestas)\n**Sobre las propuestas del equipo** (si las hay: qué integras, qué ajustas y qué descartas, con porqué en una línea)\n**Ajustes por fase** (una línea por fase con su foco y KPI principal)\n**3 apuestas del año** (las jugadas de mayor ROI)\n**Riesgos y qué vigilar**\nVoz afirmativa, sin delivery.`);
-    $('estRegenOut').innerHTML='<div class="card" style="margin-top:12px"><h2>🔄 Estrategia regenerada · '+todayISO()+'</h2><div style="font-size:12.5px">'+md2html(t)+'</div></div>';
-  }catch(e){$('estRegenOut').innerHTML='<p class="muted">Error al regenerar: '+e.message+'</p>'}
-}
+/* ===== Estrategia Anual =====
+   El AI CMO y su "Regenerar con aprendizajes" se retiraron el 27-sep-2026 junto con el
+   Panel de Asesores (decisión de Juanma): eran una tercera voz que contradecía al
+   sistema de decisión de pauta y al Sistema de Medición. La estrategia es un documento
+   fijo que se reescribe a mano; las metas viven en el Sistema de Medición. */
 function estPDF(){
   let pa=$('printArea');
   if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
   pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
-    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Estrategia Anual de Marketing</h1><div style="font-size:13px;opacity:.9">Agosto 2026 – Julio 2027 · AI CMO · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
+    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Estrategia Anual de Marketing</h1><div style="font-size:13px;opacity:.9">Agosto 2026 – Julio 2027 · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
     '<div style="font-size:12px;line-height:1.6">'+$('estBody').innerHTML+'</div>'+
-    ($('estRegenOut').innerHTML?('<div style="font-size:12px;line-height:1.6;margin-top:10px">'+$('estRegenOut').innerHTML+'</div>'):'')+
     '</div>';
   window.print();
 }
@@ -1878,156 +1831,14 @@ function delProp(id){if(!confirm('¿Eliminar esta propuesta?'))return;store('ros
 function propEstado(id,val){const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);if(x){x.estado=val;store('rosanta_prop',p);renderProps()}}
 function renderProps(){
   const props=read('rosanta_prop',[]);
-  const opts=['Nueva','En debate','Aprobada','Descartada'];
+  const opts=['Nueva','En revisión','Aprobada','Descartada'];
   $('propList').innerHTML=props.length?props.map(p=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
     '<summary style="cursor:pointer;font-weight:700">📄 '+p.titulo+' <span class="muted">· '+p.autor+' · '+p.fecha+'</span> <span class="chip '+(p.estado==='Aprobada'?'on':(p.estado==='Descartada'?'off':'warn'))+'">'+p.estado+'</span></summary>'+
     '<div style="padding:10px;font-size:12.5px;background:var(--crema);border-radius:8px;margin:6px 0;max-height:280px;overflow:auto">'+md2html(p.contenido||'')+'</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
     '<select onchange="propEstado(\''+p.id+'\',this.value)">'+opts.map(o=>'<option'+(o===p.estado?' selected':'')+'>'+o+'</option>').join('')+'</select>'+
-    '<button class="btn sec sm" onclick="debatirProp(\''+p.id+'\')">🧠 Debatir en el panel</button>'+
     '<button class="btn danger" onclick="delProp(\''+p.id+'\')">✕</button></div></details>').join('')
   :'<p class="muted">Sin propuestas cargadas. Usa "+ Cargar propuesta" cuando el equipo entregue un documento.</p>';
-}
-/* ===== 🧠 Panel de Asesores ===== */
-/* Cada silla razona desde el MARCO PUBLICADO de un experto real con presencia
-   digital (link en su tarjeta, para corroborar y aprender de su contenido).
-   Es una simulación de su criterio público: la persona real está fuera de esto
-   y jamás se le atribuyen citas. El moderador es el AI CMO propio de Rosanta. */
-const ASESORES=[
-  ['📊','Lente Jon Loomer','Media buying · Meta Ads','Referente mundial de Meta Ads (jonloomer.com). Estructura simple, fases de aprendizaje del algoritmo, presupuestos mínimos viables, retargeting bien secuenciado, cero métricas de vanidad.','https://www.jonloomer.com/'],
-  ['🎬','Lente Savannah Sanchez','Creativo de pauta','Experta en creativo de paid social (thesocialsavannah.com). El creativo es el targeting: hook en los primeros 3 segundos, video nativo, variaciones constantes contra la fatiga.','https://thesocialsavannah.com/'],
-  ['🍔','Lente Rev Ciancio','Marketing de restaurantes','Estratega de hospitality y restaurantes (revdavidciancio.com). Reseñas y prueba social, ocupación entre semana, eventos y ticket promedio: el marketing se mide en sillas llenas.','https://revdavidciancio.com/'],
-  ['📈','Lente Avinash Kaushik','Datos y medición','Autor de Occam\'s Razor (kaushik.net). Modelo See-Think-Do-Care, atribución honesta, UTM/CAPI, medir outcomes (reservas) y jamás outputs (likes).','https://www.kaushik.net/avinash/'],
-  ['🥊','Lente Mark Ritson','Estrategia y efectividad · abogado del diablo','Columnista de Marketing Week y creador del Mini MBA. Diagnóstico antes que táctica, balance largo/corto plazo, foco brutal: demuele propuestas débiles antes de gastar.','https://www.marketingweek.com/mark-ritson/'],
-  ['💥','Lente Alex Hormozi','Ofertas y monetización','Autor de $100M Offers y $100M Leads (acquisition.com). Value Equation, ofertas con garantía que invierte el riesgo, precio por valor: entra fuerte en paquetes, precios y eventos.','https://www.acquisition.com/'],
-  ['🎯','AI CMO Rosanta','Moderador · síntesis','El estratega propio del sistema. Alinea el debate al North Star (reservas atribuidas por mes), cierra con veredicto y decisiones concretas.','']
-];
-const PANEL_PROMPT=`Simula el PANEL DE ASESORES de marketing digital de Rosanta. Cada silla razona ESTRICTAMENTE desde el marco publicado de un experto real, usando la METODOLOGÍA escrita abajo (viene de sus libros, blogs y cursos públicos). Preséntalas siempre como "Lente X": son simulaciones de su criterio público, jamás citas ni palabras de la persona real. Cuando una lente aplique uno de sus marcos, nómbralo (ej: "aplicando la Value Equation..."), para que el dueño pueda verificarlo en la fuente. Los desacuerdos son deseables y deben ser específicos, con números cuando aplique.
-
-📊 LENTE JON LOOMER (media buying en Meta). Metodología:
-- Simplicidad de estructura: pocas campañas con presupuesto consolidado; fragmentar presupuestos pequeños mata el aprendizaje del algoritmo.
-- Respetar la fase de aprendizaje: cambios significativos (presupuesto, audiencia, creativo) la reinician; medir en ventanas, sin reaccionar al día a día.
-- Segmentación amplia + creativo como targeting antes que hipersegmentar; el sistema optimiza mejor con señal suficiente.
-- Métricas de negocio (costo por resultado real) sobre métricas de vanidad (CPM, likes); vigilar frecuencia como señal de fatiga.
-- Retargeting: secuencias con ventanas y exclusiones correctas para evitar pagar dos veces por la misma persona.
-- Diversificación creativa real (regla Andromeda, verificada jul-2026): Meta agrupa creativos casi idénticos como duplicados y los ahoga en retrieval; variar = conceptos de video distintos, jamás el mismo material con otro gancho.
-
-🎬 LENTE SAVANNAH SANCHEZ (creativo de pauta). Metodología:
-- El hook de los primeros 1-3 segundos decide el resultado: medir hook rate (3s vistas/impresiones) y hold rate.
-- Video nativo estilo orgánico/UGC vence a la producción pulida de anuncio; vertical 9:16, subtítulos, funciona sin sonido.
-- Iterar sobre ganadores: variar hooks de un creativo que funciona antes de apostar a conceptos nuevos; refrescar creativos contra la fatiga.
-- El creativo es el targeting: cada pieza le habla a una audiencia y un ángulo específicos.
-
-🍔 LENTE REV CIANCIO (marketing de restaurantes). Metodología:
-- El marketing de restaurante se mide en sillas llenas, ticket promedio y visitas repetidas, jamás en likes.
-- Reseñas y prueba social son el motor #1 de decisión: pedirlas, responderlas todas, exhibirlas.
-- Base de datos propia (email/WhatsApp/CRM) sobre audiencias alquiladas; el dinero está en la lista y en la recurrencia.
-- Ocupación entre semana se construye con eventos, experiencias y alianzas locales; la hospitalidad es la retención.
-
-📈 LENTE AVINASH KAUSHIK (datos y medición). Metodología:
-- See-Think-Do-Care: cada campaña declara su intención de audiencia y su métrica de éxito ANTES de lanzarse; awareness se mide distinto que conversión.
-- Outcomes (reservas, ingresos) sobre outputs (alcance, impresiones): la actividad es distinta del logro.
-- Disciplina de UTM + Pixel/CAPI: sin atribución confiable el debate es opinión; exigir el plan de medición de toda propuesta.
-- Segmentar siempre: el promedio miente; comparar por audiencia, canal e idioma.
-
-🥊 LENTE MARK RITSON (estrategia y efectividad, abogado del diablo). Metodología:
-- Orden sagrado: diagnóstico → estrategia → táctica; toda propuesta que arranca en táctica sin diagnóstico queda bajo sospecha.
-- Balance largo/corto plazo (~60% construcción de marca / ~40% activación, Binet & Field): el 100% activación canibaliza el futuro.
-- Foco: pocas cosas ejecutadas con excelencia; targeting y posicionamiento definidos antes de gastar un quetzal.
-- Exigir evidencia de efectividad (incrementalidad, no correlación); su trabajo es demoler la propuesta si es débil.
-
-💥 LENTE ALEX HORMOZI (ofertas y monetización). Metodología:
-- Value Equation: Valor = (Resultado soñado × Probabilidad percibida) ÷ (Tiempo de espera × Esfuerzo del cliente); diagnosticar cuál elemento está débil y arreglarlo.
-- Grand Slam Offer: resultado específico + stack de valor (una solución por obstáculo) + garantía que invierte el riesgo + nombre por el resultado, jamás por el servicio.
-- Precio por el valor del resultado, jamás por costo u horas; subir ticket con paquetes y experiencias premium.
-- Seguimiento: 5-7 toques de valor antes de descartar un lead (give-give-give-ask).
-- Entra con fuerza cuando el tema es paquetes, precios, eventos o ticket promedio; en temas puros de pauta cede el turno.
-
-🎯 AI CMO DE ROSANTA (moderador): alinea todo al North Star (reservas atribuidas por mes), pondera las lentes según el tema y cierra el debate.
-
-REGLA DE HUMILDAD TEMPORAL (obligatoria): el conocimiento de las lentes tiene fecha de corte y las plataformas cambian en meses. Toda afirmación que dependa de la mecánica ACTUAL de una plataforma (algoritmos de entrega de Meta/Google, tratamiento de creativos, formatos, políticas, umbrales, precios) se marca con "⚠️ verificar en plataforma" en vez de afirmarse como vigente. Precedente de la casa: el panel recomendó "1 video + 3 variantes de gancho" y la mecánica real de Meta (Andromeda agrupa casi-duplicados) lo invalidó; lo detectó el equipo humano.
-
-Entrega en español, con exactamente esta estructura:
-**🎙️ Posiciones** cada lente da su posición en 3-4 líneas, aplicando SU metodología por nombre.
-**⚔️ Donde choca el panel** los 2-3 desacuerdos reales: qué lente contra qué lente y por qué.
-**🎯 Síntesis del AI CMO** veredicto (aprobar / aprobar con ajustes / rechazar), los ajustes concretos con cifras, 3 decisiones para ejecutar esta semana y qué medir en 30 días para saber qué lente tenía razón.
-**⚠️ Qué verificar antes de ejecutar** la lista de afirmaciones marcadas "verificar en plataforma", cada una con quién la valida (Vanessa en Meta, Juanma con Cowork para investigación con fuentes). Si el debate tuvo cero marcas, decir "Sin dependencias de mecánica actual".
-Voz afirmativa. Rosanta jamás hace delivery.`;
-function renderPanel(){
-  $('asesorCards').innerHTML=ASESORES.map(a=>'<div class="card" style="padding:12px"><div style="font-size:22px">'+a[0]+'</div><b style="font-size:13px">'+a[1]+'</b><div style="font-size:11.5px;color:var(--tierra);margin:2px 0 4px">'+a[2]+'</div><div class="muted" style="font-size:11.5px;line-height:1.5">'+a[3]+'</div>'+(a[4]?'<a href="'+a[4]+'" target="_blank" rel="noopener" style="font-size:11px;color:var(--verde)">Su contenido real ↗</a>':'')+'</div>').join('');
-  const props=read('rosanta_prop',[]).filter(p=>p.estado!=='Descartada');
-  const cur=$('debSel').value;
-  $('debSel').innerHTML='<option value="libre">Tema libre (escríbelo abajo)</option>'+props.map(p=>'<option value="'+p.id+'">📄 '+p.titulo+' · '+p.autor+'</option>').join('');
-  if(cur&&[...$('debSel').options].some(o=>o.value===cur))$('debSel').value=cur;
-}
-function debatirProp(id){
-  const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);
-  if(x&&x.estado==='Nueva'){x.estado='En debate';store('rosanta_prop',p);renderProps()}
-  goTab('panel');$('debSel').value=id;
-}
-function debCard(t){
-  return '<div style="font-size:12.5px;background:var(--crema);border-radius:10px;padding:14px;margin-top:12px">'+md2html(t)+'</div>';
-}
-async function debatir(){
-  const sel=$('debSel').value;
-  const libre=$('debLibre').value.trim();
-  let tema='',cont='';
-  if(sel&&sel!=='libre'){
-    const props=read('rosanta_prop',[]);
-    const p=props.find(x=>x.id===sel);
-    if(p){tema=p.titulo+' ('+p.autor+')';cont='\n\nCONTENIDO DE LA PROPUESTA A DEBATIR:\n'+(p.contenido||'');
-      if(p.estado==='Nueva'){p.estado='En debate';store('rosanta_prop',props);renderProps()}}
-  }
-  if(!tema){if(!libre){alert('Elige una propuesta o escribe un tema libre');return}tema=libre}
-  $('debOut').innerHTML='<div class="loading"><div class="spin"></div>🔎 Investigando mecánica actual de plataforma…</div>';
-  $('debStatus').textContent='';$('debReplicaBox').style.display='none';
-  /* Paso 1: investigación en vivo (llamada propia, con su propio timeout).
-     Si falla, el debate corre igual y lo declara: la regla de humildad manda. */
-  let inv='';
-  try{inv=await srv('panelInvestigar', tema+(libre?(' · Contexto: '+libre):''))}catch(e){inv=''}
-  const invBlock=inv?('\n\nINVESTIGACIÓN EN VIVO DE HOY (evidencia fresca con fuentes; las lentes DEBEN usarla cuando toquen mecánica actual y citar sus links; si contradice la memoria de una lente, gana la investigación):\n'+inv)
-    :'\n\n(Investigación en vivo no disponible en este debate: aplicar la regla de humildad temporal con máximo rigor y marcar TODA mecánica de plataforma como ⚠️ verificar.)';
-  $('debOut').innerHTML='<div class="loading"><div class="spin"></div>El panel está debatiendo…</div>';
-  try{
-    try{await aprPull();}catch(e){}
-    const apr=read('rosanta_apr',[]).slice(0,12);
-    const aprBlock=apr.length?('\n\nAPRENDIZAJES ACUMULADOS DE ROSANTA (evidencia real, úsenla en el debate):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'';
-    const t=await askIA(EST_CONTEXT+aprBlock+invBlock+'\n\n'+PANEL_PROMPT+'\n\nTEMA DEL DEBATE: '+tema+cont+(libre&&sel!=='libre'?('\n\nCONTEXTO ADICIONAL DE JUANMA (dueño): '+libre):''));
-    window._debTema=tema;
-    window._debFull=(inv?('**🔎 Investigación en vivo (previa al debate)**\n'+inv+'\n\n---\n\n'):'**🔎 Sin investigación en vivo en este debate** (revisar con más rigor las marcas ⚠️)\n\n---\n\n')+t;
-    window._debId='d'+Date.now();
-    $('debOut').innerHTML=debCard(window._debFull);
-    $('debReplicaBox').style.display='block';$('debCom').value='';
-    saveDeb();
-    $('debStatus').textContent='Debate guardado en el historial';
-  }catch(e){$('debOut').innerHTML='<p class="muted">Error en el debate: '+e.message+'</p>'}
-}
-async function debReplica(){
-  const c=$('debCom').value.trim();if(!c){alert('Escribe tu respuesta al panel');return}
-  const prev=window._debFull;if(!prev)return;
-  $('debStatus').textContent='El panel responde…';
-  try{
-    const t=await askIA(EST_CONTEXT+'\n\n'+PANEL_PROMPT+'\n\nDEBATE PREVIO SOBRE "'+window._debTema+'":\n'+prev.slice(-6000)+'\n\nJUANMA (dueño de Rosanta) RESPONDE AL PANEL:\n'+c+'\n\nContinúa el debate: replican SOLO los asesores con algo relevante que aportar (2-3 líneas cada uno, máximo 4 asesores) y 🎯 Marta actualiza su síntesis y decisiones si la respuesta de Juanma cambia algo. Máximo 25 líneas.');
-    window._debFull=prev+'\n\n**↩️ Juanma:** '+c+'\n\n'+t;
-    $('debOut').innerHTML=debCard(window._debFull);
-    $('debCom').value='';$('debStatus').textContent='Debate actualizado en el historial';
-    saveDeb();
-  }catch(e){$('debStatus').textContent='Error: '+e.message}
-}
-function saveDeb(){
-  const d=read('rosanta_deb',[]).filter(x=>x.id!==window._debId);
-  d.unshift({id:window._debId,fecha:todayISO(),tema:window._debTema,participantes:'Lentes: Loomer · Sanchez · Ciancio · Kaushik · Ritson · Hormozi · AI CMO (mod)',resultado:window._debFull});
-  store('rosanta_deb',d.slice(0,30));renderDebHist();
-}
-function delDeb(id){store('rosanta_deb',read('rosanta_deb',[]).filter(x=>x.id!==id));renderDebHist()}
-function renderDebHist(){
-  const d=read('rosanta_deb',[]);
-  $('debHist').innerHTML=d.length?d.map(x=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
-    '<summary style="cursor:pointer;font-weight:700">🧠 '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
-    '<div style="padding:10px;font-size:12.5px">'+md2html(x.resultado||'')+'</div>'+
-    '<button class="btn sec sm" onclick="navigator.clipboard.writeText(read(\'rosanta_deb\',[]).find(y=>y.id===\''+x.id+'\').resultado);alert(\'Copiado\')">Copiar</button> '+
-    '<button class="btn danger" onclick="delDeb(\''+x.id+'\')">✕</button></details>').join('')
-  :'<p class="muted">Sin debates todavía. Elige una propuesta o un tema libre y presiona 🎙️ Iniciar debate.</p>';
 }
 /* ===== Panel Datos ===== */
 function osRenderConn(){
@@ -2047,22 +1858,22 @@ async function osPushAll(){
   $('osSyncStatus').textContent='Enviando…';
   try{
     for(const k in OS_MAP){await osPost({tab:OS_MAP[k],action:'replace',rows:read(k,[])})}
-    $('osSyncStatus').textContent='✅ Piezas, propuestas y debates enviados a la Sheet (calendario, aprendizajes y carritos ya viajan fila por fila).';
+    $('osSyncStatus').textContent='✅ Piezas y propuestas enviadas a la Sheet (calendario, aprendizajes y carritos ya viajan fila por fila).';
   }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
 }
 async function osPullAll(){
-  if(!confirm('Traer de la Sheet reemplaza los datos locales de calendario, piezas, carritos, aprendizajes, propuestas y debates. ¿Continuar?'))return;
+  if(!confirm('Traer de la Sheet reemplaza los datos locales de calendario, piezas, carritos, aprendizajes y propuestas. ¿Continuar?'))return;
   $('osSyncStatus').textContent='Trayendo…';
   try{
     await calPull(); // calendario, aprendizajes y carritos van aparte: fila por fila, no en OS_MAP
     await aprPull();await carrPull();
     for(const k in OS_MAP){const r=await osGet(OS_MAP[k]);if(r.rows)localStorage.setItem(k,JSON.stringify(r.rows))}
-    renderCal();renderPz();renderCarr();renderApr();seedProps();renderProps();renderDebHist();renderPanel();
+    renderCal();renderPz();renderCarr();renderApr();seedProps();renderProps();
     $('osSyncStatus').textContent='✅ Datos traídos de la Sheet.';
   }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
 }
 function osExport(){
-  const data={calendario:read('rosanta_cal',[]),piezas:read('rosanta_pz',[]),carritos:read('rosanta_carr',[]),aprendizajes:read('rosanta_apr',[]),biblioteca:read('rosanta_lib',[]),propuestas:read('rosanta_prop',[]),debates:read('rosanta_deb',[]),exportado:new Date().toISOString()};
+  const data={calendario:read('rosanta_cal',[]),piezas:read('rosanta_pz',[]),carritos:read('rosanta_carr',[]),aprendizajes:read('rosanta_apr',[]),biblioteca:read('rosanta_lib',[]),propuestas:read('rosanta_prop',[]),exportado:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rosanta_marketing_os_'+todayISO()+'.json';a.click();
   $('osSyncStatus').textContent='💾 Respaldo JSON descargado.';
@@ -2074,7 +1885,7 @@ calPull().then(renderCal).catch(function(){}); // calendario siempre fresco desd
 aprPull().then(renderApr).catch(function(){}); // aprendizajes también: la Sheet manda, no el localStorage
 if(FULL){
   osRenderConn();seedProps();
-  renderCarr();renderProps();renderDebHist();renderPanel();renderUtmHist();loadMeta();loadGads();
+  renderCarr();renderProps();renderUtmHist();loadMeta();loadGads();
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
   // Sistema de Medicion: clientes nuevos, CAC y comensales contra la meta del mes.
   srv('getMiPalancaPauta').then(r=>{
@@ -2088,8 +1899,6 @@ if(FULL){
   }).catch(()=>{});
   // Decisiones de pauta: se carga al abrir su pestaña, no en cada arranque.
   document.querySelector('nav button[data-tab="decis"]').addEventListener('click',()=>{if(!PS)psCargar()});
-  // Estrategia y Panel solo reciben cifras verificadas en la pestaña supuestos.
-  srv('psSupuestosVerificados').then(t=>{EST_CONTEXT=EST_BASE+(t||'')}).catch(()=>{});
 }else{
   renderCal(); // para contenido, Calendario es el tab inicial
 }

@@ -2,7 +2,7 @@
  * PautaSistema.gs — sistema de decisión de pauta (27-sep-2026, Juanma).
  *
  * POR QUÉ EXISTE. Hasta esta fecha la pauta se decidía con tres opiniones que se
- * contradecían: el Panel de Asesores, el Diagnóstico IA del Dashboard y los reportes
+ * contradecían: el Panel de Asesores (retirado el 27-sep-2026), el Diagnóstico IA del Dashboard y los reportes
  * sueltos. Cada una leía datos distintos y todas cargaban los mismos supuestos sin
  * verificar ("VisitasIG rinde 20-100x", "US$440/mes", "184 carritos"). El Diagnóstico
  * IA recomendó escalar VisitasIG por CTR sin haber visto una sola reserva.
@@ -981,7 +981,7 @@ function psUpsertAprendizaje_(row) {
   }
 }
 
-/** Para los prompts de Estrategia y Panel: solo los supuestos verificados. */
+/** Para el estándar creativo de pauta: solo los supuestos verificados y vigentes. */
 function psSupuestosVerificados(auth) {
   requiereMarketing_(null, auth);
   var hoy = psHoy_();
