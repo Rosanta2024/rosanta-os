@@ -1,0 +1,43 @@
+<style>
+  /* Lectura de un pilar (27-sep-2026, Sistema de Medicion): el molde del reporte semanal.
+     La usan el tablero global y los modulos. Todo lleva el prefijo lx- para no chocar. */
+  .lx { display: flex; flex-direction: column; gap: 1.1rem; max-width: 1080px; }
+  .lx-sec { background: #fff; border-radius: 18px; padding: 1rem 1.2rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+  .lx-sec h2 { font-family: 'Playfair Display', Georgia, serif; color: var(--verde-bosque, #4E6D5A); font-size: 1.15rem; margin: 0 0 0.6rem; }
+  .lx-sec h2 .n { color: #AEAAE2; margin-right: 0.4rem; }
+  .lx-q { font-family: 'Playfair Display', Georgia, serif; font-size: 1.45rem; color: var(--verde-bosque, #4E6D5A); line-height: 1.2; margin: 0; }
+  .lx-r { font-size: 1.02rem; margin: 0.45rem 0 0.9rem; line-height: 1.45; }
+  .lx-nums { display: flex; flex-wrap: wrap; gap: 0.6rem 2.2rem; align-items: flex-end; }
+  .lx-num b { display: block; font-size: 2.1rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .lx-num.chico b { font-size: 1.35rem; }
+  .lx-num span { font-size: 0.8rem; color: #52514e; }
+  .lx-num .m { display: block; font-size: 0.8rem; color: #1a1a1a; margin-top: 0.1rem; }
+  .lx-dueno { font-size: 0.78rem; color: #8a8780; margin-top: 0.6rem; }
+  .lx-chart svg { width: 100%; height: auto; display: block; max-height: 220px; }
+  .lx-tabla { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .lx-tabla th { text-align: left; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; padding: 0.4rem 0.5rem 0.4rem 0; border-bottom: 1px solid rgba(26,26,26,0.12); }
+  .lx-tabla td { padding: 0.55rem 0.5rem 0.55rem 0; border-bottom: 1px solid rgba(26,26,26,0.07); vertical-align: top; }
+  .lx-tabla td.n { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lx-tabla .nota { display: block; font-size: 0.76rem; color: #8a8780; }
+  .lx-scroll { overflow-x: auto; }
+  .lx-pill { display: inline-block; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+  .lx-pill.verde { background: #e2efe5; color: #2E6B3F; } .lx-pill.amarillo { background: #FBF3E2; color: #8a6420; }
+  .lx-pill.rojo { background: #F6E4DF; color: #A33A2A; } .lx-pill.gris { background: #ecebe8; color: #52514e; }
+  .lx-falta { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.92rem; }
+  .lx-falta li { display: grid; grid-template-columns: 12px 1fr; gap: 0.6rem; align-items: start; }
+  .lx-falta i { width: 10px; height: 10px; border-radius: 50%; margin-top: 0.35rem; }
+  .lx-ok { font-size: 0.92rem; color: #2E6B3F; }
+  .lx-acc { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+  .lx-acc li { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: center; font-size: 0.92rem; padding: 0.45rem 0; border-bottom: 1px solid rgba(26,26,26,0.07); }
+  .lx-acc li.hecha span.t { text-decoration: line-through; color: #8a8780; }
+  .lx-acc .o { font-size: 0.78rem; color: #8a8780; white-space: nowrap; }
+  .lx-acc .o b.at { color: #A33A2A; }
+  .lx-acc button, .lx-form button { font: inherit; font-size: 0.78rem; border: 1px solid rgba(78,109,90,0.35); background: #fff; color: var(--verde-bosque, #4E6D5A); border-radius: 999px; padding: 0.2rem 0.7rem; cursor: pointer; margin-left: 0.3rem; }
+  .lx-form { display: grid; grid-template-columns: 1fr auto auto auto; gap: 0.5rem; margin-top: 0.8rem; align-items: center; }
+  .lx-form input, .lx-form select { font: inherit; font-size: 0.88rem; padding: 0.35rem 0.5rem; border: 1px solid rgba(26,26,26,0.2); border-radius: 8px; min-width: 0; }
+  .lx-form button.p { background: var(--verde-bosque, #4E6D5A); color: #fff; }
+  .lx-err { color: #A33A2A; font-size: 0.8rem; }
+  .lx-como { font-size: 0.82rem; color: #52514e; }
+  .lx-como summary { cursor: pointer; color: var(--verde-bosque, #4E6D5A); font-weight: 700; }
+  @media (max-width: 700px) { .lx-form { grid-template-columns: 1fr 1fr; } .lx-form input { grid-column: 1 / -1; } .lx-q { font-size: 1.2rem; } }
+</style>

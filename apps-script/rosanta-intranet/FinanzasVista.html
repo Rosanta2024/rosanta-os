@@ -4,6 +4,7 @@
   <base target="_top">
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
+  <?!= incluirCrudo_('LecturaEstilo') ?>
   <style>
     /* "Como vamos" · Pilar 3, Finance & Data OS.
        Es para decidir el lunes: la semana contra su meta, el mes contra el suyo,
@@ -190,6 +191,8 @@
       <button class="fin-boton" id="btn-refrescar">Actualizar datos</button>
     </div>
 
+    <!-- Sistema de Medicion (27-sep-2026): el pilar leido como el reporte semanal, arriba. -->
+    <div id="lx-modulo" style="margin-bottom:1.2rem"></div>
     <div id="cargando" class="fin-cargando">Leyendo el maestro…</div>
 
     <div id="todo" style="display:none">
@@ -577,6 +580,17 @@
     this.textContent = compacta ? 'Ver todas las columnas' : 'Ver solo lo esencial';
   });
   cargar(false);
+</script>
+<?!= incluirCrudo_('LecturaJs') ?>
+<script>
+  (function () {
+    var host = document.getElementById('lx-modulo');
+    if (!host || !window.LECTURA) return;
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura) window.LECTURA.pintar(host, r.lectura, {}); else host.style.display = 'none'; })
+      .withFailureHandler(function () { host.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'finanzas');
+  })();
 </script>
 </body>
 </html>

@@ -146,6 +146,12 @@ function getTableroPilar(auth, pilar) {
   } catch (e) {
     out.error = String(e && e.message || e);
   }
+  // Sistema de Medicion: las acciones de la semana van dentro de la lectura del pilar
+  if (out.lectura) {
+    try { out.lectura.acciones = medAcciones_(pilar); } catch (e2) { out.lectura.acciones = []; out.avisos.push('Acciones: ' + String(e2 && e2.message || e2)); }
+    out.lectura.puede_escribir = true;
+    out.lectura.equipo = MED_EQUIPO_;
+  }
   return out;
 }
 
@@ -191,7 +197,7 @@ function _tabFundamentos_(out, P, hoy, auth) {
   }));
   // los cuatro numeros de pilar
   out.pilares = [
-    tabKpi_({ clave: '03 · Juanma', nombre: 'Dias de caja', valor: d.dias_caja, unidad: 'dias',
+    tabKpi_({ clave: '03 · Juanma', nombre: 'Días de caja', valor: d.dias_caja, unidad: 'dias',
       periodo: 'banco al ' + ((d.integridad && d.integridad.ult && d.integridad.ult['03_Banco_Industrial']) || '?'),
       meta: M.dias_caja.valor, meta_origen: M.dias_caja.origen, meta_texto: 'meta del mes ≥' + M.dias_caja.valor + ' · rojo bajo 3',
       zona: tabZona_(d.dias_caja, M.dias_caja.valor, 3, 'mayor'), enlace: 'finanzas&sub=caja', fuente: 'FinanzasDatos › dias_caja' }),
@@ -204,7 +210,7 @@ function _tabFundamentos_(out, P, hoy, auth) {
       periodo: M.mes + (mc.ultimo && mc.ultimo.tp ? ' · ' + mc.ultimo.mes + ' Q' + Math.round(mc.ultimo.tp) : ''),
       meta: M.ticket.valor, meta_origen: M.ticket.origen, meta_texto: 'meta Q' + M.ticket.valor + ' · rojo bajo Q' + Math.round(M.ticket.valor * 0.94),
       zona: tabZona_(cur.tp, M.ticket.valor, M.ticket.valor * 0.94, 'mayor'), enlace: 'finanzas&sub=semana', fuente: 'FinanzasDatos › meses[].tp' }),
-    tabKpi_({ clave: '04 · Jeffry', nombre: 'Food cost real (movil 4)', valor: ul.cogs_m4, unidad: '%',
+    tabKpi_({ clave: '04 · Jeffry', nombre: 'Food cost real (móvil 4)', valor: ul.cogs_m4, unidad: '%',
       periodo: 'S' + ul.w, meta: M.food.valor, meta_origen: M.food.origen,
       meta_texto: M.food.valor ? ('tramo del mes ≤' + M.food.valor + '% · meta final ' + d.meta_cogs + '%') : ('meta ' + d.meta_cogs + '%'),
       zona: tabZona_(ul.cogs_m4, M.food.valor || d.meta_cogs, (M.food.valor || d.meta_cogs) + 3, 'menor'), enlace: 'costeo', fuente: 'FinanzasDatos › semanas[].cogs_m4' })
@@ -224,6 +230,7 @@ function _tabFundamentos_(out, P, hoy, auth) {
     zona: (meta && esperado) ? tabZona_(anioTotal, esperado, esperado * 0.9, 'mayor') : 'gris',
     fuente: 'FinanzasDatos › total.ventas + meses[].eventos', enlace: 'finanzas&sub=comparativo'
   });
+  out.lectura = medLecturaFundamentos_(out, d, M, c, hoy);
 }
 
 // ------------------------------------------------------------- 02 Management
@@ -282,6 +289,7 @@ function _tabManagement_(out, P, hoy) {
     nota: rs ? ('promedio de las ultimas 4 semanas: ' + rs.prom_4 + ' por semana' + (rs.estrellas_4 !== null ? ' · ' + rs.estrellas_4 + '★' : '') + '. No cuenta la carga inicial del bot (' + rs.carga_inicial + ').') : 'sin dato',
     estado: rs ? 'ok' : 'falta_dato'
   }));
+  out.lectura = medLecturaManagement_(out, d, M, hoy);
 }
 
 // ------------------------------------------------------------- 03 Finanzas
@@ -377,13 +385,15 @@ function _tabFinanzas_(out, P, hoy, auth) {
       detalle: { imp: mc.ultimo.imp, eventos: mc.ultimo.eventos, neto: mc.ultimo.neto }
     }));
   }
+  out.lectura = medLecturaFinanzas_(out, d, MM, hoy);
 }
 
 // ------------------------------------------------------------- 04 Profit OS
 /* Sistema de Medicion: el numero es el food cost real (Jeffry), contra el TRAMO del mes
    (METAS › TRAMO_FOOD_PCT) camino a la meta final de PARAMETROS, que no cambia. Recibe
    los inventarios (K03) desde Management; ticket y lunes a miercoles se fueron alla. */
-function _tabProfit_(out, P, hoy, auth) {
+function _tabProfit_(out, P, hoy, auth, conQ) {
+  if (conQ === undefined) conQ = true;
   var d = _finDatos_(false);
   var mc = tabMesCerrado_(d, hoy);
   var u = d.ultima || {};
@@ -463,6 +473,7 @@ function _tabProfit_(out, P, hoy, auth) {
       estado: 'falta_meta'
     }));
   }
+  out.lectura = medLecturaProfit_(out, d, M, hoy, conQ);
 }
 
 // ------------------------------------------------------------- 05 Marketing
@@ -543,6 +554,7 @@ function _tabMarketing_(out, P, hoy) {
       zona: 'gris', fuente: 'MarketingDatos › mktKpisMes_', enlace: 'marketing', estado: M.roas === null ? 'falta_dato' : 'ok'
     }));
   }
+  out.lectura = medLecturaMarketing_(out, d, Mt, c, hoy);
 }
 
 // ------------------------------------------------------------- 06 Expansion
@@ -553,7 +565,7 @@ function _tabExpansion_(out, P, hoy) {
   try {
     P = P || tabParametros_(); hoy = hoy || new Date();
     var d = _finDatos_(false), u = d.ultima || {};
-    out.kpis.push(tabKpi_({ clave: 'C1', nombre: 'Dias de caja ≥ ' + P.caja_dias_verde.valor, valor: d.dias_caja, unidad: 'dias',
+    out.kpis.push(tabKpi_({ clave: 'C1', nombre: 'Días de caja ≥ ' + P.caja_dias_verde.valor, valor: d.dias_caja, unidad: 'dias',
       meta: P.caja_dias_verde.valor, meta_origen: P.caja_dias_verde.origen, meta_texto: 'condicion: ' + P.caja_dias_verde.valor + ' dias o mas',
       zona: d.dias_caja >= P.caja_dias_verde.valor ? 'verde' : 'rojo', fuente: 'FinanzasDatos › dias_caja', enlace: 'finanzas&sub=caja' }));
     out.kpis.push(tabKpi_({ clave: 'C2', nombre: 'Food cost en meta (' + d.meta_cogs + '%)', valor: u.cogs_m4, unidad: '%',
@@ -561,11 +573,12 @@ function _tabExpansion_(out, P, hoy) {
       zona: u.cogs_m4 <= d.meta_cogs ? 'verde' : 'rojo', fuente: 'FinanzasDatos › semanas[].cogs_m4', enlace: 'costeo' }));
     var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
     var ok = inv.areas.COCINA.zona === 'verde' && inv.areas.BARRA.zona === 'verde';
-    out.kpis.push(tabKpi_({ clave: 'C3', nombre: 'Inventarios antes del dia ' + inv.dia_limite, valor: ok ? 'a tiempo' : 'atrasado', unidad: 'mes',
+    out.kpis.push(tabKpi_({ clave: 'C3', nombre: 'Inventarios antes del día ' + inv.dia_limite, valor: ok ? 'a tiempo' : 'atrasado', unidad: 'mes',
       meta: inv.dia_limite, meta_origen: P.inventario_cierre_dia.origen, meta_texto: 'condicion: cocina y barra cerradas a tiempo',
       zona: ok ? 'verde' : 'rojo', fuente: 'InventarioDatos › invEstadoCierre_', enlace: 'costeo',
       nota: 'cocina ' + (inv.areas.COCINA.ultimo_cerrado || 'ninguno') + ' · barra ' + (inv.areas.BARRA.ultimo_cerrado || 'ninguno') }));
   } catch (e) { out.avisos.push(String(e && e.message || e)); }
+  out.lectura = medLecturaExpansion_(out);
 }
 
 // ------------------------------------------------------------- Metas y ajustes

@@ -5,6 +5,7 @@
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <?!= incluirCrudo_('ReporteSemanalEstilo') ?>
+  <?!= incluirCrudo_('LecturaEstilo') ?>
   <style>
     /* Tablero global (25-sep-2026). Solo dueño. No calcula: pinta lo que manda
        TableroDatos.gs, un pilar por llamada, en paralelo. */
@@ -209,7 +210,12 @@
     var html = '';
     if (r.error) html += '<div class="tb-error">' + esc(r.error) + '</div>';
     if (r.avisos && r.avisos.length) html += '<div class="tb-avisos">' + r.avisos.map(esc).join('<br>') + '</div>';
-    if (p === 'fundamentos') {
+    var conLectura = !!r.lectura && p !== 'metas';
+    if (conLectura) {
+      // Sistema de Medicion: el pilar se lee como el reporte semanal. Las tarjetas de
+      // siempre van plegadas al final, en "Como se calcula".
+      html += '<div id="lx-host-' + p + '"></div>';
+    } else if (p === 'fundamentos') {
       html += cascada(r);
     } else if (p === 'metas') {
       html += metas(r);
@@ -221,6 +227,11 @@
     }
     html += '<p class="tb-leyenda">Calculado ' + esc(r.gen || '') + '</p>';
     el.innerHTML = html;
+    if (conLectura) {
+      var detalle = '<p><b>Las tarjetas del pilar, con su fuente y su meta:</b></p>' +
+        (p === 'fundamentos' ? cascada(r) : '<div class="tb-grid">' + (r.kpis || []).map(tarjeta).join('') + '</div>');
+      window.LECTURA.pintar(document.getElementById('lx-host-' + p), r.lectura, { detalle: detalle, guardar: guardarAccion, marcar: marcarAccion });
+    }
     if (p === 'metas') enlazarInstalador();
     if (p === 'marketing') pintarPlanes();   // el plan de Meta Ads va al pie de este pilar
     // el punto de la pestaña: el peor semaforo del pilar
@@ -312,6 +323,20 @@
       }).join('') + '</table></div>' +
       '<p class="tb-leyenda">Es una vista previa: la regla formal corre en cada recalibración y solo sobre meses que ya tenían meta en METAS. Un cambio se escribe a mano en METAS con fecha, de cuánto a cuánto y por qué; la fila vieja no se borra.</p>';
     return h;
+  }
+
+  /* Acciones de la semana: se anotan y se cierran desde el tablero (solo dueño). */
+  function guardarAccion(pilar, texto, dueno, fecha, listo) {
+    google.script.run
+      .withSuccessHandler(function (a) { listo(a); })
+      .withFailureHandler(function (e) { listo(null, e && e.message || String(e)); })
+      .guardarAccion(AUTH, pilar, texto, dueno, fecha);
+  }
+  function marcarAccion(fila, estado, texto, listo) {
+    google.script.run
+      .withSuccessHandler(function (a) { listo(a); })
+      .withFailureHandler(function (e) { listo(null, e && e.message || String(e)); })
+      .marcarAccion(AUTH, fila, estado, texto);
   }
 
   function enlazarInstalador() {
@@ -424,6 +449,7 @@
   PILARES.forEach(cargar);
 })();
 </script>
+<?!= incluirCrudo_('LecturaJs') ?>
 <script>
   /* Lo que el reporte semanal embebido necesita; su JS va pegado crudo debajo. */
   var RP_CFG = { auth: '<?= authToken ?>', base: <?!= JSON.stringify(urlBase) ?>,

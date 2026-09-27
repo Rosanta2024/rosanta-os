@@ -4,6 +4,7 @@
   <base target="_top">
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
+  <?!= incluirCrudo_('LecturaEstilo') ?>
   <style>
     /* Sala (27-sep-2026, Sistema de Medicion): el numero de José y lo que tiene que hacer hoy. */
     .sl-mio { background: #fff; border: 2px solid var(--lila); border-radius: 18px; padding: 1rem 1.2rem; display: flex; flex-wrap: wrap; gap: 0.6rem 1.8rem; margin: 1rem 0; }
@@ -35,6 +36,7 @@
   <main>
     <h1>Sala</h1>
     <p style="font-size:0.9rem;opacity:0.8">Tu número es el ticket por comensal. Lo mueven la ocupación de lunes a miércoles, las reseñas y las mesas bien cerradas en Wix.</p>
+    <div id="lx-modulo" style="margin:1rem 0 1.2rem"></div>
     <div id="sl"><div class="sl-cargando">Leyendo tus números, las reservas y las reseñas…</div></div>
   </main>
 <script>
@@ -53,9 +55,7 @@
     .withSuccessHandler(function (r) {
       var h = '';
       var S = r.semana || {};
-      h += '<div class="sl-mio">' + (S.items || []).map(function (x) {
-        return '<div class="sl-i"><b style="color:' + (COL[x.zona] || '#1a1a1a') + '">' + esc(x.valor) + '</b><span>' + esc(x.nombre) + '<br>' + esc(x.texto) + '</span></div>';
-      }).join('') + '</div>';
+      /* el numero y las palancas ya los pinta la lectura de arriba (LecturaJs) */
       var M = r.mesas || { falta_consumo: [], sin_cerrar: [] };
       var n = M.falta_consumo.length + M.sin_cerrar.length;
       h += '<div class="sl-dos"><div class="sl-box"><h3>Mesas por cerrar en Wix (' + n + ')</h3>';
@@ -78,6 +78,17 @@
     .withFailureHandler(function (e) { document.getElementById('sl').innerHTML = '<div class="sl-aviso">' + esc(e && e.message || e) + '</div>'; })
     .getSala(AUTH);
 })();
+</script>
+<?!= incluirCrudo_('LecturaJs') ?>
+<script>
+  (function () {
+    var host = document.getElementById('lx-modulo');
+    if (!host || !window.LECTURA) return;
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura) window.LECTURA.pintar(host, r.lectura, {}); else host.style.display = 'none'; })
+      .withFailureHandler(function () { host.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'management');
+  })();
 </script>
 </body>
 </html>

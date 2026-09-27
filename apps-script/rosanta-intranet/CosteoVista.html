@@ -52,6 +52,7 @@
      Lo que no se lee, no se protege. -->
 <style>
 <?!= incluirCrudo_('CosteoEstilos') ?>
+<?!= incluirCrudo_('LecturaEstilo') ?>
 </style>
 
 <header class="top">
@@ -94,6 +95,10 @@
   <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
 </div>
 <main class="wrap">
+  <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la cocina?" arriba del
+       inicio, solo para quien le toca (chef y dueño; sin quetzales para el chef). Se
+       esconde junto con el inicio cuando se abre otra vista. -->
+  <section id="lx-modulo" style="margin-bottom:1.4rem"></section>
   <section id="v-inicio"></section>
   <section id="v-menu" hidden></section>
   <section id="v-recetas" hidden></section>
@@ -202,4 +207,23 @@ google.script.run
   .getProfitOS(AUTH, 13);
 
 google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData(AUTH);
+</script>
+<?!= incluirCrudo_('LecturaJs') ?>
+<script>
+  (function () {
+    var host = document.getElementById('lx-modulo');
+    if (!host || !window.LECTURA) return;
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura) window.LECTURA.pintar(host, r.lectura, {}); else host.style.display = 'none'; })
+      .withFailureHandler(function () { host.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'profit');
+  })();
+  /* el bloque vive con el inicio: si se abre otra vista, se esconde con el */
+  (function () {
+    var ini = document.getElementById('v-inicio'), host = document.getElementById('lx-modulo');
+    if (!ini || !host) return;
+    function sync() { host.hidden = ini.hidden; }
+    new MutationObserver(sync).observe(ini, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
+  })();
 </script>

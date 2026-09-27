@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Marketing · Rosanta</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<?!= incluirCrudo_('LecturaEstilo') ?>
 <style>
 :root{
   color-scheme: light;
@@ -148,9 +149,9 @@ a{color:var(--verde)}
     <button class="btn sm" onclick="loadMeta()">Actualizar</button>
     <span class="muted" id="metaStatus"></span>
   </div>
-  <!-- Sistema de Medicion (27-sep-2026): la palanca de Vanessa contra su meta del mes.
-       Los numeros los calcula el servidor (MedicionDatos.gs › getMiPalancaPauta). -->
-  <div id="miPalanca" class="mipal" style="display:none"></div>
+  <!-- Sistema de Medicion (27-sep-2026): "Vienen suficientes personas?" leido como el
+       reporte semanal (MedicionDatos.gs › getLecturaPauta, pintado por LecturaJs). -->
+  <div id="lx-modulo" style="margin:10px 0 16px"></div>
   <!-- El Diagnostico IA se retiro el 27-sep-2026: decidia con
        CTR y CPC sin ver una sola reserva. Las decisiones salen de la pestaña
        ⚖️ Decisiones de pauta (PautaSistema.gs): hechos, validacion y reglas. -->
@@ -1942,21 +1943,17 @@ if(FULL){
   osRenderConn();seedProps();
   renderCarr();renderProps();renderUtmHist();loadMeta();loadGads();
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
-  // Sistema de Medicion: clientes nuevos, CAC y comensales contra la meta del mes.
-  srv('getMiPalancaPauta').then(r=>{
-    if(!r||!r.items)return;
-    const col={verde:'#2E6B3F',amarillo:'#C89A3C',rojo:'#A33A2A'};
-    const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const el=$('miPalanca');
-    el.innerHTML='<div class="l">Mi palanca · '+esc(r.mes||'')+' · Sistema de Medición</div>'+r.items.map(x=>
-      '<div class="i"><b style="color:'+(col[x.zona]||'inherit')+'">'+esc(x.valor)+'</b><span>'+esc(x.nombre)+'<br>'+esc(x.texto)+'</span></div>').join('');
-    el.style.display='flex';
-  }).catch(()=>{});
+  // Sistema de Medicion: la lectura de Marketing (comensales y las palancas de Vanessa).
+  srv('getLecturaPauta').then(r=>{
+    const el=$('lx-modulo');
+    if(r&&r.lectura&&window.LECTURA)window.LECTURA.pintar(el,r.lectura,{});else el.style.display='none';
+  }).catch(()=>{$('lx-modulo').style.display='none'});
   // Decisiones de pauta: se carga al abrir su pestaña, no en cada arranque.
   document.querySelector('nav button[data-tab="decis"]').addEventListener('click',()=>{if(!PS)psCargar()});
 }else{
   renderCal(); // para contenido, Calendario es el tab inicial
 }
 </script>
+<?!= incluirCrudo_('LecturaJs') ?>
 </body>
 </html>

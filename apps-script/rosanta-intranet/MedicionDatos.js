@@ -624,11 +624,297 @@ function getSala(auth) {
   return out;
 }
 
-/** La franja "Mi palanca" arriba del Dashboard de Pauta: la vista de Vanessa (rol pauta). El dueño ve la misma. */
-function getMiPalancaPauta(auth) {
+// ============================================================================
+// LECTURA DE CADA PILAR, CON EL MOLDE DEL REPORTE SEMANAL (27-sep-2026)
+// ============================================================================
+/*
+ * Juanma: "la unica pestaña que esta clara es la del reporte semanal". El reporte se lee
+ * de arriba abajo, pregunta por pregunta, y termina en acciones. Las pestañas de pilar
+ * eran una rejilla de tarjetas con codigos. Cada pilar se lee ahora en cinco pasos:
+ *   1 la pregunta y su numero · 2 la ruta · 3 que lo mueve · 4 con que no contamos ·
+ *   5 que hacemos esta semana.
+ * Lo arma el SERVIDOR, una vez, con los mismos campos de las tarjetas (no calcula nada
+ * nuevo), y lo pintan igual el tablero y cada modulo (LecturaJs.html). Las tarjetas de
+ * siempre quedan debajo, plegadas en "Como se calcula".
+ */
+
+var MED_ACC_HOJA_ = 'ACCIONES';
+var MED_ACC_COLS_ = ['SEMANA', 'PILAR', 'ACCION', 'DUENO', 'FECHA_LIMITE', 'ESTADO', 'ESCRITO_POR', 'CREADA', 'CERRADA'];
+var MED_PILAR_NOMBRE_ = { fundamentos: 'Meta del negocio', management: 'Sala', finanzas: 'Finanzas',
+                          profit: 'Profit OS', marketing: 'Marketing', expansion: 'Expansión' };
+var MED_EQUIPO_ = ['Juanma', 'José', 'Jeffry', 'Vanessa', 'Efraín', 'Nadia'];
+
+function medQ_(n) { return (n === null || n === undefined || isNaN(n)) ? '—' : (n < 0 ? '−' : '') + 'Q' + Math.round(Math.abs(n)).toLocaleString('es-GT'); }
+function medKpi_(out, clave) { var r = null; (out.kpis || []).forEach(function (k) { if (k.clave === clave) r = k; }); return r; }
+function medSemanaClave_(d) { var k = _finClaveSemana_(d); return Math.floor(k / 100) + '-S' + (k % 100 < 10 ? '0' : '') + (k % 100); }
+
+/** Las ultimas n semanas de un campo de semanas[] del motor. */
+function medSerie_(d, campo, n, fn) {
+  var S = (d.semanas || []).filter(function (s) { return !s.corta; }).slice(-(n || 8));
+  return S.map(function (s) { return { et: 'S' + s.w, v: fn ? fn(s) : s[campo] }; });
+}
+
+/** Las acciones de un pilar: las de esta semana y las viejas que siguen pendientes. */
+function medAcciones_(pilar) {
+  var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(MED_ACC_HOJA_);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var v = sh.getDataRange().getValues(), sem = medSemanaClave_(new Date()), out = [];
+  for (var i = 1; i < v.length; i++) {
+    if (pilar && String(v[i][1]) !== pilar) continue;
+    var estado = String(v[i][5] || 'pendiente');
+    if (String(v[i][0]) !== sem && estado !== 'pendiente') continue;
+    var fl = v[i][4] instanceof Date ? medFechaIso_(v[i][4]) : String(v[i][4] || '').slice(0, 10);
+    out.push({ fila: i + 1, semana: String(v[i][0]), pilar: String(v[i][1]), accion: String(v[i][2]), dueno: String(v[i][3]),
+               fecha: fl, estado: estado, atrasada: estado === 'pendiente' && fl && fl < medFechaIso_(new Date()) });
+  }
+  return out;
+}
+
+/** Anota una accion de la reunion del lunes. Solo el dueño. */
+function guardarAccion(auth, pilar, accion, dueno, fecha) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  if (!MED_PILAR_NOMBRE_[pilar]) throw new Error('Pilar desconocido: ' + pilar);
+  accion = String(accion || '').trim();
+  if (accion.length < 5) throw new Error('Escribi la accion: una conducta concreta.');
+  if (MED_EQUIPO_.indexOf(dueno) === -1) throw new Error('El dueño tiene que ser una persona del equipo.');
+  fecha = String(fecha || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) throw new Error('Falta la fecha limite.');
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
+    var sh = ss.getSheetByName(MED_ACC_HOJA_);
+    if (!sh) {
+      sh = ss.insertSheet(MED_ACC_HOJA_);
+      sh.getRange(1, 1, 1, MED_ACC_COLS_.length).setValues([MED_ACC_COLS_]).setFontWeight('bold');
+      sh.setFrozenRows(1);
+    }
+    sh.appendRow([medSemanaClave_(new Date()), pilar, accion.slice(0, 300), dueno, fecha, 'pendiente', u.nombre || u.email || '', new Date(), '']);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return medAcciones_(pilar);
+}
+
+/** Marca una accion como hecha o descartada. Solo el dueño. */
+function marcarAccion(auth, fila, estado, textoEsperado) {
+  var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);
+  if (['hecha', 'descartada', 'pendiente'].indexOf(estado) === -1) throw new Error('Estado invalido.');
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var pilar = '';
+  try {
+    var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(MED_ACC_HOJA_);
+    if (!sh) throw new Error('No hay acciones.');
+    var fila_ = sh.getRange(Number(fila), 1, 1, MED_ACC_COLS_.length).getValues()[0];
+    // la fila se verifica por su texto: si alguien inserto una fila en medio, no se marca otra accion
+    if (String(fila_[2]) !== String(textoEsperado)) throw new Error('La accion cambio de lugar en la hoja: recarga el tablero.');
+    pilar = String(fila_[1]);
+    sh.getRange(Number(fila), 6).setValue(estado);
+    sh.getRange(Number(fila), 9).setValue(estado === 'pendiente' ? '' : new Date());
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return medAcciones_(pilar);
+}
+
+/**
+ * La lectura de un pilar desde un MODULO (no el tablero): Finanzas, Profit OS, Marketing
+ * y Sala muestran arriba el mismo bloque que el tablero. Quien la pide:
+ *   dueno  cualquier pilar
+ *   chef   profit (sin quetzales, regla del 15-sep)
+ *   sala   management
+ *   pauta  marketing
+ *   modulo finanzas  finanzas
+ */
+function getLecturaPilar(auth, pilar) {
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
   var rol = normalizar_(u.rol);
-  if (rol !== 'pauta' && rol !== 'dueno') return null;
-  return medMiSemana_(u, 'pauta', auth);
+  var ok = rol === 'dueno' ||
+           (pilar === 'profit' && rol === 'chef') ||
+           (pilar === 'management' && rol === 'sala') ||
+           (pilar === 'marketing' && rol === 'pauta') ||
+           (pilar === 'finanzas' && usuarioTieneModulo(u, 'finanzas'));
+  if (!ok) throw new Error('Este bloque no es de tu area.');
+  var P = tabParametros_(), hoy = new Date();
+  var out = { pilar: pilar, kpis: [], avisos: [], parametros: P };
+  var conQ = rol === 'dueno';
+  if (pilar === 'fundamentos') _tabFundamentos_(out, P, hoy, auth);
+  else if (pilar === 'management') _tabManagement_(out, P, hoy);
+  else if (pilar === 'finanzas') _tabFinanzas_(out, P, hoy, auth);
+  else if (pilar === 'profit') _tabProfit_(out, P, hoy, auth, conQ);
+  else if (pilar === 'marketing') _tabMarketing_(out, P, hoy);
+  else if (pilar === 'expansion') _tabExpansion_(out, P, hoy);
+  else throw new Error('Pilar desconocido: ' + pilar);
+  var L = out.lectura || null;
+  if (L) {
+    try { L.acciones = medAcciones_(pilar); } catch (e) { L.acciones = []; }
+    L.puede_escribir = false;          // en los modulos las acciones se leen; se escriben en el tablero
+  }
+  return { lectura: L, avisos: out.avisos, gen: Utilities.formatDate(hoy, 'America/Guatemala', 'dd/MM/yyyy HH:mm') };
+}
+
+/* ---- los constructores: uno por pilar. Reciben lo que ya calculo su _tab*_. ---- */
+
+function medZonaTexto_(z, si, casi, no) { return z === 'verde' ? si : (z === 'amarillo' ? casi : (z === 'rojo' ? no : 'Sin dato suficiente para responder.')); }
+function medPal_(nombre, dueno, k, hoyTxt, metaTxt, nota) {
+  return { nombre: nombre, dueno: dueno, hoy: hoyTxt, meta: metaTxt, zona: k ? k.zona : 'gris', nota: nota || '' };
+}
+
+function medLecturaFundamentos_(out, d, M, c, hoy) {
+  var diasMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+  var metaSem = M.venta_total ? Math.round(M.venta_total / diasMes * 7) : null;
+  var L = { pilar: 'fundamentos', titulo: 'Meta del negocio', dueno: 'Juanma',
+    pregunta: '¿La operación deja lo que necesitamos este mes?',
+    zona: c.venta_zona,
+    respuesta: medZonaTexto_(c.venta_zona,
+      'Vamos en meta: la venta de ' + M.mes + ' proyecta ' + medQ_(c.venta_proy) + ' contra ' + medQ_(M.venta_total) + '.',
+      'Vamos cerca: la venta de ' + M.mes + ' proyecta ' + medQ_(c.venta_proy) + ' y la meta es ' + medQ_(M.venta_total) + '.',
+      'No: la venta de ' + M.mes + ' proyecta ' + medQ_(c.venta_proy) + ' y la meta es ' + medQ_(M.venta_total) + '.'),
+    numero: { valor: medQ_(c.venta_proy), etiqueta: 'venta de ' + M.mes + ' al ritmo actual', meta: M.venta_total ? 'meta ' + medQ_(M.venta_total) : 'sin meta', zona: c.venta_zona },
+    extras: [{ valor: medQ_(c.deja), etiqueta: 'lo que deja la operación (resto del mes) · piso ' + medQ_(c.piso), zona: c.deja_zona }],
+    serie: { titulo: 'Venta por semana, contra la meta semanal', unidad: 'Q', sentido: 'mayor', meta: metaSem,
+             puntos: medSerie_(d, 'ventas', 8) },
+    palancas: (out.pilares || []).map(function (k) {
+      var fmt = k.unidad === 'Q' ? medQ_(k.valor) : (k.unidad === '%' ? k.valor + '%' : k.valor);
+      return { nombre: k.nombre, dueno: String(k.clave).split('·')[1] ? String(k.clave).split('·')[1].trim() : '', hoy: fmt,
+               meta: String(k.meta_texto || '').replace(/^meta (del mes )?/, ''), zona: k.zona, nota: '' };
+    }),
+    faltantes: (c.higiene || []).filter(function (h) { return h.zona !== 'verde'; }).map(function (h) { return { texto: h.nombre + ': ' + h.texto + ' (' + h.dueno + ')', zona: h.zona }; }),
+    como: 'Venta = comensales × ticket + eventos. Lo que deja sale de la pestaña Caja (escenario base, mes en curso en proporción). Metas: pestaña METAS.'
+  };
+  return L;
+}
+
+function medLecturaManagement_(out, d, M, hoy) {
+  var tk = medKpi_(out, 'K14a'), lmx = medKpi_(out, 'K14b'), lec = medKpi_(out, 'K20'), res = medKpi_(out, 'K18'), vl = medKpi_(out, 'K21');
+  var mesas = null;
+  try { mesas = medMesasPorCerrar_(hoy); } catch (e) { mesas = null; }
+  var nMesas = mesas ? mesas.falta_consumo.length + mesas.sin_cerrar.length : null;
+  var falt = [];
+  if (nMesas) falt.push({ texto: nMesas + ' mesas de los últimos 7 días sin cerrar en Wix: sin eso Marketing no puede medir el CAC.', zona: 'rojo' });
+  if (lec && lec.zona !== 'verde') falt.push({ texto: 'Lectura de Wix del mes: ' + (lec.valor === null ? 'sin dato' : lec.valor + '%') + ' (meta ' + M.lectura.valor + '%).', zona: lec.zona });
+  if (!res || res.estado !== 'ok') falt.push({ texto: 'No se pudo leer la hoja del bot de reseñas.', zona: 'gris' });
+  return { pilar: 'management', titulo: 'Sala', dueno: 'José',
+    pregunta: '¿Vendemos suficiente por persona?',
+    zona: tk ? tk.zona : 'gris',
+    respuesta: medZonaTexto_(tk && tk.zona, 'Sí. El ticket está en ' + medQ_(tk && tk.valor) + ' sin IVA; la meta del mes es Q' + M.ticket.valor + '.',
+      'Casi. El ticket está en ' + medQ_(tk && tk.valor) + ' y la meta es Q' + M.ticket.valor + '.',
+      'No. El ticket está en ' + medQ_(tk && tk.valor) + ' y la meta es Q' + M.ticket.valor + '.'),
+    numero: { valor: medQ_(tk && tk.valor), etiqueta: 'ticket por comensal, sin IVA · ' + M.mes, meta: 'meta Q' + M.ticket.valor, zona: tk ? tk.zona : 'gris' },
+    extras: [],
+    serie: { titulo: 'Ticket por semana, contra la meta', unidad: 'Q', sentido: 'mayor', meta: M.ticket.valor, puntos: medSerie_(d, 'tp', 8) },
+    palancas: [
+      medPal_('Mesas cerradas en Wix (lectura)', 'José', lec, lec && lec.valor !== null ? lec.valor + '%' : '—', M.lectura.valor + '%', 'Seated al sentar; el consumo al terminar.'),
+      medPal_('Comensales por día, lunes a miércoles', 'José', lmx, lmx && lmx.valor !== null ? String(lmx.valor) : '—', String(M.lmx.valor), 'Ocupación entre semana, sin descuentos de precio.'),
+      medPal_('Reseñas nuevas en Google (semana pasada)', 'Meseros', res, res && res.valor !== null ? String(res.valor) : '—', M.resenas.valor + ' por semana', 'Pedirlas en el huddle.'),
+      medPal_('Venta de lunes a miércoles', 'José', vl, medQ_(vl && vl.valor), 'se mide en octubre', '')
+    ],
+    faltantes: falt,
+    como: 'Ticket = venta sin IVA de los tickets con comensales ÷ comensales. Lectura = "Cliente que visitó" ÷ (visitó + histórica) en el CRM. Reseñas: hoja del bot de Google, sin la carga inicial del 7-jul.'
+  };
+}
+
+function medLecturaFinanzas_(out, d, M, hoy) {
+  var k4 = medKpi_(out, 'K04'), k6 = medKpi_(out, 'K06'), k9 = medKpi_(out, 'K09'), k7 = medKpi_(out, 'K07'), k10 = medKpi_(out, 'K10'), k5 = medKpi_(out, 'K05');
+  var banco = (d.integridad && d.integridad.ult && d.integridad.ult['03_Banco_Industrial']) || '';
+  var gd = d.gasto_dia || 0;
+  var pct9 = k9 && k9.detalle ? k9.detalle.pct_compra : null;
+  return { pilar: 'finanzas', titulo: 'Finanzas', dueno: 'Juanma',
+    pregunta: '¿Tenemos caja para aguantar el mes?',
+    zona: k4 ? k4.zona : 'gris',
+    respuesta: medZonaTexto_(k4 && k4.zona, 'Sí: ' + d.dias_caja + ' días de caja, la meta del mes es ' + M.dias_caja.valor + '.',
+      'Justo: ' + d.dias_caja + ' días de caja contra una meta de ' + M.dias_caja.valor + '. Un mes flojo nos deja sin colchón.',
+      'No: ' + d.dias_caja + ' días de caja contra una meta de ' + M.dias_caja.valor + '.'),
+    numero: { valor: d.dias_caja + ' días', etiqueta: 'días de caja · banco al ' + banco, meta: 'meta ≥' + M.dias_caja.valor + ' · 21 antes del 15-mar', zona: k4 ? k4.zona : 'gris' },
+    extras: k5 ? [{ valor: medQ_(k5.valor), etiqueta: 'venta del mes a la fecha (restaurante)', zona: k5.zona }] : [],
+    serie: { titulo: 'Días de caja por semana', unidad: 'días', sentido: 'mayor', meta: M.dias_caja.valor,
+             puntos: medSerie_(d, 'caja', 8, function (s) { return gd ? Math.round(s.caja / gd * 10) / 10 : null; }) },
+    palancas: [
+      medPal_('Prime cost (móvil 4)', 'Juanma', k6, k6 ? k6.valor + '%' : '—', 'verde bajo 60%', ''),
+      medPal_('Compra sin factura', 'Juanma', k9, pct9 !== null ? pct9 + '% de la compra' : '—', '≤45% oct · ≤30% ene', 'El IVA de esa compra no se recupera.'),
+      medPal_('Resultado del último mes', 'Juanma', k7, k7 ? medQ_(k7.valor) : '—', 'desde cero', k7 ? k7.periodo : ''),
+      medPal_('EBITDA del último mes', 'Juanma', k10, k10 ? medQ_(k10.valor) : '—', '10% de la venta', '')
+    ],
+    faltantes: [{ texto: 'El banco está cargado al ' + banco + '. Los días de caja valen a esa fecha.', zona: 'amarillo' }].concat(
+      (medKpi_(out, 'K08') ? [{ texto: 'Comisión de tarjeta: falta la venta bruta con tarjeta.', zona: 'gris' }] : [])),
+    como: 'Días de caja = saldo de bancos ÷ gasto por día. Prime = (compra + mano de obra) ÷ venta, móvil de 4 semanas. Compra sin factura = categorías _EFECTIVO del banco.'
+  };
+}
+
+function medLecturaProfit_(out, d, M, hoy, conQ) {
+  var k11 = medKpi_(out, 'K11'), k12 = medKpi_(out, 'K12'), c3 = medKpi_(out, 'K03a'), b3 = medKpi_(out, 'K03b'), k22 = medKpi_(out, 'K22');
+  var tramo = M.food.valor || d.meta_cogs, u = d.ultima || {};
+  var rm = null;
+  try { rm = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1); } catch (e) { rm = null; }
+  var falt = [];
+  if (c3 && c3.zona !== 'verde') falt.push({ texto: 'Inventario de cocina: último cerrado ' + c3.valor + '. Sin el cierre, la brecha real no se puede ajustar.', zona: c3.zona });
+  if (b3 && b3.zona !== 'verde') falt.push({ texto: 'Inventario de barra: último cerrado ' + b3.valor + '.', zona: b3.zona });
+  if (rm && rm.n && rm.con_detalle < rm.n) falt.push({ texto: (rm.n - rm.con_detalle) + ' retiros de cajero sin detalle este mes' + (conQ ? ' (' + medQ_(rm.q - rm.q_con) + ')' : '') + ': anotar qué se compró en la página Retiros.', zona: 'rojo' });
+  return { pilar: 'profit', titulo: 'Profit OS', dueno: 'Jeffry',
+    pregunta: '¿Se nos va la plata en la cocina?',
+    zona: k11 ? k11.zona : 'gris',
+    respuesta: medZonaTexto_(k11 && k11.zona, 'No. El food cost está en ' + u.cogs_m4 + '%, dentro del tramo del mes (≤' + tramo + '%).',
+      'Un poco. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%.',
+      'Sí. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%. La meta final es ' + d.meta_cogs + '%.'),
+    numero: { valor: u.cogs_m4 + '%', etiqueta: 'food cost real, móvil de 4 semanas · S' + u.w, meta: 'tramo ≤' + tramo + '% · meta ' + d.meta_cogs + '%', zona: k11 ? k11.zona : 'gris' },
+    extras: [],
+    serie: { titulo: 'Food cost por semana (móvil 4), contra el tramo', unidad: '%', sentido: 'menor', meta: tramo, puntos: medSerie_(d, 'cogs_m4', 8) },
+    palancas: [
+      medPal_('Brecha real contra teórico', 'Jeffry', k12, k12 && k12.valor !== null ? (k12.valor > 0 ? '+' : '') + k12.valor + ' pts' : '—', '≤' + (M.brecha.valor || 2) + ' pts', 'Recepción, almacén y porciones.'),
+      medPal_('Retiros de cajero con detalle', 'Jeffry', k22, rm ? rm.con_detalle + ' de ' + rm.n : '—', '100%', ''),
+      medPal_('Inventario de cocina cerrado', 'Jeffry', c3, c3 ? String(c3.valor) : '—', 'antes del día 5', ''),
+      medPal_('Inventario de barra cerrado', 'José', b3, b3 ? String(b3.valor) : '—', 'antes del día 5', '')
+    ],
+    faltantes: falt,
+    como: 'Food cost = compra (FEL neto + sin factura + tarjeta) ÷ venta sin IVA ni servicio, móvil de 4 semanas. Brecha = real − teórico de las fichas en los últimos meses cerrados.'
+  };
+}
+
+function medLecturaMarketing_(out, d, M, c, hoy) {
+  var k23 = medKpi_(out, 'K23'), k24 = medKpi_(out, 'K24'), k15 = medKpi_(out, 'K15'), k17 = medKpi_(out, 'K17'), k19 = medKpi_(out, 'K19');
+  var diasMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+  var metaSem = M.comensales ? Math.round(M.comensales / diasMes * 7) : null;
+  var falt = [];
+  if (!k15 || k15.estado !== 'ok') falt.push({ texto: 'El CAC no se puede publicar: menos de la mitad de las mesas se cerraron en Wix (depende de Sala).', zona: 'rojo' });
+  else if (k15.nota && k15.nota.indexOf('inflado') > -1) falt.push({ texto: 'El CAC sale inflado: la lectura de Wix está bajo 90%.', zona: 'amarillo' });
+  return { pilar: 'marketing', titulo: 'Marketing', dueno: 'Juanma · palanca de Vanessa',
+    pregunta: '¿Vienen suficientes personas?',
+    zona: c.com_zona,
+    respuesta: medZonaTexto_(c.com_zona, 'Sí. Al ritmo actual llegamos a ' + c.com_ritmo + ' comensales; la meta es ' + M.comensales + '.',
+      'Casi. Al ritmo actual llegamos a ' + c.com_ritmo + ' comensales y la meta es ' + M.comensales + '.',
+      'No. Al ritmo actual llegamos a ' + c.com_ritmo + ' comensales y la meta es ' + M.comensales + '.'),
+    numero: { valor: c.com_ritmo === null ? '—' : String(c.com_ritmo), etiqueta: 'comensales de ' + M.mes + ' al ritmo actual', meta: M.comensales ? 'meta ' + M.comensales : 'sin meta', zona: c.com_zona },
+    extras: [],
+    serie: { titulo: 'Comensales por semana (POS), contra la meta semanal', unidad: '', sentido: 'mayor', meta: metaSem, puntos: medSerie_(d, 'com', 8) },
+    palancas: [
+      medPal_('Clientes nuevos del mes', 'Vanessa', k24, k24 && k24.valor !== null ? String(k24.valor) : '—', String(M.clientes.valor), 'Pauta optimizada a reserva real.'),
+      medPal_('CAC', 'Vanessa', k15, k15 && k15.valor !== null ? medQ_(k15.valor) : 'no se publica', '≤Q60', k15 ? k15.periodo : ''),
+      medPal_('Eventos cerrados, en Q', 'Juanma', k17, k17 ? medQ_(k17.valor) : '—', M.eventos.valor ? medQ_(M.eventos.valor) : '—', 'Seguimiento de cotizaciones.'),
+      medPal_('Repetición', 'Juanma', k19, k19 && k19.valor !== null ? k19.valor + '%' : '—', '24% → 28% en marzo', '')
+    ],
+    faltantes: falt,
+    como: 'Comensales del mes = venta del restaurante ÷ ticket (1 de cada 10 tickets viene sin comensales en el POS). Clientes nuevos = altas "Cliente que visitó" del CRM. Las decisiones de pauta: pestaña ⚖️ Decisiones.'
+  };
+}
+
+function medLecturaExpansion_(out) {
+  var ks = out.kpis || [];
+  var ok = ks.filter(function (k) { return k.zona === 'verde'; }).length;
+  return { pilar: 'expansion', titulo: 'Expansión', dueno: 'Juanma',
+    pregunta: '¿Ya estamos listos para crecer?',
+    zona: ok === ks.length && ks.length ? 'verde' : 'rojo',
+    respuesta: 'Todavía no. Se cumplen ' + ok + ' de ' + ks.length + ' condiciones y hacen falta las tres durante 3 meses seguidos.',
+    numero: { valor: '0 de 3', etiqueta: 'meses seguidos cumpliendo las tres condiciones', meta: 'meta 3 de 3', zona: 'rojo' },
+    extras: [], serie: null,
+    palancas: ks.map(function (k) { return { nombre: k.nombre, dueno: k.clave === 'C1' ? 'Juanma' : 'Jeffry', hoy: k.unidad === '%' ? k.valor + '%' : String(k.valor), meta: k.meta_texto, zona: k.zona, nota: '' }; }),
+    faltantes: [],
+    como: 'Pilar en pausa hasta 2027 por regla del método: no se mide expansión mientras la caja no tenga colchón, el food cost no esté en meta y el inventario no cierre a tiempo.'
+  };
+}
+
+/** Para Marketing.html, que llama por srv() con el token al FINAL: la lectura de Marketing. */
+function getLecturaPauta(auth) {
+  var u = resolverUsuario_(auth);                // la guarda va aqui tambien: la bateria lee el cuerpo
+  if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
+  return getLecturaPilar(auth, 'marketing');
 }
