@@ -68,6 +68,18 @@ function doGet(e) {
     pagina = 'marketing-os';
   }
 
+  // Sala y Retiros dejaron de ser pantallas sueltas (Juanma, 27-sep-2026: "son secciones
+  // internas de Profit, no sistemas de Rosanta OS"). Los enlaces viejos —los del correo del
+  // vigia, la franja "Tu semana" y los que ya circulan— abren Profit OS en su pestaña.
+  var rolCost = normalizar_(usuario.rol);
+  var vistaCost = (e && e.parameter && e.parameter.vista) || '';
+  if (pagina === 'sala') { pagina = 'costeo'; vistaCost = 'barrasala'; }
+  if (pagina === 'retiros') { pagina = 'costeo'; vistaCost = 'cocina'; }
+  // Cada pestaña de area es de su jefe y del dueño; a quien no le toca, abre el inicio.
+  if ((vistaCost === 'cocina' || vistaCost === 'barrasala') &&
+      REP_AREAS_ROLES[vistaCost].indexOf(rolCost) === -1) vistaCost = '';
+  if (['cocina', 'barrasala', 'menu', 'inventario', 'recetas', 'insumos', 'proveedores', 'higiene', 'guia'].indexOf(vistaCost) === -1) vistaCost = 'inicio';
+
   // Recetario visual + Proveedores. Reemplaza a la vista vieja ?page=recetario,
   // retirada el 21 ago 2026: definia leerFicha_ y primerNumero_ con los mismos
   // nombres que el modulo de costeo y, como los .gs comparten un solo ambito
@@ -80,6 +92,8 @@ function doGet(e) {
     var tplCosteo = HtmlService.createTemplateFromFile('CosteoVista');
     tplCosteo.urlBase = urlBase;      // para el boton "Panel principal"
     tplCosteo.authToken = authToken;
+    tplCosteo.rol = rolCost;          // que pestañas de area se ven (Cocina, Barra y Sala)
+    tplCosteo.vistaIni = vistaCost;   // ?vista= (lista cerrada arriba)
     return tplCosteo.evaluate()
       .setTitle('Rosanta \u00b7 Recetario y Proveedores')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -169,16 +183,15 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
-  // Sistema de Medicion (27-sep-2026): Sala es el numero de José (rol sala) y Retiros es
-  // donde cocina anota que se compro con cada retiro de cajero (rol chef). El dueño ve las dos.
-  var rolPag = String(usuario.rol || '').toLowerCase();
-  if (pagina === 'sala' && (rolPag === 'sala' || rolPag === 'dueno')) {
-    return render_('SalaVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  }
-  if (pagina === 'retiros' && (rolPag === 'chef' || rolPag === 'dueno')) {
-    return render_('RetirosVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  // Las pestañas de area de Profit OS (27-sep-2026): Cocina (food cost, compra contra techo,
+  // platos, compras en efectivo) y Barra y Sala (lo mismo de barra, la sala de José y las
+  // reservas). CosteoVista las embebe; cada una es de su jefe y del dueño.
+  if (pagina === 'profit-area' && usuarioTieneModulo(usuario, 'recetario')) {
+    var areaPa = (e && e.parameter && e.parameter.area) || '';
+    if (REP_AREAS_ROLES.hasOwnProperty(areaPa) && REP_AREAS_ROLES[areaPa].indexOf(normalizar_(usuario.rol)) !== -1) {
+      return render_('ProfitAreaVista', { usuario: usuario, urlBase: urlBase, authToken: authToken, area: areaPa })
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
   }
 
   // Vista CRM: contactos de la maestra arriba, conversación del bot abajo.
@@ -196,7 +209,7 @@ function doGet(e) {
   if (pagina === 'finanzas' && usuarioTieneModulo(usuario, 'finanzas')) {
     var subFin = (e && e.parameter && e.parameter.sub) || 'semana';
     // El ?sub= lo escribe quien quiera: si no es uno de los tres, abre el primero.
-    if (['semana', 'metas', 'caja', 'gasto', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
+    if (['semana', 'reporte', 'metas', 'caja', 'gasto', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
     return render_('SistemaFinanzas', {
       usuario: usuario, urlBase: urlBase, sub: subFin, authToken: authToken
     });
@@ -256,9 +269,14 @@ function doGet(e) {
   // Reporte semanal de operacion, en vivo (25-sep-2026): las 8 secciones del formato
   // S38 calculadas desde los motores. Reemplaza al PDF armado a mano. Mismo permiso
   // que el resto de Finanzas; el tablero global lo embebe con ?embed=1.
+  // Con ?secciones=1,2,3,7,8 muestra solo esas: es la pestaña "La semana" de Finanzas
+  // (27-sep-2026, el reporte repartido por la intranet). Sin el parametro, el reporte entero.
   if (pagina === 'reporte-semanal' && usuarioTieneModulo(usuario, 'finanzas')) {
+    var secRep = String((e && e.parameter && e.parameter.secciones) || '').split(',')
+      .map(Number).filter(function (n) { return n >= 1 && n <= 8; });
     return render_('ReporteSemanalVista', {
-      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
+      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida,
+      secciones: secRep.length ? secRep : null
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 

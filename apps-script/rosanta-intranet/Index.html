@@ -42,8 +42,8 @@
         <div class="ts-l">Tu semana<span id="ts-mes"></span></div>
         <div class="ts-items" id="ts-items"><span class="ts-c">Leyendo tus números…</span></div>
         <? if (rolTs === 'dueno') { ?><a class="ts-b" href="<?= urlBase ?>?page=tablero<?!= qs ?>">Ver la cascada</a><? } ?>
-        <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=retiros<?!= qs ?>">Anotar retiros</a><? } ?>
-        <? if (rolTs === 'sala') { ?><a class="ts-b" href="<?= urlBase ?>?page=sala<?!= qs ?>">Abrir Sala</a><? } ?>
+        <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=cocina<?!= qs ?>">Anotar compras en efectivo</a><? } ?>
+        <? if (rolTs === 'sala') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=barrasala<?!= qs ?>">Abrir Barra y Sala</a><? } ?>
       </section>
     <? } ?>
     <div class="tarjetas">
@@ -55,21 +55,7 @@
           <span class="chip">solo dueño</span>
         </a>
       <? } ?>
-      <? if (rolTs === 'sala' || rolTs === 'dueno') { ?>
-        <a class="tarjeta" href="<?= urlBase ?>?page=sala<?!= qs ?>">
-          <h3>Sala</h3>
-          <p>Ticket por comensal, lunes a miércoles, reseñas de la semana y las mesas que faltan cerrar en Wix.</p>
-          <span class="chip">sala y dueño</span>
-        </a>
-      <? } ?>
-      <? if (rolTs === 'chef' || rolTs === 'dueno') { ?>
-        <a class="tarjeta lila" href="<?= urlBase ?>?page=retiros<?!= qs ?>">
-          <h3>Retiros de cajero</h3>
-          <p>Qué se compró con cada retiro del cajero para el mercado. Sin eso el food cost no se puede auditar.</p>
-          <span class="chip">cocina y dueño</span>
-        </a>
-      <? } ?>
-      <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
+<? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
         <a class="tarjeta" href="<?= urlBase ?>?page=finanzas<?!= qs ?>">
           <h3>Finanzas &amp; Data</h3>
           <p>La semana con sus semaforos de margen y food cost, las metas del mes y la

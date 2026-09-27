@@ -1041,6 +1041,22 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'retiros: solo chef y dueño · Sala: solo sala y dueño', malos.length, 0);
   });
 
+  prCorrer_(g, 'Las pestañas de area de Profit no llevan el resultado de la casa', function () {
+    var nombre = 'Las pestañas de area de Profit no llevan el resultado de la casa';
+    var malos = [];
+    if (REP_AREAS_ROLES.cocina.join() !== 'chef,dueno') malos.push('cocina abre a ' + REP_AREAS_ROLES.cocina.join());
+    if (REP_AREAS_ROLES.barrasala.join() !== 'sala,dueno') malos.push('barra y sala abre a ' + REP_AREAS_ROLES.barrasala.join());
+    var falso = { kpis: {}, pl: {}, personal: {}, equilibrio: {}, cuatro: [], acciones: {}, reservas: { validas: 1 },
+                  dias: [{ dia: 'Lun', ventas: 999, com: 10 }] };
+    ['cocina', 'barrasala'].forEach(function (a) {
+      var r = _repRecortarArea_(falso, a);
+      ['kpis', 'pl', 'personal', 'equilibrio', 'cuatro', 'acciones'].forEach(function (k) { if (r[k] !== undefined) malos.push(a + ' lleva ' + k); });
+      (r.dias || []).forEach(function (x) { if (x.ventas !== undefined) malos.push(a + ' lleva la venta del dia'); });
+    });
+    if (_repRecortarArea_(falso, 'cocina').reservas) malos.push('cocina lleva las reservas');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'cocina: chef y dueño · barra y sala: sala y dueño · sin P&L, equilibrio ni venta del dia', malos.length, 0);
+  });
+
   prCorrer_(g, 'El cierre de PosFile se lee: venta, tarjeta, propina y mesas', function () {
     var nombre = 'El cierre de PosFile se lee: venta, tarjeta, propina y mesas';
     // el texto real del cierre del 20-sep-2026, cruzado contra el maestro: 5 tickets, Q4,191

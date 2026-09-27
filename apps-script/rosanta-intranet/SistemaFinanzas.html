@@ -32,6 +32,7 @@
   -->
   <nav class="sf-tabs" aria-label="Secciones de Finanzas">
     <button type="button" class="sf-tab" data-sub="semana">Cómo vamos</button>
+    <button type="button" class="sf-tab" data-sub="reporte">La semana</button>
     <button type="button" class="sf-tab" data-sub="metas">Metas</button>
     <button type="button" class="sf-tab" data-sub="caja">Caja</button>
     <button type="button" class="sf-tab" data-sub="gasto">El gasto</button>
@@ -49,6 +50,9 @@
   var B = <?!= JSON.stringify(urlBase) ?>;
   var URLS = {
     semana:      B + '?page=finanzas-semana&embed=1' + T,
+    // el reporte semanal repartido (27-sep-2026): aca van venta, ritmo, P&L, equilibrio
+    // y acciones; food cost y platos viven en Profit OS › Cocina / Barra y Sala
+    reporte:     B + '?page=reporte-semanal&embed=1&secciones=1,2,3,7,8' + T,
     metas:       B + '?page=metas&embed=1' + T,
     caja:        B + '?page=caja&embed=1' + T,
     gasto:       B + '?page=finanzas-gasto&embed=1' + T,

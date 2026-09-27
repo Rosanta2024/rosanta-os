@@ -361,7 +361,7 @@ function prCimientos_(res) {
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
                   'TableroVista', 'ReporteSemanalVista',
                   // Sistema de Medicion (27-sep-2026): Sala, Retiros y el molde de lectura.
-                  'SalaVista', 'RetirosVista', 'LecturaJs',
+                  'ProfitAreaVista', 'LecturaJs',
                   // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     var MINIMO = 15;
@@ -972,7 +972,7 @@ function prPuentePOS_(res) {
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
                   'TableroVista', 'ReporteSemanalVista',
                   // Sistema de Medicion (27-sep-2026): Sala, Retiros y el molde de lectura.
-                  'SalaVista', 'RetirosVista', 'LecturaJs',
+                  'ProfitAreaVista', 'LecturaJs',
                   // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     // Piso de alarma, no meta: el 10-sep-2026 habia 21. Si de golpe caen a menos de
@@ -1069,7 +1069,7 @@ function prPuentePOS_(res) {
                   'SistemaFinanzas', 'EscenariosVista', 'CajaVista', 'FinanzasGastoVista', 'TableroVista',
                   'ReporteSemanalVista',
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs',
-                  'SalaVista', 'RetirosVista', 'LecturaJs', 'LecturaEstilo',
+                  'ProfitAreaVista', 'LecturaJs', 'LecturaEstilo',
                   // sin llamadas hoy, pero son vistas: lo que no se lee, no se revisa
                   'CosteoEstilos', 'Estilos', 'Logo'];
     var MINIMO = 25;    // el 12-sep-2026 habia 36 google.script.run en estas vistas

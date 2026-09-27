@@ -70,6 +70,8 @@
     </div>
     <nav class="nav" role="tablist" aria-label="Secciones">
       <button role="tab" data-view="inicio" aria-selected="true">Inicio</button>
+      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
+      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
       <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
       <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
       <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
@@ -107,6 +109,11 @@
   <section id="v-inventario" hidden></section>
   <section id="v-higiene" hidden></section>
   <section id="v-guia" hidden></section>
+  <!-- Pestañas de area (27-sep-2026): el reporte semanal de cada area mas Compras en efectivo
+       (cocina) y Sala (barra y sala). Cada una es una pagina aparte (?page=profit-area) que se
+       monta aca la primera vez que se abre, como las pestañas de Finanzas. -->
+  <section id="v-cocina" hidden></section>
+  <section id="v-barrasala" hidden></section>
 </main>
 
 <footer class="wrap pie">
@@ -126,6 +133,19 @@
    recetario". Asi le paso a Jeffry, que fue el primero en entrar de verdad al
    modulo. Si agregas una llamada nueva, pasale AUTH. */
 var AUTH = '<?= authToken ?>';
+/* la pestaña con la que abre (?vista=, lista cerrada en Code.js) */
+window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
+/* Monta la pagina de un area en su pestaña, una sola vez: asi conserva la semana elegida
+   y lo que se estaba escribiendo al ir y volver entre pestañas. */
+function montarArea(v){
+  var sec = document.getElementById('v-' + v);
+  if(!sec || sec.querySelector('iframe')) return;
+  var f = document.createElement('iframe');
+  f.title = v === 'cocina' ? 'Cocina' : 'Barra y Sala';
+  f.src = <?!= JSON.stringify(urlBase) ?> + '?page=profit-area&area=' + v + <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
+  f.style.cssText = 'width:100%;height:calc(100vh - 150px);min-height:560px;border:0;display:block;background:transparent';
+  sec.appendChild(f);
+}
 
 function iniciarApp(){
 <?!= incluirCrudo_('CosteoJs_Base') ?>

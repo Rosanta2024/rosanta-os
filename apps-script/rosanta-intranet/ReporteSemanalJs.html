@@ -6,6 +6,14 @@
   var CFG = window.RP_CFG || {};
   var AUTH = CFG.auth || '';
   var D = null, CLAVE = 0;
+  /* Repartido por la intranet (27-sep-2026): la pagina puede pedir solo algunas secciones
+     (RP_CFG.secciones, p. ej. [1,2,3,7,8] en Finanzas) y, dentro de Profit OS, solo un area
+     (RP_CFG.area 'cocina' o 'barrasala', que lee getReporteArea con el permiso del recetario).
+     Sin secciones es el reporte entero de siempre: el del tablero y el del PDF. */
+  var SECC = CFG.secciones || null, AREA = CFG.area || '';
+  function ver(n) { return !SECC || SECC.indexOf(n) !== -1; }
+  function tit(n, t) { return SECC ? t : n + ' · ' + t; }
+  var AREAS_VER = AREA === 'cocina' ? ['Cocina'] : (AREA === 'barrasala' ? ['Barra'] : ['Cocina', 'Barra']);
   var RP_ALTO = 140;   // px de la barra mas alta; el area mide 170 y deja sitio al valor
 
   function q(n, dec) {
@@ -28,7 +36,8 @@
     D = d; CLAVE = d.semana.clave;
     // "Guardar PDF en Drive": ruta del servidor con la semana que se esta viendo (solo dueño)
     var pdfDrive = document.getElementById('rp-pdf-drive');
-    if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
+    if (pdfDrive && SECC) pdfDrive.style.display = 'none';
+    else if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
     document.getElementById('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
       ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
     document.getElementById('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;
@@ -37,11 +46,11 @@
       return '<option value="' + s.clave + '"' + (s.clave === d.semana.clave ? ' selected' : '') + '>S' + s.w + ' · ' + esc(s.ini) + ' al ' + esc(s.fin) + '</option>';
     }).join('');
 
-    var k = d.kpis, pe = d.equilibrio, h = '';
+    var k = d.kpis || {}, pe = d.equilibrio || null, h = '';
     if (d.notas && d.notas.length) h += '<div class="rp-aviso no-print">' + d.notas.map(esc).join('<br>') + '</div>';
 
     // ---- 1. la semana
-    h += '<section class="rp"><h2>1 · La semana</h2><div class="rp-kpis">' +
+    if (ver(1)) h += '<section class="rp"><h2>' + tit(1, 'La semana') + '</h2><div class="rp-kpis">' +
       kpi('', 'Ventas', q(k.ventas), num(k.tickets) + ' tickets · ' + num(k.com) + ' comensales' + (k.ventas_dif_pct !== null ? ' · ' + signo(k.ventas_dif_pct) + pct(k.ventas_dif_pct) + ' vs semana anterior' : '')) +
       kpi(k.gasto_pct > 100 ? 'rojo' : '', 'Gasto total', q(k.gasto), pct(k.gasto_pct) + ' sobre ventas') +
       kpi(k.resultado >= 0 ? 'verde' : 'rojo', 'Resultado del período', q(k.resultado), pct(k.resultado_pct) + ' sobre ventas') +
@@ -49,8 +58,9 @@
       '</div></section>';
 
     // ---- 2. cuatro semanas
+    if (ver(2)) {
     var tope = Math.max.apply(null, d.cuatro.map(function (x) { return x.ventas; }).concat([pe ? pe.pe_semana : 0, 1]));
-    h += '<section class="rp"><h2>2 · Cuatro semanas: ventas, comensales y ticket</h2>' +
+    h += '<section class="rp"><h2>' + tit(2, 'Cuatro semanas: ventas, comensales y ticket') + '</h2>' +
       '<p class="rp-nota">La semana en curso en rojo. La línea punteada es el punto de equilibrio semanal' + (pe ? ' (' + q(pe.pe_semana) + ')' : '') + '.</p>' +
       '<div class="rp-graf"><div class="rp-area">' +
       (pe ? '<div class="rp-pe" style="bottom:' + Math.round(pe.pe_semana / tope * RP_ALTO) + 'px"><span>equilibrio ' + q(pe.pe_semana) + '</span></div>' : '') +
@@ -69,9 +79,10 @@
         '</div>';
     }
     h += '</section>';
+    }
 
     // ---- 3. ritmo de la semana
-    h += '<section class="rp"><h2>3 · Ritmo de la semana</h2>' +
+    if (ver(3)) h += '<section class="rp"><h2>' + tit(3, 'Ritmo de la semana') + '</h2>' +
       '<p class="rp-nota">Venta y comensales por día, comensales que vinieron con reserva y el equilibrio diario (semanal ÷ 7' + (pe ? ' = ' + q(pe.pe_dia) : '') + ').</p>' +
       '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Venta</th><th>Comensales</th><th>Con reserva</th><th>Walk-ins</th><th>Tickets</th><th>Equilibrio diario</th></tr></thead><tbody>' +
       d.dias.map(function (x) {
@@ -85,7 +96,8 @@
 
     // ---- 4. comensales y reservas
     var r = d.reservas;
-    h += '<section class="rp"><h2>4 · Comensales y reservas</h2>';
+    if (ver(4) && r) {
+    h += '<section class="rp"><h2>' + tit(4, 'Comensales y reservas') + '</h2>';
     if (r.error) {
       h += '<div class="rp-error">No se pudieron leer las reservas: ' + esc(r.error) + '</div>';
     } else {
@@ -103,19 +115,22 @@
         }).join('') + '</tbody></table></div>';
     }
     h += '</section>';
+    }
 
     // ---- 5. food cost
     var fc = d.foodcost;
-    h += '<section class="rp"><h2>5 · Food cost</h2>' +
+    if (ver(5)) {
+    var enArea = function (nom) { return AREAS_VER.indexOf(nom) !== -1; };
+    h += '<section class="rp"><h2>' + tit(5, AREA ? 'Food cost de ' + AREAS_VER[0].toLowerCase() : 'Food cost') + '</h2>' +
       '<p class="rp-nota">Sobre venta sin IVA ni servicio, contra las metas de PARAMETROS: global ' + pct(fc.meta_global, 0) + ', cocina ' + pct(fc.cocina.meta, 0) + ', barra ' + pct(fc.barra.meta, 0) + '. ' + esc(fc.aviso_barra) + '</p>' +
       '<div class="rp-kpis">' +
       kpi(zonaCosto(fc.semana_pct, fc.meta_global), 'Food cost de la semana', pct(fc.semana_pct), 'móvil de 4 semanas: ' + pct(fc.movil4_pct)) +
       kpi(zonaCosto(fc.mes_pct, fc.meta_global), 'Food cost del mes a la fecha', pct(fc.mes_pct), esc(fc.mes_nombre) + (fc.mes ? ' · cocina ' + q(fc.mes.cocina) + ' · barra ' + q(fc.mes.barra) : '')) +
-      kpi(fc.cocina.exceso > 0 ? 'rojo' : 'verde', 'Cocina: exceso sobre objetivo', (fc.cocina.exceso > 0 ? '+' : '') + q(fc.cocina.exceso), pct(fc.cocina.real_pct) + ' real contra ' + pct(fc.cocina.meta, 0)) +
-      kpi(fc.barra.exceso > 0 ? 'rojo' : 'verde', 'Barra: exceso sobre objetivo', (fc.barra.exceso > 0 ? '+' : '') + q(fc.barra.exceso), pct(fc.barra.real_pct) + ' real contra ' + pct(fc.barra.meta, 0)) +
+      (enArea('Cocina') ? kpi(fc.cocina.exceso > 0 ? 'rojo' : 'verde', 'Cocina: exceso sobre objetivo', (fc.cocina.exceso > 0 ? '+' : '') + q(fc.cocina.exceso), pct(fc.cocina.real_pct) + ' real contra ' + pct(fc.cocina.meta, 0)) : '') +
+      (enArea('Barra') ? kpi(fc.barra.exceso > 0 ? 'rojo' : 'verde', 'Barra: exceso sobre objetivo', (fc.barra.exceso > 0 ? '+' : '') + q(fc.barra.exceso), pct(fc.barra.real_pct) + ' real contra ' + pct(fc.barra.meta, 0)) : '') +
       '</div>' +
       '<div class="rp-tabla"><table class="rp"><thead><tr><th>Área</th><th>Venta del área</th><th>Costo real</th><th>Costo a objetivo</th><th>Exceso</th><th>Real %</th><th>Objetivo %</th><th>Desvío</th></tr></thead><tbody>' +
-      [['Cocina', fc.cocina], ['Barra', fc.barra]].map(function (p) {
+      [['Cocina', fc.cocina], ['Barra', fc.barra]].filter(function (p) { return enArea(p[0]); }).map(function (p) {
         var x = p[1];
         return '<tr><td>' + p[0] + '</td><td>' + q(x.venta) + '</td><td>' + q(x.costo) + '</td><td>' + q(x.a_meta) + '</td><td class="' + (x.exceso > 0 ? 'neg' : 'pos') + '">' + (x.exceso > 0 ? '+' : '') + q(x.exceso) + '</td><td>' + pct(x.real_pct) + '</td><td>' + pct(x.meta, 0) + '</td><td class="' + (x.desvio_pts > 0 ? 'neg' : 'pos') + '">' + (x.desvio_pts === null ? '—' : signo(x.desvio_pts) + x.desvio_pts + ' pp') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
@@ -146,9 +161,10 @@
       }
       h += '<h3 style="margin:1.2rem 0 0.2rem">Compras contra su techo, cuatro semanas</h3>' +
         '<p class="rp-nota">' + esc(cp.nota) + ' La raya negra de cada barra es el techo de esa semana; la barra en rojo se pasó.</p>' +
-        '<div class="rp-dos">' + grafCompras('Cocina', 'cocina', cp.meta_cocina) + grafCompras('Barra', 'barra', cp.meta_barra) + '</div>';
+        '<div class="rp-dos">' + (enArea('Cocina') ? grafCompras('Cocina', 'cocina', cp.meta_cocina) : '') + (enArea('Barra') ? grafCompras('Barra', 'barra', cp.meta_barra) : '') + '</div>';
     }
     h += '</section>';
+    }
 
     // ---- 6. cocina y barra
     function bloqueArea(nombre, a) {
@@ -163,12 +179,13 @@
         kpi(a.margen >= 0 ? 'verde' : 'rojo', 'Margen bruto', q(a.margen), pct(a.margen_pct) + ' del área') +
         '</div>' + tabla + '</div>';
     }
-    h += '<section class="rp"><h2>6 · Cocina y Barra</h2>' + (d.areas.error ? '<div class="rp-error">' + esc(d.areas.error) + '</div>' : '') +
-      '<div class="rp-dos">' + bloqueArea('Cocina', d.areas.cocina) + bloqueArea('Barra', d.areas.barra) + '</div></section>';
+    if (ver(6)) h += '<section class="rp"><h2>' + tit(6, AREA ? 'Venta y margen de ' + AREAS_VER[0].toLowerCase() : 'Cocina y Barra') + '</h2>' + (d.areas.error ? '<div class="rp-error">' + esc(d.areas.error) + '</div>' : '') +
+      '<div class="rp-dos">' + AREAS_VER.map(function (nom) { return bloqueArea(nom, d.areas[nom.toLowerCase()]); }).join('') + '</div></section>';
 
     // ---- 7. personal y P&L
+    if (ver(7)) {
     var pl = d.pl, pe2 = d.personal, pm = pe2.planilla_mes;
-    h += '<section class="rp"><h2>7 · Personal y P&amp;L semanal</h2>' +
+    h += '<section class="rp"><h2>' + tit(7, 'Personal y P&amp;L semanal') + '</h2>' +
       '<div class="rp-kpis">' +
       kpi(pe2.prime < 60 ? 'verde' : (pe2.prime <= 65 ? 'amarillo' : 'rojo'), 'Prime cost', pct(pe2.prime), 'móvil de 4: ' + pct(pe2.prime_m4)) +
       kpi('', 'Nómina devengada de la semana', q(pe2.labor_semana), pct(pe2.labor_pct) + ' de la venta · planilla del mes ÷ 4.345') +
@@ -186,9 +203,11 @@
       '<tr class="total"><td class="txt">Resultado</td><td class="' + (pl.resultado >= 0 ? 'pos' : 'neg') + '">' + q(pl.resultado) + '</td><td></td><td>' + pct(pl.resultado_pct) + '</td></tr>' +
       '</tbody></table></div>' +
       '<p class="rp-nota">' + esc(pl.nota_nomina) + ' Marketing va incluido (' + q(pl.marketing) + '); sin marketing el resultado sería ' + q(pl.resultado_sin_marketing) + '.</p></section>';
+    }
 
     // ---- 8. equilibrio y acciones
-    h += '<section class="rp"><h2>8 · Cómo se construye el equilibrio, y las acciones</h2>';
+    if (ver(8)) {
+    h += '<section class="rp"><h2>' + tit(8, 'Cómo se construye el equilibrio, y las acciones') + '</h2>';
     if (pe) {
       h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO)</th><th>Al mes</th></tr></thead><tbody>' +
         pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
@@ -212,11 +231,12 @@
       '<label>Por qué</label><textarea id="ac-porque" placeholder="El dato que respalda la acción: el número, la semana, el desvío"></textarea>' +
       '<div style="margin-top:0.7rem;display:flex;gap:0.6rem;align-items:center"><button class="rp-boton lleno" id="ac-guardar" type="button">Guardar acción</button><span id="ac-msg" style="font-size:0.82rem;color:#52514e"></span></div></div>' +
       '</section>';
+    }
 
     document.getElementById('rp-todo').innerHTML = h;
     document.getElementById('rp-todo').hidden = false;
     document.getElementById('rp-cargando').hidden = true;
-    document.getElementById('ac-guardar').addEventListener('click', guardarAccion);
+    if (document.getElementById('ac-guardar')) document.getElementById('ac-guardar').addEventListener('click', guardarAccion);
     document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
   }
 
@@ -261,15 +281,19 @@
         var el = document.getElementById('rp-error');
         el.textContent = String(e && e.message || e); el.hidden = false;
       });
-    if (forzar) run.refrescarReporteSemanal(AUTH, clave || 0); else run.getReporteSemanal(AUTH, clave || 0);
+    if (AREA) run.getReporteArea(AUTH, clave || 0, AREA, !!forzar);
+    else if (forzar) run.refrescarReporteSemanal(AUTH, clave || 0); else run.getReporteSemanal(AUTH, clave || 0);
   }
 
+  if (CFG.titulo) document.getElementById('rp-titulo').textContent = CFG.titulo;
   document.getElementById('rp-sel').addEventListener('change', function () { cargar(Number(this.value), false); });
   document.getElementById('rp-actualizar').addEventListener('click', function () { cargar(CLAVE, true); });
   // Dentro del tablero, imprimir la pagina imprimiria las siete pestañas: se abre la
   // pagina sola del reporte (?page=reporte-semanal) y desde ahi se imprime.
   var imprimir = document.getElementById('rp-imprimir');
-  if (CFG.embebido) {
+  if (SECC) {
+    imprimir.style.display = 'none';   // el documento para imprimir es el reporte entero
+  } else if (CFG.embebido) {
     imprimir.textContent = 'Abrir para imprimir / PDF';
     imprimir.addEventListener('click', function () { window.open(CFG.base + '?page=reporte-semanal' + (CFG.t || ''), '_blank'); });
   } else {

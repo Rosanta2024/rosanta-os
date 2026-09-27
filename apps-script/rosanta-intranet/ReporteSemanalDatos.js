@@ -46,6 +46,37 @@ function refrescarReporteSemanal(auth, clave) {
   return _repDatos_(Number(clave) || 0, true);
 }
 
+/**
+ * Las secciones del reporte que viven DENTRO de Profit OS (Juanma, 27-sep-2026: "reparte
+ * cada seccion del reporte en su seccion de la intranet"). Dos pestañas:
+ *   cocina     food cost, compra contra techo y platos de cocina (Jeffry y el dueño)
+ *   barrasala  lo mismo de barra, mas comensales y reservas (José y el dueño)
+ * Mismo calculo y misma cache que el reporte entero; lo que cambia es QUE sale: nada del
+ * resultado de la casa (P&L, equilibrio, venta del dia), que es de Finanzas.
+ */
+var REP_AREAS_ROLES = { cocina: ['chef', 'dueno'], barrasala: ['sala', 'dueno'] };
+
+function getReporteArea(auth, clave, area, forzar) {
+  var u = exigirModulo_(auth, 'recetario');
+  area = String(area || '');
+  if (!REP_AREAS_ROLES.hasOwnProperty(area)) throw new Error('Area desconocida: ' + area);
+  if (REP_AREAS_ROLES[area].indexOf(normalizar_(u.rol)) === -1) throw new Error('Esta pestaña es de ' + (area === 'cocina' ? 'cocina' : 'barra y sala') + ' y del dueño.');
+  return _repRecortarArea_(_repDatos_(Number(clave) || 0, !!forzar), area);
+}
+
+function _repRecortarArea_(d, area) {
+  return {
+    area: area, semana: d.semana, semanas: d.semanas, gen: d.gen, fuentes: d.fuentes, notas: d.notas,
+    metas: d.metas, foodcost: d.foodcost, compras: d.compras, areas: d.areas,
+    reservas: area === 'barrasala' ? d.reservas : null,
+    // por dia sin la venta: la venta de la casa es de Finanzas
+    dias: area === 'barrasala' ? (d.dias || []).map(function (x) {
+      return { dia: x.dia, com: x.com, personas: x.personas, walkins: x.walkins, reservas: x.reservas,
+               canceladas: x.canceladas, reservas_superan: x.reservas_superan };
+    }) : []
+  };
+}
+
 function _repDatos_(clave, forzar) {
   var cache = CacheService.getScriptCache();
   var k = REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_();

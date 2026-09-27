@@ -3,7 +3,7 @@ const R = D.recetas, I = D.insumos, P = D.proveedores;
 const sim = new Map();
 /* El modulo abre en el tablero: contesta "como vamos". La ingenieria de menu, que
    contesta "que hago esta semana", queda segunda. Las otras son de consulta. */
-let view = 'inicio', q = '', area = 'COCINA', filt = {rec:'carta', ins:'todos', prov:null};
+let view = window.PROFIT_VISTA_INI || 'inicio', q = '', area = 'COCINA', filt = {rec:'carta', ins:'todos', prov:null};
 let imArea = 'COCINA', imSemanas = 13;   // el trimestre: ver IM_VENTANAS
 let dbSemanas = 13;                      // el tablero abre en la misma ventana
 
