@@ -231,7 +231,7 @@ function medMiSemana_(u, rol, auth) {
 
   if (rol === 'dueno') {
     var c = medCascadaResumen_(d, P, M, hoy);
-    it('Lo que deja la operación', c.deja !== null ? 'Q' + Math.round(c.deja).toLocaleString('es-GT') : '—',
+    it('Lo que deja la operación', c.deja !== null ? medQ_(c.deja) : '—',
        'lo que falta del mes · piso Q' + Math.round(c.piso || 0).toLocaleString('es-GT') + ' en proporción', c.deja_zona);
     it('Venta del mes (proyección)', c.venta_proy ? 'Q' + Math.round(c.venta_proy).toLocaleString('es-GT') : '—',
        M.venta_total ? 'meta Q' + M.venta_total.toLocaleString('es-GT') : 'sin meta', c.venta_zona);

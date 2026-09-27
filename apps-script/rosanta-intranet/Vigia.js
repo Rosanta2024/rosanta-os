@@ -297,7 +297,9 @@ function _vigWhatsApp_(dest, msg) {
   var errP = r.getContentText().slice(0, 200);
   var r2 = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', headers: H, muteHttpExceptions: true,
     payload: JSON.stringify({ messaging_product: 'whatsapp', to: dest.whatsapp, type: 'text', text: { body: msg.texto.slice(0, 4000) } }) });
-  if (r2.getResponseCode() === 200) return { ok: true, detalle: 'texto libre (la plantilla fallo: ' + errP + ')' };
+  // Meta ACEPTA el texto libre siempre, pero solo lo ENTREGA si esa persona le escribio al
+  // restaurante en las ultimas 24 h. Aceptado no es entregado: el log lo dice asi.
+  if (r2.getResponseCode() === 200) return { ok: false, detalle: 'SIN GARANTIA: texto libre aceptado por Meta; solo llega si esta persona escribio al restaurante en las ultimas 24 h. Falta la plantilla aprobada (' + errP.slice(0, 120) + ')' };
   return { ok: false, detalle: 'plantilla: ' + errP + ' · texto: ' + r2.getContentText().slice(0, 200) };
 }
 
