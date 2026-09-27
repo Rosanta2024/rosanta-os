@@ -202,8 +202,10 @@ function vistaInventario(){
       <button class="chip" data-invsub="catalogo" aria-pressed="${invSub === 'catalogo'}">Catálogo · ${datos.productos.length}</button>
       <button class="chip" data-invsub="conectar" aria-pressed="${invSub === 'conectar'}">Por conectar · ${conectar.length}</button>
       <button class="chip" data-invsub="precios" aria-pressed="${invSub === 'precios'}">Precios al Banco${INVPRECIOS && INVPRECIOS.pendientes && INVPRECIOS.pendientes.length ? ' · ' + INVPRECIOS.pendientes.length + ' por aprobar' : ''}</button>
+      ${ed ? `<button class="chip" data-invaltatoggle="1" aria-pressed="${invAltaOn}" style="${invAltaOn ? '' : invBtnVerde}">+ Agregar un producto</button>` : ''}
       <span class="count">Leído el ${esc(datos.leido)}</span>
     </div>
+    ${ed && invAltaOn ? invAltaHTML(ultimo.estado === 'ABIERTO' ? ultimo : null, a, datos) : ''}
     ${q ? `<p class="buscando">Filtrando por “${esc(q)}” dentro del inventario de ${invNomArea(a)}.</p>` : ''}`;
 
   let cuerpo;
@@ -268,13 +270,12 @@ function invMesEditable(m, ant, a, datos){
       <button class="chip" data-invguardar="1" style="${invBtnVerde}"${nCambios ? '' : ' disabled'}>${nCambios ? `Guardar ${nCambios} producto${nCambios === 1 ? '' : 's'}` : 'Sin cambios'}</button>
       ${nCambios ? '<button class="chip" data-invdescartar="1">Descartar</button>' : ''}
       <button class="chip" data-invsin="1" aria-pressed="${invSoloSin}">Solo sin contar</button>
-      <button class="chip" data-invaltatoggle="1" aria-pressed="${invAltaOn}">Agregar un producto</button>
       ${nCambios ? '<span class="count">Guardá antes de cerrar el mes</span>'
                  : `<button class="chip" data-invcerrar="${esc(m.mes)}" style="margin-left:auto">Cerrar ${invMesNombre(m.mes).split(' ')[0].toLowerCase()}</button>`}
     </div>`;
 
   const cuerpo = invGrupos(filas).map(g =>
-    `<tr><td colspan="4" style="font-weight:700;padding-top:14px">${esc(Tt(g.cat) || 'Sin categoría')}</td></tr>` +
+    `<tr><td colspan="5" style="font-weight:700;padding-top:14px">${esc(Tt(g.cat) || 'Sin categoría')}</td></tr>` +
     g.filas.map(f => {
       const b = borr[f[0]] || {}, dest = invEsDest(f), pa = exAnt[f[0]];
       const vEx = 'existencia' in b ? b.existencia : invVerEx(f);
@@ -289,13 +290,14 @@ function invMesEditable(m, ant, a, datos){
         <td class="r"><input type="number" step="0.01" min="0" style="width:96px" ${campo('precio', vPr, `aria-label="Precio de ${esc(f[2])}"`)}>
           ${invCambioPrecio(invLeerNum(vPr), precioAnt[f[0]])}</td>
         <td><input list="inv-provs" style="width:170px" autocomplete="off" ${campo('proveedor', vPv, `aria-label="Proveedor de ${esc(f[2])}"`)}></td>
+        <td class="r"><button class="chip" data-invactivo="${esc(f[0])}" data-invactivar="NO" title="Inactivar: sale de este conteo y de los próximos" aria-label="Quitar ${esc(f[2])}">Quitar</button></td>
       </tr>`;
     }).join('')).join('');
 
-  return `${invAltaOn ? invAltaHTML(m, a, datos) : ''}${barra}
+  return `${barra}
     <datalist id="inv-provs">${invProvsConocidos().sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
     ${filas.length ? `<div class="tablewrap"><table>
-      <thead><tr><th>Producto</th><th class="r">Existencia</th><th class="r">Precio</th><th>Proveedor</th></tr></thead>
+      <thead><tr><th>Producto</th><th class="r">Existencia</th><th class="r">Precio</th><th>Proveedor</th><th></th></tr></thead>
       <tbody>${cuerpo}</tbody></table></div>` : `<p class="empty">${invSoloSin ? 'No queda nada sin contar.' : 'Sin resultados.'}</p>`}
     <p class="nota">Vacío es <strong>sin contar</strong>; si no hay nada, escribí 0. ${a === 'BARRA' ? 'En destilados la existencia va en <strong>% de botella</strong>, como siempre: 3 botellas y media son 350. ' : ''}La existencia va en la unidad de la presentación (libra, unidad, caja…). Lo que escribís se guarda recién al tocar <strong>Guardar</strong>; el monto y el total se recalculan en la hoja. Un proveedor nuevo pasa también a Proveedores y al producto del Banco. El precio llega al Banco al cerrar el mes.</p>
     ${nCambios ? barra : ''}`;
@@ -304,14 +306,15 @@ function invMesEditable(m, ant, a, datos){
 function invAltaHTML(m, a, datos){
   const cats = [...new Set(datos.productos.map(p => p[1]).filter(Boolean))].sort();
   return `<div class="addrow">
-      <div class="sec-t" style="margin-top:0">Agregar un producto al conteo de ${invMesNombre(m.mes)}</div>
+      <div class="sec-t" style="margin-top:0">${m ? `Agregar un producto al catálogo y al conteo abierto de ${invMesNombre(m.mes)}`
+                                                  : 'Agregar un producto al catálogo · no hay conteo abierto: entra solo al próximo que se abra'}</div>
       <div class="simrow" style="flex-wrap:wrap">
         <input id="inva-prod" placeholder="Producto" style="width:210px" autocomplete="off">
         <input id="inva-cat" list="inva-cats" placeholder="Categoría" style="width:170px" autocomplete="off">
         <select id="inva-tipo" style="width:130px">${INV_TIPOS.map(t => `<option value="${t[0]}">${t[1]}</option>`).join('')}</select>
         ${a === 'BARRA' ? `<select id="inva-bloque" style="width:170px">${INV_BLOQUES.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select>` : ''}
         <input id="inva-pres" placeholder="Presentación (libra, 750 ml…)" style="width:190px" autocomplete="off">
-        <input id="inva-prov" list="inv-provs" placeholder="Proveedor" style="width:170px" autocomplete="off">
+        <input id="inva-prov" list="inva-provs" placeholder="Proveedor" style="width:170px" autocomplete="off">
         <input id="inva-precio" type="number" step="0.01" min="0" placeholder="Precio" style="width:110px">
       </div>
       <div class="sec-t">Si es insumo</div>
@@ -322,6 +325,7 @@ function invAltaHTML(m, a, datos){
         <input id="inva-cont" type="number" step="any" min="0" placeholder="Contenido (si es envase)" style="width:180px">
         <button class="chip" data-invalta="1" style="${invBtnVerde}">Agregar</button>
       </div>
+      <datalist id="inva-provs">${invProvsConocidos().sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
       <datalist id="inva-cats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
       <datalist id="inv-banco">${I.filter(x => x.area === a).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
       <datalist id="inv-unidades"><option value="g"><option value="ml"><option value="unidad"></datalist>
@@ -700,7 +704,7 @@ document.addEventListener('click', e => {
           }
           invAltaOn = false;
           const ecos = invEcos(r);
-          invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) al conteo de ${invMesNombre(r.mes)}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
+          invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) ${r.mes ? 'al conteo de ' + invMesNombre(r.mes) : 'al catálogo; entra al próximo conteo que se abra'}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
         })
         .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + err.message); })
         .webInventarioAlta(AUTH, a, Object.assign({}, datos, {confirmarBanco: !!confirmarBanco}), confirmar);
@@ -713,6 +717,7 @@ document.addEventListener('click', e => {
   if(t.dataset.invactivo){
     const d = INVDATOS[a], p = d.productos.find(x => x[0] === t.dataset.invactivo), activar = t.dataset.invactivar === 'SI';
     if(!p) return;
+    if(!invSinPendientes()) return;
     let msg;
     if(activar) msg = `¿Reactivar ${p[2]}?\n\nVuelve a entrar en el conteo abierto, si hay uno.`;
     else {

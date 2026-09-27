@@ -125,6 +125,50 @@ function invLeerProductos_(hoja, area) {
 
 /* ------------------------------------------------------------ utiles ---- */
 
+/** PRODUCTOS no traia BLOQUE (la migracion lo dejo solo en los meses). Un alta sin mes
+ *  abierto lo necesita para saber donde entra en barra: se agrega al final si falta. */
+function invAsegurarColumnaBloque_(cat) {
+  if (cat.c['bloque'] != null) return;
+  var k = cat.encabezado.length;
+  cat.hoja.getRange(1, k + 1).setValue('BLOQUE').setFontWeight('bold');
+  cat.encabezado = cat.encabezado.concat(['BLOQUE']);
+  cat.c['bloque'] = k;
+}
+
+/**
+ * Al abrir un conteo: los productos ACTIVOS del catalogo que no estaban en el ultimo mes
+ * (altas hechas sin conteo abierto, reactivados). Entran en `filas` despues del ultimo de
+ * su misma categoria y bloque. El bloque sale del catalogo, del ultimo mes en que se
+ * conto, o en cocina de la categoria. Devuelve cuantos sumo.
+ */
+function invActivosQueFaltan_(ss, cat, filas, area) {
+  var esta = {};
+  filas.forEach(function (f) { esta[f[0]] = 1; });
+  var n = 0;
+  cat.filas.forEach(function (f) {
+    var id = invTexto_(f[cat.c['id']]);
+    if (!id || esta[id] || invTexto_(f[cat.c['activo']]).toUpperCase() === 'NO') return;
+    var categoria = invTexto_(f[cat.c['categoria']]);
+    var bloque = cat.c['bloque'] != null ? invTexto_(f[cat.c['bloque']]) : '';
+    if (!bloque && cat.c['ultimo mes'] != null) {
+      var previo = invFilaEnMes_(ss, invMesDeCelda_(f[cat.c['ultimo mes']]), id);
+      if (previo) bloque = previo.bloque;
+    }
+    if (!bloque) bloque = area === 'COCINA' ? categoria : 'INSUMOS';
+    var precio = cat.c['precio actual'] != null ? invNumero_(f[cat.c['precio actual']]) : null;
+    var nueva = [id, categoria, invTexto_(f[cat.c['producto']]), invTexto_(f[cat.c['tipo']]),
+                 cat.c['presentacion'] != null ? invTexto_(f[cat.c['presentacion']]) : '',
+                 cat.c['proveedor'] != null ? invTexto_(f[cat.c['proveedor']]) : '',
+                 precio === null ? '' : precio, '', '', '', bloque];
+    var pos = -1;
+    for (var k = 0; k < filas.length; k++) if (filas[k][10] === bloque && filas[k][1] === categoria) pos = k;
+    if (pos < 0) for (var k2 = 0; k2 < filas.length; k2++) if (filas[k2][10] === bloque) pos = k2;
+    filas.splice(pos < 0 ? filas.length : pos + 1, 0, nueva);
+    esta[id] = 1; n++;
+  });
+  return n;
+}
+
 /** { 'etiqueta normalizada' -> indice }. La primera aparicion gana. */
 function invColumnas_(encabezado) {
   var c = {};
@@ -260,13 +304,15 @@ function invAbrirMes_(area, u) {
                 invNumero_(f[c['precio']]) === null ? '' : invNumero_(f[c['precio']]),
                 '', '', '', invTexto_(f[c['bloque']])]);
   }
+  var sumados = invActivosQueFaltan_(ss, cat, filas, area);
   if (!filas.length) throw new Error('El mes ' + ult.mes + ' no tiene productos activos para copiar.');
 
   var h = ss.insertSheet(nuevo, ult.hoja.getIndex());   // queda despues del ultimo mes
   invEscribirMes_(h, nuevo, 'ABIERTO', 'Abierto desde la intranet por ' + (u.nombre || u.email), filas);
   bitacoraLote_([[u.email, u.rol, 'inventario abrir mes', 'INVENTARIO ' + area, nuevo, 'ESTADO', '', 'ABIERTO',
-                  filas.length + ' productos copiados de ' + ult.mes]]);
-  return { mes: nuevo, desde: ult.mes, productos: filas.length };
+                  (filas.length - sumados) + ' productos copiados de ' + ult.mes +
+                  (sumados ? ' y ' + sumados + ' del catalogo que no estaban' : '')]]);
+  return { mes: nuevo, desde: ult.mes, productos: filas.length, delCatalogo: sumados };
 }
 
 /** Escribe una pestana de mes nueva: meta, encabezado, filas con formula y TOTAL. */
@@ -407,8 +453,10 @@ function invAlta_(area, datos, confirmar, u) {
     return { creado: false, similares: similares.slice(0, 8) };
   }
 
+  // Sin conteo abierto el producto igual se crea (27-sep-2026, regla de Juanma: todo
+  // cambio se puede hacer desde cualquier seccion). Queda en el catalogo con su BLOQUE y
+  // entra solo al proximo conteo que se abra (invAbrirMes_ suma los activos que faltan).
   var abierto = invMesAbierto_(ss);
-  if (!abierto) throw new Error('No hay un conteo abierto en ' + area + '. Abri el mes antes de agregar productos.');
 
   var vinculo = 'NO APLICA', enBanco = '', bancoNuevo = false, provAlBanco = false, avisos = [];
   if (tipo === 'INSUMO') {
@@ -438,20 +486,21 @@ function invAlta_(area, datos, confirmar, u) {
     }
   }
   var id = (area === 'COCINA' ? 'C-' : 'B-') + ('000' + (maxId + 1)).slice(-3);
+  invAsegurarColumnaBloque_(cat);
 
   var fila = cat.encabezado.map(function () { return ''; });
   var poner = function (k, v) { if (cat.c[k] != null) fila[cat.c[k]] = v; };
   poner('id', id); poner('area', area); poner('categoria', categoria); poner('producto', producto);
   poner('tipo', tipo); poner('vinculo', vinculo); poner('producto en banco', enBanco);
   poner('presentacion', presentacion); poner('proveedor', proveedor); poner('precio actual', precio);
-  poner('activo', 'SI'); poner('ultimo mes', abierto.mes);
+  poner('activo', 'SI'); poner('ultimo mes', abierto ? abierto.mes : ''); poner('bloque', bloque);
   var r = cat.hoja.getLastRow() + 1, rango = cat.hoja.getRange(r, 1, 1, fila.length);
   rango.setNumberFormat('@');
   if (cat.c['precio actual'] != null) cat.hoja.getRange(r, cat.c['precio actual'] + 1).setNumberFormat('0.00##');
   rango.setValues([fila]);
 
-  invInsertarEnMes_(abierto, [id, categoria, producto, tipo, presentacion, proveedor, precio, '', '', '', bloque]);
-  bitacoraLote_([[u.email, u.rol, 'inventario alta', 'INVENTARIO ' + area + ' ' + abierto.mes, id + ' · ' + producto,
+  if (abierto) invInsertarEnMes_(abierto, [id, categoria, producto, tipo, presentacion, proveedor, precio, '', '', '', bloque]);
+  bitacoraLote_([[u.email, u.rol, 'inventario alta', 'INVENTARIO ' + area + (abierto ? ' ' + abierto.mes : ' catalogo'), id + ' · ' + producto,
                   'PRODUCTO', '', producto, tipo + (enBanco ? ' · Banco: ' + enBanco : '') +
                   (similares.length ? ' · creado igual con ' + similares.length + ' parecido(s)' : '')]]);
   SpreadsheetApp.flush();
@@ -465,7 +514,7 @@ function invAlta_(area, datos, confirmar, u) {
     try { provNuevos = invAsegurarProveedores_([proveedor], u); }
     catch (e) { avisos.push('Proveedores: ' + (e && e.message || e)); }
   }
-  return { creado: true, id: id, mes: abierto.mes, banco: enBanco, bancoNuevo: bancoNuevo,
+  return { creado: true, id: id, mes: abierto ? abierto.mes : null, banco: enBanco, bancoNuevo: bancoNuevo,
            proveedoresNuevos: provNuevos, avisos: avisos,
            recetario: bancoNuevo || provAlBanco || provNuevos.length > 0 };
 }
@@ -497,7 +546,8 @@ function invActivo_(area, id, activo, u) {
     }
     if (activo && k < 0) {
       var previo = invFilaEnMes_(ss, invMesDeCelda_(p.fila[cat.c['ultimo mes']]), id);
-      var bloque = previo ? previo.bloque : (area === 'COCINA' ? invTexto_(p.fila[cat.c['categoria']]) : '');
+      var bloque = (cat.c['bloque'] != null ? invTexto_(p.fila[cat.c['bloque']]) : '') ||
+                   (previo ? previo.bloque : (area === 'COCINA' ? invTexto_(p.fila[cat.c['categoria']]) : ''));
       if (!bloque) throw new Error('No encuentro en que bloque de barra iba ' + prod + '. Dalo de alta de nuevo.');
       var precio = invNumero_(p.fila[cat.c['precio actual']]);
       invInsertarEnMes_(abierto, [id, invTexto_(p.fila[cat.c['categoria']]), prod, invTexto_(p.fila[cat.c['tipo']]),
