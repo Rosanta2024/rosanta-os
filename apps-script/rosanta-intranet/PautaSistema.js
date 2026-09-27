@@ -57,9 +57,12 @@ var PS_PRUEBA_ESTADOS = ['propuesta', 'en_curso', 'leida', 'descartada'];
 var PS_METRICAS_JUEZ = {
   reservas_negocio:    'Reservas por semana (Wix, pauta_semanal)',
   comensales_negocio:  'Comensales por semana (POS, pauta_semanal)',
-  newreservation_pixel: 'Reservas del pixel por semana (NewReservation)',
-  reservas_atribuidas: 'Reservas atribuidas a la pauta por semana (Meta)'
+  clientes_nuevos_negocio: 'Clientes nuevos por semana (pauta_semanal; solo con lectura de Wix ≥ lectura_min_juez)',
+  newreservation_pixel: 'Reservas del pixel por semana (NewReservation, toda la cuenta)'
 };
+/* reservas_atribuidas salió de las métricas juez el 27-sep-2026 (congruencia con el
+   Sistema de Medición): por conjunto son 0, 1 o 2 por semana y no juzgan nada. Queda
+   como columna de diagnóstico en hechos_semana. */
 
 /* ---------------------------------------------------------------- semillas --- */
 
@@ -75,6 +78,8 @@ var PS_REGLAS_BASE = [
   ['retencion_min', 10, 'Retención mínima (%) = ThruPlay ÷ impresiones.'],
   ['dias_minimos', 7, 'Días sin tocar un conjunto después de lanzarlo o cambiarlo, antes de juzgarlo.'],
   ['semanas_escalar', 2, 'Semanas seguidas de subida en reservas atribuidas para poder escalar.'],
+  ['reservas_min_escalar', 6, 'Reservas atribuidas mínimas, sumando las semanas de subida, para que la subida no sea ruido.'],
+  ['lectura_min_juez', 50, 'Lectura de Wix mínima (%) del mes para usar clientes nuevos como juez (misma guarda que el CAC).'],
   ['tope_cambio_pct', 20, 'Cambio máximo de presupuesto por decisión (%).'],
   ['dias_apagar', 14, 'Ventana para apagar un conjunto de conversión sin reservas.'],
   ['gasto_min_apagar', 150, 'Gasto mínimo (Q) en esa ventana antes de apagar por falta de reservas.'],
@@ -631,6 +636,26 @@ function psNegocio_() {
   return porWk;
 }
 
+/**
+ * Metas del Sistema de Medición prorrateadas a la semana (mes del domingo de cierre).
+ * Solo LEE: medMetasMes_ y tabParametros_ (MedicionDatos/TableroDatos) y
+ * crmAltasPorMes_ (CrmDatos). Sin meta o sin dato devuelve null: "sin dato no hay
+ * semáforo", y sin meta de comensales no se escala.
+ */
+function psMetasSemana_(sem) {
+  var out = { mes: '', com_meta_sem: null, clientes_meta_sem: null, lectura: null, error: '' };
+  try {
+    var f = new Date(String(sem.hasta).slice(0, 10) + 'T12:00:00'), anio = f.getFullYear(), m = f.getMonth() + 1;
+    var dias = new Date(anio, m, 0).getDate();
+    var M = medMetasMes_(anio, m, tabParametros_());
+    out.mes = M.mes;
+    if (M.comensales) out.com_meta_sem = Math.round(M.comensales / dias * 7);
+    if (M.clientes && M.clientes.valor) out.clientes_meta_sem = psRedondear_(M.clientes.valor / dias * 7, 1);
+    try { var A = crmAltasPorMes_(anio)[m]; out.lectura = A && A.lectura !== undefined ? A.lectura : null; } catch (e2) { out.lectura = null; }
+  } catch (e) { out.error = String(e && e.message || e); }
+  return out;
+}
+
 function psPromedio_(xs) {
   var v = xs.filter(function (x) { return x !== null && x !== undefined && !isNaN(x); });
   return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null;
@@ -642,7 +667,8 @@ function psPromedio_(xs) {
  * Estado de un conjunto. Determinista: los mismos hechos y reglas dan el mismo estado.
  * `serie` = sus filas de hechos_semana en orden de semana, la última es la evaluada.
  */
-function psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio) {
+function psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio, metas) {
+  metas = metas || {};
   var al = psAlertasDeTexto_(h.alertas);
   var rojo = al.filter(function (a) { return a.nivel === 'rojo'; })[0];
   if (rojo) {
@@ -675,13 +701,21 @@ function psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio) {
     }
     var n = cfg.semanas_escalar, ult = serie.slice(-(n + 1)).map(function (x) { return Number(x.reservas_atribuidas) || 0; });
     var sube = ult.length === n + 1 && ult.every(function (v, k) { return k === 0 || v > ult[k - 1]; });
-    var neg = negocio[h.wk], base = psPromedio_(psSemanasPrevias_(h.wk, cfg.semanas_base).map(function (w) {
-      return negocio[w] ? negocio[w].reservas : null;
-    }));
-    var negocioOk = neg && neg.reservas !== null && (base === null || neg.reservas >= base);
-    if (sube && negocioOk) {
-      return { estado: 'ESCALAR', regla: 'R3 · Reservas al alza', razon: 'Reservas atribuidas ' + ult.join(' → ') + ' y el negocio no bajó.',
-               accion: 'Subir presupuesto hasta ' + cfg.tope_cambio_pct + '% y registrarlo como prueba.' };
+    if (sube) {
+      // R3 amarrada al Sistema de Medición (27-sep-2026): volumen suficiente y el
+      // negocio contra su META, no solo contra su propio promedio.
+      var vol = ult.slice(1).reduce(function (a, b) { return a + b; }, 0);
+      var juicio = psNegocioParaEscalar_(h.wk, negocio, metas, cfg);
+      if (vol < cfg.reservas_min_escalar) {
+        return { estado: 'MANTENER', regla: 'R3 · Volumen insuficiente', razon: 'Reservas atribuidas ' + ult.join(' → ') + ' suman ' + vol +
+                 ', bajo el mínimo de ' + cfg.reservas_min_escalar + ': la subida puede ser ruido.', accion: 'No tocar.' };
+      }
+      if (juicio.ok) {
+        return { estado: 'ESCALAR', regla: 'R3 · Reservas al alza y negocio en meta', razon: 'Reservas atribuidas ' + ult.join(' → ') + '. ' + juicio.texto,
+                 accion: 'Subir presupuesto hasta ' + cfg.tope_cambio_pct + '% y registrarlo como prueba.' };
+      }
+      return { estado: 'MANTENER', regla: 'R3 · El negocio no acompaña', razon: 'Reservas atribuidas ' + ult.join(' → ') + ', pero ' + juicio.texto,
+               accion: 'No tocar.' };
     }
     return { estado: 'MANTENER', regla: 'R5 · Conversión estable', razon: 'Reservas atribuidas esta semana: ' + (Number(h.reservas_atribuidas) || 0) + '.',
              accion: 'No tocar.' };
@@ -694,6 +728,31 @@ function psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio) {
   }
   return { estado: 'MANTENER', regla: 'R7 · Awareness y tráfico', razon: 'No se juzga por su propia métrica (' + h.resultado_nombre + ').',
            accion: 'Su presupuesto solo se mueve con una prueba en la bitácora juzgada por reservas.' };
+}
+
+/**
+ * ¿El negocio de la semana permite escalar? Reservas de Wix ≥ su base, comensales ≥ el
+ * ritmo semanal de la meta del mes y, si la lectura de Wix lo permite, clientes nuevos
+ * al ritmo de su meta. Sin meta de comensales no se escala: falta el dato que juzga.
+ */
+function psNegocioParaEscalar_(wk, negocio, metas, cfg) {
+  var neg = negocio[wk];
+  if (!neg || neg.reservas === null) return { ok: false, texto: 'falta el dato de reservas de la semana.' };
+  var base = psPromedio_(psSemanasPrevias_(wk, cfg.semanas_base).map(function (w) { return negocio[w] ? negocio[w].reservas : null; }));
+  if (base !== null && neg.reservas < base) return { ok: false, texto: 'las reservas de Wix (' + neg.reservas + ') bajaron de su base (' + psRedondear_(base, 1) + ').' };
+  if (!metas.com_meta_sem) return { ok: false, texto: 'falta la meta de comensales del mes (Sistema de Medición): sin meta no se escala.' };
+  if (neg.comensales === null || neg.comensales === undefined) return { ok: false, texto: 'falta el dato de comensales de la semana.' };
+  if (neg.comensales < metas.com_meta_sem) return { ok: false, texto: 'los comensales (' + neg.comensales + ') están bajo el ritmo de la meta (' + metas.com_meta_sem + ' por semana).' };
+  var txt = 'Reservas ' + neg.reservas + ' (base ' + (base === null ? '—' : psRedondear_(base, 1)) + ') y comensales ' + neg.comensales + ' sobre la meta semanal de ' + metas.com_meta_sem + '.';
+  if (metas.lectura !== null && metas.lectura !== undefined && metas.lectura >= cfg.lectura_min_juez && metas.clientes_meta_sem) {
+    if (neg.clientes_nuevos === null || neg.clientes_nuevos < metas.clientes_meta_sem) {
+      return { ok: false, texto: 'los clientes nuevos (' + (neg.clientes_nuevos === null ? '—' : neg.clientes_nuevos) + ') están bajo el ritmo de su meta (' + metas.clientes_meta_sem + ').' };
+    }
+    txt += ' Clientes nuevos ' + neg.clientes_nuevos + ' al ritmo de su meta.';
+  } else {
+    txt += ' Clientes nuevos sin dato (lectura de Wix ' + (metas.lectura === null || metas.lectura === undefined ? '—' : metas.lectura + '%') + ').';
+  }
+  return { ok: true, texto: txt };
 }
 
 function psAccionCorregir_(texto) {
@@ -720,11 +779,12 @@ function psArmarTablero_(sem) {
   var pixel = psIndicePixel_(psLeer_('pixel_semana').filter(function (p) { return p.semana === sem.id; }));
   var pruebas = psLeer_('bitacora_pruebas');
   var negocio = psNegocio_();
+  var metas = psMetasSemana_(sem);
 
   var conjuntos = hechos.map(function (h) {
     var serie = todos.filter(function (x) { return String(x.conjunto_id) === String(h.conjunto_id) && x.semana <= sem.id; })
       .sort(function (a, b) { return a.semana < b.semana ? -1 : 1; });
-    var ev = psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio);
+    var ev = psEvaluarConjunto_(h, serie, cfg, hoy, pruebas, negocio, metas);
     return Object.assign({}, h, ev);
   }).sort(function (a, b) { return (Number(b.gasto) || 0) - (Number(a.gasto) || 0); });
 
@@ -744,6 +804,10 @@ function psArmarTablero_(sem) {
     if (desfase > cfg.desfase_pixel_max) alertasCuenta.push({ nivel: 'amarillo',
       texto: 'El pixel contó ' + nr + ' reservas y Wix ' + neg.reservas + ' (' + Math.round(desfase) + '% de diferencia): revisar la instalación.' });
   }
+  if (!metas.com_meta_sem) alertasCuenta.push({ nivel: 'amarillo',
+    texto: 'Sin meta de comensales del mes en el Sistema de Medición (pestaña METAS): ninguna regla puede escalar.' });
+  else if (neg && neg.comensales !== null && neg.comensales < metas.com_meta_sem) alertasCuenta.push({ nivel: 'amarillo',
+    texto: 'Comensales de la semana ' + neg.comensales + ' contra una meta de ' + metas.com_meta_sem + ' por semana (' + metas.mes + ').' });
   Object.keys(pixel).forEach(function (ev) {
     var c = psEventoContaminado_(ev, pixel, cfg);
     if (c) alertasCuenta.push({ nivel: 'amarillo', texto: c });
@@ -757,6 +821,8 @@ function psArmarTablero_(sem) {
       reservas: neg ? neg.reservas : null, reservas_base: psRedondear_(baseRes, 1),
       comensales: neg ? neg.comensales : null, comensales_base: psRedondear_(baseCom, 1),
       clientes_nuevos: neg ? neg.clientes_nuevos : null,
+      com_meta_sem: metas.com_meta_sem, clientes_meta_sem: metas.clientes_meta_sem,
+      lectura: metas.lectura, lectura_min: cfg.lectura_min_juez, mes: metas.mes,
       newreservation: nr, vistas_reservas: vr,
       tasa: (nr !== null && vr) ? psRedondear_(nr / vr * 100, 2) : null,
       gasto_meta: psRedondear_(hechos.reduce(function (s, h) { return s + (Number(h.gasto) || 0); }, 0), 2),
@@ -813,6 +879,13 @@ function psTablero(semanaId, auth) {
   t.esDueno = psEsDueno_(u);
   t.puedeEditar = !!u.puedeEditar;
   t.reglas = psLeer_('reglas');
+  // Una regla nueva del código que todavía no está en la Sheet se muestra con su valor
+  // por defecto, para que el dueño la vea y la pueda cambiar.
+  PS_REGLAS_BASE.forEach(function (r) {
+    if (!t.reglas.some(function (x) { return x.id === r[0]; })) {
+      t.reglas.push({ id: r[0], valor: r[1], descripcion: r[2], editado_por: 'defecto del código', editado_el: '' });
+    }
+  });
   t.supuestos = psLeer_('supuestos');
   t.pruebas = psLeer_('bitacora_pruebas').sort(function (a, b) { return String(b.fecha).localeCompare(String(a.fecha)); });
   t.metricas_juez = PS_METRICAS_JUEZ;
@@ -828,6 +901,7 @@ function psLineasBase_(sem) {
   return {
     reservas_negocio: psRedondear_(psPromedio_(previas.map(function (w) { return negocio[w] ? negocio[w].reservas : null; })), 1),
     comensales_negocio: psRedondear_(psPromedio_(previas.map(function (w) { return negocio[w] ? negocio[w].comensales : null; })), 1),
+    clientes_nuevos_negocio: psRedondear_(psPromedio_(previas.map(function (w) { return negocio[w] ? negocio[w].clientes_nuevos : null; })), 1),
     newreservation_pixel: psRedondear_(psPromedio_(previas.map(function (w) {
       var p = pixel.filter(function (x) { return Number(x.wk) === w && x.evento === cfg.evento_conversion; })[0];
       return p ? Number(p.conteo) : null;
@@ -846,8 +920,8 @@ function psValorMetrica_(metrica, desdeIso, hastaIso) {
   var b = psSemanaDe_(new Date(String(hastaIso).slice(0, 10) + 'T12:00:00'));
   var wks = [];
   for (var w = a.wk; w <= b.wk; w++) wks.push(w);
-  if (metrica === 'reservas_negocio' || metrica === 'comensales_negocio') {
-    var negocio = psNegocio_(), campo = metrica === 'reservas_negocio' ? 'reservas' : 'comensales';
+  if (metrica === 'reservas_negocio' || metrica === 'comensales_negocio' || metrica === 'clientes_nuevos_negocio') {
+    var negocio = psNegocio_(), campo = { reservas_negocio: 'reservas', comensales_negocio: 'comensales', clientes_nuevos_negocio: 'clientes_nuevos' }[metrica];
     return psRedondear_(psPromedio_(wks.map(function (x) { return negocio[x] ? negocio[x][campo] : null; })), 1);
   }
   if (metrica === 'newreservation_pixel') {
@@ -892,7 +966,7 @@ function psGuardarRegla(id, valor, auth) {
   if (!base) throw new Error('Regla desconocida: ' + id);
   if (typeof base[1] === 'number' && isNaN(Number(valor))) throw new Error('La regla ' + id + ' lleva un número.');
   return psUpsert_('reglas', { id: id, valor: typeof base[1] === 'number' ? Number(valor) : String(valor),
-                               editado_por: u.email, editado_el: psHoy_() });
+                               descripcion: base[2], editado_por: u.email, editado_el: psHoy_() });
 }
 
 function psGuardarSupuesto(row, auth) {
@@ -917,7 +991,7 @@ function psGuardarSupuesto(row, auth) {
  * Devuelve el estado final o lanza. Cualquiera con edición PROPONE; solo el dueño
  * arranca, cierra o descarta; y nunca hay dos pruebas en curso a la vez.
  */
-function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar) {
+function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar, lectura, lecturaMin) {
   if (!puedeEditar) throw new Error('Tu usuario es de solo lectura.');
   var estado = row.estado || (previa && previa.estado) || 'propuesta';
   if (PS_PRUEBA_ESTADOS.indexOf(estado) === -1) throw new Error('Estado de prueba inválido.');
@@ -928,6 +1002,11 @@ function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar) {
   if (estado === 'en_curso' && (!previa || previa.estado !== 'en_curso')) {
     var otra = (todas || []).filter(function (p) { return p.estado === 'en_curso' && p.id !== row.id; })[0];
     if (otra) throw new Error('Ya hay una prueba en curso ("' + otra.hipotesis + '"). Un cambio a la vez.');
+    var juez = row.metrica_juez || (previa && previa.metrica_juez);
+    if (juez === 'clientes_nuevos_negocio' && !(lectura !== null && lectura !== undefined && lectura >= lecturaMin)) {
+      throw new Error('Clientes nuevos no puede juzgar esta prueba: la lectura de Wix del mes es ' +
+        (lectura === null || lectura === undefined ? 'desconocida' : lectura + '%') + ' (mínimo ' + lecturaMin + '%). Elegí reservas o comensales.');
+    }
   }
   return estado;
 }
@@ -937,7 +1016,9 @@ function psGuardarPrueba(row, auth) {
   row = row || {};
   var todas = psLeer_('bitacora_pruebas');
   var previa = row.id ? todas.filter(function (p) { return p.id === row.id; })[0] : null;
-  var estado = psReglasPrueba_(row, previa, todas, psEsDueno_(u), !!u.puedeEditar);
+  var arranca = (row.estado === 'en_curso') && (!previa || previa.estado !== 'en_curso');
+  var lectura = arranca ? psMetasSemana_(psSemanaCerrada_()).lectura : null;
+  var estado = psReglasPrueba_(row, previa, todas, psEsDueno_(u), !!u.puedeEditar, lectura, psReglas_().lectura_min_juez);
 
   if (!previa) {
     row.id = 'p' + Date.now();

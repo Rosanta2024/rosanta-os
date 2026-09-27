@@ -762,7 +762,7 @@ const STDC_POR_TIPO={VALOR:'See',COMUNIDAD:'Think',VENTA:'Do'};
 const METRICA_POR_TIPO={
   VALOR:'Hook rate ≥40% · retención ≥10%',
   COMUNIDAD:'Guardados + compartidos por alcance ≥ promedio del mes',
-  VENTA:'Clics al link UTM · reservas atribuidas'
+  VENTA:'Clics al link UTM · reservas de la semana (Wix)'
 };
 function fmtParse(notas){
   var m=String(notas||'').match(/^\[fmt:(Video|Post|Carrusel)\]\s?/);
@@ -1644,10 +1644,12 @@ function psPintar(){
   const vs=(v,b)=>b===null||b===''||v===null?'':' · base '+psNum(b);
   const k=[
     ['Reservas (Wix)',psNum(c.reservas,0),'Juez del negocio'+vs(c.reservas,c.reservas_base)],
-    ['Comensales (POS)',psNum(c.comensales,0),'Juez del negocio'+vs(c.comensales,c.comensales_base)],
-    ['Reservas del pixel',psNum(c.newreservation,0),'NewReservation'],
+    ['Comensales (POS)',psNum(c.comensales,0),c.com_meta_sem?('Meta '+psNum(c.com_meta_sem,0)+' por semana ('+psEsc(c.mes)+') · Sistema de Medición'):'Sin meta del mes en METAS: no se escala'],
+    ['Clientes nuevos',psNum(c.clientes_nuevos,0),(c.lectura!==null&&c.lectura!==undefined&&c.lectura>=c.lectura_min)
+      ?('Meta '+psNum(c.clientes_meta_sem,1)+' por semana · lectura '+psNum(c.lectura,0)+'%')
+      :('Sin dato: lectura de Wix '+(c.lectura===null||c.lectura===undefined?'—':psNum(c.lectura,0)+'%')+' (mínimo '+psNum(c.lectura_min,0)+'%)')],
+    ['Reservas del pixel',psNum(c.newreservation,0),'NewReservation · toda la cuenta'],
     ['Vistas pág. reservas',psNum(c.vistas_reservas,0),c.tasa!==null?'Conversión '+psNum(c.tasa,2)+'%':'Conversión —'],
-    ['Reservas atribuidas',psNum(c.reservas_atribuidas,0),'Meta, todos los conjuntos'],
     ['Gasto Meta',fmtQ(Number(c.gasto_meta)||0),'Semana '+t.semana]
   ];
   $('psKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');

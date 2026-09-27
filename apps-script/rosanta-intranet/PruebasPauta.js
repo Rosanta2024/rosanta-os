@@ -80,16 +80,60 @@ function prPauta_(res) {
     prIgual_(g, 'Tráfico barato nunca se escala por su propia métrica', ev.estado, 'MANTENER', ev.regla);
   });
 
-  prCorrer_(g, 'Escala solo si las reservas atribuidas suben y el negocio no baja', function () {
-    var mk = function (wk, r) { return { tipo_resultado: 'conversion', inicio: '2026-08-01', wk: wk, gasto: 160,
+  /* R3 amarrada al Sistema de Medición (27-sep-2026): subir no alcanza. Hace falta
+     volumen (reservas_min_escalar) y que el negocio esté en su META de comensales. */
+  var mkC = function (wk, r) { return { tipo_resultado: 'conversion', inicio: '2026-08-01', wk: wk, gasto: 160,
                                          reservas_atribuidas: r, alertas: '', resultado_nombre: 'reservas' }; };
-    var serie = [mk(37, 2), mk(38, 4), mk(39, 6)];
-    var negocio = { 35: { reservas: 16 }, 36: { reservas: 16 }, 37: { reservas: 17 }, 38: { reservas: 18 }, 39: { reservas: 20 } };
-    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negocio);
-    prIgual_(g, 'Escala solo si las reservas atribuidas suben y el negocio no baja', ev.estado, 'ESCALAR', ev.razon);
+  var negOk = function () { return { 35: { reservas: 16 }, 36: { reservas: 16 }, 37: { reservas: 17 }, 38: { reservas: 18 },
+                                     39: { reservas: 20, comensales: 150, clientes_nuevos: 3 } }; };
+  var metasOk = { com_meta_sem: 131, clientes_meta_sem: 9.3, lectura: 18 };
+
+  prCorrer_(g, 'Escala solo con volumen, reservas al alza y comensales en meta', function () {
+    var serie = [mkC(37, 2), mkC(38, 4), mkC(39, 6)];
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negOk(), metasOk);
+    prIgual_(g, 'Escala solo con volumen, reservas al alza y comensales en meta', ev.estado, 'ESCALAR', ev.razon);
+  });
+
+  prCorrer_(g, 'No escala si el negocio bajó', function () {
+    var serie = [mkC(37, 2), mkC(38, 4), mkC(39, 6)], negocio = negOk();
     negocio[39].reservas = 12;
-    var ev2 = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negocio);
-    prIgual_(g, 'No escala si el negocio bajó', ev2.estado, 'MANTENER', ev2.razon);
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negocio, metasOk);
+    prIgual_(g, 'No escala si el negocio bajó', ev.estado, 'MANTENER', ev.razon);
+  });
+
+  prCorrer_(g, 'No escala con reservas atribuidas de ruido (0 → 1 → 2)', function () {
+    var serie = [mkC(37, 0), mkC(38, 1), mkC(39, 2)];
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negOk(), metasOk);
+    prIgual_(g, 'No escala con reservas atribuidas de ruido (0 → 1 → 2)', ev.regla, 'R3 · Volumen insuficiente', ev.razon);
+  });
+
+  prCorrer_(g, 'No escala con comensales bajo el ritmo de la meta', function () {
+    var serie = [mkC(37, 2), mkC(38, 4), mkC(39, 6)], negocio = negOk();
+    negocio[39].comensales = 100;
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negocio, metasOk);
+    prIgual_(g, 'No escala con comensales bajo el ritmo de la meta', ev.estado, 'MANTENER', ev.razon);
+  });
+
+  prCorrer_(g, 'Sin meta de comensales no se escala', function () {
+    var serie = [mkC(37, 2), mkC(38, 4), mkC(39, 6)];
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negOk(), {});
+    prIgual_(g, 'Sin meta de comensales no se escala', ev.estado, 'MANTENER', ev.razon);
+  });
+
+  prCorrer_(g, 'Con lectura ≥50% los clientes nuevos también deciden', function () {
+    var serie = [mkC(37, 2), mkC(38, 4), mkC(39, 6)];
+    var ev = psEvaluarConjunto_(serie[2], serie, cfg, hoy, [], negOk(), { com_meta_sem: 131, clientes_meta_sem: 9.3, lectura: 80 });
+    prIgual_(g, 'Con lectura ≥50% los clientes nuevos también deciden', ev.estado, 'MANTENER', ev.razon);
+  });
+
+  prCorrer_(g, 'Clientes nuevos no juzgan una prueba con lectura de Wix bajo 50%', function () {
+    var row = function () { return { id: 'p2', estado: 'en_curso', metrica_juez: 'clientes_nuevos_negocio' }; };
+    var previa = { id: 'p2', estado: 'propuesta' };
+    var r = [];
+    try { psReglasPrueba_(row(), previa, [], true, true, 18, cfg.lectura_min_juez); r.push('pasa'); } catch (e) { r.push('lanza'); }
+    try { r.push(psReglasPrueba_(row(), previa, [], true, true, 80, cfg.lectura_min_juez)); } catch (e) { r.push('lanza: ' + e.message); }
+    var sinAtrib = PS_METRICAS_JUEZ.reservas_atribuidas ? 'reservas_atribuidas sigue siendo juez' : 'ok';
+    prIgual_(g, 'Clientes nuevos no juzgan una prueba con lectura de Wix bajo 50%', r.join('|') + '|' + sinAtrib, 'lanza|en_curso|ok');
   });
 
   prCorrer_(g, 'Apaga conversión con gasto y cero reservas', function () {
