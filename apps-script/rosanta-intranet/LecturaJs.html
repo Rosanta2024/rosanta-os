@@ -52,8 +52,10 @@ window.LECTURA = (function () {
     var A = L.acciones || [];
     var h = A.length ? '<ul class="lx-acc">' + A.map(function (a, i) {
       return '<li class="' + esc(a.estado) + '"><span><span class="t">' + esc(a.accion) + '</span><span class="o"> · ' + esc(a.dueno) + ' · ' +
-        (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '') + '</span></span>' +
-        '<span>' + (L.puede_escribir && opts.marcar ? (a.estado === 'pendiente'
+        (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado === 'sugerida' ? ' · <b style="color:#5b56a6">sugerida por el vigía</b>' : (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '')) + '</span></span>' +
+        '<span>' + (L.puede_escribir && opts.marcar ? (a.estado === 'sugerida'
+          ? '<button type="button" data-i="' + i + '" data-e="pendiente">Aprobar</button><button type="button" data-i="' + i + '" data-e="descartada">Descartar</button>'
+          : a.estado === 'pendiente'
           ? '<button type="button" data-i="' + i + '" data-e="hecha">Hecha</button><button type="button" data-i="' + i + '" data-e="descartada">Descartar</button>'
           : '<button type="button" data-i="' + i + '" data-e="pendiente">Reabrir</button>') : '') + '</span></li>';
     }).join('') + '</ul>' : '<p class="lx-como">No hay acciones anotadas para esta semana.' + (L.puede_escribir ? ' Se anotan en la reunión del lunes: máximo 5, cada una con dueño y fecha.' : ' Se anotan en la reunión del lunes.') + '</p>';
