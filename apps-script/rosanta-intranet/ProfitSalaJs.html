@@ -1,0 +1,41 @@
+<script>
+/* Sala dentro de Profit OS › Barra y Sala (27-sep-2026; antes pantalla SalaVista). Parcial crudo:
+   PF_SALA(host, AUTH) pinta mesas por cerrar, reseñas y el huddle. El token va PRIMERO. */
+window.PF_SALA = function (HOST, AUTH) {
+  var COL = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A' };
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function filas(lista, wix, etiqueta, rojo) {
+    return lista.map(function (x) {
+      return '<tr><td>' + esc(x.fecha) + '</td><td>' + esc(x.nombre) + '</td><td>' + esc(x.personas) + '</td><td><span class="sl-p' + (rojo ? ' r' : '') + '">' + esc(etiqueta) + '</span></td>' +
+             '<td>' + (x.id ? '<a class="b" href="' + esc(wix + x.id) + '" target="_blank" rel="noopener">Abrir en Wix</a>' : '') + '</td></tr>';
+    }).join('');
+  }
+  google.script.run
+    .withSuccessHandler(function (r) {
+      var h = '';
+      var S = r.semana || {};
+      /* el numero y las palancas ya los pinta la lectura de arriba (LecturaJs) */
+      var M = r.mesas || { falta_consumo: [], sin_cerrar: [] };
+      var n = M.falta_consumo.length + M.sin_cerrar.length;
+      h += '<div class="sl-dos"><div class="sl-box"><h3>Mesas por cerrar en Wix (' + n + ')</h3>';
+      if (!n) h += '<p>Todas las mesas de los últimos 7 días están cerradas. Así el CAC se puede medir.</p>';
+      else h += '<table><tr><th>Fecha</th><th>Nombre</th><th>Pers.</th><th>Falta</th><th></th></tr>' +
+        filas(M.falta_consumo, M.wix, 'poner consumo', false) + filas(M.sin_cerrar, M.wix, 'sigue en Reserved', true) + '</table>';
+      h += '<p class="sl-nota">Del ' + esc(M.desde || '') + ' al ' + esc(M.hasta || '') + '. Al sentar la mesa: Seated. Al terminar: el total en "Consumo total de la mesa (Q)" y se deja en Seated. Finished solo para pedir la reseña. No-show solo si de verdad no llegó.</p></div>';
+      var R = r.resenas || {};
+      h += '<div class="sl-box"><h3>Reseñas de Google</h3><div class="sl-big">' + esc(R.esta_semana === undefined ? '—' : R.esta_semana) +
+        ' <span style="font-size:0.95rem;font-weight:400;color:#52514e">esta semana · meta ' + esc(r.meta_resenas) + '</span></div>' +
+        '<p class="sl-nota">La semana pasada: ' + esc(R.semana_pasada === undefined ? '—' : R.semana_pasada) + ' · promedio de 4 semanas: ' + esc(R.prom_4 === undefined ? '—' : R.prom_4) +
+        (R.estrellas_4 ? ' · ' + esc(R.estrellas_4) + '★' : '') + '. Se cuentan solas desde el bot de reseñas.</p>';
+      var P = r.semana_pos || {};
+      h += '<h3 style="margin-top:1rem">Para el huddle</h3><table><tr><td>Última semana cargada</td><td>S' + esc(P.w) + ' · ' + esc(P.ini) + ' al ' + esc(P.fin) + '</td></tr>' +
+        '<tr><td>Comensales</td><td>' + esc(P.com) + '</td></tr><tr><td>Ticket por comensal (sin IVA)</td><td>Q' + esc(P.tp) + '</td></tr></table>' +
+        '<p class="sl-nota">El POS se carga los lunes (último día cargado: ' + esc(r.pos_al || '?') + ').</p></div></div>';
+      if (r.avisos && r.avisos.length) h += '<div class="sl-aviso">' + r.avisos.map(esc).join('<br>') + '</div>';
+      HOST.innerHTML = h;
+    })
+    .withFailureHandler(function (e) { HOST.innerHTML = '<div class="sl-aviso">' + esc(e && e.message || e) + '</div>'; })
+    .getSala(AUTH);
+};
+</script>

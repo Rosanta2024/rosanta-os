@@ -1,0 +1,51 @@
+<script>
+/* Compras en efectivo dentro de Profit OS › Cocina (27-sep-2026; antes pantalla RetirosVista).
+   Parcial crudo: PF_RETIROS(host, AUTH). El token va PRIMERO en cada llamada. */
+window.PF_RETIROS = function (HOST, AUTH) {
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { maximumFractionDigits: 2 }); }
+  var DATA = null;
+  function mes(M, clave) {
+    if (!M) return '';
+    var h = '<div class="rt-box"><h3>' + esc(M.mes) + ' ' + esc(M.anio) + '</h3><div class="rt-res"><b>' + esc(M.con_detalle) + ' de ' + esc(M.n) + '</b> retiros con detalle · ' +
+      q(M.q_con) + ' de ' + q(M.q) + '</div>';
+    if (!M.n) return h + '<p class="rt-ok">No hay retiros de cajero cargados este mes.</p></div>';
+    h += '<div class="rt-scroll"><table><tr><th>Fecha</th><th class="n">Monto</th><th>Cajero</th><th>Qué se compró</th><th>Área</th><th></th></tr>';
+    M.lista.forEach(function (x, i) {
+      var id = clave + '-' + i;
+      if (x.detalle) {
+        h += '<tr><td>' + esc(x.fecha) + '</td><td class="n">' + q(x.monto) + '</td><td>' + esc(x.desc) + '</td><td>' + esc(x.detalle) + '</td><td>' + esc(x.area) + '</td><td class="rt-ok">✓</td></tr>';
+      } else {
+        h += '<tr><td>' + esc(x.fecha) + '</td><td class="n">' + q(x.monto) + '</td><td>' + esc(x.desc) + '</td>' +
+          '<td><input type="text" id="d-' + id + '" placeholder="ej. verdura del mercado, pollo, hielo"></td>' +
+          '<td><select id="a-' + id + '"><option>COCINA</option><option>BARRA</option></select></td>' +
+          '<td><button type="button" data-k="' + clave + '" data-i="' + i + '">Guardar</button><div class="rt-err" id="e-' + id + '"></div></td></tr>';
+      }
+    });
+    return h + '</table></div></div>';
+  }
+  function pintar() {
+    HOST.innerHTML = mes(DATA.actual, 'actual') + mes(DATA.anterior, 'anterior');
+    HOST.querySelectorAll('button[data-k]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-k'), i = Number(b.getAttribute('data-i')), x = DATA[k].lista[i], id = k + '-' + i;
+        var det = HOST.querySelector('#' + 'd-' + id).value, area = HOST.querySelector('#' + 'a-' + id).value;
+        b.disabled = true; b.textContent = 'Guardando…';
+        google.script.run
+          .withSuccessHandler(function (res) {
+            DATA[k] = res.mes; pintar();
+            if (res.aviso) alertar(res.aviso);
+          })
+          .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Guardar'; HOST.querySelector('#' + 'e-' + id).textContent = e && e.message || e; })
+          .registrarRetiro(AUTH, x.fecha, x.monto, det, area);
+      });
+    });
+  }
+  function alertar(t) { var d = document.createElement('div'); d.className = 'rt-box rt-err'; d.textContent = t; HOST.prepend(d); }
+  google.script.run
+    .withSuccessHandler(function (r) { DATA = r; pintar(); })
+    .withFailureHandler(function (e) { HOST.innerHTML = '<div class="rt-box rt-err">' + esc(e && e.message || e) + '</div>'; })
+    .getRetirosPendientes(AUTH);
+};
+</script>

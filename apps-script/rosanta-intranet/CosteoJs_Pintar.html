@@ -98,7 +98,7 @@ function pintar(){
   if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
   if(view==='cocina' || view==='barrasala') montarArea(view);
   // el filtro Cocina / Barra / Todo no aplica adentro de las pestañas de area
-  var selArea = document.querySelector('.nav .areas');
+  var selArea = document.querySelector('.topbar .areas');
   if(selArea) selArea.style.display = (view==='cocina' || view==='barrasala') ? 'none' : '';
   if(view==='inicio'){
     document.getElementById('v-inicio').innerHTML = vistaInicio();

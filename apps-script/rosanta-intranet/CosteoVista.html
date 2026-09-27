@@ -54,37 +54,61 @@
 <?!= incluirCrudo_('CosteoEstilos') ?>
 <?!= incluirCrudo_('LecturaEstilo') ?>
 </style>
+<?!= incluirCrudo_('ReporteSemanalEstilo') ?>
+<?!= incluirCrudo_('ProfitAreaEstilo') ?>
+<style>
+/* BARRA LATERAL (Juanma, 27-sep-2026: "en la barra superior se pierde; cada uno tiene su
+   propio intranet"). Arriba: Profit OS entero (cocina y barra). Despues, el area de quien
+   entra (Jeffry ve Cocina, José ve Barra y Sala, el dueño las dos). Abajo, las herramientas.
+   Los botones siguen siendo .nav button[data-view]: el ruteo de pintar() no cambia. */
+/* Mismo molde que el Sistema de Marketing (Juanma, 27-sep-2026: "se tiene que ver como
+   los modulos de marketing"): lateral blanco pegado a la izquierda, rotulos en versalitas,
+   el item activo en verde bosque. Medidas de .sm-side (Estilos.html). */
+header.top .wrap{max-width:none;padding:0 28px}
+.pf-layout{display:grid;grid-template-columns:208px minmax(0,1fr);align-items:start;min-height:calc(100vh - var(--pf-hdr,64px))}
+.pf-lat{background:var(--surface);border-right:1px solid var(--line);padding:1rem .7rem 2rem;
+  position:sticky;top:var(--pf-hdr,64px);height:calc(100vh - var(--pf-hdr,64px));overflow-y:auto}
+.pf-lat .nav{display:flex;flex-direction:column;gap:.25rem;padding:0}
+.pf-lat .pf-grupo{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.2rem .6rem .5rem;margin-top:.9rem}
+.pf-lat .pf-grupo:first-child{margin-top:0}
+.pf-lat .nav button{display:block;width:100%;text-align:left;cursor:pointer;border:0;border-bottom:0;background:none;
+  padding:.55rem .7rem;border-radius:9px;color:var(--ink);font-size:.9rem;font-weight:400;letter-spacing:0}
+.pf-lat .nav button:hover:not([aria-selected="true"]){background:var(--panel);color:var(--ink)}
+.pf-lat .nav button[aria-selected="true"]{background:var(--bosque);color:var(--surface);font-weight:700}
+.pf-lat .nav button small{display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:1px}
+.pf-lat .nav button[aria-selected="true"] small{color:var(--surface);opacity:.8}
+.pf-layout > main{padding:24px 28px 40px;min-width:0;width:100%;max-width:1236px;justify-self:center}
+.topbar .areas{margin-left:0}
+@media (max-width:860px){
+  .pf-layout{grid-template-columns:1fr}
+  .pf-lat{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem .7rem}
+  .pf-lat .nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto}
+  .pf-lat .pf-grupo{display:none}
+  .pf-lat .nav button{width:auto;white-space:nowrap;flex:0 0 auto}
+  .pf-lat .nav button small{display:none}
+  .pf-layout > main{padding:16px 16px 32px}
+  header.top .wrap{padding:0 16px}
+}
+</style>
 
 <header class="top">
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
         <h1 class="logo"><span class="oculto">Rosanta · Recetario</span></h1>
-        <span class="sec">Recetario · 14° N · 91° W</span>
+        <span class="sec">Profit OS</span>
       </div>
       <div class="search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Buscar plato, ingrediente o proveedor…" autocomplete="off" aria-label="Buscar">
       </div>
-      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
-    </div>
-    <nav class="nav" role="tablist" aria-label="Secciones">
-      <button role="tab" data-view="inicio" aria-selected="true">Inicio</button>
-      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
-      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
-      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
-      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
-      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
-      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
-      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
-      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
-      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
-      <span class="areas" role="group" aria-label="Área">
+      <span class="areas" role="group" aria-label="Área de recetas y productos">
         <button data-area="COCINA" aria-pressed="true">Cocina</button>
         <button data-area="BARRA" aria-pressed="false">Barra</button>
         <button data-area="" aria-pressed="false">Todo</button>
       </span>
-    </nav>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
   </div>
   <div class="simbar" id="simbar" role="status">
     <span id="simtext"></span>
@@ -96,8 +120,26 @@
   <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
   <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
 </div>
-<main class="wrap">
-  <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la cocina?" arriba del
+<div class="pf-layout">
+  <aside class="pf-lat">
+    <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Secciones">
+      <div class="pf-grupo">Profit OS</div>
+      <button role="tab" data-view="inicio" aria-selected="true">Inicio<small>cocina y barra juntas</small></button>
+      <? if (rol === 'chef' || rol === 'sala' || rol === 'dueno') { ?><div class="pf-grupo"><?= rol === 'dueno' ? 'Por área' : 'Tu área' ?></div><? } ?>
+      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" class="pf-mia" data-view="cocina" aria-selected="false">Cocina<small>food cost, compras en efectivo</small></button><? } ?>
+      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" class="pf-mia" data-view="barrasala" aria-selected="false">Barra y Sala<small>barra, mesas, reservas</small></button><? } ?>
+      <div class="pf-grupo">Herramientas</div>
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
+      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
+      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
+    </nav>
+  </aside>
+<main>
+  <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la mercaderia?" arriba del
        inicio, solo para quien le toca (chef y dueño; sin quetzales para el chef). Se
        esconde junto con el inicio cuando se abre otra vista. -->
   <section id="lx-modulo" style="margin-bottom:1.4rem"></section>
@@ -110,11 +152,14 @@
   <section id="v-higiene" hidden></section>
   <section id="v-guia" hidden></section>
   <!-- Pestañas de area (27-sep-2026): el reporte semanal de cada area mas Compras en efectivo
-       (cocina) y Sala (barra y sala). Cada una es una pagina aparte (?page=profit-area) que se
-       monta aca la primera vez que se abre, como las pestañas de Finanzas. -->
+       (cocina) y Sala (barra y sala). Se pintan aca adentro la primera vez que se abren
+       (montarArea, abajo). Sin iframe: en /dev Google no deja enmarcar la app. -->
   <section id="v-cocina" hidden></section>
   <section id="v-barrasala" hidden></section>
 </main>
+</div>
+<!-- el cuerpo del reporte, para copiarlo en cada area (cada id se busca dentro de su area) -->
+<template id="rp-molde"><?!= incluirCrudo_('ReporteSemanalCuerpo') ?></template>
 
 <footer class="wrap pie">
   <span id="foot"></span>
@@ -134,17 +179,39 @@
    modulo. Si agregas una llamada nueva, pasale AUTH. */
 var AUTH = '<?= authToken ?>';
 /* la pestaña con la que abre (?vista=, lista cerrada en Code.js) */
+(function(){ function alto(){ var h=document.querySelector('header.top'); if(h) document.documentElement.style.setProperty('--pf-hdr', h.offsetHeight + 'px'); }
+  window.addEventListener('resize', alto); document.addEventListener('DOMContentLoaded', alto); setTimeout(alto, 0); })();
 window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
-/* Monta la pagina de un area en su pestaña, una sola vez: asi conserva la semana elegida
-   y lo que se estaba escribiendo al ir y volver entre pestañas. */
+/* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
+   estaba escribiendo). Sin iframe: el cuerpo del reporte se copia del <template> y cada
+   area lo pinta con RP_INICIAR dentro de su propia raiz. */
 function montarArea(v){
   var sec = document.getElementById('v-' + v);
-  if(!sec || sec.querySelector('iframe')) return;
-  var f = document.createElement('iframe');
-  f.title = v === 'cocina' ? 'Cocina' : 'Barra y Sala';
-  f.src = <?!= JSON.stringify(urlBase) ?> + '?page=profit-area&area=' + v + <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
-  f.style.cssText = 'width:100%;height:calc(100vh - 150px);min-height:560px;border:0;display:block;background:transparent';
-  sec.appendChild(f);
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.classList.add('pf-area');
+  var rep = '<section class="pa-sec pf-rep" style="margin-top:0"></section>';
+  if(v === 'cocina'){
+    sec.innerHTML = rep +
+      '<section class="pa-sec"><h2>Compras en efectivo</h2><p class="pa-intro">Cada retiro de cajero para compras de mercado necesita decir qué se compró. Sin eso el food cost no se puede auditar. Los retiros aparecen cuando se carga el estado de cuenta del banco.</p>' +
+      '<div class="pf-rt"><div class="rt-box">Leyendo los retiros del banco…</div></div></section>';
+    window.PF_RETIROS(sec.querySelector('.pf-rt'), AUTH);
+  } else {
+    sec.innerHTML = '<section class="pa-sec" style="margin-top:0"><h2>Sala</h2><p class="pa-intro">El número de sala es el ticket por comensal. Lo mueven la ocupación de lunes a miércoles, las reseñas y las mesas bien cerradas en Wix.</p>' +
+      '<div class="pf-lx" style="margin:1rem 0 1.2rem"></div><div class="pf-sl"><div class="sl-cargando">Leyendo las reservas y las reseñas…</div></div></section>' +
+      rep.replace(' style="margin-top:0"', '');
+    window.PF_SALA(sec.querySelector('.pf-sl'), AUTH);
+    var lx = sec.querySelector('.pf-lx');
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura && window.LECTURA) window.LECTURA.pintar(lx, r.lectura, {}); else lx.style.display = 'none'; })
+      .withFailureHandler(function () { lx.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'management');
+  }
+  var host = sec.querySelector('.pf-rep');
+  host.innerHTML = document.getElementById('rp-molde').innerHTML;
+  window.RP_INICIAR({ auth: AUTH, base: <?!= JSON.stringify(urlBase) ?>, t: <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>,
+    embebido: true, area: v, secciones: v === 'cocina' ? [5, 6] : [5, 6, 4],
+    titulo: v === 'cocina' ? 'Cocina: la semana' : 'Barra: la semana' }, host);
 }
 
 function iniciarApp(){
@@ -229,6 +296,9 @@ google.script.run
 google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData(AUTH);
 </script>
 <?!= incluirCrudo_('LecturaJs') ?>
+<?!= incluirCrudo_('ReporteSemanalJs') ?>
+<?!= incluirCrudo_('ProfitSalaJs') ?>
+<?!= incluirCrudo_('ProfitRetirosJs') ?>
 <script>
   (function () {
     var host = document.getElementById('lx-modulo');

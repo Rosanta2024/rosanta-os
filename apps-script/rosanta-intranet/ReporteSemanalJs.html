@@ -1,9 +1,15 @@
 <script>
 (function () {
-  /* Parcial SIN scriptlets: lo pega incluirCrudo_ en la pagina sola y en el tablero.
-     La pagina declara window.RP_CFG = { auth, base, t, embebido } antes de pegarlo.
+  /* Parcial SIN scriptlets: lo pega incluirCrudo_ en la pagina sola, en el tablero y en
+     Profit OS. La pagina declara window.RP_CFG = { auth, base, t, embebido } antes de
+     pegarlo y arranca sola; o no lo declara y llama window.RP_INICIAR(cfg, raiz), que es
+     lo que hace Profit OS (27-sep-2026) para pintar Cocina y Barra y Sala en la misma
+     pagina: cada una con su copia del cuerpo, y cada id se busca DENTRO de su raiz.
      El token va como PRIMER argumento en TODA llamada a google.script.run. */
-  var CFG = window.RP_CFG || {};
+  function iniciar(CFG, ROOT) {
+  CFG = CFG || {};
+  ROOT = ROOT || document;
+  function $(id) { return ROOT.querySelector('#' + id); }
   var AUTH = CFG.auth || '';
   var D = null, CLAVE = 0;
   /* Repartido por la intranet (27-sep-2026): la pagina puede pedir solo algunas secciones
@@ -35,13 +41,13 @@
   function pintar(d) {
     D = d; CLAVE = d.semana.clave;
     // "Guardar PDF en Drive": ruta del servidor con la semana que se esta viendo (solo dueño)
-    var pdfDrive = document.getElementById('rp-pdf-drive');
+    var pdfDrive = $('rp-pdf-drive');
     if (pdfDrive && SECC) pdfDrive.style.display = 'none';
     else if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
-    document.getElementById('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
+    $('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
       ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
-    document.getElementById('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;
-    var sel = document.getElementById('rp-sel');
+    $('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;
+    var sel = $('rp-sel');
     sel.innerHTML = d.semanas.map(function (s) {
       return '<option value="' + s.clave + '"' + (s.clave === d.semana.clave ? ' selected' : '') + '>S' + s.w + ' · ' + esc(s.ini) + ' al ' + esc(s.fin) + '</option>';
     }).join('');
@@ -233,11 +239,11 @@
       '</section>';
     }
 
-    document.getElementById('rp-todo').innerHTML = h;
-    document.getElementById('rp-todo').hidden = false;
-    document.getElementById('rp-cargando').hidden = true;
-    if (document.getElementById('ac-guardar')) document.getElementById('ac-guardar').addEventListener('click', guardarAccion);
-    document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+    $('rp-todo').innerHTML = h;
+    $('rp-todo').hidden = false;
+    $('rp-cargando').hidden = true;
+    if ($('ac-guardar')) $('ac-guardar').addEventListener('click', guardarAccion);
+    ROOT.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
   }
 
   function filaAccion(a) {
@@ -246,51 +252,51 @@
   }
 
   function guardarAccion() {
-    var msg = document.getElementById('ac-msg');
+    var msg = $('ac-msg');
     msg.textContent = 'Guardando…';
     google.script.run
       .withSuccessHandler(function (ac) {
         msg.textContent = 'Guardada.';
-        document.getElementById('ac-accion').value = ''; document.getElementById('ac-porque').value = '';
-        document.getElementById('acciones').innerHTML = ac.lista.map(filaAccion).join('');
-        document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+        $('ac-accion').value = ''; $('ac-porque').value = '';
+        $('acciones').innerHTML = ac.lista.map(filaAccion).join('');
+        ROOT.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
       })
       .withFailureHandler(function (e) { msg.textContent = String(e && e.message || e); })
-      .guardarAccionReporte(AUTH, { clave: CLAVE, accion: document.getElementById('ac-accion').value,
-                                    responsable: document.getElementById('ac-resp').value, porque: document.getElementById('ac-porque').value });
+      .guardarAccionReporte(AUTH, { clave: CLAVE, accion: $('ac-accion').value,
+                                    responsable: $('ac-resp').value, porque: $('ac-porque').value });
   }
   function borrarAccion(fila) {
     if (!window.confirm('¿Borrar esta acción?')) return;
     google.script.run
       .withSuccessHandler(function (ac) {
-        document.getElementById('acciones').innerHTML = ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>';
-        document.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
+        $('acciones').innerHTML = ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>';
+        ROOT.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
       })
       .withFailureHandler(function (e) { window.alert(String(e && e.message || e)); })
       .borrarAccionReporte(AUTH, Number(fila));
   }
 
   function cargar(clave, forzar) {
-    document.getElementById('rp-cargando').hidden = false;
-    document.getElementById('rp-todo').hidden = true;
-    document.getElementById('rp-error').hidden = true;
+    $('rp-cargando').hidden = false;
+    $('rp-todo').hidden = true;
+    $('rp-error').hidden = true;
     var run = google.script.run
       .withSuccessHandler(pintar)
       .withFailureHandler(function (e) {
-        document.getElementById('rp-cargando').hidden = true;
-        var el = document.getElementById('rp-error');
+        $('rp-cargando').hidden = true;
+        var el = $('rp-error');
         el.textContent = String(e && e.message || e); el.hidden = false;
       });
     if (AREA) run.getReporteArea(AUTH, clave || 0, AREA, !!forzar);
     else if (forzar) run.refrescarReporteSemanal(AUTH, clave || 0); else run.getReporteSemanal(AUTH, clave || 0);
   }
 
-  if (CFG.titulo) document.getElementById('rp-titulo').textContent = CFG.titulo;
-  document.getElementById('rp-sel').addEventListener('change', function () { cargar(Number(this.value), false); });
-  document.getElementById('rp-actualizar').addEventListener('click', function () { cargar(CLAVE, true); });
+  if (CFG.titulo) $('rp-titulo').textContent = CFG.titulo;
+  $('rp-sel').addEventListener('change', function () { cargar(Number(this.value), false); });
+  $('rp-actualizar').addEventListener('click', function () { cargar(CLAVE, true); });
   // Dentro del tablero, imprimir la pagina imprimiria las siete pestañas: se abre la
   // pagina sola del reporte (?page=reporte-semanal) y desde ahi se imprime.
-  var imprimir = document.getElementById('rp-imprimir');
+  var imprimir = $('rp-imprimir');
   if (SECC) {
     imprimir.style.display = 'none';   // el documento para imprimir es el reporte entero
   } else if (CFG.embebido) {
@@ -300,7 +306,10 @@
     imprimir.addEventListener('click', function () { window.print(); });
   }
   // El tablero llama RP.recargar(true) desde su boton "Actualizar".
-  window.RP = { recargar: function (forzar) { cargar(CLAVE, !!forzar); } };
+  if (!CFG.area) window.RP = { recargar: function (forzar) { cargar(CLAVE, !!forzar); } };
   cargar(0, false);
+  }
+  window.RP_INICIAR = iniciar;
+  if (window.RP_CFG) iniciar(window.RP_CFG, document);
 })();
 </script>

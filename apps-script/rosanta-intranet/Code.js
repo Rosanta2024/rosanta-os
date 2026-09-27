@@ -183,16 +183,6 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
-  // Las pestañas de area de Profit OS (27-sep-2026): Cocina (food cost, compra contra techo,
-  // platos, compras en efectivo) y Barra y Sala (lo mismo de barra, la sala de José y las
-  // reservas). CosteoVista las embebe; cada una es de su jefe y del dueño.
-  if (pagina === 'profit-area' && usuarioTieneModulo(usuario, 'recetario')) {
-    var areaPa = (e && e.parameter && e.parameter.area) || '';
-    if (REP_AREAS_ROLES.hasOwnProperty(areaPa) && REP_AREAS_ROLES[areaPa].indexOf(normalizar_(usuario.rol)) !== -1) {
-      return render_('ProfitAreaVista', { usuario: usuario, urlBase: urlBase, authToken: authToken, area: areaPa })
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-    }
-  }
 
   // Vista CRM: contactos de la maestra arriba, conversación del bot abajo.
   if (pagina === 'crm' && usuarioTieneModulo(usuario, 'crm')) {
