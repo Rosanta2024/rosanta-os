@@ -231,6 +231,7 @@ function _tabFundamentos_(out, P, hoy, auth) {
     fuente: 'FinanzasDatos › total.ventas + meses[].eventos', enlace: 'finanzas&sub=comparativo'
   });
   out.lectura = medLecturaFundamentos_(out, d, M, c, hoy);
+  try { out.vision = medVision_({ rol: 'dueno' }); } catch (eV) { out.vision = null; }
 }
 
 // ------------------------------------------------------------- 02 Management

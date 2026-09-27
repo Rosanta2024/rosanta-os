@@ -226,6 +226,12 @@ function vigiaReglas_(ctx) {
     var fechas = Object.keys(ctx.cierres).sort(), ult = fechas.length ? fechas[fechas.length - 1] : null;
     if (ult && !ctx.cierres[ayer]) aviso('dueno', 'No llegó el cierre de PosFile de ayer (el último es del ' + ult + '). La venta del mes queda hasta ese día.');
   }
+  // V12 · la experiencia: el promedio de las reseñas nunca baja de 4.8 (piso duro de la vision)
+  if (ctx.resenas && ctx.resenas.estrellas_4 !== null && ctx.resenas.estrellas_4 < MED_VISION_.resenas) {
+    var tx = 'Las reseñas de las últimas 4 semanas promedian ' + ctx.resenas.estrellas_4 + '★: bajo el piso de ' + MED_VISION_.resenas + '★ de la visión.';
+    aviso('dueno', tx, true); aviso('sala', tx + ' Revisar en el huddle qué se quejó el cliente.', true);
+    sugerir('V12-experiencia', 'management', 'José', 'Reseñas en ' + ctx.resenas.estrellas_4 + '★ (piso 4.8): leer las reseñas bajas con el equipo y corregir la causa esta semana.');
+  }
   // V10 · reseñas de la semana, desde el jueves
   if (ctx.resenas && dia >= 4 && ctx.resenas.esta_semana < M.resenas.valor) {
     aviso('sala', 'Reseñas de Google esta semana: ' + ctx.resenas.esta_semana + ' de ' + M.resenas.valor + '. Pedirlas en el huddle de hoy.');

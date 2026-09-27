@@ -26,6 +26,13 @@
     var qs = authToken ? ('&u=' + authToken) : '';
   ?>
   <main>
+    <!-- Vision 2027 (aprobada por Juanma el 27-sep-2026): la punta de la cadena. -->
+    <section class="vi" id="vi">
+      <div class="vi-l">Visión 2027</div>
+      <h2 class="vi-t">En 2027 Rosanta se paga sola.</h2>
+      <p class="vi-x" id="vi-x">Cubre todos los meses el costo de vida de su dueño, devuelve lo invertido a Raúl, hace de los eventos su segunda línea de negocio y funciona una semana completa sin Juanma, sin bajar la experiencia de mesa ni la cocina de temporada.</p>
+      <div class="vi-p" id="vi-p"><span class="vi-c">Leyendo cómo vamos…</span></div>
+    </section>
     <h1>Panel principal</h1>
     <p>Elige un modulo para empezar.</p>
     <? var rolTs = String(usuario.rol || '').toLowerCase(); ?>
@@ -94,6 +101,15 @@
     </div>
   </main>
   <style>
+    .vi { background: var(--verde-bosque); color: #fff; border-radius: 20px; padding: 1.2rem 1.4rem; margin-bottom: 1.4rem; }
+    .vi-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; }
+    .vi-t { color: #fff; font-size: 1.6rem; margin: 0.2rem 0 0.3rem; }
+    .vi-x { margin: 0 0 0.9rem; font-size: 0.95rem; line-height: 1.5; max-width: 80ch; opacity: 0.95; }
+    .vi-p { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.6rem; }
+    .vi-i { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.78rem; }
+    .vi-i b { font-size: 0.86rem; } .vi-i .h { font-size: 0.95rem; font-weight: 700; } .vi-i .m { opacity: 0.8; }
+    .vi-i i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.35rem; }
+    .vi-c { font-size: 0.85rem; opacity: 0.8; }
     .ts { background: #fff; border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; margin-top: 1rem;
           display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem 1.4rem; align-items: center; }
     .ts-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #5b56a6; }
@@ -106,6 +122,26 @@
     .ts-b { background: var(--verde-bosque); color: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
     @media (max-width: 700px) { .ts { grid-template-columns: 1fr; } }
   </style>
+  <script>
+    (function () {
+      var el = document.getElementById('vi-p');
+      if (!el) return;
+      var AUTH = '<?= authToken ?>';
+      var COL = { verde: '#9be3b5', amarillo: '#f1cf7a', rojo: '#f3a195', gris: 'rgba(255,255,255,0.5)' };
+      function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      google.script.run
+        .withSuccessHandler(function (v) {
+          if (!v) return;
+          el.innerHTML = (v.puntos || []).map(function (p) {
+            return '<div class="vi-i"><b><i style="background:' + (COL[p.zona] || COL.gris) + '"></i>' + esc(p.nombre) + '</b>' +
+                   '<span class="h">' + esc(p.hoy) + '</span><span class="m">meta: ' + esc(p.meta) + '</span></div>';
+          }).join('');
+        })
+        .withFailureHandler(function () { el.innerHTML = ''; })
+        .getVision(AUTH);
+    })();
+  </script>
   <script>
     (function () {
       var el = document.getElementById('ts-items');

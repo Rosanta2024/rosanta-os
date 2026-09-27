@@ -989,3 +989,65 @@ function medGuardarDesdeReporte_(clave, accion, depto, porque, u) {
   sh.appendRow(fila);
   SpreadsheetApp.flush();
 }
+
+// ============================================================================
+// VISION 2027 (27-sep-2026, aprobada por Juanma)
+// ============================================================================
+/*
+ * La punta de la cadena: vision → meta del negocio → un numero por pilar → palancas.
+ * Se muestra arriba del Panel principal (todo el equipo) y arriba de la Cascada del
+ * tablero. El avance de cada punto sale de los motores; el equipo lo ve en porcentajes
+ * y fechas, y solo el dueño ve los quetzales (el piso es su costo de vida personal).
+ * Documento: Rosanta OS / 01_Business_Fundamentals / 2026-09-27_Vision_2027.md
+ */
+var MED_VISION_ = {
+  titulo: 'En 2027 Rosanta se paga sola.',
+  texto: 'Cubre todos los meses el costo de vida de su dueño, devuelve lo invertido a Raúl, hace de los eventos ' +
+         'su segunda línea de negocio y funciona una semana completa sin Juanma, sin bajar la experiencia de mesa ' +
+         'ni la cocina de temporada.',
+  venta_2027: 2100000, eventos_pct: 15, food_pct: 28, ebitda_pct: 10, caja_dias: 21,
+  resenas: 4.8,        // piso duro (Juanma, 27-sep-2026): 'no debemos bajar nunca de 4.8'
+  ensayo: '2027-06-01', semana_sin_juanma: '2027-10-18'
+};
+
+function medVision_(u) {
+  var rol = normalizar_(u && u.rol), conQ = rol === 'dueno', hoy = new Date();
+  var V = MED_VISION_, puntos = [];
+  function p(nombre, hoyTxt, meta, zona) { puntos.push({ nombre: nombre, hoy: hoyTxt, meta: meta, zona: zona || 'gris' }); }
+  var d = null, P = null, M = null, c = null;
+  try { d = _finDatos_(false); P = tabParametros_(); M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P); } catch (e) { d = null; }
+  if (d) {
+    var totV = d.total.ventas, totE = (d.meses || []).reduce(function (a, x) { return a + (x.eventos || 0); }, 0);
+    if (conQ) {
+      try { c = medCascadaResumen_(d, P, M, hoy); } catch (e2) { c = null; }
+      p('Se paga sola', c && c.deja !== null ? 'deja ' + medQ_(c.deja) + ' (mes en curso, en proporción)' : '—',
+        'piso Q18,896 los 12 meses · venta ' + medQ_(V.venta_2027), c ? c.deja_zona : 'gris');
+      p('Devuelve lo invertido', 'el pago es el 15-mar-2027', 'Q100,000 a Raúl (mínimo ~Q60,000)', 'gris');
+    } else {
+      p('Se paga sola', 'se mide con la meta del mes', 'cubrir la meta los 12 meses de 2027', 'gris');
+    }
+    var pe = (totV + totE) ? Math.round(totE / (totV + totE) * 1000) / 10 : null;
+    p('Eventos, segunda línea', pe !== null ? pe + '% del ingreso ' + d.anio : '—', V.eventos_pct + '% del ingreso',
+      pe === null ? 'gris' : (pe >= V.eventos_pct ? 'verde' : (pe >= V.eventos_pct / 2 ? 'amarillo' : 'rojo')));
+    var u4 = d.ultima || {};
+    p('Rentable: food cost', u4.cogs_m4 + '%', V.food_pct + '%', tabZona_(u4.cogs_m4, V.food_pct, V.food_pct + 5, 'menor'));
+    if (conQ) {        // la salud de la caja la ve el dueño, no el equipo
+      p('Rentable: EBITDA del año', d.total.ebitdap + '%', 'más de ' + V.ebitda_pct + '%', tabZona_(d.total.ebitdap, V.ebitda_pct, 0, 'mayor'));
+      p('Rentable: días de caja', String(d.dias_caja), V.caja_dias + ' días', tabZona_(d.dias_caja, V.caja_dias, 7, 'mayor'));
+    }
+  }
+  var faltan = function (iso) { var q = iso.split('-'); return Math.ceil((new Date(Number(q[0]), Number(q[1]) - 1, Number(q[2])) - hoy) / 86400000); };
+  p('Sin Juanma', 'ensayo de 3 días en junio 2027 (faltan ' + faltan(V.ensayo) + ' días)', 'semana completa desde el 18-oct-2027 con el tablero en verde', 'gris');
+  var rs = null;
+  try { rs = medResenas_(hoy); } catch (e3) { rs = null; }
+  p('Sin bajar la experiencia', rs && rs.estrellas_4 !== null ? rs.estrellas_4 + '★ en las reseñas de las últimas 4 semanas' : 'sin dato de reseñas',
+    'nunca bajo ' + V.resenas + '★', rs && rs.estrellas_4 !== null ? (rs.estrellas_4 >= V.resenas ? 'verde' : 'rojo') : 'gris');
+  return { titulo: V.titulo, texto: V.texto, puntos: puntos, con_q: conQ };
+}
+
+/** La vision para el panel principal y el tablero. Cualquiera identificado la ve. */
+function getVision(auth) {
+  var u = resolverUsuario_(auth);
+  if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
+  return medVision_(u);
+}
