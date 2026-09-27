@@ -110,6 +110,10 @@ Juanma: "Genera el PDF de la S37 en su carpeta". El generador viejo (`generar_re
 - **Hecho en vivo (HEAD, 26-sep 19:29):** `Rosanta_S37_2026.pdf` en `Reportes 2026/S37` (id `1hi4uFJUZHlWXZXJxrTuos28sxYwvMHDO` en la primera corrida; las repeticiones archivaron la anterior en `S37/_Archive`). 6 páginas; S37 07/09–13/09: ventas Q27,628 (43 tickets, 89 comensales), gasto Q30,891, resultado −Q3,263, ticket Q310; PE Q34,052 con margen 45.3% (móvil de esa semana); food cost 58.1%; cocina +Q6,699 sobre el techo (exige Q14,805 de venta), barra +Q1,451. Primera versión sin barras (el conversor ignora los fondos de celda): se cambiaron a bordes de ancho % con columna fija del 22%.
 - Batería sobre HEAD con el PDF: 129 OK · 0 fallas · 4 avisos · 3 saltadas (dos corridas: 191 s y 234 s). Corrida final con las barras arregladas: 128 OK · 0 fallas · 5 avisos · 3 saltadas (183 s); el quinto aviso es "El calentador no reconstruye si el cache ya esta caliente" (tardó 5.1 s), que va y viene con el estado del caché y no toca este cambio. **HEAD = disco (68 archivos). Sin publicar: queda para el "publica" de Juanma (sería la @128).**
 
+## 27-sep: el reporte viejo se archiva entero (decisión de Juanma: "elimina el reporte y todos sus componentes")
+
+Nada se borra, se archiva: `Rosanta OS/_Archive/2026-09-27_Reporte_Semanal_Python/` con `generar_reporte_semanal.py` y `Rosanta_Formato_Reporte_Semanal.md` (movidos desde la carpeta Maestro), el `SKILL.md` de la tarea del lunes (y su copia previa al venv), la skill instalada `rosanta-reporte-semanal-formato` (movida desde skills-plugin) y un `LEEME.txt` con el porqué. La tarea `rosanta-reporte-semanal` se eliminó del programador: quedan ocho routines. Los PDF ya generados siguen en sus carpetas SXX. Cerebro v28 y `ecosistema.md` actualizados. `tools/arreglar-cwd-routines/estado-esperado.txt` (de otra sesión) sigue listando nueve routines: corregirlo cuando esa sesión lo retome.
+
 ## Cómo se publicó (para la próxima vez)
 
 1. `clasp login` con restaurante@rosanta.rest (solo Juanma; abre el navegador).

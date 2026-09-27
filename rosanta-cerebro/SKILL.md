@@ -7,7 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 26 sep 2026, noche (v28).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 27 sep 2026 (v28).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
@@ -19,7 +19,7 @@ Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ningun
 - **Compras contra su techo (pedido de Juanma):** en la sección 5, por área y para las cuatro semanas, compra del motor contra techo = venta del área × meta, barra en rojo si se pasó, y la **venta extra que exige** el exceso (× 100 ÷ margen de contribución, hoy ×1.99). La venta por área de cada semana sale de UNA lectura de VENTAS x PLATO sobre las cuatro semanas (`ventasDelRango_` devuelve ahora `fecha` por línea). Caché `rep_sem_v2_`. En la S38: cocina +Q2,091 sobre el techo (exige Q4,160 de venta), barra +Q161.
 - **La S37 no tenía PDF** en `Reportes 2026/S37`: era dato, no código. Se generó la noche del 26-sep con lo de abajo.
 
-**Noche del 26-sep: el PDF del reporte sale del servidor (`ReporteSemanalPdf.js`).** Juanma pidió "Genera el PDF de la S37 en su carpeta". El generador viejo (`Maestro/generar_reporte_semanal.py`) tiene todos los números de la S38 escritos a mano: alimentarlo para la S37 habría sido un segundo motor. Ahora `_repHtmlPdf_(d)` arma el HTML estático de las 8 secciones desde `_repDatos_` (tablas simples; las barras son bordes de ancho %, porque el conversor de Apps Script ignora los fondos de celda), `Utilities.newBlob(html).getAs(PDF)` lo convierte y `_repPdfGuardar_(clave)` lo guarda con Drive v3 en `Reportes 2026/SXX/Rosanta_SXX_AAAA.pdf`, **archivando el anterior en `SXX/_Archive` con fecha** (nada se borra) y borrando el caché `tab_docs_v1`. Entradas: `generarPdfReporteSemanal(auth, clave)` (dueño) y la ruta **`?page=reporte-semanal-pdf&semana=CLAVE`** (clave = año×100 + semana ISO, p. ej. 202637), que es el destino del botón **"Guardar PDF en Drive"** de la pantalla y del tablero. Prueba: "El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla" (8 secciones, la venta, `%PDF`; no escribe en Drive). `Rosanta_S37_2026.pdf` quedó en su carpeta: 6 páginas, S37 07/09–13/09, ventas Q27,628, PE Q34,052 (mc 45.3% con la móvil de esa semana), cocina +Q6,699 sobre el techo. **El formato de 6 páginas (`Rosanta_Formato_Reporte_Semanal.md`) y el Python quedan como historia; decisión pendiente: retirar o redirigir la tarea del lunes `rosanta-reporte-semanal`.** Cuando la extensión de Chrome se cae, el navegador propio de la app sirve si Juanma inicia sesión en el panel: `navigate` y `screenshot` funcionan; `get_page_text` no ve el iframe.
+**Noche del 26-sep: el PDF del reporte sale del servidor (`ReporteSemanalPdf.js`).** Juanma pidió "Genera el PDF de la S37 en su carpeta". El generador viejo (`Maestro/generar_reporte_semanal.py`) tiene todos los números de la S38 escritos a mano: alimentarlo para la S37 habría sido un segundo motor. Ahora `_repHtmlPdf_(d)` arma el HTML estático de las 8 secciones desde `_repDatos_` (tablas simples; las barras son bordes de ancho %, porque el conversor de Apps Script ignora los fondos de celda), `Utilities.newBlob(html).getAs(PDF)` lo convierte y `_repPdfGuardar_(clave)` lo guarda con Drive v3 en `Reportes 2026/SXX/Rosanta_SXX_AAAA.pdf`, **archivando el anterior en `SXX/_Archive` con fecha** (nada se borra) y borrando el caché `tab_docs_v1`. Entradas: `generarPdfReporteSemanal(auth, clave)` (dueño) y la ruta **`?page=reporte-semanal-pdf&semana=CLAVE`** (clave = año×100 + semana ISO, p. ej. 202637), que es el destino del botón **"Guardar PDF en Drive"** de la pantalla y del tablero. Prueba: "El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla" (8 secciones, la venta, `%PDF`; no escribe en Drive). `Rosanta_S37_2026.pdf` quedó en su carpeta: 6 páginas, S37 07/09–13/09, ventas Q27,628, PE Q34,052 (mc 45.3% con la móvil de esa semana), cocina +Q6,699 sobre el techo. **27-sep-2026, decisión de Juanma ("elimina el reporte y todos sus componentes"): el reporte viejo se ARCHIVÓ entero en `Rosanta OS/_Archive/2026-09-27_Reporte_Semanal_Python/` (el Python, `Rosanta_Formato_Reporte_Semanal.md`, el SKILL.md de la tarea y la skill `rosanta-reporte-semanal-formato`, con LEEME) y la tarea del lunes `rosanta-reporte-semanal` se eliminó del programador. Son OCHO routines desde entonces. El único reporte semanal es el de la intranet; su PDF sale de `?page=reporte-semanal-pdf`.** Cuando la extensión de Chrome se cae, el navegador propio de la app sirve si Juanma inicia sesión en el panel: `navigate` y `screenshot` funcionan; `get_page_text` no ve el iframe.
 
 **El equipo estuvo en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería sobre ese HEAD: **127 OK · 0 fallas · 5 avisos · 3 saltadas** (237 s). Commits `c0a0cb7` y `a03479b` en `rosanta-os/main`. Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md` (secciones @125, corrección y @126).
 
@@ -158,7 +158,7 @@ escribiendo a la vez, una tarea que guarde sola es la forma más rápida de perd
 | `rosanta-latido-reservas-web` | diaria 8:10 | activa |
 | `rosanta-latido-repo` | diaria 8:24 | activa, **nueva** |
 | `morning-brief-juanma` | L–V 6:06 | activa |
-| `rosanta-reporte-semanal` | lunes 16:24 | activa |
+| ~~`rosanta-reporte-semanal`~~ | ~~lunes 16:24~~ | **eliminada el 27-sep-2026** (archivada en `_Archive/2026-09-27_Reporte_Semanal_Python`) |
 | `rosanta-cierre-semanal` | domingos 18:20 | activa |
 | `rosanta-cerebro-mantenimiento` | día 1, 9:07 | activa |
 | `rosanta-reporte-mensual` | día 3, 9:08 | activa |
@@ -305,7 +305,7 @@ verificación**. Vale escribirlas porque el error es repetible:
 | `rosanta-latido-reservas-web` | diaria 8:10 |
 | `morning-brief-juanma` | L–V 6:06 |
 | `rosanta-analista-pauta-lunes` | **borrada** el mismo día por Juanma |
-| `rosanta-reporte-semanal` | lunes 16:24 |
+| ~~`rosanta-reporte-semanal`~~ | eliminada el 27-sep-2026 |
 | `rosanta-cierre-semanal` | domingos 18:20 |
 | `rosanta-cerebro-mantenimiento` | día 1, 9:07 |
 | `rosanta-reporte-mensual` | día 3, 9:08 |
