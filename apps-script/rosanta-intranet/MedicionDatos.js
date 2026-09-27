@@ -738,7 +738,7 @@ function marcarAccion(auth, fila, estado, textoEsperado) {
  * y Sala muestran arriba el mismo bloque que el tablero. Quien la pide:
  *   dueno  cualquier pilar
  *   chef   profit (sin quetzales, regla del 15-sep)
- *   sala   management
+ *   sala   management y profit (la barra es de José; sin quetzales)
  *   pauta  marketing
  *   modulo finanzas  finanzas
  */
@@ -747,7 +747,7 @@ function getLecturaPilar(auth, pilar) {
   if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
   var rol = normalizar_(u.rol);
   var ok = rol === 'dueno' ||
-           (pilar === 'profit' && rol === 'chef') ||
+           (pilar === 'profit' && (rol === 'chef' || rol === 'sala')) ||   // barra es de José
            (pilar === 'management' && rol === 'sala') ||
            (pilar === 'marketing' && rol === 'pauta') ||
            (pilar === 'finanzas' && usuarioTieneModulo(u, 'finanzas'));
@@ -866,17 +866,28 @@ function medLecturaProfit_(out, d, M, hoy, conQ) {
   var falt = [];
   if (c3 && c3.zona !== 'verde') falt.push({ texto: 'Inventario de cocina: último cerrado ' + c3.valor + '. Sin el cierre, la brecha real no se puede ajustar.', zona: c3.zona });
   if (b3 && b3.zona !== 'verde') falt.push({ texto: 'Inventario de barra: último cerrado ' + b3.valor + '.', zona: b3.zona });
-  if (rm && rm.n && rm.con_detalle < rm.n) falt.push({ texto: (rm.n - rm.con_detalle) + ' retiros de cajero sin detalle este mes' + (conQ ? ' (' + medQ_(rm.q - rm.q_con) + ')' : '') + ': anotar qué se compró en la página Retiros.', zona: 'rojo' });
-  return { pilar: 'profit', titulo: 'Profit OS', dueno: 'Jeffry',
-    pregunta: '¿Se nos va la plata en la cocina?',
+  if (rm && rm.n && rm.con_detalle < rm.n) falt.push({ texto: (rm.n - rm.con_detalle) + ' retiros de cajero sin detalle este mes' + (conQ ? ' (' + medQ_(rm.q - rm.q_con) + ')' : '') + ': anotar qué se compró en Profit OS › Cocina › Compras en efectivo.', zona: 'rojo' });
+  // Profit es cocina Y barra (Juanma, 27-sep-2026): el numero es el food cost de las dos
+  // juntas y debajo va cada area de la semana, del mismo calculo que el reporte semanal.
+  var fc = null;
+  try { fc = _repDatos_(0, false).foodcost; } catch (e2) { fc = null; }
+  function zonaArea(x) { return !x || x.real_pct === null || x.real_pct === undefined ? 'gris' : (x.real_pct <= x.meta ? 'verde' : (x.real_pct <= x.meta + 3 ? 'amarillo' : 'rojo')); }
+  var extras = fc ? [
+    { valor: fc.cocina.real_pct === null ? '—' : fc.cocina.real_pct + '%', etiqueta: 'cocina esta semana · meta ' + fc.cocina.meta + '% · Jeffry', zona: zonaArea(fc.cocina) },
+    { valor: fc.barra.real_pct === null ? '—' : fc.barra.real_pct + '%', etiqueta: 'barra esta semana · meta ' + fc.barra.meta + '% · José', zona: zonaArea(fc.barra) }
+  ] : [];
+  return { pilar: 'profit', titulo: 'Profit OS', dueno: 'Jeffry (cocina) · José (barra)',
+    pregunta: '¿Se nos va la plata en la mercadería, cocina y barra?',
     zona: k11 ? k11.zona : 'gris',
     respuesta: medZonaTexto_(k11 && k11.zona, 'No. El food cost está en ' + u.cogs_m4 + '%, dentro del tramo del mes (≤' + tramo + '%).',
       'Un poco. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%.',
       'Sí. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%. La meta final es ' + d.meta_cogs + '%.'),
-    numero: { valor: u.cogs_m4 + '%', etiqueta: 'food cost real, móvil de 4 semanas · S' + u.w, meta: 'tramo ≤' + tramo + '% · meta ' + d.meta_cogs + '%', zona: k11 ? k11.zona : 'gris' },
-    extras: [],
+    numero: { valor: u.cogs_m4 + '%', etiqueta: 'food cost de cocina y barra juntas, móvil de 4 semanas · S' + u.w, meta: 'tramo ≤' + tramo + '% · meta ' + d.meta_cogs + '%', zona: k11 ? k11.zona : 'gris' },
+    extras: extras,
     serie: { titulo: 'Food cost por semana (móvil 4), contra el tramo', unidad: '%', sentido: 'menor', meta: tramo, puntos: medSerie_(d, 'cogs_m4', 8) },
     palancas: [
+      medPal_('Food cost de cocina, semana', 'Jeffry', fc ? { zona: zonaArea(fc.cocina) } : null, fc && fc.cocina.real_pct !== null ? fc.cocina.real_pct + '%' : '—', fc ? '≤' + fc.cocina.meta + '%' : '—', 'Detalle en la pestaña Cocina.'),
+      medPal_('Food cost de barra, semana', 'José', fc ? { zona: zonaArea(fc.barra) } : null, fc && fc.barra.real_pct !== null ? fc.barra.real_pct + '%' : '—', fc ? '≤' + fc.barra.meta + '%' : '—', 'Detalle en la pestaña Barra y Sala.'),
       medPal_('Brecha real contra teórico', 'Jeffry', k12, k12 && k12.valor !== null ? (k12.valor > 0 ? '+' : '') + k12.valor + ' pts' : '—', '≤' + (M.brecha.valor || 2) + ' pts', 'Recepción, almacén y porciones.'),
       medPal_('Retiros de cajero con detalle', 'Jeffry', k22, rm ? rm.con_detalle + ' de ' + rm.n : '—', '100%', ''),
       medPal_('Inventario de cocina cerrado', 'Jeffry', c3, c3 ? String(c3.valor) : '—', 'antes del día 5', ''),
