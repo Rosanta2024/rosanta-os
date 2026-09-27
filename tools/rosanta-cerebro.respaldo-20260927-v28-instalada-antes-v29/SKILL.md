@@ -7,73 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 27 sep 2026, tarde (v29).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
-
----
-
-## Cierre del 27 sep 2026, tarde (v29): la pauta decide con hechos; el Panel de Asesores se retira
-
-### 1. Lo que se publicó en la @131 (27-sep, mañana), que ninguna versión del cerebro tenía
-
-- **Sistema de decisión de pauta** (`PautaSistema.js`, commit 1056076), pestaña **⚖️ Decisiones de pauta**
-  de Marketing. Proceso **sin juicio de IA** (decisión de Juanma): hechos → validación → reglas → **UNA
-  decisión por semana** → aprendizaje. Pestañas propias en la Sheet del Marketing OS: `hechos_semana`,
-  `pixel_semana`, `estados_semana`, `reglas` (umbrales, los edita solo el dueño), `supuestos`
-  (verificado / por_verificar / falso) y `bitacora_pruebas`. **A propósito NO están en `SCHEMA`**, para
-  que `mktReplace` no las pise. Activador semanal `psCapturaLunes` (se crea a mano en Editor ›
-  Activadores). Batería: grupo "9. Sistema de pauta" en `PruebasPauta.js`.
-- **Sistema de Medición v1** (commit 3c2cd87): franja **"Mi palanca"** arriba del Dashboard de Pauta
-  (`MedicionDatos.js › getMiPalancaPauta`), roles pauta y dueño. Plan en
-  `02_Management_OS/2026-09-27_Sistema_de_Medicion_Rosanta.md`: **el número de Marketing es COMENSALES DEL
-  MES** (dueño Juanma; oct 580 · nov 630 · dic 800). Palancas de Vanessa: **clientes nuevos** (oct 40 ·
-  nov 50 · dic 55) y **CAC ≤ Q60**, publicado solo con lectura de Wix ≥ 50%. **"Reservas atribuidas"
-  quedó DESCARTADA como North Star: no se puede medir.**
-- **El 🧠 Diagnóstico IA se retiró**: recomendaba escalar con CTR y CPC sin ver una sola reserva.
-- La @131 se publicó sin abrir /dev ni correr la batería en el servidor (decisión de Juanma).
-
-### 2. Tarde: tres commits en git, subidos a HEAD, SIN publicar
-
-Commits `0f2dc6f`, `acd6b3d` y `beec65e`. `clasp push` verificado bajando HEAD aparte. **Producción
-sigue en la @131** hasta que Juanma corra la batería en /dev y diga sí. Informe:
-`apps-script/_informes/2026-09-27_Pauta_verificacion_congruencia_retiro_Panel.md`.
-
-1. **Panel de Asesores RETIRADO COMPLETO, lentes incluidas** (decisión de Juanma): fuera la pestaña 🧠, los
-   debates, `panelInvestigar`, el **AI CMO** ("Regenerar con aprendizajes" de la Estrategia) y las
-   constantes `LOOMER`/`SAVANNAH`. Razón: el sistema de decisión decide con hechos y reglas y el Sistema
-   de Medición fija las metas; cualquier "opinión experta" aparte es una **tercera voz que contradice a
-   las otras dos**. `debates` salió de `SCHEMA`; su pestaña **queda como historial OBSOLETO, no se borra**.
-   La Estrategia quedó como documento fijo que apunta al Sistema de Medición. **NO construir nada sobre el
-   Panel ni reponer lentes con nombre de experto.** La sesión "Panel de asesores de marketing" quedó vieja.
-2. **Estándar creativo de pauta de Rosanta** (`ESTANDAR_PAUTA` en `Marketing.html`): el Creador de pauta
-   sigue (produce anuncios, **no decide dinero**), pero como **regla de la casa sin nombres de personas**,
-   igual que Kaprica para el orgánico. Método: gancho de 3 s, video nativo UGC, el creativo es la
-   segmentación, iterar sobre ganadores, conceptos distintos (regla Andromeda). A cámara solo **Jeffry,
-   Maco o clientes reales**. Los números de "qué medir" **ya no están en el prompt**: salen de `reglas` y
-   solo de supuestos **verificados** (`psContextoCreativo`); el hook rate no se pide mientras
-   `s_definicion_video` esté por verificar. Cada concepto trae **"Registrar como prueba"** → bitácora como
-   *propuesta*; **una prueba en curso a la vez y solo el dueño la arranca**. El Creador lee como contexto
-   solo aprendizajes con fuente `prueba`. **Decidido: no hay skill local `rosanta-pauta-creativa`**; si
-   algún día hace falta, lee la constante del repo en vez de copiarla.
-3. **La decisión se amarró al Sistema de Medición:** ESCALAR (R3) ahora pide volumen (`reservas_min_escalar`
-   = 6), reservas de Wix ≥ su base, **comensales de la semana ≥ ritmo de la meta del mes** y, con lectura
-   ≥ `lectura_min_juez` (50%), clientes nuevos al ritmo de su meta. **Sin meta de comensales en METAS no
-   se escala.** Métricas juez: entra `clientes_nuevos_negocio` (rechazada con lectura < 50%), **sale
-   `reservas_atribuidas`** (queda como diagnóstico). Motivo: con ~17 NewReservation por semana en la cuenta,
-   por conjunto son 0-2 y "subir dos semanas" era ruido. `MedicionDatos.js` **no se tocó**: solo se leen
-   `medMetasMes_`, `tabParametros_` y `crmAltasPorMes_`.
-
-### 3. Hallazgos y pendientes
-
-- **La captura nunca escribió:** al cierre, `hechos_semana` y `pixel_semana` tenían solo el encabezado.
-  Pendiente: que Juanma presione "📥 Capturar semana" y confirme filas.
-- Activador `psCapturaLunes`: sin confirmar (solo se ve en el editor).
-- `debates` tenía un debate **del mismo 27-sep**: el Panel se seguía usando el día que se retiró.
-- La pestaña `aprendizajes` tiene 3 filas de agosto con fuente "Panel de Asesores / AI CMO": se quedan como
-  historia; el Creador no las lee, el Plan del mes todavía sí.
-- Arnés nuevo: `tools/harness-intranet/harness-pauta.js` corre el grupo 9 y las guardas de srv() en Node
-  sin datos (26 pruebas del grupo 9, todas OK). Marketing quedó con 26 llamadas `srv('…')` (mínimo 10).
-- Aviso para Vanessa redactado en el informe (Diagnóstico IA retirado + instructivo de ⚖️ y "Mi palanca"):
-  **no se ha enviado**.
+**Última actualización: 27 sep 2026 (v28).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
@@ -1697,7 +1631,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 |---|---|---|
 | **Finanzas & Data OS** | ARRANCADO 2 sep. Maestro nativo validado 8/8 meses, cálculo nuevo (reglas 10–14), ~~forecast de caja~~ **HECHO** (pestaña Caja, @93). Falta: panel de integridad, registro de compra de mercado, documentar el cargador | `references/negocio.md`, `references/proyectos.md` §5 |
 | **Profit OS** | En funcionamiento (S35). Recetario v14 nativo, inventarios integrados. Merma y SPLH diferidos | `references/proyectos.md` §2 |
-| **Marketing OS** | En funcionamiento. **Desde el 27-sep (v29): decide ⚖️ Decisiones de pauta (hechos + reglas, sin IA), las metas las fija el Sistema de Medición (comensales del mes, clientes nuevos, CAC), el Creador de pauta aplica el estándar creativo de la casa. Panel de Asesores, lentes, AI CMO y Diagnóstico IA RETIRADOS.** ~~En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 y Diagnóstico IA con Lente Loomer + AI CMO en la @100, ambos del 16 sep.** Pendiente: memoria del diagnóstico en la Sheet (v20 §3). Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor~~ | `references/marketing.md` |
+| **Marketing OS** | En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 y Diagnóstico IA con Lente Loomer + AI CMO en la @100, ambos del 16 sep.** Pendiente: memoria del diagnóstico en la Sheet (v20 §3). Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
 | **Back office / Operations Hub** | **11 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), 0 código en Drive, guardián vivo. Abierto: 1,0 GB en duplicados, 374 punteros, credenciales en texto plano | `references/ecosistema.md` |
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |

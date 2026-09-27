@@ -32,7 +32,7 @@ Mapa de skills, artefactos y automatizaciones. Usar la herramienta correcta seg�
 
 | Skill | Para qué |
 |---|---|
-| `rosanta-analista-pauta` | Diagnóstico Meta Ads contra benchmarks propios (escalar/ajustar/apagar). ~~Desde la @100 el mismo criterio corre dentro de la intranet con Lente Loomer + AI CMO~~ (retirado el 27-sep-2026: en la intranet decide ⚖️ Decisiones de pauta, con hechos y reglas); la skill queda para análisis a mano en chat |
+| `rosanta-analista-pauta` | Diagnóstico Meta Ads contra benchmarks propios (escalar/ajustar/apagar). Desde la @100 el mismo criterio corre dentro de la intranet con Lente Loomer + AI CMO; la skill queda para análisis a mano en chat |
 | `rosanta-espia-pauta` | Inteligencia competitiva vía Ad Library de Meta |
 | `rosanta-autopsia-contenido` | Forense del contenido orgánico → decisiones de calendario |
 | `rosanta-seo-local` | SEO local + AI-SEO (GBP, sitio, FAQ, presencia en IAs) |
@@ -112,7 +112,7 @@ Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificaci
 | `morning-brief-juanma` | L–V 6:02 | Brief diario con los 3 N1 del tablero |
 | ~~`rosanta-seguimiento-offsite`~~ | ~~Lunes 8:05~~ | **APAGADA** (`enabled: false`). Reputación TripAdvisor + listicles. No asumirla viva |
 | ~~`rosanta-analista-pauta-lunes`~~ | ~~Lunes 8:08~~ | **RETIRADA por Juanma el 16-sep-2026 (noche).** El análisis vive en la intranet (🧠 Diagnóstico IA, Lente Loomer + AI CMO, @100). Se perdió con ella la escritura automática del hallazgo semanal en `aprendizajes`: pendiente |
-| ~~`rosanta-reporte-semanal`~~ | — | **Eliminada el 27-sep-2026** por decisión de Juanma: el reporte vive en la intranet y su PDF sale del servidor (`?page=reporte-semanal-pdf`). Todo lo suyo quedó en `_Archive/2026-09-27_Reporte_Semanal_Python`. |
+| `rosanta-reporte-semanal` | **Lunes 16:06** | Valida la carga automática, procesa PDF de bancos, genera el PDF semanal. **Era 10:06** |
 | ~~`rosanta-dashboard-refresh`~~ | — | **YA NO EXISTE.** El dashboard semanal dejó de ser artefacto: la intranet es la única superficie del pilar 3 |
 | `rosanta-cierre-semanal` | Domingos 18:03 | Cierre de la semana → actualiza el tablero |
 | `rosanta-reporte-mensual` | **Día 3, 9:00** | Verifica que el mes anterior esté completo en el maestro (bancos, ventas, facturas, tarjeta, planilla) y avisa qué falta. **No calcula números ni toca artefactos** |

@@ -12,8 +12,8 @@ Fuente principal: Doc "Plan_Campana_Rosanta_jun-dic2026" (`19qeBduU8QM-7MnMLzP7w
 - Creativos: branding en primeros 3 s, CTA en últimos 2–3 s, todo video subtitulado. Benchmarks: Hook Rate ≥40–45%, retención ≥10–15%, costo por engagement < Q0.05.
 - **Meta (Andromeda): las variantes de un mismo video se tratan como duplicado.** Diversificar = videos conceptualmente distintos sobre UN mismo concepto, jamás el mismo material con otro gancho.
 - Todo copy pasa por `rosanta-kaprica` (formato) + `rosanta-brand-guidelines` (identidad).
-- **OBSOLETO desde el 27-sep-2026 (v29):** la "Lente Savannah Sanchez" pasó a ser el **estándar creativo de pauta de Rosanta**, sin nombres; qué medir sale de `reglas` y supuestos verificados, y cada concepto se registra como prueba. Texto viejo: **Pauta (desde la @99, 16 sep 2026):** los anuncios de Meta nacen del **🎯 Creador de pauta** de la intranet (Marketing OS › ✍️ Creador de Contenido), con la **Lente Savannah Sanchez** y sin Kaprica: gancho literal de 3 s, guión UGC, texto principal, titular, descripción, botón, utm_content, qué medir a 7 días. Lo opera Vanessa. Talento a cámara: Jeffry y Maco (Wilson ya no colabora).
-- **OBSOLETO desde el 27-sep-2026:** el 🧠 Diagnóstico IA (Lente Loomer + AI CMO) se **retiró**; decide ⚖️ Decisiones de pauta. Texto viejo: **Diagnóstico de pauta (desde la @100, 16 sep 2026):** el botón 🧠 Diagnóstico IA del Dashboard (junto a Actualizar, resultado arriba de los KPIs) razona con la **Lente Jon Loomer** y cierra con el **veredicto del AI CMO**; marca "⚠️ verificar en plataforma" lo que dependa de mecánica actual de Meta. Sigue sin memoria: cada diagnóstico se pierde al recargar (pendiente guardarlo en la Sheet). La tarea de los lunes `rosanta-analista-pauta-lunes` **se retiró el 16-sep** a favor de este botón; el hallazgo semanal en `aprendizajes` ya no se escribe solo.
+- **Pauta (desde la @99, 16 sep 2026):** los anuncios de Meta nacen del **🎯 Creador de pauta** de la intranet (Marketing OS › ✍️ Creador de Contenido), con la **Lente Savannah Sanchez** y sin Kaprica: gancho literal de 3 s, guión UGC, texto principal, titular, descripción, botón, utm_content, qué medir a 7 días. Lo opera Vanessa. Talento a cámara: Jeffry y Maco (Wilson ya no colabora).
+- **Diagnóstico de pauta (desde la @100, 16 sep 2026):** el botón 🧠 Diagnóstico IA del Dashboard (junto a Actualizar, resultado arriba de los KPIs) razona con la **Lente Jon Loomer** y cierra con el **veredicto del AI CMO**; marca "⚠️ verificar en plataforma" lo que dependa de mecánica actual de Meta. Sigue sin memoria: cada diagnóstico se pierde al recargar (pendiente guardarlo en la Sheet). La tarea de los lunes `rosanta-analista-pauta-lunes` **se retiró el 16-sep** a favor de este botón; el hallazgo semanal en `aprendizajes` ya no se escribe solo.
 
 ## Audiencias
 
@@ -36,7 +36,7 @@ Demografía Meta: 25–54 (pico 25–44), 57% mujeres, Antigua + Ciudad de Guate
 - Recuperación de carritos: circuito WIX → webhook Apps Script → Sheet Marketing OS → Meta CAPI. Secuencia WhatsApp+email (+24h, +72h, cierre 7d). Meta: 10% fase 2, 15% fase 3. **Campañas de retención ya corriendo** (adelantadas al invierno).
 - Tablero semanal: pauta (Vanessa), contenido (Daniel), reservas (Juanma). Cadencia: 4 piezas/semana, publica martes y viernes.
 - **Google Ads reactivado** el 10 ago 2026 (método de pago actualizado, riesgo de suspensión resuelto).
-- Plan de medios Ago–Oct de Vanessa aprobado con ajustes del Panel de Asesores (30 jul). *(El Panel de Asesores se retiró completo el 27-sep-2026.)*
+- Plan de medios Ago–Oct de Vanessa aprobado con ajustes del Panel de Asesores (30 jul).
 
 ## Medición: ROAS, CAC y analítica
 

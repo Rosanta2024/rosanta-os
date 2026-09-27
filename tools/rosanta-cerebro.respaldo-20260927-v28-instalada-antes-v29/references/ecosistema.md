@@ -32,7 +32,7 @@ Mapa de skills, artefactos y automatizaciones. Usar la herramienta correcta seg�
 
 | Skill | Para qué |
 |---|---|
-| `rosanta-analista-pauta` | Diagnóstico Meta Ads contra benchmarks propios (escalar/ajustar/apagar). ~~Desde la @100 el mismo criterio corre dentro de la intranet con Lente Loomer + AI CMO~~ (retirado el 27-sep-2026: en la intranet decide ⚖️ Decisiones de pauta, con hechos y reglas); la skill queda para análisis a mano en chat |
+| `rosanta-analista-pauta` | Diagnóstico Meta Ads contra benchmarks propios (escalar/ajustar/apagar). Desde la @100 el mismo criterio corre dentro de la intranet con Lente Loomer + AI CMO; la skill queda para análisis a mano en chat |
 | `rosanta-espia-pauta` | Inteligencia competitiva vía Ad Library de Meta |
 | `rosanta-autopsia-contenido` | Forense del contenido orgánico → decisiones de calendario |
 | `rosanta-seo-local` | SEO local + AI-SEO (GBP, sitio, FAQ, presencia en IAs) |

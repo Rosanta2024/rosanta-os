@@ -7,110 +7,9 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 27 sep 2026, tarde (v29).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 25 sep 2026, noche (v27).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
-
-## Cierre del 27 sep 2026, tarde (v29): la pauta decide con hechos; el Panel de Asesores se retira
-
-### 1. Lo que se publicó en la @131 (27-sep, mañana), que ninguna versión del cerebro tenía
-
-- **Sistema de decisión de pauta** (`PautaSistema.js`, commit 1056076), pestaña **⚖️ Decisiones de pauta**
-  de Marketing. Proceso **sin juicio de IA** (decisión de Juanma): hechos → validación → reglas → **UNA
-  decisión por semana** → aprendizaje. Pestañas propias en la Sheet del Marketing OS: `hechos_semana`,
-  `pixel_semana`, `estados_semana`, `reglas` (umbrales, los edita solo el dueño), `supuestos`
-  (verificado / por_verificar / falso) y `bitacora_pruebas`. **A propósito NO están en `SCHEMA`**, para
-  que `mktReplace` no las pise. Activador semanal `psCapturaLunes` (se crea a mano en Editor ›
-  Activadores). Batería: grupo "9. Sistema de pauta" en `PruebasPauta.js`.
-- **Sistema de Medición v1** (commit 3c2cd87): franja **"Mi palanca"** arriba del Dashboard de Pauta
-  (`MedicionDatos.js › getMiPalancaPauta`), roles pauta y dueño. Plan en
-  `02_Management_OS/2026-09-27_Sistema_de_Medicion_Rosanta.md`: **el número de Marketing es COMENSALES DEL
-  MES** (dueño Juanma; oct 580 · nov 630 · dic 800). Palancas de Vanessa: **clientes nuevos** (oct 40 ·
-  nov 50 · dic 55) y **CAC ≤ Q60**, publicado solo con lectura de Wix ≥ 50%. **"Reservas atribuidas"
-  quedó DESCARTADA como North Star: no se puede medir.**
-- **El 🧠 Diagnóstico IA se retiró**: recomendaba escalar con CTR y CPC sin ver una sola reserva.
-- La @131 se publicó sin abrir /dev ni correr la batería en el servidor (decisión de Juanma).
-
-### 2. Tarde: tres commits en git, subidos a HEAD, SIN publicar
-
-Commits `0f2dc6f`, `acd6b3d` y `beec65e`. `clasp push` verificado bajando HEAD aparte. **Producción
-sigue en la @131** hasta que Juanma corra la batería en /dev y diga sí. Informe:
-`apps-script/_informes/2026-09-27_Pauta_verificacion_congruencia_retiro_Panel.md`.
-
-1. **Panel de Asesores RETIRADO COMPLETO, lentes incluidas** (decisión de Juanma): fuera la pestaña 🧠, los
-   debates, `panelInvestigar`, el **AI CMO** ("Regenerar con aprendizajes" de la Estrategia) y las
-   constantes `LOOMER`/`SAVANNAH`. Razón: el sistema de decisión decide con hechos y reglas y el Sistema
-   de Medición fija las metas; cualquier "opinión experta" aparte es una **tercera voz que contradice a
-   las otras dos**. `debates` salió de `SCHEMA`; su pestaña **queda como historial OBSOLETO, no se borra**.
-   La Estrategia quedó como documento fijo que apunta al Sistema de Medición. **NO construir nada sobre el
-   Panel ni reponer lentes con nombre de experto.** La sesión "Panel de asesores de marketing" quedó vieja.
-2. **Estándar creativo de pauta de Rosanta** (`ESTANDAR_PAUTA` en `Marketing.html`): el Creador de pauta
-   sigue (produce anuncios, **no decide dinero**), pero como **regla de la casa sin nombres de personas**,
-   igual que Kaprica para el orgánico. Método: gancho de 3 s, video nativo UGC, el creativo es la
-   segmentación, iterar sobre ganadores, conceptos distintos (regla Andromeda). A cámara solo **Jeffry,
-   Maco o clientes reales**. Los números de "qué medir" **ya no están en el prompt**: salen de `reglas` y
-   solo de supuestos **verificados** (`psContextoCreativo`); el hook rate no se pide mientras
-   `s_definicion_video` esté por verificar. Cada concepto trae **"Registrar como prueba"** → bitácora como
-   *propuesta*; **una prueba en curso a la vez y solo el dueño la arranca**. El Creador lee como contexto
-   solo aprendizajes con fuente `prueba`. **Decidido: no hay skill local `rosanta-pauta-creativa`**; si
-   algún día hace falta, lee la constante del repo en vez de copiarla.
-3. **La decisión se amarró al Sistema de Medición:** ESCALAR (R3) ahora pide volumen (`reservas_min_escalar`
-   = 6), reservas de Wix ≥ su base, **comensales de la semana ≥ ritmo de la meta del mes** y, con lectura
-   ≥ `lectura_min_juez` (50%), clientes nuevos al ritmo de su meta. **Sin meta de comensales en METAS no
-   se escala.** Métricas juez: entra `clientes_nuevos_negocio` (rechazada con lectura < 50%), **sale
-   `reservas_atribuidas`** (queda como diagnóstico). Motivo: con ~17 NewReservation por semana en la cuenta,
-   por conjunto son 0-2 y "subir dos semanas" era ruido. `MedicionDatos.js` **no se tocó**: solo se leen
-   `medMetasMes_`, `tabParametros_` y `crmAltasPorMes_`.
-
-### 3. Hallazgos y pendientes
-
-- **La captura nunca escribió:** al cierre, `hechos_semana` y `pixel_semana` tenían solo el encabezado.
-  Pendiente: que Juanma presione "📥 Capturar semana" y confirme filas.
-- Activador `psCapturaLunes`: sin confirmar (solo se ve en el editor).
-- `debates` tenía un debate **del mismo 27-sep**: el Panel se seguía usando el día que se retiró.
-- La pestaña `aprendizajes` tiene 3 filas de agosto con fuente "Panel de Asesores / AI CMO": se quedan como
-  historia; el Creador no las lee, el Plan del mes todavía sí.
-- Arnés nuevo: `tools/harness-intranet/harness-pauta.js` corre el grupo 9 y las guardas de srv() en Node
-  sin datos (26 pruebas del grupo 9, todas OK). Marketing quedó con 26 llamadas `srv('…')` (mínimo 10).
-- Aviso para Vanessa redactado en el informe (Diagnóstico IA retirado + instructivo de ⚖️ y "Mi palanca"):
-  **no se ha enviado**.
-
----
-
-## Cierre del 26 sep 2026 (v28): el reporte semanal vive en la intranet, publicado en la @126 y la @127
-
-**27-sep: @128** (el PDF desde el servidor y el botón "Guardar PDF en Drive" en producción; 68 archivos, idéntica al disco). **Tarde del 26-sep: @127.** Juanma revisó la @126 y pidió cuatro cosas, más una nueva; todo salió en la @127 (batería 128 OK · 0 fallas · 4 avisos; 67 archivos, idéntica al disco):
-- **El reporte ya no va en iframe:** tres parciales crudos sin scriptlets (`ReporteSemanalEstilo`, `ReporteSemanalCuerpo`, `ReporteSemanalJs`) que pegan con `incluirCrudo_` tanto `ReporteSemanalVista` como la pestaña del tablero. Cada página declara `window.RP_CFG` (token, urlBase, embebido) antes del JS; ids con prefijo `rp-`. En el tablero el botón es "Abrir para imprimir / PDF" y "Actualizar" llama `RP.recargar(true)`. Los tres parciales están en las tres listas `VISTAS` de `Pruebas.js`.
-- **Gráfico de cuatro semanas:** barras y línea del equilibrio en la misma escala (140 px sobre un área de 170), etiquetas en fila aparte. `.rp-barra` estaba definida dos veces: ahora `.rp-cab` (cabecera) y `.rp-col` (columna).
-- **Compras contra su techo (pedido de Juanma):** en la sección 5, por área y para las cuatro semanas, compra del motor contra techo = venta del área × meta, barra en rojo si se pasó, y la **venta extra que exige** el exceso (× 100 ÷ margen de contribución, hoy ×1.99). La venta por área de cada semana sale de UNA lectura de VENTAS x PLATO sobre las cuatro semanas (`ventasDelRango_` devuelve ahora `fecha` por línea). Caché `rep_sem_v2_`. En la S38: cocina +Q2,091 sobre el techo (exige Q4,160 de venta), barra +Q161.
-- **La S37 no tenía PDF** en `Reportes 2026/S37`: era dato, no código. Se generó la noche del 26-sep con lo de abajo.
-
-**Noche del 26-sep: el PDF del reporte sale del servidor (`ReporteSemanalPdf.js`).** Juanma pidió "Genera el PDF de la S37 en su carpeta". El generador viejo (`Maestro/generar_reporte_semanal.py`) tiene todos los números de la S38 escritos a mano: alimentarlo para la S37 habría sido un segundo motor. Ahora `_repHtmlPdf_(d)` arma el HTML estático de las 8 secciones desde `_repDatos_` (tablas simples; las barras son bordes de ancho %, porque el conversor de Apps Script ignora los fondos de celda), `Utilities.newBlob(html).getAs(PDF)` lo convierte y `_repPdfGuardar_(clave)` lo guarda con Drive v3 en `Reportes 2026/SXX/Rosanta_SXX_AAAA.pdf`, **archivando el anterior en `SXX/_Archive` con fecha** (nada se borra) y borrando el caché `tab_docs_v1`. Entradas: `generarPdfReporteSemanal(auth, clave)` (dueño) y la ruta **`?page=reporte-semanal-pdf&semana=CLAVE`** (clave = año×100 + semana ISO, p. ej. 202637), que es el destino del botón **"Guardar PDF en Drive"** de la pantalla y del tablero. Prueba: "El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla" (8 secciones, la venta, `%PDF`; no escribe en Drive). `Rosanta_S37_2026.pdf` quedó en su carpeta: 6 páginas, S37 07/09–13/09, ventas Q27,628, PE Q34,052 (mc 45.3% con la móvil de esa semana), cocina +Q6,699 sobre el techo. **27-sep-2026, decisión de Juanma ("elimina el reporte y todos sus componentes"): el reporte viejo se ARCHIVÓ entero en `Rosanta OS/_Archive/2026-09-27_Reporte_Semanal_Python/` (el Python, `Rosanta_Formato_Reporte_Semanal.md`, el SKILL.md de la tarea y la skill `rosanta-reporte-semanal-formato`, con LEEME) y la tarea del lunes `rosanta-reporte-semanal` se eliminó del programador. Son OCHO routines desde entonces. El único reporte semanal es el de la intranet; su PDF sale de `?page=reporte-semanal-pdf`.** Cuando la extensión de Chrome se cae, el navegador propio de la app sirve si Juanma inicia sesión en el panel: `navigate` y `screenshot` funcionan; `get_page_text` no ve el iframe.
-
-**El equipo estuvo en la @126** (verificado: `list-deployments` releído tres veces y la @126 bajada aparte idéntica al disco, 64 archivos). Batería sobre ese HEAD: **127 OK · 0 fallas · 5 avisos · 3 saltadas** (237 s). Commits `c0a0cb7` y `a03479b` en `rosanta-os/main`. Informe: `apps-script/_informes/2026-09-25_Tablero_global_etapa2.md` (secciones @125, corrección y @126).
-
-### 1. Qué cambió: el reporte semanal ya no es solo el PDF
-
-Juanma (25-sep): "Yo no quiero ver el pdf. Quiero mover el artefacto completo a esta sección y agregar la descarga del pdf para poder enviar al equipo." Y sobre las reglas: "Usa las reglas de la intranet".
-
-- **`?page=reporte-semanal`** (módulo finanzas; `&embed=1` sin cabecera) y la **séptima pestaña "Reporte semanal" del tablero global**, que lo embebe y debajo pone las tarjetas de descarga de `Reportes 2026 / SXX / Rosanta_SXX_2026.pdf` (para mandar al equipo).
-- **`ReporteSemanalDatos.js`** arma las 8 secciones del formato S38 **con los motores, sin calcular aparte**: semana de `getFinanzasData` (selector de 12 semanas), serie diaria de `02_Ventas_Maestro`, reservas de la pestaña `reservas` del Marketing OS, platos por `ventasDelRango_` (venta de área ÷ 1.12, top 6 + otros), food cost por área contra `metasFoodCost_()`, personal (labor, planilla del mes), P&L del mes y acciones en la pestaña `REPORTE_ACCIONES` del config (se crea sola al guardar la primera; responsables = departamentos, nunca nombres). Caché `rep_sem_v1_…`, botón Actualizar, Imprimir/PDF con `window.print`.
-- **`ReporteSemanalVista.html`**: 8 secciones en el orden del S38, formulario de acciones, CSS de impresión. Dos pruebas nuevas en `PruebasFinanzas.js` ("El reporte semanal en vivo cuadra con la semana del motor": Σ días = venta de la semana y comensales; "El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive").
-- **Marketing OS**: la pestaña 05 del tablero muestra los planes `Plan_Meta_Ads_*.docx` de la carpeta de planes (la auditoría de Meta Ads como puntaje sigue sin fila: pendiente `AUDITORIA_META`).
-
-### 2. El equilibrio semanal se arma con el PRESUPUESTO (decisión de Juanma, 26-sep: "sí, por presupuesto")
-
-La @125 mostraba **Q155,894 por semana**: salía del equilibrio mensual del motor del último mes cerrado, y agosto tiene margen de contribución 8.3%, así que el cociente explota. Es coherente mes a mes pero no sirve como vara semanal. **Desde la @126**: fijos del PRESUPUESTO del 22-sep (Inmueble Q20,212.50 · Nómina Q29,000 · Tarifas Q6,600 · Prestadores Q5,500 · Marketing Q5,700 = Q67,012.50 al mes, con el mes si lo trae) ÷ 4.345 semanas = Q15,423; variables = filas %venta del presupuesto (comisiones 6.5, propinas 4.24) + mercadería con la **móvil de 4** (Σcompra ÷ Σventa de las 4 semanas). Margen 50.3%, **PE Q30,641 por semana**. El PDF de la S38 traía Q35,097 con su propia estructura; el mensual del motor queda como referencia en la sección 8.
-
-### 3. Lo que quedó abierto
-
-- **Reservas S38: 13 canceladas de 14** en la pestaña `reservas`; el PDF decía 4 de 14. La sección 4 muestra el desglose por estado (canceladas = CANCEL, DECLIN, NO SHOW; sin cerrar = RESERVED). **Cerrado el 26-sep: son dato real, Juanma mismo canceló esas reservas en Wix después del PDF. El criterio de estados queda como está.**
-- **PDF desde el servidor** guardado en la carpeta SXX (decisión "me parece bien, recomendado"), personal extra por semana pagada, comisión de tarjeta separada (K08 FALTA DATO), y retirar después la tarea del lunes que hace el PDF con Chrome headless.
-- **Las 16 filas de `PARAMETROS` ya existen (Juanma las pegó el 26-sep):** las 13 con su defecto más `meta_venta_anio` 1,950,000 (real ene–ago + curva H2), `compra_sin_factura_max_pct` 40 (el año va en 45%; bajar a 30 en enero) y `cac_max_q` 60 (CAC del año Q53.6). Batería: 128 OK · 0 fallas · 4 avisos, "todas en PARAMETROS". Sin fila todavía: `comision_tarjeta_max_pct` (K08), `resenas_rating_meta` (K18), la pestaña `METAS`. El resto de decisiones de la v26 §4 sigue.
-
-### 4. clasp vuelve a morir cada día
-
-`invalid_rapt` apareció el 25 y otra vez el 26 (credenciales de la noche anterior). Es la política de reautenticación del Workspace, no un error de clasp. La cura es siempre la misma y solo la hace Juanma: `clasp logout` y `clasp login`, y **`clasp login` solo, sin el logout, dice "already logged in" y deja el push fallando en silencio**. Verificar `~/.clasprc.json` con fecha de hoy antes de publicar.
 
 ## Cierre del 25 sep 2026, noche (v27): el sitio pasa a Git, el código sale de la Mac
 
@@ -224,7 +123,7 @@ escribiendo a la vez, una tarea que guarde sola es la forma más rápida de perd
 | `rosanta-latido-reservas-web` | diaria 8:10 | activa |
 | `rosanta-latido-repo` | diaria 8:24 | activa, **nueva** |
 | `morning-brief-juanma` | L–V 6:06 | activa |
-| ~~`rosanta-reporte-semanal`~~ | ~~lunes 16:24~~ | **eliminada el 27-sep-2026** (archivada en `_Archive/2026-09-27_Reporte_Semanal_Python`) |
+| `rosanta-reporte-semanal` | lunes 16:24 | activa |
 | `rosanta-cierre-semanal` | domingos 18:20 | activa |
 | `rosanta-cerebro-mantenimiento` | día 1, 9:07 | activa |
 | `rosanta-reporte-mensual` | día 3, 9:08 | activa |
@@ -371,7 +270,7 @@ verificación**. Vale escribirlas porque el error es repetible:
 | `rosanta-latido-reservas-web` | diaria 8:10 |
 | `morning-brief-juanma` | L–V 6:06 |
 | `rosanta-analista-pauta-lunes` | **borrada** el mismo día por Juanma |
-| ~~`rosanta-reporte-semanal`~~ | eliminada el 27-sep-2026 |
+| `rosanta-reporte-semanal` | lunes 16:24 |
 | `rosanta-cierre-semanal` | domingos 18:20 |
 | `rosanta-cerebro-mantenimiento` | día 1, 9:07 |
 | `rosanta-reporte-mensual` | día 3, 9:08 |
@@ -1697,7 +1596,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 |---|---|---|
 | **Finanzas & Data OS** | ARRANCADO 2 sep. Maestro nativo validado 8/8 meses, cálculo nuevo (reglas 10–14), ~~forecast de caja~~ **HECHO** (pestaña Caja, @93). Falta: panel de integridad, registro de compra de mercado, documentar el cargador | `references/negocio.md`, `references/proyectos.md` §5 |
 | **Profit OS** | En funcionamiento (S35). Recetario v14 nativo, inventarios integrados. Merma y SPLH diferidos | `references/proyectos.md` §2 |
-| **Marketing OS** | En funcionamiento. **Desde el 27-sep (v29): decide ⚖️ Decisiones de pauta (hechos + reglas, sin IA), las metas las fija el Sistema de Medición (comensales del mes, clientes nuevos, CAC), el Creador de pauta aplica el estándar creativo de la casa. Panel de Asesores, lentes, AI CMO y Diagnóstico IA RETIRADOS.** ~~En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 y Diagnóstico IA con Lente Loomer + AI CMO en la @100, ambos del 16 sep.** Pendiente: memoria del diagnóstico en la Sheet (v20 §3). Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor~~ | `references/marketing.md` |
+| **Marketing OS** | En funcionamiento. **Creador de pauta (Lente Savannah Sanchez) vivo en la @99 y Diagnóstico IA con Lente Loomer + AI CMO en la @100, ambos del 16 sep.** Pendiente: memoria del diagnóstico en la Sheet (v20 §3). Abierto: webhooks mudos, credenciales expuestas, encuesta a TripAdvisor | `references/marketing.md` |
 | **Back office / Operations Hub** | **11 sep:** Rosanta OS es la puerta única (`_Codigo`/`_App`), 0 código en Drive, guardián vivo. Abierto: 1,0 GB en duplicados, 374 punteros, credenciales en texto plano | `references/ecosistema.md` |
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
