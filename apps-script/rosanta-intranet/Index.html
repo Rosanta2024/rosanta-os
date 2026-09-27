@@ -28,6 +28,17 @@
   <main>
     <h1>Panel principal</h1>
     <p>Elige un modulo para empezar.</p>
+    <? var rolTs = String(usuario.rol || '').toLowerCase(); ?>
+    <? if (rolTs === 'dueno' || rolTs === 'chef' || rolTs === 'sala' || rolTs === 'pauta') { ?>
+      <!-- Sistema de Medicion (27-sep-2026): el numero de cada quien, antes de entrar a un modulo. -->
+      <section class="ts" id="ts" aria-live="polite">
+        <div class="ts-l">Tu semana<span id="ts-mes"></span></div>
+        <div class="ts-items" id="ts-items"><span class="ts-c">Leyendo tus números…</span></div>
+        <? if (rolTs === 'dueno') { ?><a class="ts-b" href="<?= urlBase ?>?page=tablero<?!= qs ?>">Ver la cascada</a><? } ?>
+        <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=retiros<?!= qs ?>">Anotar retiros</a><? } ?>
+        <? if (rolTs === 'sala') { ?><a class="ts-b" href="<?= urlBase ?>?page=sala<?!= qs ?>">Abrir Sala</a><? } ?>
+      </section>
+    <? } ?>
     <div class="tarjetas">
       <? if (String(usuario.rol || '').toLowerCase() === 'dueno') { ?>
         <a class="tarjeta" href="<?= urlBase ?>?page=tablero<?!= qs ?>">
@@ -35,6 +46,20 @@
           <p>La foto grande: un numero por decision de cada uno de los 6 pilares, con su
              semaforo y su tendencia. Cada tarjeta lleva a la pestaña de su pilar.</p>
           <span class="chip">solo dueño</span>
+        </a>
+      <? } ?>
+      <? if (rolTs === 'sala' || rolTs === 'dueno') { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=sala<?!= qs ?>">
+          <h3>Sala</h3>
+          <p>Ticket por comensal, lunes a miércoles, reseñas de la semana y las mesas que faltan cerrar en Wix.</p>
+          <span class="chip">sala y dueño</span>
+        </a>
+      <? } ?>
+      <? if (rolTs === 'chef' || rolTs === 'dueno') { ?>
+        <a class="tarjeta lila" href="<?= urlBase ?>?page=retiros<?!= qs ?>">
+          <h3>Retiros de cajero</h3>
+          <p>Qué se compró con cada retiro del cajero para el mercado. Sin eso el food cost no se puede auditar.</p>
+          <span class="chip">cocina y dueño</span>
         </a>
       <? } ?>
       <? if (usuarioTieneModulo(usuario, 'finanzas')) { ?>
@@ -68,5 +93,39 @@
       <? } ?>
     </div>
   </main>
+  <style>
+    .ts { background: #fff; border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; margin-top: 1rem;
+          display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem 1.4rem; align-items: center; }
+    .ts-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #5b56a6; }
+    .ts-l span { margin-left: 0.4rem; letter-spacing: 0.04em; text-transform: none; font-weight: 400; color: #52514e; }
+    .ts-items { display: flex; flex-wrap: wrap; gap: 0.5rem 1.6rem; }
+    .ts-i { display: flex; flex-direction: column; min-width: 7.5rem; }
+    .ts-i b { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+    .ts-i span { font-size: 0.74rem; color: #52514e; line-height: 1.35; }
+    .ts-c { font-size: 0.85rem; color: #8a8780; }
+    .ts-b { background: var(--verde-bosque); color: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
+    @media (max-width: 700px) { .ts { grid-template-columns: 1fr; } }
+  </style>
+  <script>
+    (function () {
+      var el = document.getElementById('ts-items');
+      if (!el) return;
+      var AUTH = '<?= authToken ?>';
+      var COL = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A' };
+      function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (!r) { document.getElementById('ts').style.display = 'none'; return; }
+          document.getElementById('ts-mes').textContent = '· ' + (r.mes || '');
+          el.innerHTML = (r.items || []).map(function (x) {
+            return '<div class="ts-i"><b style="color:' + (COL[x.zona] || '#1a1a1a') + '">' + esc(x.valor) + '</b><span>' +
+                   esc(x.nombre) + '<br>' + esc(x.texto) + '</span></div>';
+          }).join('');
+        })
+        .withFailureHandler(function (e) { el.innerHTML = '<span class="ts-c">No pude leer tus números: ' + esc(e && e.message || e) + '</span>'; })
+        .getMiSemana(AUTH);
+    })();
+  </script>
 </body>
 </html>

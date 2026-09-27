@@ -39,10 +39,17 @@ var TAB_PARAMETROS = {
   comensales_lmx_meta:        { def: 16,   uso: 'K14 comensales por dia lunes a miercoles' },
   eventos_mes_meta:           { def: 2,    uso: 'K17 eventos por mes' },
   roas_meta:                  { def: 3,    uso: 'K16 ROAS de pauta' },
-  cac_max_q:                  { def: null, uso: 'K15 CAC maximo por cliente' }
+  cac_max_q:                  { def: null, uso: 'K15 CAC maximo por cliente' },
+  // Sistema de Medicion (27-sep-2026). Las que cambian por mes viven en METAS;
+  // estas son el respaldo cuando el mes no tiene fila.
+  eventos_mes_meta_q:         { def: null, uso: 'K17 eventos del mes en quetzales' },
+  clientes_nuevos_mes_meta:   { def: null, uso: 'K24 clientes nuevos del mes' },
+  resenas_semana_meta:        { def: null, uso: 'K18 reseñas nuevas por semana' },
+  lectura_wix_meta_pct:       { def: null, uso: 'K20 lectura de Wix (mesas cerradas)' },
+  repeticion_meta_pct:        { def: null, uso: 'K19 repeticion' }
 };
 
-var TAB_PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion'];
+var TAB_PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion', 'metas'];
 
 /** Las metas, leidas UNA vez de PARAMETROS, con su origen. */
 function tabParametros_() {
@@ -134,70 +141,147 @@ function getTableroPilar(auth, pilar) {
     else if (pilar === 'finanzas') _tabFinanzas_(out, P, hoy, auth);
     else if (pilar === 'profit') _tabProfit_(out, P, hoy, auth);
     else if (pilar === 'marketing') _tabMarketing_(out, P, hoy);
-    else _tabExpansion_(out);
+    else if (pilar === 'expansion') _tabExpansion_(out, P, hoy);
+    else _tabMetas_(out, P, hoy);
   } catch (e) {
     out.error = String(e && e.message || e);
   }
   return out;
 }
 
-// ------------------------------------------------------------- 01 Fundamentos
+// ------------------------------------------------------------- 01 Cascada
+/*
+ * Sistema de Medicion (27-sep-2026): la pestaña 01 dejo de ser "Fundamentos" y es la
+ * portada del sistema. Arriba la higiene de datos, despues el N1 (lo que deja la
+ * operacion y la venta del mes contra su meta), despues el numero de cada pilar. Sigue
+ * sin calcular: medCascadaResumen_ junta campos de Caja, Finanzas, CRM e Inventario.
+ * La clave interna sigue siendo 'fundamentos' para no romper enlaces ni pruebas.
+ */
 function _tabFundamentos_(out, P, hoy, auth) {
   var d = _finDatos_(false);
   var mc = tabMesCerrado_(d, hoy);
+  var M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
+  var c = medCascadaResumen_(d, P, M, hoy);
+  var cur = mc.en_curso || {};
+  var ul = d.ultima || {};
+  out.metas_mes = M;
+  out.cascada = c;
+  if (!M.hay_fila) out.avisos.push('No hay fila de ' + M.mes + ' en METAS: las metas del mes salen de PARAMETROS o no existen. Instalarlas en la pestaña "Metas y ajustes".');
+  if (c.caja_error) out.avisos.push('Caja: ' + c.caja_error);
+
+  // K02 lo que deja la operacion (N1)
+  out.kpis.push(tabKpi_({
+    clave: 'N1', nombre: 'Lo que deja la operacion contra el piso',
+    valor: c.deja, unidad: 'Q', periodo: c.deja_periodo || '',
+    meta: c.piso, meta_origen: 'COMPROMISOS',
+    meta_texto: 'piso Q' + Math.round(c.piso_mes || 0).toLocaleString('es-GT') + ' · objetivo Q' + Math.round(c.objetivo_mes || 0).toLocaleString('es-GT'),
+    zona: c.deja_zona, fuente: 'CajaDatos › meses[0].deja (escenario base)', enlace: 'finanzas&sub=caja',
+    nota: c.falta_piso ? ('faltan Q' + Math.round(c.falta_piso).toLocaleString('es-GT') + ' para el piso' + (c.venta_piso_pct !== null && c.venta_piso_pct !== undefined ? ' (+' + c.venta_piso_pct + '% de venta)' : '')) : 'cubre el piso'
+  }));
+  // venta del mes, restaurante + eventos (N1)
+  out.kpis.push(tabKpi_({
+    clave: 'N1', nombre: 'Venta del mes, restaurante + eventos (proyeccion)',
+    valor: c.venta_proy, unidad: 'Q', periodo: M.mes + (c.dia_corte ? ' · dia ' + c.dia_corte + ' de ' + c.dias_mes : ' · sin venta cargada'),
+    meta: M.venta_total, meta_origen: M.venta_rest.origen,
+    meta_texto: M.venta_total ? ('meta Q' + M.venta_total.toLocaleString('es-GT') + ' (restaurante Q' + M.venta_rest.valor.toLocaleString('es-GT') + ' + eventos Q' + (M.eventos.valor || 0).toLocaleString('es-GT') + ')' + (M.minimo.valor ? ' · minimo Q' + M.minimo.valor.toLocaleString('es-GT') : '')) : 'sin meta en METAS',
+    zona: c.venta_zona, fuente: 'FinanzasDatos › meses[].ventas + eventos · METAS', enlace: 'finanzas&sub=metas',
+    nota: 'acumulado Q' + Math.round(c.venta_acum).toLocaleString('es-GT') + (c.venta_eventos ? ' (eventos Q' + Math.round(c.venta_eventos).toLocaleString('es-GT') + ')' : '') +
+          (c.venta_esperada ? ' · a la fecha la meta pide Q' + c.venta_esperada.toLocaleString('es-GT') : ''),
+    estado: M.venta_total ? 'ok' : 'falta_meta'
+  }));
+  // los cuatro numeros de pilar
+  out.pilares = [
+    tabKpi_({ clave: '03 · Juanma', nombre: 'Dias de caja', valor: d.dias_caja, unidad: 'dias',
+      periodo: 'banco al ' + ((d.integridad && d.integridad.ult && d.integridad.ult['03_Banco_Industrial']) || '?'),
+      meta: M.dias_caja.valor, meta_origen: M.dias_caja.origen, meta_texto: 'meta del mes ≥' + M.dias_caja.valor + ' · rojo bajo 3',
+      zona: tabZona_(d.dias_caja, M.dias_caja.valor, 3, 'mayor'), enlace: 'finanzas&sub=caja', fuente: 'FinanzasDatos › dias_caja' }),
+    tabKpi_({ clave: '05 · Juanma', nombre: 'Comensales del mes (ritmo)', valor: c.com_ritmo, unidad: 'comensales',
+      periodo: M.mes + (mc.ultimo ? ' · ' + mc.ultimo.mes + ' cerro en ' + (mc.ultimo.com_est || '?') : ''),
+      meta: M.comensales, meta_origen: M.venta_rest.origen,
+      meta_texto: M.comensales ? ('meta ' + M.comensales + ' = Q' + M.venta_rest.valor.toLocaleString('es-GT') + ' ÷ Q' + M.ticket.valor) : 'sin meta',
+      zona: c.com_zona, enlace: 'finanzas&sub=metas', fuente: 'FinanzasDatos › meses[].com_est = venta ÷ ticket' }),
+    tabKpi_({ clave: '02 · José', nombre: 'Ticket por comensal (sin IVA)', valor: cur.tp || null, unidad: 'Q',
+      periodo: M.mes + (mc.ultimo && mc.ultimo.tp ? ' · ' + mc.ultimo.mes + ' Q' + Math.round(mc.ultimo.tp) : ''),
+      meta: M.ticket.valor, meta_origen: M.ticket.origen, meta_texto: 'meta Q' + M.ticket.valor + ' · rojo bajo Q' + Math.round(M.ticket.valor * 0.94),
+      zona: tabZona_(cur.tp, M.ticket.valor, M.ticket.valor * 0.94, 'mayor'), enlace: 'finanzas&sub=semana', fuente: 'FinanzasDatos › meses[].tp' }),
+    tabKpi_({ clave: '04 · Jeffry', nombre: 'Food cost real (movil 4)', valor: ul.cogs_m4, unidad: '%',
+      periodo: 'S' + ul.w, meta: M.food.valor, meta_origen: M.food.origen,
+      meta_texto: M.food.valor ? ('tramo del mes ≤' + M.food.valor + '% · meta final ' + d.meta_cogs + '%') : ('meta ' + d.meta_cogs + '%'),
+      zona: tabZona_(ul.cogs_m4, M.food.valor || d.meta_cogs, (M.food.valor || d.meta_cogs) + 3, 'menor'), enlace: 'costeo', fuente: 'FinanzasDatos › semanas[].cogs_m4' })
+  ];
+  out.pilares.forEach(function (k) { out.kpis.push(k); });
+  // K01 venta del año contra la meta del año (contexto)
   var meta = P.meta_venta_anio.valor;
-  // avance esperado: la parte del año transcurrida hasta la ultima venta cargada
-  var ult = (d.integridad && d.integridad.ult && d.integridad.ult['02_Ventas_Maestro']) || '';
-  var partes = ult.split('/');
+  var partes = String((d.integridad && d.integridad.ult && d.integridad.ult['02_Ventas_Maestro']) || '').split('/');
   var diaAnio = partes.length === 3
-    ? Math.round((new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0])) - new Date(d.anio, 0, 1)) / 86400000) + 1
-    : null;
+    ? Math.round((new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0])) - new Date(d.anio, 0, 1)) / 86400000) + 1 : null;
   var esperado = (meta && diaAnio) ? Math.round(meta * diaAnio / 365) : null;
-  out.kpis.push(tabKpi_({
-    clave: 'K01', nombre: 'Venta del año contra la meta del año',
-    valor: d.total.ventas, unidad: 'Q', periodo: d.anio + ' al ' + ult,
-    meta: meta, meta_origen: P.meta_venta_anio.origen,
-    meta_texto: meta ? ('meta Q' + meta.toLocaleString('es-GT') + ' · a la fecha deberiamos llevar Q' + (esperado || 0).toLocaleString('es-GT')) : 'sin meta en PARAMETROS (meta_venta_anio)',
-    zona: (meta && esperado) ? tabZona_(d.total.ventas, esperado, esperado * 0.9, 'mayor') : 'gris',
-    tendencia: mc.ultimo ? tabTendencia_(mc.ultimo.ventas, mc.anterior ? mc.anterior.ventas : null, 'venta ' + mc.ultimo.mes + ' contra ' + (mc.anterior ? mc.anterior.mes : '')) : null,
-    fuente: 'FinanzasDatos › total.ventas', enlace: 'finanzas&sub=comparativo',
-    estado: meta ? 'ok' : 'falta_meta',
-    detalle: { avance_pct: meta ? Math.round(d.total.ventas / meta * 1000) / 10 : null, esperado: esperado }
-  }));
-  var cj = _cajaDatos_(_cajaOpciones_({}));
-  var mesCaja = (cj.meses || [])[0] || null;    // el mes en curso, en proporcion
-  out.kpis.push(tabKpi_({
-    clave: 'K02', nombre: 'Lo que deja la operacion contra el piso y el objetivo',
-    valor: mesCaja ? mesCaja.deja : null, unidad: 'Q', periodo: mesCaja ? mesCaja.mes + (mesCaja.completo ? '' : ' (parcial, en proporcion)') : '',
-    meta: mesCaja ? mesCaja.piso : cj.piso_mes, meta_origen: 'COMPROMISOS',
-    meta_texto: mesCaja ? ('piso Q' + mesCaja.piso.toLocaleString('es-GT') + ' · objetivo Q' + mesCaja.objetivo.toLocaleString('es-GT')) : '',
-    zona: mesCaja ? tabZona_(mesCaja.deja, mesCaja.objetivo, mesCaja.piso, 'mayor') : 'gris',
-    tendencia: (cj.meses && cj.meses.length > 1) ? tabTendencia_(cj.meses[1].deja, mesCaja.deja, cj.meses[1].mes + ' proyectado') : null,
-    fuente: 'CajaDatos › meses[].deja, piso, objetivo (escenario base)', enlace: 'finanzas&sub=caja',
-    nota: mesCaja && mesCaja.falta_piso ? ('faltan Q' + mesCaja.falta_piso.toLocaleString('es-GT') + ' para el piso' + (mesCaja.venta_piso_pct !== null ? ' (+' + mesCaja.venta_piso_pct + '% de venta)' : '')) : 'cubre el piso',
-    detalle: { piso_mes: cj.piso_mes, objetivo_mes: cj.objetivo_mes, falta_objetivo: mesCaja ? mesCaja.falta_objetivo : null }
-  }));
+  var anioTotal = d.total.ventas + (d.meses || []).reduce(function (a, x) { return a + (x.eventos || 0); }, 0);
+  out.k01 = tabKpi_({
+    clave: 'K01', nombre: 'Venta del año con eventos contra la meta del año', valor: Math.round(anioTotal), unidad: 'Q',
+    periodo: d.anio, meta: meta, meta_origen: P.meta_venta_anio.origen,
+    meta_texto: meta ? ('meta Q' + meta.toLocaleString('es-GT') + ' · a la fecha Q' + (esperado || 0).toLocaleString('es-GT')) : 'sin meta',
+    zona: (meta && esperado) ? tabZona_(anioTotal, esperado, esperado * 0.9, 'mayor') : 'gris',
+    fuente: 'FinanzasDatos › total.ventas + meses[].eventos', enlace: 'finanzas&sub=comparativo'
+  });
 }
 
 // ------------------------------------------------------------- 02 Management
+/* Sistema de Medicion: el numero de sala es el ticket (José). Recibe ticket y lunes a
+   miercoles desde Profit; los inventarios se mudaron a 04 Profit. */
 function _tabManagement_(out, P, hoy) {
-  var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
-  ['COCINA', 'BARRA'].forEach(function (area) {
-    var r = inv.areas[area];
-    out.kpis.push(tabKpi_({
-      clave: area === 'COCINA' ? 'K03a' : 'K03b',
-      nombre: 'Inventario al dia · ' + (area === 'COCINA' ? 'Cocina (Jeffry)' : 'Barra (José)'),
-      valor: r.ultimo_cerrado || 'ninguno', unidad: 'mes', periodo: 'esperado ' + inv.esperado,
-      meta: P.inventario_cierre_dia.valor, meta_origen: P.inventario_cierre_dia.origen,
-      meta_texto: 'el mes anterior cerrado antes del dia ' + inv.dia_limite,
-      zona: r.zona,
-      fuente: 'InventarioDatos › invEstadoCierre_ (ESTADO de la fila 1 de cada pestaña)', enlace: 'costeo',
-      nota: r.error ? r.error : (inv.esperado + ': ' + r.estado_esperado + (r.dias_atraso ? ' · ' + r.dias_atraso + ' dias despues del limite' : '')),
-      estado: r.error ? 'error' : 'ok',
-      detalle: { ultimo_total: r.ultimo_total, total_esperado: r.total_esperado, cerrado_por: r.cerrado_por }
-    }));
-  });
-  out.avisos.push('Primer KPI del pilar. Los siguientes llegan con el scorecard de sala.');
+  var d = _finDatos_(false);
+  var mc = tabMesCerrado_(d, hoy);
+  var M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
+  var cur = mc.en_curso || {}, ult = mc.ultimo || {};
+  out.kpis.push(tabKpi_({
+    clave: 'K14a', nombre: 'Ticket por comensal (sin IVA) · José', valor: cur.tp || null, unidad: 'Q', periodo: M.mes + ' en curso',
+    meta: M.ticket.valor, meta_origen: M.ticket.origen, meta_texto: 'meta Q' + M.ticket.valor + ' · rojo bajo Q' + Math.round(M.ticket.valor * 0.94),
+    zona: tabZona_(cur.tp, M.ticket.valor, M.ticket.valor * 0.94, 'mayor'),
+    tendencia: ult.tp ? tabTendencia_(cur.tp, ult.tp, ult.mes) : null,
+    fuente: 'FinanzasDatos › meses[].tp (solo tickets con comensales)', enlace: 'finanzas&sub=semana',
+    nota: 'Corregido el 27-sep: la venta de tickets sin comensales cargados ya no infla el ticket.'
+  }));
+  var lmx = cur.com_lmx_dia !== undefined && cur.com_lmx_dia !== null ? cur : ult;
+  out.kpis.push(tabKpi_({
+    clave: 'K14b', nombre: 'Comensales por dia, lunes a miercoles · José', valor: lmx.com_lmx_dia, unidad: 'comensales/dia',
+    periodo: (lmx.mes || '') + ' · ' + (lmx.com_lmx_dias || 0) + ' dias',
+    meta: M.lmx.valor, meta_origen: M.lmx.origen, meta_texto: 'meta ' + M.lmx.valor + ' por dia',
+    zona: tabZona_(lmx.com_lmx_dia, M.lmx.valor, M.lmx.valor * 0.85, 'mayor'),
+    tendencia: (lmx === cur && ult.com_lmx_dia) ? tabTendencia_(cur.com_lmx_dia, ult.com_lmx_dia, ult.mes) : null,
+    fuente: 'FinanzasDatos › meses[].com_lmx_dia', enlace: 'finanzas&sub=comparativo'
+  }));
+  out.kpis.push(tabKpi_({
+    clave: 'K21', nombre: 'Venta de lunes a miercoles · José', valor: cur.venta_lmx || null, unidad: 'Q', periodo: M.mes + ' en curso',
+    meta: null, meta_origen: 'sin meta', meta_texto: 'se mide en octubre; meta desde noviembre',
+    zona: 'gris', tendencia: ult.venta_lmx ? tabTendencia_(cur.venta_lmx, ult.venta_lmx, ult.mes + ' completo') : null,
+    fuente: 'FinanzasDatos › meses[].venta_lmx', enlace: 'finanzas&sub=comparativo', estado: 'falta_meta'
+  }));
+  var lect = null, lectMes = '';
+  try {
+    var k = mktKpisMes_(d.anio, d);
+    var km = k.meses[hoy.getMonth() + 1] || (mc.ultimo ? k.meses[mc.ultimo.m] : null);
+    if (km) { lect = km.lectura; lectMes = km.mes; }
+  } catch (e) { out.avisos.push('CRM: ' + String(e && e.message || e)); }
+  out.kpis.push(tabKpi_({
+    clave: 'K20', nombre: 'Lectura de Wix: mesas cerradas · José', valor: lect, unidad: '%', periodo: lectMes,
+    meta: M.lectura.valor, meta_origen: M.lectura.origen, meta_texto: 'meta ' + M.lectura.valor + '% · bajo 50% no hay CAC',
+    zona: tabZona_(lect, M.lectura.valor, 50, 'mayor'),
+    fuente: 'CrmDatos › crmAltasPorMes_ (Cliente que visitó ÷ visitó + histórica)', enlace: 'marketing&sub=crm',
+    nota: 'Seated al sentar la mesa, consumo al terminar. La lista de mesas por cerrar llega los lunes por correo.',
+    estado: lect === null ? 'falta_dato' : 'ok'
+  }));
+  var rs = null;
+  try { rs = medResenas_(hoy); } catch (e2) { out.avisos.push('Reseñas: ' + String(e2 && e2.message || e2)); }
+  out.kpis.push(tabKpi_({
+    clave: 'K18', nombre: 'Reseñas nuevas en Google, semana pasada · José', valor: rs ? rs.semana_pasada : null, unidad: 'reseñas',
+    periodo: rs ? ('esta semana van ' + rs.esta_semana) : '',
+    meta: M.resenas.valor, meta_origen: M.resenas.origen, meta_texto: 'meta ' + M.resenas.valor + ' por semana · rojo bajo ' + Math.max(M.resenas.valor - 1, 1),
+    zona: rs ? tabZona_(rs.semana_pasada, M.resenas.valor, Math.max(M.resenas.valor - 1, 1), 'mayor') : 'gris',
+    fuente: 'hoja del bot de reseñas de Google (Rosanta - Control de Reseñas GBP › Reseñas)',
+    nota: rs ? ('promedio de las ultimas 4 semanas: ' + rs.prom_4 + ' por semana' + (rs.estrellas_4 !== null ? ' · ' + rs.estrellas_4 + '★' : '') + '. No cuenta la carga inicial del bot (' + rs.carga_inicial + ').') : 'sin dato',
+    estado: rs ? 'ok' : 'falta_dato'
+  }));
 }
 
 // ------------------------------------------------------------- 03 Finanzas
@@ -206,13 +290,14 @@ function _tabFinanzas_(out, P, hoy, auth) {
   var mc = tabMesCerrado_(d, hoy);
   var u = d.ultima || {};
   var fechaBanco = (d.integridad && d.integridad.ult && d.integridad.ult['03_Banco_Industrial']) || '';
+  var MM = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
   // K04 dias de caja: el primer numero del tablero
   out.kpis.push(tabKpi_({
     clave: 'K04', nombre: 'Dias de caja', valor: d.dias_caja, unidad: 'dias',
     periodo: 'banco al ' + fechaBanco,
-    meta: P.caja_colchon_dias.valor, meta_origen: P.caja_colchon_dias.origen,
-    meta_texto: 'colchon ' + P.caja_colchon_dias.valor + ' dias · verde desde ' + P.caja_dias_verde.valor,
-    zona: tabZona_(d.dias_caja, P.caja_dias_verde.valor, P.caja_colchon_dias.valor, 'mayor'),
+    meta: MM.dias_caja.valor, meta_origen: MM.dias_caja.origen,
+    meta_texto: 'meta del mes ≥' + MM.dias_caja.valor + ' dias · colchon ' + P.caja_colchon_dias.valor + ' · verde pleno desde ' + P.caja_dias_verde.valor,
+    zona: tabZona_(d.dias_caja, MM.dias_caja.valor, 3, 'mayor'),
     tendencia: null,
     fuente: 'FinanzasDatos › dias_caja = caja ÷ gasto_dia', enlace: 'finanzas&sub=caja',
     nota: 'Q' + Number(d.caja || 0).toLocaleString('es-GT') + ' en bancos · Q' + Number(d.gasto_dia || 0).toLocaleString('es-GT') + ' de gasto por dia',
@@ -230,7 +315,8 @@ function _tabFinanzas_(out, P, hoy, auth) {
       zona: (mt.meta && mt.esperado !== undefined) ? tabZona_(mt.acumulado, mt.esperado, mt.esperado * 0.9, 'mayor') : 'gris',
       tendencia: mc.ultimo ? tabTendencia_(mt.proyeccion, mc.ultimo.ventas, 'proyeccion contra ' + mc.ultimo.mes) : null,
       fuente: 'FinanzasDatos › getMetasData (acumulado, meta, proyeccion)', enlace: 'finanzas&sub=metas',
-      nota: mt.meta ? ('avance ' + mt.avance + '% · proyeccion Q' + Number(mt.proyeccion || 0).toLocaleString('es-GT') + ' (' + mt.proyeccion_pct + '%)') : 'sin meta',
+      nota: mt.meta ? ('avance ' + mt.avance + '% · proyeccion Q' + Number(mt.proyeccion || 0).toLocaleString('es-GT') + ' (' + mt.proyeccion_pct + '%)' +
+                      (MM.eventos.valor ? ' · sin eventos: su meta aparte es Q' + MM.eventos.valor.toLocaleString('es-GT') + ' (05 Marketing)' : '')) : 'sin meta',
       estado: mt.meta ? 'ok' : 'falta_meta'
     }));
   }
@@ -294,88 +380,129 @@ function _tabFinanzas_(out, P, hoy, auth) {
 }
 
 // ------------------------------------------------------------- 04 Profit OS
+/* Sistema de Medicion: el numero es el food cost real (Jeffry), contra el TRAMO del mes
+   (METAS › TRAMO_FOOD_PCT) camino a la meta final de PARAMETROS, que no cambia. Recibe
+   los inventarios (K03) desde Management; ticket y lunes a miercoles se fueron alla. */
 function _tabProfit_(out, P, hoy, auth) {
   var d = _finDatos_(false);
   var mc = tabMesCerrado_(d, hoy);
   var u = d.ultima || {};
-  // K11 food cost real (movil 4) contra la meta; el teorico por area viene de Profit OS
+  var M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
+  var tramo = M.food.valor || d.meta_cogs;
   var teo = null;
   try {
     var po = getProfitOS(auth, 13);
     teo = po && po.tablero && po.tablero.ok ? po.tablero : null;
   } catch (e) { out.avisos.push('Profit OS: ' + String(e && e.message || e)); }
   out.kpis.push(tabKpi_({
-    clave: 'K11', nombre: 'Food cost real (movil 4) contra la meta', valor: u.cogs_m4, unidad: '%',
+    clave: 'K11', nombre: 'Food cost real (movil 4) · Jeffry', valor: u.cogs_m4, unidad: '%',
     periodo: 'S' + u.w + ' · sobre venta sin servicio',
-    meta: d.meta_cogs, meta_origen: 'PARAMETROS', meta_texto: 'meta ' + d.meta_cogs + '% · cocina ' + P.food_cost_objetivo_pct.valor + ' · barra ' + P.food_cost_barra_pct.valor,
-    zona: tabZona_(u.cogs_m4, d.meta_cogs, d.meta_cogs + 3, 'menor'),
+    meta: tramo, meta_origen: M.food.valor ? 'METAS (tramo)' : 'PARAMETROS',
+    meta_texto: 'tramo del mes ≤' + tramo + '% · meta final ' + d.meta_cogs + '% · barra ' + P.food_cost_barra_pct.valor + '%',
+    zona: tabZona_(u.cogs_m4, tramo, tramo + 3, 'menor'),
     tendencia: mc.ultimo ? tabTendencia_(mc.ultimo.cogsp, mc.anterior ? mc.anterior.cogsp : null, mc.ultimo.mes + ' contra ' + (mc.anterior ? mc.anterior.mes : '') + ' (mes)') : null,
     fuente: 'FinanzasDatos › semanas[].cogs_m4 · Dashboard › cmv (teorico 13 semanas)', enlace: 'costeo',
     nota: teo ? ('teorico 13 semanas: global ' + Math.round(teo.cmv.global * 1000) / 10 + '% · cocina ' + Math.round(teo.cmv.cocina.cmv * 1000) / 10 + '% · barra ' + Math.round(teo.cmv.barra.cmv * 1000) / 10 + '%') : 'teorico de Profit OS no disponible',
     detalle: teo ? { teorico_global: teo.cmv.global, teorico_cocina: teo.cmv.cocina.cmv, teorico_barra: teo.cmv.barra.cmv, ciego_pct: teo.ciego.pctVenta } : null
   }));
-  // K12 brecha real contra teorico
   var rt = null;
   try { rt = getCmvRealTeorico(auth); } catch (e2) { out.avisos.push('Puente CMV: ' + String(e2 && e2.message || e2)); }
   var b = rt && rt.ok ? rt.bloque : null;
+  var tb = M.brecha.valor || P.brecha_cmv_revisar_pts.valor;
   out.kpis.push(tabKpi_({
-    clave: 'K12', nombre: 'Brecha CMV real contra teorico', valor: b ? b.brecha_pts : null, unidad: 'pts',
+    clave: 'K12', nombre: 'Brecha CMV real contra teorico · Jeffry', valor: b ? b.brecha_pts : null, unidad: 'pts',
     periodo: b ? (b.desde + ' a ' + b.hasta + ' (' + b.meses + ' meses cerrados)') : '',
-    meta: P.brecha_cmv_revisar_pts.valor, meta_origen: P.brecha_cmv_revisar_pts.origen,
-    meta_texto: 'hasta ' + P.brecha_cmv_revisar_pts.valor + ' normal · hasta ' + P.brecha_cmv_auditar_pts.valor + ' revisar porcionado · mas: auditar recepcion, almacen y porciones',
-    zona: b ? tabZona_(b.brecha_pts, P.brecha_cmv_revisar_pts.valor, P.brecha_cmv_auditar_pts.valor, 'menor') : 'gris',
+    meta: tb, meta_origen: M.brecha.valor ? 'METAS (tramo)' : P.brecha_cmv_revisar_pts.origen,
+    meta_texto: 'tramo del mes ≤' + tb + ' pts · meta final ≤' + P.brecha_cmv_revisar_pts.valor + ' · sobre ' + P.brecha_cmv_auditar_pts.valor + ' auditar recepcion y porciones',
+    zona: b ? tabZona_(b.brecha_pts, tb, tb + 2, 'menor') : 'gris',
     fuente: 'PuenteCmv › getCmvRealTeorico().bloque.brecha_pts', enlace: 'costeo',
     nota: b ? ('real ' + b.real_pct + '% · teorico ' + b.teorico_pct + '%' + (b.inv_cocina ? '' : ' · cocina sin inventario en el bloque: real sin ajustar') + (b.inv_barra ? '' : ' · barra sin inventario')) : (rt && rt.error ? rt.error : 'sin dato'),
     estado: b ? 'ok' : 'falta_dato',
     detalle: b ? { real_q: b.real, teorico_q: b.teorico, brecha_q: b.brecha_q, inv_cocina: b.inv_cocina, inv_barra: b.inv_barra } : null
   }));
-  // K13 margen bruto por comensal
+  var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
+  ['COCINA', 'BARRA'].forEach(function (area) {
+    var r = inv.areas[area];
+    out.kpis.push(tabKpi_({
+      clave: area === 'COCINA' ? 'K03a' : 'K03b',
+      nombre: 'Inventario al dia · ' + (area === 'COCINA' ? 'Cocina (Jeffry)' : 'Barra (José)'),
+      valor: r.ultimo_cerrado || 'ninguno', unidad: 'mes', periodo: 'esperado ' + inv.esperado,
+      meta: P.inventario_cierre_dia.valor, meta_origen: P.inventario_cierre_dia.origen,
+      meta_texto: 'el mes anterior cerrado antes del dia ' + inv.dia_limite,
+      zona: r.zona,
+      fuente: 'InventarioDatos › invEstadoCierre_ (ESTADO de la fila 1 de cada pestaña)', enlace: 'costeo',
+      nota: r.error ? r.error : (inv.esperado + ': ' + r.estado_esperado + (r.dias_atraso ? ' · ' + r.dias_atraso + ' dias despues del limite' : '')),
+      estado: r.error ? 'error' : 'ok',
+      detalle: { ultimo_total: r.ultimo_total, total_esperado: r.total_esperado, cerrado_por: r.cerrado_por }
+    }));
+  });
+  var rm = null, rma = null;
+  try {
+    rm = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1);
+    var pa = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    rma = medRetirosMes_(pa.getFullYear(), pa.getMonth() + 1);
+  } catch (e4) { out.avisos.push('Retiros: ' + String(e4 && e4.message || e4)); }
+  out.kpis.push(tabKpi_({
+    clave: 'K22', nombre: 'Retiros de cajero con detalle · Jeffry', valor: rm ? (rm.n ? rm.pct : 100) : null, unidad: '%',
+    periodo: rm ? (rm.mes + ' · ' + rm.con_detalle + ' de ' + rm.n + ' retiros · Q' + Math.round(rm.q - rm.q_con).toLocaleString('es-GT') + ' sin detalle') : '',
+    meta: 100, meta_origen: 'plan', meta_texto: 'meta 100%: que se compro con cada retiro · rojo bajo 80%',
+    zona: rm ? (rm.n ? tabZona_(rm.pct, 100, 80, 'mayor') : 'verde') : 'gris',
+    fuente: 'maestro › retiros ATM en ALIMENTOS_EFECTIVO · Config › RETIROS_DETALLE', enlace: 'retiros',
+    nota: (rma ? (rma.mes + ': ' + rma.con_detalle + ' de ' + rma.n + ' retiros con detalle (Q' + Math.round(rma.q).toLocaleString('es-GT') + '). ') : '') +
+          'Se anotan en la intranet, pagina Retiros (Jeffry o el dueño). El banco se carga cada 15 dias: un retiro nuevo aparece cuando entra el estado de cuenta.',
+    estado: rm ? 'ok' : 'falta_dato'
+  }));
   if (mc.ultimo) {
     out.kpis.push(tabKpi_({
-      clave: 'K13', nombre: 'Margen bruto por comensal', valor: mc.ultimo.mb_comensal, unidad: 'Q',
+      clave: 'K13', nombre: 'Margen bruto por comensal (contexto)', valor: mc.ultimo.mb_comensal, unidad: 'Q',
       periodo: mc.ultimo.mes + ' · ' + mc.ultimo.com + ' comensales',
-      meta: null, meta_origen: 'sin meta', meta_texto: 'medir 3 meses antes de fijar meta',
+      meta: null, meta_origen: 'sin meta', meta_texto: 'contexto: medir 3 meses antes de fijar meta',
       zona: 'gris',
       tendencia: tabTendencia_(mc.ultimo.mb_comensal, mc.anterior ? mc.anterior.mb_comensal : null),
       fuente: 'FinanzasDatos › meses[].mb_comensal = (venta sin servicio − COGS) ÷ comensales', enlace: 'finanzas&sub=comparativo',
       estado: 'falta_meta'
     }));
-    // K14 ticket promedio y comensales lunes a miercoles
-    out.kpis.push(tabKpi_({
-      clave: 'K14a', nombre: 'Ticket por comensal', valor: u.tp, unidad: 'Q', periodo: 'S' + u.w,
-      meta: P.ticket_promedio_meta_q.valor, meta_origen: P.ticket_promedio_meta_q.origen,
-      meta_texto: 'meta Q' + P.ticket_promedio_meta_q.valor,
-      zona: tabZona_(u.tp, P.ticket_promedio_meta_q.valor, P.ticket_promedio_meta_q.valor * 0.9, 'mayor'),
-      tendencia: tabTendencia_(u.tp, u.tp - (u.dtp || 0), 'semana anterior'),
-      fuente: 'FinanzasDatos › semanas[].tp', enlace: 'finanzas&sub=semana'
-    }));
-    out.kpis.push(tabKpi_({
-      clave: 'K14b', nombre: 'Comensales por dia, lunes a miercoles', valor: mc.ultimo.com_lmx_dia, unidad: 'comensales/dia',
-      periodo: mc.ultimo.mes + ' · ' + mc.ultimo.com_lmx_dias + ' dias',
-      meta: P.comensales_lmx_meta.valor, meta_origen: P.comensales_lmx_meta.origen,
-      meta_texto: 'meta ' + P.comensales_lmx_meta.valor + ' por dia',
-      zona: tabZona_(mc.ultimo.com_lmx_dia, P.comensales_lmx_meta.valor, P.comensales_lmx_meta.valor * 0.75, 'mayor'),
-      tendencia: tabTendencia_(mc.ultimo.com_lmx_dia, mc.anterior ? mc.anterior.com_lmx_dia : null),
-      fuente: 'FinanzasDatos › meses[].com_lmx_dia', enlace: 'finanzas&sub=comparativo'
-    }));
   }
 }
 
 // ------------------------------------------------------------- 05 Marketing
+/* Sistema de Medicion: el numero es COMENSALES DEL MES (Juanma) = venta del restaurante
+   ÷ ticket. Palancas: clientes nuevos y CAC (Vanessa), eventos en quetzales y repeticion
+   (Juanma). ROAS queda como contexto: no se puede medir hasta optimizar a reserva real. */
 function _tabMarketing_(out, P, hoy) {
   var d = _finDatos_(false);
   var mc = tabMesCerrado_(d, hoy);
+  var Mt = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
+  var c = medComRitmo_(d, hoy, Mt);            // sin Caja: Marketing no la necesita
+  var cur = mc.en_curso || {}, ult = mc.ultimo || {};
+  out.kpis.push(tabKpi_({
+    clave: 'K23', nombre: 'Comensales del mes (ritmo) · Juanma', valor: c.com_ritmo, unidad: 'comensales',
+    periodo: Mt.mes + (c.dia_corte ? ' · al dia ' + c.dia_corte : ''),
+    meta: Mt.comensales, meta_origen: Mt.venta_rest.origen,
+    meta_texto: Mt.comensales ? ('meta ' + Mt.comensales + ' = Q' + Mt.venta_rest.valor.toLocaleString('es-GT') + ' ÷ ticket Q' + Mt.ticket.valor) : 'sin meta en METAS',
+    zona: c.com_zona, tendencia: ult.com_est ? tabTendencia_(c.com_ritmo, ult.com_est, ult.mes + ' completo') : null,
+    fuente: 'FinanzasDatos › meses[].com_est = venta del restaurante ÷ ticket', enlace: 'finanzas&sub=metas',
+    nota: 'comensales cargados en el POS: ' + (cur.com || 0) + ' (1 de cada 10 tickets viene sin comensales)'
+  }));
   var k = mktKpisMes_(d.anio, d);
   if (k.altas_error) out.avisos.push('CRM: ' + k.altas_error);
-  var M = mc.ultimo ? k.meses[mc.ultimo.m] : null, A = mc.anterior ? k.meses[mc.anterior.m] : null;
+  var Kc = k.meses[hoy.getMonth() + 1] || null, M = mc.ultimo ? k.meses[mc.ultimo.m] : null, A = mc.anterior ? k.meses[mc.anterior.m] : null;
+  out.kpis.push(tabKpi_({
+    clave: 'K24', nombre: 'Clientes nuevos del mes · Vanessa', valor: Kc ? Kc.altas : null, unidad: 'clientes',
+    periodo: Mt.mes + ' en curso' + (M ? ' · ' + M.mes + ' cerro en ' + M.altas : ''),
+    meta: Mt.clientes.valor, meta_origen: Mt.clientes.origen, meta_texto: 'meta ' + Mt.clientes.valor + ' · rojo bajo 30',
+    zona: Kc ? tabZona_(Kc.altas, Mt.clientes.valor, 30, 'mayor') : 'gris',
+    fuente: 'CrmDatos › crmAltasPorMes_ (segmento "Cliente que visitó")', enlace: 'marketing&sub=crm',
+    nota: Kc && Kc.lectura !== null ? ('lectura de Wix ' + Kc.lectura + '%: si baja, este numero se queda corto') : 'sin altas este mes'
+  }));
   if (M) {
     var lect = M.lectura;
     out.kpis.push(tabKpi_({
-      clave: 'K15', nombre: 'CAC mensual', valor: M.publicable ? M.cac : null, unidad: 'Q/cliente',
+      clave: 'K15', nombre: 'CAC mensual · Vanessa', valor: M.publicable ? M.cac : null, unidad: 'Q/cliente',
       periodo: M.mes + ' · Q' + Number(M.medios || 0).toLocaleString('es-GT') + ' de medios ÷ ' + (M.altas === null ? '?' : M.altas) + ' clientes que visitaron',
       meta: P.cac_max_q.valor, meta_origen: P.cac_max_q.origen,
       meta_texto: P.cac_max_q.valor ? ('maximo Q' + P.cac_max_q.valor) : 'sin meta: medir 3 meses (cac_max_q)',
-      zona: (M.publicable && P.cac_max_q.valor) ? tabZona_(M.cac, P.cac_max_q.valor, P.cac_max_q.valor * 1.5, 'menor') : 'gris',
+      zona: (M.publicable && P.cac_max_q.valor) ? tabZona_(M.cac, P.cac_max_q.valor, P.cac_max_q.valor * 1.33, 'menor') : 'gris',
       tendencia: (A && A.publicable && M.publicable) ? tabTendencia_(M.cac, A.cac) : null,
       fuente: 'MarketingDatos › mktKpisMes_ (medios de Finanzas ÷ altas "Cliente que visitó" del CRM)', enlace: 'marketing&sub=crm',
       nota: lect === null ? 'sin altas en el CRM ese mes'
@@ -383,42 +510,116 @@ function _tabMarketing_(out, P, hoy) {
       estado: M.publicable ? (P.cac_max_q.valor ? 'ok' : 'falta_meta') : 'falta_dato',
       detalle: { medios: M.medios, altas: M.altas, historicas: M.historicas, lectura: lect, cac_crudo: M.cac }
     }));
-    out.kpis.push(tabKpi_({
-      clave: 'K16', nombre: 'ROAS de pauta (estimado)', valor: M.roas, unidad: 'x',
-      periodo: M.mes + ' · ' + M.roas_semanas + ' semanas de pauta_semanal',
-      meta: P.roas_meta.valor, meta_origen: P.roas_meta.origen, meta_texto: 'meta ' + P.roas_meta.valor + 'x',
-      zona: M.roas === null ? 'gris' : tabZona_(M.roas, P.roas_meta.valor, 1, 'mayor'),
-      tendencia: (A && A.roas !== null) ? tabTendencia_(M.roas, A.roas) : null,
-      fuente: 'MarketingDatos › mktKpisMes_ (comensales × ticket de pauta_semanal ÷ medios)', enlace: 'marketing',
-      nota: 'proxy blended hasta que Wix mande el consumo por reserva (p163)',
-      estado: M.roas === null ? 'falta_dato' : 'ok'
-    }));
-    out.kpis.push(tabKpi_({
-      clave: 'K17', nombre: 'Eventos por mes', valor: M.eventos_n, unidad: 'eventos', periodo: M.mes,
-      meta: P.eventos_mes_meta.valor, meta_origen: P.eventos_mes_meta.origen, meta_texto: 'meta ' + P.eventos_mes_meta.valor + ' al mes',
-      zona: tabZona_(M.eventos_n, P.eventos_mes_meta.valor, 0, 'mayor'),
-      tendencia: A ? tabTendencia_(M.eventos_n, A.eventos_n) : null,
-      fuente: 'FinanzasDatos › meses[].eventos_n', enlace: 'finanzas&sub=comparativo',
-      nota: 'venta de eventos Q' + Number(M.eventos_q || 0).toLocaleString('es-GT')
-    }));
   }
   out.kpis.push(tabKpi_({
-    clave: 'K18', nombre: 'Reseñas', valor: null, unidad: '★', zona: 'gris', estado: 'falta_dato',
-    fuente: 'bot de reseñas de Google (hoja propia) · TripAdvisor a mano',
-    nota: 'FALTA FUENTE: conectar la hoja del bot de Google (RESENAS_SHEET_ID) y una pestaña RESENAS_TA para TripAdvisor.'
+    clave: 'K17', nombre: 'Eventos del mes, en quetzales · Juanma', valor: cur.eventos || 0, unidad: 'Q',
+    periodo: Mt.mes + ' en curso · ' + (cur.eventos_n || 0) + ' eventos',
+    meta: Mt.eventos.valor, meta_origen: Mt.eventos.origen, meta_texto: Mt.eventos.valor ? ('meta Q' + Mt.eventos.valor.toLocaleString('es-GT') + ' · rojo bajo la mitad') : 'sin meta',
+    zona: Mt.eventos.valor ? tabZona_(cur.eventos || 0, Mt.eventos.valor, Mt.eventos.valor * 0.5, 'mayor') : 'gris',
+    tendencia: ult.eventos !== undefined ? tabTendencia_(cur.eventos || 0, ult.eventos, ult.mes + ' completo') : null,
+    fuente: 'FinanzasDatos › meses[].eventos', enlace: 'finanzas&sub=comparativo',
+    nota: 'el numero de eventos (' + P.eventos_mes_meta.valor + ' al mes) queda como contexto'
   }));
+  var rep = null, rMes = null, rAnt = null;
+  try { rep = medRepeticion_(d.anio); rMes = rep[hoy.getMonth() + 1] || null; rAnt = mc.ultimo ? rep[mc.ultimo.m] || null : null; }
+  catch (e3) { out.avisos.push('Repeticion: ' + String(e3 && e3.message || e3)); }
+  var rUsa = rMes || rAnt;
+  var metaRep = (P.repeticion_meta_pct && P.repeticion_meta_pct.valor) || 24;
   out.kpis.push(tabKpi_({
-    clave: 'K19', nombre: 'Clientes que vuelven en 90 dias', valor: null, unidad: '%', zona: 'gris', estado: 'falta_dato',
-    fuente: 'CRM (fecha_alta, ultima_reserva, gasto)',
-    nota: 'FALTA DATO: depende del webhook de cierre de reserva de Wix (p163).'
+    clave: 'K19', nombre: 'Repeticion: reservas de clientes que ya vinieron · Juanma', valor: rUsa ? rUsa.pct : null, unidad: '%',
+    periodo: rUsa ? ((rUsa === rMes ? Mt.mes : (mc.ultimo ? mc.ultimo.mes : '')) + ' · ' + rUsa.repetidos + ' de ' + (rUsa.nuevos + rUsa.repetidos) + ' reservas · ' + rUsa.semanas + ' semanas') : '',
+    meta: metaRep, meta_origen: P.repeticion_meta_pct ? P.repeticion_meta_pct.origen : 'plan', meta_texto: 'meta ' + metaRep + '% · 28% en marzo · rojo bajo 20%',
+    zona: rUsa ? tabZona_(rUsa.pct, metaRep, 20, 'mayor') : 'gris',
+    tendencia: (rMes && rAnt && rUsa === rMes) ? tabTendencia_(rMes.pct, rAnt.pct, mc.ultimo.mes) : null,
+    fuente: 'pauta_semanal › clientes_nuevos y repetidos (ClientesNuevos.js del Marketing OS, cada lunes)', enlace: 'marketing',
+    nota: 'Una reserva es repetida si su email o telefono ya estaba en la CRM. Solo semanas cerradas.',
+    estado: rUsa ? 'ok' : 'falta_dato'
   }));
+  if (M) {
+    out.kpis.push(tabKpi_({
+      clave: 'K16', nombre: 'ROAS de pauta (contexto, no meta)', valor: M.roas, unidad: 'x',
+      periodo: M.mes + ' · ' + M.roas_semanas + ' semanas de pauta_semanal',
+      meta: null, meta_origen: 'contexto', meta_texto: 'no es meta: no se puede medir hasta que un anuncio optimice a reserva real',
+      zona: 'gris', fuente: 'MarketingDatos › mktKpisMes_', enlace: 'marketing', estado: M.roas === null ? 'falta_dato' : 'ok'
+    }));
+  }
 }
 
 // ------------------------------------------------------------- 06 Expansion
-function _tabExpansion_(out) {
-  out.texto = 'Este pilar se activa cuando los pilares 1 a 5 esten solidos. Regla del metodo: no se ' +
-              'mide expansion mientras la caja no tenga colchon, el food cost no este en meta y el ' +
-              'inventario no cierre a tiempo.';
+/* En pausa hasta 2027. Se activa con 3 meses seguidos cumpliendo las tres condiciones. */
+function _tabExpansion_(out, P, hoy) {
+  out.texto = 'En pausa hasta 2027. Se activa cuando se cumplan las tres condiciones de abajo durante 3 meses seguidos: ' +
+              'caja con colchon, food cost en meta e inventarios a tiempo. Hoy: 0 de 3 meses.';
+  try {
+    P = P || tabParametros_(); hoy = hoy || new Date();
+    var d = _finDatos_(false), u = d.ultima || {};
+    out.kpis.push(tabKpi_({ clave: 'C1', nombre: 'Dias de caja ≥ ' + P.caja_dias_verde.valor, valor: d.dias_caja, unidad: 'dias',
+      meta: P.caja_dias_verde.valor, meta_origen: P.caja_dias_verde.origen, meta_texto: 'condicion: ' + P.caja_dias_verde.valor + ' dias o mas',
+      zona: d.dias_caja >= P.caja_dias_verde.valor ? 'verde' : 'rojo', fuente: 'FinanzasDatos › dias_caja', enlace: 'finanzas&sub=caja' }));
+    out.kpis.push(tabKpi_({ clave: 'C2', nombre: 'Food cost en meta (' + d.meta_cogs + '%)', valor: u.cogs_m4, unidad: '%',
+      meta: d.meta_cogs, meta_origen: 'PARAMETROS', meta_texto: 'condicion: movil 4 en la meta final',
+      zona: u.cogs_m4 <= d.meta_cogs ? 'verde' : 'rojo', fuente: 'FinanzasDatos › semanas[].cogs_m4', enlace: 'costeo' }));
+    var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
+    var ok = inv.areas.COCINA.zona === 'verde' && inv.areas.BARRA.zona === 'verde';
+    out.kpis.push(tabKpi_({ clave: 'C3', nombre: 'Inventarios antes del dia ' + inv.dia_limite, valor: ok ? 'a tiempo' : 'atrasado', unidad: 'mes',
+      meta: inv.dia_limite, meta_origen: P.inventario_cierre_dia.origen, meta_texto: 'condicion: cocina y barra cerradas a tiempo',
+      zona: ok ? 'verde' : 'rojo', fuente: 'InventarioDatos › invEstadoCierre_', enlace: 'costeo',
+      nota: 'cocina ' + (inv.areas.COCINA.ultimo_cerrado || 'ninguno') + ' · barra ' + (inv.areas.BARRA.ultimo_cerrado || 'ninguno') }));
+  } catch (e) { out.avisos.push(String(e && e.message || e)); }
+}
+
+// ------------------------------------------------------------- Metas y ajustes
+/*
+ * El control y los ajustes (seccion 4.3bis del plan). Muestra las filas de METAS, la
+ * regla para subir o bajar, y una VISTA PREVIA de lo que diria la regla con los ultimos
+ * 3 meses cerrados contra la meta del mes en curso. La regla formal corre en cada
+ * recalibracion (15-nov, 15-ene, trimestral) y solo sobre meses que ya tengan meta.
+ * Nada se cambia desde aqui salvo con el boton de instalar (instalarSistemaMedicion).
+ */
+function _tabMetas_(out, P, hoy) {
+  var filas = [];
+  try { filas = medMetasFilas_(); } catch (e) { out.avisos.push('METAS: ' + String(e && e.message || e)); }
+  out.filas = filas;
+  out.instalado = filas.some(function (f) { return f.origen.indexOf(MED_ORIGEN_) === 0; });
+  out.parametros_plan = MED_PARAMETROS_.map(function (x) {
+    var p = P[x.k];
+    return { clave: x.k, plan: x.v, actual: p ? p.valor : null, origen: p ? p.origen : 'no existe' };
+  });
+  out.proxima = hoy < new Date(2026, 10, 15) ? '15-nov-2026' : (hoy < new Date(2027, 0, 15) ? '15-ene-2027' : 'la siguiente trimestral');
+
+  var d = _finDatos_(false);
+  var M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
+  var mHoy = hoy.getMonth() + 1;
+  var cerrados = (d.meses || []).filter(function (x) { return x.m < mHoy; }).slice(-3);
+  var altas = null;
+  try { altas = crmAltasPorMes_(d.anio); } catch (e2) { altas = null; }
+  function prev(nombre, meta, reales, sentido, escalon, ancla) {
+    var v = reales.filter(function (x) { return x !== null && x !== undefined; });
+    var prom = v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null;
+    var r = { nombre: nombre, meta: meta, reales: reales, promedio: prom === null ? null : Math.round(prom * 10) / 10, propuesta: '', zona: 'gris' };
+    if (ancla) { r.propuesta = 'Ancla: no se mueve por desempeño'; return r; }
+    if (meta === null || meta === undefined || v.length < 3) { r.propuesta = 'Sin 3 meses con dato'; return r; }
+    var mejor = function (x) { return sentido === 'mayor' ? x >= meta * 1.05 : x <= meta * 0.95; };
+    var peor = function (x) { return sentido === 'mayor' ? x < meta : x > meta; };
+    if (v.every(mejor)) {
+      var tope = sentido === 'mayor' ? meta * (1 + escalon) : meta - escalon;
+      var nueva = sentido === 'mayor' ? Math.min(prom, tope) : Math.max(prom, tope);
+      r.propuesta = 'Subiria a ' + Math.round(nueva * 10) / 10; r.zona = 'verde';
+    } else if (v.every(peor)) {
+      r.propuesta = '3 meses en rojo: pasar los 3 filtros (dato, acciones, premisa) antes de bajar'; r.zona = 'rojo';
+    } else { r.propuesta = 'Se mantiene'; r.zona = 'amarillo'; }
+    return r;
+  }
+  out.meses_previa = cerrados.map(function (x) { return x.mes; });
+  out.previa = [
+    prev('Venta del restaurante (Q)', M.venta_rest.valor, cerrados.map(function (x) { return x.ventas; }), 'mayor', 0.10),
+    prev('Comensales del mes', M.comensales, cerrados.map(function (x) { return x.com_est; }), 'mayor', 0.20),
+    prev('Ticket por comensal (Q, sin IVA)', M.ticket.valor, cerrados.map(function (x) { return x.tp; }), 'mayor', 0.10),
+    prev('Food cost del mes (%)', M.food.valor, cerrados.map(function (x) { return x.cogsp; }), 'menor', 2),
+    prev('Clientes nuevos', M.clientes.valor, cerrados.map(function (x) { return altas && altas[x.m] ? altas[x.m].visito : null; }), 'mayor', 0.20),
+    prev('Food cost final 28/20', d.meta_cogs, [], 'menor', 0, true),
+    prev('Piso Q18,896', null, [], 'mayor', 0, true)
+  ];
 }
 
 // ------------------------------------------------------------- documentos

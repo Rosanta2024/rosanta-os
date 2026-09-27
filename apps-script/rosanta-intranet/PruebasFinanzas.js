@@ -977,6 +977,78 @@ function prFinanzas_(res) {
         : (defecto.length ? defecto.length + ' metas en defecto (falta la fila en PARAMETROS): ' + defecto.join(', ') : 'todas en PARAMETROS'),
       defecto.length, 0);
   });
+
+  // ------------------------------------------- Sistema de Medicion (27-sep-2026)
+  prCorrer_(g, 'El ticket por comensal divide solo la venta de tickets con comensales', function () {
+    var nombre = 'El ticket por comensal divide solo la venta de tickets con comensales';
+    var malos = [];
+    (d.semanas || []).forEach(function (s) {
+      if (s.com && s.tp > s.tp_bruto + 0.01) malos.push('S' + s.w + ': tp ' + s.tp + ' > bruto ' + s.tp_bruto);
+    });
+    d.meses.forEach(function (x) { if (x.com && !(x.tp > 0)) malos.push(x.mes + ': sin tp'); });
+    var u = d.ultima || {};
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.slice(0, 6).join(' · ') : 'S' + u.w + ': Q' + u.tp + ' (la formula vieja daba Q' + u.tp_bruto + ')', malos.length, 0);
+  });
+
+  prCorrer_(g, 'Los comensales del mes son la venta del restaurante entre el ticket', function () {
+    var nombre = 'Los comensales del mes son la venta del restaurante entre el ticket';
+    var malos = [];
+    d.meses.forEach(function (x) {
+      if (!x.tp || !x.com_est) return;
+      if (Math.abs(x.com_est - x.ventas / x.tp) > 1.01) malos.push(x.mes + ': ' + x.com_est + ' vs ' + Math.round(x.ventas / x.tp));
+      if (x.com_est < x.com) malos.push(x.mes + ': estimados ' + x.com_est + ' < cargados ' + x.com);
+    });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : d.meses.length + ' meses: com_est = ventas ÷ tp y nunca menor que lo cargado', malos.length, 0);
+  });
+
+  prCorrer_(g, 'La meta de comensales cuadra con la meta de venta entre el ticket', function () {
+    var nombre = 'La meta de comensales cuadra con la meta de venta entre el ticket';
+    var hoy = new Date(), M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, tabParametros_());
+    if (!M.venta_rest.valor) { prAnotar_(g, nombre, 'SALTADA', 'el mes no tiene fila en METAS: no hay meta que cuadrar', 0, 0); return; }
+    var esperado = Math.round(M.venta_rest.valor / M.ticket.valor);
+    var totalOk = M.venta_total === M.venta_rest.valor + (M.eventos.valor || 0);
+    prAnotar_(g, nombre, (M.comensales === esperado && totalOk) ? 'OK' : 'FALLA',
+      M.mes + ': ' + M.comensales + ' comensales = Q' + M.venta_rest.valor + ' ÷ Q' + M.ticket.valor + ' · total Q' + M.venta_total + ' = restaurante + eventos',
+      M.comensales, esperado);
+  });
+
+  prCorrer_(g, 'Las metas del Sistema de Medicion estan instaladas', function () {
+    var nombre = 'Las metas del Sistema de Medicion estan instaladas';
+    var F = medMetasFilas_().filter(function (f) { return f.origen.indexOf(MED_ORIGEN_) === 0; });
+    prAnotar_(g, nombre, F.length === MED_PLAN_.length ? 'OK' : 'AVISO',
+      F.length === MED_PLAN_.length ? F.length + ' meses en METAS' : F.length + ' de ' + MED_PLAN_.length + ' meses: instalar desde Tablero › Metas y ajustes',
+      F.length, MED_PLAN_.length);
+  });
+
+  prCorrer_(g, 'La franja del chef no muestra quetzales', function () {
+    var nombre = 'La franja del chef no muestra quetzales';
+    var r = medMiSemana_({ rol: 'chef', nombre: 'Prueba', email: 'prueba@x' }, 'chef', null);
+    var conQ = (r && r.items || []).filter(function (x) { return /^Q\s?-?\d/.test(String(x.valor)); });
+    prAnotar_(g, nombre, conQ.length ? 'FALLA' : 'OK',
+      conQ.length ? conQ.map(function (x) { return x.nombre + ' = ' + x.valor; }).join(' · ') : (r ? r.items.length : 0) + ' numeros, todos en % o conteos', conQ.length, 0);
+  });
+
+  prCorrer_(g, 'Solo cocina o el dueño anotan retiros; la Sala solo sala o dueño', function () {
+    var nombre = 'Solo cocina o el dueño anotan retiros; la Sala solo sala o dueño';
+    var malos = [];
+    ['sala', 'pauta', 'equipo'].forEach(function (rol) {
+      try { medPuedeRetiros_({ rol: rol }); malos.push('retiros acepta rol ' + rol); } catch (e) {}
+    });
+    try { medPuedeRetiros_({ rol: 'chef' }); } catch (e) { malos.push('retiros rechaza al chef'); }
+    var src = String(getSala);
+    if (src.indexOf("rol !== 'sala' && rol !== 'dueno'") === -1) malos.push('getSala no revisa el rol');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'retiros: solo chef y dueño · Sala: solo sala y dueño', malos.length, 0);
+  });
+
+  prCorrer_(g, 'Las fuentes nuevas se leen: reseñas, repeticion y retiros', function () {
+    var nombre = 'Las fuentes nuevas se leen: reseñas, repeticion y retiros';
+    var hoy = new Date(), malos = [], ok = [];
+    try { var rs = medResenas_(hoy); ok.push('reseñas: ' + rs.semana_pasada + ' la semana pasada'); } catch (e) { malos.push('reseñas: ' + e.message); }
+    try { var rp = medRepeticion_(d.anio); ok.push('repeticion: ' + Object.keys(rp).length + ' meses'); } catch (e2) { malos.push('repeticion: ' + e2.message); }
+    try { var rt = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1); ok.push('retiros: ' + rt.n + ' este mes'); } catch (e3) { malos.push('retiros: ' + e3.message); }
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : ok.join(' · '), malos.length, 0);
+  });
 }
 
 

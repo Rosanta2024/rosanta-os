@@ -96,6 +96,11 @@ a{color:var(--verde)}
   #printArea{display:block !important}
   #printArea .pieza{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px}
 }
+  .mipal{background:#fff;border:2px solid #AEAAE2;border-radius:14px;padding:12px 16px;margin:10px 0 14px;display:flex;flex-wrap:wrap;gap:8px 26px;align-items:center}
+  .mipal .l{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5b56a6;width:100%}
+  .mipal .i{display:flex;flex-direction:column;min-width:130px}
+  .mipal .i b{font-size:20px;font-variant-numeric:tabular-nums}
+  .mipal .i span{font-size:12px;opacity:.75;line-height:1.35}
 </style>
 </head>
 <body>
@@ -144,6 +149,9 @@ a{color:var(--verde)}
     <button class="btn sm" onclick="loadMeta()">Actualizar</button>
     <span class="muted" id="metaStatus"></span>
   </div>
+  <!-- Sistema de Medicion (27-sep-2026): la palanca de Vanessa contra su meta del mes.
+       Los numeros los calcula el servidor (MedicionDatos.gs › getMiPalancaPauta). -->
+  <div id="miPalanca" class="mipal" style="display:none"></div>
   <!-- El Diagnostico IA (Lente Loomer + AI CMO) se retiro el 27-sep-2026: decidia con
        CTR y CPC sin ver una sola reserva. Las decisiones salen de la pestaña
        ⚖️ Decisiones de pauta (PautaSistema.gs): hechos, validacion y reglas. -->
@@ -2068,6 +2076,16 @@ if(FULL){
   osRenderConn();seedProps();
   renderCarr();renderProps();renderDebHist();renderPanel();renderUtmHist();loadMeta();loadGads();
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
+  // Sistema de Medicion: clientes nuevos, CAC y comensales contra la meta del mes.
+  srv('getMiPalancaPauta').then(r=>{
+    if(!r||!r.items)return;
+    const col={verde:'#2E6B3F',amarillo:'#C89A3C',rojo:'#A33A2A'};
+    const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const el=$('miPalanca');
+    el.innerHTML='<div class="l">Mi palanca · '+esc(r.mes||'')+' · Sistema de Medición</div>'+r.items.map(x=>
+      '<div class="i"><b style="color:'+(col[x.zona]||'inherit')+'">'+esc(x.valor)+'</b><span>'+esc(x.nombre)+'<br>'+esc(x.texto)+'</span></div>').join('');
+    el.style.display='flex';
+  }).catch(()=>{});
   // Decisiones de pauta: se carga al abrir su pestaña, no en cada arranque.
   document.querySelector('nav button[data-tab="decis"]').addEventListener('click',()=>{if(!PS)psCargar()});
   // Estrategia y Panel solo reciben cifras verificadas en la pestaña supuestos.

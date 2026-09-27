@@ -169,6 +169,18 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
+  // Sistema de Medicion (27-sep-2026): Sala es el numero de José (rol sala) y Retiros es
+  // donde cocina anota que se compro con cada retiro de cajero (rol chef). El dueño ve las dos.
+  var rolPag = String(usuario.rol || '').toLowerCase();
+  if (pagina === 'sala' && (rolPag === 'sala' || rolPag === 'dueno')) {
+    return render_('SalaVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  if (pagina === 'retiros' && (rolPag === 'chef' || rolPag === 'dueno')) {
+    return render_('RetirosVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   // Vista CRM: contactos de la maestra arriba, conversación del bot abajo.
   if (pagina === 'crm' && usuarioTieneModulo(usuario, 'crm')) {
     return render_('CrmVista', {

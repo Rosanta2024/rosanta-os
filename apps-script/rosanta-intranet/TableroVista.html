@@ -52,6 +52,43 @@
     .tb-docs { margin-top: 1.2rem; }
     .tb-docs h3 { font-size: 1rem; margin: 0 0 0.5rem; color: var(--verde-bosque); }
     .tb-leyenda { font-size: 0.78rem; color: #52514e; margin-top: 1.4rem; line-height: 1.5; }
+    /* ---- Sistema de Medicion (27-sep-2026): Cascada y Metas y ajustes ---- */
+    .md-hig { background: #fff; border-radius: 14px; padding: 0.7rem 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem;
+      align-items: center; font-size: 0.84rem; margin-bottom: 1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .md-hig.mal { background: #F6E4DF; }
+    .md-hig b.t { color: #A33A2A; }
+    .md-hig .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.35rem; vertical-align: 0; }
+    .md-n1 { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .md-box { background: #fff; border-radius: 18px; padding: 1rem 1.15rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+    .md-box .l { font-size: 0.78rem; color: #52514e; }
+    .md-big { font-weight: 700; font-size: 1.9rem; line-height: 1.15; margin: 0.3rem 0; font-variant-numeric: tabular-nums; }
+    .md-pill { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.2rem 0.55rem; border-radius: 999px; vertical-align: middle; margin-left: 0.4rem; }
+    .md-pill.verde { background: #e2efe5; color: #2E6B3F; } .md-pill.amarillo { background: #FBF3E2; color: #8a6420; }
+    .md-pill.rojo { background: #F6E4DF; color: #A33A2A; } .md-pill.gris { background: #ecebe8; color: #52514e; }
+    .md-gauge { position: relative; height: 14px; border-radius: 7px; background: #ece7e2; margin: 1.9rem 0 1.5rem; }
+    .md-gauge .f { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px; }
+    .md-gauge .mk { position: absolute; top: -6px; bottom: -6px; width: 2px; background: #52514e; }
+    .md-gauge .mk span { position: absolute; top: -1.3rem; left: 50%; transform: translateX(-50%); font-size: 0.72rem; white-space: nowrap; color: #52514e; }
+    .md-gauge .mk em { position: absolute; bottom: -1.3rem; left: 50%; transform: translateX(-50%); font-size: 0.72rem; font-style: normal; white-space: nowrap; color: #8a8780; }
+    .md-pace { position: relative; height: 10px; border-radius: 5px; background: #ece7e2; margin: 0.8rem 0 0.4rem; }
+    .md-pace .a { position: absolute; left: 0; top: 0; bottom: 0; background: var(--verde-bosque); border-radius: 5px; }
+    .md-pace .p { position: absolute; left: 0; top: 0; bottom: 0; border: 1.5px dashed var(--verde-bosque); border-radius: 5px; }
+    .md-pace .t { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #A33A2A; }
+    .md-kv { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .md-kv td { padding: 0.25rem 0; border-bottom: 1px solid rgba(26,26,26,0.08); }
+    .md-kv td.n { text-align: right; font-variant-numeric: tabular-nums; }
+    .md-h { font-family: 'Playfair Display', Georgia, serif; color: var(--verde-bosque); font-size: 1.1rem; margin: 1.2rem 0 0.6rem; }
+    .md-tbl { overflow-x: auto; }
+    .md-tbl table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.84rem; background: #fff; border-radius: 14px; }
+    .md-tbl th { text-align: left; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(26,26,26,0.12); }
+    .md-tbl td { padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(26,26,26,0.07); vertical-align: top; }
+    .md-tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .md-inst { background: #fff; border: 2px solid var(--lila); border-radius: 16px; padding: 1rem 1.15rem; margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.5; }
+    .md-inst .tb-boton { margin-top: 0.6rem; margin-right: 0.5rem; }
+    .md-inst .tb-boton.fuerte { background: var(--verde-bosque); color: #fff; }
+    .md-rep { font-size: 0.82rem; margin-top: 0.6rem; line-height: 1.55; }
+    @media (max-width: 760px) { .md-n1 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -76,21 +113,23 @@
     </div>
 
     <div class="tb-tabs" id="tabs">
-      <button type="button" class="tb-tab act" data-p="fundamentos"><span class="pt"></span>01 Fundamentos</button>
+      <button type="button" class="tb-tab act" data-p="fundamentos"><span class="pt"></span>01 Cascada</button>
       <button type="button" class="tb-tab" data-p="management"><span class="pt"></span>02 Management</button>
       <button type="button" class="tb-tab" data-p="finanzas"><span class="pt"></span>03 Finanzas</button>
       <button type="button" class="tb-tab" data-p="profit"><span class="pt"></span>04 Profit</button>
       <button type="button" class="tb-tab" data-p="marketing"><span class="pt"></span>05 Marketing</button>
       <button type="button" class="tb-tab" data-p="expansion"><span class="pt"></span>06 Expansion</button>
+      <button type="button" class="tb-tab" data-p="metas"><span class="pt"></span>Metas y ajustes</button>
       <button type="button" class="tb-tab" data-p="reporte"><span class="pt"></span>Reporte semanal</button>
     </div>
 
-    <div class="tb-panel act" id="p-fundamentos"><div class="tb-cargando">Leyendo Finanzas y Caja…</div></div>
+    <div class="tb-panel act" id="p-fundamentos"><div class="tb-cargando">Armando la cascada: Finanzas, Caja, CRM e inventarios…</div></div>
     <div class="tb-panel" id="p-management"><div class="tb-cargando">Leyendo los inventarios…</div></div>
     <div class="tb-panel" id="p-finanzas"><div class="tb-cargando">Leyendo el maestro…</div></div>
     <div class="tb-panel" id="p-profit"><div class="tb-cargando">Leyendo Profit OS (puede tardar medio minuto en frio)…</div></div>
     <div class="tb-panel" id="p-marketing"><div class="tb-cargando">Leyendo Marketing OS y el CRM…</div></div>
     <div class="tb-panel" id="p-expansion"><div class="tb-cargando">…</div></div>
+    <div class="tb-panel" id="p-metas"><div class="tb-cargando">Leyendo METAS…</div></div>
     <!-- El reporte semanal en vivo va aqui como secciones de la pagina, no en un iframe
          (Juanma, 26-sep-2026). Es el mismo cuerpo que ReporteSemanalVista.html; su JS se
          pega al final. Debajo, los PDF de cada semana para mandar al equipo. -->
@@ -110,7 +149,7 @@
   var AUTH = '<?= authToken ?>';
   var B = <?!= JSON.stringify(urlBase) ?>;
   var T = <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>;
-  var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion', 'reporte'];
+  var PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing', 'expansion', 'metas', 'reporte'];
   /* El reporte semanal en vivo (ReporteSemanalJs) se carga solo y se recarga con RP.recargar(true). */
 
   function q(n, dec) {
@@ -170,13 +209,19 @@
     var html = '';
     if (r.error) html += '<div class="tb-error">' + esc(r.error) + '</div>';
     if (r.avisos && r.avisos.length) html += '<div class="tb-avisos">' + r.avisos.map(esc).join('<br>') + '</div>';
-    if (p === 'expansion') {
-      html += '<div class="tb-texto">' + esc(r.texto || '') + '</div>';
+    if (p === 'fundamentos') {
+      html += cascada(r);
+    } else if (p === 'metas') {
+      html += metas(r);
+    } else if (p === 'expansion') {
+      html += '<div class="tb-texto" style="margin-bottom:1rem">' + esc(r.texto || '') + '</div>';
+      html += '<div class="tb-grid">' + (r.kpis || []).map(tarjeta).join('') + '</div>';
     } else {
       html += '<div class="tb-grid">' + (r.kpis || []).map(tarjeta).join('') + '</div>';
     }
     html += '<p class="tb-leyenda">Calculado ' + esc(r.gen || '') + '</p>';
     el.innerHTML = html;
+    if (p === 'metas') enlazarInstalador();
     if (p === 'marketing') pintarPlanes();   // el plan de Meta Ads va al pie de este pilar
     // el punto de la pestaña: el peor semaforo del pilar
     var peor = 'gris';
@@ -186,6 +231,106 @@
       else if (k.zona === 'verde' && peor === 'gris') peor = 'verde';
     });
     punto(p, peor);
+  }
+
+  /* ---- Sistema de Medicion (27-sep-2026) ---- */
+  function pill(z, t) { return '<span class="md-pill ' + esc(z || 'gris') + '">' + esc(t) + '</span>'; }
+  var ZTXT = { verde: 'verde', amarillo: 'amarillo', rojo: 'rojo', gris: 'sin dato' };
+  var ZCOL = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A' };
+
+  function cascada(r) {
+    var c = r.cascada || {}, M = r.metas_mes || {}, h = '';
+    var malos = c.higiene_malos || 0;
+    h += '<div class="md-hig' + (malos ? ' mal' : '') + '">' +
+      (malos ? '<b class="t">' + malos + ' de 4 datos fallan · estos números pueden mentir</b>' : '<b>Datos completos</b>') +
+      (c.higiene || []).map(function (x) {
+        return '<span title="' + esc(x.texto) + '"><i class="dot" style="background:' + (ZCOL[x.zona] || '#c9c6c0') + '"></i><b>' + esc(x.nombre) + '</b> · ' + esc(x.texto) + ' (' + esc(x.dueno) + ')</span>';
+      }).join('') + '</div>';
+    // N1 lo que deja
+    var maxG = Math.max((c.objetivo_mes || 0) * 1.15, c.deja || 0, 1);
+    var pct = function (v) { return Math.max(0, Math.min(100, v / maxG * 100)); };
+    h += '<div class="md-n1"><div class="md-box"><div class="l">N1 · Lo que deja la operación · ' + esc(c.deja_periodo || '') + '</div>' +
+      '<div class="md-big">' + q(c.deja) + pill(c.deja_zona, c.deja !== null && c.deja >= (c.piso || 0) ? 'cubre el piso' : 'bajo el piso') + '</div>' +
+      '<div class="md-gauge"><div class="f" style="width:' + pct(c.deja || 0) + '%;background:' + (ZCOL[c.deja_zona] || '#c9c6c0') + '"></div>' +
+      '<div class="mk" style="left:0"><span>Q0</span><em>cero</em></div>' +
+      '<div class="mk" style="left:' + pct(c.piso || 0) + '%"><span>' + q(c.piso) + '</span><em>piso</em></div>' +
+      '<div class="mk" style="left:' + pct(c.objetivo || 0) + '%"><span>' + q(c.objetivo) + '</span><em>objetivo</em></div></div>' +
+      '<div class="l">' + (c.falta_piso ? 'Faltan ' + q(c.falta_piso) + ' para el piso' + (c.venta_piso_pct !== null && c.venta_piso_pct !== undefined ? ' (+' + c.venta_piso_pct + '% de venta)' : '') : 'Cubre el piso') +
+      '. Mes en curso en proporción, escenario base de Caja.</div></div>';
+    // N1 venta
+    var mt = M.venta_total || 0, top = Math.max(mt, c.venta_proy || 0, 1);
+    h += '<div class="md-box"><div class="l">N1 · Venta de ' + esc(M.mes || '') + ' · restaurante + eventos, sin IVA</div>' +
+      '<div class="md-big">' + q(c.venta_proy) + pill(c.venta_zona, 'proyección') + '</div>' +
+      '<div class="md-pace"><div class="p" style="width:' + ((c.venta_proy || 0) / top * 100) + '%"></div><div class="a" style="width:' + (c.venta_acum / top * 100) + '%"></div>' +
+      (mt ? '<div class="t" style="left:' + (mt / top * 100) + '%"></div>' : '') + '</div>' +
+      '<table class="md-kv"><tr><td>Acumulado al día ' + esc(c.dia_corte || 0) + ' de ' + esc(c.dias_mes || '') + '</td><td class="n">' + q(c.venta_acum) + '</td></tr>' +
+      '<tr><td>Meta del mes' + (M.venta_rest ? ' (' + esc(M.venta_rest.origen) + ')' : '') + '</td><td class="n">' + (mt ? q(mt) : 'sin meta') + '</td></tr>' +
+      (M.venta_rest && M.venta_rest.valor ? '<tr><td>· restaurante / eventos</td><td class="n">' + q(M.venta_rest.valor) + ' / ' + q(M.eventos.valor || 0) + '</td></tr>' : '') +
+      (M.minimo && M.minimo.valor ? '<tr><td>Mínimo (rojo por debajo)</td><td class="n">' + q(M.minimo.valor) + '</td></tr>' : '') +
+      (c.venta_esperada ? '<tr><td>A la fecha la meta pide</td><td class="n">' + q(c.venta_esperada) + '</td></tr>' : '') +
+      '</table></div></div>';
+    h += '<div class="md-h">Un número por pilar</div><div class="tb-grid">' + (r.pilares || []).map(tarjeta).join('') + '</div>';
+    if (r.k01) h += '<div class="md-h">El año</div><div class="tb-grid">' + tarjeta(r.k01) + '</div>';
+    h += '<p class="tb-leyenda">Las palancas de cada número están en su pestaña (02 a 05). Las metas del mes salen de METAS; si una dice PARAMETROS o "sin meta", el mes no tiene fila: se instala en "Metas y ajustes". Plan: 02_Management_OS/2026-09-27_Sistema_de_Medicion_Rosanta.md.</p>';
+    return h;
+  }
+
+  function metas(r) {
+    var h = '';
+    h += '<div class="md-inst">' + (r.instalado
+      ? '<b>El Sistema de Medición está instalado.</b> Las metas de abajo son las que usa el tablero. Para cambiar una, edita la pestaña METAS de Rosanta_Intranet_Config y anota en ORIGEN la fecha y la razón.'
+      : '<b>Falta instalar las metas del Sistema de Medición.</b> El botón escribe en Rosanta_Intranet_Config: la pestaña METAS (septiembre a diciembre, con sus columnas nuevas) y ' +
+        (r.parametros_plan || []).length + ' filas de PARAMETROS. No pisa nada escrito a mano y reporta cada cambio con su valor anterior.') +
+      '<div><button type="button" class="tb-boton" id="md-inst1">' + (r.instalado ? 'Volver a instalar (revisa y reporta)' : 'Instalar metas') + '</button>' +
+      '<button type="button" class="tb-boton fuerte" id="md-inst2" hidden>Sí, escribir en Rosanta_Intranet_Config</button>' +
+      '<button type="button" class="tb-boton" id="md-inst3" hidden>Cancelar</button></div><div class="md-rep" id="md-rep"></div></div>';
+    // filas
+    h += '<div class="md-h">Metas por mes (pestaña METAS)</div>';
+    var F = r.filas || [];
+    if (!F.length) h += '<div class="tb-avisos">La pestaña METAS no existe todavía: el tablero usa la meta automática y PARAMETROS.</div>';
+    else h += '<div class="md-tbl"><table><tr><th>Mes</th><th class="n">Restaurante</th><th class="n">Eventos</th><th class="n">Mínimo total</th><th class="n">Food cost tramo</th><th class="n">Brecha tramo</th><th class="n">Ticket</th><th class="n">Clientes nuevos</th><th class="n">L–X/día</th><th class="n">Reseñas/sem</th><th class="n">Lectura Wix</th><th class="n">Días de caja</th><th>Origen (historial)</th></tr>' +
+      F.map(function (f) {
+        function n(v, pre, suf) { return v === null || v === undefined ? '—' : (pre || '') + Number(v).toLocaleString('es-GT') + (suf || ''); }
+        return '<tr><td>' + esc(f.mes) + ' ' + esc(f.anio) + '</td><td class="n">' + n(f.venta, 'Q') + '</td><td class="n">' + n(f.meta_eventos_q, 'Q') + '</td><td class="n">' + n(f.minimo_venta_total, 'Q') +
+          '</td><td class="n">' + n(f.tramo_food_pct, '≤', '%') + '</td><td class="n">' + n(f.tramo_brecha_pts, '≤', ' pts') + '</td><td class="n">' + n(f.meta_ticket_q, 'Q') + '</td><td class="n">' + n(f.meta_clientes_nuevos) +
+          '</td><td class="n">' + n(f.meta_lmx_dia) + '</td><td class="n">' + n(f.meta_resenas_sem) + '</td><td class="n">' + n(f.meta_lectura_pct, '', '%') + '</td><td class="n">' + n(f.meta_dias_caja, '≥') + '</td><td style="font-size:0.78rem;color:#52514e">' + esc(f.origen) + '</td></tr>';
+      }).join('') + '</table></div>';
+    // parametros
+    h += '<div class="md-h">PARAMETROS del sistema</div><div class="md-tbl"><table><tr><th>Parámetro</th><th class="n">Plan</th><th class="n">Hoy</th><th>Origen</th></tr>' +
+      (r.parametros_plan || []).map(function (x) {
+        var ok = x.actual === x.plan;
+        return '<tr><td>' + esc(x.clave) + '</td><td class="n">' + esc(x.plan) + '</td><td class="n">' + (x.actual === null ? '—' : esc(x.actual)) + '</td><td>' + pill(ok ? 'verde' : 'amarillo', ok ? 'igual al plan' : esc(x.origen)) + '</td></tr>';
+      }).join('') + '</table></div>';
+    // vista previa
+    h += '<div class="md-h">Vista previa del ajuste · próxima recalibración: ' + esc(r.proxima || '') + '</div>' +
+      '<p class="tb-sub" style="margin:0 0 0.6rem">Últimos 3 meses cerrados (' + esc((r.meses_previa || []).join(', ')) + ') contra la meta del mes en curso. Sube con 3 meses en verde y al menos 5% mejor (al promedio, un escalón como máximo). Baja solo con 3 meses en rojo y después de los 3 filtros: ¿el dato estaba completo?, ¿se hicieron las acciones?, ¿cambió una premisa? Las anclas no se mueven.</p>' +
+      '<div class="md-tbl"><table><tr><th>Meta</th><th class="n">Meta hoy</th><th class="n">Últimos 3 meses</th><th class="n">Promedio</th><th>Qué diría la regla</th></tr>' +
+      (r.previa || []).map(function (x) {
+        return '<tr><td>' + esc(x.nombre) + '</td><td class="n">' + (x.meta === null || x.meta === undefined ? '—' : Number(x.meta).toLocaleString('es-GT')) + '</td><td class="n">' +
+          (x.reales || []).map(function (v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('es-GT'); }).join(' · ') +
+          '</td><td class="n">' + (x.promedio === null ? '—' : Number(x.promedio).toLocaleString('es-GT')) + '</td><td>' + pill(x.zona, x.propuesta) + '</td></tr>';
+      }).join('') + '</table></div>' +
+      '<p class="tb-leyenda">Es una vista previa: la regla formal corre en cada recalibración y solo sobre meses que ya tenían meta en METAS. Un cambio se escribe a mano en METAS con fecha, de cuánto a cuánto y por qué; la fila vieja no se borra.</p>';
+    return h;
+  }
+
+  function enlazarInstalador() {
+    var b1 = document.getElementById('md-inst1'), b2 = document.getElementById('md-inst2'), b3 = document.getElementById('md-inst3'), rep = document.getElementById('md-rep');
+    if (!b1) return;
+    b1.onclick = function () { b1.hidden = true; b2.hidden = false; b3.hidden = false;
+      rep.textContent = 'Confirma: se escribe en la pestaña METAS y en PARAMETROS de Rosanta_Intranet_Config.'; };
+    b3.onclick = function () { b1.hidden = false; b2.hidden = true; b3.hidden = true; rep.textContent = ''; };
+    b2.onclick = function () {
+      b2.disabled = true; b3.hidden = true; rep.textContent = 'Escribiendo…';
+      google.script.run
+        .withSuccessHandler(function (res) {
+          rep.innerHTML = '<b>' + (res && res.ok ? 'Listo y verificado.' : 'Terminó, pero la verificación no cuadra: revisa el reporte.') + '</b><br>' +
+            (res && res.reporte || []).map(esc).join('<br>') + '<br><i>Actualizando el tablero…</i>';
+          setTimeout(function () { document.getElementById('btn-actualizar').click(); }, 1500);
+        })
+        .withFailureHandler(function (e) { b2.disabled = false; rep.innerHTML = '<span style="color:#A33A2A">' + esc(e && e.message || e) + '</span>'; })
+        .instalarSistemaMedicion(AUTH);
+    };
   }
 
   function cargar(p) {

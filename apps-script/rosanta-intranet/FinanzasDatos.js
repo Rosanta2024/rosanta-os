@@ -639,7 +639,9 @@ function finCacheClave_() {
   // los Q5,250 que la regla borraba, y el cambio no se veria hasta que expirara sola.
   // v11 (25-sep-2026): campos del tablero global (ebitda, eventos_n, sin_factura,
   // mb_comensal, com_lmx_dia, medios). Una cache v10 dejaria el tablero sin ellos.
-  return 'finanzas_v11_m' + m.global + '-' + m.BARRA;
+  // v12 (27-sep-2026): Sistema de Medicion. El ticket divide solo la venta de tickets con
+  // comensales y cada mes trae tp, com_est y venta_lmx. Una cache v11 daria el ticket inflado.
+  return 'finanzas_v12_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -696,6 +698,7 @@ function _finCalcular_() {
     // que ya pasan por este bucle, guardados ademas por mes: el tablero no calcula.
     if (!mes[m]) mes[m] = { m: m, ventas: 0, ventas_ss: 0, eventos: 0, eventos_n: 0,
                             com: 0, com_lmx: 0, dias_lmx: {}, sin_factura: 0, medios: 0,
+                            v_con_com: 0, v_lmx: 0,
                             cogs: 0, igss: 0,
                             dev: 0, pers: 0, tickets: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
                             // venta por semana ISO contando SOLO los dias que caen en
@@ -711,6 +714,7 @@ function _finCalcular_() {
     // lee nada nuevo del maestro: son los mismos montos que ya pasan por este
     // bucle, guardados ademas por semana.
     if (!sem[k]) sem[k] = { clave: k, v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0,
+                            v_con_com: 0,
                             area: { cocina: 0, barra: 0 }, bloques: {},
                             ini: null, fin: null };
     return sem[k];
@@ -742,9 +746,16 @@ function _finCalcular_() {
     M.ventas_ss += sinServ;
     M.tickets += 1;
     M.com += Math.round(_finNum_(V[r][8]));              // col 9: comensales
+    // Sistema de Medicion (27-sep-2026): el ticket por comensal divide SOLO la venta de
+    // los tickets que traen comensales. ~1 de cada 10 viene con la columna vacia y, si su
+    // venta entra al numerador sin sus personas, el ticket sale inflado (S37: Q310 contra
+    // ~Q240 real).
+    var comT = Math.round(_finNum_(V[r][8]));
+    if (comT > 0) M.v_con_com += neto;
     // lunes (1), martes (2) y miercoles (3): la ocupacion entre semana (tablero global)
     if (f.getDay() >= 1 && f.getDay() <= 3) {
       M.com_lmx += Math.round(_finNum_(V[r][8]));
+      M.v_lmx += neto;
       M.dias_lmx[_finDDMM_(f)] = true;
     }
     var wISO = _finSemanaISO_(f);
@@ -753,6 +764,7 @@ function _finCalcular_() {
     M.porSemana[wISO].com += Math.round(_finNum_(V[r][8]));
     var S = _sem(_finClaveSemana_(f));
     S.v += neto; S.v_ss += sinServ; S.tickets += 1; S.com += Math.round(_finNum_(V[r][8]));
+    if (comT > 0) S.v_con_com += neto;
     if (!S.ini || f < S.ini) S.ini = f;
     if (!S.fin || f > S.fin) S.fin = f;
   }
@@ -949,6 +961,13 @@ function _finCalcular_() {
       m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), ventas_ss: _finR_(M.ventas_ss),
       eventos: _finR_(M.eventos),
       com: M.com, cogs: _finR_(M.cogs), labor: _finR_(labor), igss: _finR_(M.igss),
+      // ---- Sistema de Medicion (27-sep-2026) ----
+      // tp: ticket por comensal sin IVA, solo tickets con comensales cargados.
+      // com_est: comensales del mes = venta del restaurante / tp. Es el numero de
+      // Marketing: no depende de que cada ticket traiga la columna llena.
+      tp: M.com ? _finR_(M.v_con_com / M.com) : null,
+      com_est: (M.com && M.v_con_com) ? Math.round(M.ventas / (M.v_con_com / M.com)) : null,
+      venta_lmx: _finR_(M.v_lmx),
       devengado: devengado !== null,
       // El reparto fijo/extra del mes, cuando la pestana de planilla lo trae.
       // Va del mes de la planilla que se USO (pl.desde), no del mes del
@@ -1107,7 +1126,7 @@ function _finCalcular_() {
     for (var lunes = _finLunesDeClave_(conVenta[0]); _finClaveSemana_(lunes) <= ultClave;
          lunes = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7)) {
       var k = _finClaveSemana_(lunes);
-      var d = sem[k] || { v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0,
+      var d = sem[k] || { v: 0, v_ss: 0, com: 0, tickets: 0, cogs: 0, v_con_com: 0,
                           area: { cocina: 0, barra: 0 }, bloques: {},
                           ini: null, fin: null };
       var ini = d.ini || lunes;
@@ -1122,7 +1141,10 @@ function _finCalcular_() {
       var lab = _finUltimoDevengado_(planilla.valores, ini.getMonth() + 1).valor / FIN_SEMANAS_MES;
       S.push({ w: k % 100, clave: k, ini: _finDDMM_(ini), fin: _finDDMM_(fin),
                ventas: _finR_(d.v), ventas_ss: _finR_(d.v_ss), com: d.com, tickets: d.tickets,
-               tp: d.com ? _finR_(d.v / d.com) : 0,
+               // Sistema de Medicion (27-sep-2026): solo la venta de tickets con
+               // comensales. tp_bruto es la formula vieja, para comparar.
+               tp: d.com ? _finR_(d.v_con_com / d.com) : 0,
+               tp_bruto: d.com ? _finR_(d.v / d.com) : 0,
                cogs: _finR_(d.cogs), cogsp: d.v_ss ? _finR_(d.cogs / d.v_ss * 100, 1) : null,
                cocina: _finR_((d.area || {}).cocina || 0),
                barra: _finR_((d.area || {}).barra || 0),
