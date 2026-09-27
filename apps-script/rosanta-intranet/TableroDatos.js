@@ -460,7 +460,7 @@ function _tabProfit_(out, P, hoy, auth, conQ) {
     zona: rm ? (rm.n ? tabZona_(rm.pct, 100, 80, 'mayor') : 'verde') : 'gris',
     fuente: 'maestro › retiros ATM en ALIMENTOS_EFECTIVO · Config › RETIROS_DETALLE', enlace: 'retiros',
     nota: (rma ? (rma.mes + ': ' + rma.con_detalle + ' de ' + rma.n + ' retiros con detalle (Q' + Math.round(rma.q).toLocaleString('es-GT') + '). ') : '') +
-          'Se anotan en la intranet, pagina Retiros (Jeffry o el dueño). El banco se carga cada 15 dias: un retiro nuevo aparece cuando entra el estado de cuenta.',
+          'Se anotan en Profit OS › Cocina › Compras en efectivo (Jeffry o el dueño). El banco se carga cada 15 dias: un retiro nuevo aparece cuando entra el estado de cuenta.',
     estado: rm ? 'ok' : 'falta_dato'
   }));
   if (mc.ultimo) {
