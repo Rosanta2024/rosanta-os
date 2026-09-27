@@ -912,27 +912,40 @@ function psGuardarSupuesto(row, auth) {
  * la cierra con veredicto o la descarta. Al cerrarla, el aprendizaje va a la pestaña
  * aprendizajes y el supuesto ligado queda como diga el veredicto.
  */
-function psGuardarPrueba(row, auth) {
-  var u = requiereSoloMarketing_(auth);
-  if (!u.puedeEditar) throw new Error('Tu usuario es de solo lectura.');
-  row = row || {};
-  var previa = row.id ? psLeer_('bitacora_pruebas').filter(function (p) { return p.id === row.id; })[0] : null;
+/**
+ * Las reglas de la bitácora, sin tocar la Sheet (así la batería las prueba sin escribir).
+ * Devuelve el estado final o lanza. Cualquiera con edición PROPONE; solo el dueño
+ * arranca, cierra o descarta; y nunca hay dos pruebas en curso a la vez.
+ */
+function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar) {
+  if (!puedeEditar) throw new Error('Tu usuario es de solo lectura.');
   var estado = row.estado || (previa && previa.estado) || 'propuesta';
   if (PS_PRUEBA_ESTADOS.indexOf(estado) === -1) throw new Error('Estado de prueba inválido.');
   var cambiaEstado = !previa ? estado !== 'propuesta' : estado !== previa.estado;
-  if ((cambiaEstado || row.veredicto) && !psEsDueno_(u)) throw new Error('Aprobar, cerrar o descartar una prueba lo hace solo el dueño.');
+  if ((cambiaEstado || row.veredicto) && !esDueno) throw new Error('Aprobar, cerrar o descartar una prueba lo hace solo el dueño.');
   if (row.metrica_juez && !PS_METRICAS_JUEZ[row.metrica_juez]) throw new Error('Métrica juez inválida.');
+  if (!previa && (!row.hipotesis || !row.cambio)) throw new Error('Una prueba necesita hipótesis y cambio.');
+  if (estado === 'en_curso' && (!previa || previa.estado !== 'en_curso')) {
+    var otra = (todas || []).filter(function (p) { return p.estado === 'en_curso' && p.id !== row.id; })[0];
+    if (otra) throw new Error('Ya hay una prueba en curso ("' + otra.hipotesis + '"). Un cambio a la vez.');
+  }
+  return estado;
+}
+
+function psGuardarPrueba(row, auth) {
+  var u = requiereSoloMarketing_(auth);
+  row = row || {};
+  var todas = psLeer_('bitacora_pruebas');
+  var previa = row.id ? todas.filter(function (p) { return p.id === row.id; })[0] : null;
+  var estado = psReglasPrueba_(row, previa, todas, psEsDueno_(u), !!u.puedeEditar);
 
   if (!previa) {
-    if (!row.hipotesis || !row.cambio) throw new Error('Una prueba necesita hipótesis y cambio.');
     row.id = 'p' + Date.now();
     row.fecha = psHoy_();
     row.autor = u.email;
   }
   row.estado = estado;
   if (estado === 'en_curso' && (!previa || previa.estado !== 'en_curso')) {
-    var otra = psLeer_('bitacora_pruebas').filter(function (p) { return p.estado === 'en_curso' && p.id !== row.id; })[0];
-    if (otra) throw new Error('Ya hay una prueba en curso ("' + otra.hipotesis + '"). Un cambio a la vez.');
     var cfg = psReglas_();
     row.fecha_inicio = row.fecha_inicio || psHoy_();
     if (!row.fecha_lectura) {
@@ -991,4 +1004,42 @@ function psSupuestosVerificados(auth) {
   if (!ok.length) return '';
   return '\n\nHECHOS VERIFICADOS (solo estos se dan por ciertos; cualquier otra cifra es un supuesto y se dice así):\n' +
     ok.map(function (s) { return '- ' + s.afirmacion + ' (' + s.fuente + ')'; }).join('\n');
+}
+
+/**
+ * Contexto del estándar creativo de pauta (Creador de pauta, 27-sep-2026). Los números
+ * de "qué medir" ya no viven en el prompt: salen de reglas, y solo los que se apoyan en
+ * un supuesto VERIFICADO. Hook y retención dependen de s_definicion_video; mientras no
+ * esté verificado, no se piden. Los aprendizajes son solo los que dejó una prueba leída.
+ */
+function psContextoCreativo(auth) {
+  requiereMarketing_(null, auth);
+  var cfg = psReglas_(), hoy = psHoy_();
+  var ok = {};
+  psLeer_('supuestos').forEach(function (s) {
+    if (s.estado === 'verificado' && (!s.vence_el || String(s.vence_el) >= hoy)) ok[s.id] = 1;
+  });
+  var medir = [
+    'Frecuencia semanal sobre ' + cfg.frecuencia_fatiga + ' = fatiga: rotar a un concepto distinto.',
+    'CTR de enlace sobre ' + cfg.ctr_alarma + '% con CPC bajo Q' + cfg.cpc_alarma + ' = tráfico sin intención, no un logro.'
+  ];
+  if (ok.s_definicion_video) {
+    medir.push('Hook (3 s ÷ impresiones) mínimo ' + cfg.hook_min + '% y retención (ThruPlay ÷ impresiones) mínimo ' + cfg.retencion_min + '%.');
+  }
+  var aprend = [];
+  try {
+    var head = SCHEMA.aprendizajes, vals = mktSheet_('aprendizajes').getDataRange().getValues();
+    vals.shift();
+    aprend = vals.map(function (f) { var r = {}; head.forEach(function (h, k) { r[h] = f[k]; }); return r; })
+      .filter(function (r) { return String(r.fuente) === 'prueba' && r.hallazgo; })
+      .slice(-8).map(function (r) { return String(r.hallazgo) + (r.accion ? ' (' + r.accion + ')' : ''); });
+  } catch (e) { aprend = []; }
+  var enCurso = psLeer_('bitacora_pruebas').filter(function (p) { return p.estado === 'en_curso'; })[0] || null;
+  var juez = {};
+  Object.keys(PS_METRICAS_JUEZ).forEach(function (k) { if (/_negocio$/.test(k)) juez[k] = PS_METRICAS_JUEZ[k]; });
+  return JSON.parse(JSON.stringify({
+    medir: medir, pide_hook: !!ok.s_definicion_video, dias: Math.max(7, cfg.dias_minimos),
+    supuestos: psSupuestosVerificados(auth), aprendizajes: aprend, metricas_juez: juez,
+    prueba_en_curso: enCurso ? { hipotesis: enCurso.hipotesis, fecha_lectura: enCurso.fecha_lectura } : null
+  }));
 }

@@ -136,6 +136,41 @@ function prPauta_(res) {
     prIgual_(g, 'El Panel de Asesores sigue retirado', restos.join(', '), '', restos.length ? 'vuelve a estar: ' + restos.join(', ') : '');
   });
 
+  /* Estándar creativo de pauta (27-sep-2026): regla de la casa, sin personas. Si vuelve
+     un nombre de experto, un talento que ya no está o un benchmark escrito a mano, falla. */
+  prCorrer_(g, 'El estándar creativo de pauta no nombra personas', function () {
+    var txt = HtmlService.createTemplateFromFile('Marketing').getRawContent();
+    var m = txt.match(/const ESTANDAR_PAUTA=`([\s\S]*?)`;/);
+    if (!m) { prAnotar_(g, 'El estándar creativo de pauta no nombra personas', 'FALLA', 'No encontré la constante ESTANDAR_PAUTA en Marketing.html.'); return; }
+    var e = m[1].toLowerCase();
+    var malos = ['savannah', 'sanchez', 'loomer', 'ciancio', 'kaushik', 'ritson', 'hormozi', 'wilson', 'http', 'lente']
+      .filter(function (x) { return e.indexOf(x) !== -1; });
+    ['de autor', 'signature', 'jardín santa rosa', 'leña de café', 'jeffry', 'maco']
+      .forEach(function (x) { if (e.indexOf(x) === -1) malos.push('falta "' + x + '"'); });
+    if (/\d+\s*%/.test(e)) malos.push('trae un porcentaje escrito a mano');
+    if (/SAVANNAH\s*=|LOOMER\s*=/.test(txt)) malos.push('sigue viva una constante de lente');
+    prIgual_(g, 'El estándar creativo de pauta no nombra personas', malos.join(', '), '', malos.length ? malos.join(' · ') : '');
+  });
+
+  prCorrer_(g, 'Registrar como prueba entra como propuesta y respeta una en curso a la vez', function () {
+    var n = 'Registrar como prueba entra como propuesta y respeta una en curso a la vez';
+    var nueva = { hipotesis: 'h', cambio: 'c', metrica_juez: 'reservas_negocio', estado: 'propuesta' };
+    var enCurso = [{ id: 'p1', estado: 'en_curso', hipotesis: 'otra' }];
+    var lanza = function (fn) { try { fn(); return ''; } catch (e) { return 'lanza'; } };
+    var r = [
+      psReglasPrueba_(Object.assign({}, nueva), null, enCurso, false, true),                            // propone con otra en curso
+      lanza(function () { psReglasPrueba_(Object.assign({}, nueva, { estado: 'en_curso' }), null, [], false, true); }), // no dueño arranca
+      lanza(function () { psReglasPrueba_({ id: 'p2', estado: 'en_curso', metrica_juez: 'reservas_negocio' },
+                                          { id: 'p2', estado: 'propuesta' }, enCurso, true, true); }),     // segunda en curso
+      psReglasPrueba_({ id: 'p2', estado: 'en_curso' }, { id: 'p2', estado: 'propuesta' }, [], true, true),  // dueño, sin otra
+      lanza(function () { psReglasPrueba_(Object.assign({}, nueva), null, [], false, false); })             // solo lectura
+    ].join('|');
+    var txt = HtmlService.createTemplateFromFile('Marketing').getRawContent();
+    var fn = (txt.match(/async function paRegistrar[\s\S]*?\n}/) || [''])[0];
+    if (fn.indexOf("srv('psGuardarPrueba'") === -1 || fn.indexOf("estado:'propuesta'") === -1) r += '|el botón no manda una propuesta';
+    prIgual_(g, n, r, 'propuesta|lanza|lanza|en_curso|lanza');
+  });
+
   prCorrer_(g, 'Semana ISO', function () {
     var s = psSemanaDe_(new Date(2026, 8, 27, 12));
     prIgual_(g, 'Semana ISO', s.id + ' ' + s.desde + ' ' + s.hasta, '2026-W39 2026-09-21 2026-09-27');
