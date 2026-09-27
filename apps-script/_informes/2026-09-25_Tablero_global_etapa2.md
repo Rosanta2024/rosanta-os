@@ -99,6 +99,17 @@ Juanma miró la @126 y marcó cuatro cosas: la línea del equilibrio a una altur
 
 **Batería sobre este HEAD (26-sep, tarde): 128 OK · 0 fallas · 4 avisos · 3 saltadas · 174 s.** Los cuatro avisos son los conocidos. HEAD == disco, 67 archivos. Juanma: "publica y commit". **Publicado: @127** (`create-version` → 127 · `update-deployment -V 127` · releído tres veces · la @127 bajada aparte idéntica al disco, 67 archivos).
 
+## Tanda del 26-sep (noche): el PDF se genera desde el servidor y la S37 recupera el suyo
+
+Juanma: "Genera el PDF de la S37 en su carpeta". El generador viejo (`generar_reporte_semanal.py`, carpeta Maestro) es un script con todos los números de la S38 escritos a mano en constantes; alimentarlo para la S37 sería un segundo motor. Se hizo la tanda que ya estaba decidida el 25-sep: **el PDF sale del servidor con los mismos datos que la pantalla**.
+
+- **`ReporteSemanalPdf.js`** (nuevo): `_repHtmlPdf_(d)` arma el HTML estático de las 8 secciones desde `_repDatos_` (tablas y estilos simples que el conversor respeta; las barras de los gráficos son celdas con ancho en %); `_repPdfBlob_` lo convierte con `Utilities.newBlob(html).getAs(PDF)` y lo nombra `Rosanta_SXX_AAAA.pdf`; `_repPdfGuardar_(clave)` busca (o crea) la carpeta `SXX` dentro de Reportes 2026 con Drive v3, **archiva el PDF anterior en `SXX/_Archive` con fecha** (nada se borra) y crea el nuevo; borra el caché `tab_docs_v1` para que el tablero lo vea. Público: `generarPdfReporteSemanal(auth, clave)` (módulo finanzas + dueño).
+- **Ruta `?page=reporte-semanal-pdf&semana=CLAVE`** (Code.js, solo dueño): genera, guarda y muestra el enlace. Es el destino del botón **"Guardar PDF en Drive"** de la pantalla y de la pestaña del tablero (`ReporteSemanalCuerpo.html`, `ReporteSemanalJs.html`), y sirve para pedir una semana por URL.
+- **Prueba nueva**: "El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla": 8 secciones en el HTML, la venta de la semana, sin scriptlets, y la conversión devuelve un `%PDF` con nombre `Rosanta_SXX_AAAA.pdf`. No escribe en Drive.
+- El formato de 6 páginas de `Rosanta_Formato_Reporte_Semanal.md` y el generador Python quedan como referencia histórica: el reporte vive en la intranet desde la @126. **Decisión pendiente de Juanma:** retirar la tarea del lunes (`rosanta-reporte-semanal`) o cambiarla para que llame a esta ruta.
+- **Hecho en vivo (HEAD, 26-sep 19:29):** `Rosanta_S37_2026.pdf` en `Reportes 2026/S37` (id `1hi4uFJUZHlWXZXJxrTuos28sxYwvMHDO` en la primera corrida; las repeticiones archivaron la anterior en `S37/_Archive`). 6 páginas; S37 07/09–13/09: ventas Q27,628 (43 tickets, 89 comensales), gasto Q30,891, resultado −Q3,263, ticket Q310; PE Q34,052 con margen 45.3% (móvil de esa semana); food cost 58.1%; cocina +Q6,699 sobre el techo (exige Q14,805 de venta), barra +Q1,451. Primera versión sin barras (el conversor ignora los fondos de celda): se cambiaron a bordes de ancho % con columna fija del 22%.
+- Batería sobre HEAD con el PDF: 129 OK · 0 fallas · 4 avisos · 3 saltadas (dos corridas: 191 s y 234 s). Corrida final con las barras arregladas: 128 OK · 0 fallas · 5 avisos · 3 saltadas (183 s); el quinto aviso es "El calentador no reconstruye si el cache ya esta caliente" (tardó 5.1 s), que va y viene con el estado del caché y no toca este cambio. **HEAD = disco (68 archivos). Sin publicar: queda para el "publica" de Juanma (sería la @128).**
+
 ## Cómo se publicó (para la próxima vez)
 
 1. `clasp login` con restaurante@rosanta.rest (solo Juanma; abre el navegador).

@@ -250,6 +250,30 @@ function doGet(e) {
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
+  // PDF del reporte semanal desde el servidor (26-sep-2026): lo arma con los mismos
+  // datos que la pantalla, lo guarda en Reportes 2026 / SXX / Rosanta_SXX_AAAA.pdf
+  // (archivando el anterior) y muestra el enlace. Solo dueño, misma regla que el
+  // tablero. Es una ruta y no google.script.run para que sea un enlace simple desde
+  // la pantalla y desde el tablero, y para poder pedirlo por URL.
+  if (pagina === 'reporte-semanal-pdf' && String(usuario.rol || '').toLowerCase() === 'dueno') {
+    var claveSem = Number((e && e.parameter && e.parameter.semana) || 0) || 0;
+    var volverA = urlBase + '?page=reporte-semanal' + (authToken ? '&u=' + authToken : '');
+    var cuerpo;
+    try {
+      var res = _repPdfGuardar_(claveSem);
+      cuerpo = '<h1>PDF guardado</h1><p><b>' + _htmlEsc_(res.nombre) + '</b> en la carpeta <b>' + _htmlEsc_(res.carpeta) + '</b> de Reportes 2026 · ' + _htmlEsc_(res.gen) + '</p>' +
+        '<p><a href="' + _htmlEsc_(res.url) + '" target="_blank" rel="noopener">Abrir en Drive</a> · ' +
+        '<a href="https://drive.google.com/uc?export=download&amp;id=' + _htmlEsc_(res.id) + '">Descargar</a></p>' +
+        (res.archivado ? '<p>El anterior quedo en ' + _htmlEsc_(res.archivado.carpeta) + ' como ' + _htmlEsc_(res.archivado.nombre) + '.</p>' : '');
+    } catch (errPdf) {
+      cuerpo = '<h1>No se pudo generar el PDF</h1><p>' + _htmlEsc_(String(errPdf && errPdf.message || errPdf)) + '</p>';
+    }
+    return HtmlService.createHtmlOutput('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+        '<style>body{font-family:Arial,Helvetica,sans-serif;background:#F4EFE6;color:#1a1a1a;padding:2rem;max-width:40rem;margin:auto}h1{font-family:Georgia,serif;color:#4E6D5A}a{color:#4E6D5A}</style></head><body>' +
+        cuerpo + '<p><a href="' + _htmlEsc_(volverA) + '">Volver al reporte</a></p></body></html>')
+      .setTitle('Rosanta Intranet');
+  }
+
   // Caja: proyeccion del saldo del banco a 90 dias (p94) contra el piso y el objetivo
   // (p122). Entro el 15-sep-2026. Lee el maestro por su cuenta y los compromisos de la
   // pestana COMPROMISOS del Sheet de config. Solo lectura.
@@ -319,4 +343,12 @@ function include(nombre) {
  */
 function incluirCrudo_(nombre) {
   return HtmlService.createTemplateFromFile(nombre).getRawContent();
+}
+
+
+/** Escapa texto para meterlo en HTML armado a mano (la ruta del PDF del reporte). */
+function _htmlEsc_(t) {
+  return String(t === null || t === undefined ? '' : t).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
 }

@@ -26,6 +26,9 @@
 
   function pintar(d) {
     D = d; CLAVE = d.semana.clave;
+    // "Guardar PDF en Drive": ruta del servidor con la semana que se esta viendo (solo dueño)
+    var pdfDrive = document.getElementById('rp-pdf-drive');
+    if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
     document.getElementById('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
       ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
     document.getElementById('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;

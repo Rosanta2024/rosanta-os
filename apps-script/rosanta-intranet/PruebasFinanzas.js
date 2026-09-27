@@ -923,6 +923,33 @@ function prFinanzas_(res) {
       malos.length, 0);
   });
 
+  prCorrer_(g, 'El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla', function () {
+    var nombre = 'El PDF del reporte semanal se arma desde el servidor con los datos de la pantalla';
+    // 26-sep-2026: el PDF sale de _repHtmlPdf_ con el mismo _repDatos_ que la pantalla y
+    // se guarda en Reportes 2026 / SXX. Aca NO se escribe en Drive: se arma el HTML, se
+    // comprueba que trae las 8 secciones y la venta de la semana, y que la conversion
+    // a PDF devuelve un PDF de verdad (%PDF al inicio).
+    var rp = _repDatos_(0, false);
+    var html = _repHtmlPdf_(rp);
+    var malos = [];
+    for (var i = 1; i <= 8; i++) if (html.indexOf('<h2' + (i === 1 || i === 2 || i === 4 ? '>' : ' class="salto">') + i + ' · ') === -1) malos.push('falta la seccion ' + i);
+    var venta = 'Q' + Number(rp.kpis.ventas).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    if (html.indexOf(venta) === -1) malos.push('el HTML no trae la venta de la semana ' + venta);
+    if (/<\?/.test(html)) malos.push('quedo un scriptlet');
+    if (typeof generarPdfReporteSemanal !== 'function') malos.push('no existe generarPdfReporteSemanal');
+    var bytes = null;
+    try {
+      var blob = _repPdfBlob_(rp);
+      bytes = blob.getBytes();
+      var cab = String.fromCharCode.apply(null, bytes.slice(0, 4));
+      if (cab !== '%PDF') malos.push('la conversion no devolvio un PDF (empieza con ' + cab + ')');
+      if (!/^Rosanta_S\d{2}_\d{4}\.pdf$/.test(blob.getName())) malos.push('nombre ' + blob.getName());
+    } catch (e) { malos.push('conversion a PDF: ' + String(e && e.message || e).slice(0, 80)); }
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : ('S' + rp.semana.w + ' · ' + Math.round(html.length / 1024) + ' KB de HTML · PDF de ' + (bytes ? Math.round(bytes.length / 1024) : '?') + ' KB'),
+      malos.length, 0);
+  });
+
   prCorrer_(g, 'El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive', function () {
     var nombre = 'El tablero encuentra el reporte semanal y el plan de Meta Ads en Drive';
     var docs = getTableroDocumentos('');
