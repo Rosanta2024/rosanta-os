@@ -10,6 +10,11 @@
        siendo una columna de alto fijo (.sf); lo que cambia es que debajo de las
        herramientas va una FILA: lateral + contenido. */
     .sf-tabs { padding-left: calc(208px + 0.5rem); }
+    /* Rotulos de los dos grupos (Juanma, 28-sep-2026): el lateral es lo que se sigue
+       CADA SEMANA y lleva a una accion; arriba va el analisis del AÑO. Los nombres
+       "Modulos" y "Herramientas" no decian eso. */
+    .sf-rotulo { align-self: center; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #8a8377; padding: 0 0.8rem 0 0.4rem; white-space: nowrap; }
     .sf-cuerpo { flex: 1; min-height: 0; display: flex; }
     .sf-cuerpo .sf-main { flex: 1; min-width: 0; height: 100%; }
     @media (max-width: 700px) {
@@ -46,17 +51,18 @@
     falta el aviso de X-Frame-Options ni el temporizador de 6 s que Marketing
     necesita para la Consola y Reseñas, que son proyectos aparte.
   -->
-  <nav class="sf-tabs" aria-label="Herramientas de Finanzas">
+  <nav class="sf-tabs" aria-label="Análisis del año">
+    <span class="sf-rotulo">El año</span>
     <button type="button" class="sf-tab" data-sub="dre">DRE</button>
     <button type="button" class="sf-tab" data-sub="gasto">El gasto</button>
     <button type="button" class="sf-tab" data-sub="comparativo">Mes a mes</button>
     <button type="button" class="sf-tab" data-sub="escenarios">Escenarios</button>
   </nav>
   <div class="sf-cuerpo">
-    <nav class="sm-side" aria-label="Módulos de Finanzas">
-      <span class="rotulo">Módulos</span>
-      <button type="button" class="sm-item" data-sub="semana">Cómo vamos</button>
-      <button type="button" class="sm-item" data-sub="reporte">La semana</button>
+    <nav class="sm-side" aria-label="Seguimiento de cada semana">
+      <span class="rotulo">Cada semana</span>
+      <button type="button" class="sm-item" data-sub="semana">Pulso</button>
+      <button type="button" class="sm-item" data-sub="reporte">Reporte semanal</button>
       <button type="button" class="sm-item" data-sub="caja">Caja</button>
       <button type="button" class="sm-item" data-sub="metas">Metas</button>
     </nav>

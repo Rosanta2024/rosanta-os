@@ -79,7 +79,13 @@ function _repRecortarArea_(d, area) {
 
 function _repDatos_(clave, forzar) {
   var cache = CacheService.getScriptCache();
-  var k = REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_();
+  // La llave lleva la ULTIMA semana del motor (clave, venta y comensales), no solo la
+  // version del motor: finCacheClave_ es una version, no un sello de datos, y el 28-sep
+  // (lunes) el reporte quedo cacheado con la S38 mientras el motor ya traia la S39 con
+  // los datos del domingo. Leer el motor aqui es barato: viene de su propio cache.
+  var dm = _finDatos_(false), um = (dm && dm.ultima) || {};
+  var sello = (um.clave || 0) + '_' + Math.round(um.ventas || 0) + '_' + (um.com || 0);
+  var k = REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_() + '_' + sello;
   if (!forzar) {
     var g = cache.get(k);
     if (g) { try { return JSON.parse(g); } catch (e) { /* se recalcula */ } }
