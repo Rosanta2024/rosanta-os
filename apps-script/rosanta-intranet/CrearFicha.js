@@ -247,10 +247,13 @@ function crearCuerpoPlato_(h, nombre, datos, precio, cfg) {
   h.getRange(fSub + 1, 6).setFormula('=IFERROR(F' + fSub + '*' + (mermaPct / 100) + ',"")');
   h.getRange(fSub + 2, 2).setValue('COSTO TOTAL');
   h.getRange(fSub + 2, 6).setFormula('=IFERROR(F' + fSub + '+F' + (fSub + 1) + ',"")');
-  h.getRange(fSub + 3, 2).setValue('PRECIO SUGERIDO (CMV ' + Math.round(cmvObjetivo * 100) + '%)');
-  h.getRange(fSub + 3, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/' + cmvObjetivo + ',"")');
-  h.getRange(fSub + 4, 2).setValue('CMV % ACTUAL');
-  h.getRange(fSub + 4, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/E2,"")');
+  // Sin IVA desde el 27-sep-2026 (p189): el CMV es sobre el precio neto y el sugerido
+  // es precio de carta CON IVA, igual que en la intranet.
+  var iva = COSTEO.iva || 1.12;
+  h.getRange(fSub + 3, 2).setValue('PRECIO SUGERIDO CON IVA (CMV ' + Math.round(cmvObjetivo * 100) + '% sin IVA)');
+  h.getRange(fSub + 3, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/' + cmvObjetivo + '*' + iva + ',"")');
+  h.getRange(fSub + 4, 2).setValue('CMV % ACTUAL (sin IVA)');
+  h.getRange(fSub + 4, 6).setFormula('=IFERROR(F' + (fSub + 2) + '/(E2/' + iva + '),"")');
   h.getRange(fSub + 4, 6).setNumberFormat('0.0%');
 
   h.setColumnWidth(2, 260); h.setColumnWidth(4, 190); h.setColumnWidth(5, 150);
