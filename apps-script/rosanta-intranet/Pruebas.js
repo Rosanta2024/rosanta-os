@@ -30,10 +30,14 @@ var PRUEBAS_CFG = {
                                // 22-sep-2026: 41 -> 45. Los que Jeffry y Juanma fueron
                                // creando desde la intranet (Aceite Albahaca, los dos
                                // yogures, Mousse Receta). No se habia vuelto a medir.
-    conCmvCocina:        28,   // 22-sep-2026: 26 -> 28. Dos platos dejaron de costear en
+    conCmvCocina:        30,   // 27-sep-2026: 28 -> 30, cocina costeo dos platos mas. Desde ese dia
+                               // solo FALLA si bajan; si suben, AVISO para actualizar.
+                               // 22-sep-2026: 26 -> 28. Dos platos dejaron de costear en
                                // cero al entrar al Banco los pre-elaborados que les
                                // faltaban: MOUSSE DE CHOCOLATE es uno de ellos.
-    vaciasCocina:         7,   // 22-sep-2026: 9 -> 7, por lo mismo
+    vaciasCocina:         5,   // 27-sep-2026: 7 -> 5 (quedan Arroz Meloso, Lomito de la Casa,
+                               // Estofado de Rabo, Charlotta y Panacotta Maracuya).
+                               // 22-sep-2026: 9 -> 7, por lo mismo
     platosMapeadosPOS:   35
   },
 
@@ -80,7 +84,7 @@ var PRUEBAS_CFG = {
      Los 9 que quedan son nombres que no coinciden con el Banco, no filas faltantes:
      "Bitter Laurel", "GINSON", "CHLE PASA", "Viuda de Romero"... eso lo arregla quien
      sepa a que producto apunta cada uno. */
-  huerfanos: { COCINA: 1, BARRA: 9 },
+  huerfanos: { COCINA: 1, BARRA: 7 },   // 27-sep-2026: barra 9 -> 7
 
   /**
    * Lineas de ficha con cantidad pero SIN costo: la hoja no les puso numero.
@@ -129,7 +133,7 @@ var PRUEBAS_CFG = {
      se esta costeando sin ese ingrediente y su CMV sale mas bajo de lo que es. Cuando
      Jose decida, correr revisarLineasSinCosto() —en este archivo— que abre las celdas
      y dice por que. Si el pre-elaborado se elimina, este numero vuelve a 0. */
-  lineasSinCosto: { COCINA: 0, BARRA: 1 },
+  lineasSinCosto: { COCINA: 0, BARRA: 0 },   // 27-sep-2026: barra 1 -> 0
 
   /** Modulos validos en la hoja USUARIOS. Uno fuera de esta lista es un typo. */
   modulosValidos: ['finanzas', 'recetario', 'marketing', 'contenido', 'crm', 'consola', 'resenas'],
@@ -552,7 +556,10 @@ function prRecetario_(res) {
       nPre > e.preelaboradosCocina ? 'hay mas que los esperados: actualizar preelaboradosCocina en Pruebas.js' :
       (nPre < e.preelaboradosCocina ? 'faltan pre-elaborados: se perdio o se renombro una pestana' : ''),
       nPre, e.preelaboradosCocina);
-    prIgual_(g, 'Platos con CMV',    conCmv.length,             e.conCmvCocina);
+    prAnotar_(g, 'Platos con CMV', conCmv.length === e.conCmvCocina ? 'OK' : (conCmv.length > e.conCmvCocina ? 'AVISO' : 'FALLA'),
+      conCmv.length > e.conCmvCocina ? 'cocina costeo mas platos: actualizar conCmvCocina en Pruebas.js' :
+      (conCmv.length < e.conCmvCocina ? 'hay menos platos con CMV que antes: revisar que ficha perdio su costo' : ''),
+      conCmv.length, e.conCmvCocina);
     prAnotar_(g, 'Platos sin costear',
       vacias.length === e.vaciasCocina ? 'OK' : 'AVISO',
       vacias.map(function (r) { return r.nombre; }).join(' · '),
