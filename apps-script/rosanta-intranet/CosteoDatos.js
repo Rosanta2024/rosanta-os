@@ -314,9 +314,10 @@ function leerFicha_(hoja, cfg) {
     if (r.costoUnit === null && r.costo !== null && r.rinde) r.costoUnit = r.costo / r.rinde;
   }
 
-  // El CMV % ACTUAL de la hoja es sobre el precio CON IVA. Si la ficha no trae el costo
-  // pero si ese CMV, el costo sale de ahi, para poder pasarlo a neto abajo.
-  if (r.costo === null && r.cmv !== null && r.precio) r.costo = r.cmv / 100 * r.precio;
+  // Desde el 27-sep-2026 el CMV % ACTUAL de la hoja es sobre el precio SIN IVA, igual
+  // que la intranet (p189). Si la ficha no trae el costo pero si ese CMV, el costo sale
+  // de ahi: CMV x precio neto.
+  if (r.costo === null && r.cmv !== null && r.precio) r.costo = r.cmv / 100 * (r.precio / (COSTEO.iva || 1.12));
 
   return ajustarRecetaAMeta_(r);
 }
@@ -331,8 +332,9 @@ function leerFicha_(hoja, cfg) {
  *
  * El precio sugerido es el precio de CARTA, con IVA, que deja el CMV neto en la meta.
  *
- * Las formulas de las hojas NO cambian: siguen mostrando su CMV sobre precio con IVA.
- * La intranet ya no lee esa celda para el CMV.
+ * Desde el 27-sep-2026 las hojas tambien miden sin IVA (p189): CMV % ACTUAL = costo /
+ * (precio / 1.12) y el precio sugerido de la hoja es precio de carta con IVA. La
+ * intranet igual calcula el suyo aca y no lee esa celda salvo como respaldo.
  *
  * Idempotente: corre al leer la ficha y otra vez al servir el modelo cacheado, por si
  * la meta cambio en PARAMETROS despues de construirlo.
@@ -792,7 +794,9 @@ function probarCosteo() {
   // Valores de la v16 (24 ago 2026), pasados a precio SIN IVA el 14-sep-2026 (x 1.12):
   // la ensalada era 15.0 sobre precio con IVA. Los de la v9 y la v14 ya no aplican.
   var control = {
-    'ensalada rosanta'         : 16.8,
+    'ensalada rosanta'         : 17.2,  // 27-sep-2026: 16.8 -> 17.2 porque el aguacate subio de
+                                        // Q1.50 a Q2.00 la unidad en el Banco (p217). Con Q1.50
+                                        // vuelve a dar 16.8: el calculo no cambio.
     'tabla de jamones y quesos': 25.3,
     'gratin de papas'          : 22.2,
     'mix de fritas'            : 26.4,
