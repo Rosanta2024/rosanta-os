@@ -217,8 +217,8 @@
     if (ver(8)) {
     h += '<section class="rp"><h2>' + tit(8, SECC ? 'Cómo se construye el equilibrio' : 'Cómo se construye el equilibrio, y las acciones') + '</h2>';
     if (pe) {
-      h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO)</th><th>Al mes</th></tr></thead><tbody>' +
-        pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
+      h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO, con los anuales ÷ 12)</th><th>Al mes</th></tr></thead><tbody>' +
+        pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + (f.anual ? ' <span class="rp-chip">anual ÷ 12</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
         '<tr class="total"><td class="txt">Fijos del mes</td><td>' + q(pe.fijo_mes) + '</td></tr>' +
         '<tr class="total"><td class="txt">Fijos por semana (÷ 4.345)</td><td>' + q(pe.fijo_semana) + '</td></tr></tbody></table></div></div>' +
         '<div><div class="rp-tabla"><table class="rp"><thead><tr><th>Variables, % de la venta</th><th></th></tr></thead><tbody>' +

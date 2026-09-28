@@ -122,8 +122,9 @@ var FIN_SOLO_FEL = ['GAS', 'ALQUILER_EQUIPO'];
 // emitida entre 45 dias antes y 10 dias despues del pago. Solo en los bloques donde
 // el gasto viene con factura de proveedor: nomina, propinas, impuestos, comisiones e
 // inmueble quedan fuera a proposito. Mismo algoritmo en generar_finanzas.py (casar_pagos).
-var FIN_FACTURA_MANDA_BLOQUES = ['Tarifas y servicios', 'Prestadores y honorarios', 'Marketing',
-                                 'Mantencion', 'Bienes de uso', 'Uniformes'];
+// Los GRUPOS de FIN_MAP (4o elemento): las secciones de antes del 28-sep-2026, para que
+// el formato DRE no cambie que pago casa con que factura.
+var FIN_FACTURA_MANDA_GRUPOS = ['Tarifas', 'Prestadores', 'Marketing', 'Mantencion', 'Bienes', 'Uniformes'];
 var FIN_FM_DIAS_ANTES = 45, FIN_FM_DIAS_DESPUES = 10;   // la factura, respecto del pago
 
 /**
@@ -162,13 +163,13 @@ function _finPagosConFactura_(hojas, anio, usd) {
       if (String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed') continue;
       var cat = String(filas[r][L.cat - 1] || '').trim();
       var d = FIN_MAP[cat];
-      if (!d || !_finEn_(FIN_FACTURA_MANDA_BLOQUES, d[0])) continue;
+      if (!d || !_finEn_(FIN_FACTURA_MANDA_GRUPOS, d[3])) continue;
       var q = _finNum_(filas[r][L.monto - 1]);
       if (L.usd) q += _finNum_(filas[r][L.usd - 1]) * usd;
       q = Math.round(q * 100) / 100;
       if (q <= 0) continue;
       var fila = { dia: Math.round(Date.UTC(f.getFullYear(), f.getMonth(), f.getDate()) / 86400000),
-                   q: q, bloque: d[0], llave: L.hoja + '|' + r, orden: i * 1000000 + r };
+                   q: q, bloque: d[3], llave: L.hoja + '|' + r, orden: i * 1000000 + r };
       if (L.hoja === '01_FEL_Maestro') facturas.push(fila);
       // Los pagos de la regla 9 quedaban FUERA de este emparejamiento: se los saltaba
       // antes de llegar aca. Retirada la regla, entran como cualquier otro y la 15
@@ -400,6 +401,9 @@ function _finPlanillaDetalle_(hoja) {
   }
 
   var fija = 0, extra = 0, nFija = 0, nExtra = 0;
+  // Para el DRE (28-sep-2026): la planta fija por area, y jardineria y limpieza aparte,
+  // que en el formato del DRE son Servicios Externos. Todo sigue sumando en "fija".
+  var fijaCocina = 0, fijaSala = 0, servicios = 0;
   // El area del extra sale del propio puesto: "Extra cocina" / "Extra barra".
   // Un "Extra" a secas cuenta igual como extra pero sin area, y eso se ve en la
   // pantalla en vez de repartirse a ojo.
@@ -423,12 +427,18 @@ function _finPlanillaDetalle_(hoja) {
       if (resto.indexOf('cocina') === 0) porArea.cocina += v;
       else if (resto.indexOf('barra') === 0 || resto.indexOf('sala') === 0) porArea.barra += v;
       else porArea.sin_area += v;
-    } else { fija += v; nFija++; }
+    } else {
+      fija += v; nFija++;
+      if (/jardin|limpieza/.test(puesto)) servicios += v;
+      else if (puesto.indexOf('cocin') !== -1) fijaCocina += v;
+      else fijaSala += v;
+    }
   }
   return { fija: fija, extra: extra, finiquito: finiquito,
            suma: fija + extra + finiquito, n_fija: nFija, n_extra: nExtra,
            extra_cocina: porArea.cocina, extra_barra: porArea.barra,
-           extra_sin_area: porArea.sin_area };
+           extra_sin_area: porArea.sin_area,
+           fija_cocina: fijaCocina, fija_sala: fijaSala, servicios: servicios };
 }
 
 /** "Sub total" de la columna "Salario base" de una pestana de la planilla. */
@@ -458,52 +468,110 @@ function _finSinAcentos_(s) {
     .replace(/[\u00da\u00d9\u00dc\u00db]/g, 'U').replace(/\u00d1/g, 'N');
 }
 
-// categoria -> [bloque del DRE, tipo F=fijo S=semivariable V=variable]
+// ---------------------------------------------------------------- el DRE
+// LOS 9 BLOQUES DEL DRE DE ROSANTA (decision de Juanma, 28-sep-2026: "instauralo").
+// Es el formato original: la plantilla de dgimenezcoach (DRE por trimestre de 2024) y
+// el DRE 2025 (Rosanta_DRE_2025.xlsx). Hasta el 28-sep el motor usaba 11 secciones
+// propias; el formato se habia perdido el 2-sep al armar Finanzas como tablero.
+// ref = VALOR DE REFERENCIA del sector, en % de la venta (de la plantilla de 2024).
+var FIN_B = {
+  OCU: 'Ocupación / Inmueble', TAR: 'Tarifas y Servicios', EXT: 'Servicios Externos',
+  NOM: 'Nómina / Salarios', IMP: 'Impuestos y Cargos', MKT: 'Marketing y Publicidad',
+  MAN: 'Mantenimiento', FIN: 'Gastos Financieros', BIE: 'Bienes de Uso / Generales'
+};
+var FIN_DRE = [
+  { b: FIN_B.OCU, ref: [6, 10] }, { b: FIN_B.TAR, ref: [4, 6] }, { b: FIN_B.EXT, ref: [1, 3] },
+  { b: FIN_B.NOM, ref: [25, 30] }, { b: FIN_B.IMP, ref: [5, 8] }, { b: FIN_B.MKT, ref: [4, 8] },
+  { b: FIN_B.MAN, ref: [2, 4] }, { b: FIN_B.FIN, ref: [3, 5] }, { b: FIN_B.BIE, ref: [3, 5] }
+];
+var FIN_REF = {};
+FIN_DRE.forEach(function (x) { FIN_REF[x.b] = x.ref; });
+
+// categoria -> [bloque del DRE, tipo F=fijo S=fijo MV (semivariable) V=variable,
+//               subconcepto del DRE, grupo de la regla 15]
+// El grupo es la seccion vieja: la regla 15 casa un pago con una factura DEL MISMO
+// grupo, y se deja igual para que el cambio de formato no mueva ningun numero.
 var FIN_MAP = {
-  'ALQUILERES': ['Inmueble y ocupacion', 'F'], 'ALQUILER': ['Inmueble y ocupacion', 'F'],
-  'SERVICIOS_PUBLICOS': ['Tarifas y servicios', 'V'], 'SERVICIOS PUBLICOS': ['Tarifas y servicios', 'V'],
-  'GAS': ['Tarifas y servicios', 'V'], 'TELEFONOS_Y_CELULARES': ['Tarifas y servicios', 'F'],
+  'ALQUILERES': [FIN_B.OCU, 'F', 'Arrendamiento', 'Inmueble'], 'ALQUILER': [FIN_B.OCU, 'F', 'Arrendamiento', 'Inmueble'],
+  'SERVICIOS_PUBLICOS': [FIN_B.TAR, 'V', 'Electricidad', 'Tarifas'], 'SERVICIOS PUBLICOS': [FIN_B.TAR, 'V', 'Electricidad', 'Tarifas'],
+  'GAS': [FIN_B.TAR, 'V', 'Gas', 'Tarifas'],
+  'TELEFONOS_Y_CELULARES': [FIN_B.TAR, 'F', 'Teléfono e internet', 'Tarifas'],
+  'TELEFONOS Y CELULARES': [FIN_B.TAR, 'F', 'Teléfono e internet', 'Tarifas'],
+  'SERVICIO DE INTERNET': [FIN_B.TAR, 'F', 'Teléfono e internet', 'Tarifas'],
   // alquiler de la maquina de agua: contrato mensual fijo, no mercaderia.
-  // Estaba como BEBIDAS e inflaba el food cost casi un punto.
-  'ALQUILER_EQUIPO': ['Tarifas y servicios', 'F'],
-  'TELEFONOS Y CELULARES': ['Tarifas y servicios', 'F'], 'SERVICIO DE INTERNET': ['Tarifas y servicios', 'F'],
-  'SERVICIOS_PROFESIONALES': ['Prestadores y honorarios', 'F'],
-  'SERVICIOS PROFESIONALES': ['Prestadores y honorarios', 'F'],
-  'HONORARIOS CONTABLES': ['Prestadores y honorarios', 'F'],
-  'SERVICIO DE MONITOREO Y ALARMA': ['Prestadores y honorarios', 'F'],
-  'SUMINISTRO DE LIMPIEZA': ['Prestadores y honorarios', 'S'],
-  'NOMINA': ['Nomina y salarios', 'S'], 'IGSS': ['Nomina y salarios', 'S'],
-  'PROPINAS_AL_EQUIPO': ['Propinas al equipo', 'V'], 'PROPINAS_PASSTHROUGH': ['Propinas al equipo', 'V'],
-  // regla 12: bloque propio. Dentro de Nomina y salarios se perdia (Q2,750 en jul-ago)
-  'UNIFORMES': ['Uniformes', 'V'],
-  'IMPUESTOS': ['Impuestos', 'V'], 'TRIBUTO': ['Impuestos', 'V'],
-  'COMISIONES_BANCARIAS': ['Comisiones y cargos', 'V'],
-  'COMISION TARJETA DE CREDITO': ['Comisiones y cargos', 'V'],
-  'MARKETING_DIGITAL': ['Marketing', 'S'], 'CUOTAS_Y_SUSCRIPCIONES': ['Marketing', 'F'],
-  // Honorarios de marketing digital (15-sep-2026, decision de Juanma). MISMO BLOQUE que
-  // la pauta —el DRE no cambia— pero categoria aparte, para que el CAC de Marketing OS
-  // excluya los honorarios POR CATEGORIA y deje de depender del texto del banco.
-  // Con esto MARKETING_DIGITAL queda solo con medios: FACEBK y GOOGLE*ADS de la tarjeta.
-  'MARKETING_HONORARIOS': ['Marketing', 'F'],
-  'CUOTAS Y SUSCRIPCIONES': ['Marketing', 'F'],
-  'MANTENIMIENTO': ['Mantencion', 'V'], 'MANTENIMIENTO Y ACCESORIOS EQUIPO': ['Mantencion', 'V'],
-  'MATERIALES': ['Mantencion', 'V'],
-  'PAPELERIA_Y_UTILES': ['Bienes de uso', 'V'], 'PAPELERIA Y UTILES': ['Bienes de uso', 'V'],
-  'ATENCION A CLIENTES': ['Bienes de uso', 'V'], 'GASTOS_ADMINISTRATIVOS': ['Bienes de uso', 'V'],
-  'GASTOS_VARIOS': ['Bienes de uso', 'V'], 'VIATICOS': ['Bienes de uso', 'V'],
-  'PARQUEOS': ['Bienes de uso', 'V'], 'SEGUROS_Y_FIANZAS': ['Bienes de uso', 'F'],
-  'SEGUROS Y FIANZAS': ['Bienes de uso', 'F'], 'EVENTOS': ['Bienes de uso', 'V']
+  'ALQUILER_EQUIPO': [FIN_B.TAR, 'F', 'Agua (máquina)', 'Tarifas'],
+  // POSFile, Google, Wix, Claude: en el DRE 2025 son "Servicios Online" de Tarifas.
+  'CUOTAS_Y_SUSCRIPCIONES': [FIN_B.TAR, 'F', 'Servicios online', 'Marketing'],
+  'CUOTAS Y SUSCRIPCIONES': [FIN_B.TAR, 'F', 'Servicios online', 'Marketing'],
+  'SERVICIOS_PROFESIONALES': [FIN_B.EXT, 'F', 'Contabilidad y legal', 'Prestadores'],
+  'SERVICIOS PROFESIONALES': [FIN_B.EXT, 'F', 'Contabilidad y legal', 'Prestadores'],
+  'HONORARIOS CONTABLES': [FIN_B.EXT, 'F', 'Contabilidad y legal', 'Prestadores'],
+  'SERVICIO DE MONITOREO Y ALARMA': [FIN_B.EXT, 'F', 'Seguridad y seguros', 'Prestadores'],
+  'SEGUROS_Y_FIANZAS': [FIN_B.EXT, 'F', 'Seguridad y seguros', 'Bienes'],
+  'SEGUROS Y FIANZAS': [FIN_B.EXT, 'F', 'Seguridad y seguros', 'Bienes'],
+  // La nomina del banco NO entra al DRE: la reemplaza la planilla devengada (regla 4).
+  'NOMINA': [FIN_B.NOM, 'S', 'Nómina pagada por banco', 'Nomina'],
+  'IGSS': [FIN_B.NOM, 'F', 'Impuestos de planilla (IGSS)', 'Nomina'],
+  'PROPINAS_AL_EQUIPO': [FIN_B.NOM, 'V', 'Propina', 'Propinas'],
+  'PROPINAS_PASSTHROUGH': [FIN_B.NOM, 'V', 'Propina', 'Propinas'],
+  // regla 12: Uniformes tenia bloque propio para no perderse en la nomina del banco;
+  // ahora es un subconcepto de Nomina que la planilla no reemplaza.
+  'UNIFORMES': [FIN_B.NOM, 'V', 'Uniformes', 'Uniformes'],
+  // Desde el 28-sep-2026 los impuestos pagados SI son gasto operativo (Juanma).
+  'IMPUESTOS': [FIN_B.IMP, 'V', 'Impuestos pagados (SAT y municipales)', 'Impuestos'],
+  'TRIBUTO': [FIN_B.IMP, 'V', 'Impuestos pagados (SAT y municipales)', 'Impuestos'],
+  'COMISIONES_BANCARIAS': [FIN_B.FIN, 'V', 'Comisiones e intereses bancarios', 'Comisiones'],
+  'COMISION TARJETA DE CREDITO': [FIN_B.FIN, 'V', 'Comisiones de tarjeta', 'Comisiones'],
+  // Honorarios de marketing (15-sep-2026): MISMO bloque que la pauta, categoria
+  // aparte, para que el CAC excluya honorarios por categoria.
+  'MARKETING_DIGITAL': [FIN_B.MKT, 'S', 'Ads digital (Google · Meta)', 'Marketing'],
+  'MARKETING_HONORARIOS': [FIN_B.MKT, 'F', 'Agencia de marketing', 'Marketing'],
+  'MANTENIMIENTO': [FIN_B.MAN, 'V', 'Reparaciones y mantenimiento', 'Mantencion'],
+  'MANTENIMIENTO Y ACCESORIOS EQUIPO': [FIN_B.MAN, 'V', 'Reparaciones y mantenimiento', 'Mantencion'],
+  'MATERIALES': [FIN_B.MAN, 'V', 'Reparaciones y mantenimiento', 'Mantencion'],
+  'SUMINISTRO DE LIMPIEZA': [FIN_B.BIE, 'S', 'Menaje y non-food', 'Prestadores'],
+  'PAPELERIA_Y_UTILES': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'PAPELERIA Y UTILES': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'ATENCION A CLIENTES': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'GASTOS_ADMINISTRATIVOS': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'GASTOS_VARIOS': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'VIATICOS': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'PARQUEOS': [FIN_B.BIE, 'V', 'Oficina y operativos', 'Bienes'],
+  'EVENTOS': [FIN_B.BIE, 'V', 'Costos de eventos', 'Bienes']
 };
 
-// Banda del sector por bloque, en % de la venta. De aca sale el "sobre la banda".
-var FIN_REF = {
-  'Inmueble y ocupacion': [6, 10], 'Tarifas y servicios': [4, 6],
-  'Prestadores y honorarios': [1, 3], 'Nomina y salarios': [25, 30],
-  'Impuestos': [0, 0], 'Comisiones y cargos': [3, 5], 'Marketing': [4, 8],
-  'Mantencion': [2, 4], 'Bienes de uso': [3, 5],
-  'Propinas al equipo': [0, 0],  // sin banda: es pass-through del cliente
-  'Uniformes': [0, 0]            // sin banda del sector
-};
+/**
+ * La linea del DRE de un movimiento: el de su categoria, salvo dos casos que solo
+ * se distinguen por el texto (el proveedor o la descripcion del banco):
+ *   - servicios profesionales de la agencia de marketing y de contenido (Edwin
+ *     Flores, Vanessa Wilches, "Marketing Abril") -> Marketing, Agencia de marketing
+ *   - la basura, que viene como servicios publicos -> su propio subconcepto
+ * Devuelve [bloque, tipo, subconcepto, grupo] o undefined si la categoria no esta.
+ */
+function _finDreDe_(cat, txt) {
+  var d = FIN_MAP[cat];
+  if (!d) return d;
+  var t = String(txt || '').toUpperCase();
+  if (d[2] === 'Contabilidad y legal' && /FLORES|WILCHES|MARKETING|CONTENIDO/.test(t)) {
+    return [FIN_B.MKT, 'F', 'Agencia de marketing', d[3]];
+  }
+  if (d[2] === 'Electricidad' && t.indexOf('BASURA') !== -1) return [FIN_B.TAR, 'V', 'Basura / residuos', d[3]];
+  return d;
+}
+
+// El orden de los subconceptos en el DRE, como en el formato original.
+var FIN_DRE_SUBS = {};
+FIN_DRE_SUBS[FIN_B.OCU] = ['Arrendamiento'];
+FIN_DRE_SUBS[FIN_B.TAR] = ['Teléfono e internet', 'Gas', 'Electricidad', 'Basura / residuos', 'Agua (máquina)', 'Servicios online'];
+FIN_DRE_SUBS[FIN_B.EXT] = ['Jardín y limpieza', 'Contabilidad y legal', 'Seguridad y seguros'];
+FIN_DRE_SUBS[FIN_B.NOM] = ['Fijos — Cocina', 'Fijos — Sala y Barra', 'Part time — Cocina', 'Part time — Sala y Barra',
+                           'Planilla sin detalle', 'Finiquitos', 'Aguinaldo, Bono 14 y bonos', 'Impuestos de planilla (IGSS)',
+                           'Propina', 'Uniformes'];
+FIN_DRE_SUBS[FIN_B.IMP] = ['Impuestos pagados (SAT y municipales)'];
+FIN_DRE_SUBS[FIN_B.MKT] = ['Agencia de marketing', 'Ads digital (Google · Meta)'];
+FIN_DRE_SUBS[FIN_B.MAN] = ['Reparaciones y mantenimiento'];
+FIN_DRE_SUBS[FIN_B.FIN] = ['Comisiones de tarjeta', 'Comisiones e intereses bancarios'];
+FIN_DRE_SUBS[FIN_B.BIE] = ['Menaje y non-food', 'Oficina y operativos', 'Costos de eventos'];
 
 // Lo que no es gasto de la operacion y no entra al DRE.
 // ANULADA no es una categoria del maestro: la pone el calculo a la factura con
@@ -595,6 +663,21 @@ function _finR_(n, dec) {
   return Math.round(n * f) / f;
 }
 function _finEn_(lista, v) { return lista.indexOf(v) !== -1; }
+/** Suma q a la linea del DRE sub[bloque][subconcepto], con su reparto fijo / fijo MV / variable. */
+function _finSub_(M, b, sub, t, q) {
+  var B = M.sub[b] = M.sub[b] || {};
+  var x = B[sub] = B[sub] || { q: 0, F: 0, S: 0, V: 0 };
+  x.q += q; x[t] += q;
+}
+function _finSumarSub_(dest, orig) {
+  Object.keys(orig || {}).forEach(function (b) {
+    Object.keys(orig[b]).forEach(function (sub) {
+      var o = orig[b][sub], B = dest[b] = dest[b] || {};
+      var x = B[sub] = B[sub] || { q: 0, F: 0, S: 0, V: 0 };
+      ['q', 'F', 'S', 'V'].forEach(function (k) { x[k] += o[k] || 0; });
+    });
+  });
+}
 
 
 // ------------------------------------------------------------------ el calculo
@@ -641,7 +724,7 @@ function finCacheClave_() {
   // mb_comensal, com_lmx_dia, medios). Una cache v10 dejaria el tablero sin ellos.
   // v12 (27-sep-2026): Sistema de Medicion. El ticket divide solo la venta de tickets con
   // comensales y cada mes trae tp, com_est y venta_lmx. Una cache v11 daria el ticket inflado.
-  return 'finanzas_v12_m' + m.global + '-' + m.BARRA;
+  return 'finanzas_v14_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -699,8 +782,9 @@ function _finCalcular_() {
     if (!mes[m]) mes[m] = { m: m, ventas: 0, ventas_ss: 0, eventos: 0, eventos_n: 0,
                             com: 0, com_lmx: 0, dias_lmx: {}, sin_factura: 0, medios: 0,
                             v_con_com: 0, v_lmx: 0,
-                            cogs: 0, igss: 0,
+                            cogs: 0, igss: 0, prest: 0,
                             dev: 0, pers: 0, tickets: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
+                            sub: {},   // el DRE por subconcepto: sub[bloque][sub] = {q, F, S, V}
                             // venta por semana ISO contando SOLO los dias que caen en
                             // este mes. Una semana a caballo entre dos meses no puede
                             // atribuirse entera a ninguno de los dos.
@@ -837,7 +921,8 @@ function _finCalcular_() {
       // se separan, la cobertura deja de cuadrar y eso mismo es la alarma.
       var esPers = String(filas[r][L.pers - 1] || '').trim() === 'S\u00ed';
       var tieneFactura = !!conFactura[L.hoja + '|' + r];
-      var dest = _finDestino_(cat, L.hoja, esPers, tieneFactura);
+      var txt = String((L.desc ? filas[r][L.desc - 1] : (L.prov ? filas[r][L.prov - 1] : '')) || '');
+      var dest = _finDestino_(cat, L.hoja, esPers, tieneFactura, txt);
       if (L.nit && !anulada) {
         var nit = String(filas[r][L.nit - 1] || '').trim().replace(/\.0$/, '');
         felNit[nit] = (felNit[nit] || 0) + q;
@@ -895,14 +980,22 @@ function _finCalcular_() {
       if (_finEn_(FIN_SOLO_FEL, cat) && L.hoja !== '01_FEL_Maestro') continue;
       // regla 15: la factura manda. El pago con factura FEL no suma.
       if (tieneFactura) { facturaMandaN++; facturaMandaQ += q; continue; }
-      if (cat === 'IGSS') M.igss += q;
-
-      var d = FIN_MAP[cat];
+      var d = _finDreDe_(cat, txt);
       if (!d) { sinMapear += q; continue; }             // categoria sin mapear: no se inventa
+      var Sb = _sem(_finClaveSemana_(f));
+      Sb.bloques[d[0]] = (Sb.bloques[d[0]] || 0) + q;   // la semana: lo que salio de la cuenta
+      if (cat === 'NOMINA' || cat === 'IGSS') {
+        // regla 4: la nomina del DRE es la planilla devengada, no el pago del banco. Del
+        // banco solo entran el IGSS y lo que la planilla no trae: aguinaldo, Bono 14 y
+        // bonos (Juanma, 28-sep-2026). Van al DRE al armar el mes, abajo.
+        Sb.nom_banco = (Sb.nom_banco || 0) + q;
+        if (cat === 'IGSS') M.igss += q;
+        else if (/BONO|AGUINALDO/i.test(txt)) M.prest += q;
+        continue;
+      }
       M.bloques[d[0]] = (M.bloques[d[0]] || 0) + q;
       M.tipo[d[1]] += q;
-      var Sb = _sem(_finClaveSemana_(f));
-      Sb.bloques[d[0]] = (Sb.bloques[d[0]] || 0) + q;
+      _finSub_(M, d[0], d[2], d[1], q);
     }
   });
 
@@ -926,18 +1019,21 @@ function _finCalcular_() {
   var meses = [], bloquesVivos = {}, sinVenta = [];
   Object.keys(mes).map(Number).sort(function (a, b) { return a - b; }).forEach(function (m) {
     var M = mes[m];
+    // Desde el 28-sep-2026 TODO bloque es gasto operativo, impuestos incluidos (formato
+    // del DRE). La nomina del banco ya no esta en M.bloques: se separo al leerla.
     var gop = 0;
-    Object.keys(M.bloques).forEach(function (b) {
-      if (b !== 'Impuestos') gop += M.bloques[b];
-      if (M.bloques[b]) bloquesVivos[b] = true;
-    });
+    Object.keys(M.bloques).forEach(function (b) { gop += M.bloques[b]; });
     if (!M.ventas) {
       // M20 (15-sep-2026): un mes con gasto y sin venta (los primeros dias del
       // mes, antes de cargar el POS) no se pinta, pero su dinero SI va al año.
       // Hasta hoy desaparecia. Sin su nomina de banco: la del DRE es la planilla.
       if (M.cogs || gop) {
+        if (M.prest) {
+          M.bloques[FIN_B.NOM] = (M.bloques[FIN_B.NOM] || 0) + M.prest; M.tipo.F += M.prest;
+          _finSub_(M, FIN_B.NOM, 'Aguinaldo, Bono 14 y bonos', 'F', M.prest); gop += M.prest;
+        }
         sinVenta.push({ m: m, mes: FIN_MESES[m - 1], cogs: M.cogs,
-                        gop: gop - (M.bloques['Nomina y salarios'] || 0),
+                        gop: gop, imp: M.bloques[FIN_B.IMP] || 0, prest: M.prest, sub: M.sub,
                         bloques: M.bloques, pers: M.pers, dev: M.dev,
                         sin_factura: M.sin_factura, medios: M.medios });
       }
@@ -955,8 +1051,37 @@ function _finCalcular_() {
         ultVenta.getMonth() + 1 === m) {
       parte = ultVenta.getDate() / new Date(anio, m, 0).getDate();
     }
+    // labor = la planilla del mes + IGSS: es la mano de obra del prime cost y no cambia.
     var labor = pl.valor * parte + M.igss;
-    var gopDev = gop - (M.bloques['Nomina y salarios'] || 0) + labor;
+    // El bloque de Nomina del DRE, por subconcepto. Jardineria y limpieza estan en la
+    // planilla pero en el formato del DRE son Servicios Externos.
+    function _nom(b, sub, t, q) {
+      if (!q || Math.abs(q) < 0.005) return;
+      M.bloques[b] = (M.bloques[b] || 0) + q; M.tipo[t] += q; _finSub_(M, b, sub, t, q);
+    }
+    var plMes = pl.valor * parte, det = planilla.detalle && planilla.detalle[pl.desde];
+    if (det) {
+      var puesto = 0;
+      [['Fijos — Cocina', 'F', det.fija_cocina], ['Fijos — Sala y Barra', 'F', det.fija_sala],
+       ['Part time — Cocina', 'S', det.extra_cocina],
+       ['Part time — Sala y Barra', 'S', (det.extra_barra || 0) + (det.extra_sin_area || 0)],
+       ['Finiquitos', 'F', det.finiquito]].forEach(function (x) {
+        _nom(FIN_B.NOM, x[0], x[1], (x[2] || 0) * parte); puesto += (x[2] || 0) * parte;
+      });
+      _nom(FIN_B.EXT, 'Jardín y limpieza', 'F', (det.servicios || 0) * parte);
+      puesto += (det.servicios || 0) * parte;
+      // lo que el Sub total trae y las filas no explican (no deberia pasar: cuadra)
+      _nom(FIN_B.NOM, 'Planilla sin detalle', 'S', plMes - puesto);
+    } else {
+      _nom(FIN_B.NOM, 'Planilla sin detalle', 'S', plMes);
+    }
+    _nom(FIN_B.NOM, 'Impuestos de planilla (IGSS)', 'F', M.igss);
+    _nom(FIN_B.NOM, 'Aguinaldo, Bono 14 y bonos', 'F', M.prest);
+    Object.keys(M.bloques).forEach(function (b) { if (M.bloques[b]) bloquesVivos[b] = true; });
+    var gopDev = 0;
+    Object.keys(M.bloques).forEach(function (b) { gopDev += M.bloques[b]; });
+    var ventaTot = M.ventas + M.eventos;              // venta bruta total del DRE
+    var imp = M.bloques[FIN_B.IMP] || 0;
     meses.push({
       m: m, mes: FIN_MESES[m - 1], ventas: _finR_(M.ventas), ventas_ss: _finR_(M.ventas_ss),
       eventos: _finR_(M.eventos),
@@ -986,24 +1111,27 @@ function _finCalcular_() {
         : null,
       labor_origen: pl.origen, labor_desde: pl.desde ? FIN_MESES[pl.desde - 1] : '',
       labor_parte: _finR_(parte, 3),
-      gop: _finR_(gopDev), imp: _finR_(M.bloques['Impuestos'] || 0),
+      gop: _finR_(gopDev), imp: _finR_(imp), prest: _finR_(M.prest),
       dev: _finR_(M.dev), pers: _finR_(M.pers),
-      neto: _finR_(M.ventas - M.cogs - gopDev),
+      // Formato del DRE (28-sep-2026): la venta de eventos entra ("Otros ingresos") y
+      // los impuestos pagados son gasto operativo. Antes el neto dejaba fuera las dos.
+      venta_total: _finR_(ventaTot),
+      neto: _finR_(ventaTot - M.cogs - gopDev),
       cogsp: _finR_(M.cogs / (M.ventas_ss || M.ventas) * 100, 1),   // regla 14: sin servicio
       laborp: _finR_(labor / M.ventas * 100, 1),
       primep: _finR_((M.cogs + labor) / M.ventas * 100, 1),
-      netop: _finR_((M.ventas - M.cogs - gopDev) / M.ventas * 100, 1),
+      netop: _finR_((ventaTot - M.cogs - gopDev) / ventaTot * 100, 1),
       tickets: M.tickets,
       // ---- campos del tablero global (25-sep-2026, decision de Juanma) ----
-      // EBITDA = neto + Impuestos + venta de eventos. Sin depreciacion (el maestro es
+      // EBITDA = neto + Impuestos (la venta de eventos ya esta en el neto desde el
+      // 28-sep-2026). Sin depreciacion (el maestro es
       // base caja y no registra ninguna) ni intereses (no hay deuda). Bienes de uso NO
       // se suma de vuelta: mezcla gasto corriente con compras de equipo y hasta que el
       // maestro no tenga una categoria de inversion, sumarlo inflaria el EBITDA. La
       // venta de eventos entra porque su compra ya esta en el COGS (regla 2 la deja
       // fuera de `ventas`, no del negocio).
-      ebitda: _finR_(M.ventas - M.cogs - gopDev + (M.bloques['Impuestos'] || 0) + M.eventos),
-      ebitdap: _finR_((M.ventas - M.cogs - gopDev + (M.bloques['Impuestos'] || 0) + M.eventos)
-                      / (M.ventas + M.eventos) * 100, 1),
+      ebitda: _finR_(ventaTot - M.cogs - gopDev + imp),
+      ebitdap: _finR_((ventaTot - M.cogs - gopDev + imp) / ventaTot * 100, 1),
       eventos_n: M.eventos_n,
       // Compra sin factura del mes, en bruto, y el IVA que se pierde por comprar asi:
       // ese 12% viene embebido y no es credito. Es la razon de que el mismo plato
@@ -1047,37 +1175,39 @@ function _finCalcular_() {
       // equilibrio a ningun volumen: cada quetzal vendido trae mas costo
       // variable del que deja. Se devuelve null, no 0, para que la pantalla
       // diga "no alcanzable" en vez de dibujar un equilibrio de Q0.
-      bev: (M.ventas - M.cogs - (M.tipo.V + M.tipo.S * 0.5)) > 0
-        ? _finR_((M.tipo.F + M.tipo.S * 0.5) /
-                 ((M.ventas - M.cogs - (M.tipo.V + M.tipo.S * 0.5)) / M.ventas))
-        : null,
-      bloques: M.bloques, tipo: M.tipo, porSemana: M.porSemana
+      // bev (el equilibrio) ya NO sale de aca: desde el 28-sep-2026 lo pone
+      // _finEquilibrioPresu_ con el PRESUPUESTO, abajo, despues del bucle. fijo y mc
+      // quedan como el gasto real del banco, para explicar un mes.
+      bev: null,
+      bloques: M.bloques, tipo: M.tipo, sub: M.sub, porSemana: M.porSemana
     });
   });
 
   var anioTot = { ventas: 0, ventas_ss: 0, cogs: 0, labor: 0, gop: 0, neto: 0, eventos: 0,
-                  com: 0, pers: 0, dev: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 },
-                  ebitda: 0, eventos_n: 0, sin_factura: 0, medios: 0 };
+                  com: 0, pers: 0, dev: 0, bloques: {}, tipo: { F: 0, S: 0, V: 0 }, sub: {},
+                  ebitda: 0, eventos_n: 0, sin_factura: 0, medios: 0, prest: 0 };
   meses.forEach(function (x) {
     ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'com', 'pers', 'dev',
-     'ebitda', 'eventos_n', 'sin_factura', 'medios'].forEach(function (k) {
+     'ebitda', 'eventos_n', 'sin_factura', 'medios', 'prest'].forEach(function (k) {
       anioTot[k] += x[k];
     });
     Object.keys(x.bloques).forEach(function (b) {
       anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
     });
+    _finSumarSub_(anioTot.sub, x.sub);
     ['F', 'S', 'V'].forEach(function (t) { anioTot.tipo[t] += x.tipo[t]; });
   });
   // M20: el dinero de los meses sin venta tambien es del año.
   sinVenta.forEach(function (x) {
     anioTot.cogs += x.cogs; anioTot.gop += x.gop; anioTot.neto -= x.cogs + x.gop;
-    anioTot.pers += x.pers; anioTot.dev += x.dev;
+    anioTot.pers += x.pers; anioTot.dev += x.dev; anioTot.prest += x.prest || 0;
     // el EBITDA del año baja igual que el neto, sin el bloque de impuestos
-    anioTot.ebitda -= x.cogs + x.gop - (x.bloques['Impuestos'] || 0);
+    anioTot.ebitda -= x.cogs + x.gop - (x.imp || 0);
     anioTot.sin_factura += x.sin_factura || 0; anioTot.medios += x.medios || 0;
     Object.keys(x.bloques).forEach(function (b) {
-      if (b !== 'Nomina y salarios') anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
+      anioTot.bloques[b] = (anioTot.bloques[b] || 0) + x.bloques[b];
     });
+    _finSumarSub_(anioTot.sub, x.sub);
   });
   ['ventas', 'ventas_ss', 'cogs', 'labor', 'gop', 'neto', 'eventos', 'pers', 'dev',
    'ebitda', 'sin_factura', 'medios'].forEach(function (k) {
@@ -1088,19 +1218,19 @@ function _finCalcular_() {
   anioTot.cogsp = _finR_(anioTot.cogs / (anioTot.ventas_ss || anioTot.ventas) * 100, 1);   // regla 14
   anioTot.laborp = _finR_(anioTot.labor / anioTot.ventas * 100, 1);
   anioTot.primep = _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);
-  anioTot.netop = _finR_(anioTot.neto / anioTot.ventas * 100, 1);
+  anioTot.venta_total = _finR_(anioTot.ventas + anioTot.eventos);
+  anioTot.netop = anioTot.venta_total ? _finR_(anioTot.neto / anioTot.venta_total * 100, 1) : 0;
 
   // Cada bloque contra su banda del sector. El desvio va en quetzales al mes,
   // que es lo unico que permite compararlos entre si.
   // regla 4 tambien aca: el bloque de nomina va DEVENGADO, no el pago bancario.
   // Si se dejara el banco, esta tabla estaria en una base distinta al resto de
   // la pantalla y el bloque leeria 21.9% "bajo la banda" cuando no lo esta.
-  anioTot.bloques['Nomina y salarios'] = anioTot.labor;
-  bloquesVivos['Nomina y salarios'] = true;
+  // Desde el 28-sep-2026 el bloque de Nomina ya viene devengado desde cada mes.
 
   var bloques = Object.keys(bloquesVivos).map(function (b) {
     var q = anioTot.bloques[b] || 0;
-    var p = _finR_(q / anioTot.ventas * 100, 1);
+    var p = _finR_(q / (anioTot.venta_total || anioTot.ventas) * 100, 1);
     var ref = FIN_REF[b] || [0, 0];
     var sobre = ref[1] ? _finR_(Math.max(p - ref[1], 0) / 100 * anioTot.ventas / meses.length) : 0;
     return { bloque: b, q: _finR_(q), pct: p, min: ref[0], max: ref[1],
@@ -1149,6 +1279,7 @@ function _finCalcular_() {
                cocina: _finR_((d.area || {}).cocina || 0),
                barra: _finR_((d.area || {}).barra || 0),
                bloques: _finRedondear_(d.bloques || {}),
+               nom_banco: _finR_(d.nom_banco || 0),   // nomina e IGSS del banco: el DRE usa la planilla
                labor: _finR_(lab), laborp: d.v ? _finR_(lab / d.v * 100, 1) : null,
                prime: d.v ? _finR_((d.cogs + lab) / d.v * 100, 1) : null,
                caja: _finR_(prevSaldo.bi + prevSaldo.bac),
@@ -1168,6 +1299,26 @@ function _finCalcular_() {
     S[k].dc = S[k].com - p.com;
     S[k].dtp = _finR_(S[k].tp - p.tp);
   }
+
+  // ---- el punto de equilibrio de cada mes: manda el PRESUPUESTO (28-sep-2026) ----
+  // Misma formula que La semana (_finEquilibrioPresu_), con la mercaderia real del mes.
+  // El mes de la ultima venta cargada lleva solo la parte de sus dias con venta: si no,
+  // un mes a medias se compararia contra un fijo entero.
+  var presu = _finPresupuesto_();
+  meses.forEach(function (x) {
+    var e = _finEquilibrioPresu_(presu, x.m, x.ventas ? x.cogs / x.ventas * 100 : null);
+    // el mes de la ultima venta cargada va en proporcion a sus dias con venta
+    var parte = 1;
+    if (ultVenta && ultVenta.getFullYear() === anio && ultVenta.getMonth() + 1 === x.m) {
+      var dm = new Date(anio, x.m, 0).getDate();
+      if (ultVenta.getDate() < dm) parte = ultVenta.getDate() / dm;
+    }
+    x.pe_sin_presupuesto = !e;
+    x.pe_parte = parte;
+    x.pe_fijo = e ? _finR_(e.fijo_mes * parte) : null;
+    x.pe_mc = e ? e.mc : null;
+    x.bev = (e && e.pe_mes) ? _finR_(e.pe_mes * parte) : null;
+  });
 
   // ---- integridad del dato --------------------------------------------
   var u = S[S.length - 1] || {};
@@ -1189,7 +1340,7 @@ function _finCalcular_() {
     // El presupuesto de gasto por seccion del DRE (pestana PRESUPUESTO del
     // Sheet de config). Puede no existir: devuelve {existe:false} y la pantalla
     // cae a la referencia del sector diciendo que lo hace.
-    presupuesto: _finPresupuesto_(),
+    presupuesto: presu,
     usd: usd,
     mix: FIN_MIX,
     compra: compra,
@@ -1680,7 +1831,7 @@ function _finFamilias_() {
  * Donde termina una fila con esta categoria. Espeja la logica de _finCalcular.
  * Solo se usa para el panel de cobertura: no mueve ningun numero del DRE.
  */
-function _finDestino_(cat, hoja, esPersonal, tieneFactura) {
+function _finDestino_(cat, hoja, esPersonal, tieneFactura, txt) {
   if (cat === 'ANULADA') return 'anulada en SAT';
   if (esPersonal || cat === 'PERSONAL') return 'personal';
   if (cat === 'DEVOLUCION_INVERSION') return 'devolucion';
@@ -1697,7 +1848,7 @@ function _finDestino_(cat, hoja, esPersonal, tieneFactura) {
   }
   if (_finEn_(FIN_SOLO_FEL, cat) && hoja !== '01_FEL_Maestro') return 'REGLA 8: ya vino por FEL';
   if (tieneFactura && FIN_MAP[cat]) return 'REGLA 15: tiene factura FEL';
-  if (FIN_MAP[cat]) return 'DRE \u00b7 ' + FIN_MAP[cat][0];
+  if (FIN_MAP[cat]) return 'DRE \u00b7 ' + _finDreDe_(cat, txt)[0];
   return 'CATEGORIA DESCONOCIDA';
 }
 

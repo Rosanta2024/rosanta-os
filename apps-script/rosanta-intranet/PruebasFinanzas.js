@@ -171,8 +171,11 @@ function prFinanzas_(res) {
     Object.keys(d.total.bloques || {}).forEach(function (b) { bloques[b] = true; });
     Object.keys(porCob).forEach(function (b) { bloques[b] = true; });
     Object.keys(bloques).forEach(function (b) {
-      if (b === 'Nomina y salarios') return;
-      var calc = d.total.bloques[b] || 0, cob = porCob[b] || 0;
+      // Nomina: el DRE lleva la planilla, no el banco (regla 4). Servicios Externos lleva
+      // ademas jardineria y limpieza, que salen de la planilla y no de un libro.
+      if (b === FIN_B.NOM) return;
+      var dePlanilla = b === FIN_B.EXT ? ((((d.total.sub || {})[b] || {})['Jardín y limpieza'] || {}).q || 0) : 0;
+      var calc = (d.total.bloques[b] || 0) - dePlanilla, cob = porCob[b] || 0;
       revisados++;
       movido += calc;
       if (Math.abs(calc - cob) > 1) {
@@ -223,11 +226,16 @@ function prFinanzas_(res) {
   // de esconderse detras de un Q0.
   prCorrer_(g, 'El punto de equilibrio es un numero usable', function () {
     var nombre = 'El punto de equilibrio es un numero usable';
+    // Desde el 28-sep-2026 el equilibrio sale del PRESUPUESTO (pe_fijo, pe_mc).
     var rotos = [], inalcanzables = [];
+    if (d.meses.length && d.meses[0].pe_sin_presupuesto) {
+      prAnotar_(g, nombre, 'AVISO', 'sin pestaña PRESUPUESTO: no hay punto de equilibrio', 0, d.meses.length);
+      return;
+    }
     d.meses.forEach(function (m) {
-      if (!(m.fijo > 0) || m.mc === null || m.mc === undefined || m.mc >= 100) {
+      if (!(m.pe_fijo > 0) || m.pe_mc === null || m.pe_mc === undefined || m.pe_mc >= 100) {
         rotos.push(m.mes);
-      } else if (m.mc <= 0 || m.bev === null) {
+      } else if (m.pe_mc <= 0 || m.bev === null) {
         inalcanzables.push(m.mes);
       }
     });
@@ -284,11 +292,22 @@ function prFinanzas_(res) {
              'Q' + Math.round(Math.abs(m.ventas - m.bev)).toLocaleString('es-GT') + ')' +
              ' y el resultado fue ' + m.netop + '% (Q' +
              Math.round(m.ventas * m.netop / 100).toLocaleString('es-GT') + ')' +
-             ' · fijo Q' + Math.round(m.fijo).toLocaleString('es-GT') +
-             ' · margen ' + m.mc + '%';
+             ' · fijo del presupuesto Q' + Math.round(m.pe_fijo).toLocaleString('es-GT') +
+             ' (real del banco Q' + Math.round(m.fijo || 0).toLocaleString('es-GT') + ')' +
+             ' · margen ' + m.pe_mc + '%';
     });
-    prAnotar_(g, nombre, mal.length === 0 ? 'OK' : 'FALLA',
-      mal.length ? 'meses incoherentes: ' + mal.join(', ')
+    // Con el equilibrio del PRESUPUESTO (28-sep-2026) un mes "incoherente" ya no es un
+    // error de formula: es un mes cuyo gasto REAL se aparto del presupuesto. Es AVISO.
+    // Lo que si es FALLA es que el equilibrio no cumpla su propia formula.
+    var formula = comparables.filter(function (m) {
+      return Math.abs(m.bev * m.pe_mc / 100 - m.pe_fijo) > Math.max(2, m.pe_fijo * 0.001);
+    }).map(function (m) { return m.mes; });
+    if (formula.length) {
+      prAnotar_(g, nombre, 'FALLA', 'el equilibrio no es fijos / margen en: ' + formula.join(', '), 0, comparables.length);
+      return;
+    }
+    prAnotar_(g, nombre, mal.length === 0 ? 'OK' : 'AVISO',
+      mal.length ? 'el gasto real se aparto del presupuesto en: ' + mal.join(', ')
                  : comparables.length + ' meses coherentes' +
                    (fuera ? ' · ' + fuera + ' fuera de comparacion (pegados al ' +
                             'equilibrio o con resultado en cero)' : ''),
@@ -318,8 +337,9 @@ function prFinanzas_(res) {
         'la pestana ' + PRESU_HOJA + ' no existe todavia: correr instalarPresupuesto()', 0, 0);
       return;
     }
-    var puestas = Object.keys(P.secciones || {});
-    var bloques = Object.keys(FIN_REF);
+    // Las filas de la hoja son partidas; lo que se compara son los BLOQUES que cubren.
+    var puestas = Object.keys(P.bloques || {});
+    var bloques = Object.keys(_presuPartidas_()).concat(Object.keys(FIN_REF));
     // Un bloque con gasto en el año y sin presupuesto no es una falla —Juanma
     // puede decidir no presupuestarlo— pero si es un aviso: se esta midiendo
     // contra la banda del sector sin haberlo elegido.
@@ -331,7 +351,7 @@ function prFinanzas_(res) {
       prAnotar_(g, nombre, 'FALLA',
         'la hoja tiene secciones que no son bloques del DRE y no se aplican a nada: ' +
         P.desconocidas.join(', ') + '. Los bloques validos son: ' + bloques.join(', '),
-        puestas.length, puestas.length + P.desconocidas.length);
+        Object.keys(P.secciones || {}).length, Object.keys(P.secciones || {}).length + P.desconocidas.length);
       return;
     }
     prAnotar_(g, nombre, sinPresu.length ? 'AVISO' : 'OK',
@@ -400,7 +420,7 @@ function prFinanzas_(res) {
     // llamaba con notacion de corchetes —run['getFinanzasData']()— y el barrido
     // de Pruebas.gs solo reconoce run.nombre(). Esta prueba mira la funcion.
     var FN = ['getFinanzasData', 'refrescarFinanzas', 'getMetasData',
-              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData', 'getCmvRealTeorico'];
+              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData', 'getCmvRealTeorico', 'getDreData'];
     var sinGuarda = FN.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;
@@ -499,13 +519,15 @@ function prFinanzas_(res) {
       casos.length - mal.length, casos.length);
   });
 
-  prCorrer_(g, 'UNIFORMES es un bloque propio', function () {
-    var nombre = 'UNIFORMES es un bloque propio';
-    // M20: dentro de Nomina y salarios se perdia, porque esa nomina se reemplaza por la
-    // planilla devengada. Juanma, 15-sep-2026: bloque propio.
-    var ok = !!(FIN_MAP.UNIFORMES && FIN_MAP.UNIFORMES[0] === 'Uniformes' && FIN_REF.Uniformes);
+  prCorrer_(g, 'UNIFORMES no se pierde dentro de la nomina', function () {
+    var nombre = 'UNIFORMES no se pierde dentro de la nomina';
+    // M20: dentro de la nomina del banco se perdia, porque esa nomina se reemplaza por la
+    // planilla devengada. Desde el 28-sep-2026 es un subconcepto de Nomina en el DRE que
+    // la planilla no reemplaza: tiene que estar en d.total.sub.
+    var u = (((d.total.sub || {})[FIN_B.NOM] || {}).Uniformes || {}).q || 0;
+    var ok = !!(FIN_MAP.UNIFORMES && FIN_MAP.UNIFORMES[0] === FIN_B.NOM && FIN_MAP.UNIFORMES[2] === 'Uniformes');
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
-      ok ? 'Uniformes Q' + Math.round((d.total.bloques || {}).Uniformes || 0) + ' en el año'
+      ok ? 'Uniformes Q' + Math.round(u) + ' en el año, dentro de ' + FIN_B.NOM
          : 'FIN_MAP.UNIFORMES = ' + JSON.stringify(FIN_MAP.UNIFORMES), ok ? 1 : 0, 1);
   });
 
@@ -680,14 +702,14 @@ function prFinanzas_(res) {
     }
 
     var casos = [];
-    ['FinanzasVista', 'MetasVista', 'ComparativoVista', 'EscenariosVista', 'CajaVista', 'ReporteSemanalVista']
+    ['FinanzasVista', 'MetasVista', 'ComparativoVista', 'EscenariosVista', 'CajaVista', 'ReporteSemanalVista', 'DreVista']
       .forEach(function (v) {
         [true, false].forEach(function (volver) {
           casos.push([v + (volver ? ' con boton' : ' embebida'), v,
                       { usuario: u, urlBase: base, authToken: tok, mostrarVolver: volver }]);
         });
       });
-    ['semana', 'metas', 'comparativo', 'escenarios', 'caja'].forEach(function (sub) {
+    ['semana', 'metas', 'comparativo', 'escenarios', 'caja', 'dre'].forEach(function (sub) {
       casos.push(['SistemaFinanzas sub=' + sub, 'SistemaFinanzas',
                   { usuario: u, urlBase: base, authToken: tok, sub: sub }]);
     });
@@ -746,8 +768,8 @@ function prFinanzas_(res) {
     // dicen "BANCA ELECTRONICA"). Tiene que caer en el MISMO bloque que la pauta: el DRE
     // no cambia, solo se separa la categoria.
     var h = FIN_MAP.MARKETING_HONORARIOS, p = FIN_MAP.MARKETING_DIGITAL;
-    var ok = !!h && !!p && h[0] === 'Marketing' && p[0] === 'Marketing';
-    var q = Math.round((d.total.bloques || {}).Marketing || 0);
+    var ok = !!h && !!p && h[0] === FIN_B.MKT && p[0] === FIN_B.MKT;
+    var q = Math.round((d.total.bloques || {})[FIN_B.MKT] || 0);
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
       ok ? 'las dos van a "' + h[0] + '" · el bloque lleva Q' + q + ' en el año'
          : 'mapa: honorarios ' + JSON.stringify(h) + ' · pauta ' + JSON.stringify(p),
@@ -816,11 +838,35 @@ function prFinanzas_(res) {
   // _prLlamadasConCorchetes_ (abajo) sobre las 25 vistas.
 
   // ---------------------------------------------------- tablero global (25-sep-2026)
-  prCorrer_(g, 'EBITDA = neto + Impuestos + eventos, en cada mes', function () {
-    var nombre = 'EBITDA = neto + Impuestos + eventos, en cada mes';
+  prCorrer_(g, 'El DRE cuadra: subconceptos, bloques y lucro', function () {
+    var nombre = 'El DRE cuadra: subconceptos, bloques y lucro';
+    // 28-sep-2026, formato original del DRE. En cada mes: cada bloque es la suma de sus
+    // subconceptos, y el lucro es venta total (con eventos) menos CMV menos los 9 bloques.
+    // Si no cuadra, la pestaña DRE y el resto de Finanzas dirian cosas distintas.
     var malos = [];
     d.meses.forEach(function (x) {
-      var esperado = Math.round((x.neto + x.imp + x.eventos) * 100) / 100;
+      var gop = 0;
+      Object.keys(x.bloques || {}).forEach(function (b) {
+        gop += x.bloques[b];
+        var suma = 0;
+        Object.keys((x.sub || {})[b] || {}).forEach(function (s) { suma += x.sub[b][s].q; });
+        if (Math.abs(suma - x.bloques[b]) > 1) malos.push(x.mes + ' ' + b + ': subconceptos ' + Math.round(suma) + ' vs bloque ' + Math.round(x.bloques[b]));
+      });
+      var lucro = (x.ventas + (x.eventos || 0)) - x.cogs - gop;
+      if (Math.abs(lucro - x.neto) > 1) malos.push(x.mes + ': lucro ' + Math.round(lucro) + ' vs neto ' + Math.round(x.neto));
+      Object.keys(x.bloques || {}).forEach(function (b) { if (!FIN_REF[b]) malos.push(x.mes + ': bloque fuera del DRE ' + b); });
+    });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.slice(0, 6).join(' · ') : d.meses.length + ' meses · 9 bloques · año lucro Q' + Math.round(d.total.neto),
+      malos.length, 0);
+  });
+
+  prCorrer_(g, 'EBITDA = neto + Impuestos, en cada mes', function () {
+    var nombre = 'EBITDA = neto + Impuestos, en cada mes';
+    // Desde el 28-sep-2026 el neto ya lleva la venta de eventos y los impuestos (DRE).
+    var malos = [];
+    d.meses.forEach(function (x) {
+      var esperado = Math.round((x.neto + x.imp) * 100) / 100;
       if (Math.abs((x.ebitda || 0) - esperado) > 0.02) malos.push(x.mes + ': ' + x.ebitda + ' vs ' + esperado);
     });
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
@@ -849,7 +895,7 @@ function prFinanzas_(res) {
   prCorrer_(g, 'Los medios del año son la pauta de la tarjeta', function () {
     var nombre = 'Los medios del año son la pauta de la tarjeta';
     // MARKETING_DIGITAL cae en el bloque Marketing: los medios no pueden superarlo.
-    var mkt = (d.total.bloques && d.total.bloques['Marketing']) || 0;
+    var mkt = (d.total.bloques && d.total.bloques[FIN_B.MKT]) || 0;
     var ok = (d.total.medios || 0) >= 0 && (d.total.medios || 0) <= mkt + 0.01;
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
       'medios Q' + d.total.medios + ' dentro del bloque Marketing Q' + Math.round(mkt), d.total.medios, '<= ' + Math.round(mkt));

@@ -199,7 +199,7 @@ function doGet(e) {
   if (pagina === 'finanzas' && usuarioTieneModulo(usuario, 'finanzas')) {
     var subFin = (e && e.parameter && e.parameter.sub) || 'semana';
     // El ?sub= lo escribe quien quiera: si no es uno de los tres, abre el primero.
-    if (['semana', 'reporte', 'metas', 'caja', 'gasto', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
+    if (['semana', 'reporte', 'metas', 'caja', 'dre', 'gasto', 'comparativo', 'escenarios'].indexOf(subFin) === -1) subFin = 'semana';
     return render_('SistemaFinanzas', {
       usuario: usuario, urlBase: urlBase, sub: subFin, authToken: authToken
     });
@@ -233,6 +233,14 @@ function doGet(e) {
   // La meta se edita en la pestana METAS del Sheet de config, no aqui.
   if (pagina === 'metas' && usuarioTieneModulo(usuario, 'finanzas')) {
     return render_('MetasVista', {
+      usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
+    }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  // El DRE en su formato original (28-sep-2026): estado de resultados por mes,
+  // trimestre o año, con los 9 bloques y sus subconceptos. Mismo motor.
+  if (pagina === 'dre' && usuarioTieneModulo(usuario, 'finanzas')) {
+    return render_('DreVista', {
       usuario: usuario, urlBase: urlBase, authToken: authToken, mostrarVolver: !embebida
     }).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }

@@ -23,7 +23,7 @@
  *   escrito a mano SI es un presupuesto de cero.
  *
  * Para instalarla: abrir el editor de Apps Script y correr instalarPresupuesto()
- * una vez. Crea la pestana con las 11 secciones y las columnas vacias.
+ * una vez. Crea la pestana con las 11 partidas (ver _presuPartidas_) y las columnas vacias.
  */
 
 var PRESU_HOJA = 'PRESUPUESTO';
@@ -57,6 +57,29 @@ var PRESU_COLS = ['Seccion', 'Tipo', 'Valor'].concat(PRESU_MESES);
 var PRESU_TIPOS = ['fijo', '%venta', 'anual'];
 
 /**
+ * LAS FILAS DE LA HOJA SON PARTIDAS DE LOS 9 BLOQUES DEL DRE (28-sep-2026).
+ * La hoja se quedo con sus 11 filas de siempre: al pasar el motor al formato del DRE
+ * varias caen en el mismo bloque (Nomina lleva la planilla, las propinas y los
+ * uniformes) y cada una conserva su tipo. Asi Juanma no tuvo que rehacer la hoja.
+ * Tambien se acepta una fila con el nombre del bloque tal cual.
+ */
+// Funcion y no constante: los archivos .js se cargan en un orden que no se controla
+// y FIN_B vive en FinanzasDatos.js. Una constante de nivel superior podria leerlo
+// antes de que exista.
+function _presuPartidas_() {
+  return {
+    'Inmueble y ocupacion': FIN_B.OCU, 'Tarifas y servicios': FIN_B.TAR,
+    'Prestadores y honorarios': FIN_B.EXT, 'Nomina y salarios': FIN_B.NOM,
+    'Propinas al equipo': FIN_B.NOM, 'Uniformes': FIN_B.NOM, 'Impuestos': FIN_B.IMP,
+    'Marketing': FIN_B.MKT, 'Mantencion': FIN_B.MAN, 'Comisiones y cargos': FIN_B.FIN,
+    'Bienes de uso': FIN_B.BIE
+  };
+}
+function _finPresuBloque_(nombre) {
+  return _presuPartidas_()[nombre] || (FIN_REF.hasOwnProperty(nombre) ? nombre : null);
+}
+
+/**
  * Crea la pestana. Herramienta de editor: soloDueno_ la cierra a Juanma.
  *
  * Sin esa guarda seria una funcion global sin guion bajo y cualquiera podria
@@ -83,7 +106,7 @@ function instalarPresupuesto_() {
   // Las secciones salen de FIN_REF, que es la lista canonica de bloques del
   // DRE. Si manana nace un bloque nuevo, la prueba de la bateria avisa que le
   // falta su fila en vez de dejarlo sin presupuesto en silencio.
-  var secciones = Object.keys(FIN_REF).sort();
+  var secciones = Object.keys(_presuPartidas_()).sort();
   var filas = secciones.map(function (s) {
     return [s].concat(new Array(PRESU_COLS.length - 1).fill(''));
   });
@@ -111,7 +134,7 @@ function instalarPresupuesto_() {
  * creyendo que presupuesto algo que el calculo no mira.
  */
 function _finPresupuesto_() {
-  var out = { existe: false, secciones: {}, desconocidas: [], sin_tipo: [], error: '' };
+  var out = { existe: false, secciones: {}, bloques: {}, desconocidas: [], sin_tipo: [], error: '' };
   var ss;
   try {
     ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
@@ -147,7 +170,7 @@ function _finPresupuesto_() {
   for (var r = 1; r < filas.length; r++) {
     var nombre = String(filas[r][cSec] || '').trim();
     if (!nombre) continue;
-    if (!FIN_REF.hasOwnProperty(nombre)) { out.desconocidas.push(nombre); continue; }
+    if (!_finPresuBloque_(nombre)) { out.desconocidas.push(nombre); continue; }
 
     function celda(j) {
       if (j === undefined || j < 0) return null;
@@ -175,7 +198,9 @@ function _finPresupuesto_() {
       out.sin_tipo.push(nombre + (tipo ? ' ("' + tipo + '")' : ''));
       tipo = 'fijo';
     }
-    out.secciones[nombre] = { tipo: tipo, valor: valor, meses: meses };
+    var bloque = _finPresuBloque_(nombre);
+    out.secciones[nombre] = { tipo: tipo, valor: valor, meses: meses, bloque: bloque };
+    (out.bloques[bloque] = out.bloques[bloque] || []).push(nombre);
   }
   return out;
 }
@@ -191,23 +216,28 @@ function _finPresupuesto_() {
  * 'mes' o 'anio'. Sin eso, la pantalla compararia un presupuesto anual contra
  * el gasto de un mes y todo se veria holgado.
  */
-function _finPresuDe_(presu, seccion, mes, ventaMes) {
-  var S = presu && presu.secciones && presu.secciones[seccion];
-  if (!S) return null;
-
-  if (S.tipo === 'anual') {
-    if (S.valor === null) return null;
-    return { monto: S.valor, base: 'anio', tipo: S.tipo };
+function _finPresuDe_(presu, bloque, mes, ventaMes) {
+  // El presupuesto de un BLOQUE del DRE = la suma de sus partidas. Si todas son
+  // anuales se compara contra el acumulado del año; si hay alguna de mes, la anual
+  // entra en doceavos (el unico caso hoy: Uniformes dentro de Nomina).
+  var nombres = (presu && presu.bloques && presu.bloques[bloque]) || [];
+  var partes = nombres.map(function (n) { return presu.secciones[n]; });
+  if (!partes.length) return null;
+  var todasAnuales = partes.every(function (S) { return S.tipo === 'anual'; });
+  if (todasAnuales) {
+    var tot = 0;
+    partes.forEach(function (S) { tot += S.valor || 0; });
+    return { monto: tot, base: 'anio', tipo: 'anual' };
   }
-
-  var v = (S.meses && S.meses[mes] !== undefined) ? S.meses[mes] : S.valor;
-  if (v === null || v === undefined) return null;
-
-  if (S.tipo === '%venta') {
-    if (!ventaMes) return null;          // sin venta no hay presupuesto que calcular
-    return { monto: ventaMes * v / 100, base: 'mes', tipo: S.tipo, pct: v };
-  }
-  return { monto: v, base: 'mes', tipo: 'fijo' };
+  var monto = 0, algo = false;
+  partes.forEach(function (S) {
+    if (S.tipo === 'anual') { if (S.valor) { monto += S.valor / 12; algo = true; } return; }
+    var v = (S.meses && S.meses[mes] !== undefined) ? S.meses[mes] : S.valor;
+    if (v === null || v === undefined) return;
+    if (S.tipo === '%venta') { if (ventaMes) { monto += ventaMes * v / 100; algo = true; } return; }
+    monto += v; algo = true;
+  });
+  return algo ? { monto: monto, base: 'mes', tipo: partes.length > 1 ? 'mixto' : partes[0].tipo } : null;
 }
 
 
@@ -572,4 +602,44 @@ function etiquetarExtrasPorArea() {
   ].join('\n');
   console.log(res);
   return res;
+}
+
+
+/**
+ * EL punto de equilibrio de Rosanta (decision de Juanma, 28-sep-2026: "que mande el
+ * presupuesto"). Una sola formula para la semana (La semana, tablero) y para el mes
+ * (Escenarios):
+ *
+ *   fijos     las secciones tipo "fijo" del PRESUPUESTO, con el monto del mes si lo trae,
+ *             MAS las tipo "anual" divididas entre 12 (Juanma, 28-sep-2026: sin ellas faltaban
+ *             ~Q20,000 al mes y el equilibrio daba enero a julio en verde con perdida)
+ *   variables las secciones tipo "%venta" (comisiones, propinas) + la mercaderia REAL
+ *             del periodo (compra / venta: la movil de 4 en la semana, el mes en el mes)
+ *   margen    100 - variables
+ *   PE        fijos / margen
+ *
+ * Antes Escenarios usaba el gasto fijo y variable del BANCO del mes: con el margen de
+ * agosto (8.3%) daba Q677,000 al mes, y mezclaba nomina pagada con resultado devengado.
+ * mercPct null o margen <= 0 -> pe_mes null. Sin pestaña PRESUPUESTO -> null.
+ */
+function _finEquilibrioPresu_(presu, mesN, mercPct) {
+  if (!presu || !presu.existe || !presu.secciones) return null;
+  var fijos = [], fijoMes = 0, pctVenta = [], pctTotal = 0;
+  Object.keys(presu.secciones).forEach(function (k) {
+    var x = presu.secciones[k];
+    if (x.tipo === 'fijo') {
+      var delMes = !!(x.meses && x.meses[mesN] !== undefined);
+      var v = delMes ? x.meses[mesN] : x.valor;
+      if (v) { fijos.push({ seccion: k, mensual: _finR_(v), del_mes: delMes }); fijoMes += v; }
+    } else if (x.tipo === 'anual' && x.valor) {
+      fijos.push({ seccion: k, mensual: _finR_(x.valor / 12), anual: true }); fijoMes += x.valor / 12;
+    } else if (x.tipo === '%venta' && x.valor) {
+      pctVenta.push({ seccion: k, pct: x.valor }); pctTotal += x.valor;
+    }
+  });
+  var sinMerc = mercPct === null || mercPct === undefined || isNaN(mercPct);
+  var mc = sinMerc ? null : 100 - mercPct - pctTotal;
+  return { fijos: fijos, fijo_mes: _finR_(fijoMes), pct_venta: pctVenta, pct_total: pctTotal,
+           merc_pct: sinMerc ? null : _finR_(mercPct, 1), mc: mc === null ? null : _finR_(mc, 1),
+           pe_mes: (fijoMes && mc !== null && mc > 0) ? _finR_(fijoMes / (mc / 100)) : null };
 }

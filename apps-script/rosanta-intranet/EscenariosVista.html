@@ -242,13 +242,13 @@
       hint: 'Más o menos gente, mismo ticket' },
     { id: 'cmv',      n: 'Costo de mercadería', min: -10, max: 10, u: ' pp',
       hint: 'Puntos porcentuales sobre la venta' },
-    { id: 'alquiler', n: 'Alquiler', min: -50, max: 10, u: '%', bloque: 'Inmueble y ocupacion',
+    { id: 'alquiler', n: 'Alquiler', min: -50, max: 10, u: '%', bloque: 'Ocupación / Inmueble',
       hint: 'referencia 6–10% de la venta' },
-    { id: 'honor',    n: 'Prestadores y honorarios', min: -70, max: 10, u: '%',
-      bloque: 'Prestadores y honorarios', hint: 'referencia 1–3%' },
-    { id: 'comis',    n: 'Comisiones y cargos', min: -40, max: 10, u: '%',
-      bloque: 'Comisiones y cargos', hint: 'referencia 3–5%' },
-    { id: 'nomina',   n: 'Nómina', min: -20, max: 20, u: '%', bloque: 'Nomina y salarios',
+    { id: 'honor',    n: 'Servicios externos', min: -70, max: 10, u: '%',
+      bloque: 'Servicios Externos', hint: 'referencia 1–3%' },
+    { id: 'comis',    n: 'Gastos financieros (comisiones)', min: -40, max: 10, u: '%',
+      bloque: 'Gastos Financieros', hint: 'referencia 3–5%' },
+    { id: 'nomina',   n: 'Nómina', min: -20, max: 20, u: '%', bloque: 'Nómina / Salarios',
       hint: 'referencia 25–30%' }
   ];
   var PRESETS = {
@@ -265,24 +265,26 @@
 
   function calc() {
     var f = 1 + st.precio / 100, g = 1 + st.volumen / 100;
-    var ventas = T.ventas * f * g;
+    // la venta de eventos entra al resultado (formato del DRE, 28-sep-2026) y no se mueve
+    var ventas = T.ventas * f * g + (T.eventos || 0);
     var cogs = T.cogs * g * (1 + st.cmv / 100 * (T.ventas / T.cogs));
     var bl = {};
     BL.forEach(function (b) { bl[b] = T.bloques[b] || 0; });
-    if (bl['Inmueble y ocupacion'] !== undefined) bl['Inmueble y ocupacion'] *= 1 + st.alquiler / 100;
-    if (bl['Prestadores y honorarios'] !== undefined) bl['Prestadores y honorarios'] *= 1 + st.honor / 100;
-    if (bl['Comisiones y cargos'] !== undefined) bl['Comisiones y cargos'] *= (1 + st.comis / 100) * f * g;
-    if (bl['Nomina y salarios'] !== undefined) bl['Nomina y salarios'] *= 1 + st.nomina / 100;
-    ['Tarifas y servicios', 'Mantencion', 'Bienes de uso'].forEach(function (b) {
+    // los 9 bloques del DRE (28-sep-2026); los impuestos ya son gasto operativo
+    if (bl['Ocupación / Inmueble'] !== undefined) bl['Ocupación / Inmueble'] *= 1 + st.alquiler / 100;
+    if (bl['Servicios Externos'] !== undefined) bl['Servicios Externos'] *= 1 + st.honor / 100;
+    if (bl['Gastos Financieros'] !== undefined) bl['Gastos Financieros'] *= (1 + st.comis / 100) * f * g;
+    if (bl['Nómina / Salarios'] !== undefined) bl['Nómina / Salarios'] *= 1 + st.nomina / 100;
+    ['Tarifas y Servicios', 'Mantenimiento', 'Bienes de Uso / Generales'].forEach(function (b) {
       if (bl[b]) bl[b] *= 1 + (g - 1) * 0.4;
     });
     var gop = 0;
-    Object.keys(bl).forEach(function (b) { if (b !== 'Impuestos') gop += bl[b]; });
+    Object.keys(bl).forEach(function (b) { gop += bl[b]; });
     return { ventas: ventas, cogs: cogs, gop: gop, res: ventas - cogs - gop };
   }
 
   function barras(e) {
-    var filas = [['Ventas', T.ventas, e.ventas], ['Mercadería', T.cogs, e.cogs],
+    var filas = [['Ventas', T.venta_total || T.ventas, e.ventas], ['Mercadería', T.cogs, e.cogs],
                  ['Gasto operativo', T.gop, e.gop], ['Resultado', T.neto, e.res]];
     var tope = 0;
     filas.forEach(function (f) { tope = Math.max(tope, Math.abs(f[1]), Math.abs(f[2])); });
@@ -362,17 +364,24 @@
     var tk = m.com ? m.ventas / m.com : 0;
     var el = document.getElementById('beVal');
 
-    // Margen de contribucion <= 0: el mes no llega al equilibrio a ningun
-    // volumen, porque cada quetzal vendido trae mas costo variable del que
-    // deja. El motor manda bev null. Antes esto salia como un equilibrio de Q0,
-    // que se leia como "no hacia falta vender nada".
+    // Desde el 28-sep-2026 el equilibrio sale del PRESUPUESTO (el mismo de La semana):
+    // fijos del presupuesto del mes / (1 - mercaderia real del mes - % de venta).
+    // bev null = sin pestaña PRESUPUESTO o margen <= 0 (no llega a ningun volumen).
+    if (m.pe_sin_presupuesto) {
+      el.textContent = 'Sin presupuesto';
+      el.className = 'be-n';
+      document.getElementById('beTxt').innerHTML =
+        'El punto de equilibrio sale de la pestaña <b>PRESUPUESTO</b> del Sheet de configuración, y no se pudo leer.';
+      document.getElementById('bePista').innerHTML = '';
+      return;
+    }
     if (m.bev === null || m.bev === undefined) {
       el.textContent = 'No alcanzable';
       el.className = 'be-n mal';
       document.getElementById('beTxt').innerHTML =
-        'Con un gasto fijo de <b>' + q(m.fijo) + '</b> y un margen de contribución de <b>' +
-        pct(m.mc) + '</b>, ' + m.mes + ' <b>no tiene punto de equilibrio</b>: el costo que ' +
-        'se mueve con la venta —mercadería más el gasto operativo variable— se come el ' +
+        'Con los fijos del presupuesto (<b>' + q(m.pe_fijo) + '</b>) y un margen de contribución de <b>' +
+        pct(m.pe_mc) + '</b>, ' + m.mes + ' <b>no tiene punto de equilibrio</b>: el costo que ' +
+        'se mueve con la venta —mercadería, comisiones y propinas— se come el ' +
         '100% de cada quetzal vendido, así que vender más no acerca al equilibrio. ' +
         'Vendió ' + q(m.ventas) + ' con ' + m.com + ' comensales. ' +
         'Lo que hay que mover es el costo, no el volumen.';
@@ -385,8 +394,9 @@
     el.textContent = q(m.bev);
     el.className = 'be-n' + (falta > 0 ? ' mal' : '');
     document.getElementById('beTxt').innerHTML =
-      'Con un gasto fijo de <b>' + q(m.fijo) + '</b> y un margen de contribución de <b>' +
-      pct(m.mc) + '</b>, ' + m.mes + ' necesitaba <b>' + q(m.bev) +
+      'Con los fijos del presupuesto (<b>' + q(m.pe_fijo) + '</b>' + (m.pe_parte < 1 ? ', en proporción a los días cargados' : '') +
+      ') y un margen de contribución de <b>' + pct(m.pe_mc) + '</b> (mercadería real del mes, comisiones y propinas), ' +
+      m.mes + ' necesitaba <b>' + q(m.bev) +
       '</b> de venta para no perder. Vendió ' + q(m.ventas) + ' con ' + m.com + ' comensales' +
       (tk ? ' (ticket ' + q(tk) + '), o sea <b>' + Math.round(m.bev / tk).toLocaleString('es-GT') +
             '</b> comensales para llegar al equilibrio.' : '.') +
@@ -426,10 +436,23 @@
     d.meses.forEach(function (m) {
       fijoAnio += (m.fijo || 0);
       varAnio += (m.variable || 0);
+      if (m.pe_sin_presupuesto) return;
       if (m.bev === null || m.bev === undefined) { conBE++; bajoBE++; }   // no alcanzable = bajo
       else { conBE++; if (m.ventas < m.bev) bajoBE++; }
     });
-    var mc = T.ventas ? (T.ventas - T.cogs - varAnio) / T.ventas : 0;
+    // El margen es el mismo del punto de equilibrio (28-sep-2026): la mercaderia real
+    // del año y los % de venta del PRESUPUESTO. Sin presupuesto, el del gasto bancario.
+    var pctPresu = null;
+    if (d.presupuesto && d.presupuesto.existe) {
+      pctPresu = 0;
+      Object.keys(d.presupuesto.secciones || {}).forEach(function (k) {
+        var x = d.presupuesto.secciones[k];
+        if (x.tipo === '%venta' && x.valor) pctPresu += x.valor;
+      });
+    }
+    var mc = !T.ventas ? 0 : (pctPresu !== null
+      ? 1 - T.cogs / T.ventas - pctPresu / 100
+      : (T.ventas - T.cogs - varAnio) / T.ventas);
     var falta = -T.neto;                       // lo que falta para cerrar en cero
     var nMes = d.meses.length || 1;
     // Vender mas arrastra su propio costo variable: lo que cierra la brecha es
@@ -474,12 +497,12 @@
     document.getElementById('beTabla').innerHTML = d.meses.map(function (m) {
       if (m.bev === null || m.bev === undefined) {
         return '<tr><td>' + m.mes + '</td><td>' + q(m.ventas) + '</td>' +
-          '<td class="r">no alcanzable</td><td class="r">' + pct(m.mc) + '</td>' +
+          '<td class="r">' + (m.pe_sin_presupuesto ? 'sin presupuesto' : 'no alcanzable') + '</td><td class="r">' + pct(m.pe_mc) + '</td>' +
           '<td class="r">—</td></tr>';
       }
       var h = m.ventas - m.bev;
       return '<tr><td>' + m.mes + '</td><td>' + q(m.ventas) + '</td><td>' + q(m.bev) + '</td>' +
-        '<td>' + pct(m.mc) + '</td>' +
+        '<td>' + pct(m.pe_mc) + '</td>' +
         '<td class="' + (h < 0 ? 'r' : 'v') + '">' + (h >= 0 ? '+' : '') + q(h) + '</td></tr>';
     }).join('');
 

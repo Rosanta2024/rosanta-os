@@ -265,7 +265,7 @@ function _repHtmlPdf_(d) {
   if (pe) {
     h += '<table class="dos"><tr><td>' +
       tabla(['Costos fijos (PRESUPUESTO)', 'Al mes'],
-        pe.fijos.map(function (f) { return { c: [esc(f.seccion) + (f.del_mes ? ' (del mes)' : ''), q(f.mensual)] }; })
+        pe.fijos.map(function (f) { return { c: [esc(f.seccion) + (f.del_mes ? ' (del mes)' : '') + (f.anual ? ' (anual ÷ 12)' : ''), q(f.mensual)] }; })
           .concat([{ cls: 'total', c: ['Fijos del mes', q(pe.fijo_mes)] }, { cls: 'total', c: ['Fijos por semana (÷ 4.345)', q(pe.fijo_semana)] }])) +
       '</td><td>' +
       tabla(['Variables, % de la venta', ''],
@@ -273,7 +273,7 @@ function _repHtmlPdf_(d) {
           .concat([{ c: ['Total variable', pct(pe.variables_pct)] }, { c: ['Margen de contribución', pct(pe.mc)] },
                    { cls: 'total', c: ['Punto de equilibrio', q(pe.pe_semana) + ' / semana · ' + q(pe.pe_dia) + ' / día'] }])) +
       '</td></tr></table>' +
-      '<p class="nota">' + esc(pe.nota) + (pe.motor ? ' Referencia del motor: ' + esc(pe.motor.mes) + ' fijo ' + q(pe.motor.fijo_mes) + ', margen ' + pct(pe.motor.mc) + ', equilibrio ' + q(pe.motor.pe_semana) + ' por semana.' : '') + '</p>';
+      '<p class="nota">' + esc(pe.nota) + '</p>';
   }
   var ac = d.acciones;
   h += '<h3>Acciones de la semana</h3>' +

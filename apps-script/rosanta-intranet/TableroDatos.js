@@ -381,7 +381,7 @@ function _tabFinanzas_(out, P, hoy, auth) {
       meta_texto: 'meta ' + P.ebitda_meta_pct.valor + '% de la venta',
       zona: tabZona_(mc.ultimo.ebitdap, P.ebitda_meta_pct.valor, 0, 'mayor'),
       tendencia: tabTendencia_(mc.ultimo.ebitda, mc.anterior ? mc.anterior.ebitda : null),
-      fuente: 'FinanzasDatos › meses[].ebitda = neto + Impuestos + venta de eventos', enlace: 'finanzas&sub=comparativo',
+      fuente: 'FinanzasDatos › meses[].ebitda = neto + Impuestos (el neto ya lleva la venta de eventos)', enlace: 'finanzas&sub=comparativo',
       nota: mc.ultimo.ebitdap + '% de la venta · año Q' + Number(d.total.ebitda || 0).toLocaleString('es-GT') + ' (' + d.total.ebitdap + '%)',
       detalle: { imp: mc.ultimo.imp, eventos: mc.ultimo.eventos, neto: mc.ultimo.neto }
     }));

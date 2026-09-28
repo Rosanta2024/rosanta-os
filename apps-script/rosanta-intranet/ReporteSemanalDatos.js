@@ -31,7 +31,7 @@ var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', '
 var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala', 'Reservas', 'Administración'];
 var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
 var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
-var REP_CACHE = 'rep_sem_v2_';
+var REP_CACHE = 'rep_sem_v3_';   // v3: equilibrio del presupuesto con anuales (28-sep-2026)
 var REP_CACHE_SEGS = 30 * 60;
 
 // ------------------------------------------------------------------ entradas
@@ -123,10 +123,9 @@ function _repCalcular_(clave) {
   var domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6);
   var jueves = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 3);
   var mesN = jueves.getMonth() + 1;
-  var mes = null, ultimoCerrado = null;
+  var mes = null;
   (d.meses || []).forEach(function (x) {
     if (x.m === mesN) mes = x;
-    if (x.m < (new Date()).getMonth() + 1) ultimoCerrado = x;
   });
   var metas = metasFoodCost_();
   var notas = [];
@@ -144,45 +143,26 @@ function _repCalcular_(clave) {
   //             que va con la MOVIL DE 4 de compra sobre venta (regla 7: la semana
   //             cruda no es señal) — cociente de sumas de las 4 semanas
   //   PE        fijos por semana / (1 - variables)
-  // El equilibrio MENSUAL del motor (Escenarios: fijo F + S/2 del gasto bancario,
-  // margen con lo variable del banco) se deja como referencia: el 25-sep dio Q155,894
-  // por semana con el margen de 8.3% de agosto, un numero que no sirve para decidir
-  // la semana. Queda anotado como decision pendiente de Juanma cual de los dos manda.
+  // Decidido por Juanma el 28-sep-2026: manda el PRESUPUESTO, aqui y en Escenarios, con
+  // una sola funcion (_finEquilibrioPresu_, Presupuesto.js). La "referencia del motor"
+  // (fijo y variable del banco: Q155,894 por semana con el margen de agosto) se retiro.
   var pe = null;
-  var presu = d.presupuesto && d.presupuesto.existe ? d.presupuesto.secciones : null;
-  if (presu) {
-    var fijos = [], fijoMes = 0, pctVenta = [], pctTotal = 0;
-    Object.keys(presu).forEach(function (k) {
-      var x = presu[k];
-      if (x.tipo === 'fijo') {
-        var v = (x.meses && x.meses[mesN] !== undefined) ? x.meses[mesN] : x.valor;
-        if (v) { fijos.push({ seccion: k, mensual: _finR_(v), del_mes: !!(x.meses && x.meses[mesN] !== undefined) }); fijoMes += v; }
-      } else if (x.tipo === '%venta' && x.valor) {
-        pctVenta.push({ seccion: k, pct: x.valor }); pctTotal += x.valor;
-      }
-    });
-    var vC = 0, cC = 0;
-    cuatro.forEach(function (x) { vC += x.ventas; cC += x.cogs; });
-    var mercPct = vC ? cC / vC * 100 : null;          // movil de 4, sobre venta total
-    var mc = mercPct === null ? null : 100 - mercPct - pctTotal;
-    if (fijoMes && mc && mc > 0) {
-      var fijoSem = fijoMes / FIN_SEMANAS_MES;
-      pe = { fijos: fijos, fijo_mes: _finR_(fijoMes), fijo_semana: _finR_(fijoSem),
-             variables: pctVenta.concat([{ seccion: 'Mercaderia (compra, movil de 4 semanas)', pct: _finR_(mercPct, 1) }]),
-             variables_pct: _finR_(mercPct + pctTotal, 1), mc: _finR_(mc, 1),
-             pe_semana: _finR_(fijoSem / (mc / 100)), pe_mes: _finR_(fijoMes / (mc / 100)),
-             base: 'PRESUPUESTO · mercaderia movil de 4 (S' + cuatro[0].w + ' a S' + s.w + ')' };
-    } else {
-      notas.push('Sin equilibrio: el presupuesto no tiene fijos o el margen de contribucion no es positivo (mercaderia ' +
-                 (mercPct === null ? '—' : _finR_(mercPct, 1) + '%') + ' + ' + pctTotal + '% de venta).');
-    }
-  } else {
+  var vC = 0, cC = 0;
+  cuatro.forEach(function (x) { vC += x.ventas; cC += x.cogs; });
+  var eq = _finEquilibrioPresu_(d.presupuesto, mesN, vC ? cC / vC * 100 : null);   // movil de 4
+  if (!eq) {
     notas.push('Sin punto de equilibrio: falta la pestaña PRESUPUESTO del Sheet de config (instalarPresupuesto).');
+  } else if (eq.pe_mes) {
+    var fijoSem = eq.fijo_mes / FIN_SEMANAS_MES;
+    pe = { fijos: eq.fijos, fijo_mes: eq.fijo_mes, fijo_semana: _finR_(fijoSem),
+           variables: eq.pct_venta.concat([{ seccion: 'Mercaderia (compra, movil de 4 semanas)', pct: eq.merc_pct }]),
+           variables_pct: _finR_(eq.merc_pct + eq.pct_total, 1), mc: eq.mc,
+           pe_semana: _finR_(fijoSem / (eq.mc / 100)), pe_mes: eq.pe_mes,
+           base: 'PRESUPUESTO · mercaderia movil de 4 (S' + cuatro[0].w + ' a S' + s.w + ')' };
+  } else {
+    notas.push('Sin equilibrio: el presupuesto no tiene fijos o el margen de contribucion no es positivo (mercaderia ' +
+               (eq.merc_pct === null ? '—' : eq.merc_pct + '%') + ' + ' + eq.pct_total + '% de venta).');
   }
-  // referencia: el equilibrio mensual del motor (Escenarios), del ultimo mes cerrado
-  var mesPE = (ultimoCerrado && ultimoCerrado.bev) ? ultimoCerrado : null;
-  var peMotor = mesPE ? { mes: mesPE.mes, fijo_mes: mesPE.fijo, mc: mesPE.mc, pe_mes: mesPE.bev,
-                          pe_semana: _finR_(mesPE.bev / FIN_SEMANAS_MES) } : null;
   var peDia = pe ? _finR_(pe.pe_semana / 7) : null;
 
   // ---- 3. la serie diaria (02_Ventas_Maestro, mismas reglas 1, 2 y 10) ------------
@@ -359,13 +339,19 @@ function _repCalcular_(clave) {
   var bloques = s.bloques || {};
   var secciones = [];
   var gastoSecciones = 0;
-  Object.keys(bloques).sort(function (a, b) { return bloques[b] - bloques[a]; }).forEach(function (b) {
-    if (b === 'Nomina y salarios') return;      // la nomina del banco se reemplaza por la devengada
-    secciones.push({ seccion: b, q: _finR_(bloques[b]) });
-    gastoSecciones += bloques[b];
+  // Los bloques del DRE (28-sep-2026). Del de Nomina se saca lo que el banco pago de
+  // planilla e IGSS: la nomina entra devengada (s.labor). Quedan propinas y uniformes.
+  var enSemana = {};
+  Object.keys(bloques).forEach(function (b) {
+    enSemana[b] = bloques[b] - (b === FIN_B.NOM ? (s.nom_banco || 0) : 0);
   });
-  var comisiones = _finR_(bloques['Comisiones y cargos'] || 0);
-  var marketing = _finR_(bloques['Marketing'] || 0);
+  Object.keys(enSemana).sort(function (a, b) { return enSemana[b] - enSemana[a]; }).forEach(function (b) {
+    if (Math.abs(enSemana[b]) < 0.005) return;
+    secciones.push({ seccion: b === FIN_B.NOM ? 'Nómina: propinas y uniformes' : b, q: _finR_(enSemana[b]) });
+    gastoSecciones += enSemana[b];
+  });
+  var comisiones = _finR_(bloques[FIN_B.FIN] || 0);
+  var marketing = _finR_(bloques[FIN_B.MKT] || 0);
   var gasto = _finR_(s.cogs + gastoSecciones + s.labor);
   var resultado = _finR_(s.ventas - gasto);
   var pl = {
@@ -414,9 +400,8 @@ function _repCalcular_(clave) {
       variables: pe.variables, variables_pct: pe.variables_pct, mc: pe.mc,
       venta_pct: _finR_(s.ventas / pe.pe_semana * 100, 1), brecha: _finR_(s.ventas - pe.pe_semana),
       semanas_sobre: cuatro.filter(function (x) { return x.ventas >= pe.pe_semana; }).length, de: cuatro.length,
-      motor: peMotor,
-      nota: 'Fijos y porcentajes de venta del PRESUPUESTO (22-sep-2026); mercaderia con la movil de 4 semanas. ' +
-            'El equilibrio mensual de Escenarios (fijo y variable del gasto bancario) queda como referencia.'
+      nota: 'Fijos y porcentajes de venta del PRESUPUESTO; mercaderia con la movil de 4 semanas. ' +
+            'Es el mismo calculo del equilibrio de cada mes en Escenarios.'
     } : null,
     dias: dias,
     reservas: reservas,

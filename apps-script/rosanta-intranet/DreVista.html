@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <?!= include('Estilos') ?>
+  <?!= include('Logo') ?>
+  <style>
+    /* DRE · Pilar 3, Finance & Data OS (28-sep-2026).
+       El estado de resultados en el formato original de Rosanta: la plantilla de
+       dgimenezcoach (2024) y el DRE 2025. Solo lectura. No calcula: suma los meses
+       que da getDreData, que a su vez solo elige campos del motor de Finanzas. */
+    main.dre { max-width: 1140px; }
+    .dre-sub { font-size: 0.9rem; opacity: 0.75; margin-top: 0.3rem; }
+    .dre-barra { display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem; }
+    .dre-ctrl { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 1.2rem 0 0.4rem; }
+    .dre-ctrl select { font-family: 'Lato', Arial, sans-serif; font-size: 0.86rem; padding: 0.4rem 0.7rem;
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px; background: var(--blanco); color: var(--negro); }
+    .dre-boton { background: transparent; color: var(--verde-bosque);
+      border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
+      padding: 0.42rem 1rem; font-size: 0.82rem; cursor: pointer; font-family: 'Lato', Arial, sans-serif; }
+    .dre-boton.on { background: var(--verde-bosque); color: var(--blanco); }
+
+    .dre-hoja { background: var(--blanco); margin-top: 1rem; padding: 1.4rem 1.5rem 1.6rem; }
+    .dre-tit { text-align: center; margin-bottom: 1.1rem; }
+    .dre-tit b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.3rem; letter-spacing: 0.04em; }
+    .dre-tit div { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; margin-top: 0.15rem; }
+
+    table.dre { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    table.dre th { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+      text-align: right; padding: 0.45rem 0.55rem; border-bottom: 2px solid var(--verde-bosque); white-space: nowrap; }
+    table.dre th:first-child { text-align: left; }
+    table.dre td { padding: 0.32rem 0.55rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    table.dre td:first-child { text-align: left; white-space: normal; }
+    table.dre tr.sec td { font-weight: 700; color: var(--verde-bosque); padding-top: 0.9rem; letter-spacing: 0.02em; }
+    table.dre tr.bl td { font-weight: 700; padding-top: 0.75rem; }
+    table.dre tr.sub td:first-child { padding-left: 1.6rem; }
+    table.dre tr.tot td { font-weight: 700; border-top: 1px solid rgba(26,26,26,0.25); }
+    table.dre tr.gran td { font-weight: 700; border-top: 2px solid var(--verde-bosque); font-size: 0.95rem; }
+    table.dre tr.lucro td { font-weight: 700; font-size: 1.02rem; border-top: 2px solid var(--verde-bosque);
+      border-bottom: 2px solid var(--verde-bosque); }
+    table.dre td.ref { color: #7a7a74; font-size: 0.78rem; }
+    table.dre td.neg { color: #A33A2A; }
+    table.dre td.fuera { color: #A33A2A; font-weight: 700; }
+    table.dre td.dentro { color: #2E6B3F; }
+    table.dre .mv { opacity: 0.75; }
+    .dre-scroll { overflow-x: auto; }
+    .dre-pie { margin-top: 1.1rem; font-size: 0.8rem; opacity: 0.72; line-height: 1.55; max-width: 90ch; }
+    .dre-pie p { margin: 0.25rem 0; }
+    /* El panel de BREAK EVEN POINT y las dos graficas del formato original (plantilla 2024) */
+    .dre-grid { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 1.2rem; align-items: start; margin-top: 1rem; }
+    .dre-grid .dre-hoja { margin-top: 0; }
+    .dre-panel { background: var(--blanco); padding: 1.1rem 1.2rem; position: sticky; top: 0.8rem; }
+    .dre-panel h3 { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--verde-bosque);
+      border-bottom: 2px solid var(--verde-bosque); padding-bottom: 0.35rem; margin: 0 0 0.6rem; }
+    .dre-panel .k { padding: 0.45rem 0; border-bottom: 1px solid rgba(26,26,26,0.08); }
+    .dre-panel .k:last-child { border-bottom: 0; }
+    .dre-panel .t { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.65; }
+    .dre-panel .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; line-height: 1.2; }
+    .dre-panel .n.neg { color: #A33A2A; }
+    .dre-panel .n.pe { background: #FBF3C8; display: inline-block; padding: 0 0.3rem; }
+    .dre-panel .c { font-size: 0.76rem; opacity: 0.72; line-height: 1.4; }
+    .dre-graf { background: var(--blanco); margin-top: 1.2rem; padding: 1.2rem 1.4rem 1.4rem; }
+    .dre-graf h3 { font-size: 0.95rem; margin: 0 0 0.2rem; }
+    .dre-graf p.nota { font-size: 0.78rem; opacity: 0.7; margin: 0 0 0.9rem; }
+    .gb { display: grid; grid-template-columns: 210px minmax(0, 1fr) 64px; gap: 0.5rem; align-items: center; font-size: 0.82rem; margin: 0.32rem 0; }
+    .gb .pista { position: relative; height: 16px; background: #F2EEEB; }
+    .gb .banda { position: absolute; top: 0; bottom: 0; background: rgba(87,167,127,0.28); }
+    .gb .val { position: absolute; left: 0; top: 3px; bottom: 3px; background: var(--verde-bosque); }
+    .gb .val.fuera { background: #A33A2A; }
+    .gb .p { text-align: right; font-variant-numeric: tabular-nums; }
+    .reparto { display: flex; height: 38px; margin: 0.4rem 0 0.6rem; }
+    .reparto > div { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.78rem; font-weight: 700; overflow: hidden; white-space: nowrap; }
+    .rep-ley { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.8rem; }
+    .rep-ley i { display: inline-block; width: 10px; height: 10px; margin-right: 0.35rem; vertical-align: -1px; }
+    @media (max-width: 900px) {
+      .dre-grid { grid-template-columns: 1fr; }
+      .dre-panel { position: static; }
+      .gb { grid-template-columns: 130px minmax(0, 1fr) 54px; font-size: 0.76rem; }
+    }
+    .dre-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
+    .dre-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem; font-size: 0.9rem; }
+    @media (max-width: 720px) {
+      .dre-hoja { padding: 1rem 0.6rem; }
+      table.dre .mv { display: none; }       /* en el telefono: concepto, monto, % y referencia */
+      table.dre { font-size: 0.8rem; }
+    }
+    @media print {
+      header.app, .dre-ctrl, .dre-barra a, .dre-barra button { display: none !important; }
+      .dre-grid { grid-template-columns: minmax(0, 1fr) 240px; }
+      .dre-panel { position: static; }
+      .dre-hoja { padding: 0; }
+      table.dre .mv { display: table-cell !important; }
+    }
+  </style>
+</head>
+<body>
+  <? if (mostrarVolver) { ?>
+  <header class="app">
+    <div class="marca">
+      <span class="logo" role="img" aria-label="Rosanta"></span>
+      <span class="sec">DRE</span>
+    </div>
+    <div class="quien">
+      <span><?= usuario.nombre || usuario.email ?></span>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">Panel principal</a>
+    </div>
+  </header>
+  <? } ?>
+
+  <main class="dre">
+    <div class="dre-barra">
+      <div>
+        <h1>DRE · Estado de resultados</h1>
+        <p class="dre-sub" id="sub">Cargando…</p>
+      </div>
+      <button type="button" class="dre-boton" id="btn-imprimir">Imprimir / PDF</button>
+    </div>
+
+    <div class="dre-ctrl" id="ctrl" style="display:none">
+      <select id="periodo" aria-label="Período"></select>
+      <button type="button" class="dre-boton on" data-forma="completo">DRE completo</button>
+      <button type="button" class="dre-boton" data-forma="reducido">DRE reducido</button>
+    </div>
+
+    <div id="cargando" class="dre-cargando">Leyendo el maestro…</div>
+    <div id="cuerpo" style="display:none">
+      <div class="dre-grid">
+        <div id="hoja" class="dre-hoja"></div>
+        <aside id="panel" class="dre-panel" aria-label="Break even point"></aside>
+      </div>
+      <section id="graf-bloques" class="dre-graf"></section>
+      <section id="graf-reparto" class="dre-graf"></section>
+    </div>
+  </main>
+
+<script>
+  /* El token va como PRIMER argumento en TODA llamada a google.script.run. */
+  var AUTH = '<?= authToken ?>';
+  var D = null, FORMA = 'completo';
+
+  function q(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    var s = Math.abs(n).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return (n < 0 ? '−Q' : 'Q') + s;
+  }
+  function pct(n) { return (n === null || n === undefined || !isFinite(n)) ? '' : (n * 100).toFixed(1) + '%'; }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* Los periodos: el año a la fecha, los trimestres con datos y cada mes. */
+  function periodos() {
+    var ms = D.meses.map(function (m) { return m.m; }), out = [];
+    out.push({ k: 'anio', n: 'Año ' + D.anio + ' a la fecha (' + D.meses[0].mes + '–' + D.meses[D.meses.length - 1].mes + ')', ms: ms });
+    [1, 2, 3, 4].forEach(function (t) {
+      var tm = ms.filter(function (m) { return Math.ceil(m / 3) === t; });
+      if (tm.length) out.push({ k: 't' + t, n: t + 'T ' + D.anio + (tm.length < 3 ? ' (parcial)' : ''), ms: tm });
+    });
+    D.meses.slice().reverse().forEach(function (m) { out.push({ k: 'm' + m.m, n: m.mes + ' ' + D.anio + (m.parte < 1 ? ' (en curso)' : ''), ms: [m.m] }); });
+    return out;
+  }
+
+  /* Suma los meses del periodo. Nada mas: cada numero ya viene del motor. */
+  function sumar(ms) {
+    var P = { venta_cocina: 0, venta_bar: 0, otros: 0, cmv_cocina: 0, cmv_bar: 0, cmv_otros: 0,
+              com: 0, pe: 0, pe_meses: 0, sub: {}, bloques: {}, n: 0, parcial: false };
+    D.meses.forEach(function (m) {
+      if (ms.indexOf(m.m) === -1) return;
+      P.n++;
+      if (m.parte < 1) P.parcial = true;
+      ['venta_cocina', 'venta_bar', 'otros', 'cmv_cocina', 'cmv_bar', 'cmv_otros', 'com'].forEach(function (k) { P[k] += m[k] || 0; });
+      if (m.pe !== null && m.pe !== undefined) { P.pe += m.pe; P.pe_meses++; }
+      Object.keys(m.bloques).forEach(function (b) { P.bloques[b] = (P.bloques[b] || 0) + m.bloques[b]; });
+      Object.keys(m.sub).forEach(function (b) {
+        Object.keys(m.sub[b]).forEach(function (s) {
+          var o = m.sub[b][s], B = P.sub[b] = P.sub[b] || {}, x = B[s] = B[s] || { q: 0, F: 0, S: 0, V: 0 };
+          ['q', 'F', 'S', 'V'].forEach(function (k) { x[k] += o[k] || 0; });
+        });
+      });
+    });
+    P.venta = P.venta_cocina + P.venta_bar + P.otros;
+    P.cmv = P.cmv_cocina + P.cmv_bar + P.cmv_otros;
+    P.mb = P.venta - P.cmv;
+    P.gop = 0;
+    Object.keys(P.bloques).forEach(function (b) { P.gop += P.bloques[b]; });
+    P.lucro = P.mb - P.gop;
+    return P;
+  }
+
+  function pintar() {
+    var sel = document.getElementById('periodo');
+    var per = periodos().filter(function (p) { return p.k === sel.value; })[0] || periodos()[0];
+    var P = sumar(per.ms), V = P.venta;
+    var h = '<div class="dre-tit"><b>ROSANTA</b><div>Gastrococtelería — Antigua Guatemala</div>' +
+      '<div>' + (FORMA === 'completo' ? 'Estado de resultados' : 'DRE resumido') + ' · ' + esc(per.n) + '</div></div>';
+    var cols = FORMA === 'completo';
+    h += '<div class="dre-scroll"><table class="dre"><thead><tr><th>Concepto</th>' +
+      (cols ? '<th class="mv">Fijo</th><th class="mv">Fijo MV</th><th class="mv">Variable</th>' : '') +
+      '<th>Monto (Q)</th><th>% venta</th>' + (cols ? '<th>Referencia</th>' : '') + '</tr></thead><tbody>';
+    var nc = cols ? 7 : 3;
+    function fila(cls, nombre, monto, f, s, v, ref, zona) {
+      h += '<tr class="' + (cls || '') + '"><td>' + nombre + '</td>' +
+        (cols ? '<td class="mv">' + (f ? q(f) : '') + '</td><td class="mv">' + (s ? q(s) : '') + '</td><td class="mv">' + (v ? q(v) : '') + '</td>' : '') +
+        '<td class="' + (monto < 0 ? 'neg' : '') + '">' + (monto === null ? '' : q(monto)) + '</td>' +
+        '<td class="' + (zona || '') + '">' + (monto === null || !V ? '' : pct(monto / V)) + '</td>' +
+        (cols ? '<td class="ref">' + (ref || '') + '</td>' : '') + '</tr>';
+    }
+    function titulo(t) { h += '<tr class="sec"><td colspan="' + nc + '">' + t + '</td></tr>'; }
+
+    if (cols) {
+      titulo('Ingresos');
+      fila('sub', 'Venta cocina', P.venta_cocina); fila('sub', 'Venta bar', P.venta_bar);
+      fila('sub', 'Otros ingresos (eventos)', P.otros);
+    }
+    fila('gran', 'Venta bruta total', V);
+    if (cols) {
+      titulo('Costo de mercancía vendida (CMV)');
+      fila('sub', 'CMV alimentos / cocina', P.cmv_cocina); fila('sub', 'CMV bar', P.cmv_bar);
+      if (Math.abs(P.cmv_otros) > 1) fila('sub', 'CMV sin área', P.cmv_otros);
+      fila('tot', 'Total CMV', P.cmv);
+    } else {
+      fila('sub', 'Costo de mercancía vendida (CMV)', -P.cmv);
+    }
+    fila('gran', 'Margen bruto', P.mb);
+    titulo('Gastos operativos');
+    D.bloques.forEach(function (B, i) {
+      var monto = P.bloques[B.b] || 0;
+      var p = V ? monto / V * 100 : 0;
+      var zona = !B.ref[1] ? '' : (p > B.ref[1] ? 'fuera' : 'dentro');
+      var nombre = (i + 1) + ' · ' + esc(B.b);
+      if (!cols) { fila('sub', nombre, monto, null, null, null, null, zona); return; }
+      h += '<tr class="bl"><td colspan="' + nc + '">' + nombre + '</td></tr>';
+      var subs = P.sub[B.b] || {}, tf = 0, ts = 0, tv = 0;
+      var orden = B.subs.concat(Object.keys(subs).filter(function (s) { return B.subs.indexOf(s) === -1; }));
+      orden.forEach(function (s) {
+        var x = subs[s];
+        if (!x || Math.abs(x.q) < 0.5) return;
+        tf += x.F; ts += x.S; tv += x.V;
+        fila('sub', esc(s), x.q, x.F, x.S, x.V);
+      });
+      fila('tot', 'Total ' + esc(B.b.toLowerCase()), monto, tf, ts, tv, B.ref[0] + '/' + B.ref[1] + ' %', zona);
+    });
+    fila('gran', 'Total gastos operativos (GOP)', P.gop);
+    fila('lucro', 'Lucro neto', P.lucro);
+    h += '</tbody></table></div>';
+
+    // el equilibrio y el ticket viven en el panel de al lado; aca solo las notas
+    var pie = [];
+    if (P.parcial) pie.push('El período incluye un mes en curso: su nómina va en proporción a los días cargados.');
+    D.notas.forEach(function (n) { pie.push(esc(n)); });
+    h += '<div class="dre-pie">' + pie.map(function (x) { return '<p>' + x + '</p>'; }).join('') + '</div>';
+    document.getElementById('hoja').innerHTML = h;
+    pintarPanel(P, per);
+    pintarGraficas(P);
+  }
+
+  /* El panel BREAK EVEN POINT de la plantilla original: los mismos numeros del cuadro,
+     puestos donde se leen de un vistazo. */
+  function pintarPanel(P, per) {
+    var V = P.venta, ab = P.venta_cocina + P.venta_bar;
+    var dias = 0;
+    D.meses.forEach(function (m) {
+      if (per.ms.indexOf(m.m) === -1) return;
+      dias += Math.round(new Date(D.anio, m.m, 0).getDate() * (m.parte || 1));
+    });
+    function k(t, n, c, cls) {
+      return '<div class="k"><div class="t">' + t + '</div><div class="n' + (cls ? ' ' + cls : '') + '">' + n + '</div>' +
+        (c ? '<div class="c">' + c + '</div>' : '') + '</div>';
+    }
+    var h = '<h3>Break even point</h3>';
+    h += k('Venta bruta del período', q(V), 'cocina ' + pct(P.venta_cocina / V) + ' · bar ' + pct(P.venta_bar / V) + (P.otros ? ' · eventos ' + pct(P.otros / V) : ''));
+    h += k('CMV total', q(P.cmv), pct(P.cmv / V) + ' de la venta · referencia 28–32%', '');
+    h += k('Margen de contribución', q(P.mb), 'índice ' + (V ? (P.mb / V).toFixed(4) : '—'));
+    h += k('Total gasto operativo', q(P.gop), pct(P.gop / V) + ' de la venta');
+    if (P.pe_meses) {
+      h += k('Break even (presupuesto)', q(P.pe), (dias ? 'por día ' + q(P.pe / dias) + ' · ' : '') +
+        (V >= P.pe ? 'sobran ' + q(V - P.pe) : 'faltan ' + q(P.pe - V)), 'pe');
+    } else {
+      h += k('Break even (presupuesto)', '—', 'falta la pestaña PRESUPUESTO');
+    }
+    h += k('Ticket medio', P.com ? q(ab / P.com) : '—', P.com ? P.com.toLocaleString('es-GT') + ' comensales' + (dias ? ' · ' + Math.round(P.com / dias) + ' por día' : '') : '');
+    h += k('Lucro neto', q(P.lucro), pct(P.lucro / V) + ' de la venta', P.lucro < 0 ? 'neg' : '');
+    h += '<h3 style="margin-top:0.9rem">Cocina y bar</h3>';
+    h += k('Venta cocina', q(P.venta_cocina), 'CMV ' + q(P.cmv_cocina) + ' · ' + pct(P.venta_cocina ? P.cmv_cocina / P.venta_cocina : null));
+    h += k('Venta bar', q(P.venta_bar), 'CMV ' + q(P.cmv_bar) + ' · ' + pct(P.venta_bar ? P.cmv_bar / P.venta_bar : null));
+    h += k('Total A&B', q(ab), 'CMV ' + q(P.cmv_cocina + P.cmv_bar) + ' · ' + pct(ab ? (P.cmv_cocina + P.cmv_bar) / ab : null));
+    document.getElementById('panel').innerHTML = h;
+  }
+
+  /* Las dos graficas del formato original: el gasto operativo por bloque (contra su
+     valor de referencia) y en que se va la venta (CMV, gasto operativo y lucro). */
+  function pintarGraficas(P) {
+    var V = P.venta || 1;
+    var tope = 0;
+    D.bloques.forEach(function (B) { tope = Math.max(tope, (P.bloques[B.b] || 0) / V * 100, B.ref[1] || 0); });
+    tope = tope * 1.1 || 1;
+    var filas = D.bloques.map(function (B, i) {
+      var p = (P.bloques[B.b] || 0) / V * 100, fuera = B.ref[1] && p > B.ref[1];
+      return '<div class="gb"><div>' + (i + 1) + ' · ' + esc(B.b) + '</div><div class="pista">' +
+        (B.ref[1] ? '<span class="banda" style="left:' + (B.ref[0] / tope * 100) + '%;width:' + ((B.ref[1] - B.ref[0]) / tope * 100) + '%" title="referencia ' + B.ref[0] + '–' + B.ref[1] + '%"></span>' : '') +
+        '<span class="val' + (fuera ? ' fuera' : '') + '" style="width:' + Math.min(p / tope * 100, 100) + '%"></span></div>' +
+        '<div class="p">' + p.toFixed(1) + '%</div></div>';
+    }).join('');
+    document.getElementById('graf-bloques').innerHTML =
+      '<h3>Gasto operativo por bloque</h3><p class="nota">En % de la venta. La franja verde es el valor de referencia del sector; la barra en rojo se pasó.</p>' + filas;
+
+    var cmv = P.cmv / V * 100, gop = P.gop / V * 100, luc = P.lucro / V * 100;
+    var escala = Math.max(100, cmv + gop);        // con pérdida, el costo pasa del 100%
+    function tramo(v, color, t) {
+      return v > 0 ? '<div style="width:' + (v / escala * 100) + '%;background:' + color + '" title="' + t + '">' + (v >= 6 ? v.toFixed(0) + '%' : '') + '</div>' : '';
+    }
+    document.getElementById('graf-reparto').innerHTML =
+      '<h3>¿En qué se va cada Q100 de venta?</h3>' +
+      '<p class="nota">' + (luc < 0 ? 'El costo pasa del 100% de la venta: la parte en rojo es la pérdida.' : 'CMV + gasto operativo + lucro = la venta.') + '</p>' +
+      '<div class="reparto">' + tramo(cmv, '#AEAAE2', 'CMV') + tramo(gop, '#4E6D5A', 'Gasto operativo') +
+        (luc >= 0 ? tramo(luc, '#57A77F', 'Lucro') : '') + '</div>' +
+      (luc < 0 ? '<div class="reparto" style="height:14px;margin-top:-0.4rem"><div style="width:' + (100 / escala * 100) + '%;background:transparent;border-right:2px solid #1a1a1a"></div>' +
+        '<div style="width:' + (-luc / escala * 100) + '%;background:#A33A2A"></div></div>' : '') +
+      '<div class="rep-ley"><span><i style="background:#AEAAE2"></i>CMV ' + q(P.cmv) + ' · ' + cmv.toFixed(1) + '%</span>' +
+      '<span><i style="background:#4E6D5A"></i>Gasto operativo ' + q(P.gop) + ' · ' + gop.toFixed(1) + '%</span>' +
+      '<span><i style="background:' + (luc < 0 ? '#A33A2A' : '#57A77F') + '"></i>Lucro ' + q(P.lucro) + ' · ' + luc.toFixed(1) + '%</span></div>';
+  }
+
+  function cargar() {
+    google.script.run
+      .withSuccessHandler(function (d) {
+        D = d;
+        if (!d.meses || !d.meses.length) {
+          document.getElementById('cargando').innerHTML = '<div class="dre-error">Todavía no hay meses con venta en ' + esc(d.anio) + '.</div>';
+          return;
+        }
+        document.getElementById('sub').textContent = 'Formato original del DRE de Rosanta · datos al ' + (d.gen || '');
+        var sel = document.getElementById('periodo');
+        sel.innerHTML = periodos().map(function (p) { return '<option value="' + p.k + '">' + esc(p.n) + '</option>'; }).join('');
+        sel.addEventListener('change', pintar);
+        document.getElementById('cargando').style.display = 'none';
+        document.getElementById('ctrl').style.display = '';
+        document.getElementById('cuerpo').style.display = '';
+        pintar();
+      })
+      .withFailureHandler(function (e) {
+        document.getElementById('cargando').innerHTML = '<div class="dre-error">No se pudo leer el DRE.<br>' +
+          esc(e && e.message ? e.message : e) + '</div>';
+      })
+      .getDreData(AUTH);
+  }
+
+  document.querySelectorAll('[data-forma]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      FORMA = b.getAttribute('data-forma');
+      document.querySelectorAll('[data-forma]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      if (D) pintar();
+    });
+  });
+  document.getElementById('btn-imprimir').addEventListener('click', function () { window.print(); });
+  cargar();
+</script>
+</body>
+</html>

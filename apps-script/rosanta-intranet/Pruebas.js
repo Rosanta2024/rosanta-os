@@ -356,7 +356,7 @@ function prCimientos_(res) {
      del servidor y barre las diez vistas: lo que se agregue despues entra solo. */
   prCorrer_(g, 'Las llamadas de las vistas pasan el token', function () {
     var nombre = 'Las llamadas de las vistas pasan el token';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista',
+    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   // Los parciales de CosteoVista (partido el 12-sep-2026). Sus llamadas
                   // se fueron con ellos: si no se leen aca, dejan de estar protegidas.
@@ -974,7 +974,7 @@ function prPuentePOS_(res) {
 
   prCorrer_(g, 'Toda llamada de las vistas verifica identidad', function () {
     var nombre = 'Toda llamada de las vistas verifica identidad';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista',
+    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   // Los parciales de CosteoVista (partido el 12-sep-2026). Sus llamadas
                   // se fueron con ellos: si no se leen aca, dejan de estar protegidas.
@@ -1078,7 +1078,7 @@ function prPuentePOS_(res) {
      cubierta y esta prueba FALLA. */
   prCorrer_(g, 'Ninguna vista llama al servidor con el nombre en una variable', function () {
     var nombre = 'Ninguna vista llama al servidor con el nombre en una variable';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista',
+    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   'CosteoJs_Base', 'CosteoJs_Recetas', 'CosteoJs_Insumos', 'CosteoJs_Proveedores',
                   'CosteoJs_Menu', 'CosteoJs_Inicio', 'CosteoJs_HigieneGuia', 'CosteoJs_Pintar',

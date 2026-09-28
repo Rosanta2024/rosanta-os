@@ -406,21 +406,30 @@
 
        Comparar un presupuesto anual contra el gasto de un mes haria ver todo
        holgado once meses y disparado el doceavo. */
+    /* Desde el 28-sep-2026 las filas del PRESUPUESTO son PARTIDAS de los 9 bloques del
+       DRE (P.bloques[bloque] = sus partidas). El bloque suma sus partidas; si todas son
+       anuales se compara contra el acumulado del año, y si no, la anual entra en
+       doceavos. Misma logica que _finPresuDe_ en el servidor. */
     function presuDe(b) {
-      var S = P.secciones && P.secciones[b];
-      if (!S) return null;
-      if (S.tipo === 'anual') {
-        if (S.valor === null || S.valor === undefined) return null;
-        return { monto: S.valor, gasto: anioQ[b] || 0, base: 'anio', tipo: 'anual' };
+      var nombres = (P.bloques && P.bloques[b]) || [];
+      var partes = nombres.map(function (n) { return P.secciones[n]; }).filter(Boolean);
+      if (!partes.length) return null;
+      if (partes.every(function (S) { return S.tipo === 'anual'; })) {
+        var tot = 0;
+        partes.forEach(function (S) { tot += S.valor || 0; });
+        return { monto: tot, gasto: anioQ[b] || 0, base: 'anio', tipo: 'anual' };
       }
-      var v = (mesNum !== null && S.meses && S.meses[mesNum] !== undefined)
-        ? S.meses[mesNum] : S.valor;
-      if (v === null || v === undefined) return null;
-      if (S.tipo === '%venta') {
-        if (!ventaMes) return null;
-        return { monto: ventaMes * v / 100, gasto: null, base: 'mes', tipo: '%venta', pct: v };
-      }
-      return { monto: v, gasto: null, base: 'mes', tipo: 'fijo' };
+      var monto = 0, algo = false, pctV = null;
+      partes.forEach(function (S) {
+        if (S.tipo === 'anual') { if (S.valor) { monto += S.valor / 12; algo = true; } return; }
+        var v = (mesNum !== null && S.meses && S.meses[mesNum] !== undefined) ? S.meses[mesNum] : S.valor;
+        if (v === null || v === undefined) return;
+        if (S.tipo === '%venta') { if (ventaMes) { monto += ventaMes * v / 100; algo = true; pctV = v; } return; }
+        monto += v; algo = true;
+      });
+      if (!algo) return null;
+      var tipo = partes.length > 1 ? 'mixto' : partes[0].tipo;
+      return { monto: monto, gasto: null, base: 'mes', tipo: tipo, pct: tipo === '%venta' ? pctV : undefined };
     }
 
     return Object.keys(nombres).map(function (b) {
@@ -443,9 +452,8 @@
         // presupuesto devengado hace saltar la fila sin que cambie la operacion.
         // La semana SI se queda con el banco —ahi la pregunta es que salio de la
         // cuenta esta semana— y la nota de la tabla lo dice.
-        mes: (b === 'Nomina y salarios' && mesActual && mesActual.labor !== undefined)
-          ? mesActual.labor
-          : (((mesActual && mesActual.bloques) || {})[b] || 0),
+        // desde el 28-sep-2026 el bloque de Nomina del mes ya viene devengado
+        mes: (((mesActual && mesActual.bloques) || {})[b] || 0),
         presu: presuDe(b),
         ref: (metaVenta && refPct[b]) ? metaVenta * refPct[b] / 100 : null
       };

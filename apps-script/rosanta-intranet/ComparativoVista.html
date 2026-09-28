@@ -124,7 +124,6 @@
 
     <div id="cargando" class="cmp-cargando">Leyendo el maestro…</div>
     <div id="todo" style="display:none"></div>
-    <section class="cmp-seccion" id="pnl-caja"></section>
     <section class="cmp-seccion" id="personal-caja"></section>
   </main>
 
@@ -262,74 +261,10 @@ var AUTH = '<?= authToken ?>';
      Si esta llamada falla, el comparativo de arriba se ve igual. */
   var FIN = null;
 
+  /* El resultado de cada mes (P&L) salio de aca el 28-sep-2026: vive en la pestaña DRE,
+     en el formato original del estado de resultados. Aca queda la mano de obra extra. */
   function pintarPnl() {
-    var caja = document.getElementById('pnl-caja');
-    if (!caja || !FIN) return;
-    var d = FIN, t = d.total;
-
-    function zonaFood(v) {
-      if (v === null || v === undefined) return '';
-      return v <= d.meta_cogs ? 'v' : (v <= d.meta_cogs + 3 ? 'a' : 'r');
-    }
-    function zonaPrime(v) {
-      if (v === null || v === undefined) return '';
-      return v < 60 ? 'v' : (v <= 65 ? 'a' : 'r');
-    }
-
-    var estimados = [], sinDato = 0;
-    var filas = d.meses.map(function (m) {
-      var origen = m.labor_origen || (m.devengado ? 'planilla' : 'sin dato');
-      var hay = origen !== 'sin dato';
-      if (origen === 'estimada') {
-        estimados.push(m.mes + ' con la de ' + (m.labor_desde || '—') +
-          (m.labor_parte && m.labor_parte < 1
-            ? ', en proporción a los días cargados (' + Math.round(m.labor_parte * 100) +
-              '% del mes)' : ''));
-      }
-      if (!hay) sinDato++;
-      var op = origen === 'planilla' ? '' : ' style="opacity:.6" title="' +
-        (hay ? 'Mano de obra estimada con la planilla de ' + esc(m.labor_desde || '')
-             : 'Sin planilla cargada') + '"';
-      return '<tr><td>' + m.mes + (origen === 'planilla' ? '' : ' *') + '</td>' +
-        '<td>' + q(m.ventas) + '</td>' +
-        '<td class="det" style="opacity:.6">' + (m.eventos ? q(m.eventos) : '—') + '</td>' +
-        '<td class="det">' + m.com + '</td>' +
-        '<td class="' + zonaFood(m.cogsp) + '">' + pct(m.cogsp) + '</td>' +
-        '<td class="det"' + op + '>' + (hay ? pct(m.laborp) : '—') + '</td>' +
-        '<td' + (hay ? ' class="' + zonaPrime(m.primep) + '"' : '') + op + '>' +
-          (hay ? pct(m.primep) : '—') + '</td>' +
-        '<td' + (hay ? ' class="' + (m.netop < 0 ? 'r' : 'v') + '"' : '') + op + '>' +
-          (hay ? pct(m.netop) : '—') + '</td></tr>';
-    }).join('');
-
-    var notas = ['Food cost sobre la venta sin IVA ni servicio, la misma base de la meta y ' +
-      'de las fichas. Mano de obra, prime cost y neto, sobre la venta total.'];
-    if (estimados.length) {
-      notas.push('* ' + esc(estimados.join(' · ')) + ': la planilla del mes todavía no está ' +
-        'cargada. La mano de obra se estima con la última planilla y el resultado es provisional.');
-    }
-    if (sinDato) {
-      notas.push('* ' + sinDato + ' mes(es) sin ninguna planilla con que estimar: mano de obra, ' +
-        'prime cost y resultado quedan en blanco a propósito.');
-    }
-
-    caja.innerHTML =
-      '<h2>El resultado de cada mes</h2>' +
-      '<p class="cmp-nota">Nómina devengada de la planilla, no del pago bancario: el banco ' +
-      'reparte los sueldos de un mes entre dos y el prime cost salta sin que la operación ' +
-      'cambie. Las propinas no entran al costo laboral.</p>' +
-      '<div class="tabla-scroll"><table class="pnl"><thead><tr>' +
-      '<th>Mes</th><th>Ventas netas</th><th class="det">Eventos</th>' +
-      '<th class="det">Comensales</th><th>Food cost</th><th class="det">Mano de obra</th>' +
-      '<th>Prime</th><th>Neto</th></tr></thead><tbody>' + filas +
-      '<tr class="total"><td>Año</td><td>' + q(t.ventas) + '</td>' +
-      '<td class="det">' + q(t.eventos) + '</td><td class="det">' + t.com + '</td>' +
-      '<td>' + pct(t.cogsp) + '</td><td class="det">' + pct(t.laborp) + '</td>' +
-      '<td class="' + zonaPrime(t.primep) + '">' + pct(t.primep) + '</td>' +
-      '<td class="' + (t.netop < 0 ? 'r' : 'v') + '">' + pct(t.netop) + '</td></tr>' +
-      '</tbody></table></div>' +
-      '<p class="cmp-nota" style="margin-top:.8rem">' + notas.join('<br>') + '</p>';
-
+    if (!FIN) return;
     pintarPersonal();
   }
 
