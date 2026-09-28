@@ -7,21 +7,7 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 28 sep 2026 (v32).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
-
----
-
-## Cierre del 28 sep 2026 (v32): el shell de Finanzas dice para qué sirve cada grupo — producción en la @142
-
-**El equipo está en la @142** (28-sep; `list-deployments` releído tres veces, la @142 bajada aparte idéntica al disco, 80 archivos). Va sobre la @141 de la sesión "Inventario de KPIs intranet" y lleva dos cosas de la sesión del tablero global:
-
-- **Rótulos del shell de Finanzas** (`SistemaFinanzas.html`, solo rótulos, `data-sub` intactos). Juanma no entendía "Módulos" en el lateral y "Herramientas" arriba (su propia regla del 27-sep, bien aplicada pero sin decir el criterio). Ahora el lateral es **"Cada semana"** (lo que se sigue cada semana y lleva a una acción: Pulso · Reporte semanal · Caja · Metas) y arriba va **"El año"** (análisis: DRE · El gasto · Mes a mes · Escenarios). "Cómo vamos" pasó a "Pulso" y "La semana" a "Reporte semanal". Se avisó a la sesión dueña de la @141 antes de tocar el archivo y confirmó no tener cambios pendientes.
-- **El caché del reporte semanal sigue al motor** (`ReporteSemanalDatos.js`, `_repDatos_`): la llave lleva clave, venta y comensales de la última semana del motor. Antes solo llevaba `finCacheClave_()`, que es una VERSIÓN del motor y no un sello de datos, y el motor se refresca solo cada 3 h bajo la misma llave: el lunes 28 el reporte quedó cacheado en S38 con el motor ya en S39.
-
-**Reglas que dejó el lunes:**
-- **Los lunes la batería puede dar fallas de datos en movimiento**: el cargador de las 10:00 mete el domingo y la "última semana" cambia durante la corrida ("Las ventas del año se leen igual que el cálculo", K06 en "El tablero global no calcula"). Repetirla antes de buscar un bug; la segunda corrida las limpió.
-- **La batería tarda 324 s con 175 pruebas, cerca del límite de 360 s.** Si crece, partirla en dos corridas; si no, se corta sola y parece rota.
-- El PDF del reporte se genera en el servidor (`?page=reporte-semanal-pdf&semana=CLAVE`, botón "Guardar PDF en Drive", @128, v28); el reporte viejo en Python quedó archivado el 27-sep en `_Archive/2026-09-27_Reporte_Semanal_Python` y la tarea del lunes se eliminó (ocho routines).
+**Última actualización: 27 sep 2026, noche (v31).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
 
