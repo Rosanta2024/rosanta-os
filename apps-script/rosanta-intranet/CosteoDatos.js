@@ -332,7 +332,8 @@ function leerFicha_(hoja, cfg) {
  *
  * El precio sugerido es el precio de CARTA, con IVA, que deja el CMV neto en la meta.
  *
- * Desde el 27-sep-2026 las hojas tambien miden sin IVA (p189): CMV % ACTUAL = costo /
+ * Desde el 27-sep-2026 las hojas tambien miden sin IVA (p189; lo aplico CMV_SIN_IVA.js,
+ * 210 de 210 formulas, archivado en apps-script/_archivo/2026-09-27_cmv_sin_iva): CMV % ACTUAL = costo /
  * (precio / 1.12) y el precio sugerido de la hoja es precio de carta con IVA. La
  * intranet igual calcula el suyo aca y no lee esa celda salvo como respaldo.
  *
