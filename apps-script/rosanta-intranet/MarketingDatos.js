@@ -194,10 +194,12 @@ function mktUpsert(tab, row, auth) {
  *                 psUpsertAprendizaje_ al cerrar pruebas de pauta.
  *   carritos      webhook de carritos de WIX (intakeCarrito) y CRMSync, que los
  *                 pasa a Completado.
+ *   piezas, propuestas  solo las escribe el navegador, pero dos personas editando a
+ *                 la vez se pisaban con el replace (p218, 27-sep-2026).
  * El guard vive aquí y no solo en la vista: una pestaña abierta con el HTML viejo
  * sigue llamando a mktReplace hasta que se recarga.
  */
-var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1 };
+var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1, propuestas: 1 };
 
 /** Lo que usa el auto-sync del sistema (osAutoPush -> action:'replace'). */
 function mktReplace(tab, rows, auth) {

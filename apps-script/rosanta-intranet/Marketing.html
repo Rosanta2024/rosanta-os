@@ -719,9 +719,21 @@ const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){re
    y mktReplace los rechaza en el servidor. */
 /* debates salió el 27-sep-2026 con el Panel de Asesores: su pestaña quedó archivada
    como historial y ya no está en SCHEMA, así que nadie la reescribe. */
-const OS_MAP={rosanta_pz:'piezas',rosanta_prop:'propuestas'};
+/* piezas y propuestas salieron el 27-sep-2026 (p218): con el replace, dos personas
+   editando a la vez se pisaban. Ya ninguna pestaña viaja por replace masivo: todo
+   va fila por fila y mktReplace las rechaza en el servidor. OS_MAP queda vacío. */
+const OS_MAP={};
 function osConnected(){return true}  // servido por Apps Script: siempre conectado
+/* Lista blanca (p134, 27-sep-2026): el despachador srv solo llama estas funciones
+   del servidor. Todas tienen guarda propia; esto evita que el despachador sirva de
+   puerta a cualquier otra función pública. Una llamada nueva hay que agregarla aquí:
+   la prueba de la lista blanca del despachador de Marketing lo vigila.
+   mktReplace no está a propósito: ninguna pestaña se reemplaza completa (p218). */
+const SRV_PERMITIDAS=new Set(['mktRead','mktUpsert','mktDelete','calGuardarVersion',
+  'psTablero','psCapturarManual','psGuardarPrueba','psGuardarSupuesto','psGuardarRegla','psContextoCreativo',
+  'getLecturaPauta','metaEntities','adLibrarySearch','askClaudeSrv','driveBuscarReportes','driveDescargar']);
 function srv(fn,...args){
+  if(!SRV_PERMITIDAS.has(fn)) return Promise.reject(new Error('Función no permitida desde Marketing: '+fn));
   return new Promise((res,rej)=>{
     /* El token viaja como último argumento; los guardas del servidor lo leen.
        Sin token (usuario del dominio) llega '' y manda la sesión de Google. */
@@ -735,7 +747,7 @@ async function osGet(tab){
   return {tab,rows:await srv('mktRead',tab)};
 }
 async function osPost(body){
-  if(body.action==='replace')return {ok:true,result:await srv('mktReplace',body.tab,body.rows||[])};
+  if(body.action==='replace')throw new Error('Ya no se reemplazan pestañas completas: todo va fila por fila (p218).');
   if(body.action==='delete') return {ok:true,result:await srv('mktDelete',body.tab,body.id)};
   return {ok:true,result:await srv('mktUpsert',body.tab,body.row||{})};
 }
@@ -792,6 +804,9 @@ async function tabPull(tab,k){
 }
 function aprPull(){ return tabPull('aprendizajes','rosanta_apr'); }
 function carrPull(){ return tabPull('carritos','rosanta_carr'); }
+function pzPull(){ return tabPull('piezas','rosanta_pz'); }
+function propPull(){ return tabPull('propuestas','rosanta_prop'); }
+function filaAviso(accion){ return function(e){alert(accion+' local, pero la Sheet rechazó: '+(e&&e.message?e.message:e));}; }
 /* ===== Puente window.cowork -> Apps Script =====
    En Cowork, Meta / Drive / Ad Library / Claude llegaban por window.cowork.
    Ese puente no existe aquí, así que lo reimplementamos contra Servicios.gs
@@ -1195,9 +1210,10 @@ function ckUpd(){
 function savePieza(){
   const name=$('pzName').value.trim();if(!name){alert('Nombre de la pieza');return}
   const done=document.querySelectorAll('#ckList input:checked').length;
-  const pz=read('rosanta_pz',[]);
-  pz.unshift({name,score:done,total:CK.length,fecha:todayISO()});
-  store('rosanta_pz',pz.slice(0,30));
+  const row={id:'z'+Date.now(),name,score:done,total:CK.length,fecha:todayISO()};
+  const pz=read('rosanta_pz',[]);pz.unshift(row);
+  localStorage.setItem('rosanta_pz',JSON.stringify(pz));
+  filaUpsertRemoto('piezas',row).catch(filaAviso('Guardada'));
   // Sincronizar con calendario: si la pieza existe y pasó 8/8, queda Lista
   if(done===CK.length){
     const cal=read('rosanta_cal',[]);
@@ -1863,17 +1879,26 @@ PROPUESTA DE CONTENIDO · Serie de video "Llegar a Rosanta" (awareness, 3 videos
 Los 3 rotan dentro de la misma campaña de Awareness durante agosto y septiembre; invitan sin presionar, sin descuentos ni urgencia.`};
 function seedProps(){
   const props=read('rosanta_prop',[]);
-  if(!props.some(p=>p.id===PROP_VANESA.id)){props.unshift(PROP_VANESA);store('rosanta_prop',props)}
+  if(!props.some(p=>p.id===PROP_VANESA.id)){props.unshift(PROP_VANESA);localStorage.setItem('rosanta_prop',JSON.stringify(props));filaUpsertRemoto('propuestas',PROP_VANESA).catch(function(){})}
 }
 function openProp(){$('prAutor').value='';$('prTitulo').value='';$('prCont').value='';$('ovProp').classList.add('act')}
 function saveProp(){
   const titulo=$('prTitulo').value.trim();if(!titulo){alert('La propuesta necesita título');return}
-  const props=read('rosanta_prop',[]);
-  props.unshift({id:'pr'+Date.now(),fecha:todayISO(),autor:$('prAutor').value.trim()||'Equipo',titulo,estado:'Nueva',contenido:$('prCont').value.trim()});
-  store('rosanta_prop',props.slice(0,30));closeOv('ovProp');renderProps();
+  const row={id:'pr'+Date.now(),fecha:todayISO(),autor:$('prAutor').value.trim()||'Equipo',titulo,estado:'Nueva',contenido:$('prCont').value.trim()};
+  const props=read('rosanta_prop',[]);props.unshift(row);
+  localStorage.setItem('rosanta_prop',JSON.stringify(props));closeOv('ovProp');renderProps();
+  filaUpsertRemoto('propuestas',row).catch(filaAviso('Guardada'));
 }
-function delProp(id){if(!confirm('¿Eliminar esta propuesta?'))return;store('rosanta_prop',read('rosanta_prop',[]).filter(x=>x.id!==id));renderProps()}
-function propEstado(id,val){const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);if(x){x.estado=val;store('rosanta_prop',p);renderProps()}}
+function delProp(id){
+  if(!confirm('¿Eliminar esta propuesta?'))return;
+  localStorage.setItem('rosanta_prop',JSON.stringify(read('rosanta_prop',[]).filter(x=>x.id!==id)));renderProps();
+  filaBorrarRemoto('propuestas',id).catch(filaAviso('Borrada'));
+}
+function propEstado(id,val){
+  const p=read('rosanta_prop',[]);const x=p.find(y=>y.id===id);if(!x)return;
+  x.estado=val;localStorage.setItem('rosanta_prop',JSON.stringify(p));renderProps();
+  filaUpsertRemoto('propuestas',x).catch(filaAviso('Guardado'));
+}
 /* Lo que en una propuesta mueve presupuesto entra a la bitácora como propuesta de prueba
    (reemplaza al "Debatir en el panel" retirado el 27-sep-2026). */
 async function propPrueba(id){
@@ -1914,7 +1939,7 @@ async function osPushAll(){
   $('osSyncStatus').textContent='Enviando…';
   try{
     for(const k in OS_MAP){await osPost({tab:OS_MAP[k],action:'replace',rows:read(k,[])})}
-    $('osSyncStatus').textContent='✅ Piezas y propuestas enviadas a la Sheet (calendario, aprendizajes y carritos ya viajan fila por fila).';
+    $('osSyncStatus').textContent='✅ No hay nada que enviar: calendario, piezas, propuestas, aprendizajes y carritos se guardan en la Sheet fila por fila al momento.';
   }catch(e){$('osSyncStatus').textContent='❌ '+e.message}
 }
 async function osPullAll(){
@@ -1922,7 +1947,7 @@ async function osPullAll(){
   $('osSyncStatus').textContent='Trayendo…';
   try{
     await calPull(); // calendario, aprendizajes y carritos van aparte: fila por fila, no en OS_MAP
-    await aprPull();await carrPull();
+    await aprPull();await carrPull();await pzPull();await propPull();
     for(const k in OS_MAP){const r=await osGet(OS_MAP[k]);if(r.rows)localStorage.setItem(k,JSON.stringify(r.rows))}
     renderCal();renderPz();renderCarr();renderApr();seedProps();renderProps();
     $('osSyncStatus').textContent='✅ Datos traídos de la Sheet.';
@@ -1937,11 +1962,13 @@ function osExport(){
 /* init */
 $('poEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
 ckUpd();renderPz();renderLib();renderApr();
+pzPull().then(renderPz).catch(function(){}); // piezas: la Sheet manda (p218)
 calPull().then(renderCal).catch(function(){}); // calendario siempre fresco desde la Sheet
 aprPull().then(renderApr).catch(function(){}); // aprendizajes también: la Sheet manda, no el localStorage
 if(FULL){
-  osRenderConn();seedProps();
-  renderCarr();renderProps();renderUtmHist();loadMeta();loadGads();
+  osRenderConn();
+  renderCarr();renderProps();
+  propPull().then(function(){seedProps();renderProps();}).catch(function(){seedProps();renderProps();}); // propuestas: la Sheet manda (p218)renderUtmHist();loadMeta();loadGads();
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
   // Sistema de Medicion: la lectura de Marketing (comensales y las palancas de Vanessa).
   srv('getLecturaPauta').then(r=>{

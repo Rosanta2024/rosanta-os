@@ -223,6 +223,31 @@ function prPauta_(res) {
     prIgual_(g, n, r, 'propuesta|lanza|lanza|en_curso|lanza');
   });
 
+  prCorrer_(g, 'Ninguna pestaña del Marketing OS se reemplaza completa desde el navegador', function () {
+    var n = 'Ninguna pestaña del Marketing OS se reemplaza completa desde el navegador';
+    var faltan = ['calendario', 'aprendizajes', 'carritos', 'piezas', 'propuestas'].filter(function (t) { return !TABS_SIN_REPLACE[t]; });
+    var txt = HtmlService.createTemplateFromFile('Marketing').getRawContent();
+    var mapa = (txt.match(/const OS_MAP=\{([^}]*)\}/) || ['', 'no encontrado'])[1].trim();
+    prIgual_(g, n, (faltan.length ? 'sin guarda: ' + faltan.join(',') : 'ok') + ' | OS_MAP=' + (mapa || 'vacío'), 'ok | OS_MAP=vacío');
+  });
+
+  prCorrer_(g, 'srv() de Marketing solo llama funciones de su lista blanca', function () {
+    var n = 'srv() de Marketing solo llama funciones de su lista blanca';
+    var txt = HtmlService.createTemplateFromFile('Marketing').getRawContent();
+    var lista = (txt.match(/const SRV_PERMITIDAS=new Set\(\[([\s\S]*?)\]\)/) || ['', ''])[1];
+    var ok = {};
+    (lista.match(/'([A-Za-z_]+)'/g) || []).forEach(function (x) { ok[x.slice(1, -1)] = 1; });
+    var usadas = {};
+    (txt.match(/srv\('([A-Za-z_]+)'/g) || []).forEach(function (x) { usadas[x.slice(5, -1)] = 1; });
+    var fuera = Object.keys(usadas).filter(function (f) { return !ok[f]; });
+    var inexistentes = Object.keys(ok).filter(function (f) { return typeof globalThis[f] !== 'function'; });
+    var guarda = /function srv\(fn,[^)]*\)\{\s*if\(!SRV_PERMITIDAS\.has\(fn\)\)/.test(txt);
+    prIgual_(g, n, [Object.keys(ok).length ? 'lista' : 'sin lista', guarda ? 'guarda' : 'sin guarda',
+      'fuera:' + (fuera.join(',') || '-'), 'inexistentes:' + (inexistentes.join(',') || '-'),
+      ok.mktReplace ? 'mktReplace permitido' : 'sin replace'].join(' | '),
+      'lista | guarda | fuera:- | inexistentes:- | sin replace');
+  });
+
   prCorrer_(g, 'Semana ISO', function () {
     var s = psSemanaDe_(new Date(2026, 8, 27, 12));
     prIgual_(g, 'Semana ISO', s.id + ' ' + s.desde + ' ' + s.hasta, '2026-W39 2026-09-21 2026-09-27');
