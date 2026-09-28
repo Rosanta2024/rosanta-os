@@ -7,26 +7,9 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 27 sep 2026, noche (v31).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 27 sep 2026, noche (v30).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
 
 ---
-
-## Cierre del 27 sep 2026, noche (v31): se retira el cotejo A/B
-
-**Decisión de Juanma (27-sep-2026): el cotejo A/B se elimina.** `generar_finanzas.py` repetía en Python, sobre el espejo `.xlsx`, el mismo cálculo que la intranet hace sobre el Sheet nativo, para comparar los dos. Se retira porque era un **segundo motor**: cada regla nueva (9, 10 a 15, servicio) había que programarla dos veces, y casi nunca se corría completo (p196 existía porque la última vez solo se corrió la mitad Python). Es el mismo criterio que retiró los dashboards y el reporte semanal en Python.
-
-- Archivado en `~/Dev/Rosanta/scripts/maestro-finanzas/_archivo/2026-09-27_cotejo_AB_retirado/` con `rutas.py` y el README viejo (última referencia medida: 23-sep). Commit `20ada38`. En la carpeta quedan `extraer_proveedores.py`, `medir_doble_conteo.py` y `p96_2026-09-15/`, que no dependen de él.
-- **La única comprobación de los números del pilar 3 es la batería de la intranet** (`?page=pruebas`). Lo que se pierde, dicho claro: si una regla del motor tiene un error de lógica que ninguna prueba cubre, ya no hay un segundo cálculo que lo delate.
-- **OBSOLETO desde hoy** todo lo que en este cerebro diga "`generar_finanzas.py` es el validador A/B", "intranet y Python dan lo mismo al centavo", o que una regla nueva hay que escribirla también en `casar_pagos()`. **No revivirlo sin una decisión nueva de Juanma.** Cerrados con esto p196 (la mitad de intranet del A/B) y p192 (pago agrupado de la regla 15, ~Q777).
-
-**Otros hechos del mismo cierre, para no re-investigarlos:**
-- **El conector de Google Drive YA TRAE el nombre de cada pestaña de un Sheet.** `get_file_metadata` con `snippetVerbosity: "MAX_ALLOWED"` devuelve cada pestaña como `# AAAA-MM` con su contenido (verificado en Planilla 2026: las nueve, con su Sub total; ago Q31,450, sep Q25,050). Queda OBSOLETA la regla del 23-sep que decía que el conector concatena sin nombres. La tarea del día 3 (`rosanta-reporte-mensual`, paso 2) ya lee por nombre de pestaña (p181 cerrado).
-- **`01b_FEL_Emitidas` tiene el mismo desfase de zona horaria de p120:** 529 de 748 facturas guardadas a las 23:00 del día anterior (espejo del 21-sep). No mueve ningún número: el motor de la intranet no lee esa pestaña. Las FEL emitidas de enero a septiembre 2026 están en `03_Finance_Data_OS/Bancos_y_Conciliaciones/FEL_SAT/01_FEL/FEL_2026` (1T, 2T, 3T y zips de ene-mar); la pestaña del maestro arranca en junio y eso no es un faltante.
-- Decisiones de Juanma en el tablero: EEGSA jul-ago **pagado**; lo de EX Security eran **pagos pendientes** y lo de Edwin Flores un **pago adicional** (no son pagos de más); p96 (brecha de food cost) y p122 (camino al piso) salen del tablero porque los vigilan la intranet y el vigía; queda p88 (detalle de retiros de cajero).
-- Pauta: el tamaño `-1` que Meta devuelve para audiencias desconocidas ya se trata como "sin dato" (`PautaSistema.js`, commit `1a28529`, en HEAD). Sin publicar hasta que Juanma corra la batería en el /dev.
-
----
-
 
 ## Cierre del 27 sep 2026, noche (v30): Sistema de Medición, Visión 2027, vigía y la intranet reordenada — producción en la @137
 
@@ -1295,7 +1278,7 @@ funciones globales repetidas — ahora 0. Detalle en
 
 **Jubilados el 12-sep:** `generar_dashboard.py` (a `_archivo/`), los `Rosanta_Dashboard*.html`,
 la tarea de Cowork `rosanta-dashboard-refresh` (borrada) y el artefacto
-`rosanta-dashboard-semanal`. **~~`generar_finanzas.py` se queda como validador A/B~~ (OBSOLETO: retirado el 27-sep-2026, ver v31)**: era el mismo
+`rosanta-dashboard-semanal`. **`generar_finanzas.py` se queda como validador A/B**: es el mismo
 cálculo por otro camino —espejo `.xlsx` y Python contra Sheet nativo y Apps Script— y si los
 dos dan distinto, uno se desvió. Es la única comprobación independiente que hay.
 

@@ -64,7 +64,7 @@ Carpeta `~/Dev/Rosanta/tools/` — utilidades y skills:
 - `convertir-punteros/` — `.gdoc/.gsheet/.gslides` → archivo real al lado del puntero. Por demanda, nunca en bloque.
 - `ui-ux-pro-max/` — motor de diseño para dashboards. La identidad de `rosanta-brand-guidelines` manda sobre lo que sugiera el motor.
 
-**OBSOLETO (27-sep-2026): `generar_finanzas.py` y `rutas.py` se archivaron al retirar el cotejo A/B; `generar_dashboard.py` estaba archivado desde el 12-sep. Hoy la carpeta solo tiene `extraer_proveedores.py`, `medir_doble_conteo.py` y `p96_2026-09-15/`.** Texto anterior: Carpeta `~/Dev/Rosanta/scripts/maestro-finanzas/` — `generar_finanzas.py` (produce los 4 JSON de `_datos_finanzas/`) y `generar_dashboard.py` (produce los dos `Rosanta_Dashboard*.html`). **El código está acá; los datos siguen en Drive**, en `03_Finance_Data_OS/Maestro/`. `rutas.py` resuelve dónde: `--datos RUTA` > `ROSANTA_MAESTRO_DIR` > el default.
+Carpeta `~/Dev/Rosanta/scripts/maestro-finanzas/` — `generar_finanzas.py` (produce los 4 JSON de `_datos_finanzas/`) y `generar_dashboard.py` (produce los dos `Rosanta_Dashboard*.html`). **El código está acá; los datos siguen en Drive**, en `03_Finance_Data_OS/Maestro/`. `rutas.py` resuelve dónde: `--datos RUTA` > `ROSANTA_MAESTRO_DIR` > el default.
 
 Carpeta `03_Finance_Data_OS/Maestro/` en Drive — solo datos y entregables: `Rosanta_Maestro_ESPEJO.xlsx`, `_datos_finanzas/`, los dashboards, `README_scripts.md`, `INFORME_APPS_SCRIPT.md`, `PROMPT_ROAS_medios_vs_honorarios.md`.
 

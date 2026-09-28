@@ -21,7 +21,7 @@
 | Prime cost | — | **55.0%** |
 | **Resultado** | **−Q44,650** | **−3.5%** |
 
-Intranet y `generar_finanzas.py` dan lo mismo al centavo (dato del 15-sep; el cotejo A/B se retiró el 27-sep-2026). Fugas Q0.
+Intranet y `generar_finanzas.py` dan lo mismo al centavo. Fugas Q0.
 
 ~~**OBSOLETO** — la primera construcción del 2–3 sep, ocho meses con las reglas viejas (fechas sin corregir, facturas anuladas sumando, nómina con el 29000 fijo):~~
 
