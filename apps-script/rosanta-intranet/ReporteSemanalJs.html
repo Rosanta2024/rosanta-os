@@ -115,9 +115,9 @@
         kpi('', 'Walk-ins', r.walkins === null ? '—' : num(r.walkins), pct(r.walkins_pct) + ' de los comensales') +
         kpi(r.sin_cerrar ? 'amarillo' : 'verde', 'Reservas sin cerrar', num(r.sin_cerrar), 'siguen en RESERVED: el estado sin cerrar rompe el seguimiento post-visita') +
         '</div>' +
-        '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Reservas</th><th>Personas</th><th>Comensales POS</th><th>Walk-ins</th><th>Canceladas</th></tr></thead><tbody>' +
+        '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Reservas</th><th>Personas</th><th>Comensales POS</th>' + (AREA ? '' : '<th>Walk-ins</th>') + '<th>Canceladas</th></tr></thead><tbody>' +
         d.dias.map(function (x) {
-          return '<tr><td>' + esc(x.dia) + '</td><td>' + num(x.reservas) + '</td><td' + (x.reservas_superan ? ' class="neg"' : '') + '>' + num(x.personas) + (x.reservas_superan ? ' *' : '') + '</td><td>' + num(x.com) + '</td><td>' + (x.walkins === null ? '—' : num(x.walkins)) + '</td><td>' + num(x.canceladas) + '</td></tr>';
+          return '<tr><td>' + esc(x.dia) + '</td><td>' + num(x.reservas) + '</td><td' + (x.reservas_superan ? ' class="neg"' : '') + '>' + num(x.personas) + (x.reservas_superan ? ' *' : '') + '</td><td>' + num(x.com) + '</td>' + (AREA ? '' : '<td>' + (x.walkins === null ? '—' : num(x.walkins)) + '</td>') + '<td>' + num(x.canceladas) + '</td></tr>';
         }).join('') + '</tbody></table></div>';
     }
     h += '</section>';
@@ -130,17 +130,19 @@
     h += '<section class="rp"><h2>' + tit(5, AREA ? 'Food cost de ' + AREAS_VER[0].toLowerCase() : 'Food cost') + '</h2>' +
       '<p class="rp-nota">Sobre venta sin IVA ni servicio, contra las metas de PARAMETROS: global ' + pct(fc.meta_global, 0) + ', cocina ' + pct(fc.cocina.meta, 0) + ', barra ' + pct(fc.barra.meta, 0) + '. ' + esc(fc.aviso_barra) + '</p>' +
       '<div class="rp-kpis">' +
-      kpi(zonaCosto(fc.semana_pct, fc.meta_global), 'Food cost de la semana', pct(fc.semana_pct), 'móvil de 4 semanas: ' + pct(fc.movil4_pct)) +
-      kpi(zonaCosto(fc.mes_pct, fc.meta_global), 'Food cost del mes a la fecha', pct(fc.mes_pct), esc(fc.mes_nombre) + (fc.mes ? ' · cocina ' + q(fc.mes.cocina) + ' · barra ' + q(fc.mes.barra) : '')) +
+      // Limpieza del 28-sep-2026: dentro de un area (Profit OS) no van los dos food cost GLOBALES,
+      // que salian con titulo de cocina o barra, ni la tabla de 8 columnas que repetia las tarjetas.
+      (AREA ? '' : kpi(zonaCosto(fc.semana_pct, fc.meta_global), 'Food cost de la semana', pct(fc.semana_pct), 'móvil de 4 semanas: ' + pct(fc.movil4_pct)) +
+      kpi(zonaCosto(fc.mes_pct, fc.meta_global), 'Food cost del mes a la fecha', pct(fc.mes_pct), esc(fc.mes_nombre) + (fc.mes ? ' · cocina ' + q(fc.mes.cocina) + ' · barra ' + q(fc.mes.barra) : ''))) +
       (enArea('Cocina') ? kpi(fc.cocina.exceso > 0 ? 'rojo' : 'verde', 'Cocina: exceso sobre objetivo', (fc.cocina.exceso > 0 ? '+' : '') + q(fc.cocina.exceso), pct(fc.cocina.real_pct) + ' real contra ' + pct(fc.cocina.meta, 0)) : '') +
       (enArea('Barra') ? kpi(fc.barra.exceso > 0 ? 'rojo' : 'verde', 'Barra: exceso sobre objetivo', (fc.barra.exceso > 0 ? '+' : '') + q(fc.barra.exceso), pct(fc.barra.real_pct) + ' real contra ' + pct(fc.barra.meta, 0)) : '') +
-      '</div>' +
+      '</div>' + (AREA ? '' :
       '<div class="rp-tabla"><table class="rp"><thead><tr><th>Área</th><th>Venta del área</th><th>Costo real</th><th>Costo a objetivo</th><th>Exceso</th><th>Real %</th><th>Objetivo %</th><th>Desvío</th></tr></thead><tbody>' +
       [['Cocina', fc.cocina], ['Barra', fc.barra]].filter(function (p) { return enArea(p[0]); }).map(function (p) {
         var x = p[1];
         return '<tr><td>' + p[0] + '</td><td>' + q(x.venta) + '</td><td>' + q(x.costo) + '</td><td>' + q(x.a_meta) + '</td><td class="' + (x.exceso > 0 ? 'neg' : 'pos') + '">' + (x.exceso > 0 ? '+' : '') + q(x.exceso) + '</td><td>' + pct(x.real_pct) + '</td><td>' + pct(x.meta, 0) + '</td><td class="' + (x.desvio_pts > 0 ? 'neg' : 'pos') + '">' + (x.desvio_pts === null ? '—' : signo(x.desvio_pts) + x.desvio_pts + ' pp') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      '<p class="rp-nota">Mix de ventas: cocina ' + pct(d.areas.mix_cocina) + ' · barra ' + pct(d.areas.mix_cocina === null ? null : 100 - d.areas.mix_cocina) + '. ' + esc(d.areas.nota) + '</p>';
+      '<p class="rp-nota">Mix de ventas: cocina ' + pct(d.areas.mix_cocina) + ' · barra ' + pct(d.areas.mix_cocina === null ? null : 100 - d.areas.mix_cocina) + '. ' + esc(d.areas.nota) + '</p>');
     // compras contra su techo, por area y semana (Juanma, 26-sep-2026)
     var cp = d.compras;
     if (cp && cp.semanas && cp.semanas.length) {
@@ -181,7 +183,7 @@
       return '<div><h3 style="margin:0.6rem 0 0.4rem">' + nombre + '</h3><div class="rp-kpis">' +
         kpi('', 'Venta del área', q(a.venta), pct(a.venta_pct) + ' de la venta de la semana') +
         kpi('', 'Costo del área', q(a.costo), 'compra de la semana (motor de Finanzas)') +
-        kpi(zonaCosto(a.costo_pct, nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra), 'Costo / venta', pct(a.costo_pct), 'objetivo ' + pct(nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra, 0)) +
+        (AREA ? '' : kpi(zonaCosto(a.costo_pct, nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra), 'Costo / venta', pct(a.costo_pct), 'objetivo ' + pct(nombre === 'Cocina' ? d.metas.food_cocina : d.metas.food_barra, 0))) +
         kpi(a.margen >= 0 ? 'verde' : 'rojo', 'Margen bruto', q(a.margen), pct(a.margen_pct) + ' del área') +
         '</div>' + tabla + '</div>';
     }
@@ -213,7 +215,7 @@
 
     // ---- 8. equilibrio y acciones
     if (ver(8)) {
-    h += '<section class="rp"><h2>' + tit(8, 'Cómo se construye el equilibrio, y las acciones') + '</h2>';
+    h += '<section class="rp"><h2>' + tit(8, SECC ? 'Cómo se construye el equilibrio' : 'Cómo se construye el equilibrio, y las acciones') + '</h2>';
     if (pe) {
       h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO)</th><th>Al mes</th></tr></thead><tbody>' +
         pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
@@ -224,8 +226,9 @@
         '<tr><td class="txt">Total variable</td><td>' + pct(pe.variables_pct) + '</td></tr>' +
         '<tr><td class="txt">Margen de contribución</td><td>' + pct(pe.mc) + '</td></tr>' +
         '<tr class="total"><td class="txt">Punto de equilibrio</td><td>' + q(pe.pe_semana) + ' / semana · ' + q(pe.pe_dia) + ' / día</td></tr></tbody></table></div>' +
-        '<p class="rp-nota">' + esc(pe.nota) + (pe.motor ? ' Referencia del motor: ' + esc(pe.motor.mes) + ' fijo ' + q(pe.motor.fijo_mes) + ', margen ' + pct(pe.motor.mc) + ', equilibrio ' + q(pe.motor.pe_semana) + ' por semana.' : '') + '</p></div></div>';
+        '<p class="rp-nota">' + esc(pe.nota) + '</p></div></div>';
     }
+    if (SECC) { h += '</section>'; } else {   // en Finanzas las acciones viven en "Qué hacemos esta semana"
     h += '<h3 style="margin:1.2rem 0 0.3rem">Acciones de la semana</h3>';
     var ac = d.acciones;
     if (!ac.existe) h += '<div class="rp-aviso">La pestaña ACCIONES del Sheet de config todavía no existe: se crea sola al guardar la primera acción (es la misma lista que usan el tablero y el vigía).</div>';
@@ -237,6 +240,7 @@
       '<label>Por qué</label><textarea id="ac-porque" placeholder="El dato que respalda la acción: el número, la semana, el desvío"></textarea>' +
       '<div style="margin-top:0.7rem;display:flex;gap:0.6rem;align-items:center"><button class="rp-boton lleno" id="ac-guardar" type="button">Guardar acción</button><span id="ac-msg" style="font-size:0.82rem;color:#52514e"></span></div></div>' +
       '</section>';
+    }
     }
 
     $('rp-todo').innerHTML = h;

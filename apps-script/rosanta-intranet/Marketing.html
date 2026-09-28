@@ -156,25 +156,13 @@ a{color:var(--verde)}
        CTR y CPC sin ver una sola reserva. Las decisiones salen de la pestaña
        ⚖️ Decisiones de pauta (PautaSistema.gs): hechos, validacion y reglas. -->
   <div class="bench">
-    <span>Hook Rate mín <b>40%</b></span>
-    <span>Retención mín <b>10%</b></span>
-    <span>CPE bajo <b>Q0.05</b></span>
     <span>Mover dinero: solo en <b>⚖️ Decisiones</b>, juzgado por reservas</span>
   </div>
   <div style="height:12px"></div>
   <div id="metaKpis" class="grid kpis"></div>
   <div style="height:12px"></div>
-  <div class="card">
-    <div class="toolbar">
-      <h2 style="margin:0;flex:1">Retorno estimado (ROAS / ROI / CAC)</h2>
-      <span class="muted">Ticket por comensal Q</span><input id="roTicket" type="number" value="259" style="width:80px">
-      <span class="muted">Comensales atribuidos</span><input id="roRes" type="number" placeholder="0" style="width:80px">
-      <button class="btn sm" onclick="computeRoas()">Calcular</button>
-    </div>
-    <div id="roasKpis" class="grid kpis"></div>
-    <p class="muted" style="margin-top:8px">Todo este bloque se calcula sobre la <b>última semana ISO</b> de pauta_semanal, no sobre el selector de rango de arriba. ROAS = (comensales × ticket por comensal) ÷ inversión en medios de esa semana, y la inversión son <b>solo medios</b>: Google + Meta, lo que se le paga a las plataformas por audiencia. Los honorarios de gestión de pauta, el contenido y las herramientas cuentan en el bloque Marketing del DRE, pero jamás entran en este denominador. ROI = (ingreso − inversión) ÷ inversión. El <b>ticket por comensal se toma del POS</b> (columna ticket de pauta_semanal) y los comensales atribuidos se prellenan con los de las reservas de esa semana (Wix); ajusta "comensales atribuidos" si quieres el ROAS solo de pauta en vez del blended. Cuando el Pixel envíe el valor real por reserva, será exacto por campaña. <b>CAC</b> = la misma inversión en medios ÷ clientes nuevos (primeras reservas de Wix); si la semana aún no registra clientes nuevos, se muestra "—". Si a una plataforma le falta el dato de la semana, la tarjeta de inversión lo avisa: el ROAS saldría alto.</p>
-  </div>
-  <div style="height:12px"></div>
+  <!-- Limpieza del 28-sep-2026 (Juanma): fuera el bloque "Retorno estimado" (ROAS/ROI/CAC semanal). Traia un
+       segundo CAC distinto al de la lectura de arriba; el CAC oficial es el del Sistema de Medicion. -->
   <div class="card">
     <div class="toolbar">
       <h2 style="margin:0;flex:1">Pauta semanal · Google + Meta (desde la Sheet Marketing OS)</h2>
@@ -187,10 +175,7 @@ a{color:var(--verde)}
     <div id="gadsTable" class="loading"><div class="spin"></div>Leyendo pauta_semanal de la Sheet…</div>
   </div>
   <div style="height:12px"></div>
-  <div class="row">
-    <div class="card"><h2>Inversión por campaña (Meta)</h2><div class="chartbox"><canvas id="chSpend"></canvas></div></div>
-    <div class="card"><h2>CTR por campaña</h2><div class="chartbox"><canvas id="chCtr"></canvas></div></div>
-  </div>
+  <div class="card"><h2>Inversión por campaña (Meta)</h2><div class="chartbox"><canvas id="chSpend"></canvas></div></div>
   <div style="height:12px"></div>
   <div class="card">
     <div class="toolbar">
@@ -262,7 +247,7 @@ a{color:var(--verde)}
   <div class="card" id="estBody" style="font-size:13px;line-height:1.65">
 
     <h2>🌟 El número de Marketing</h2>
-    <p><b>Comensales del mes</b> (venta del restaurante ÷ ticket por comensal), del Sistema de Medición. Metas: octubre 580 · noviembre 630 · diciembre 800. Las palancas de pauta son los <b>clientes nuevos</b> del mes (octubre 40 · noviembre 50 · diciembre 55) y el <b>CAC ≤ Q60</b>, que solo se publica con lectura de Wix ≥ 50%. "Reservas atribuidas" quedó descartada como meta el 27-sep-2026 porque hoy no se puede medir.</p>
+    <p><b>Comensales del mes</b> (venta del restaurante ÷ ticket por comensal), del Sistema de Medición. Las palancas de pauta son los <b>clientes nuevos</b> del mes y el <b>CAC</b>, que solo se publica con lectura de Wix ≥ 50%. Las metas de cada mes están en la pestaña <b>METAS</b> de Rosanta_Intranet_Config y en la lectura del Dashboard de Pauta; no se copian aquí para que no se desactualicen. "Reservas atribuidas" quedó descartada como meta el 27-sep-2026 porque hoy no se puede medir.</p>
 
     <h2 style="margin-top:14px">⚙️ Los 3 motores financieros</h2>
     <p>Toda pieza alimenta uno de estos tres motores; si no mueve ninguno, no entra al calendario. <b>Eventos</b> (ocupación y flujo con experiencias temáticas de alta conversión), <b>Ventas</b> (ticket promedio más alto con paquetes plato + cóctel + postre en sala) y <b>Crecimiento</b> (clientes nuevos y autoridad de marca que sostiene la demanda).</p>
@@ -847,7 +832,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 function closeOv(id){$(id).classList.remove('act')}
 
 /* ================= DASHBOARD PAUTA ================= */
-let chSpend=null,chCtr=null;
+let chSpend=null;
 async function loadMeta(){
   $('metaStatus').textContent='Cargando…';
   $('metaTable').innerHTML='<div class="loading"><div class="spin"></div>Cargando data de Meta Ads…</div>';
@@ -910,9 +895,6 @@ function renderCharts(live){
   const labels=top.map(x=>x.name.length>28?x.name.slice(0,28)+'…':x.name);
   if(chSpend)chSpend.destroy();
   chSpend=new Chart($('chSpend'),{type:'bar',data:{labels,datasets:[{label:'Gasto (Q)',data:top.map(x=>x.spend),backgroundColor:'#4A6741',borderRadius:6}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EDE6D4'}},y:{grid:{display:false}}}}});
-  if(chCtr)chCtr.destroy();
-  chCtr=new Chart($('chCtr'),{type:'bar',data:{labels,datasets:[{label:'CTR %',data:top.map(x=>x.ctr),backgroundColor:'#C9923F',borderRadius:6}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EDE6D4'}},y:{grid:{display:false}}}}});
 }
 
@@ -1318,7 +1300,6 @@ async function loadGads(){
       .filter(x=>x.gCosto!=null||x.mCosto!=null)
       .sort((a,b)=>b.wk-a.wk).slice(0,10);
     if(!rows.length)throw new Error('La pestaña pauta_semanal de la Sheet Marketing OS está vacía');
-    window._pautaRows=rows; // el CAC del bloque ROAS lee la última semana de aquí
     const last=rows[0];
     const gTot=rows.reduce((a,x)=>a+(x.gCosto||0),0),mTot=rows.reduce((a,x)=>a+(x.mCosto||0),0);
     const k=[
@@ -1328,18 +1309,10 @@ async function loadGads(){
       ['Total '+rows.length+' semanas',fmtQ(gTot+mTot),'Google '+fmtQ(gTot)+' + Meta '+fmtQ(mTot)]
     ];
     $('gadsKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val" style="font-size:20px">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
-    $('gadsTable').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Semana</th><th>Google (Q)</th><th>Clics</th><th>Impresiones</th><th>CTR</th><th>Meta (Q)</th><th>Alcance</th><th>Reservas</th><th>Comens. reserva</th><th>Comensales</th><th>Ticket (Q)</th></tr></thead><tbody>'+
-      rows.map(x=>'<tr><td><b>S'+x.wk+'</b></td><td>'+(x.gCosto!=null?fmtQ(x.gCosto):'—')+'</td><td>'+fmtN(x.gClics)+'</td><td>'+fmtN(x.gImp)+'</td>'+
-      '<td>'+((x.gImp&&x.gClics)?(x.gClics/x.gImp*100).toFixed(2)+'%':'—')+'</td>'+
-      '<td>'+(x.mCosto!=null?fmtQ(x.mCosto):'—')+'</td><td>'+fmtN(x.mAlcance)+'</td><td>'+(x.reservas!=null?x.reservas:'—')+'</td>'+
-      '<td>'+(x.comensalesReserva!=null?fmtN(x.comensalesReserva):'—')+'</td><td>'+(x.comensales!=null?fmtN(x.comensales):'—')+'</td><td>'+(x.ticket!=null?fmtQ(x.ticket):'—')+'</td></tr>').join('')+'</tbody></table></div>';
+    $('gadsTable').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Semana</th><th>Google (Q)</th><th>Meta (Q)</th><th>Reservas</th><th>Comensales</th><th>Ticket (Q)</th></tr></thead><tbody>'+
+      rows.map(x=>'<tr><td><b>S'+x.wk+'</b></td><td>'+(x.gCosto!=null?fmtQ(x.gCosto):'—')+'</td>'+
+      '<td>'+(x.mCosto!=null?fmtQ(x.mCosto):'—')+'</td><td>'+(x.reservas!=null?x.reservas:'—')+'</td><td>'+(x.comensales!=null?fmtN(x.comensales):'—')+'</td><td>'+(x.ticket!=null?fmtQ(x.ticket):'—')+'</td></tr>').join('')+'</tbody></table></div>';
     $('gadsStatus').textContent=rows.length+' semanas cargadas';
-    // ROAS: ticket por comensal (POS) y comensales de las reservas (Wix) de la
-    // última semana; si la semana aún no trae comensales, caen las reservas.
-    if(last.ticket)$('roTicket').value=Math.round(last.ticket);
-    const atrib=last.comensalesReserva!=null?last.comensalesReserva:last.reservas;
-    if(atrib!=null)$('roRes').value=atrib;
-    computeRoas(); // el bloque de retorno vive de estas filas, no de la data viva de Meta
   }catch(err){
     $('gadsKpis').innerHTML='';
     $('gadsTable').innerHTML='<p class="muted">'+err.message+'. Presiona Actualizar para reintentar.</p>';
@@ -1490,95 +1463,6 @@ async function paRegistrar(k){
   const box=$('paReg'+k);
   try{await srv('psGuardarPrueba',row);box.innerHTML='<span style="font-size:12.5px">✅ Concepto '+(k+1)+' registrado como propuesta en la bitácora.</span>';PA_CTX=null}
   catch(e){alert(e.message)}
-}
-/* ================= ROAS / ROI ================= */
-/* REGLA DEL DENOMINADOR — no la cambies sin leer esto (02-sep-2026).
- *
- *   ROAS = ventas atribuidas a la campana / inversion en MEDIOS
- *
- * En el denominador entra SOLO la compra de audiencia en plataforma: Meta Ads
- * y Google Ads. Queda fuera todo lo demas que se paga en marketing —
- * honorarios de quien gestiona la pauta, produccion de contenido,
- * suscripciones de herramientas.
- *
- * Por que: el ROAS mide que devuelve cada quetzal puesto en medios. Si el
- * honorario de gestion entra al denominador, el ROAS baja artificialmente y la
- * pauta parece rendir menos de lo que rinde; escalar o apagar campanas se
- * decide entonces con un numero equivocado.
- *
- * Esos honorarios SI cuentan en el bloque Marketing del DRE — el rango de
- * referencia del sector (4-8% de la venta) se mide sobre el gasto total de
- * marketing, gestion incluida. No se borran de ningun lado: simplemente no
- * entran aqui.
- *
- * Si alguna vez hace falta un indicador que incluya la gestion, va aparte y
- * con otro nombre (por ejemplo "costo total de adquisicion"). Nunca
- * sobrescribiendo el ROAS.
- *
- * DE DONDE SALE EL GASTO HOY — las dos fuentes son de plataforma, no del
- * maestro financiero, y por eso ya cumplen la regla:
- *   - spend  : Meta Graph API (campanas con gasto de la cuenta de anuncios).
- *   - gCosto : Google Ads Script, metrics.cost_micros.
- *   - mCosto : Meta Graph API, escrito por el mismo Google Ads Script.
- * Ninguna suma la categoria MARKETING_DIGITAL del maestro. NO la uses: ahi
- * conviven los medios con los honorarios y las herramientas. Si algun dia hay
- * que leer el gasto desde el maestro, el criterio de identificacion de MEDIOS
- * en la descripcion del movimiento es: Meta trae "FACEBK" y Google trae
- * "GOOGLE*ADS". Todo lo demas de esa categoria es gestion, contenido o
- * herramientas y se queda fuera. Ojo tambien con la moneda: los cargos de
- * Google Ads vienen en dolares (columna Dolares de la tarjeta) y los de Meta
- * en quetzales.
- *
- * PERIODO: semana ISO. El denominador es gCosto + mCosto de la ultima semana de
- * pauta_semanal — las dos plataformas, no solo Meta — y el ingreso sale del
- * ticket y los comensales de esa misma semana. NO uses el gasto vivo de Meta
- * del selector de arriba: ese responde al rango de 7/30/90 dias y mezclaria un
- * mes de inversion contra una semana de ingreso.
- */
-function computeRoas(){
-  /* Todo el bloque se para sobre la ultima semana ISO de pauta_semanal: de ahi
-     salen los dos medios, el ticket, los comensales y los clientes nuevos. Asi
-     ROAS, ROI y CAC comparten periodo y denominador. Antes el ROAS tomaba el
-     gasto vivo de Meta del selector de arriba (30 dias por defecto) contra un
-     ingreso de una sola semana, y sin el gasto de Google: dos errores en
-     direcciones opuestas que nadie podia leer por separado. */
-  const pw=(window._pautaRows||[])[0];
-  if(!pw){
-    $('roasKpis').innerHTML='<p class="muted">Todavia sin semanas con gasto en pauta_semanal. '+
-      'Presiona Actualizar en el panel de pauta semanal de abajo.</p>';
-    return;
-  }
-  const g=pw.gCosto||0, m=pw.mCosto||0, spend=g+m;
-  /* Una plataforma sin dato NO es una plataforma sin gasto: si el Google Ads
-     Script no escribio la semana, el denominador queda corto y el ROAS sale
-     alto. Se avisa en la tarjeta en vez de dejarlo pasar callado. */
-  const faltan=[];
-  if(pw.gCosto==null)faltan.push('Google');
-  if(pw.mCosto==null)faltan.push('Meta');
-  const ticket=parseFloat($('roTicket').value)||0;
-  const res=parseFloat($('roRes').value)||0;
-  const ingreso=res*ticket;
-  const roas=spend?ingreso/spend:0;
-  const roi=spend?(ingreso-spend)/spend*100:0;
-  /* Sin inversion o sin comensales atribuidos NO hay ratio que mostrar. Un
-     "0.00x · En perdida" por falta de dato se lee como mal rendimiento y es
-     justo la lectura que hace apagar una campana que va bien. */
-  const hay=spend>0&&ingreso>0;
-  const porque=!spend?'Sin inversión registrada esa semana':'Sin comensales atribuidos esa semana';
-  const k=[
-    ['Inversión medios · S'+pw.wk,fmtQ(spend),
-      'Google '+fmtQ(g)+' + Meta '+fmtQ(m)+(faltan.length?' · ⚠ falta el dato de '+faltan.join(' y '):'')],
-    ['Ingreso estimado',fmtQ(ingreso),fmtN(res)+' comensales × '+fmtQ(ticket)],
-    ['ROAS',hay?roas.toFixed(2)+'x':'—',hay?(roas>=1?'Recupera la inversión':'Bajo 1x'):porque],
-    ['ROI',hay?((roi>=0?'+':'')+roi.toFixed(0)+'%'):'—',hay?(roi>=0?'Retorno positivo':'En pérdida'):porque]
-  ];
-  /* CAC = la MISMA inversión en medios de la semana ÷ clientes_nuevos (primeras
-     reservas de Wix). Con clientes_nuevos en 0 o vacío se muestra "—": jamás
-     división por cero. */
-  const cn=pw.clientes_nuevos;
-  k.push(['CAC · S'+pw.wk,(cn&&spend)?fmtQ(spend/cn):'—',
-    cn?fmtN(cn)+' clientes nuevos':'Sin clientes nuevos registrados esa semana']);
-  $('roasKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val" style="font-size:22px">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
 }
 /* ================= CREADOR DE UTMs (Vanessa) ================= */
 /* Convención Rosanta: minúsculas, sin tildes ni ñ, espacios y guiones → guión
@@ -1968,7 +1852,8 @@ aprPull().then(renderApr).catch(function(){}); // aprendizajes también: la Shee
 if(FULL){
   osRenderConn();
   renderCarr();renderProps();
-  propPull().then(function(){seedProps();renderProps();}).catch(function(){seedProps();renderProps();}); // propuestas: la Sheet manda (p218)renderUtmHist();loadMeta();loadGads();
+  propPull().then(function(){seedProps();renderProps();}).catch(function(){seedProps();renderProps();}); // propuestas: la Sheet manda (p218)
+  renderUtmHist();loadMeta();loadGads();   // estaban pegadas detras del comentario de arriba desde la @138 y no corrian
   carrPull().then(renderCarr).catch(function(){}); // los carritos de WIX entran directo a la Sheet
   // Sistema de Medicion: la lectura de Marketing (comensales y las palancas de Vanessa).
   srv('getLecturaPauta').then(r=>{

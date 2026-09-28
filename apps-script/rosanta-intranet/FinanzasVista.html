@@ -8,8 +8,7 @@
   <style>
     /* "Como vamos" · Pilar 3, Finance & Data OS.
        Es para decidir el lunes: la semana contra su meta, el mes contra el suyo,
-       la caja, y que hay que responder. Solo lectura salvo el bloque RAA, que
-       es lo unico que escribe.
+       la caja. Solo lectura desde la limpieza del 28-sep-2026 (sin bloque RAA).
 
        Hasta el 22-sep-2026 esta pantalla se llamaba "La semana" y cinco de sus
        siete secciones eran del AÑO: abria con la venta acumulada de 2026 y once
@@ -54,22 +53,10 @@
       .fin-kpis { padding: 1.1rem 1.15rem; gap: 1rem 1.1rem;
         grid-template-columns: 1fr 1fr; }
       .fin-kpis .u { border-left: 0; padding-left: 0; }
-      .fin-kpis .u:first-child { grid-column: 1 / -1; }
       .fin-kpis .n { font-size: 1.5rem; }
       .fin-kpis .u:first-child .n { font-size: 1.9rem; }
       .fin-kpis .c { font-size: 0.72rem; }
     }
-
-    /* --- la tira de integridad: una linea, no una seccion --- */
-    /* Los separadores son borde, no el caracter "·" en el texto: al cortar
-       linea un "·" quedaba colgando al final de la fila. */
-    .fin-tira { display: flex; flex-wrap: wrap; align-items: center;
-      font-size: 0.78rem; opacity: 0.7; margin-top: 1rem; row-gap: 0.3rem; }
-    .fin-tira > span { padding: 0 0.7rem; border-left: 1px solid rgba(26,26,26,0.18);
-      line-height: 1.35; }
-    .fin-tira > span:first-child { padding-left: 0; border-left: 0; }
-    .fin-tira .alerta { color: #C4553B; opacity: 1; font-weight: 700; }
-    .fin-tira a { color: inherit; }
 
     .fin-seccion { margin-top: 2.2rem; }
     .fin-seccion > h2 { font-size: 1.25rem; margin-bottom: 0.2rem; }
@@ -132,33 +119,6 @@
     .tabla-pie .fin-boton { font-size: 0.76rem; padding: 0.3rem 0.8rem; }
     @media (min-width: 721px) { .tabla-pie { display: none; } }
 
-    /* --- RAA: analisis y accion --- */
-    .raa { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
-    .raa-card { background: var(--blanco); border-radius: 18px; padding: 1.15rem 1.3rem;
-      box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-left: 6px solid #BDBDBD; }
-    .raa-card.amarillo { border-left-color: #E0A93B; }
-    .raa-card.rojo { border-left-color: #C4553B; }
-    .raa-card.verde { border-left-color: var(--verde-medio); }
-    .raa-card h3 { font-size: 0.95rem; display: flex; align-items: center;
-      justify-content: space-between; gap: 0.5rem; }
-    .raa-card h3 .val { font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem; }
-    .raa-res { font-size: 0.84rem; line-height: 1.55; opacity: 0.85; margin: 0.6rem 0; }
-    .raa-costo { background: rgba(196,85,59,0.08); border-radius: 12px; padding: 0.6rem 0.8rem;
-      font-size: 0.84rem; line-height: 1.5; margin-bottom: 0.85rem; }
-    .raa-costo b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem;
-      color: #C4553B; }
-    .raa-card label { display: block; font-size: 0.76rem; text-transform: uppercase;
-      letter-spacing: 0.06em; opacity: 0.6; margin: 0.6rem 0 0.25rem; }
-    .raa-card textarea, .raa-card select { width: 100%; font-family: 'Lato', Arial, sans-serif;
-      font-size: 0.86rem; padding: 0.55rem 0.7rem; border: 1px solid rgba(26,26,26,0.16);
-      border-radius: 10px; background: #FCFBFA; resize: vertical; }
-    .raa-card textarea { min-height: 64px; line-height: 1.5; }
-    .raa-pie { display: flex; align-items: center; justify-content: space-between;
-      gap: 0.6rem; margin-top: 0.8rem; flex-wrap: wrap; }
-    .raa-guardado { font-size: 0.76rem; opacity: 0.62; }
-    .raa-verde-nota { font-size: 0.84rem; opacity: 0.72; line-height: 1.5; }
-    .raa-hist td { font-size: 0.82rem; white-space: normal; vertical-align: top; }
-
     .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
     .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
@@ -197,48 +157,9 @@
 
     <div id="todo" style="display:none">
       <div class="fin-kpis" id="kpis"></div>
-      <div class="fin-tira" id="tira"></div>
-
-      <section class="fin-seccion">
-        <h2>Qué hay que responder</h2>
-        <details class="fin-ayuda">
-          <summary>Cómo funciona este bloque</summary>
-          <p>
-            Todo indicador en amarillo o rojo abre una tarjeta. El resultado y el costo los
-            calcula el sistema; el análisis y la acción se escriben aquí y quedan en la hoja RAA
-            del Sheet de configuración, para poder revisar la semana que viene si la acción
-            funcionó. Una acción sin nombre no es una acción: si todos son responsables, no lo
-            es nadie.
-          </p>
-        </details>
-        <div id="raa-cargando" class="fin-nota">Cargando el bloque de acciones…</div>
-        <div class="raa" id="raa"></div>
-        <div id="raa-hist-caja" style="display:none;margin-top:1.4rem">
-          <h3 style="font-size:1rem;margin-bottom:.5rem">Lo que se decidió antes</h3>
-          <div class="tabla-scroll">
-            <table class="fin raa-hist">
-              <thead><tr>
-                <th>Semana</th><th>Indicador</th><th>Acción</th><th>Responsable</th><th>Fecha</th>
-              </tr></thead>
-              <tbody id="raa-hist"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="fin-seccion">
-        <h2>Food cost y prime cost</h2>
-        <details class="fin-ayuda">
-          <summary>Por qué el número con semáforo es la media móvil de 4</summary>
-          <p>
-            La media móvil de 4 es el cociente de las sumas, no el promedio de los porcentajes.
-            La semana cruda va como contexto: sola se mueve entre 16% y 68% porque la compra no
-            cae en la semana en que se consume. El food cost va sobre la venta sin IVA ni
-            servicio, la misma base de la meta y de las fichas.
-          </p>
-        </details>
-        <div class="fin-semaforos" id="semaforos"></div>
-      </section>
+      <!-- Limpieza del 28-sep-2026 (Juanma): fuera la tira de integridad (vive en El gasto), el bloque RAA
+           (las acciones viven en una sola lista: "Qué hacemos esta semana") y los semáforos de food y prime
+           (el food cost es de Profit OS; el prime cost está en las palancas de arriba). -->
 
       <section class="fin-seccion">
         <h2>Semana por semana</h2>
@@ -270,7 +191,6 @@
   var AUTH = '<?= authToken ?>';
   var D = null;
   var M = null;      // getMetasData: la meta del mes y la de cada semana
-  var RAA = null;
 
   function q(n, dec) {
     var d = dec === undefined ? 0 : dec;
@@ -331,13 +251,6 @@
         M && M.sin_meta ? 'sin meta cargada para el mes' : 'meta de la semana no disponible');
     }
 
-    // 2) contra la semana anterior
-    html += unidad('Contra la semana anterior',
-      (u.dv >= 0 ? '+' : '') + pct(u.dv),
-      'de ' + q(D.semanas.length > 1 ? D.semanas[D.semanas.length - 2].ventas : 0) +
-        ' a ' + q(u.ventas),
-      u.dv >= 0 ? 'bien' : (u.dv >= -10 ? '' : 'mal'));
-
     // 3) el acumulado del mes contra la meta del mes
     if (M && !M.sin_meta && M.meta) {
       html += unidad('Acumulado de ' + esc(M.mes), q(M.acumulado),
@@ -349,49 +262,10 @@
         M && M.sin_meta ? 'sin meta cargada' : 'no disponible');
     }
 
-    // 4) el ritmo: el acumulado contra lo que deberia llevar a esta altura
-    if (M && !M.sin_meta && M.meta) {
-      html += unidad('Ritmo del mes',
-        (M.brecha >= 0 ? '+' : '−') + q(Math.abs(M.brecha)),
-        (M.brecha >= 0 ? 'sobre' : 'bajo') + ' lo esperado al día ' + M.dias.corridos +
-          ' · proyección ' + pct(M.proyeccion_pct),
-        M.brecha >= 0 ? 'bien' : 'mal');
-    } else {
-      html += unidad('Ritmo del mes', '—', 'necesita la meta del mes');
-    }
-
-    // 5) la caja, que es la alerta de supervivencia
-    html += unidad('Caja', Number(D.dias_caja).toFixed(1) + ' días',
-      q(D.caja) + ' · gasto ' + q(D.gasto_dia) + ' al día · verde con 21',
-      D.dias_caja >= 21 ? 'bien' : (D.dias_caja >= 7 ? '' : 'mal'));
+    // Limpieza del 28-sep-2026: fuera "Contra la semana anterior" (está en La semana), "Ritmo del mes"
+    // (está en Metas) y "Caja" (es el número principal de la lectura de arriba).
 
     document.getElementById('kpis').innerHTML = html;
-  }
-
-  /* La integridad del dato vivia en una seccion propia al final, con cinco
-     tarjetas. Lo unico que hay que mirar todas las semanas es si algo se esta
-     cayendo; el detalle completo esta en la pestaña "El gasto". */
-  function pintarTira() {
-    var it = D.integridad, p = [];
-    function trozo(txt, alerta) {
-      return '<span' + (alerta ? ' class="alerta"' : '') + '>' + txt + '</span>';
-    }
-    p.push(trozo('Datos al ' + esc(D.gen)));
-    p.push(it.dias_atraso > 10
-      ? trozo(it.dias_atraso + ' días sin cargar ventas', true)
-      : trozo(it.dias_atraso + ' día(s) desde la última venta cargada'));
-    if (it.por_clasificar) {
-      p.push(trozo(it.por_clasificar + ' en POR_CLASIFICAR', true));
-    }
-    if (it.sin_identificar) {
-      p.push(trozo(q(it.sin_identificar) + ' sin identificar', true));
-    }
-    if (it.sin_mapear) {
-      p.push(trozo(q(it.sin_mapear) + ' en categorías sin mapear', true));
-    }
-    p.push(trozo(pct(it.factura_pct) + ' de la compra con factura'));
-    p.push(trozo('Detalle en <strong>El gasto</strong>'));
-    document.getElementById('tira').innerHTML = p.join('');
   }
 
   /* ------------------------------------------------------------ la vista */
@@ -404,22 +278,6 @@
       ' · año ' + d.anio;
 
     pintarKpis();
-    pintarTira();
-
-    // ---- food y prime
-    function tarjeta(z, titulo, valor, meta, cruda) {
-      return '<div class="fin-card ' + z + '"><h3><span class="punto"></span>' + titulo + '</h3>' +
-        '<div class="fin-valor">' + valor + '</div>' +
-        '<div class="fin-meta">' + meta + '</div>' +
-        (cruda ? '<div class="fin-cruda">' + cruda + '</div>' : '') + '</div>';
-    }
-    document.getElementById('semaforos').innerHTML =
-      tarjeta(zona('food', u.cogs_m4, d.meta_cogs), 'Food cost móvil 4', pct(u.cogs_m4),
-        'Meta ' + pct(d.meta_cogs) + ' · sobre venta sin servicio',
-        'Semana cruda ' + pct(u.cogsp) + ' · ' + q(u.cogs)) +
-      tarjeta(zona('prime', u.prime_m4), 'Prime cost móvil 4', pct(u.prime_m4),
-        'Verde bajo 60% · rojo sobre 65%',
-        'Semana cruda ' + pct(u.prime) + ' · mano de obra ' + pct(u.laborp));
 
     // ---- semana por semana
     document.getElementById('tabla-sem').innerHTML =
@@ -445,7 +303,7 @@
     var c = document.getElementById('cargando');
     c.style.display = ''; c.textContent = 'Leyendo el maestro…';
     var run = google.script.run
-      .withSuccessHandler(function (d) { pintar(d); cargarMetas(forzar); cargarRaa(forzar); })
+      .withSuccessHandler(function (d) { pintar(d); cargarMetas(forzar); })
       .withFailureHandler(function (e) {
         c.innerHTML = '<div class="fin-error">No se pudo leer el maestro.<br>' +
           esc(e && e.message ? e.message : e) + '</div>';
@@ -461,116 +319,6 @@
       .withSuccessHandler(function (m) { M = m; if (D) pintarKpis(); })
       .withFailureHandler(function () { M = { error: true }; if (D) pintarKpis(); })
       .getMetasData(AUTH, !!forzar);
-  }
-
-  /* ------------------------------------------------------------------ RAA */
-
-  /* Cada indicador con su propio texto de ayuda. Hasta el 22-sep-2026 los
-     cuatro repetian el de food cost, asi que la tarjeta de Caja y la de Ventas
-     pedian explicar por que no bajo el food cost. */
-  var PISTAS = {
-    food:   ['Qué específicamente se rompió. No vale «fue una semana ocupada»: una semana ' +
-             'ocupada debería BAJAR el food cost.',
-             'La conducta exacta que cambia la compra de la semana que viene.'],
-    prime:  ['Qué movió el prime: la compra, las horas, o que cayó la venta y el costo fijo ' +
-             'quedó igual.',
-             'La conducta exacta que cambia la semana que viene: horas, turnos o compra.'],
-    caja:   ['Qué se llevó la caja esta semana: un pago grande, una caída de venta, o una ' +
-             'salida que no era de la operación.',
-             'Qué se cobra, se aplaza o se deja de pagar esta semana, con fecha.'],
-    ventas: ['Por qué cayó la venta: menos comensales, menor ticket, o una semana con menos ' +
-             'días de servicio.',
-             'Qué se hace esta semana para traer gente o subir el ticket.']
-  };
-
-  function tarjetaRaa(t) {
-    var abierta = t.zona === 'amarillo' || t.zona === 'rojo';
-    var valor = t.ind === 'caja'
-      ? Number(t.valor).toFixed(1) + ' días'
-      : (t.ind === 'ventas' ? ((t.valor >= 0 ? '+' : '') + pct(t.valor)) : pct(t.valor));
-
-    var cab = '<h3><span>' + esc(t.nombre) + '</span><span class="val">' + valor + '</span></h3>' +
-      '<div class="raa-res">' + esc(t.resultado) + '</div>';
-
-    if (!abierta) {
-      return '<div class="raa-card ' + t.zona + '">' + cab +
-        '<div class="raa-verde-nota">En zona verde. No pide acción esta semana' +
-        (t.accion ? ', pero traía una: “' + esc(t.accion) + '”.' : '.') + '</div></div>';
-    }
-
-    var opts = ['<option value="">Elegí un responsable…</option>'].concat(
-      RAA.equipo.map(function (n) {
-        return '<option value="' + esc(n) + '"' + (n === t.responsable ? ' selected' : '') +
-               '>' + esc(n) + '</option>';
-      })).join('');
-
-    var pista = PISTAS[t.ind] || PISTAS.food;
-
-    return '<div class="raa-card ' + t.zona + '" data-ind="' + t.ind + '">' + cab +
-      '<div class="raa-costo">Cuesta <b>' + q(t.costo) + '</b> al mes. ' +
-        esc(t.costo_txt) + '</div>' +
-      '<label>Análisis</label>' +
-      '<textarea id="an_' + t.ind + '" placeholder="' + esc(pista[0]) + '">' +
-        esc(t.analisis) + '</textarea>' +
-      '<label>Acción</label>' +
-      '<textarea id="ac_' + t.ind + '" placeholder="' + esc(pista[1]) +
-        ' Si no se puede escribir, no es una acción.">' + esc(t.accion) + '</textarea>' +
-      '<label>Responsable</label>' +
-      '<select id="re_' + t.ind + '">' + opts + '</select>' +
-      '<div class="raa-pie">' +
-        '<button class="fin-boton" data-guardar="' + t.ind + '">Guardar</button>' +
-        '<span class="raa-guardado" id="ok_' + t.ind + '">' +
-          (t.guardado ? 'Guardado ' + esc(t.guardado) : '') + '</span>' +
-      '</div></div>';
-  }
-
-  function pintarRaa(r) {
-    RAA = r;
-    document.getElementById('raa-cargando').style.display = 'none';
-    document.getElementById('raa').innerHTML = r.tarjetas.map(tarjetaRaa).join('');
-
-    document.querySelectorAll('[data-guardar]').forEach(function (b) {
-      b.addEventListener('click', function () { guardar(b.getAttribute('data-guardar'), b); });
-    });
-
-    if (r.historial && r.historial.length) {
-      document.getElementById('raa-hist-caja').style.display = '';
-      document.getElementById('raa-hist').innerHTML = r.historial.map(function (h) {
-        return '<tr><td>S' + h.semana + '</td><td>' + esc(h.ind) + '</td>' +
-          '<td>' + esc(h.accion) + '</td><td>' + esc(h.responsable) + '</td>' +
-          '<td>' + esc(h.fecha) + '</td></tr>';
-      }).join('');
-    }
-  }
-
-  function guardar(ind, boton) {
-    var ok = document.getElementById('ok_' + ind);
-    boton.disabled = true;
-    ok.textContent = 'Guardando…';
-    google.script.run
-      .withSuccessHandler(function (r) { pintarRaa(r); })
-      .withFailureHandler(function (e) {
-        boton.disabled = false;
-        ok.textContent = (e && e.message) ? e.message : 'No se pudo guardar.';
-      })
-      .guardarRaa(AUTH, {
-        ind: ind,
-        analisis: document.getElementById('an_' + ind).value,
-        accion: document.getElementById('ac_' + ind).value,
-        responsable: document.getElementById('re_' + ind).value
-      });
-  }
-
-  function cargarRaa(forzar) {
-    var c = document.getElementById('raa-cargando');
-    c.style.display = ''; c.textContent = 'Cargando el bloque de acciones…';
-    google.script.run
-      .withSuccessHandler(pintarRaa)
-      .withFailureHandler(function (e) {
-        c.innerHTML = '<span style="color:#C4553B">No se pudo cargar el bloque de acciones: ' +
-          esc(e && e.message ? e.message : e) + '</span>';
-      })
-      .getRaaData(AUTH, !!forzar);
   }
 
   document.getElementById('btn-refrescar').addEventListener('click', function () { cargar(true); });

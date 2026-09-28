@@ -44,19 +44,9 @@ function vistaInicio(){
   if(!d.ok) return `<div id="db">${bar}<p class="empty">${esc(d.error||'No se pudo leer')}</p></div>`;
 
   const c = d.cmv;
-  /* 1. CMV teorico. Las DOS AREAS QUEDAN SIEMPRE VISIBLES: un global de 28.5%
-     que se ve sano esconde que barra esta cuatro puntos arriba de su meta. */
-  const tCmv = dbTile({
-    titulo:'CMV teórico', color: dbSemaforo(c.global, c.metaGlobal),
-    valor: dbPct(c.global), sub:`meta ponderada ${dbPct(c.metaGlobal)}`,
-    cuerpo: `<div class="db-filas">
-      ${[['Cocina',c.cocina],['Barra',c.barra]].map(([n,a])=>`
-        <div class="db-f"><span>${n}</span>
-          <b style="color:${dbSemaforo(a.cmv,a.meta)}">${dbPct(a.cmv)}</b>
-          <small>meta ${dbPct(a.meta)}</small></div>`).join('')}
-    </div>`,
-    pie:'Sobre venta neta. El global va ponderado por la venta de cada área, no promediado.'
-  });
+  /* Limpieza del 28-sep-2026 (Juanma): quedan solo dos tarjetas. El CMV teorico, la contribucion,
+     el recuperable y la oportunidad en sala viven en Ingenieria de menu; el food cost, en la lectura
+     de arriba. */
 
   /* 2. CMV real contra teorico (p96 parte B, Finanzas, 15-sep-2026). Lo pide
      pedirCmvReal() aparte y son los ULTIMOS MESES CERRADOS, no la ventana del selector:
@@ -91,33 +81,7 @@ function vistaInicio(){
          ${esc(d.real.falta)}`
   });
 
-  const tContrib = dbTile({
-    titulo:'Contribución del período', color:'var(--bosque)',
-    valor: imQ(d.contribucion.total),
-    sub:`cocina ${imQ(d.contribucion.cocina)} · barra ${imQ(d.contribucion.barra)}`,
-    pie:'Venta neta menos materia prima, sobre todo lo que tiene costo firme. Es el tamaño del premio.'
-  });
-
-  const tRecup = dbTile({
-    titulo:'Recuperable contra meta', color:'var(--alto)',
-    valor: imQ(d.recuperable.total) + '<small>/año</small>',
-    sub:`${d.recuperable.productos} productos arriba de su meta`,
-    cuerpo: dbLista(d.recuperable.top, p=>`${(p.cmv*100).toFixed(1)}% contra ${(p.meta*100).toFixed(0)}%`),
-    pie:'La lista de trabajo, en quetzales. Acá la palanca es el costo o la receta.'
-  });
-
-  /* 5. Va al lado del 4 A PROPOSITO: la palanca de sala pesa casi lo mismo que
-     toda la de costo junta, y un tablero que solo muestra costos empuja a la
-     gerencia hacia el lado equivocado. */
-  const tSala = dbTile({
-    titulo:'Oportunidad en sala', color:'var(--lila)',
-    valor: imQ(d.sala.total) + '<small>/año</small>',
-    sub:`${d.sala.productos} rompecabezas con venta al menos mensual`,
-    cuerpo: dbLista(d.sala.top, p=>`${Math.round(p.udsMes)} al mes · margen ${imQ(p.mc)}`),
-    pie:'Valuados a cinco unidades más al mes cada uno. Acá la palanca es la sala, no el costo.'
-  });
-
-  /* 6. VALIDA A LOS OTROS CINCO. Con 18% a ciegas, el CMV es "29.7% de lo que
+  /* VALIDA A LOS DEMAS. Con 18% a ciegas, el CMV es "29.7% de lo que
      si sabemos medir". Por eso el color se pone en rojo solo arriba del umbral. */
   const ciego = d.ciego, ciegoAlto = ciego.pctVenta > ciego.tolerable;
   const dias = d.diasDesdeCarga;
@@ -130,8 +94,8 @@ function vistaInicio(){
           dias==null ? '—' : (dias===0 ? 'hoy' : 'hace '+dias+' día'+(dias===1?'':'s'))}</b>
         <small>${esc(d.cargadoEl||'nunca')}</small></div></div>`,
     pie: ciegoAlto
-      ? `Los otros cinco indicadores miden solo lo que sí se puede costear. Debajo de ${dbPct(ciego.tolerable)} pasan de indicativos a confiables.`
-      : 'Debajo del umbral: los otros cinco indicadores son confiables.'
+      ? `Los indicadores de costo miden solo lo que sí se puede costear. Debajo de ${dbPct(ciego.tolerable)} pasan de indicativos a confiables.`
+      : 'Debajo del umbral: los indicadores de costo son confiables.'
   });
 
   const avisos = window.__DBAV__;
@@ -145,7 +109,7 @@ function vistaInicio(){
         </div>`).join('')}</div>`;
 
   return `<div id="db">${bar}
-    <div class="db-grid">${tCmv}${tReal}${tContrib}${tRecup}${tSala}${tCiego}</div>
+    <div class="db-grid">${tReal}${tCiego}</div>
     ${franja}</div>`;
 }
 

@@ -286,71 +286,11 @@ var AUTH = '<?= authToken ?>';
           '<td>' + (s.com ? q(s.ventas / s.com, 2) : '—') + '</td></tr>';
       }).join('') + '</tbody></table></div></section>';
 
-    // ---- 3. EL TECHO DE COMPRA, uno por area
-    if (d.techo) {
-      html += '<section class="met-seccion"><h2>Qué se puede comprar</h2>' +
-        '<p class="met-nota">El techo de cada área sale de su parte de la venta sin servicio por su meta de ' +
-        'food cost. <strong>El semanal es guía</strong> de qué llevar al mercado; ' +
-        '<strong>el que controla es el acumulado del mes</strong>, porque la compra va a saltos ' +
-        'y el consumo es parejo: una caja de vino se paga una semana y se toma en tres.</p>' +
-        '<div class="met-areas">';
-
-      [['cocina', 'Cocina', 'Jeffry'], ['barra', 'Barra', 'José']].forEach(function (par) {
-        var A = d.techo[par[0]];
-        if (!A) return;
-        var sobre = A.saldo_mes < 0;
-        var anchoG = Math.min(A.mes ? A.gastado_mes / A.mes * 100 : 0, 100);
-
-        html += '<div class="met-area">' +
-          '<div class="cab"><h3>' + par[1] + '</h3>' +
-            '<span class="quien2">' + par[2] + ' · ' + A.mix.toFixed(1) + '% de la venta · ' +
-            'meta ' + pct(A.meta) + '</span></div>' +
-
-          '<div class="sem"><div class="et">Esta semana</div>' +
-            '<div class="nn">' + q(A.semana) + '</div>' +
-            '<div class="tt">sobre ' + q(A.venta_semana) + ' de venta sin servicio</div></div>' +
-
-          '<div class="mes">' +
-            '<div class="fila"><span>Techo del mes</span><b>' + q(A.mes) + '</b></div>' +
-            '<div class="fila"><span>Comprado hasta hoy</span><b>' + q(A.gastado_mes) + '</b></div>' +
-            '<div class="pista2"><div class="real2' + (sobre ? ' sobre' : '') +
-              '" style="width:' + anchoG + '%"></div></div>' +
-            '<div class="fila ' + (sobre ? 'rojo' : 'verde') + '"><span>' +
-              (sobre ? 'Pasado del techo por' : 'Queda del mes') + '</span><b>' +
-              q(Math.abs(A.saldo_mes)) + '</b></div>' +
-          '</div>';
-
-        if (A.familias.length) {
-          html += '<table class="fam"><thead><tr><th>Familia</th><th>Semana</th><th>Del año</th>' +
-            '</tr></thead><tbody>' +
-            A.familias.map(function (f) {
-              var raro = (f.k === 'REVISAR' || f.k === 'SIN_FACTURA');
-              return '<tr' + (raro ? ' class="raro"' : '') + '><td>' + esc(f.nombre) + '</td>' +
-                '<td>' + q(f.semana) + '</td>' +
-                '<td style="opacity:.6">' + f.pct.toFixed(1) + '%</td></tr>';
-            }).join('') + '</tbody></table>';
-          if (A.sin_clasificar > 0) {
-            html += '<p class="ojo">' + A.sin_clasificar.toFixed(1) + '% de la compra de esta ' +
-              'área todavía no tiene familia asignada. El reparto de arriba se lee con esa ' +
-              'reserva hasta que se corrija en <strong>00_Proveedores</strong>.</p>';
-          }
-        } else {
-          html += '<p class="ojo">Todavía no hay familias asignadas en ' +
-            '<strong>00_Proveedores</strong>. Cuando se llene la columna <strong>Familia</strong>, ' +
-            'este bloque se llena solo.</p>';
-        }
-        html += '</div>';
-      });
-      html += '</div></section>';
-    }
+    // Limpieza del 28-sep-2026 (Juanma): el techo de compra por área vive en El gasto, no se repite aquí.
 
     // ---- 4. lo que se deriva de la meta
     html +=
       '<div class="met-cards">' +
-        '<div class="met-card"><h3>Meta de food cost</h3>' +
-          '<div class="n">' + pct(d.meta_food) + '</div>' +
-          '<div class="t">La misma para todo el restaurante, sobre la venta sin IVA. ' +
-          'Se cambia en el Sheet de configuración, pestaña PARAMETROS, fila food_cost_objetivo_pct.</div></div>' +
         (d.base_2025
           ? '<div class="met-card"><h3>' + esc(d.mes) + ' del año pasado</h3>' +
             '<div class="n">' + q(d.base_2025.ventas) + '</div>' +

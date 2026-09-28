@@ -26,11 +26,11 @@ window.PF_SALA = function (HOST, AUTH) {
       var R = r.resenas || {};
       h += '<div class="sl-box"><h3>Reseñas de Google</h3><div class="sl-big">' + esc(R.esta_semana === undefined ? '—' : R.esta_semana) +
         ' <span style="font-size:0.95rem;font-weight:400;color:#52514e">esta semana · meta ' + esc(r.meta_resenas) + '</span></div>' +
-        '<p class="sl-nota">La semana pasada: ' + esc(R.semana_pasada === undefined ? '—' : R.semana_pasada) + ' · promedio de 4 semanas: ' + esc(R.prom_4 === undefined ? '—' : R.prom_4) +
-        (R.estrellas_4 ? ' · ' + esc(R.estrellas_4) + '★' : '') + '. Se cuentan solas desde el bot de reseñas.</p>';
+        '<p class="sl-nota">Promedio de 4 semanas: ' + esc(R.prom_4 === undefined ? '—' : R.prom_4) +
+        '. Se cuentan solas desde el bot de reseñas.</p>';   // limpieza 28-sep-2026: sin semana pasada ni estrellas
       var P = r.semana_pos || {};
       h += '<h3 style="margin-top:1rem">Para el huddle</h3><table><tr><td>Última semana cargada</td><td>S' + esc(P.w) + ' · ' + esc(P.ini) + ' al ' + esc(P.fin) + '</td></tr>' +
-        '<tr><td>Comensales</td><td>' + esc(P.com) + '</td></tr><tr><td>Ticket por comensal (sin IVA)</td><td>Q' + esc(P.tp) + '</td></tr></table>' +
+        '<tr><td>Comensales</td><td>' + esc(P.com) + '</td></tr></table>' +   // el ticket vive en la lectura de arriba (28-sep-2026)
         '<p class="sl-nota">El POS se carga los lunes (último día cargado: ' + esc(r.pos_al || '?') + ').</p></div></div>';
       if (r.avisos && r.avisos.length) h += '<div class="sl-aviso">' + r.avisos.map(esc).join('<br>') + '</div>';
       HOST.innerHTML = h;

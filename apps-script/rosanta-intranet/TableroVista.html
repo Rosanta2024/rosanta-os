@@ -242,21 +242,9 @@
     if (r.avisos && r.avisos.length) html += '<div class="tb-avisos">' + r.avisos.map(esc).join('<br>') + '</div>';
     var conLectura = !!r.lectura && p !== 'metas';
     if (conLectura) {
-      // Sistema de Medicion: el pilar se lee como el reporte semanal. Las tarjetas de
-      // siempre van plegadas al final, en "Como se calcula".
-      if (p === 'fundamentos' && r.vision) {
-        var V = r.vision, VC = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A', gris: '#8a8780' };
-        html += '<div class="lx-sec" style="background:var(--verde-bosque);color:#fff;margin-bottom:1.1rem">' +
-          '<div style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;opacity:0.75;font-weight:700">Visión 2027 · la punta de la cadena</div>' +
-          '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:1.45rem;margin:0.2rem 0">' + esc(V.titulo) + '</div>' +
-          '<p style="margin:0 0 0.8rem;font-size:0.92rem;opacity:0.95">' + esc(V.texto) + '</p>' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0.5rem">' +
-          (V.puntos || []).map(function (x) {
-            return '<div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:0.5rem 0.7rem;font-size:0.78rem">' +
-              '<b style="display:block;font-size:0.84rem">' + esc(x.nombre) + '</b><span style="font-weight:700">' + esc(x.hoy) + '</span>' +
-              '<span style="display:block;opacity:0.8">meta: ' + esc(x.meta) + '</span></div>';
-          }).join('') + '</div></div>';
-      }
+      // Sistema de Medicion: el pilar se lee como el reporte semanal. Limpieza del 28-sep-2026
+      // (Juanma): sin la Vision repetida (vive en el panel principal) ni las tarjetas plegadas
+      // de "Como se calcula", que repetian la lectura numero por numero.
       html += '<div id="lx-host-' + p + '"></div>';
     } else if (p === 'fundamentos') {
       html += cascada(r);
@@ -271,9 +259,7 @@
     html += '<p class="tb-leyenda">Calculado ' + esc(r.gen || '') + '</p>';
     el.innerHTML = html;
     if (conLectura) {
-      var detalle = '<p><b>Las tarjetas del pilar, con su fuente y su meta:</b></p>' +
-        (p === 'fundamentos' ? cascada(r) : '<div class="tb-grid">' + (r.kpis || []).map(tarjeta).join('') + '</div>');
-      window.LECTURA.pintar(document.getElementById('lx-host-' + p), r.lectura, { detalle: detalle, guardar: guardarAccion, marcar: marcarAccion });
+      window.LECTURA.pintar(document.getElementById('lx-host-' + p), r.lectura, { guardar: guardarAccion, marcar: marcarAccion });
     }
     if (p === 'metas') { enlazarInstalador(); cargarVigia(); }
     if (p === 'marketing') pintarPlanes();   // el plan de Meta Ads va al pie de este pilar

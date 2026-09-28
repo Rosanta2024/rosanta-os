@@ -517,12 +517,10 @@
 
     document.getElementById('kpis').innerHTML =
       unidad('Gasto de la semana', q(gastoSem),
-        'mercadería ' + q(merca) + ' · secciones del DRE ' + q(gastoDre) +
-        (gastoAnt !== null
-          ? ' · la anterior ' + q(gastoAnt) +
-            ' (' + qd(gastoSem - gastoAnt) + ')'
-          : '') +
-        (mediaGasto ? ' · media de 4: ' + q(mediaGasto) : ''),
+        // Limpieza del 28-sep-2026: solo contra la anterior y la media de 4; el reparte
+        // mercaderia / DRE ya esta en la tarjeta de al lado y en la tabla de secciones.
+        [gastoAnt !== null ? qd(gastoSem - gastoAnt) + ' contra la anterior' : '',
+         mediaGasto ? 'media de 4: ' + q(mediaGasto) : ''].filter(Boolean).join(' · '),
         (mediaGasto && gastoSem > mediaGasto * 1.2) ? 'mal' : '') +
 
       unidad('Mercadería', q(merca),

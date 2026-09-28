@@ -932,7 +932,7 @@ function medLecturaExpansion_(out) {
     pregunta: '¿Ya estamos listos para crecer?',
     zona: ok === ks.length && ks.length ? 'verde' : 'rojo',
     respuesta: 'Todavía no. Se cumplen ' + ok + ' de ' + ks.length + ' condiciones y hacen falta las tres durante 3 meses seguidos.',
-    numero: { valor: '0 de 3', etiqueta: 'meses seguidos cumpliendo las tres condiciones', meta: 'meta 3 de 3', zona: 'rojo' },
+    numero: { valor: ok + ' de ' + ks.length, etiqueta: 'condiciones que se cumplen hoy (hacen falta 3 meses seguidos)', meta: 'meta ' + ks.length + ' de ' + ks.length, zona: ok === ks.length && ks.length ? 'verde' : 'rojo' },
     extras: [], serie: null,
     palancas: ks.map(function (k) { return { nombre: k.nombre, dueno: k.clave === 'C1' ? 'Juanma' : 'Jeffry', hoy: k.unidad === '%' ? k.valor + '%' : String(k.valor), meta: k.meta_texto, zona: k.zona, nota: '' }; }),
     faltantes: [],
@@ -1033,10 +1033,9 @@ function medVision_(u) {
       try { c = medCascadaResumen_(d, P, M, hoy); } catch (e2) { c = null; }
       p('Se paga sola', c && c.deja !== null ? 'deja ' + medQ_(c.deja) + ' (mes en curso, en proporción)' : '—',
         'piso Q18,896 los 12 meses · venta ' + medQ_(V.venta_2027), c ? c.deja_zona : 'gris');
-      p('Devuelve lo invertido', 'el pago es el 15-mar-2027', 'Q100,000 a Raúl (mínimo ~Q60,000)', 'gris');
-    } else {
-      p('Se paga sola', 'se mide con la meta del mes', 'cubrir la meta los 12 meses de 2027', 'gris');
     }
+    // Limpieza del 28-sep-2026 (Juanma): fuera los puntos que eran texto fijo y siempre salian en gris
+    // ('Devuelve lo invertido', 'Sin Juanma' y 'Se paga sola' para quien no es dueño). Siguen en el texto.
     var pe = (totV + totE) ? Math.round(totE / (totV + totE) * 1000) / 10 : null;
     p('Eventos, segunda línea', pe !== null ? pe + '% del ingreso ' + d.anio : '—', V.eventos_pct + '% del ingreso',
       pe === null ? 'gris' : (pe >= V.eventos_pct ? 'verde' : (pe >= V.eventos_pct / 2 ? 'amarillo' : 'rojo')));
@@ -1047,8 +1046,6 @@ function medVision_(u) {
       p('Rentable: días de caja', String(d.dias_caja), V.caja_dias + ' días', tabZona_(d.dias_caja, V.caja_dias, 7, 'mayor'));
     }
   }
-  var faltan = function (iso) { var q = iso.split('-'); return Math.ceil((new Date(Number(q[0]), Number(q[1]) - 1, Number(q[2])) - hoy) / 86400000); };
-  p('Sin Juanma', 'ensayo de 3 días en junio 2027 (faltan ' + faltan(V.ensayo) + ' días)', 'semana completa desde el 18-oct-2027 con el tablero en verde', 'gris');
   var rs = null;
   try { rs = medResenas_(hoy); } catch (e3) { rs = null; }
   p('Sin bajar la experiencia', rs && rs.estrellas_4 !== null ? rs.estrellas_4 + '★ en las reseñas de las últimas 4 semanas' : 'sin dato de reseñas',

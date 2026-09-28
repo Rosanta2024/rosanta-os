@@ -231,7 +231,7 @@ function _tabFundamentos_(out, P, hoy, auth) {
     fuente: 'FinanzasDatos › total.ventas + meses[].eventos', enlace: 'finanzas&sub=comparativo'
   });
   out.lectura = medLecturaFundamentos_(out, d, M, c, hoy);
-  try { out.vision = medVision_({ rol: 'dueno' }); } catch (eV) { out.vision = null; }
+  // La Vision ya no se repite en la Cascada (limpieza del 28-sep-2026): vive en el panel principal.
 }
 
 // ------------------------------------------------------------- 02 Management
@@ -562,7 +562,7 @@ function _tabMarketing_(out, P, hoy) {
 /* En pausa hasta 2027. Se activa con 3 meses seguidos cumpliendo las tres condiciones. */
 function _tabExpansion_(out, P, hoy) {
   out.texto = 'En pausa hasta 2027. Se activa cuando se cumplan las tres condiciones de abajo durante 3 meses seguidos: ' +
-              'caja con colchon, food cost en meta e inventarios a tiempo. Hoy: 0 de 3 meses.';
+              'caja con colchon, food cost en meta e inventarios a tiempo.';
   try {
     P = P || tabParametros_(); hoy = hoy || new Date();
     var d = _finDatos_(false), u = d.ultima || {};
