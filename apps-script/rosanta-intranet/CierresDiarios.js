@@ -44,14 +44,13 @@ function cieParsear_(texto) {
   if (r.cortesia !== null) r.cortesia = Math.abs(r.cortesia);
   var f = /Fecha inicio:\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(t);
   r.fecha = f ? f[3] + '-' + f[1] + '-' + f[2] : null;
-  // tickets: una linea por documento, "7560 cf cf | CF 425.00"
-  var docs = [], re = /^\s*(\d{3,8})\s+[^\n]*\|[^\n]*?([\d,]+\.\d{2})\s*$/gm, m;
-  while ((m = re.exec(t))) docs.push({ no: m[1], total: Number(m[2].replace(/,/g, '')) });
-  var vistos = {};
-  docs = docs.filter(function (d) { if (vistos[d.no]) return false; vistos[d.no] = true; return true; });
-  r.tickets = docs.length || null;
-  var suma = docs.reduce(function (a, d) { return a + d.total; }, 0);
-  r.cuadra = r.sin_propina !== null && docs.length ? Math.abs(suma - r.sin_propina) < 0.02 : false;
+  // Las MESAS no salen del cierre diario (Juanma, 27-sep-2026: el numero de mesas solo se
+  // ve en el reporte semanal). La columna TICKETS queda vacia a proposito.
+  r.tickets = null;
+  // Cuadra = las formas de pago suman el gran total. Es lo que el cierre si trae completo.
+  var pagos = ['tarjeta', 'efectivo', 'transferencia', 'pedidos_ya', 'uber_eats']
+    .reduce(function (a, k) { return a + (r[k] || 0); }, 0);
+  r.cuadra = r.gran_total !== null && Math.abs(pagos - r.gran_total) < 0.02;
   return r;
 }
 
@@ -114,7 +113,12 @@ function cieLeer_(dias) {
     return h;
   })();
   var v = sh.getDataRange().getValues(), fila = {}, idsLeidos = {};
-  for (var i = 1; i < v.length; i++) { fila[String(v[i][0]).slice(0, 10)] = i + 1; idsLeidos[String(v[i][14])] = true; }
+  // un correo ya guardado se salta, salvo que su fila no cuadre: esa se vuelve a leer (asi se
+  // corrigen solas las filas que dejo la regla vieja de mesas, 27-sep-2026)
+  for (var i = 1; i < v.length; i++) {
+    fila[String(v[i][0]).slice(0, 10)] = i + 1;
+    if (String(v[i][13]) === 'SI') idsLeidos[String(v[i][14])] = true;
+  }
   var rep = { correos: msgs.length, nuevos: 0, repetidos: 0, errores: [] };
   // del mas viejo al mas nuevo: si un dia llega dos veces, el ultimo pisa al primero
   msgs.slice().reverse().forEach(function (mm) {
