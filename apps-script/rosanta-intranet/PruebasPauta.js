@@ -51,6 +51,14 @@ function prPauta_(res) {
       al.some(function (a) { return a.codigo === 'expansion'; }), true);
   });
 
+  prCorrer_(g, 'Un tamaño de audiencia desconocido (-1 de Meta) no dispara expansión', function () {
+    var malos = [-4, -1, 'sin_dato'].every(function (v) {
+      var h = Object.assign({}, base, { audiencia_tam: v });
+      return !psValidar_(h, { cfg: cfg, pixel: {} }).some(function (a) { return a.codigo === 'expansion'; });
+    });
+    prIgual_(g, 'Un tamaño de audiencia desconocido (-1 de Meta) no dispara expansión', malos, true);
+  });
+
   prCorrer_(g, 'CTR alto con CPC bajo es alarma, no logro', function () {
     var al = psValidar_(base, { cfg: cfg, pixel: {} });
     prIgual_(g, 'CTR alto con CPC bajo es alarma, no logro',

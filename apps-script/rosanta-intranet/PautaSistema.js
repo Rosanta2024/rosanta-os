@@ -457,7 +457,8 @@ function psCapturar_(sem) {
     if (tamAud.hasOwnProperty(id)) return tamAud[id];
     try {
       var a = graph_(id, { fields: 'approximate_count_lower_bound' });
-      tamAud[id] = psNum_(a.approximate_count_lower_bound);
+      var n = psNum_(a.approximate_count_lower_bound);
+      tamAud[id] = n !== null && n >= 0 ? n : null; // Meta manda -1 cuando no conoce el tamaño
     } catch (e) { tamAud[id] = null; }
     return tamAud[id];
   }
@@ -479,8 +480,10 @@ function psCapturar_(sem) {
       else resultados = psSumaAcciones_(i.actions, q.acciones) || psSumaAcciones_(i.conversions, q.acciones);
     }
     var auds = ((a.targeting && a.targeting.custom_audiences) || []);
-    var tam = null;
-    auds.forEach(function (x) { var t = tamano(x.id); if (t !== null) tam = (tam || 0) + t; });
+    // Si una sola audiencia no tiene tamaño conocido, la suma no es el tamaño real: se deja vacío.
+    var tam = null, tamIncompleto = false;
+    auds.forEach(function (x) { var t = tamano(x.id); if (t === null) tamIncompleto = true; else tam = (tam || 0) + t; });
+    if (tamIncompleto) tam = null;
     hechos.push({
       id: sem.id + '|' + a.id, semana: sem.id, wk: sem.wk,
       campana: (a.campaign && a.campaign.name) || (i && i.campaign_name) || '',
@@ -499,7 +502,7 @@ function psCapturar_(sem) {
       hook: imp && vistas3s !== null ? psRedondear_(vistas3s / imp * 100, 1) : '',
       retencion: imp && thru !== null ? psRedondear_(thru / imp * 100, 1) : '',
       audiencias: auds.map(function (x) { return x.name; }).join(' · '),
-      audiencia_tam: tam === null ? '' : tam,
+      audiencia_tam: tamIncompleto ? 'sin_dato' : (tam === null ? '' : tam),
       fecha_captura: ahora
     });
   });
@@ -574,6 +577,7 @@ function psValidar_(h, ctx) {
     al.push({ nivel: 'amarillo', codigo: 'desconocido', texto: 'No pude leer qué evento cuenta este conjunto: revisarlo en Meta.' });
   }
   var tam = psNum_(h.audiencia_tam);
+  if (tam !== null && tam < 0) tam = null; // filas capturadas antes del 27-sep sumaron los -1 de Meta
   if (tam !== null && tam < cfg.audiencia_min && alcance > cfg.factor_expansion * Math.max(tam, 1)) {
     al.push({ nivel: 'rojo', codigo: 'expansion',
       texto: 'La audiencia tiene ' + tam + ' personas y alcanzó ' + alcance + ': Meta expandió a frío, no es retargeting.' });

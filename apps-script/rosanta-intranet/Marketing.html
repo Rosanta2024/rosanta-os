@@ -1658,7 +1658,7 @@ function psPintar(){
   $('psTabla').innerHTML=t.conjuntos.length?'<div style="overflow-x:auto"><table><thead><tr><th>Conjunto</th><th>Qué cuenta como resultado</th><th>Resultados</th><th>Reservas atrib.</th><th>Gasto</th><th>Audiencia</th><th>Semáforo</th><th>Estado</th><th>Regla · por qué</th></tr></thead><tbody>'+
     t.conjuntos.map(x=>{const s=PS_SEM[x.semaforo]||['',''];return '<tr><td><b>'+psEsc(x.conjunto)+'</b><div class="muted">'+psEsc(x.campana)+'</div></td>'+
       '<td>'+psEsc(x.resultado_nombre)+'</td><td>'+psNum(x.resultados,0)+'</td><td>'+psNum(x.reservas_atribuidas,0)+'</td><td>'+fmtQ(Number(x.gasto)||0)+'</td>'+
-      '<td>'+(x.audiencia_tam!==''?psNum(x.audiencia_tam,0):'amplia')+'</td>'+
+      '<td>'+(x.audiencia_tam===''?'amplia':(Number(x.audiencia_tam)>=0?psNum(x.audiencia_tam,0):'sin dato'))+'</td>'+
       '<td><span class="chip '+s[1]+'" title="'+psEsc(x.alertas)+'">'+s[0]+' '+psEsc(x.semaforo)+'</span></td>'+
       '<td><b>'+psEsc(x.estado)+'</b></td><td><div>'+psEsc(x.regla)+'</div><div class="muted">'+psEsc(x.razon)+'</div><div>'+psEsc(x.accion)+'</div>'+
       (x.alertas?'<details><summary class="muted">alertas</summary><div style="white-space:pre-line">'+psEsc(x.alertas)+'</div></details>':'')+'</td></tr>'}).join('')+
