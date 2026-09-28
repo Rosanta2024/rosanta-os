@@ -23,7 +23,11 @@ var PRUEBAS_CFG = {
   /** Numeros que deben dar. Actualizar cuando cambie el recetario, a proposito. */
   esperado: {
     platosCocina:        35,
-    preelaboradosCocina: 45,   // 22-sep-2026: 41 -> 45. Los que Jeffry y Juanma fueron
+    preelaboradosCocina: 50,   // 27-sep-2026: 45 -> 50 (Vinagreta N'duja, Aderezo Thai Mani y
+                               // tres fermentados). Desde ese dia la prueba solo FALLA si
+                               // bajan (se perdio una pestana); si suben, AVISO para
+                               // actualizar este numero. Cocina crea pre-elaborados seguido.
+                               // 22-sep-2026: 41 -> 45. Los que Jeffry y Juanma fueron
                                // creando desde la intranet (Aceite Albahaca, los dos
                                // yogures, Mousse Receta). No se habia vuelto a medir.
     conCmvCocina:        28,   // 22-sep-2026: 26 -> 28. Dos platos dejaron de costear en
@@ -542,7 +546,11 @@ function prRecetario_(res) {
     var conCmv = platos.filter(function (r) { return r.cmv != null && r.cmv > 0; });
 
     prIgual_(g, 'Fichas de plato',   platos.length,             e.platosCocina);
-    prIgual_(g, 'Pre-elaborados',    coc.length - platos.length, e.preelaboradosCocina);
+    var nPre = coc.length - platos.length;
+    prAnotar_(g, 'Pre-elaborados', nPre === e.preelaboradosCocina ? 'OK' : (nPre > e.preelaboradosCocina ? 'AVISO' : 'FALLA'),
+      nPre > e.preelaboradosCocina ? 'hay mas que los esperados: actualizar preelaboradosCocina en Pruebas.js' :
+      (nPre < e.preelaboradosCocina ? 'faltan pre-elaborados: se perdio o se renombro una pestana' : ''),
+      nPre, e.preelaboradosCocina);
     prIgual_(g, 'Platos con CMV',    conCmv.length,             e.conCmvCocina);
     prAnotar_(g, 'Platos sin costear',
       vacias.length === e.vaciasCocina ? 'OK' : 'AVISO',
