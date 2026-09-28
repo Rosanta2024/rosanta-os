@@ -71,6 +71,12 @@ function medMetasFilas_() {
  * Las metas de UN mes, cada una con su origen: la fila de METAS si la trae, si no
  * PARAMETROS, si no null ("sin meta"). P es tabParametros_().
  */
+/** Texto de una meta que puede faltar: nunca imprime "null" (28-sep-2026). */
+function medMetaTxt_(v, antes, despues, siFalta) {
+  if (v === null || v === undefined || (typeof v === 'number' && isNaN(v))) return siFalta === undefined ? 'sin meta' : siFalta;
+  return (antes || '') + v + (despues || '');
+}
+
 function medMetasMes_(anio, m, P) {
   var fila = null;
   try { medMetasFilas_().forEach(function (f) { if (f.anio === anio && f.m === m) fila = f; }); } catch (e) { fila = null; }
@@ -86,8 +92,8 @@ function medMetasMes_(anio, m, P) {
     venta_rest: fila && fila.venta ? { valor: fila.venta, origen: 'METAS' } : { valor: null, origen: 'sin meta' },
     eventos:    de('meta_eventos_q', 'eventos_mes_meta_q'),
     minimo:     de('minimo_venta_total'),
-    food:       de('tramo_food_pct'),
-    brecha:     de('tramo_brecha_pts'),
+    food:       de('tramo_food_pct', 'food_cost_objetivo_pct'),     // sin tramo del mes, la meta final
+    brecha:     de('tramo_brecha_pts', 'brecha_cmv_revisar_pts'),
     ticket:     de('meta_ticket_q', 'ticket_promedio_meta_q'),
     clientes:   de('meta_clientes_nuevos', 'clientes_nuevos_mes_meta'),
     lmx:        de('meta_lmx_dia', 'comensales_lmx_meta'),
@@ -246,10 +252,10 @@ function medMiSemana_(u, rol, auth) {
     var k = null;
     try { k = mktKpisMes_(d.anio, d); } catch (e0) { k = null; }
     var Kc = k ? k.meses[hoy.getMonth() + 1] : null, Ku = (k && mc.ultimo) ? k.meses[mc.ultimo.m] : null;
-    it('Clientes nuevos del mes', Kc && Kc.altas !== null ? String(Kc.altas) : '—', 'meta ' + M.clientes.valor + ' · "Cliente que visitó"',
+    it('Clientes nuevos del mes', Kc && Kc.altas !== null ? String(Kc.altas) : '—', medMetaTxt_(M.clientes.valor, 'meta ') + ' · "Cliente que visitó"',
        Kc ? tabZona_(Kc.altas, M.clientes.valor, 30, 'mayor') : 'gris');
     it('CAC ' + (Ku ? Ku.mes : ''), Ku && Ku.publicable && Ku.cac !== null ? 'Q' + Math.round(Ku.cac) : 'no se publica',
-       'máximo Q' + P.cac_max_q.valor + (Ku && Ku.lectura !== null ? ' · lectura ' + Ku.lectura + '%' : ''),
+       medMetaTxt_(P.cac_max_q.valor, 'máximo Q') + (Ku && Ku.lectura !== null ? ' · lectura ' + Ku.lectura + '%' : ''),
        Ku && Ku.publicable ? tabZona_(Ku.cac, P.cac_max_q.valor, P.cac_max_q.valor * 1.33, 'menor') : 'gris');
     var semCom = (d.ultima || {}).com;
     var metaSem = M.comensales ? Math.round(M.comensales / new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate() * 7) : null;
@@ -261,12 +267,12 @@ function medMiSemana_(u, rol, auth) {
   var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
   if (rol === 'chef') {
     var ul = d.ultima || {};
-    it('Food cost real (móvil 4)', ul.cogs_m4 + '%', 'tramo ≤' + M.food.valor + '% · meta ' + d.meta_cogs + '%',
+    it('Food cost real (móvil 4)', medMetaTxt_(ul.cogs_m4, '', '%', '—'), medMetaTxt_(M.food.valor, 'tramo ≤', '%') + ' · meta ' + d.meta_cogs + '%',
        tabZona_(ul.cogs_m4, M.food.valor, M.food.valor + 3, 'menor'));
     var b = null;
     try { var rt = getCmvRealTeorico(auth); b = rt && rt.ok ? rt.bloque : null; } catch (e) { b = null; }
     it('Brecha real contra teórico', b ? (b.brecha_pts > 0 ? '+' : '') + b.brecha_pts + ' pts' : '—',
-       'tramo ≤' + M.brecha.valor + ' pts', b ? tabZona_(b.brecha_pts, M.brecha.valor, M.brecha.valor + 2, 'menor') : 'gris');
+       medMetaTxt_(M.brecha.valor, 'tramo ≤', ' pts'), b ? tabZona_(b.brecha_pts, M.brecha.valor, M.brecha.valor + 2, 'menor') : 'gris');
     var rc = inv.areas.COCINA;
     it('Inventario de cocina', rc.ultimo_cerrado || 'ninguno', 'esperado ' + inv.esperado + ' antes del día ' + inv.dia_limite, rc.zona);
     try {
@@ -285,13 +291,13 @@ function medMiSemana_(u, rol, auth) {
      tabZona_(lmx, M.lmx.valor, M.lmx.valor * 0.85, 'mayor'));
   var lect = null;
   try { var k = mktKpisMes_(d.anio, d); lect = k.meses[hoy.getMonth() + 1] ? k.meses[hoy.getMonth() + 1].lectura : null; } catch (e2) { lect = null; }
-  it('Lectura de Wix', lect !== null ? lect + '%' : '—', 'meta ' + M.lectura.valor + '% · mesas cerradas',
+  it('Lectura de Wix', lect !== null ? lect + '%' : '—', medMetaTxt_(M.lectura.valor, 'meta ', '%') + ' · mesas cerradas',
      tabZona_(lect, M.lectura.valor, 50, 'mayor'));
   var rb = inv.areas.BARRA;
   it('Inventario de barra', rb.ultimo_cerrado || 'ninguno', 'esperado ' + inv.esperado, rb.zona);
   try {
     var rs = medResenas_(hoy);
-    it('Reseñas de Google esta semana', String(rs.esta_semana), 'meta ' + M.resenas.valor + ' · la semana pasada ' + rs.semana_pasada,
+    it('Reseñas de Google esta semana', String(rs.esta_semana), medMetaTxt_(M.resenas.valor, 'meta ') + ' · la semana pasada ' + rs.semana_pasada,
        tabZona_(rs.esta_semana, M.resenas.valor, Math.max(M.resenas.valor - 1, 1), 'mayor'));
   } catch (e3) { /* sin la hoja del bot: la franja sigue */ }
   out.enlace = { texto: 'Abrir Sala', page: 'sala' };
@@ -367,7 +373,7 @@ function medCascadaResumen_(d, P, M, hoy) {
   try { var k = mktKpisMes_(d.anio, d); var km = k.meses[hoy.getMonth() + 1] || (mc.ultimo ? k.meses[mc.ultimo.m] : null); lect = km ? km.lectura : null; }
   catch (e2) { lect = null; }
   h('Lectura de Wix', tabZona_(lect, M.lectura.valor, 50, 'mayor'),
-    lect === null ? 'sin altas este mes' : lect + '% · meta ' + M.lectura.valor + '%', 'José');
+    lect === null ? 'sin altas este mes' : lect + '% · ' + medMetaTxt_(M.lectura.valor, 'meta ', '%'), 'José');
   try {
     var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
     var zc = inv.areas.COCINA.zona, zb = inv.areas.BARRA.zona;
@@ -809,7 +815,7 @@ function medLecturaManagement_(out, d, M, hoy) {
   var nMesas = mesas ? mesas.falta_consumo.length + mesas.sin_cerrar.length : null;
   var falt = [];
   if (nMesas) falt.push({ texto: nMesas + ' mesas de los últimos 7 días sin cerrar en Wix: sin eso Marketing no puede medir el CAC.', zona: 'rojo' });
-  if (lec && lec.zona !== 'verde') falt.push({ texto: 'Lectura de Wix del mes: ' + (lec.valor === null ? 'sin dato' : lec.valor + '%') + ' (meta ' + M.lectura.valor + '%).', zona: lec.zona });
+  if (lec && lec.zona !== 'verde') falt.push({ texto: 'Lectura de Wix del mes: ' + (lec.valor === null ? 'sin dato' : lec.valor + '%') + ' (' + medMetaTxt_(M.lectura.valor, 'meta ', '%') + ').', zona: lec.zona });
   if (!res || res.estado !== 'ok') falt.push({ texto: 'No se pudo leer la hoja del bot de reseñas.', zona: 'gris' });
   return { pilar: 'management', titulo: 'Sala', dueno: 'José',
     pregunta: '¿Vendemos suficiente por persona?',
@@ -821,9 +827,9 @@ function medLecturaManagement_(out, d, M, hoy) {
     extras: [],
     serie: { titulo: 'Ticket por semana, contra la meta', unidad: 'Q', sentido: 'mayor', meta: M.ticket.valor, puntos: medSerie_(d, 'tp', 8) },
     palancas: [
-      medPal_('Mesas cerradas en Wix (lectura)', 'José', lec, lec && lec.valor !== null ? lec.valor + '%' : '—', M.lectura.valor + '%', 'Seated al sentar; el consumo al terminar.'),
-      medPal_('Comensales por día, lunes a miércoles', 'José', lmx, lmx && lmx.valor !== null ? String(lmx.valor) : '—', String(M.lmx.valor), 'Ocupación entre semana, sin descuentos de precio.'),
-      medPal_('Reseñas nuevas en Google (semana pasada)', 'Meseros', res, res && res.valor !== null ? String(res.valor) : '—', M.resenas.valor + ' por semana', 'Pedirlas en el huddle.'),
+      medPal_('Mesas cerradas en Wix (lectura)', 'José', lec, lec && lec.valor !== null ? lec.valor + '%' : '—', medMetaTxt_(M.lectura.valor, '', '%'), 'Seated al sentar; el consumo al terminar.'),
+      medPal_('Comensales por día, lunes a miércoles', 'José', lmx, lmx && lmx.valor !== null ? String(lmx.valor) : '—', medMetaTxt_(M.lmx.valor), 'Ocupación entre semana, sin descuentos de precio.'),
+      medPal_('Reseñas nuevas en Google (semana pasada)', 'Meseros', res, res && res.valor !== null ? String(res.valor) : '—', medMetaTxt_(M.resenas.valor, '', ' por semana'), 'Pedirlas en el huddle.'),
       medPal_('Venta de lunes a miércoles', 'José', vl, medQ_(vl && vl.valor), 'se mide en octubre', '')
     ],
     faltantes: falt,
@@ -882,7 +888,7 @@ function medLecturaProfit_(out, d, M, hoy, conQ) {
     respuesta: medZonaTexto_(k11 && k11.zona, 'No. El food cost está en ' + u.cogs_m4 + '%, dentro del tramo del mes (≤' + tramo + '%).',
       'Un poco. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%.',
       'Sí. El food cost está en ' + u.cogs_m4 + '% y el tramo del mes es ≤' + tramo + '%. La meta final es ' + d.meta_cogs + '%.'),
-    numero: { valor: u.cogs_m4 + '%', etiqueta: 'food cost de cocina y barra juntas, móvil de 4 semanas · S' + u.w, meta: 'tramo ≤' + tramo + '% · meta ' + d.meta_cogs + '%', zona: k11 ? k11.zona : 'gris' },
+    numero: { valor: medMetaTxt_(u.cogs_m4, '', '%', '—'), etiqueta: 'food cost de cocina y barra juntas, móvil de 4 semanas · S' + u.w, meta: 'tramo ≤' + tramo + '% · meta ' + d.meta_cogs + '%', zona: k11 ? k11.zona : 'gris' },
     extras: extras,
     serie: { titulo: 'Food cost por semana (móvil 4), contra el tramo', unidad: '%', sentido: 'menor', meta: tramo, puntos: medSerie_(d, 'cogs_m4', 8) },
     palancas: [
@@ -915,7 +921,7 @@ function medLecturaMarketing_(out, d, M, c, hoy) {
     extras: [],
     serie: { titulo: 'Comensales por semana (POS), contra la meta semanal', unidad: '', sentido: 'mayor', meta: metaSem, puntos: medSerie_(d, 'com', 8) },
     palancas: [
-      medPal_('Clientes nuevos del mes', 'Vanessa', k24, k24 && k24.valor !== null ? String(k24.valor) : '—', String(M.clientes.valor), 'Pauta optimizada a reserva real.'),
+      medPal_('Clientes nuevos del mes', 'Vanessa', k24, k24 && k24.valor !== null ? String(k24.valor) : '—', medMetaTxt_(M.clientes.valor), 'Pauta optimizada a reserva real.'),
       medPal_('CAC', 'Vanessa', k15, k15 && k15.valor !== null ? medQ_(k15.valor) : 'no se publica', '≤Q60', k15 ? k15.periodo : ''),
       medPal_('Eventos cerrados, en Q', 'Juanma', k17, k17 ? medQ_(k17.valor) : '—', M.eventos.valor ? medQ_(M.eventos.valor) : '—', 'Seguimiento de cotizaciones.'),
       medPal_('Repetición', 'Juanma', k19, k19 && k19.valor !== null ? k19.valor + '%' : '—', '24% → 28% en marzo', '')
@@ -1040,7 +1046,7 @@ function medVision_(u) {
     p('Eventos, segunda línea', pe !== null ? pe + '% del ingreso ' + d.anio : '—', V.eventos_pct + '% del ingreso',
       pe === null ? 'gris' : (pe >= V.eventos_pct ? 'verde' : (pe >= V.eventos_pct / 2 ? 'amarillo' : 'rojo')));
     var u4 = d.ultima || {};
-    p('Rentable: food cost', u4.cogs_m4 + '%', V.food_pct + '%', tabZona_(u4.cogs_m4, V.food_pct, V.food_pct + 5, 'menor'));
+    p('Rentable: food cost', medMetaTxt_(u4.cogs_m4, '', '%', '—'), V.food_pct + '%', tabZona_(u4.cogs_m4, V.food_pct, V.food_pct + 5, 'menor'));
     if (conQ) {        // la salud de la caja la ve el dueño, no el equipo
       p('Rentable: EBITDA del año', d.total.ebitdap + '%', 'más de ' + V.ebitda_pct + '%', tabZona_(d.total.ebitdap, V.ebitda_pct, 0, 'mayor'));
       p('Rentable: días de caja', String(d.dias_caja), V.caja_dias + ' días', tabZona_(d.dias_caja, V.caja_dias, 7, 'mayor'));

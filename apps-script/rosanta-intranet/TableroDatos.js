@@ -35,8 +35,8 @@ var TAB_PARAMETROS = {
   brecha_cmv_revisar_pts:     { def: 2,    uso: 'K12 brecha real contra teorico: revisar' },
   brecha_cmv_auditar_pts:     { def: 4,    uso: 'K12 brecha real contra teorico: auditar' },
   inventario_cierre_dia:      { def: 5,    uso: 'K03 dia limite para cerrar el mes anterior' },
-  ticket_promedio_meta_q:     { def: 280,  uso: 'K14 ticket por comensal' },
-  comensales_lmx_meta:        { def: 16,   uso: 'K14 comensales por dia lunes a miercoles' },
+  ticket_promedio_meta_q:     { def: 245,  uso: 'K14 ticket por comensal' },   // 245 = plan 2026 (antes 280, 28-sep-2026)
+  comensales_lmx_meta:        { def: 14,   uso: 'K14 comensales por dia lunes a miercoles' },   // 14 = METAS (antes 16)
   eventos_mes_meta:           { def: 2,    uso: 'K17 eventos por mes' },
   roas_meta:                  { def: 3,    uso: 'K16 ROAS de pauta' },
   cac_max_q:                  { def: null, uso: 'K15 CAC maximo por cliente' },
@@ -273,7 +273,7 @@ function _tabManagement_(out, P, hoy) {
   } catch (e) { out.avisos.push('CRM: ' + String(e && e.message || e)); }
   out.kpis.push(tabKpi_({
     clave: 'K20', nombre: 'Lectura de Wix: mesas cerradas · José', valor: lect, unidad: '%', periodo: lectMes,
-    meta: M.lectura.valor, meta_origen: M.lectura.origen, meta_texto: 'meta ' + M.lectura.valor + '% · bajo 50% no hay CAC',
+    meta: M.lectura.valor, meta_origen: M.lectura.origen, meta_texto: medMetaTxt_(M.lectura.valor, 'meta ', '%') + ' · bajo 50% no hay CAC',
     zona: tabZona_(lect, M.lectura.valor, 50, 'mayor'),
     fuente: 'CrmDatos › crmAltasPorMes_ (Cliente que visitó ÷ visitó + histórica)', enlace: 'marketing&sub=crm',
     nota: 'Seated al sentar la mesa, consumo al terminar. La lista de mesas por cerrar llega los lunes por correo.',
@@ -284,7 +284,7 @@ function _tabManagement_(out, P, hoy) {
   out.kpis.push(tabKpi_({
     clave: 'K18', nombre: 'Reseñas nuevas en Google, semana pasada · José', valor: rs ? rs.semana_pasada : null, unidad: 'reseñas',
     periodo: rs ? ('esta semana van ' + rs.esta_semana) : '',
-    meta: M.resenas.valor, meta_origen: M.resenas.origen, meta_texto: 'meta ' + M.resenas.valor + ' por semana · rojo bajo ' + Math.max(M.resenas.valor - 1, 1),
+    meta: M.resenas.valor, meta_origen: M.resenas.origen, meta_texto: M.resenas.valor === null ? 'sin meta' : 'meta ' + M.resenas.valor + ' por semana · rojo bajo ' + Math.max(M.resenas.valor - 1, 1),
     zona: rs ? tabZona_(rs.semana_pasada, M.resenas.valor, Math.max(M.resenas.valor - 1, 1), 'mayor') : 'gris',
     fuente: 'hoja del bot de reseñas de Google (Rosanta - Control de Reseñas GBP › Reseñas)',
     nota: rs ? ('promedio de las ultimas 4 semanas: ' + rs.prom_4 + ' por semana' + (rs.estrellas_4 !== null ? ' · ' + rs.estrellas_4 + '★' : '') + '. No cuenta la carga inicial del bot (' + rs.carga_inicial + ').') : 'sin dato',
@@ -502,7 +502,7 @@ function _tabMarketing_(out, P, hoy) {
   out.kpis.push(tabKpi_({
     clave: 'K24', nombre: 'Clientes nuevos del mes · Vanessa', valor: Kc ? Kc.altas : null, unidad: 'clientes',
     periodo: Mt.mes + ' en curso' + (M ? ' · ' + M.mes + ' cerro en ' + M.altas : ''),
-    meta: Mt.clientes.valor, meta_origen: Mt.clientes.origen, meta_texto: 'meta ' + Mt.clientes.valor + ' · rojo bajo 30',
+    meta: Mt.clientes.valor, meta_origen: Mt.clientes.origen, meta_texto: Mt.clientes.valor === null ? 'sin meta' : 'meta ' + Mt.clientes.valor + ' · rojo bajo 30',
     zona: Kc ? tabZona_(Kc.altas, Mt.clientes.valor, 30, 'mayor') : 'gris',
     fuente: 'CrmDatos › crmAltasPorMes_ (segmento "Cliente que visitó")', enlace: 'marketing&sub=crm',
     nota: Kc && Kc.lectura !== null ? ('lectura de Wix ' + Kc.lectura + '%: si baja, este numero se queda corto') : 'sin altas este mes'
@@ -540,7 +540,7 @@ function _tabMarketing_(out, P, hoy) {
   out.kpis.push(tabKpi_({
     clave: 'K19', nombre: 'Repeticion: reservas de clientes que ya vinieron · Juanma', valor: rUsa ? rUsa.pct : null, unidad: '%',
     periodo: rUsa ? ((rUsa === rMes ? Mt.mes : (mc.ultimo ? mc.ultimo.mes : '')) + ' · ' + rUsa.repetidos + ' de ' + (rUsa.nuevos + rUsa.repetidos) + ' reservas · ' + rUsa.semanas + ' semanas') : '',
-    meta: metaRep, meta_origen: P.repeticion_meta_pct ? P.repeticion_meta_pct.origen : 'plan', meta_texto: 'meta ' + metaRep + '% · 28% en marzo · rojo bajo 20%',
+    meta: metaRep, meta_origen: P.repeticion_meta_pct && P.repeticion_meta_pct.valor ? P.repeticion_meta_pct.origen : 'plan', meta_texto: 'meta ' + metaRep + '% · 28% en marzo · rojo bajo 20%',
     zona: rUsa ? tabZona_(rUsa.pct, metaRep, 20, 'mayor') : 'gris',
     tendencia: (rMes && rAnt && rUsa === rMes) ? tabTendencia_(rMes.pct, rAnt.pct, mc.ultimo.mes) : null,
     fuente: 'pauta_semanal › clientes_nuevos y repetidos (ClientesNuevos.js del Marketing OS, cada lunes)', enlace: 'marketing',
