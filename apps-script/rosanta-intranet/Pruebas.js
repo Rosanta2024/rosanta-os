@@ -45,7 +45,8 @@ var PRUEBAS_CFG = {
       El 14-sep-2026 la ficha paso a medir sin IVA (decision de Juanma): son los
       valores de la v16 multiplicados por 1.12. La ensalada era 15.0. */
   control: {
-    'ensalada rosanta'         : 17.2,   // 27-sep-2026: 16.8 -> 17.2, aguacate de Q1.50 a Q2.00 en el Banco (p217).
+    'ensalada rosanta'         : 16.8,   // 27-sep-2026: fue 17.2 unas horas por el aguacate a Q2.00 en el Banco;
+                                         // Juanma lo devolvio a Q1.50, el precio del inventario de agosto (p217).
                                          // v16: bajo de 15.9 a 15.0 (con IVA) al corregirse la gremolata
     'tabla de jamones y quesos': 25.3,
     'gratin de papas'          : 22.2,

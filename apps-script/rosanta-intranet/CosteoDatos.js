@@ -795,7 +795,7 @@ function probarCosteo() {
   // Valores de la v16 (24 ago 2026), pasados a precio SIN IVA el 14-sep-2026 (x 1.12):
   // la ensalada era 15.0 sobre precio con IVA. Los de la v9 y la v14 ya no aplican.
   var control = {
-    'ensalada rosanta'         : 17.2,  // 27-sep-2026: 16.8 -> 17.2 porque el aguacate subio de
+    'ensalada rosanta'         : 16.8,  // 27-sep-2026: fue 17.2 unas horas porque el aguacate subio de
                                         // Q1.50 a Q2.00 la unidad en el Banco (p217). Con Q1.50
                                         // vuelve a dar 16.8: el calculo no cambio.
     'tabla de jamones y quesos': 25.3,
