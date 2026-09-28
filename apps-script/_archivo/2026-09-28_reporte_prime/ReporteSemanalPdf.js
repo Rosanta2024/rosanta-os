@@ -242,38 +242,42 @@ function _repHtmlPdf_(d) {
       : '<p class="nota">Sin ventas por plato cargadas para esta semana.</p>';
   });
 
-  // 7 · Prime cost (28-sep-2026): el reporte es para los supervisores de cocina y barra;
-  // solo COGS y costo del personal. El P&L con gastos y resultado queda en Finanzas.
-  var SEM = 4.345, labor = p2.labor_semana || 0, cogs = pl.cogs || 0, prime = cogs + labor;
-  function fp(nombre, monto, cls) {
-    return { cls: cls, c: [esc(nombre), q(monto), pl.ventas ? pct(monto / pl.ventas * 100) : '—', prime ? pct(monto / prime * 100) : '—'] };
+  // 7
+  h += '<h2 class="salto">7 · Personal y P&amp;L semanal</h2>' + kpis([
+    [p2.prime < 60 ? 'verde' : (p2.prime <= 65 ? 'amarillo' : 'rojo'), 'Prime cost', pct(p2.prime), 'móvil de 4: ' + pct(p2.prime_m4)],
+    ['', 'Nómina devengada de la semana', q(p2.labor_semana), pct(p2.labor_pct) + ' de la venta · planilla del mes ÷ 4.345'],
+    ['', 'Sueldos fijos del mes', pm ? q(pm.fija) : '—', pm ? ('planilla ' + esc(pm.desde) + (pm.origen === 'estimada' ? ' (estimada)' : '')) : 'sin planilla'],
+    ['', 'Personal extra del mes', pm ? q(pm.extra) : '—', pm ? ('cocina ' + q(pm.extra_cocina) + ' · barra y sala ' + q(pm.extra_barra) + ' · ' + num(pm.n_extra) + ' personas') : '']
+  ]) + '<p class="nota">' + esc(p2.nota) + '</p>';
+  function fila(nombre, monto, cls) {
+    return { cls: cls, c: [esc(nombre), q(monto), pl.gasto ? pct(monto / pl.gasto * 100) : '—', pl.ventas ? pct(monto / pl.ventas * 100) : '—'] };
   }
-  var filasP = [fp('Mercadería cocina (alimentos, con y sin factura)', pl.cogs_cocina || 0),
-                fp('Mercadería barra (bebidas, coctelería, licores)', pl.cogs_barra || 0),
-                fp('COGS total', cogs, 'total')];
-  if (pm) {
-    var fija = pm.fija / SEM, exC = pm.extra_cocina / SEM, exB = pm.extra_barra / SEM, resto = labor - fija - exC - exB;
-    filasP.push(fp('Sueldos fijos (planilla ' + pm.desde + ' ÷ 4.345)', fija));
-    filasP.push(fp('Personal extra cocina', exC));
-    filasP.push(fp('Personal extra barra y sala', exB));
-    if (Math.abs(resto) >= 1) filasP.push(fp('Otros de planilla', resto));
-  }
-  filasP.push(fp('Personal total', labor, 'total'));
-  filasP.push(fp('PRIME COST', prime, 'total'));
-  h += '<h2 class="salto">7 · Prime cost de la semana</h2>' + kpis([
-    [p2.prime < 60 ? 'verde' : (p2.prime <= 65 ? 'amarillo' : 'rojo'), 'Prime cost', pct(p2.prime), q(prime) + ' · meta &lt;60% · móvil de 4: ' + pct(p2.prime_m4)],
-    ['', 'Personal de la semana', q(labor), pct(p2.labor_pct) + ' de la venta'],
-    ['', 'COGS de la semana', q(cogs), pl.ventas ? pct(cogs / pl.ventas * 100) + ' de la venta' : ''],
-    ['', 'Venta de la semana', q(pl.ventas), 'base de los porcentajes']
-  ]) + tabla(['Concepto', 'Monto de la semana', '% de ventas', '% del prime cost'], filasP) +
-    '<p class="nota">Prime cost = mercadería de la semana + costo del personal de la semana. El personal es la planilla del mes ÷ 4.345 (devengado), ' +
-    'no lo que el banco pagó esta semana' + (pm && pm.origen === 'estimada' ? '; la planilla del mes es estimada' : '') +
-    '. Meta menor a 60% de la venta; arriba de 65% es crítico. La mercadería de barra es compra de la semana, no consumo.</p>';
+  h += tabla(['Concepto', 'Monto', '% del gasto', '% de ventas'],
+    [fila('Mercadería cocina (alimentos, con y sin factura)', pl.cogs_cocina), fila('Mercadería barra (bebidas, coctelería, licores)', pl.cogs_barra), fila('COGS total', pl.cogs, 'total'),
+     fila('Nómina devengada', pl.labor)]
+    .concat(pl.secciones.map(function (s) { return fila(s.seccion, s.q); }))
+    .concat([fila('GASTO TOTAL', pl.gasto, 'total'),
+             { cls: 'total', c: ['Resultado', '<span class="' + (pl.resultado >= 0 ? 'pos' : 'neg') + '">' + q(pl.resultado) + '</span>', '', pct(pl.resultado_pct)] }])) +
+    '<p class="nota">' + esc(pl.nota_nomina) + ' Marketing va incluido (' + q(pl.marketing) + '); sin marketing el resultado sería ' + q(pl.resultado_sin_marketing) + '.</p>';
 
-  // 8 · Acciones
-  h += '<h2>8 · Acciones de la semana</h2>';
+  // 8
+  h += '<h2 class="salto">8 · Cómo se construye el equilibrio, y las acciones</h2>';
+  if (pe) {
+    h += '<table class="dos"><tr><td>' +
+      tabla(['Costos fijos (PRESUPUESTO)', 'Al mes'],
+        pe.fijos.map(function (f) { return { c: [esc(f.seccion) + (f.del_mes ? ' (del mes)' : '') + (f.anual ? ' (anual ÷ 12)' : ''), q(f.mensual)] }; })
+          .concat([{ cls: 'total', c: ['Fijos del mes', q(pe.fijo_mes)] }, { cls: 'total', c: ['Fijos por semana (÷ 4.345)', q(pe.fijo_semana)] }])) +
+      '</td><td>' +
+      tabla(['Variables, % de la venta', ''],
+        pe.variables.map(function (x) { return { c: [esc(x.seccion), pct(x.pct)] }; })
+          .concat([{ c: ['Total variable', pct(pe.variables_pct)] }, { c: ['Margen de contribución', pct(pe.mc)] },
+                   { cls: 'total', c: ['Punto de equilibrio', q(pe.pe_semana) + ' / semana · ' + q(pe.pe_dia) + ' / día'] }])) +
+      '</td></tr></table>' +
+      '<p class="nota">' + esc(pe.nota) + '</p>';
+  }
   var ac = d.acciones;
-  h += (ac.lista.length ? tabla(['Acción', 'Responsable', 'Por qué (el dato)'], ac.lista.map(function (a) { return { c: ['<b>' + esc(a.accion) + '</b>', esc(a.responsable), esc(a.porque)] }; }))
+  h += '<h3>Acciones de la semana</h3>' +
+    (ac.lista.length ? tabla(['Acción', 'Responsable', 'Por qué (el dato)'], ac.lista.map(function (a) { return { c: ['<b>' + esc(a.accion) + '</b>', esc(a.responsable), esc(a.porque)] }; }))
                      : '<p class="nota">Sin acciones escritas para esta semana.</p>');
 
   h += '<p class="pie">Rosanta · CORSAGA, S.A. · Fuentes: ' + esc(d.fuentes) + ' · Los responsables son departamentos: el documento no lleva nombres de personas.</p>';

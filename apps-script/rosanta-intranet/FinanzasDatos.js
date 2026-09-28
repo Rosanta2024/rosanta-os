@@ -581,7 +581,15 @@ var FIN_FUERA = ['DEVOLUCION_INVERSION', 'CARGO_FRAUDULENTO', 'PAGO_TARJETA_CRED
                  'PERSONAL', 'SALDO', 'POR_CLASIFICAR', 'ANULADA',
                  // 21-sep-2026 (Juanma): factura a nombre de la empresa que no es del
                  // restaurante ni gasto personal. No es gasto ni extraccion.
-                 'FACTURA_AJENA'];
+                 'FACTURA_AJENA',
+                 // 28-sep-2026 (Juanma, caso por caso): el pago del banco de facturas que
+                 // ya cuentan por FEL y que la regla 15 no puede casar sola (varias facturas
+                 // en un pago, abonos parciales, un pago doble que se desconto despues).
+                 // Sigue siendo salida de caja (CajaDatos lo cuenta); en el DRE ya esta la factura.
+                 'PAGO_FACTURA_FEL',
+                 // 28-sep-2026: gasto del año anterior pagado este año (la renta de
+                 // diciembre 2025 pagada el 2-ene). Es de 2025: no entra al DRE de 2026.
+                 'PERIODO_ANTERIOR'];
 
 // Hoja -> columnas. Seccion 3 de la especificacion.
 var FIN_LIBROS = [

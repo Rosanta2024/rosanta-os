@@ -38,38 +38,6 @@
     return real <= meta ? 'verde' : (real <= meta + 3 ? 'amarillo' : 'rojo');
   }
 
-  // Prime cost de la semana = COGS + personal devengado (planilla del mes ÷ 4.345).
-  // Lo usan la pagina y el PDF; el reparto del personal sale de la planilla del mes.
-  function primeFilas(d) {
-    var pl = d.pl, pe2 = d.personal, pm = pe2.planilla_mes, SEM = 4.345;
-    var ventas = pl.ventas, labor = pe2.labor_semana || 0, cogs = pl.cogs || 0, total = cogs + labor;
-    function f(nombre, monto, cls) {
-      return { nombre: nombre, monto: monto, cls: cls,
-               ventas_pct: ventas ? monto / ventas * 100 : null, prime_pct: total ? monto / total * 100 : null };
-    }
-    var filas = [f('Mercadería cocina (alimentos, con y sin factura)', pl.cogs_cocina || 0),
-                 f('Mercadería barra (bebidas, coctelería, licores)', pl.cogs_barra || 0),
-                 f('COGS total', cogs, 'total')];
-    if (pm) {
-      var fija = pm.fija / SEM, exC = pm.extra_cocina / SEM, exB = pm.extra_barra / SEM, resto = labor - fija - exC - exB;
-      filas.push(f('Sueldos fijos (planilla ' + pm.desde + ' ÷ 4.345)', fija));
-      filas.push(f('Personal extra cocina', exC));
-      filas.push(f('Personal extra barra y sala', exB));
-      if (Math.abs(resto) >= 1) filas.push(f('Otros de planilla', resto));
-    }
-    filas.push(f('Personal total', labor, 'total'));
-    filas.push(f('PRIME COST', total, 'total'));
-    return {
-      filas: filas, ventas: ventas, cogs: cogs, labor: labor, total: total,
-      cogs_pct: ventas ? cogs / ventas * 100 : null, labor_pct: pe2.labor_pct,
-      pct: pe2.prime, m4: pe2.prime_m4,
-      zona: pe2.prime < 60 ? 'verde' : (pe2.prime <= 65 ? 'amarillo' : 'rojo'),
-      nota: 'Prime cost = mercadería de la semana + costo del personal de la semana. El personal es la planilla del mes ÷ 4.345 ' +
-            '(devengado), no lo que el banco pagó esta semana' + (pm && pm.origen === 'estimada' ? '; la planilla del mes es estimada' : '') +
-            '. Meta menor a 60% de la venta; arriba de 65% es crítico. La mercadería de barra es compra de la semana, no consumo.'
-    };
-  }
-
   function pintar(d) {
     D = d; CLAVE = d.semana.clave;
     // "Guardar PDF en Drive": ruta del servidor con la semana que se esta viendo (solo dueño)
@@ -222,24 +190,8 @@
     if (ver(6)) h += '<section class="rp"><h2>' + tit(6, AREA ? 'Venta y margen de ' + AREAS_VER[0].toLowerCase() : 'Cocina y Barra') + '</h2>' + (d.areas.error ? '<div class="rp-error">' + esc(d.areas.error) + '</div>' : '') +
       '<div class="rp-dos">' + AREAS_VER.map(function (nom) { return bloqueArea(nom, d.areas[nom.toLowerCase()]); }).join('') + '</div></section>';
 
-    // ---- 7. prime cost (reporte para supervisores, 28-sep-2026): solo COGS y el costo del
-    // personal de la semana. El P&L completo con gastos y resultado queda en Finanzas (SECC).
-    if (ver(7) && !SECC) {
-    var pr = primeFilas(d);
-    h += '<section class="rp"><h2>' + tit(7, 'Prime cost de la semana') + '</h2>' +
-      '<div class="rp-kpis">' +
-      kpi(pr.zona, 'Prime cost', pct(pr.pct), q(pr.total) + ' · meta &lt;60% · móvil de 4: ' + pct(pr.m4)) +
-      kpi('', 'Personal de la semana', q(pr.labor), pct(pr.labor_pct) + ' de la venta') +
-      kpi('', 'COGS de la semana', q(pr.cogs), pct(pr.cogs_pct) + ' de la venta') +
-      kpi('', 'Venta de la semana', q(pr.ventas), 'base de los porcentajes') +
-      '</div>' +
-      '<div class="rp-tabla"><table class="rp"><thead><tr><th>Concepto</th><th>Monto de la semana</th><th>% de ventas</th><th>% del prime cost</th></tr></thead><tbody>' +
-      pr.filas.map(function (f) {
-        return '<tr' + (f.cls ? ' class="' + f.cls + '"' : '') + '><td class="txt">' + esc(f.nombre) + '</td><td>' + q(f.monto) + '</td><td>' + pct(f.ventas_pct) + '</td><td>' + pct(f.prime_pct) + '</td></tr>';
-      }).join('') +
-      '</tbody></table></div><p class="rp-nota">' + esc(pr.nota) + '</p></section>';
-    }
-    if (ver(7) && SECC) {
+    // ---- 7. personal y P&L
+    if (ver(7)) {
     var pl = d.pl, pe2 = d.personal, pm = pe2.planilla_mes;
     h += '<section class="rp"><h2>' + tit(7, 'Personal y P&amp;L semanal') + '</h2>' +
       '<div class="rp-kpis">' +
@@ -261,10 +213,10 @@
       '<p class="rp-nota">' + esc(pl.nota_nomina) + ' Marketing va incluido (' + q(pl.marketing) + '); sin marketing el resultado sería ' + q(pl.resultado_sin_marketing) + '.</p></section>';
     }
 
-    // ---- 8. equilibrio y acciones. En el reporte para supervisores solo las acciones.
+    // ---- 8. equilibrio y acciones
     if (ver(8)) {
-    h += '<section class="rp"><h2>' + tit(8, SECC ? 'Cómo se construye el equilibrio' : 'Acciones de la semana') + '</h2>';
-    if (pe && SECC) {
+    h += '<section class="rp"><h2>' + tit(8, SECC ? 'Cómo se construye el equilibrio' : 'Cómo se construye el equilibrio, y las acciones') + '</h2>';
+    if (pe) {
       h += '<div class="rp-dos"><div><div class="rp-tabla"><table class="rp"><thead><tr><th>Costos fijos (PRESUPUESTO, con los anuales ÷ 12)</th><th>Al mes</th></tr></thead><tbody>' +
         pe.fijos.map(function (f) { return '<tr><td class="txt">' + esc(f.seccion) + (f.del_mes ? ' <span class="rp-chip">del mes</span>' : '') + (f.anual ? ' <span class="rp-chip">anual ÷ 12</span>' : '') + '</td><td>' + q(f.mensual) + '</td></tr>'; }).join('') +
         '<tr class="total"><td class="txt">Fijos del mes</td><td>' + q(pe.fijo_mes) + '</td></tr>' +
@@ -277,6 +229,7 @@
         '<p class="rp-nota">' + esc(pe.nota) + '</p></div></div>';
     }
     if (SECC) { h += '</section>'; } else {   // en Finanzas las acciones viven en "Qué hacemos esta semana"
+    h += '<h3 style="margin:1.2rem 0 0.3rem">Acciones de la semana</h3>';
     var ac = d.acciones;
     if (!ac.existe) h += '<div class="rp-aviso">La pestaña ACCIONES del Sheet de config todavía no existe: se crea sola al guardar la primera acción (es la misma lista que usan el tablero y el vigía).</div>';
     h += '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Por qué (el dato)</th><th class="no-print"></th></tr></thead><tbody id="acciones">' +
