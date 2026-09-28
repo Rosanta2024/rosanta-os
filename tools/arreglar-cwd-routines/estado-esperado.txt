@@ -4,7 +4,6 @@ md5  41d26b5a24a66f1e5640e33b7255090f
 mtime 2026-09-25 19:02:41
 
 rosanta-latido-reservas-web          /Users/juanmalemus/Documents/Claude/Projects/05_Marketing_OS/Workspace_Pauta
-rosanta-reporte-semanal              /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
 morning-brief-juanma                 /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
 rosanta-cierre-semanal               /Users/juanmalemus/Documents/Claude/Projects/03_Finance_Data_OS
 rosanta-cerebro-mantenimiento        /Users/juanmalemus/Documents/Claude/Projects/02_Management_OS

@@ -65,7 +65,7 @@ PILARES = [
 # — el código y la carpeta de la app NO se sincronizan con Drive.
 PUERTAS = {
     "_Codigo": os.path.join(HOME, "Dev", "Rosanta"),
-    "_App": os.path.join(HOME, "Claude"),
+    "_App": os.path.join(HOME, ".claude"),  # repuntado el 25-sep-2026: ~/Claude quedo vacia
 }
 
 CRITICAS = {"R4", "R3"}  # alias roto y código en Drive
