@@ -75,6 +75,8 @@
     // "Guardar PDF en Drive": ruta del servidor con la semana que se esta viendo (solo dueño)
     var pdfDrive = $('rp-pdf-drive');
     if (pdfDrive && SECC) pdfDrive.style.display = 'none';
+    var enviar = $('rp-enviar');
+    if (enviar && (SECC || AREA)) enviar.style.display = 'none';
     else if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
     $('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
       ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
@@ -343,6 +345,22 @@
   }
 
   if (CFG.titulo) $('rp-titulo').textContent = CFG.titulo;
+  // Enviar a supervisores (28-sep-2026): el PDF oficial de la semana que se esta viendo.
+  function enviarSupervisores(reenviar) {
+    var b = $('rp-enviar');
+    b.disabled = true; b.textContent = 'Enviando…';
+    google.script.run
+      .withSuccessHandler(function (r) {
+        b.disabled = false; b.textContent = 'Enviar a supervisores';
+        if (r.ya_enviado) { if (confirm(r.detalle + ' ¿Enviarlo otra vez?')) enviarSupervisores(true); return; }
+        alert(r.ok ? r.detalle : 'No se envió: ' + r.detalle);
+      })
+      .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Enviar a supervisores'; alert(String(e && e.message || e)); })
+      .enviarReporteSupervisores(AUTH, CLAVE, !!reenviar);
+  }
+  if ($('rp-enviar')) $('rp-enviar').addEventListener('click', function () {
+    if (confirm('Enviar el PDF de la S' + (CLAVE % 100) + ' a los supervisores de Cocina y de Barra y Sala, con copia a Juanma?')) enviarSupervisores(false);
+  });
   $('rp-sel').addEventListener('change', function () { cargar(Number(this.value), false); });
   $('rp-actualizar').addEventListener('click', function () { cargar(CLAVE, true); });
   // Dentro del tablero, imprimir la pagina imprimiria las siete pestañas: se abre la

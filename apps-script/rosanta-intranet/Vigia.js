@@ -388,6 +388,8 @@ function vigiaCadaHora() {
   // Puente con el reporte semanal (28-sep-2026): importa las acciones que propuso la tarea
   // del lunes y exporta METAS y ACCIONES para la proxima corrida. Nunca frena al vigia.
   try { Logger.log(puenteReporte_()); } catch (eP) { Logger.log('Puente del reporte: ' + eP); }
+  // El reporte semanal por correo a los supervisores, martes 12:00 (28-sep-2026).
+  try { Logger.log(repCorreoCadaHora_(new Date())); } catch (eR) { Logger.log('Reporte por correo: ' + eR); }
   var hoy = new Date(), hora = hoy.getHours(), dia = _vigDia_(hoy);
   var destinos = vigiaDestinos_();
   var ya = _vigYaHoy_();
