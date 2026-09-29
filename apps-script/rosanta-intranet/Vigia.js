@@ -115,6 +115,8 @@ function _vigContexto_(hoy) {
   try { var k = mktKpisMes_(d.anio, d); ctx.mkt = k.meses[hoy.getMonth() + 1] || null; } catch (e6) { ctx.mkt = null; }
   try { ctx.acciones = medAcciones_(null); } catch (e7) { ctx.acciones = []; }
   try { ctx.cierres = cieTodos_(); } catch (e8) { ctx.cierres = {}; }
+  ctx.invBanco = {};
+  ['COCINA', 'BARRA'].forEach(function (a) { try { ctx.invBanco[a] = invBancoContraInventario_(a); } catch (e9) { ctx.invBanco[a] = null; } });
   return ctx;
 }
 
@@ -232,6 +234,22 @@ function vigiaReglas_(ctx) {
     aviso('dueno', tx, true); aviso('sala', tx + ' Revisar en el huddle qué se quejó el cliente.', true);
     sugerir('V12-experiencia', 'management', 'José', 'Reseñas en ' + ctx.resenas.estrellas_4 + '★ (piso 4.8): leer las reseñas bajas con el equipo y corregir la causa esta semana.');
   }
+  // V13 · el Banco se aparto del ultimo inventario cerrado (p226): el precio que manda es
+  //       el del inventario, y el cierre solo corrige lo que cambio en el conteo. Los de
+  //       unidad distinta no se pueden comparar; se recuerdan solo los lunes.
+  ['COCINA', 'BARRA'].forEach(function (a) {
+    var r = ctx.invBanco && ctx.invBanco[a];
+    if (!r || !r.mes) return;
+    if (r.difieren.length) {
+      aviso('dueno', 'Banco de ' + a.toLowerCase() + ' distinto al inventario de ' + r.mes + ' en ' + r.difieren.length +
+        (r.difieren.length === 1 ? ' insumo' : ' insumos') + ' (10% o más): ' + r.difieren.slice(0, 5).map(invDifiereTexto_).join(' · ') +
+        (r.difieren.length > 5 ? ' · y ' + (r.difieren.length - 5) + ' más' : '') + '. El precio que manda es el del inventario.');
+    }
+    if (dia === 1 && r.noComparables.length) {
+      aviso('dueno', 'No comparables por unidad (' + a.toLowerCase() + ', ' + r.mes + '): ' +
+        r.noComparables.map(function (x) { return x.producto + ' ' + x.enInventario + ' contra ' + x.enBanco; }).join(' · ') + '.');
+    }
+  });
   // V10 · reseñas de la semana, desde el jueves
   if (ctx.resenas && dia >= 4 && ctx.resenas.esta_semana < M.resenas.valor) {
     aviso('sala', 'Reseñas de Google esta semana: ' + ctx.resenas.esta_semana + ' de ' + M.resenas.valor + '. Pedirlas en el huddle de hoy.');

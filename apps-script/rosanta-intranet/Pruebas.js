@@ -1987,7 +1987,7 @@ function prInventario_(res) {
   var g = prGrupo_(res, '8. Inventario: cierre y precios');
 
   prCorrer_(g, 'Las piezas del cierre existen', function () {
-    var piezas = ['invPreciosEditados_', 'invPreciosDeBitacora_', 'invPropuestaPrecios_', 'invBuscarEnBanco_',
+    var piezas = ['invPreciosEditados_', 'invPreciosDeBitacora_', 'invPropuestaPrecios_', 'invBuscarEnBanco_', 'invBancoContraInventario_',
                   'invElegirPendientes_', 'invMesDeCelda_', 'invMismoPrecio_'];
     var faltan = piezas.filter(function (n) { return typeof globalThis[n] !== 'function'; });
     prAnotar_(g, 'Las piezas del cierre existen', faltan.length === 0 ? 'OK' : 'FALLA',
@@ -2041,6 +2041,25 @@ function prInventario_(res) {
         (repetidos.length ? ' · Banco con nombres repetidos: ' + repetidos.slice(0, 5).join(' · ') : '') +
         (raras.length ? ' · propuestas que la regla vieja no hacia: ' + raras.map(function (x) { return x.producto; }).join(' · ') : ''),
         nAhora, null);
+    });
+  });
+
+  // p226 (29-sep-2026): el Banco no se aparta del ultimo inventario cerrado. AVISO y no
+  // FALLA: es dato, no codigo. Lo mismo lo manda el vigia (V13) a Juanma cada mañana.
+  ['COCINA', 'BARRA'].forEach(function (area) {
+    var nBanco = 'Inventario de ' + area.toLowerCase() + ': el Banco tiene el precio del ultimo mes cerrado';
+    prCorrer_(g, nBanco, function () {
+      if (!abrirPorClave_(INV_DATOS.propiedad[area])) { prAnotar_(g, nBanco, 'SALTADA', 'falta ' + INV_DATOS.propiedad[area]); return; }
+      var r = invBancoContraInventario_(area);
+      if (!r.mes) { prAnotar_(g, nBanco, 'SALTADA', 'no hay un mes cerrado'); return; }
+      prAnotar_(g, nBanco, r.difieren.length ? 'AVISO' : 'OK',
+        r.mes + ': ' + r.iguales + ' iguales · ' + r.menores + ' bajo 10% · ' + r.difieren.length + ' con 10% o mas' +
+        (r.difieren.length ? ': ' + r.difieren.map(invDifiereTexto_).join(' · ') : '') +
+        ' · no comparables por unidad: ' + (r.noComparables.length
+          ? r.noComparables.map(function (x) { return x.producto + ' ' + x.enInventario + ' contra ' + x.enBanco; }).join(' · ')
+          : 'ninguno') +
+        (r.otros.length ? ' · otros: ' + r.otros.slice(0, 5).join(' · ') : ''),
+        r.difieren.length, 0);
     });
   });
 

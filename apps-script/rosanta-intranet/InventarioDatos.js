@@ -1469,3 +1469,53 @@ function getInventarioCierre(auth) {
   invExigirDueno_(u);
   return invEstadoCierre_(new Date(), _finParametro_('inventario_cierre_dia', 5));
 }
+
+/* ------------------------------------------------- Banco contra inventario ----
+ * p226, 29-sep-2026. Solo LEE.
+ *
+ * Regla de Juanma (27-sep): el precio correcto de un insumo es el del ULTIMO INVENTARIO
+ * CERRADO. El cierre solo lleva al Banco lo que CAMBIO en el conteo (invPreciosEditados_),
+ * asi que un precio escrito directo en el Banco (Registrar precio) se queda para siempre
+ * sin que nadie se entere: aguacate Q2 contra Q1.50, platanos Q2 contra Q1, tomate
+ * ciruelo Q7 contra Q5, corregidos a mano el 27-sep.
+ *
+ * NO hay un segundo comparador: es invPropuestaPrecios_ del cierre, sobre el ultimo mes
+ * CERRADO y sin el filtro de editados. Mismos candados (solo INSUMO conectado, misma
+ * unidad con mismaUnidad_, una sola fila en el Banco) y el mismo umbral de 10%:
+ *   difieren       10% o mas (lo que el cierre mandaria a aprobar)
+ *   noComparables  unidad distinta en cada lado: el cierre tampoco los puede llevar
+ *   iguales, menores (bajo 10%), otros (Banco sin la fila, nombres repetidos...)
+ * La variacion es la del cierre: (inventario − Banco) ÷ Banco.
+ */
+function invBancoContraInventario_(area) {
+  var ss = invHojaDe_(area), cerrados = [];
+  ss.getSheets().forEach(function (h) {
+    var n = h.getName().trim();
+    if (/^\d{4}-\d{2}$/.test(n)) cerrados.push(n);
+  });
+  cerrados.sort().reverse();
+  var mes = null, d = null;
+  for (var i = 0; i < cerrados.length && !mes; i++) {
+    var dd = ss.getSheetByName(cerrados[i]).getDataRange().getValues();
+    if (invEstado_(dd) === 'CERRADO') { mes = cerrados[i]; d = dd; }
+  }
+  if (!mes) return { area: area, mes: null, difieren: [], noComparables: [], iguales: 0, menores: 0, otros: [] };
+  var c = invColumnas_(d[INV_DATOS.filaEncabezadoMes - 1]), filas = [];
+  for (var k = INV_DATOS.filaEncabezadoMes; k < d.length; k++) {
+    if (!invTexto_(d[k][c['id']])) { if (normalizar_(d[k][c['producto']]) === 'total') break; continue; }
+    filas.push(d[k]);
+  }
+  var p = invPropuestaPrecios_(area, filas, c, invCatalogo_(ss));
+  return {
+    area: area, mes: mes,
+    difieren: p.aprobar.map(function (x) { return { producto: x.producto, inventario: x.precioNuevo, banco: x.precioViejo, unidad: x.unidad, pct: x.pct }; })
+                       .sort(function (a, b) { return Math.abs(b.pct) - Math.abs(a.pct); }),
+    noComparables: p.unidadDistinta, iguales: p.iguales, menores: p.auto.length, otros: p.otros
+  };
+}
+
+/** "Aguacate: inventario Q1.50 / Banco Q2 (−25%)". */
+function invDifiereTexto_(x) {
+  return x.producto + ': inventario Q' + x.inventario + ' / Banco Q' + x.banco + (x.unidad ? ' por ' + x.unidad : '') +
+         ' (' + (x.pct > 0 ? '+' : '') + x.pct + '%)';
+}
