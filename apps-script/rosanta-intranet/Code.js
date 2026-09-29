@@ -78,7 +78,10 @@ function doGet(e) {
   // Cada pestaña de area es de su jefe y del dueño; a quien no le toca, abre el inicio.
   if ((vistaCost === 'cocina' || vistaCost === 'barrasala') &&
       REP_AREAS_ROLES[vistaCost].indexOf(rolCost) === -1) vistaCost = '';
-  if (['cocina', 'barrasala', 'menu', 'inventario', 'recetas', 'insumos', 'proveedores', 'higiene', 'guia'].indexOf(vistaCost) === -1) vistaCost = 'inicio';
+  // Pagos a proveedores (p213, 29-sep-2026): modulo 'pagos' o dueño.
+  var puedePagos = rolCost === 'dueno' || usuarioTieneModulo(usuario, 'pagos');
+  if (vistaCost === 'pagos' && !puedePagos) vistaCost = '';
+  if (['cocina', 'barrasala', 'pagos', 'menu', 'inventario', 'recetas', 'insumos', 'proveedores', 'higiene', 'guia'].indexOf(vistaCost) === -1) vistaCost = 'inicio';
 
   // Recetario visual + Proveedores. Reemplaza a la vista vieja ?page=recetario,
   // retirada el 21 ago 2026: definia leerFicha_ y primerNumero_ con los mismos
@@ -94,6 +97,7 @@ function doGet(e) {
     tplCosteo.authToken = authToken;
     tplCosteo.rol = rolCost;          // que pestañas de area se ven (Cocina, Barra y Sala)
     tplCosteo.vistaIni = vistaCost;   // ?vista= (lista cerrada arriba)
+    tplCosteo.puedePagos = puedePagos; // la herramienta Pagos arriba
     return tplCosteo.evaluate()
       .setTitle('Rosanta \u00b7 Recetario y Proveedores')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')

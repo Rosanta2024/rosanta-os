@@ -97,9 +97,10 @@ function pintar(){
   }
   if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
   if(view==='cocina' || view==='barrasala') montarArea(view);
+  if(view==='pagos') montarPagos();
   // el filtro Cocina / Barra / Todo no aplica adentro de las pestañas de area
   var selArea = document.querySelector('.nav .areas');
-  if(selArea) selArea.style.display = (view==='cocina' || view==='barrasala') ? 'none' : '';
+  if(selArea) selArea.style.display = (view==='cocina' || view==='barrasala' || view==='pagos') ? 'none' : '';
   if(view==='inicio'){
     document.getElementById('v-inicio').innerHTML = vistaInicio();
     if(!window.__DB__) pedirProfitOS(dbSemanas);

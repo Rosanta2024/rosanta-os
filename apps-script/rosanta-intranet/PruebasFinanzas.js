@@ -1126,6 +1126,37 @@ function prFinanzas_(res) {
     try { var rt = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1); ok.push('retiros: ' + rt.n + ' este mes'); } catch (e3) { malos.push('retiros: ' + e3.message); }
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : ok.join(' · '), malos.length, 0);
   });
+
+  // ---------------------------------------------------------------- pagos a proveedores (p213)
+  prCorrer_(g, 'El banco solo cierra una factura cuando la casada es segura', function () {
+    var nombre = 'El banco solo cierra una factura cuando la casada es segura';
+    var F = function (llave, nit, dte, dia, saldo, pal, marca) { return { llave: llave, nit: nit, dte: dte, dia: dia, saldo: saldo, palabras: pal, marcaBanco: marca }; };
+    var casos = [
+      ['DTE en la glosa, la otra del mismo NIT sin marca: no casa', _pagCasarBanco_([F('a', '1', '111111', 100, 500, [], null), F('b', '1', '222222', 101, 300, [], null)], [{ llave: 'p', dia: 105, q: 800, glosa: 'S35 Cofradia 111111' }]), function (r) { return !r.casados.a && r.dudosos.length === 1; }],
+      ['DTE en la glosa y la otra marcada Banco suman exacto: casan las dos', _pagCasarBanco_([F('a', '1', '111111', 100, 500, [], 104), F('b', '1', '222222', 101, 300, [], 104)], [{ llave: 'p', dia: 105, q: 800, glosa: 'S35 Cofradia 111111' }]), function (r) { return r.casados.a === 'p' && r.casados.b === 'p'; }],
+      ['dos NIT marcados con el mismo monto: dudoso', _pagCasarBanco_([F('a', '1', '1', 100, 500, [], 104), F('c', '2', '3', 100, 500, [], 104)], [{ llave: 'p', dia: 105, q: 500, glosa: 'X' }]), function (r) { return !r.casados.a && !r.casados.c && r.dudosos.length === 1; }],
+      ['monto exacto sin marca ni nombre en la glosa: suelto', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['xelac'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'OTRO GT' }]), function (r) { return !r.casados.a && r.sueltos.length === 1; }],
+      ['nombre en la glosa y monto exacto: casa', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['xelac'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'S38 XELAC VARIOS' }]), function (r) { return r.casados.a === 'p'; }]
+    ];
+    var malos = casos.filter(function (c) { return !c[2](c[1]); }).map(function (c) { return c[0]; });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos de juguete', malos.length, 0);
+  });
+
+  prCorrer_(g, 'Pagos a proveedores lee el FEL y cada factura tiene area y llave unica', function () {
+    var nombre = 'Pagos a proveedores lee el FEL y cada factura tiene area y llave unica';
+    var E = pagEstado_(), vistas = {}, dup = [], sinArea = [];
+    E.facturas.forEach(function (f) {
+      if (vistas[f.llave]) dup.push(f.llave); vistas[f.llave] = 1;
+      if (['COCINA', 'BARRA', 'ADMIN'].indexOf(f.area) === -1) sinArea.push(f.llave);
+    });
+    var malos = dup.length + sinArea.length;
+    // Sin facturas desde PAG_DESDE_ no hay nada que revisar: SALTADA, no OK.
+    if (!E.facturas.length) { prAnotar_(g, nombre, 'SALTADA', 'no hay facturas desde el ' + PAG_DESDE_ + ' en el FEL cargado'); return; }
+    prAnotar_(g, nombre, malos ? 'FALLA' : 'OK',
+      malos ? (dup.length ? 'llave repetida: ' + dup.slice(0, 5).join(', ') + ' ' : '') + (sinArea.length ? 'sin area: ' + sinArea.slice(0, 5).join(', ') : '')
+            : E.facturas.length + ' facturas desde el ' + PAG_DESDE_ + ' · ' + E.facturas.filter(function (f) { return f.saldo > 0.01; }).length + ' por pagar · banco hasta ' + (E.banco_ult || 'sin dato'),
+      malos, 0);
+  });
 }
 
 

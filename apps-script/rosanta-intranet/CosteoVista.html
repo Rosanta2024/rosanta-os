@@ -111,6 +111,7 @@ header.top .wrap{max-width:none;padding:0 28px}
       <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
       <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
       <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
       <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
       <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
       <span class="areas" role="group" aria-label="Área de recetas y productos">
@@ -149,6 +150,7 @@ header.top .wrap{max-width:none;padding:0 28px}
   <section id="v-recetas" hidden></section>
   <section id="v-insumos" hidden></section>
   <section id="v-proveedores" hidden></section>
+  <section id="v-pagos" hidden></section>
   <section id="v-inventario" hidden></section>
   <section id="v-higiene" hidden></section>
   <section id="v-guia" hidden></section>
@@ -213,6 +215,14 @@ function montarArea(v){
   window.RP_INICIAR({ auth: AUTH, base: <?!= JSON.stringify(urlBase) ?>, t: <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>,
     embebido: true, area: v, secciones: v === 'cocina' ? [5, 6] : [5, 6, 4],
     titulo: v === 'cocina' ? 'Cocina: la semana' : 'Barra: la semana' }, host);
+}
+
+/* Pagos a proveedores (p213, 29-sep-2026): se pinta la primera vez que se abre. */
+function montarPagos(){
+  var sec = document.getElementById('v-pagos');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_PAGOS(sec, AUTH);
 }
 
 function iniciarApp(){
@@ -300,6 +310,7 @@ google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCos
 <?!= incluirCrudo_('ReporteSemanalJs') ?>
 <?!= incluirCrudo_('ProfitSalaJs') ?>
 <?!= incluirCrudo_('ProfitRetirosJs') ?>
+<?!= incluirCrudo_('ProfitPagosJs') ?>
 <script>
   (function () {
     var host = document.getElementById('lx-modulo');

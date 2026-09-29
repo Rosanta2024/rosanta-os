@@ -44,6 +44,7 @@
         <? if (rolTs === 'dueno') { ?><a class="ts-b" href="<?= urlBase ?>?page=tablero<?!= qs ?>">Ver la cascada</a><? } ?>
         <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=cocina<?!= qs ?>">Anotar compras en efectivo</a><? } ?>
         <? if (rolTs === 'sala') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=barrasala<?!= qs ?>">Abrir Barra y Sala</a><? } ?>
+        <? if ((rolTs === 'chef' || rolTs === 'sala') && usuarioTieneModulo(usuario, 'pagos')) { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=pagos<?!= qs ?>">Pagar facturas</a><? } ?>
       </section>
     <? } ?>
     <div class="tarjetas">

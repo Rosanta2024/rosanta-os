@@ -17,9 +17,14 @@ window.PF_RETIROS = function (HOST, AUTH) {
       if (x.detalle) {
         h += '<tr><td>' + esc(x.fecha) + '</td><td class="n">' + q(x.monto) + '</td><td>' + esc(x.desc) + '</td><td>' + esc(x.detalle) + '</td><td>' + esc(x.area) + '</td><td class="rt-ok">✓</td></tr>';
       } else {
+        // Lo anotado en Pagos › Compra de mercado con "Retiro de cajero", del dia del retiro a 3 dias
+        // despues (p213): llega escrito y solo hay que revisarlo y guardar.
+        var am = anotadas(x), txt = am.map(function (m) { return m.proveedor + ': ' + m.detalle + ' (Q' + m.q + ')'; }).join('; ');
+        var areaM = am.length && am.every(function (m) { return m.area === 'BARRA'; }) ? 'BARRA' : 'COCINA';
         h += '<tr><td>' + esc(x.fecha) + '</td><td class="n">' + q(x.monto) + '</td><td>' + esc(x.desc) + '</td>' +
-          '<td><input type="text" id="d-' + id + '" placeholder="ej. verdura del mercado, pollo, hielo"></td>' +
-          '<td><select id="a-' + id + '"><option>COCINA</option><option>BARRA</option></select></td>' +
+          '<td><input type="text" id="d-' + id + '" placeholder="ej. verdura del mercado, pollo, hielo" value="' + esc(txt) + '">' +
+          (am.length ? '<div class="rt-ok">De Pagos: ' + am.length + ' compra' + (am.length > 1 ? 's' : '') + ' por ' + q(am.reduce(function (a, m) { return a + m.q; }, 0)) + '. Revisá y guardá.</div>' : '') + '</td>' +
+          '<td><select id="a-' + id + '"><option' + (areaM === 'COCINA' ? ' selected' : '') + '>COCINA</option><option' + (areaM === 'BARRA' ? ' selected' : '') + '>BARRA</option></select></td>' +
           '<td><button type="button" data-k="' + clave + '" data-i="' + i + '">Guardar</button><div class="rt-err" id="e-' + id + '"></div></td></tr>';
       }
     });
@@ -57,6 +62,12 @@ window.PF_RETIROS = function (HOST, AUTH) {
         img.src = fr.result;
       };
       fr.readAsDataURL(file);
+    });
+  }
+  function anotadas(x) {
+    var d0 = new Date(x.fecha + 'T12:00:00'), lim = new Date(d0.getTime() + 3 * 86400000);
+    return ((DATA && DATA.mercado) || []).filter(function (m) {
+      var d = new Date(m.fecha + 'T12:00:00'); return d >= d0 && d <= lim;
     });
   }
   function textoCompra(c) {

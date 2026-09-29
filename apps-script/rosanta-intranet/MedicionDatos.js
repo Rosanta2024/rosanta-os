@@ -560,7 +560,9 @@ function getRetirosPendientes(auth) {
   var hoy = new Date();
   var ant = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
   return { actual: medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1),
-           anterior: medRetirosMes_(ant.getFullYear(), ant.getMonth() + 1) };
+           anterior: medRetirosMes_(ant.getFullYear(), ant.getMonth() + 1),
+           // las compras de mercado anotadas en Pagos con "Retiro de cajero" (p213)
+           mercado: medMercadoDeRetiros_() };
 }
 
 /** Anota que se compro con un retiro de cajero. Devuelve la lista actualizada. */
