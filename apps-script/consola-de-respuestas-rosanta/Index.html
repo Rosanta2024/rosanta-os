@@ -39,13 +39,19 @@
   .msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:9px;}
   .row{display:flex;}
   .row.out{justify-content:flex-end;}
-  .bubble{max-width:74%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(0,0,0,.05);}
+  .bubble{max-width:34rem;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(0,0,0,.05);}
   .in .bubble{background:#fff;border-bottom-left-radius:5px;}
   .out.bot .bubble{background:#def0e2;border-bottom-right-radius:5px;}
   .out.humano .bubble{background:var(--verde);color:#fff;border-bottom-right-radius:5px;}
   .meta{font-size:10px;color:#9a9488;margin-top:3px;}
   .out .meta{text-align:right;}
   .tagh{font-size:10px;font-weight:700;opacity:.85;display:block;margin-bottom:2px;}
+  .bubble a{color:inherit;text-decoration:underline;word-break:break-all;}
+  .clip{border:1px solid var(--linea);background:#fff;color:var(--verde);border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;flex:0 0 auto;}
+  .fotos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .fotos:empty{display:none;}
+  .foto{position:relative;width:64px;height:64px;border-radius:10px;background:#ddd center/cover;}
+  .foto button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:0;background:var(--negro);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
   .compose{border-top:1px solid var(--linea);padding:12px;background:var(--crema);}
   .warn{background:#fff4e0;border:1px solid #f0d79a;color:#8a6d1f;font-size:11.5px;padding:7px 10px;border-radius:10px;margin-bottom:8px;}
   .crow{display:flex;gap:9px;align-items:flex-end;}
@@ -85,6 +91,8 @@
 <script>
   var THREADS=[],FILTER='todos',CUR=null,msgTimer=null,listTimer=null;
   function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  /* Texto ya escapado → los enlaces se pueden abrir con un clic. */
+  function linkify(h){return h.replace(/https?:\/\/[^\s<>"']+/g,function(u){return '<a href="'+u+'" target="_blank" rel="noopener">'+u+'</a>';});}
   function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
   function initials(s){s=(s||'').trim();if(!s)return '·';var p=s.split(/\s+/);return ((p[0][0]||'')+(p[1]?p[1][0]:'')).toUpperCase();}
   function canalChip(c){c=(c||'').toLowerCase();var n=c==='whatsapp'?'WhatsApp':c==='instagram'?'Instagram':c==='messenger'?'Messenger':c;return '<span class="chip c-'+c+'">'+n+'</span>';}
@@ -160,6 +168,7 @@
   }
   /* Arma el armazón del chat UNA vez (header + caja de texto). No se vuelve a tocar en el polling. */
   function renderShell(){
+    FOTOS=[];   // las fotos elegidas no se pasan a otro chat
     var t=THREADS.filter(function(x){return x.id===CUR.id&&x.canal===CUR.canal;})[0]||{canal:CUR.canal,id:CUR.id,nombre:''};
     document.getElementById('chat').innerHTML=
       '<div class="chat-head"><button class="back" onclick="closeThread()">&#8249;</button>'+
@@ -167,7 +176,10 @@
       '<div><div class="nm">'+esc(nameOf(t))+'</div><div class="sub">'+canalChip(t.canal)+esc(String(t.id))+'</div></div></div>'+
       '<div class="msgs" id="msgs"></div><div class="compose">'+
       '<div class="warn" id="warn" style="display:none"></div>'+
-      '<div class="crow"><textarea id="ta" rows="1" placeholder="Escribe tu respuesta…" oninput="growTa(this)" onkeydown="taKey(event)"></textarea>'+
+      '<div class="fotos" id="fotos"></div>'+
+      '<div class="crow"><button class="clip" title="Adjuntar fotos" onclick="document.getElementById(\'fi\').click()">&#128206;</button>'+
+      '<input type="file" id="fi" accept="image/jpeg,image/png" multiple style="display:none" onchange="elegirFotos(this)">'+
+      '<textarea id="ta" rows="1" placeholder="Escribe tu respuesta…" oninput="growTa(this)" onkeydown="taKey(event)"></textarea>'+
       '<button class="send" id="sendBtn" onclick="enviar()">&#10148;</button></div></div>';
   }
   /* Solo refresca los mensajes y el aviso de 24h. NO toca el textarea. */
@@ -185,14 +197,55 @@
       var side=m.direccion==='in'?'in':'out';
       var who=m.autor==='humano'?'humano':(m.autor==='bot'?'bot':'');
       var tag=(side==='out')?'<span class="tagh">'+(who==='humano'?'Equipo':'Bot')+'</span>':'';
-      return '<div class="row '+side+' '+who+'"><div><div class="bubble">'+tag+esc(m.texto)+'</div><div class="meta">'+fmtTime(m.fecha)+'</div></div></div>';
+      return '<div class="row '+side+' '+who+'"><div><div class="bubble">'+tag+linkify(esc(m.texto))+'</div><div class="meta">'+fmtTime(m.fecha)+'</div></div></div>';
     }).join('');
     if(scroll)box.scrollTop=box.scrollHeight;
   }
   function growTa(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
   function taKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}}
+  /* ===== Fotos =====
+     Se achican en el navegador (lado mayor 1600 px, JPG) antes de subir: así
+     una foto de celular de 8 MB viaja en ~300 KB y queda bajo el límite de 5 MB
+     de WhatsApp. El texto de la caja va como pie de la primera foto. */
+  var FOTOS=[];
+  function elegirFotos(inp){
+    var files=[].slice.call(inp.files||[]);inp.value='';
+    files.forEach(function(f){
+      var img=new Image(),url=URL.createObjectURL(f);
+      img.onload=function(){
+        var k=Math.min(1,1600/Math.max(img.width,img.height));
+        var c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+        var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url);
+        FOTOS.push(c.toDataURL('image/jpeg',0.85));pintarFotos();
+      };
+      img.onerror=function(){URL.revokeObjectURL(url);toast('No pude leer '+f.name+'. Usa JPG o PNG.');};
+      img.src=url;
+    });
+  }
+  function pintarFotos(){
+    var box=document.getElementById('fotos');if(!box)return;
+    box.innerHTML=FOTOS.map(function(d,i){return '<div class="foto" style="background-image:url('+d+')"><button onclick="quitarFoto('+i+')">&#10005;</button></div>';}).join('');
+  }
+  function quitarFoto(i){FOTOS.splice(i,1);pintarFotos();}
+  function enviarFotos(txt){
+    var lista=FOTOS.slice(),c=CUR,btn=document.getElementById('sendBtn'),box=document.getElementById('msgs'),ta=document.getElementById('ta');
+    FOTOS=[];pintarFotos();ta.value='';growTa(ta);btn.disabled=true;
+    box.insertAdjacentHTML('beforeend','<div class="row out humano"><div><div class="bubble"><span class="tagh">Equipo</span>📷 '+lista.length+' foto'+(lista.length===1?'':'s')+(txt?': '+esc(txt):'')+'</div><div class="meta">subiendo…</div></div></div>');
+    box.scrollTop=box.scrollHeight;
+    var i=0;
+    (function sig(){
+      if(i>=lista.length){btn.disabled=false;toast('Fotos en camino. Llegan en <1 min.');setTimeout(function(){loadMsgs(true);loadThreads(false);},1500);return;}
+      var b64=lista[i].split(',')[1],cap=(i===0?txt:'');i++;
+      google.script.run.withSuccessHandler(function(r){
+        if(r&&r.ok)sig();else{btn.disabled=false;toast((r&&r.msg)||'No se pudo enviar la foto.');}
+      }).withFailureHandler(function(e){btn.disabled=false;toast('Error: '+e.message);}).enviarImagen(c.canal,c.id,b64,'image/jpeg',cap);
+    })();
+  }
   function enviar(){
-    if(!CUR)return;var ta=document.getElementById('ta');var txt=(ta.value||'').trim();if(!txt)return;
+    if(!CUR)return;var ta=document.getElementById('ta');var txt=(ta.value||'').trim();
+    if(FOTOS.length){enviarFotos(txt);return;}
+    if(!txt)return;
     var btn=document.getElementById('sendBtn');btn.disabled=true;
     var box=document.getElementById('msgs');
     box.insertAdjacentHTML('beforeend','<div class="row out humano"><div><div class="bubble"><span class="tagh">Equipo</span>'+esc(txt)+'</div><div class="meta">enviando…</div></div></div>');

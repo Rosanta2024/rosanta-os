@@ -123,7 +123,7 @@ function sendWhatsApp(phoneNumberId, to, text) {
     messaging_product: 'whatsapp',
     to: to,
     type: 'text',
-    text: { body: text }
+    text: { body: text, preview_url: true }   // los enlaces llegan con vista previa
   };
   UrlFetchApp.fetch(url, {
     method: 'post',
@@ -535,12 +535,22 @@ function enviarRespuestasPendientes() {
       const canal = d[i][1];
       const contactoId = d[i][2];
       const texto = d[i][3];
+      const tipo = String(d[i][4] || '');        // 'libre' o 'imagen:<ID de Drive>'
       const enviado = d[i][5];
-      if (texto && contactoId && !enviado) {
+      const esImagen = tipo.indexOf('imagen:') === 0;
+      if ((texto || esImagen) && contactoId && !enviado) {
         try {
-          enviarPorCanal(canal, contactoId, texto);
-          cola.getRange(i + 1, 6).setValue(new Date());
-          logMensaje(canal, contactoId, '', 'out', 'humano', texto);
+          if (esImagen) {
+            const fileId = tipo.substring(7);
+            enviarImagenPorCanal(canal, contactoId, fileId, texto);
+            cola.getRange(i + 1, 6).setValue(new Date());
+            logMensaje(canal, contactoId, '', 'out', 'humano',
+              '📷 Foto' + (texto ? ': ' + texto : '') + '\nhttps://drive.google.com/file/d/' + fileId + '/view');
+          } else {
+            enviarPorCanal(canal, contactoId, texto);
+            cola.getRange(i + 1, 6).setValue(new Date());
+            logMensaje(canal, contactoId, '', 'out', 'humano', texto);
+          }
           pausarBot(contactoId, 6);
         } catch (err) {
           cola.getRange(i + 1, 6).setValue('ERROR: ' + err);
@@ -612,6 +622,64 @@ function enviarPorCanal(canal, idDestino, texto) {
     sendMessenger(idDestino, texto);
   } else { // whatsapp por defecto
     sendWhatsApp(PROPS.getProperty('WA_PHONE_NUMBER_ID'), idDestino, texto);
+  }
+}
+
+// Foto que el equipo sube desde la consola. La consola la deja en Drive
+// compartida con enlace; aquí se baja por URL, así el bot no necesita permiso
+// de Drive. A diferencia del texto, si Meta la rechaza se lanza el error para
+// que quede "ERROR: …" en Salientes y no se marque como enviada.
+function enviarImagenPorCanal(canal, idDestino, fileId, caption) {
+  canal = String(canal || '').toLowerCase();
+  const urlDrive = 'https://drive.google.com/uc?export=download&id=' + fileId;
+  let resp;
+  if (canal === 'instagram' || canal === 'messenger') {
+    const ig = canal === 'instagram';
+    const url = ig ? 'https://graph.instagram.com/' + CONFIG.GRAPH_VERSION + '/me/messages'
+                   : 'https://graph.facebook.com/' + (CONFIG.GRAPH_VERSION || 'v21.0') + '/me/messages';
+    resp = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + (ig ? CONFIG.IG_TOKEN : CONFIG.MESSENGER_TOKEN) },
+      payload: JSON.stringify({ recipient: { id: idDestino },
+        message: { attachment: { type: 'image', payload: { url: urlDrive } } } }),
+      muteHttpExceptions: true
+    });
+    revisarEnvio_(resp);
+    if (caption) enviarPorCanal(canal, idDestino, caption);   // IG/Messenger no llevan pie de foto
+    return;
+  }
+  // WhatsApp: se sube la foto a Meta y se manda por id (más fiable que darle el enlace de Drive)
+  const img = UrlFetchApp.fetch(urlDrive, { muteHttpExceptions: true });
+  const blob = img.getBlob();
+  const mime = String(blob.getContentType() || '');
+  if (img.getResponseCode() !== 200 || mime.indexOf('image/') !== 0) {
+    throw new Error('No se pudo bajar la foto de Drive (' + img.getResponseCode() + ' ' + mime + '). ¿Está compartida con enlace?');
+  }
+  const base = 'https://graph.facebook.com/' + CONFIG.GRAPH_VERSION + '/' + PROPS.getProperty('WA_PHONE_NUMBER_ID');
+  const H = { Authorization: 'Bearer ' + CONFIG.WHATSAPP_TOKEN };
+  const up = UrlFetchApp.fetch(base + '/media', {
+    method: 'post', headers: H, muteHttpExceptions: true,
+    payload: { messaging_product: 'whatsapp', type: mime, file: blob }
+  });
+  let mediaId = '';
+  try { mediaId = JSON.parse(up.getContentText()).id || ''; } catch (e) {}
+  if (!mediaId) throw new Error('Meta no aceptó la foto: ' + up.getContentText().substring(0, 200));
+  const image = { id: mediaId };
+  if (caption) image.caption = caption;
+  resp = UrlFetchApp.fetch(base + '/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: H,
+    payload: JSON.stringify({ messaging_product: 'whatsapp', to: idDestino, type: 'image', image: image }),
+    muteHttpExceptions: true
+  });
+  revisarEnvio_(resp);
+}
+
+function revisarEnvio_(resp) {
+  if (resp.getResponseCode() >= 300) {
+    throw new Error('Meta rechazó la foto (' + resp.getResponseCode() + '): ' + resp.getContentText().substring(0, 200));
   }
 }
 

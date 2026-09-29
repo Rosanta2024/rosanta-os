@@ -98,12 +98,54 @@ function enviarMensaje(canal, contactoId, texto) {
   contactoId = String(contactoId || '').trim();
   if (!texto) return { ok: false, msg: 'El mensaje está vacío.' };
   if (!contactoId) return { ok: false, msg: 'Falta el contacto.' };
+  hojaSalientes_().appendRow([new Date(), canal, contactoId, texto, 'libre', '']);
+  return { ok: true, msg: 'En camino. El bot lo enviará en menos de un minuto.' };
+}
+
+function hojaSalientes_() {
   var ss = getSS_();
   var sh = ss.getSheetByName('Salientes');
   if (!sh) {
     sh = ss.insertSheet('Salientes');
     sh.appendRow(['Fecha/Hora', 'Canal', 'ContactoID', 'Texto', 'Tipo', 'Enviado']);
   }
-  sh.appendRow([new Date(), canal, contactoId, texto, 'libre', '']);
-  return { ok: true, msg: 'En camino. El bot lo enviará en menos de un minuto.' };
+  return sh;
+}
+
+/**
+ * Encola una foto. Se guarda en Drive compartida con enlace (el bot la baja
+ * por URL y se la sube a Meta) y va a "Salientes" con Tipo "imagen:<ID>".
+ * El texto, si hay, viaja como pie de foto.
+ */
+function enviarImagen(canal, contactoId, base64, mime, caption) {
+  canal = String(canal || '').toLowerCase();
+  contactoId = String(contactoId || '').trim();
+  caption = (caption || '').trim();
+  if (!contactoId) return { ok: false, msg: 'Falta el contacto.' };
+  if (!base64) return { ok: false, msg: 'No llegó la foto.' };
+  if (mime !== 'image/jpeg' && mime !== 'image/png') return { ok: false, msg: 'Solo fotos JPG o PNG.' };
+  var blob = Utilities.newBlob(Utilities.base64Decode(base64), mime,
+    'foto-' + contactoId + '-' + Date.now() + (mime === 'image/png' ? '.png' : '.jpg'));
+  if (blob.getBytes().length > 5 * 1024 * 1024) return { ok: false, msg: 'La foto pesa más de 5 MB.' };
+  var file = carpetaFotos_().createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  hojaSalientes_().appendRow([new Date(), canal, contactoId, caption, 'imagen:' + file.getId(), '']);
+  return { ok: true, msg: 'Foto en camino. El bot la enviará en menos de un minuto.' };
+}
+
+/** Carpeta de Drive donde quedan las fotos enviadas (se crea la primera vez). */
+function carpetaFotos_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('FOTOS_FOLDER_ID');
+  if (id) {
+    try { return DriveApp.getFolderById(id); } catch (e) {}
+  }
+  var f = DriveApp.createFolder('Rosanta · Fotos enviadas desde la consola');
+  props.setProperty('FOTOS_FOLDER_ID', f.getId());
+  return f;
+}
+
+/** Correr UNA vez desde el editor para autorizar el permiso de Drive. */
+function autorizarDrive() {
+  Logger.log('Carpeta de fotos: ' + carpetaFotos_().getUrl());
 }
