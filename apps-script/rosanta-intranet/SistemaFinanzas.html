@@ -62,7 +62,7 @@
     <nav class="sm-side" aria-label="Seguimiento de cada semana">
       <span class="rotulo">Cada semana</span>
       <button type="button" class="sm-item" data-sub="semana">Pulso</button>
-      <button type="button" class="sm-item" data-sub="reporte">Reporte semanal</button>
+      <button type="button" class="sm-item" data-sub="reporte">P&amp;L semanal</button>
       <button type="button" class="sm-item" data-sub="caja">Caja</button>
       <button type="button" class="sm-item" data-sub="metas">Metas</button>
     </nav>
@@ -80,7 +80,9 @@
     semana:      B + '?page=finanzas-semana&embed=1' + T,
     // el reporte semanal repartido (27-sep-2026): aca van venta, ritmo, P&L, equilibrio
     // y acciones; food cost y platos viven en Profit OS › Cocina / Barra y Sala
-    reporte:     B + '?page=reporte-semanal&embed=1&secciones=1,2,3,7,8' + T,
+    // 28-sep-2026 (Juanma): el reporte semanal vive solo en el tablero; aca queda lo que es
+    // solo del dueño: el P&L de la semana y como se construye el equilibrio.
+    reporte:     B + '?page=reporte-semanal&embed=1&secciones=7,8' + T,
     metas:       B + '?page=metas&embed=1' + T,
     caja:        B + '?page=caja&embed=1' + T,
     dre:         B + '?page=dre&embed=1' + T,

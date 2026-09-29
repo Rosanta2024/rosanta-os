@@ -31,7 +31,7 @@ var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', '
 var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala', 'Reservas', 'Administración'];
 var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
 var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
-var REP_CACHE = 'rep_sem_v4_';   // v4: la seccion 8 trae las propuestas de la semana siguiente (28-sep-2026)
+var REP_CACHE = 'rep_sem_v5_';   // v5: el responsable de barra sale como Barra (28-sep-2026)
 var REP_CACHE_SEGS = 30 * 60;
 
 // ------------------------------------------------------------------ entradas

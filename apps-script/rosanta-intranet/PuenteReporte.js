@@ -51,7 +51,7 @@ function _puenteExportar_(carpeta) {
       var sem = String(v[i][0] || '');
       if (!sem || sem < desde) continue;
       acciones.push({ semana: sem, pilar: String(v[i][1] || ''), accion: String(v[i][2] || ''),
-                      departamento: MED_PERSONA_A_DEPTO_[String(v[i][3])] || String(v[i][3] || ''),
+                      departamento: medDeptoDe_(v[i][3], v[i][1]),
                       fecha_limite: v[i][4] instanceof Date ? medFechaIso_(v[i][4]) : String(v[i][4] || '').slice(0, 10),
                       estado: String(v[i][5] || ''), escrito_por: String(v[i][6] || ''),
                       porque: iP >= 0 ? String(v[i][iP] || '') : '', meta: iM >= 0 ? String(v[i][iM] || '') : '',

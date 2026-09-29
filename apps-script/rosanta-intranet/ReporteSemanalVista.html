@@ -36,7 +36,7 @@
   var RP_CFG = { auth: '<?= authToken ?>', base: <?!= JSON.stringify(urlBase) ?>,
                  t: <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>, embebido: false,
                  secciones: <?!= JSON.stringify(typeof secciones === 'undefined' ? null : secciones) ?>,
-                 titulo: <?!= JSON.stringify(typeof secciones !== 'undefined' && secciones ? 'La semana: venta, equilibrio y P&L' : '') ?> };
+                 titulo: <?!= JSON.stringify(typeof secciones !== 'undefined' && secciones ? 'P&L semanal y punto de equilibrio' : '') ?> };
 </script>
 <?!= incluirCrudo_('ReporteSemanalJs') ?>
 </body>

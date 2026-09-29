@@ -965,6 +965,12 @@ function getLecturaPauta(auth) {
  */
 var MED_DEPTO_A_PERSONA_ = { 'Cocina': 'Jeffry', 'Barra': 'José', 'Sala': 'José', 'Reservas': 'Vanessa', 'Administración': 'Juanma' };
 var MED_DEPTO_A_PILAR_ = { 'Cocina': 'profit', 'Barra': 'profit', 'Sala': 'management', 'Reservas': 'marketing', 'Administración': 'finanzas' };
+/** El departamento de una accion: José es Barra en Profit OS y Sala en lo demas (28-sep-2026). */
+function medDeptoDe_(persona, pilar) {
+  persona = String(persona || '');
+  if (persona === 'José' && String(pilar) === 'profit') return 'Barra';
+  return MED_PERSONA_A_DEPTO_[persona] || persona;
+}
 var MED_PERSONA_A_DEPTO_ = { 'Jeffry': 'Cocina', 'José': 'Sala', 'Efraín': 'Sala', 'Vanessa': 'Reservas', 'Juanma': 'Administración', 'Nadia': 'Administración' };
 
 function medClaveATexto_(clave) { clave = Number(clave); return Math.floor(clave / 100) + '-S' + ((clave % 100) < 10 ? '0' : '') + (clave % 100); }
@@ -984,7 +990,7 @@ function medAccionesReporte_(clave) {
   for (var j = 1; j < v.length; j++) {
     if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada') continue;
     out.siguiente.push({ fila: j + 1, accion: String(v[j][2] || ''),
-                         responsable: MED_PERSONA_A_DEPTO_[String(v[j][3])] || String(v[j][3] || ''),
+                         responsable: medDeptoDe_(v[j][3], v[j][1]),
                          porque: iP >= 0 ? String(v[j][iP] || '') : '', meta: iM >= 0 ? String(v[j][iM] || '') : '',
                          escrito_por: String(v[j][6] || ''), estado: String(v[j][5] || '') });
   }
@@ -993,7 +999,7 @@ function medAccionesReporte_(clave) {
     var est = String(v[i][5] || '');
     if (est === 'descartada' || est === 'sugerida') continue;       // el reporte muestra lo aprobado
     out.lista.push({ fila: i + 1, accion: String(v[i][2] || ''),
-                     responsable: MED_PERSONA_A_DEPTO_[String(v[i][3])] || String(v[i][3] || ''),
+                     responsable: medDeptoDe_(v[i][3], v[i][1]),
                      porque: iP >= 0 ? String(v[i][iP] || '') : '',
                      fecha: v[i][7] instanceof Date ? _finFecha_(v[i][7]) : String(v[i][7] || ''),
                      escrito_por: String(v[i][6] || ''), estado: est });

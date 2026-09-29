@@ -50,7 +50,7 @@ function _repCorreoAcciones_(clave) {
     if (String(v[i][0]) !== sem || !duenos[String(v[i][3])]) continue;
     var est = String(v[i][5] || '');
     if (est === 'descartada') continue;
-    var a = { accion: String(v[i][2] || ''), depto: MED_PERSONA_A_DEPTO_[String(v[i][3])] || String(v[i][3]),
+    var a = { accion: String(v[i][2] || ''), depto: medDeptoDe_(v[i][3], v[i][1]),
               meta: iM >= 0 ? String(v[i][iM] || '') : '', porque: iP >= 0 ? String(v[i][iP] || '') : '' };
     (est === 'sugerida' ? out.propuestas : out.acordadas).push(a);
   }
