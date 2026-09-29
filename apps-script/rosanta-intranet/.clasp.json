@@ -11,5 +11,6 @@
     ".json"
   ],
   "filePushOrder": [],
-  "skipSubdirectories": false
+  "skipSubdirectories": false,
+  "projectId": "rosanta-apps-script"
 }
