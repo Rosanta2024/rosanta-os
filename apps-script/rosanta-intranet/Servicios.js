@@ -307,10 +307,23 @@ function askClaudeSrv(prompt, auth) {
     max_tokens: 4000,
     messages: [{ role: 'user', content: String(prompt) }]
   };
+  var body = claudeLlamar_(payload);
+  return (body.content || []).map(function (b) { return b.text || ''; }).join('').trim();
+}
+
+/**
+ * La llamada cruda a la API de Claude (Messages). La usan el Creador Kaprica y el
+ * comprobante de retiros de Profit OS (29-sep-2026). betas: encabezados anthropic-beta.
+ */
+function claudeLlamar_(payload, betas) {
+  var key = prop_('ANTHROPIC_API_KEY');
+  if (!key) throw new Error('Falta ANTHROPIC_API_KEY en Propiedades del script.');
+  var headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01' };
+  if (betas && betas.length) headers['anthropic-beta'] = betas.join(',');
   var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
     method: 'post',
     contentType: 'application/json',
-    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    headers: headers,
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   });
@@ -319,7 +332,7 @@ function askClaudeSrv(prompt, auth) {
     throw new Error('Claude respondió ' + res.getResponseCode() + ': ' +
       ((body.error && body.error.message) || 'error desconocido'));
   }
-  return (body.content || []).map(function (b) { return b.text || ''; }).join('').trim();
+  return body;
 }
 
 /* panelInvestigar (investigación web del Panel de Asesores) se retiró el 27-sep-2026

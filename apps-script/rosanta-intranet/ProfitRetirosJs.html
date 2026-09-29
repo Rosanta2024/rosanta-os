@@ -25,8 +25,113 @@ window.PF_RETIROS = function (HOST, AUTH) {
     });
     return h + '</table></div></div>';
   }
+  /* ---- Subir comprobante (29-sep-2026): capturas de WhatsApp, Excel o un Google Sheet.
+     La intranet propone; nada se guarda hasta que Jeffry confirma. */
+  var LEIDO = null;
+  function cajaComprobante() {
+    return '<div class="rt-box"><h3>Subir comprobante</h3>' +
+      '<p class="rt-res">Sube las capturas de los pedidos por WhatsApp a los proveedores, un Excel o el link de un Google Sheet. ' +
+      'La intranet lee lo que se compró y propone a qué retiro corresponde. Revisas y confirmas.</p>' +
+      '<input type="file" id="rt-arch" multiple accept="image/*,.xlsx,.xls,.csv"> ' +
+      '<input type="text" id="rt-url" placeholder="o pega el link de un Google Sheet" style="min-width:16rem"> ' +
+      '<button type="button" id="rt-leer">Leer</button><div class="rt-err" id="rt-lerr"></div><div id="rt-prop"></div></div>';
+  }
+  function aBase64(file) {
+    return new Promise(function (ok, mal) {
+      var fr = new FileReader();
+      fr.onerror = function () { mal(new Error('No pude leer ' + file.name)); };
+      if (!/^image\//.test(file.type)) {
+        fr.onload = function () { ok({ nombre: file.name, mime: file.type || 'application/octet-stream', datos: String(fr.result).split(',')[1] }); };
+        fr.readAsDataURL(file); return;
+      }
+      // las fotos del telefono pesan varios MB: se achican a 1600 px en JPEG antes de subir
+      fr.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          ok({ nombre: file.name.replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', datos: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
+        };
+        img.onerror = function () { mal(new Error('No pude abrir la imagen ' + file.name)); };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function textoCompra(c) {
+    var prods = (c.productos || []).map(function (p) {
+      return (p.cantidad ? p.cantidad + ' ' : '') + (p.unidad ? p.unidad + ' ' : '') + p.producto + (p.precio ? ' Q' + p.precio : '');
+    }).join(', ');
+    return (c.proveedor || 'Proveedor sin nombre') + ': ' + (prods || 'sin productos legibles') + (c.total ? ' (total Q' + c.total + ')' : '');
+  }
+  function pintarPropuestas() {
+    var el = HOST.querySelector('#rt-prop');
+    if (!LEIDO) { el.innerHTML = ''; return; }
+    if (!LEIDO.compras.length) { el.innerHTML = '<p class="rt-err">No encontré compras en lo que subiste.</p>'; return; }
+    var opts = function (c) {
+      return '<option value="">Sin asignar</option>' + LEIDO.pendientes.map(function (p, j) {
+        var sel = p.fecha === c.retiro_fecha && Math.abs(p.monto - c.retiro_monto) < 0.01 ? ' selected' : '';
+        return '<option value="' + j + '"' + sel + '>' + esc(p.fecha) + ' · ' + q(p.monto) + '</option>';
+      }).join('');
+    };
+    el.innerHTML = '<div class="rt-scroll"><table><tr><th></th><th>Compra</th><th>Fecha</th><th>Retiro</th><th>Área</th><th>Nota</th></tr>' +
+      LEIDO.compras.map(function (c, i) {
+        return '<tr><td><input type="checkbox" id="rc-' + i + '"' + (c.retiro_fecha ? ' checked' : '') + '></td>' +
+          '<td><input type="text" id="rt-t-' + i + '" value="' + esc(textoCompra(c)) + '" style="width:100%"></td>' +
+          '<td>' + esc(c.fecha) + '</td><td><select id="rs-' + i + '">' + opts(c) + '</select></td>' +
+          '<td><select id="ra-' + i + '"><option>COCINA</option><option>BARRA</option></select></td>' +
+          '<td>' + esc(c.confianza) + (c.nota ? ' · ' + esc(c.nota) : '') + '</td></tr>';
+      }).join('') + '</table></div><button type="button" id="rt-guardar">Guardar lo marcado</button><div class="rt-err" id="rt-gerr"></div>';
+    el.querySelector('#rt-guardar').addEventListener('click', guardarPropuestas);
+  }
+  function guardarPropuestas() {
+    // varias compras pueden ir al mismo retiro: se juntan en un solo detalle por retiro
+    var grupos = {};
+    LEIDO.compras.forEach(function (c, i) {
+      if (!HOST.querySelector('#rc-' + i).checked) return;
+      var j = HOST.querySelector('#rs-' + i).value;
+      if (j === '') return;
+      if (!grupos[j]) grupos[j] = { p: LEIDO.pendientes[Number(j)], textos: [], area: HOST.querySelector('#ra-' + i).value };
+      grupos[j].textos.push(HOST.querySelector('#rt-t-' + i).value);
+    });
+    var lista = Object.keys(grupos).map(function (k) { return grupos[k]; });
+    var err = HOST.querySelector('#rt-gerr'), b = HOST.querySelector('#rt-guardar');
+    if (!lista.length) { err.textContent = 'Marca al menos una compra con su retiro.'; return; }
+    var archivos = LEIDO.archivos.map(function (a) { return a.url; }).join(' ');
+    b.disabled = true; b.textContent = 'Guardando…';
+    var i = 0;
+    (function siguiente() {
+      if (i >= lista.length) {
+        LEIDO = null;
+        google.script.run.withSuccessHandler(function (r) { DATA = r; pintar(); }).getRetirosPendientes(AUTH);
+        return;
+      }
+      var g = lista[i++];
+      google.script.run
+        .withSuccessHandler(function (res) { if (res.aviso) alertar(res.aviso); siguiente(); })
+        .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Guardar lo marcado'; err.textContent = e && e.message || e; })
+        .registrarRetiro(AUTH, g.p.fecha, g.p.monto, g.textos.join('; '), g.area, archivos);
+    })();
+  }
+  function leerComprobante() {
+    var files = [].slice.call(HOST.querySelector('#rt-arch').files || []), url = HOST.querySelector('#rt-url').value.trim();
+    var err = HOST.querySelector('#rt-lerr'), b = HOST.querySelector('#rt-leer');
+    err.textContent = '';
+    if (!files.length && !url) { err.textContent = 'Elige al menos un archivo o pega el link de un Sheet.'; return; }
+    b.disabled = true; b.textContent = 'Leyendo… (puede tardar un minuto)';
+    Promise.all(files.map(aBase64)).then(function (arch) {
+      google.script.run
+        .withSuccessHandler(function (r) { LEIDO = r; b.disabled = false; b.textContent = 'Leer'; pintarPropuestas(); })
+        .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Leer'; err.textContent = e && e.message || e; })
+        .leerComprobanteRetiros(AUTH, arch, url);
+    }, function (e) { b.disabled = false; b.textContent = 'Leer'; err.textContent = e.message; });
+  }
+
   function pintar() {
-    HOST.innerHTML = mes(DATA.actual, 'actual') + mes(DATA.anterior, 'anterior');
+    HOST.innerHTML = cajaComprobante() + mes(DATA.actual, 'actual') + mes(DATA.anterior, 'anterior');
+    HOST.querySelector('#rt-leer').addEventListener('click', leerComprobante);
+    pintarPropuestas();
     HOST.querySelectorAll('button[data-k]').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.getAttribute('data-k'), i = Number(b.getAttribute('data-i')), x = DATA[k].lista[i], id = k + '-' + i;
