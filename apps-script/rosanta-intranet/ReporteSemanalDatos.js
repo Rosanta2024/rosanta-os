@@ -28,10 +28,12 @@ var REP_HOJA_ACCIONES = 'REPORTE_ACCIONES';
 var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', 'ESCRITO_POR'];
 // Responsables por DEPARTAMENTO, no por persona: es un documento interno de operacion
 // y el formato no lleva nombres propios (decision de Juanma, 23-sep-2026).
-var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala', 'Reservas', 'Administración'];
+// El reporte es de los supervisores (Juanma, 28-sep-2026): solo Cocina, Barra y Sala. Lo de
+// Reservas y Administracion vive en su pilar (Marketing, Finanzas).
+var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala'];
 var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
 var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
-var REP_CACHE = 'rep_sem_v5_';   // v5: el responsable de barra sale como Barra (28-sep-2026)
+var REP_CACHE = 'rep_sem_v6_';   // v6: la seccion 8 solo trae Cocina, Barra y Sala (28-sep-2026)
 var REP_CACHE_SEGS = 30 * 60;
 
 // ------------------------------------------------------------------ entradas

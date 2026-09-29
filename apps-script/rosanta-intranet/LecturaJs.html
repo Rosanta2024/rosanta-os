@@ -49,9 +49,9 @@ window.LECTURA = (function () {
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
   function acciones(el, L, opts) {
-    // Las sugeridas (del vigia y del reporte) se aprueban o descartan solo en la seccion 8
-    // del reporte semanal (Juanma, 28-sep-2026). Aqui van solo las aprobadas.
-    var A = (L.acciones || []).filter(function (a) { return a.estado !== 'sugerida'; });
+    // Las sugeridas de Cocina, Barra y Sala (Jeffry y José) se aprueban solo en la seccion 8
+    // del reporte semanal; las de los demas (Reservas, Administracion) siguen en su pilar.
+    var A = (L.acciones || []).filter(function (a) { return !(a.estado === 'sugerida' && (a.dueno === 'Jeffry' || a.dueno === 'José')); });
     var h = A.length ? '<ul class="lx-acc">' + A.map(function (a, i) {
       return '<li class="' + esc(a.estado) + '"><span><span class="t">' + esc(a.accion) + '</span><span class="o"> · ' + esc(a.dueno) + ' · ' +
         (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado === 'sugerida' ? ' · <b style="color:#5b56a6">' + (a.escrito_por === 'Reporte semanal' ? 'propuesta del reporte semanal' : 'sugerida por el vigía') + '</b>' : (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '')) + '</span></span>' +

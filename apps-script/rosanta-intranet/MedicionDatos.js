@@ -987,15 +987,17 @@ function medAccionesReporte_(clave) {
   var lun = _finLunesDeClave_(clave), iM = head.indexOf('META');
   var semSig = medSemanaClave_(new Date(lun.getFullYear(), lun.getMonth(), lun.getDate() + 7));
   out.semana_siguiente = semSig; out.siguiente = [];
+  // Solo lo de los supervisores: Cocina, Barra y Sala (REP_DEPARTAMENTOS).
+  function deSupervisor(r) { return REP_DEPARTAMENTOS.indexOf(medDeptoDe_(r[3], r[1])) !== -1; }
   for (var j = 1; j < v.length; j++) {
-    if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada') continue;
+    if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada' || !deSupervisor(v[j])) continue;
     out.siguiente.push({ fila: j + 1, accion: String(v[j][2] || ''),
                          responsable: medDeptoDe_(v[j][3], v[j][1]),
                          porque: iP >= 0 ? String(v[j][iP] || '') : '', meta: iM >= 0 ? String(v[j][iM] || '') : '',
                          escrito_por: String(v[j][6] || ''), estado: String(v[j][5] || '') });
   }
   for (var i = 1; i < v.length; i++) {
-    if (String(v[i][0]) !== sem) continue;
+    if (String(v[i][0]) !== sem || !deSupervisor(v[i])) continue;
     var est = String(v[i][5] || '');
     if (est === 'descartada' || est === 'sugerida') continue;       // el reporte muestra lo aprobado
     out.lista.push({ fila: i + 1, accion: String(v[i][2] || ''),

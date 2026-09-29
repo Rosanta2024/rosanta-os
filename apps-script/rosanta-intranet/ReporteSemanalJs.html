@@ -324,10 +324,21 @@
     var a = null;
     ((D && D.acciones && D.acciones.siguiente) || []).forEach(function (x) { if (String(x.fila) === b.dataset.fila) a = x; });
     if (!a) return;
-    b.disabled = true; b.textContent = '…';
+    var tr = b.closest('tr'), botones = tr.querySelectorAll('.ac-marcar'), texto = b.textContent;
+    botones.forEach(function (x) { x.disabled = true; });
+    b.textContent = '…';
+    // Solo cambia esta fila: recargar el reporte entero movia la pagina (Juanma, 28-sep-2026).
     google.script.run
-      .withSuccessHandler(function () { cargar(CLAVE, true); })
-      .withFailureHandler(function (e) { b.disabled = false; alert(String(e && e.message || e)); })
+      .withSuccessHandler(function () {
+        a.estado = b.dataset.e;
+        if (a.estado === 'descartada') { tr.parentNode.removeChild(tr); return; }
+        tr.cells[3].textContent = 'Aprobada';
+        tr.cells[4].innerHTML = '';
+      })
+      .withFailureHandler(function (e) {
+        botones.forEach(function (x) { x.disabled = false; }); b.textContent = texto;
+        alert(String(e && e.message || e));
+      })
       .marcarAccion(AUTH, a.fila, b.dataset.e, a.accion);
   }
 
