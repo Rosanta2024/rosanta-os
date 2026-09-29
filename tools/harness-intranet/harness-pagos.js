@@ -125,6 +125,7 @@ v = ctx.traerFacturaAnterior('tok', '1938509046');
 an = v.facturas.find(f => f.dte === '1938509046');
 t('Anterior entera: saldo = total y grupo del Excel', an && Math.abs(an.saldo - an.total) < 0.011 && an.grupo === 'BEBIDAS Y COCTELERIA', an && an.grupo);
 t('Maco la ve (es de barra) y el chef no', ctx.getPagosProveedores('tokmaco').facturas.some(f => f.dte === '1938509046') && !ctx.getPagosProveedores('tokchef').facturas.some(f => f.dte === '1938509046'));
+t('La fila de una factura anterior no se puede anular', /no un pago/.test(tira(() => ctx.anularMovimientoPago('tokmaco', CONFIG.PAGOS_PROVEEDORES.find(r => r[6] === 'Pendiente anterior' && r[7] === '5213541')[11]))));
 t('No se trae dos veces', /ya está/.test(tira(() => ctx.traerFacturaAnterior('tok', '1938509046'))));
 t('Proveedores de mercado: primero los ya usados, despues la lista base', v.proveedores_mercado[0] === 'Mercado central' || v.proveedores_mercado.indexOf('Mercado') !== -1, v.proveedores_mercado.slice(0, 4).join(', '));
 // 5. balance del año (COMPRAS_2026 no esta en el harness: tiene que avisar y seguir)

@@ -540,9 +540,10 @@ function anularMovimientoPago(auth, id) {
     var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iA = H.indexOf('AREA');
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][iId]) !== id) continue;
-      if (Q.rol !== 'dueno' && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
       var est = String(v[r][iE] || '');
       if (/^ANULADO/i.test(est)) break;
+      if (est === PAG_ANTERIOR_ && Q.rol !== 'dueno') throw new Error('Esa fila es la que trajo la factura desde COMPRAS_2026, no un pago. Si la factura no se debe, avisá al dueño.');
+      if (Q.rol !== 'dueno' && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
       sh.getRange(r + 1, iE + 1).setValue('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');
       SpreadsheetApp.flush();
       break;

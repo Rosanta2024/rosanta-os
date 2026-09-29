@@ -140,11 +140,15 @@ window.PF_PAGOS = function (HOST, AUTH) {
       }).join('');
     }
     if (TAB === 'pagadas') {
-      var pag = D.facturas.filter(function (f) { return f.pagos.length; }).slice().reverse();
+      // "Traida de antes" / "Pagado antes" no son pagos: es como entro la factura desde
+      // COMPRAS_2026. No se listan aca ni se pueden anular (anularla sacaba la factura de
+      // la lista: paso con Doorways el 29-sep-2026).
+      var esPago = function (p) { return !/antes/i.test(p.estatus); };
+      var pag = D.facturas.filter(function (f) { return f.pagos.some(esPago); }).slice().reverse();
       if (!pag.length) return '<div class="pg-vacio">Todavía no hay pagos anotados.</div>';
       return '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>DTE</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
         pag.map(function (f) {
-          return f.pagos.map(function (p) {
+          return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
               '<td class="n">' + q(p.q) + '</td><td>' + esc(p.estatus) + (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
               '<td>' + (p.id ? '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') + '</td></tr>';
