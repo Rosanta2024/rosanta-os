@@ -145,6 +145,7 @@ function pagFacturas_(ss, anteriores) {
     var total = _finR_(_finNum_(f[iT]));
     if (!(total > 0) || tipo === 'NCRE') return;   // las notas de credito no se pagan
     var nit = pagNit_(f[iNit]), cat = String(f[iC] || '').trim();
+    if (cat === 'PERSONAL' || cat === 'FACTURA_AJENA') return;   // no las paga Rosanta
     var numero = String(f[iN] || '').trim().replace(/\.0$/, '');
     out.push({
       llave: nit + '|' + numero, nit: nit, dte: numero, serie: String(f[iS] || '').trim(),
@@ -559,4 +560,168 @@ function medMercadoDeRetiros_() {
     return pagMovimientos_().filter(function (m) { return m.dte === PAG_SIN_FACTURA_ && m.estatus === 'Retiro de cajero'; })
       .map(function (m) { return { fecha: m.fecha_pagado, q: m.q, proveedor: m.proveedor, detalle: m.detalle, area: m.area }; });
   } catch (e) { return []; }
+}
+
+/* ---- BALANCE DEL AÑO POR PROVEEDOR (29-sep-2026, pedido de Juanma) ----
+   Lo facturado en 2026 (FEL) contra lo pagado, por NIT. Lo pagado sale de tres lados:
+   (1) el banco y la tarjeta, cuando la glosa trae un DTE del proveedor o su nombre;
+   (2) COMPRAS_2026, las filas pagadas de caja, tarjeta o por Maco/Jeffry (el historial
+       antes de esta pantalla; las filas "BI" se cuentan por el banco, no aca);
+   (3) este registro (PAGOS_PROVEEDORES), lo que no es Banco.
+   La diferencia NO es deuda confirmada: lo pagado en enero puede ser de diciembre de 2025,
+   el banco llega hasta su ultima carga y una glosa sin el nombre no se cuenta. Es la lista
+   para preguntar, y al lado va lo que ya esta cargado por pagar para ver cuanto queda sin
+   explicar. Solo el dueño. */
+var PAG_COMPRAS_ID_ = '1Py2KLc8o2GYzJhosnpi_R0OsDU76xa6d_F9B_UuUq0o';
+// Proveedores cuyo nombre en el banco no se parece al del FEL.
+var PAG_ALIAS_BANCO_ = { '336211': ['avicola', 'villalobos'], '37027107': ['tavito', 'donis'], '96569239': ['doorway', '902410067'],
+  '47215682': ['elder', 'marroquin'], '110989163': ['migdalia', 'alpes'],
+  '52496325': ['verdura', 'dona mina', 'anona'], '47687916': ['marisco', 'tiburon', 'pescad'], '345377': ['licorera', 'nacional'], '5564662': ['altogas'], '74382489': ['entrevinos', 'vinos de altura'] };
+var PAG_VACIAS_BAL_ = ['antigua', 'ventas', 'productos', 'alimentos', 'bebidas', 'market', 'supermercados', 'super', 'tienda',
+  'agencia', 'condado', 'naranjo', 'vinos', 'cafe', 'sala', 'central', 'nueva concepcion'];
+var PAG_EFECTIVO_ = /carnic|carne|marraner/;
+// Proveedores que se pagaron en efectivo hasta una fecha (Juanma, 29-sep-2026: Doña Mina y la
+// pescaderia, julio y agosto). Sus facturas hasta ese dia cuentan como pagadas de caja.
+var PAG_EFECTIVO_HASTA_ = { '52496325': '2026-08-31', '47687916': '2026-08-31' };
+var PAG_CAT_BAL_ = ['ALIMENTOS', 'BEBIDAS', 'COCTELERIA', 'LICORES', 'SUMINISTRO DE LIMPIEZA', 'GAS', 'MANTENIMIENTO', 'MANTENIMIENTO Y ACCESORIOS EQUIPO', 'EVENTOS'];
+
+function _pagClaves_(nombres, nit) {
+  var ks = {};
+  nombres.forEach(function (s) { _pagPalabras_(s).forEach(function (w) { if (w.length >= 5 && PAG_VACIAS_BAL_.indexOf(w) === -1) ks[w] = 1; }); });
+  (PAG_ALIAS_BANCO_[nit] || []).forEach(function (w) { ks[w] = 1; });
+  return Object.keys(ks);
+}
+
+/** El NIT al que apunta un texto: primero por DTE, despues por nombre (unico). null si no se sabe. */
+function _pagNitDeTexto_(texto, porDte, claves) {
+  var nums = String(texto || '').match(/\d{6,}/g) || [];
+  for (var i = 0; i < nums.length; i++) if (porDte[nums[i]]) return porDte[nums[i]];
+  var t = ' ' + normalizar_(texto).replace(/[^a-z0-9 ]/g, ' ') + ' ' + String(texto || '');
+  var hits = {};
+  Object.keys(claves).forEach(function (n) {
+    claves[n].forEach(function (k) { if (t.indexOf(k) !== -1) hits[n] = (hits[n] || 0) + 1; });
+  });
+  var ns = Object.keys(hits).sort(function (a, b) { return hits[b] - hits[a]; });
+  if (!ns.length) return null;
+  // empate: solo vale si son el mismo proveedor con dos NIT (La Bodegona), que se suman en una fila
+  var emp = ns.filter(function (n) { return hits[n] === hits[ns[0]]; });
+  if (emp.length > 1 && emp.some(function (n) { return claves[n].join() !== claves[emp[0]].join(); })) return null;
+  return ns[0];
+}
+
+function _pagBalance_(anio) {
+  var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+  var v = ss.getSheetByName('01_FEL_Maestro').getDataRange().getValues(), hi = -1;
+  for (var i = 0; i < Math.min(v.length, 10); i++) if (v[i].map(String).indexOf('NIT_Emisor') >= 0) { hi = i; break; }
+  var H = v[hi].map(function (h) { return String(h || '').trim(); }), c = function (n) { return H.indexOf(n); };
+  var P = {}, porDte = {}, nombres = {};
+  v.slice(hi + 1).forEach(function (f) {
+    var d = pagDia_(f[c('Fecha')]);
+    if (!d || d.getFullYear() !== anio || String(f[c('Estado')] || '').trim() === 'Anulado' || String(f[c('Es_Personal')] || '').trim() === 'Sí') return;
+    var cat = String(f[c('Categoría')] || '').trim(), nit = pagNit_(f[c('NIT_Emisor')]);
+    var num = String(f[c('Numero_DTE')] || '').trim().replace(/\.0$/, '');
+    porDte[num] = nit;
+    if (PAG_CAT_BAL_.indexOf(cat) === -1) return;
+    var q = _finR_(_finNum_(f[c('Gran_Total')]));
+    if (!(q > 0)) return;
+    var x = P[nit] = P[nit] || { nit: nit, proveedor: String(f[c('Establecimiento')] || '').trim() || String(f[c('Nombre_Emisor')] || '').trim(),
+      grupo: PAG_GRUPO_CAT_[cat] || 'ADMIN', n: 0, facturado: 0, banco: 0, caja: 0, registro: 0, pendiente: 0, n_pagos: 0, ult_pago: '', primera: pagIso_(d), ultima: pagIso_(d) };
+    x.n++; x.facturado += q;
+    if (PAG_EFECTIVO_HASTA_[nit] && pagIso_(d) <= PAG_EFECTIVO_HASTA_[nit]) { x.caja += q; x.efectivo_hasta = PAG_EFECTIVO_HASTA_[nit]; }
+    if (pagIso_(d) < x.primera) x.primera = pagIso_(d);
+    if (pagIso_(d) > x.ultima) x.ultima = pagIso_(d);
+    // Por el nombre COMERCIAL: el legal suele ser el de una persona y choca con el equipo
+    // (el de Altogas lleva "Efrain", igual que un mesero: su planilla se le sumaba).
+    nombres[nit] = (nombres[nit] || []).concat([String(f[c('Establecimiento')] || '').trim() || String(f[c('Nombre_Emisor')] || '')]);
+  });
+  var claves = {};
+  Object.keys(P).forEach(function (n) { claves[n] = _pagClaves_(nombres[n] || [], n); });
+  var anota = function (nit, q, fecha, campo) {
+    var x = P[nit]; if (!x) return;
+    x[campo] += q; x.n_pagos++;
+    if (fecha && fecha > x.ult_pago) x.ult_pago = fecha;
+  };
+  // (1) banco y tarjeta
+  var bancoHasta = {};
+  [['03_Banco_Industrial', 'Débito', 'Descripción'], ['04_Banco_BAC', 'Débito', 'Descripción'], ['05_Tarjeta_Credito_BAC', 'Quetzales', 'Descripción']].forEach(function (b) {
+    var sh = ss.getSheetByName(b[0]); if (!sh) return;
+    var w = sh.getDataRange().getValues(), h = -1;
+    for (var i = 0; i < Math.min(w.length, 10); i++) if (w[i].map(String).indexOf('Categoría') >= 0) { h = i; break; }
+    if (h < 0) return;
+    var HB = w[h].map(function (x) { return String(x || '').trim(); });
+    var iF = HB.indexOf('Fecha'), iQ = HB.indexOf(b[1]), iD = HB.indexOf(b[2]), iP = HB.indexOf('Es_Personal'), iC = HB.indexOf('Categoría');
+    for (var r = h + 1; r < w.length; r++) {
+      var d = pagDia_(w[r][iF]); if (!d || d.getFullYear() !== anio) continue;
+      var fi = pagIso_(d); if (!bancoHasta[b[0]] || fi > bancoHasta[b[0]]) bancoHasta[b[0]] = fi;
+      var q = _finR_(_finNum_(w[r][iQ])); if (!(q > 0) || String(w[r][iP] || '').trim() === 'Sí') continue;
+      // lo que no es pago a un proveedor no se busca: planilla, propinas, impuestos, personal, retiros
+      if (/^(NOMINA|PROPINA|IGSS|PERSONAL|DEVOLUCION|IMPUESTO|ISR|IVA|INGRESO|TRANSFERENCIA|COMISION)/.test(String(w[r][iC] || '').trim())) continue;
+      // los retiros de cajero no nombran a nadie; los pagos "S31 Mariscos" o "Mercado Verduras"
+      // van como ALIMENTOS_EFECTIVO pero son transferencias con nombre y si cuentan
+      if (/^(ATM|RETIRO|A-|F-)/i.test(String(w[r][iD] || '').trim())) continue;
+      var nit = _pagNitDeTexto_(w[r][iD], porDte, claves);
+      if (nit) anota(nit, q, fi, 'banco');
+    }
+  });
+  // (2) COMPRAS_2026: solo lo pagado fuera del banco
+  var avisos = [];
+  try {
+    var CAJA = /caja|tarjet|targ|maco|jeffry|visalink|efectivo/i;
+    SpreadsheetApp.openById(PAG_COMPRAS_ID_).getSheets().forEach(function (sh) {
+      sh.getDataRange().getValues().forEach(function (row) {
+        var resto = row.slice(3, 10).map(function (x) { return x instanceof Date ? pagIso_(x) : String(x); }).join(' ');
+        if (!CAJA.test(resto) || /saldo a favor/i.test(resto)) return;
+        var q = null;
+        for (var k = 3; k < 8 && q === null; k++) if (typeof row[k] === 'number' && row[k] > 0.5 && row[k] < 100000) q = row[k];
+        if (q === null) return;
+        var dtes = String(row[2] || '').match(/\d{6,}/g) || [];
+        var fp = null; for (var j = 3; j < 6; j++) if (row[j] instanceof Date) { fp = row[j]; break; }
+        // el año: por la factura si trae DTE del FEL, si no por la fecha pagado; sin ninguno, fuera
+        var es = dtes.some(function (d) { return porDte[d]; }) || (fp && fp.getFullYear() === anio);
+        if (!es) return;
+        var nit = _pagNitDeTexto_(String(row[2] || '') + ' ' + String(row[1] || ''), porDte, claves);
+        if (nit) anota(nit, _finR_(q), fp ? pagIso_(fp) : '', 'caja');
+      });
+    });
+  } catch (e) { avisos.push('No pude leer COMPRAS_2026: ' + e.message); }
+  // (3) este registro, y lo que ya esta cargado por pagar
+  var E = pagEstado_();
+  pagMovimientos_().forEach(function (m) {
+    if (m.dte === PAG_SIN_FACTURA_ || /Banco|Saldo a favor|Programado|Pendiente anterior/.test(m.estatus)) return;
+    if (m.fecha_pagado && m.fecha_pagado.slice(0, 4) === String(anio)) anota(m.nit, m.q, m.fecha_pagado, 'registro');
+  });
+  E.facturas.forEach(function (f) { if (P[f.nit] && f.saldo > 0.01) P[f.nit].pendiente += f.saldo; });
+  // un mismo nombre comercial con varios NIT (La Bodegona) va en una sola fila
+  var U = {};
+  Object.keys(P).forEach(function (n) {
+    var x = P[n], k = normalizar_(x.proveedor);
+    if (!U[k]) { U[k] = x; return; }
+    var u = U[k];
+    ['n', 'facturado', 'banco', 'caja', 'registro', 'pendiente', 'n_pagos'].forEach(function (c) { u[c] += x[c]; });
+    u.nit += ' · ' + x.nit;
+    if (x.ult_pago > u.ult_pago) u.ult_pago = x.ult_pago;
+  });
+  var filas = Object.keys(U).map(function (n) {
+    var x = U[n];
+    ['facturado', 'banco', 'caja', 'registro', 'pendiente'].forEach(function (k) { x[k] = _finR_(x[k]); });
+    x.pagado = _finR_(x.banco + x.caja + x.registro);
+    x.diferencia = _finR_(x.facturado - x.pagado);
+    x.sin_explicar = _finR_(x.diferencia - x.pendiente);
+    // Lo unico que se paga en efectivo es la carne (Juanma, 29-sep-2026): no se le busca pago.
+    x.efectivo = PAG_EFECTIVO_.test(normalizar_(x.proveedor));
+    return x;
+  }).sort(function (a, b) { return b.sin_explicar - a.sin_explicar; });
+  return { anio: anio, filas: filas, banco_hasta: bancoHasta, avisos: avisos,
+           gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm') };
+}
+
+/** La pestaña Balance del año de Pagos. Solo el dueño; caché de 20 minutos. */
+function getBalanceProveedores(auth, forzar) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('El balance del año es solo para el dueño.');
+  var anio = new Date().getFullYear(), cache = CacheService.getScriptCache(), clave = 'pag_balance_v1_' + anio;
+  if (!forzar) { var c = cache.get(clave); if (c) return JSON.parse(c); }
+  var r = _pagBalance_(anio);
+  try { cache.put(clave, JSON.stringify(r), 1200); } catch (e) {}
+  return r;
 }

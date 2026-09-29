@@ -127,6 +127,15 @@ t('Anterior entera: saldo = total y grupo del Excel', an && Math.abs(an.saldo - 
 t('Maco la ve (es de barra) y el chef no', ctx.getPagosProveedores('tokmaco').facturas.some(f => f.dte === '1938509046') && !ctx.getPagosProveedores('tokchef').facturas.some(f => f.dte === '1938509046'));
 t('No se trae dos veces', /ya está/.test(tira(() => ctx.traerFacturaAnterior('tok', '1938509046'))));
 t('Proveedores de mercado: primero los ya usados, despues la lista base', v.proveedores_mercado[0] === 'Mercado central' || v.proveedores_mercado.indexOf('Mercado') !== -1, v.proveedores_mercado.slice(0, 4).join(', '));
+// 5. balance del año (COMPRAS_2026 no esta en el harness: tiene que avisar y seguir)
+const bal = ctx._pagBalance_(2026);
+const cof = bal.filas.find(x => x.nit === '86809970'), alt = bal.filas.find(x => x.nit === '5564662'), eli = bal.filas.find(x => x.nit === '5213541');
+t('Balance: avisa que no leyo COMPRAS_2026 y sigue', bal.avisos.length === 1 && bal.filas.length > 10, bal.avisos[0]);
+t('Balance: Cofradia facturado Q22,268 y banco por nombre', cof && Math.abs(cof.facturado - 22268) < 1 && cof.banco > 15000, cof && (cof.facturado + ' / banco ' + cof.banco));
+t('Balance: Altogas cuenta el pago del BAC por alias', alt && alt.banco >= 8456, alt && alt.banco);
+t('Balance: sin explicar = diferencia - ya por pagar', bal.filas.every(x => Math.abs(x.sin_explicar - (x.diferencia - x.pendiente)) < 0.02));
+t('Balance: solo el dueño', /solo para el dueño/.test(tira(() => ctx.getBalanceProveedores('tokchef'))));
+console.log('      top sin explicar: ' + bal.filas.slice(0, 6).map(x => x.proveedor.slice(0, 18) + ' ' + Math.round(x.sin_explicar)).join(' · '));
 console.log('\nPestaña PAGOS_PROVEEDORES (' + (CONFIG.PAGOS_PROVEEDORES.length - 1) + ' filas):');
 CONFIG.PAGOS_PROVEEDORES.forEach(r => console.log('  ' + r.slice(0, 9).map(x => x instanceof Date ? 'fecha' : String(x)).join(' | ')));
 console.log('\n' + ok + ' OK · ' + mal + ' fallas');

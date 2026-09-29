@@ -73,7 +73,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
   function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-  var D = null, TAB = 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false;
+  var D = null, TAB = 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false, BAL = null;
   var CLASE = { 'Pendiente': 'pend', 'Abonada': 'abon', 'Banco por confirmar': 'banco', 'Pagada': 'ok', 'Pagada de más': 'mas' };
   function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e) + '</span>'; }
 
@@ -101,7 +101,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
-      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura'].concat(D.rol === 'dueno' ? ['banco:Banco sin casar'] : []).map(function (t) {
+      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura'].concat(D.rol === 'dueno' ? ['balance:Balance del año', 'banco:Banco sin casar'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
@@ -173,6 +173,37 @@ window.PF_PAGOS = function (HOST, AUTH) {
           return '<tr><td>' + esc(x.area) + '</td><td>' + esc(x.proveedor) + '</td><td>' + esc(ddmm(x.fecha_pagado)) + '</td><td>' + esc(x.detalle) + '</td><td class="n">' + q(x.q) + '</td>' +
             '<td>' + esc(x.estatus) + '</td><td><button type="button" class="pg-x" data-anular="' + esc(x.id) + '">anular</button></td></tr>';
         }).join('') + '</table></div>';
+    }
+    if (TAB === 'balance') {
+      if (!BAL) {
+        google.script.run.withSuccessHandler(function (r) { BAL = r; if (TAB === 'balance') pintar(); })
+          .withFailureHandler(function (e) { BAL = { error: String(e && e.message || e) }; if (TAB === 'balance') pintar(); })
+          .getBalanceProveedores(AUTH, false);
+        return '<div class="pg-vacio">Cruzando las facturas del año con el banco y COMPRAS_2026…</div>';
+      }
+      if (BAL.error) return '<p class="pg-err">' + esc(BAL.error) + '</p>';
+      var filasB = BAL.filas.filter(function (x) { return !x.efectivo; }), carne = BAL.filas.filter(function (x) { return x.efectivo; });
+      var hasta = Object.keys(BAL.banco_hasta || {}).map(function (k) { return k.replace(/^\d+_/, '').replace(/_/g, ' ') + ' al ' + ddmm(BAL.banco_hasta[k]); }).join(' · ');
+      var sum = function (k) { return filasB.reduce(function (a, x) { return a + x[k]; }, 0); };
+      return '<p class="pg-nota">Lo facturado en ' + BAL.anio + ' (FEL) contra lo pagado: el banco y la tarjeta cuando la glosa trae el DTE o el nombre del proveedor, lo pagado de caja, tarjeta o por Maco/Jeffry en COMPRAS_2026, y lo anotado en esta pantalla. ' +
+        '<b>La diferencia no es deuda confirmada</b>: lo pagado en enero puede ser de diciembre, el banco llega hasta su última carga (' + esc(hasta) + ') y un pago cuya glosa no nombra al proveedor no se cuenta. ' +
+        '<b>Sin explicar</b> = diferencia menos lo que ya está cargado por pagar: es lo que hay que preguntar.</p>' +
+        (BAL.avisos || []).map(function (a) { return '<p class="pg-err">' + esc(a) + '</p>'; }).join('') +
+        '<div class="pg-tabs" style="margin:0.6rem 0"><span class="pg-sp"></span>' +
+        '<button type="button" class="pg-b" data-acc="balrecalc">Recalcular</button></div>' +
+        '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Área</th><th class="n">Facturas</th><th class="n">Facturado</th><th class="n">Pagado banco</th><th class="n">Caja / tarjeta</th>' +
+        '<th class="n">Pagado</th><th class="n">Diferencia</th><th class="n">Ya por pagar</th><th class="n">Sin explicar</th><th>Último pago</th></tr>' +
+        filasB.map(function (x) {
+          var alerta = x.sin_explicar > 500 ? ' style="color:#A33A2A;font-weight:700"' : '';
+          return '<tr><td>' + esc(x.proveedor) + (x.efectivo_hasta ? '<div class="pg-nota">efectivo hasta el ' + esc(ddmm(x.efectivo_hasta)) + '</div>' : '') + '</td><td>' + esc(x.grupo) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.banco) + '</td>' +
+            '<td class="n">' + q(x.caja + x.registro) + '</td><td class="n">' + q(x.pagado) + '</td><td class="n">' + q(x.diferencia) + '</td><td class="n">' + (x.pendiente ? q(x.pendiente) : '') + '</td>' +
+            '<td class="n"' + alerta + '>' + q(x.sin_explicar) + '</td><td>' + esc(ddmm(x.ult_pago)) + '</td></tr>';
+        }).join('') +
+        '<tr><th>Total</th><th></th><th></th><th class="n">' + q(sum('facturado')) + '</th><th class="n">' + q(sum('banco')) + '</th><th class="n">' + q(sum('caja') + sum('registro')) + '</th><th class="n">' + q(sum('pagado')) + '</th>' +
+        '<th class="n">' + q(sum('diferencia')) + '</th><th class="n">' + q(sum('pendiente')) + '</th><th class="n">' + q(sum('sin_explicar')) + '</th><th></th></tr></table></div>' +
+        (carne.length ? '<p class="pg-nota" style="margin-top:0.8rem"><b>Se pagan en efectivo</b> (la carne), fuera del total: ' +
+          carne.map(function (x) { return esc(x.proveedor) + ' ' + q(x.facturado) + ' en ' + x.n + ' facturas'; }).join(' · ') + '.</p>' : '') +
+        '<p class="pg-nota" style="margin-top:0.6rem">Un número negativo es más pagado que facturado: facturas de 2025 pagadas este año, o facturas que no llegaron al FEL. Calculado ' + esc(BAL.gen) + '.</p>';
     }
     if (TAB === 'banco') {
       var fila = function (p) { return '<tr><td>' + esc(ddmm(p.fecha)) + '</td><td class="n">' + q(p.q) + '</td><td>' + esc(p.glosa) + '</td><td>' + esc(p.categoria) + '</td></tr>'; };
@@ -261,7 +292,14 @@ window.PF_PAGOS = function (HOST, AUTH) {
     var b = ev.target.closest('button'); if (!b || !D) return;
     var panel = b.closest('[data-panel]');
     if (b.dataset.tab) { TAB = b.dataset.tab; ABIERTA = null; pintar(); return; }
-    if (b.dataset.acc === 'recargar') { cargar(); return; }
+    if (b.dataset.acc === 'recargar') { BAL = null; cargar(); return; }
+    if (b.dataset.acc === 'balrecalc') {
+      BAL = null; HOST.querySelector('#pg-cuerpo').innerHTML = '<div class="pg-vacio">Recalculando…</div>';
+      google.script.run.withSuccessHandler(function (r) { BAL = r; pintar(); })
+        .withFailureHandler(function (e) { BAL = { error: String(e && e.message || e) }; pintar(); })
+        .getBalanceProveedores(AUTH, true);
+      return;
+    }
     if (b.dataset.acc === 'mercado') { formMercado(); return; }
     if (b.dataset.acc === 'anterior') { formAnterior(); return; }
     if (b.dataset.traer && panel) {
@@ -295,7 +333,8 @@ window.PF_PAGOS = function (HOST, AUTH) {
     }
   });
   HOST.addEventListener('change', function (ev) {
-    var c = ev.target; if (!c.dataset || !c.dataset.sel) return;
+    var c = ev.target;
+    if (!c.dataset || !c.dataset.sel) return;
     SEL[c.dataset.sel] = c.checked; pintarSeleccion();
   });
   cargar();
