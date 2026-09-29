@@ -687,7 +687,7 @@ function medAcciones_(pilar) {
     var estado = String(v[i][5] || 'pendiente');
     if (String(v[i][0]) !== sem && estado !== 'pendiente') continue;
     var fl = v[i][4] instanceof Date ? medFechaIso_(v[i][4]) : String(v[i][4] || '').slice(0, 10);
-    out.push({ fila: i + 1, semana: String(v[i][0]), pilar: String(v[i][1]), accion: String(v[i][2]), dueno: String(v[i][3]),
+    out.push({ fila: i + 1, semana: String(v[i][0]), pilar: String(v[i][1]), accion: String(v[i][2]), dueno: String(v[i][3]), escrito_por: String(v[i][6] || ''),
                fecha: fl, estado: estado, atrasada: estado === 'pendiente' && fl && fl < medFechaIso_(new Date()) });
   }
   return out;

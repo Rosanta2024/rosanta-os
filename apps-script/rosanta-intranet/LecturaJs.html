@@ -52,7 +52,7 @@ window.LECTURA = (function () {
     var A = L.acciones || [];
     var h = A.length ? '<ul class="lx-acc">' + A.map(function (a, i) {
       return '<li class="' + esc(a.estado) + '"><span><span class="t">' + esc(a.accion) + '</span><span class="o"> · ' + esc(a.dueno) + ' · ' +
-        (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado === 'sugerida' ? ' · <b style="color:#5b56a6">sugerida por el vigía</b>' : (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '')) + '</span></span>' +
+        (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado === 'sugerida' ? ' · <b style="color:#5b56a6">' + (a.escrito_por === 'Reporte semanal' ? 'propuesta del reporte semanal' : 'sugerida por el vigía') + '</b>' : (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '')) + '</span></span>' +
         '<span>' + (L.puede_escribir && opts.marcar ? (a.estado === 'sugerida'
           ? '<button type="button" data-i="' + i + '" data-e="pendiente">Aprobar</button><button type="button" data-i="' + i + '" data-e="descartada">Descartar</button>'
           : a.estado === 'pendiente'
