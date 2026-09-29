@@ -66,6 +66,15 @@ function _puenteExportar_(carpeta) {
     anclas: { food_cocina_pct: fc.COCINA, food_barra_pct: fc.BARRA,
               prime_max_pct: P.prime_cost_max_pct.valor, prime_rojo_pct: P.prime_cost_rojo_pct.valor,
               resenas_piso: MED_VISION_.resenas },
+    // El punto de equilibrio de la ultima semana, del PRESUPUESTO (manda el PRESUPUESTO,
+    // decision de Juanma del 28-sep-2026). Sale del mismo calculo del reporte y de Escenarios.
+    equilibrio: (function () {
+      try {
+        var r = _repDatos_(0, false), e = r.equilibrio;
+        return e ? { semana: 'S' + r.semana.w, pe_semana: e.pe_semana, pe_dia: e.pe_dia, fijo_semana: e.fijo_semana,
+                     fijo_mes: e.fijo_mes, mc: e.mc, variables_pct: e.variables_pct, base: e.base } : null;
+      } catch (eq) { return null; }
+    })(),
     departamentos: Object.keys(MED_DEPTO_A_PERSONA_),
     acciones: acciones
   };
