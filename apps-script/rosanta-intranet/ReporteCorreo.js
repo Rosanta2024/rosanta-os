@@ -57,16 +57,69 @@ function _repCorreoAcciones_(clave) {
   return out;
 }
 
+/* Las acciones van en un bloque por supervisor (29-sep-2026, Juanma: "si lees de prisa, te
+   puedes perder"): Cocina · Jeffry y Barra y Sala · José. Cada accion en su linea, con la
+   meta, el porque y el compromiso debajo. PuenteReporte pega el compromiso al PORQUE con
+   REP_CORREO_SEP_COMPROMISO_; aqui se vuelve a separar. */
+var REP_CORREO_BLOQUES_ = [
+  { titulo: 'COCINA · Jeffry', deptos: ['Cocina'], color: '#4E6D5A' },
+  { titulo: 'BARRA Y SALA · José', deptos: ['Barra', 'Sala'], color: '#7A74C9' }
+];
+var REP_CORREO_SEP_COMPROMISO_ = ' · Compromiso de la semana: ';
+
+function _repCorreoPartes_(a) {
+  var porque = a.porque || '', compromiso = '', k = porque.indexOf(REP_CORREO_SEP_COMPROMISO_);
+  if (k >= 0) { compromiso = porque.slice(k + REP_CORREO_SEP_COMPROMISO_.length); porque = porque.slice(0, k); }
+  var p = [];
+  if (a.meta) p.push(['Meta', a.meta]);
+  if (porque) p.push(['Por qué', porque]);
+  if (compromiso) p.push(['Compromiso', compromiso]);
+  return p;
+}
+
 function _repCorreoMensaje_(clave, ac) {
-  var w = clave % 100, L = [];
-  L.push('Hola, va el reporte de la semana ' + w + ' en el PDF adjunto. Lo revisamos en la reunión.');
-  L.push('');
-  function linea(a) { return '- ' + a.depto + ': ' + a.accion + (a.meta ? ' (meta: ' + a.meta + ')' : '') + (a.porque ? '. ' + a.porque : ''); }
-  if (ac.acordadas.length) { L.push('ACCIONES ACORDADAS PARA ESTA SEMANA'); ac.acordadas.forEach(function (a) { L.push(linea(a)); }); L.push(''); }
-  if (ac.propuestas.length) { L.push('PROPUESTA · POR CONFIRMAR CON JUANMA'); ac.propuestas.forEach(function (a) { L.push(linea(a)); }); L.push(''); }
-  if (!ac.acordadas.length && !ac.propuestas.length) { L.push('Las acciones de la semana se definen en la reunión.'); L.push(''); }
-  L.push('La página 6 del PDF trae las acciones propuestas y cómo nos fue con las de la semana pasada.');
-  return { asunto: 'Rosanta · Reporte semanal S' + w, texto: L.join('\n') };
+  var w = clave % 100, L = [], H = [];
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  var intro = 'Hola, va el reporte de la semana ' + w + ' en el PDF adjunto. Lo revisamos en la reunión.';
+  L.push(intro, '');
+  H.push('<p style="margin:0 0 18px">' + esc(intro) + '</p>');
+
+  function lista(titulo, acciones, dosDeptos) {
+    L.push(titulo);
+    H.push('<p style="margin:10px 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#555">' + esc(titulo) + '</p><ol style="margin:0 0 8px;padding-left:22px">');
+    acciones.forEach(function (a, i) {
+      var etiqueta = dosDeptos ? '[' + a.depto + '] ' : '';
+      L.push((i + 1) + '. ' + etiqueta + a.accion);
+      var partes = _repCorreoPartes_(a);
+      partes.forEach(function (p) { L.push('   ' + p[0] + ': ' + p[1]); });
+      H.push('<li style="margin:0 0 10px"><b>' + (etiqueta ? esc(etiqueta) : '') + esc(a.accion) + '</b>' +
+             partes.map(function (p) { return '<br><span style="color:#555">' + esc(p[0]) + ':</span> ' + esc(p[1]); }).join('') + '</li>');
+    });
+    L.push('');
+    H.push('</ol>');
+  }
+
+  var hay = false;
+  REP_CORREO_BLOQUES_.forEach(function (b) {
+    function del(x) { return b.deptos.indexOf(x.depto) >= 0; }
+    var acor = ac.acordadas.filter(del), prop = ac.propuestas.filter(del);
+    if (!acor.length && !prop.length) return;
+    hay = true;
+    var dos = b.deptos.length > 1;
+    L.push('==============================', b.titulo, '==============================');
+    H.push('<h2 style="margin:26px 0 6px;padding-bottom:4px;font-size:18px;color:' + b.color + ';border-bottom:3px solid ' + b.color + '">' + esc(b.titulo) + '</h2>');
+    if (acor.length) lista('Acordadas para esta semana', acor, dos);
+    if (prop.length) lista('Propuesta · por confirmar con Juanma', prop, dos);
+  });
+  if (!hay) {
+    L.push('Las acciones de la semana se definen en la reunión.', '');
+    H.push('<p>Las acciones de la semana se definen en la reunión.</p>');
+  }
+  var cierre = 'La página 6 del PDF trae las acciones propuestas y cómo nos fue con las de la semana pasada.';
+  L.push(cierre);
+  H.push('<p style="margin:22px 0 0;color:#555">' + esc(cierre) + '</p>');
+  return { asunto: 'Rosanta · Reporte semanal S' + w, texto: L.join('\n'),
+           html: '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#1a1a1a;max-width:680px">' + H.join('') + '</div>' };
 }
 
 /** Manda el PDF de la semana `clave`. quien: 'martes' | 'boton'. */
@@ -76,10 +129,8 @@ function _repCorreoEnviar_(clave, quien) {
   var destinos = _repCorreoDestinos_();
   if (!destinos.length) return { ok: false, detalle: 'VIGIA_DESTINOS no tiene correo para los supervisores de Cocina, Barra o Sala.' };
   var msg = _repCorreoMensaje_(clave, _repCorreoAcciones_(clave));
-  var html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#1a1a1a">' +
-    msg.texto.split('\n').map(function (l) { return l ? l.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) : '&nbsp;'; }).join('<br>') + '</div>';
   MailApp.sendEmail({ to: destinos.map(function (x) { return x.correo; }).join(','), cc: DUENO_CORREO_,
-                      subject: msg.asunto, body: msg.texto, htmlBody: html, name: 'Rosanta · Reporte semanal',
+                      subject: msg.asunto, body: msg.texto, htmlBody: msg.html, name: 'Rosanta · Reporte semanal',
                       attachments: [pdf.getBlob()] });
   var cuando = Utilities.formatDate(new Date(), VIG_TZ_, 'yyyy-MM-dd HH:mm');
   PropertiesService.getScriptProperties().setProperty('REP_CORREO_' + clave, cuando + ' · ' + quien);
