@@ -16,7 +16,9 @@
 //
 // Los estados de cuenta (Banco Industrial, BAC y tarjeta) NO se cargan
 // aca: vienen en PDF y los procesa Claude una vez al mes, validando
-// contra los totales impresos del banco.
+// contra los totales impresos del banco. Los scripts de un solo uso que
+// los cargaban (cargar_banco_SXX) se sacaron del proyecto el 28-sep-2026:
+// estan en el repo, apps-script/_archivo/2026-09-28_scripts_banco_maestro.
 //
 // USO NORMAL: desde el maestro, menu "Rosanta" > "Cargar lo que falte".
 // No hay que editar codigo ni elegir carpetas.
