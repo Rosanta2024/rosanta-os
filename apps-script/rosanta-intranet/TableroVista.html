@@ -110,6 +110,16 @@
     .md-tbl th { text-align: left; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(26,26,26,0.12); }
     .md-tbl td { padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(26,26,26,0.07); vertical-align: top; }
     .md-tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    /* 29-sep-2026 (Juanma: "los valores debajo de su nombre"): el titulo de una columna de
+       numeros se alinea igual que sus numeros; grupos arriba para leer la tabla de METAS. */
+    .md-tbl th.n { text-align: right; }
+    .md-tbl th.g { text-align: center; color: var(--verde-bosque); border-bottom: 2px solid #e4e0d6; }
+    .md-tbl th.g + th.g, .md-tbl .sep { border-left: 1px solid #ece7e2; }
+    .md-tbl tr.hoy td { background: #f3f8f4; font-weight: 600; }
+    .md-tbl td .k { display: block; font-size: 0.72rem; color: #8a8780; font-weight: 400; }
+    .md-tbl td.orig { font-size: 0.78rem; color: #52514e; min-width: 160px; }
+    .md-prev .md-pill { text-transform: none; letter-spacing: 0; font-size: 0.78rem; font-weight: 600; white-space: normal; line-height: 1.35; }
+    .md-intro { font-size: 0.86rem; color: #52514e; margin: -0.3rem 0 0.6rem; max-width: 80ch; line-height: 1.5; }
     .md-inst { background: #fff; border: 2px solid var(--lila); border-radius: 16px; padding: 1rem 1.15rem; margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.5; }
     .md-inst .tb-boton { margin-top: 0.6rem; margin-right: 0.5rem; }
     .md-inst .tb-boton.fuerte { background: var(--verde-bosque); color: #fff; }
@@ -325,30 +335,62 @@
       '<button type="button" class="tb-boton fuerte" id="md-inst2" hidden>Sí, escribir en Rosanta_Intranet_Config</button>' +
       '<button type="button" class="tb-boton" id="md-inst3" hidden>Cancelar</button></div><div class="md-rep" id="md-rep"></div></div>';
     // filas
-    h += '<div class="md-h">Metas por mes (pestaña METAS)</div>';
+    h += '<div class="md-h">Metas por mes</div><p class="md-intro">Lo que se espera de cada mes. El tablero pinta verde, amarillo o rojo contra estas metas. El mes en curso va resaltado.</p>';
     var F = r.filas || [];
     if (!F.length) h += '<div class="tb-avisos">La pestaña METAS no existe todavía: el tablero usa la meta automática y PARAMETROS.</div>';
-    else h += '<div class="md-tbl"><table><tr><th>Mes</th><th class="n">Restaurante</th><th class="n">Eventos</th><th class="n">Mínimo total</th><th class="n">Food cost tramo</th><th class="n">Brecha tramo</th><th class="n">Ticket</th><th class="n">Clientes nuevos</th><th class="n">L–X/día</th><th class="n">Reseñas/sem</th><th class="n">Lectura Wix</th><th class="n">Días de caja</th><th>Origen (historial)</th></tr>' +
-      F.map(function (f) {
-        function n(v, pre, suf) { return v === null || v === undefined ? '—' : (pre || '') + Number(v).toLocaleString('es-GT') + (suf || ''); }
-        return '<tr><td>' + esc(f.mes) + ' ' + esc(f.anio) + '</td><td class="n">' + n(f.venta, 'Q') + '</td><td class="n">' + n(f.meta_eventos_q, 'Q') + '</td><td class="n">' + n(f.minimo_venta_total, 'Q') +
-          '</td><td class="n">' + n(f.tramo_food_pct, '≤', '%') + '</td><td class="n">' + n(f.tramo_brecha_pts, '≤', ' pts') + '</td><td class="n">' + n(f.meta_ticket_q, 'Q') + '</td><td class="n">' + n(f.meta_clientes_nuevos) +
-          '</td><td class="n">' + n(f.meta_lmx_dia) + '</td><td class="n">' + n(f.meta_resenas_sem) + '</td><td class="n">' + n(f.meta_lectura_pct, '', '%') + '</td><td class="n">' + n(f.meta_dias_caja, '≥') + '</td><td style="font-size:0.78rem;color:#52514e">' + esc(f.origen) + '</td></tr>';
-      }).join('') + '</table></div>';
+    else {
+      var mHoy = new Date().getMonth() + 1, aHoy = new Date().getFullYear();
+      var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      h += '<div class="md-tbl"><table>' +
+        '<tr><th rowspan="2">Mes</th><th class="g" colspan="3">Venta</th><th class="g" colspan="2">Costo</th><th class="g" colspan="3">Clientes</th><th class="g" colspan="2">Calidad</th><th class="g">Caja</th><th rowspan="2">Por qué esta meta</th></tr>' +
+        '<tr><th class="n">Restaurante</th><th class="n">Eventos</th><th class="n">Mínimo total</th>' +
+        '<th class="n sep">Food cost</th><th class="n">Brecha</th>' +
+        '<th class="n sep">Ticket</th><th class="n">Nuevos</th><th class="n">L–X por día</th>' +
+        '<th class="n sep">Reseñas por semana</th><th class="n">Mesas cerradas Wix</th>' +
+        '<th class="n sep">Días</th></tr>' +
+        F.map(function (f) {
+          function n(v, pre, suf) { return v === null || v === undefined || v === '' ? '—' : (pre || '') + Number(v).toLocaleString('es-GT') + (suf || ''); }
+          var esHoy = Number(f.anio) === aHoy && MESES.indexOf(String(f.mes).slice(0, 3).toLowerCase()) + 1 === mHoy;
+          var orig = String(f.origen || ''), corto = orig.indexOf(' · ') !== -1 ? orig.slice(orig.indexOf(' · ') + 3) : orig;
+          return '<tr' + (esHoy ? ' class="hoy"' : '') + '><td style="white-space:nowrap">' + esc(f.mes) + ' ' + esc(f.anio) + '</td>' +
+            '<td class="n">' + n(f.venta, 'Q') + '</td><td class="n">' + n(f.meta_eventos_q, 'Q') + '</td><td class="n">' + n(f.minimo_venta_total, 'Q') + '</td>' +
+            '<td class="n sep">' + n(f.tramo_food_pct, '≤ ', '%') + '</td><td class="n">' + n(f.tramo_brecha_pts, '≤ ', ' pts') + '</td>' +
+            '<td class="n sep">' + n(f.meta_ticket_q, 'Q') + '</td><td class="n">' + n(f.meta_clientes_nuevos) + '</td><td class="n">' + n(f.meta_lmx_dia) + '</td>' +
+            '<td class="n sep">' + n(f.meta_resenas_sem) + '</td><td class="n">' + n(f.meta_lectura_pct, '', '%') + '</td>' +
+            '<td class="n sep">' + n(f.meta_dias_caja, '≥ ') + '</td>' +
+            '<td class="orig" title="' + esc(orig) + '">' + esc(corto) + '</td></tr>';
+        }).join('') + '</table></div>' +
+        '<p class="tb-leyenda">Food cost y brecha son techos (≤); días de caja es un piso (≥). Brecha = food cost real menos el teórico de las fichas. Pasa el cursor sobre "Por qué esta meta" para ver el historial completo.</p>';
+    }
     // parametros
-    h += '<div class="md-h">PARAMETROS del sistema</div><div class="md-tbl"><table><tr><th>Parámetro</th><th class="n">Plan</th><th class="n">Hoy</th><th>Origen</th></tr>' +
+    var PAR = {
+      meta_venta_anio: ['Venta del año, restaurante + eventos', 'Q'], ticket_promedio_meta_q: ['Ticket por comensal, sin IVA', 'Q'],
+      eventos_mes_meta_q: ['Eventos al mes', 'Q'], clientes_nuevos_mes_meta: ['Clientes nuevos al mes', ''],
+      resenas_semana_meta: ['Reseñas nuevas por semana', ''], lectura_wix_meta_pct: ['Mesas cerradas en Wix', '%'],
+      repeticion_meta_pct: ['Clientes que repiten', '%']
+    };
+    function fmtPar(v, u) { if (v === null || v === undefined || v === '' || isNaN(Number(v))) return v === null || v === undefined ? '—' : esc(v); var s = Number(v).toLocaleString('es-GT'); return u === 'Q' ? 'Q' + s : s + u; }
+    h += '<div class="md-h">Metas fijas del año</div><p class="md-intro">Las que no cambian mes a mes. "Plan" es lo que dice el Sistema de Medición; "Hoy" es lo que está escrito en PARAMETROS y usa el tablero.</p>' +
+      '<div class="md-tbl"><table><tr><th>Qué mide</th><th class="n">Plan</th><th class="n">Hoy</th><th>Estado</th></tr>' +
       (r.parametros_plan || []).map(function (x) {
-        var ok = x.actual === x.plan;
-        return '<tr><td>' + esc(x.clave) + '</td><td class="n">' + esc(x.plan) + '</td><td class="n">' + (x.actual === null ? '—' : esc(x.actual)) + '</td><td>' + pill(ok ? 'verde' : 'amarillo', ok ? 'igual al plan' : esc(x.origen)) + '</td></tr>';
+        var ok = x.actual === x.plan, e = PAR[x.clave] || [x.clave, ''];
+        return '<tr><td>' + esc(e[0]) + '<span class="k">' + esc(x.clave) + '</span></td><td class="n">' + fmtPar(x.plan, e[1]) + '</td><td class="n">' + (x.actual === null ? '—' : fmtPar(x.actual, e[1])) + '</td><td>' + pill(ok ? 'verde' : 'amarillo', ok ? 'igual al plan' : esc(x.origen)) + '</td></tr>';
       }).join('') + '</table></div>';
     // vista previa
     h += '<div class="md-h">Vista previa del ajuste · próxima recalibración: ' + esc(r.proxima || '') + '</div>' +
       '<p class="tb-sub" style="margin:0 0 0.6rem">Últimos 3 meses cerrados (' + esc((r.meses_previa || []).join(', ')) + ') contra la meta del mes en curso. Sube con 3 meses en verde y al menos 5% mejor (al promedio, un escalón como máximo). Baja solo con 3 meses en rojo y después de los 3 filtros: ¿el dato estaba completo?, ¿se hicieron las acciones?, ¿cambió una premisa? Las anclas no se mueven.</p>' +
-      '<div class="md-tbl"><table><tr><th>Meta</th><th class="n">Meta hoy</th><th class="n">Últimos 3 meses</th><th class="n">Promedio</th><th>Qué diría la regla</th></tr>' +
+      '<div class="md-tbl md-prev"><table><tr><th>Meta</th><th class="n">Meta hoy</th>' +
+      (r.meses_previa || []).map(function (m) { return '<th class="n">' + esc(m) + '</th>'; }).join('') +
+      '<th class="n">Promedio</th><th>Qué diría la regla</th></tr>' +
       (r.previa || []).map(function (x) {
-        return '<tr><td>' + esc(x.nombre) + '</td><td class="n">' + (x.meta === null || x.meta === undefined ? '—' : Number(x.meta).toLocaleString('es-GT')) + '</td><td class="n">' +
-          (x.reales || []).map(function (v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('es-GT'); }).join(' · ') +
-          '</td><td class="n">' + (x.promedio === null || x.promedio === undefined || isNaN(x.promedio) ? '—' : Number(x.promedio).toLocaleString('es-GT')) + '</td><td>' + pill(x.zona, x.propuesta) + '</td></tr>';
+        var u = /\(Q/.test(x.nombre) ? 'Q' : (/food cost|%/i.test(x.nombre) ? '%' : '');
+        function f(v) {
+          if (v === null || v === undefined || isNaN(v)) return '—';
+          return u === 'Q' ? 'Q' + Math.round(v).toLocaleString('es-GT') : u === '%' ? (Math.round(v * 10) / 10).toLocaleString('es-GT') + '%' : Math.round(v).toLocaleString('es-GT');
+        }
+        var reales = (r.meses_previa || []).map(function (m, i) { return '<td class="n">' + f((x.reales || [])[i]) + '</td>'; }).join('');
+        return '<tr><td>' + esc(x.nombre.replace(/ \((Q|%)[^)]*\)/, '')) + '</td><td class="n"><b>' + f(x.meta) + '</b></td>' + reales +
+          '<td class="n">' + f(x.promedio) + '</td><td>' + pill(x.zona, x.propuesta) + '</td></tr>';
       }).join('') + '</table></div>' +
       '<p class="tb-leyenda">Es una vista previa: la regla formal corre en cada recalibración y solo sobre meses que ya tenían meta en METAS. Un cambio se escribe a mano en METAS con fecha, de cuánto a cuánto y por qué; la fila vieja no se borra.</p>';
     h += '<div class="md-h">El vigía · la intranet proactiva</div><div id="vig"><div class="tb-cargando">Armando los mensajes de hoy…</div></div>';
@@ -378,17 +420,28 @@
       .withFailureHandler(function (e) { el.innerHTML = '<div class="tb-error">' + esc(e && e.message || e) + '</div>'; })
       .vigiaVistaPrevia(AUTH);
   }
+  /* Los dias de VIGIA_DESTINOS en palabras: L-V, L-D, o codigos L,MA,MI,J,V,S,D. */
+  function diasTxt(d) {
+    d = String(d || '');
+    var fijo = { 'L-V': 'de lunes a viernes', 'L-S': 'de lunes a sábado', 'L-D': 'todos los días', 'TODOS': 'todos los días' };
+    if (fijo[d]) return fijo[d];
+    var N = { L: 'lunes', MA: 'martes', MI: 'miércoles', J: 'jueves', V: 'viernes', S: 'sábado', D: 'domingo' };
+    var L = d.split(',').map(function (x) { return N[x] || x; });
+    return esc(L.length > 1 ? L.slice(0, -1).join(', ') + ' y ' + L[L.length - 1] : L[0]);
+  }
   function pintarVigia(el, v) {
     var h = '<div class="md-inst"><b>' + (v.instalado ? 'El vigía está instalado.' : 'Falta instalar el vigía.') + '</b> ' +
-      'Cada día manda a cada persona, por correo, su número y lo que tiene que hacer (Juanma 7:00 L–V · José y Jeffry 12:00 · Vanessa lunes 9:00) y deja acciones sugeridas para aprobar. ' +
+      'Cada día manda a cada persona, por correo, su número y lo que tiene que hacer' +
+      (v.destinos.length ? ' (' + v.destinos.map(function (d) { return esc(d.nombre) + ' ' + esc(d.hora) + ':00 ' + diasTxt(d.dias); }).join(' · ') + ')' : '') +
+      ' y deja acciones sugeridas para aprobar. ' +
       'Canal: <b>correo</b>' + (v.whatsapp_activo ? ' y WhatsApp (plantilla <code>' + esc(v.plantilla) + '</code>).' : '. WhatsApp está apagado; se enciende con la propiedad VIGIA_WHATSAPP = SI cuando haya una plantilla aprobada.') +
       '<div><button type="button" class="tb-boton" id="vig-inst">' + (v.instalado ? 'Revisar instalación' : 'Instalar el vigía') + '</button>' +
       '<button type="button" class="tb-boton" id="vig-sug">Escribir las sugerencias de hoy</button>' +
       '<button type="button" class="tb-boton" id="vig-cie">Leer los cierres de PosFile (40 días)</button></div><div class="md-rep" id="vig-rep"></div></div>';
     if (v.destinos.length) {
-      h += '<div class="md-tbl"><table><tr><th>Persona</th><th>Hora</th><th>Días</th><th>Canal</th><th>WhatsApp</th><th>Correo</th><th></th></tr>' +
-        v.destinos.map(function (d) { return '<tr><td>' + esc(d.nombre) + '</td><td>' + esc(d.hora) + ':00</td><td>' + esc(d.dias) + '</td><td>' + esc(d.canal) + '</td><td>' +
-          (d.whatsapp ? esc(d.whatsapp) : '<span style="color:#A33A2A">falta</span>') + '</td><td>' + esc(d.correo) + '</td><td><button type="button" class="tb-boton" data-env="' + esc(d.nombre) + '">Enviar ahora</button></td></tr>'; }).join('') +
+      h += '<div class="md-tbl"><table><tr><th>Persona</th><th>Hora</th><th>Días</th><th>Canal</th>' + (v.whatsapp_activo ? '<th>WhatsApp</th>' : '') + '<th>Correo</th><th></th></tr>' +
+        v.destinos.map(function (d) { return '<tr><td>' + esc(d.nombre) + '</td><td>' + esc(d.hora) + ':00</td><td>' + diasTxt(d.dias) + '</td><td>' + esc(d.canal) + '</td>' + (v.whatsapp_activo ? '<td>' +
+          (d.whatsapp ? esc(d.whatsapp) : '<span style="color:#A33A2A">falta</span>') + '</td>' : '') + '<td>' + esc(d.correo) + '</td><td><button type="button" class="tb-boton" data-env="' + esc(d.nombre) + '">Enviar ahora</button></td></tr>'; }).join('') +
         '</table></div><p class="tb-leyenda">Horarios, canal y números se cambian en la pestaña VIGIA_DESTINOS de Rosanta_Intranet_Config.</p>';
     }
     h += '<div class="md-h" style="font-size:1rem">Lo que diría hoy</div>' + (v.mensajes || []).map(function (m) {
