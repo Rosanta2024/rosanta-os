@@ -140,7 +140,7 @@ function carpetaFotos_() {
   if (id) {
     try { return DriveApp.getFolderById(id); } catch (e) {}
   }
-  var f = DriveApp.createFolder('Rosanta · Fotos enviadas desde la consola');
+  var f = DriveApp.createFolder('Contenido para clientes');
   props.setProperty('FOTOS_FOLDER_ID', f.getId());
   return f;
 }
