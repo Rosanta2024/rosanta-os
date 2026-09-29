@@ -976,6 +976,18 @@ function medAccionesReporte_(clave) {
   if (!sh) return out;
   out.existe = true;
   var v = sh.getDataRange().getValues(), head = v[0].map(String), iP = head.indexOf('PORQUE'), sem = medClaveATexto_(clave);
+  // La semana siguiente (28-sep-2026): lo que proponen el reporte y el vigia para ella,
+  // para aprobarlo o descartarlo desde la seccion 8 del reporte. Sin las descartadas.
+  var lun = _finLunesDeClave_(clave), iM = head.indexOf('META');
+  var semSig = medSemanaClave_(new Date(lun.getFullYear(), lun.getMonth(), lun.getDate() + 7));
+  out.semana_siguiente = semSig; out.siguiente = [];
+  for (var j = 1; j < v.length; j++) {
+    if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada') continue;
+    out.siguiente.push({ fila: j + 1, accion: String(v[j][2] || ''),
+                         responsable: MED_PERSONA_A_DEPTO_[String(v[j][3])] || String(v[j][3] || ''),
+                         porque: iP >= 0 ? String(v[j][iP] || '') : '', meta: iM >= 0 ? String(v[j][iM] || '') : '',
+                         escrito_por: String(v[j][6] || ''), estado: String(v[j][5] || '') });
+  }
   for (var i = 1; i < v.length; i++) {
     if (String(v[i][0]) !== sem) continue;
     var est = String(v[i][5] || '');
