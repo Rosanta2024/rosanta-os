@@ -29,8 +29,23 @@ var PAG_SIN_FACTURA_ = 'SIN FACTURA';
 // El banco confirma una factura marcada "Banco" entre 3 dias antes y 45 despues de la marca,
 // y una factura sin marcar si se emitio entre 45 dias antes y 10 despues del pago (regla 15).
 var PAG_BANCO_ANTES_ = 3, PAG_BANCO_DESPUES_ = 45;
-var PAG_AREA_CAT_ = { ALIMENTOS: 'COCINA', BEBIDAS: 'BARRA', COCTELERIA: 'BARRA', LICORES: 'BARRA' };
+// La limpieza la paga cocina (Juanma, 29-sep-2026: Doorways y M.C. Industrial / Vijusa).
+var PAG_AREA_CAT_ = { ALIMENTOS: 'COCINA', BEBIDAS: 'BARRA', COCTELERIA: 'BARRA', LICORES: 'BARRA', 'SUMINISTRO DE LIMPIEZA': 'COCINA' };
 var PAG_AREAS_ROL_ = { chef: ['COCINA'], sala: ['BARRA'], dueno: ['COCINA', 'BARRA', 'ADMIN'] };
+// El AREA que se ve es la del Excel (Juanma, 29-sep-2026: "formato parecido al del excel").
+// El permiso sigue siendo cocina / barra / admin; esto solo agrupa la lista.
+var PAG_GRUPO_CAT_ = { ALIMENTOS: 'ALIMENTOS', BEBIDAS: 'BEBIDAS Y COCTELERIA', COCTELERIA: 'BEBIDAS Y COCTELERIA',
+  LICORES: 'BEBIDAS Y COCTELERIA', 'SUMINISTRO DE LIMPIEZA': 'MANTENIMIENTO Y LIMPIEZA',
+  'MANTENIMIENTO Y ACCESORIOS EQUIPO': 'MANTENIMIENTO Y LIMPIEZA', GAS: 'GAS', EVENTOS: 'EVENTOS' };
+var PAG_GRUPOS_ORDEN_ = ['ALIMENTOS', 'BEBIDAS Y COCTELERIA', 'GAS', 'MANTENIMIENTO Y LIMPIEZA', 'EVENTOS', 'ADMIN'];
+// Una factura de antes de PAG_DESDE_ que sigue sin pagar se trae a mano (traerFacturaAnterior):
+// la fila guarda el SALDO que falta en CANTIDAD PAGADA y la diferencia con el total cuenta
+// como pagada antes. Asi entraron las de la pestaña SEMANA #19 de COMPRAS_2026 (29-sep-2026).
+var PAG_ANTERIOR_ = 'Pendiente anterior';
+// Proveedores sin factura que mas se usan, para el boton de mercado. Medido en las 19
+// pestañas de 2026 de COMPRAS_2026 (29-sep-2026); arriba se suman los que ya se anotaron aca.
+var PAG_PROV_MERCADO_ = ['Mercado', 'Carnicería Nueva Concepción', 'Mariscos', 'La Torre', 'La Bodegona',
+  'Avícola Villa Lobos', 'Julio Hartman', 'Gas evento', 'Dollar City', 'Plásticos', 'Cemaco'];
 
 /** Quien entra y que areas ve. Modulo 'pagos' (el dueño entra siempre). */
 function pagQuien_(auth) {
@@ -107,7 +122,8 @@ function _pagAreaPorNit_(filas, iNit, iCat) {
 }
 
 /** Las facturas desde PAG_DESDE_: ni anuladas ni personales, con su area. */
-function pagFacturas_(ss) {
+function pagFacturas_(ss, anteriores) {
+  anteriores = anteriores || {};
   var v = ss.getSheetByName('01_FEL_Maestro').getDataRange().getValues();
   var hi = -1;
   for (var i = 0; i < Math.min(v.length, 10); i++) if (v[i].map(String).indexOf('NIT_Emisor') >= 0) { hi = i; break; }
@@ -121,7 +137,8 @@ function pagFacturas_(ss) {
   var desde = pagDia_(PAG_DESDE_), out = [];
   filas.forEach(function (f) {
     var d = pagDia_(f[iF]);
-    if (!d || d < desde) return;
+    var nitF = pagNit_(f[iNit]), numF = String(f[iN] || '').trim().replace(/\.0$/, '');
+    if (!d || (d < desde && !anteriores[nitF + '|' + numF])) return;
     if (String(f[iE] || '').trim() === 'Anulado') return;
     if (String(f[iP] || '').trim() === 'Sí') return;
     var tipo = iTipo >= 0 ? String(f[iTipo] || '').trim().toUpperCase() : '';
@@ -133,7 +150,8 @@ function pagFacturas_(ss) {
       llave: nit + '|' + numero, nit: nit, dte: numero, serie: String(f[iS] || '').trim(),
       proveedor: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(),
       razon: String(f[iNom] || '').trim(), fecha: pagIso_(d), dia: pagNumDia_(d), total: total, categoria: cat,
-      area: PAG_AREA_CAT_[cat] || porNit[nit] || 'ADMIN'
+      area: PAG_AREA_CAT_[cat] || porNit[nit] || 'ADMIN',
+      grupo: PAG_GRUPO_CAT_[cat] || (PAG_AREA_CAT_[cat] || porNit[nit] ? (PAG_AREA_CAT_[cat] || porNit[nit]) === 'BARRA' ? 'BEBIDAS Y COCTELERIA' : 'ALIMENTOS' : 'ADMIN')
     });
   });
   return out;
@@ -258,19 +276,29 @@ function _pagCasarBanco_(facturas, pagos) {
 /** Arma el estado de cada factura y el cuadre por proveedor. Sin filtrar por area. */
 function pagEstado_() {
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
-  var facturas = pagFacturas_(ss), movs = pagMovimientos_(), banco = pagPagosBanco_(ss);
+  var movs = pagMovimientos_(), anteriores = {};
+  movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
+  var facturas = pagFacturas_(ss, anteriores), banco = pagPagosBanco_(ss);
   var porLlave = {};
   facturas.forEach(function (f) {
     f.pagado = 0; f.favor_usado = 0; f.pagos = []; f.fecha_pagar = ''; f.marca_banco = null;
     porLlave[f.llave] = f;
   });
-  var favor = {}, mercado = [];   // saldo a favor por NIT; compras sin factura
+  var favor = {}, mercado = [], favores = [];   // saldo a favor por NIT; compras sin factura
   movs.forEach(function (m) {
     if (m.dte === PAG_SIN_FACTURA_) { mercado.push(m); return; }
-    if (m.estatus === 'Saldo a favor') { favor[m.nit] = (favor[m.nit] || 0) + m.q; return; }
+    if (m.estatus === 'Saldo a favor') { favor[m.nit] = (favor[m.nit] || 0) + m.q; favores.push(m); return; }
     var f = porLlave[m.nit + '|' + m.dte];
     if (!f) return;
     if (m.estatus === 'Programado') { f.fecha_pagar = m.fecha_pagar; return; }
+    if (m.estatus === PAG_ANTERIOR_) {   // lo que ya se habia pagado antes de traerla
+      var previo = _finR_(f.total - m.q);
+      if (previo > 0.01) { f.pagado += previo; f.pagos.push({ id: m.id, fecha: '', q: previo, estatus: 'Pagado antes (COMPRAS_2026)', por: m.por, detalle: m.detalle }); }
+      else f.pagos.push({ id: m.id, fecha: '', q: 0, estatus: 'Traida de antes', por: m.por, detalle: m.detalle });
+      f.anterior = true;
+      if (m.fecha_pagar) f.fecha_pagar = m.fecha_pagar;
+      return;
+    }
     if (m.fecha_pagar) f.fecha_pagar = m.fecha_pagar;
     if (m.estatus === 'Saldo a favor usado') { f.favor_usado += m.q; favor[m.nit] = (favor[m.nit] || 0) - m.q; }
     else if (m.estatus === 'Banco') f.marca_banco = pagNumDia_(pagDia_(m.fecha_pagado) || new Date());
@@ -299,7 +327,7 @@ function pagEstado_() {
     delete f.dia; delete f.marca_banco;
   });
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
-  return { facturas: facturas, mercado: mercado, favor: favor,
+  return { facturas: facturas, mercado: mercado, favor: favor, favores: favores,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
            banco_ult: banco.reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '') };
 }
@@ -308,7 +336,7 @@ function pagEstado_() {
 function _pagCuadre_(facturas, favor) {
   var P = {};
   facturas.forEach(function (f) {
-    var x = P[f.nit] = P[f.nit] || { nit: f.nit, proveedor: f.proveedor, area: f.area, n: 0, facturado: 0, pagado: 0,
+    var x = P[f.nit] = P[f.nit] || { nit: f.nit, proveedor: f.proveedor, area: f.area, grupo: f.grupo, n: 0, facturado: 0, pagado: 0,
                                      pendiente: 0, abonadas: 0, de_mas: 0, favor: 0, por_confirmar: 0 };
     x.n++; x.facturado += f.total; x.pagado += f.pagado + f.favor_usado;
     if (f.saldo > 0.01) x.pendiente += f.saldo;
@@ -329,7 +357,8 @@ function getPagosProveedores(auth) {
   var Q = pagQuien_(auth);
   var E = pagEstado_(), ve = function (a) { return Q.areas.indexOf(a) !== -1; };
   var facturas = E.facturas.filter(function (f) { return ve(f.area); });
-  facturas.sort(function (a, b) { return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.proveedor < b.proveedor ? -1 : 1); });
+  var og = function (g) { var i = PAG_GRUPOS_ORDEN_.indexOf(g); return i < 0 ? 99 : i; };
+  facturas.sort(function (a, b) { return og(a.grupo) - og(b.grupo) || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : (a.fecha < b.fecha ? -1 : 1)); });
   var favor = {};
   facturas.forEach(function (f) { if (E.favor[f.nit]) favor[f.nit] = E.favor[f.nit]; });
   var out = {
@@ -337,10 +366,22 @@ function getPagosProveedores(auth) {
     rol: Q.rol, areas: Q.areas, formas: PAG_FORMAS_, formas_mercado: PAG_FORMAS_MERCADO_,
     facturas: facturas, cuadre: _pagCuadre_(facturas, favor),
     mercado: E.mercado.filter(function (m) { return ve(m.area); }),
+    proveedores_mercado: _pagProvMercado_(E.mercado), grupos: PAG_GRUPOS_ORDEN_,
+    // cada saldo a favor anotado, con su id para poder anularlo si se escribio por error
+    favores: E.favores.filter(function (m) { return favor[m.nit] !== undefined; }),
     banco_ult: E.banco_ult
   };
   if (Q.rol === 'dueno') { out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; }
   return out;
+}
+
+/** Los proveedores de mercado: primero los que mas se anotaron aca, despues la lista base. */
+function _pagProvMercado_(mercado) {
+  var n = {}, nombre = {};
+  (mercado || []).forEach(function (m) { var k = normalizar_(m.proveedor); if (!k) return; n[k] = (n[k] || 0) + 1; nombre[k] = nombre[k] || m.proveedor; });
+  var usados = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; }).map(function (k) { return nombre[k]; });
+  PAG_PROV_MERCADO_.forEach(function (p) { if (!n[normalizar_(p)]) usados.push(p); });
+  return usados;
 }
 
 function _pagEscribir_(filas) {
@@ -418,6 +459,38 @@ function programarPagoFactura(auth, llave, fechaPagar) {
   return getPagosProveedores(auth);
 }
 
+/**
+ * Trae a la lista una factura de ANTES de PAG_DESDE_ que sigue sin pagar (solo el dueño).
+ * saldo: lo que falta pagar; vacio = la factura entera. La diferencia cuenta como pagada antes.
+ * Busca la factura en el FEL por su numero de DTE (y el NIT si hay dos con el mismo numero).
+ */
+function traerFacturaAnterior(auth, dte, saldo, nit, detalle) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Traer una factura anterior lo hace el dueño.');
+  dte = String(dte || '').replace(/\D/g, '');
+  if (dte.length < 5) throw new Error('Escribí el número de DTE de la factura.');
+  var v = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName('01_FEL_Maestro').getDataRange().getValues(), hi = -1;
+  for (var i = 0; i < Math.min(v.length, 10); i++) if (v[i].map(String).indexOf('NIT_Emisor') >= 0) { hi = i; break; }
+  var H = v[hi].map(function (h) { return String(h || '').trim(); });
+  var iN = H.indexOf('Numero_DTE'), iNit = H.indexOf('NIT_Emisor'), iT = H.indexOf('Gran_Total'), iE = H.indexOf('Estado'),
+      iEst = H.indexOf('Establecimiento'), iNom = H.indexOf('Nombre_Emisor');
+  var hall = v.slice(hi + 1).filter(function (f) {
+    return String(f[iN] || '').trim().replace(/\.0$/, '') === dte && String(f[iE] || '').trim() !== 'Anulado' &&
+           (!nit || pagNit_(f[iNit]) === pagNit_(nit));
+  });
+  if (!hall.length) throw new Error('La factura ' + dte + ' no está en el FEL cargado.');
+  if (hall.length > 1) throw new Error('Hay ' + hall.length + ' facturas con el número ' + dte + ': indicá el NIT.');
+  var f = hall[0], total = _finR_(_finNum_(f[iT]));
+  saldo = saldo === '' || saldo == null ? total : _finR_(Number(saldo));
+  if (!(saldo > 0) || saldo > total + 0.01) throw new Error('El saldo tiene que estar entre Q0.01 y el total, Q' + total + '.');
+  var llave = pagNit_(f[iNit]) + '|' + dte;
+  if (pagMovimientos_().some(function (m) { return m.estatus === PAG_ANTERIOR_ && m.nit + '|' + m.dte === llave; }))
+    throw new Error('La factura ' + dte + ' ya está en la lista.');
+  _pagEscribir_([{ AREA: '', PROVEEDOR: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(), NIT: pagNit_(f[iNit]), DTE: dte,
+                   'CANTIDAD PAGADA': saldo, 'ESTATUS DE PAGO': PAG_ANTERIOR_, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+  return getPagosProveedores(auth);
+}
+
 /** Un saldo a favor que el proveedor le reconoce a Rosanta (credito, devolucion, pago de mas). */
 function registrarSaldoFavor(auth, nit, monto, detalle) {
   var Q = pagQuien_(auth);
@@ -466,7 +539,7 @@ function anularMovimientoPago(auth, id) {
     var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iA = H.indexOf('AREA');
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][iId]) !== id) continue;
-      if (Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
+      if (Q.rol !== 'dueno' && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
       var est = String(v[r][iE] || '');
       if (/^ANULADO/i.test(est)) break;
       sh.getRange(r + 1, iE + 1).setValue('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');

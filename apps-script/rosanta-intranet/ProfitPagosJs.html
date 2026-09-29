@@ -43,6 +43,8 @@
   .pg-t td, .pg-t th { padding: 0.5rem 0.45rem; border-bottom: 1px solid rgba(26,26,26,0.08); text-align: left; }
   .pg-scroll { overflow-x: auto; margin-top: 0.9rem; border-radius: 18px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
   .pg-x { font: inherit; font-size: 0.72rem; background: none; border: 0; color: #A33A2A; cursor: pointer; text-decoration: underline; padding: 0; }
+  .pg-grupo { font-family: 'Playfair Display', Georgia, serif; font-size: 1.1rem; margin: 1.4rem 0 0; padding-bottom: 0.3rem; border-bottom: 2px solid var(--vb); display: flex; justify-content: space-between; }
+  .pg-grupo span { font-family: inherit; font-size: 0.9rem; }
   .pg-vacio { padding: 2rem 0; text-align: center; color: #52514e; }
   /* Una factura por linea, con las columnas del Excel. En el telefono se acomoda en dos
      renglones: DTE y cantidad arriba, estatus y el boton abajo. */
@@ -101,7 +103,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
       '<div class="pg-tabs">' +
       ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura'].concat(D.rol === 'dueno' ? ['banco:Banco sin casar'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
-      }).join('') + '<span class="pg-sp"></span><button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
+      }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '.</p></div>';
     HOST.innerHTML = h;
@@ -111,14 +113,22 @@ window.PF_PAGOS = function (HOST, AUTH) {
   function cuerpo(abiertas) {
     if (TAB === 'pagar') {
       if (!abiertas.length) return '<div class="pg-vacio">No hay facturas por pagar. ✓</div>';
+      var grupoAnt = '';
       return porProveedor(abiertas).map(function (g) {
+        var cab = '';
+        if (g[0].grupo !== grupoAnt) {
+          grupoAnt = g[0].grupo;
+          var totG = abiertas.filter(function (f) { return f.grupo === grupoAnt; }).reduce(function (a, f) { return a + f.saldo; }, 0);
+          cab = '<h3 class="pg-grupo">' + esc(grupoAnt) + '<span>' + q(totG) + '</span></h3>';
+        }
+        return cab + (function () {
         var f0 = g[0], tot = g.reduce(function (a, f) { return a + f.saldo; }, 0), fav = favorDe(f0.nit);
-        return '<section class="pg-prov"><header><div><span class="pg-area">' + esc(f0.area) + '</span><h3>' + esc(f0.proveedor) + '</h3></div>' +
+        return '<section class="pg-prov"><header><div><span class="pg-area">' + esc(f0.grupo) + '</span><h3>' + esc(f0.proveedor) + '</h3></div>' +
           '<div class="n"><b>' + q(tot) + '</b>' + (fav > 0.01 ? ' · <span class="pg-est ok">' + q(fav) + ' a favor</span>' : '') + '</div></header>' +
           '<div class="pg-l cab"><span></span><span>DTE</span><span>Fecha</span><span>Fecha de pagar</span><span class="n">Cantidad a pagar</span><span>Estatus de pago</span><span></span></div>' +
           g.map(function (f) {
             var fila = '<div class="pg-l"><span class="c"><input type="checkbox" data-sel="' + esc(f.llave) + '"' + (SEL[f.llave] ? ' checked' : '') + ' aria-label="Elegir"></span>' +
-              '<span class="dte">' + esc(f.dte) + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
+              '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
               '<span class="n cant">' + q(f.saldo) + (f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + '</span>' : '') + '</span>' +
               '<span class="est">' + estado(f.estado) + '</span>' +
@@ -126,6 +136,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
             if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + panelPago([f]) + '</div>';
             return fila;
           }).join('') + '</section>';
+        })();
       }).join('');
     }
     if (TAB === 'pagadas') {
@@ -134,7 +145,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
       return '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>DTE</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
         pag.map(function (f) {
           return f.pagos.map(function (p) {
-            return '<tr><td>' + esc(f.area) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
+            return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
               '<td class="n">' + q(p.q) + '</td><td>' + esc(p.estatus) + (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
               '<td>' + (p.id ? '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') + '</td></tr>';
           }).join('');
@@ -145,11 +156,14 @@ window.PF_PAGOS = function (HOST, AUTH) {
       return '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Área</th><th class="n">Facturas</th><th class="n">Facturado</th><th class="n">Pagado</th><th class="n">Pendiente</th>' +
         '<th class="n">Banco por confirmar</th><th class="n">Abonadas</th><th class="n">A favor</th><th class="n">Pagado de más</th><th></th></tr>' +
         D.cuadre.map(function (x) {
-          return '<tr><td>' + esc(x.proveedor) + '</td><td>' + esc(x.area) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.pagado) + '</td>' +
+          return '<tr><td>' + esc(x.proveedor) + '</td><td>' + esc(x.grupo) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.pagado) + '</td>' +
             '<td class="n"><b>' + q(x.pendiente) + '</b></td><td class="n">' + (x.por_confirmar ? q(x.por_confirmar) : '') + '</td><td class="n">' + (x.abonadas || '') + '</td>' +
             '<td class="n">' + (x.favor ? q(x.favor) : '') + '</td><td class="n">' + (x.de_mas ? q(x.de_mas) : '') + '</td>' +
             '<td><button type="button" class="pg-x" style="color:var(--vb)" data-favor="' + esc(x.nit) + '">+ saldo a favor</button></td></tr>';
-        }).join('') + '</table></div>';
+        }).join('') + '</table></div>' +
+        ((D.favores || []).length ? '<h3 style="margin-top:1.2rem">Saldos a favor anotados</h3><div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Fecha</th><th class="n">Cantidad</th><th>De dónde sale</th><th>Anotó</th><th></th></tr>' +
+          D.favores.map(function (m) { return '<tr><td>' + esc(m.proveedor) + '</td><td>' + esc(ddmm(m.fecha_pagado)) + '</td><td class="n">' + q(m.q) + '</td><td>' + esc(m.detalle) + '</td><td>' + esc(m.por) + '</td><td><button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button></td></tr>'; }).join('') +
+          '</table></div>' : '');
     }
     if (TAB === 'mercado') {
       var m = (D.mercado || []).slice().reverse();
@@ -221,12 +235,26 @@ window.PF_PAGOS = function (HOST, AUTH) {
     box.innerHTML = '<section class="pg-prov" data-panel="mercado"><h3>Compra de mercado sin factura</h3>' +
       '<p class="pg-nota">Si se pagó con un retiro de cajero, elegí <b>Retiro de cajero</b>: cuando entre el banco, Compras en efectivo la ofrece como detalle de ese retiro.</p>' +
       '<div class="pg-mas"><label>Fecha <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
-      '<label>Proveedor <input type="text" data-f="prov" placeholder="ej. Mercado, Don Beto"></label>' +
+      '<label>Proveedor <input type="text" data-f="prov" list="pg-provs" placeholder="elegí o escribí"></label>' +
+      '<datalist id="pg-provs">' + (D.proveedores_mercado || []).map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>' +
       '<label>Qué se compró <input type="text" data-f="det" placeholder="ej. limones, menta, hielo" style="min-width:14rem"></label>' +
       '<label>Cantidad <input type="number" step="0.01" min="0" data-f="monto"></label>' +
       (areas.length > 1 ? '<label>Área <select data-f="area">' + areas.map(function (a) { return '<option>' + a + '</option>'; }).join('') + '</select></label>' : '') +
       '</div><div class="pg-nota" style="margin-top:0.5rem">¿Cómo se pagó?</div><div class="pg-formas">' +
       D.formas_mercado.map(function (x) { return '<button type="button" data-merc="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div><div class="pg-err" data-err></div></section>';
+  }
+
+  /* Una factura de antes del arranque que sigue sin pagar (solo el dueño). */
+  function formAnterior() {
+    var box = HOST.querySelector('#pg-merc');
+    if (box.innerHTML) { box.innerHTML = ''; return; }
+    box.innerHTML = '<section class="pg-prov" data-panel="anterior"><h3>Traer una factura anterior</h3>' +
+      '<p class="pg-nota">Para una factura de antes del ' + esc(ddmm(D.desde)) + ' que sigue sin pagar. Si ya se abonó una parte, escribí solo lo que falta.</p>' +
+      '<div class="pg-mas"><label>DTE <input type="text" data-f="dte" placeholder="número de la factura"></label>' +
+      '<label>Falta pagar <input type="number" step="0.01" min="0" data-f="saldo" placeholder="vacío = toda"></label>' +
+      '<label>NIT <input type="text" data-f="nit" placeholder="solo si se repite el número"></label>' +
+      '<label>Nota <input type="text" data-f="det" placeholder="ej. venía de la semana 19"></label>' +
+      '<button type="button" class="pg-b pri" data-traer="1">Traer</button></div><div class="pg-err" data-err></div></section>';
   }
 
   HOST.addEventListener('click', function (ev) {
@@ -235,6 +263,11 @@ window.PF_PAGOS = function (HOST, AUTH) {
     if (b.dataset.tab) { TAB = b.dataset.tab; ABIERTA = null; pintar(); return; }
     if (b.dataset.acc === 'recargar') { cargar(); return; }
     if (b.dataset.acc === 'mercado') { formMercado(); return; }
+    if (b.dataset.acc === 'anterior') { formAnterior(); return; }
+    if (b.dataset.traer && panel) {
+      var dte = valor(panel, 'dte'), sal = valor(panel, 'saldo'), nitA = valor(panel, 'nit'), detA = valor(panel, 'det');
+      llamar(function (r) { r.traerFacturaAnterior(AUTH, dte, sal === '' ? null : Number(sal), nitA, detA); }, panel); return;
+    }
     if (b.dataset.abrir) { ABIERTA = ABIERTA === b.dataset.abrir ? null : b.dataset.abrir; pintar(); return; }
     if (b.dataset.forma && panel) {
       var ks = panel.dataset.panel.split(','), m = valor(panel, 'monto');
