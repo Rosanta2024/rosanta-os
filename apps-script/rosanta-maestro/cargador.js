@@ -19,6 +19,9 @@
 // contra los totales impresos del banco. Los scripts de un solo uso que
 // los cargaban (cargar_banco_SXX) se sacaron del proyecto el 28-sep-2026:
 // estan en el repo, apps-script/_archivo/2026-09-28_scripts_banco_maestro.
+// Los lotes de correccion ya corridos (duplicados de mayo, reclasificaciones,
+// fechas con hora, proveedores...) salieron el 29-sep-2026 (p232) a
+// apps-script/_archivo/2026-09-29_lotes_un_solo_uso_maestro.
 //
 // USO NORMAL: desde el maestro, menu "Rosanta" > "Cargar lo que falte".
 // No hay que editar codigo ni elegir carpetas.
@@ -636,8 +639,12 @@ function menuOlvidar() { olvidarProgreso(); _avisoLog(); }
    reclasificarSinClasificar —por coordenada, por teclado y por referencia de
    elemento— dejaron el desplegable donde estaba. El menu del Sheet si funciona.
    Se corre desde aca y se verifica en la pagina de Ejecuciones, que es la unica
-   fuente que no miente sobre que se ejecuto. */
-function menuReclasRevisar() { revisarSinClasificar(); _avisoLog(); }
+   fuente que no miente sobre que se ejecuto.
+   29-sep-2026: el lote que corre es retiros_personales_tc.js (7 adelantos de la
+   tarjeta, Q2,400, a PERSONAL). El de reclasificar_sin_clasificar ya corrio el
+   12-sep y se archivo. Un lote nuevo se engancha aca, cambiando estas dos
+   llamadas, y el archivo sale del proyecto cuando corrio. */
+function menuReclasRevisar() { revisarRetirosPersonalesTC(); _avisoLog(); }
 
 function menuReclasAplicar() {
   var ui = SpreadsheetApp.getUi();
@@ -651,7 +658,7 @@ function menuReclasAplicar() {
     ui.alert('Rosanta', 'No se escribio nada.', ui.ButtonSet.OK);
     return;
   }
-  reclasificarSinClasificar();
+  aplicarRetirosPersonalesTC();
 
   /* 12-sep-2026: este flush NO es decorativo. La primera corrida escribio las 36
      filas correctamente —el Sheet lo confirma— pero el espejo que se genero cinco
@@ -664,7 +671,7 @@ function menuReclasAplicar() {
   ui.alert('Rosanta',
     'Lote aplicado y espejo regenerado.\n\n' +
     'VERIFICA en Extensiones > Apps Script > Ejecuciones que aparezca ' +
-    '"reclasificarSinClasificar". Si no aparece, no se escribio.',
+    '"aplicarRetirosPersonalesTC". Si no aparece, no se escribio.',
     ui.ButtonSet.OK);
 }
 function _avisoLog() {

@@ -1,0 +1,13 @@
+Lotes de correccion de un solo uso del proyecto Rosanta_MAESTRO_ACTIVO_2026 (p232).
+Se sacaron del proyecto el 29-sep-2026 por pedido de Juanma (no dejar codigo innecesario).
+
+Los 22 ya corrieron y nadie los llamaba. Verificado contra el espejo del 28-sep 15:51:
+mayo sin duplicados, 02b_Ventas_2025 con 1,787 filas, GRUPO ECO 10/10 en ALQUILER_EQUIPO,
+los 17 retiros a la cuenta 974954208 en PERSONAL, Vanessa en MARKETING_HONORARIOS,
+BEBIDAS_EFECTIVO / COCTELERIA_EFECTIVO presentes, proveedores S38 y abogada dados de alta,
+columna Familia y bloque Marketing del P&L instalados.
+
+reclasificar_sin_clasificar.js lo llamaba el menu "Rosanta" del maestro (corrio el 12-sep);
+el menu ahora apunta a retiros_personales_tc.js, que quedo en el proyecto porque no habia corrido.
+
+Si hace falta uno de estos otra vez: copiarlo de vuelta, correrlo y volver a sacarlo.

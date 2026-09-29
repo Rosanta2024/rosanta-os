@@ -30,11 +30,11 @@
 // fila. Solo escribe si la categoria de hoy es la esperada. Se puede correr dos
 // veces sin dano.
 //
-// COMO SE CORRE (editor del proyecto del maestro)
-//   1. revisarRetirosPersonalesTC()     no escribe. Tiene que decir 7 filas y
-//                                       "Sin avisos". Si no, parar y avisar.
-//   2. aplicarRetirosPersonalesTC()
-//   3. generarEspejo()
+// COMO SE CORRE (desde el maestro, menu "Rosanta"; 29-sep-2026)
+//   1. "Reclasificar lote: revisar"  = revisarRetirosPersonalesTC(). No escribe.
+//      Tiene que decir 7 filas y "Sin avisos". Si no, parar y avisar.
+//   2. "Reclasificar lote: APLICAR"  = aplicarRetirosPersonalesTC() y despues
+//      generarEspejo(), los dos en la misma corrida.
 // ============================================================
 
 var SHEET_ID_RP = '1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk';
