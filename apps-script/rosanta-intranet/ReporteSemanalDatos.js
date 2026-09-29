@@ -33,19 +33,26 @@ var REP_COLS_ACCIONES = ['SEMANA', 'ACCION', 'RESPONSABLE', 'PORQUE', 'FECHA', '
 var REP_DEPARTAMENTOS = ['Cocina', 'Barra', 'Sala'];
 var REP_TOP = 6;               // platos por area en la tabla de mas vendidos
 var REP_SEMANAS_LISTA = 12;    // semanas que ofrece el selector
-var REP_CACHE = 'rep_sem_v6_';   // v6: la seccion 8 solo trae Cocina, Barra y Sala (28-sep-2026)
+var REP_CACHE = 'rep_sem_v7_';   // v7: la seccion 8 trae aparte Reservas y Administracion (29-sep-2026)
 var REP_CACHE_SEGS = 30 * 60;
 
 // ------------------------------------------------------------------ entradas
 
 function getReporteSemanal(auth, clave) {
-  exigirModulo_(auth, 'finanzas');
-  return _repDatos_(Number(clave) || 0, false);
+  var u = exigirModulo_(auth, 'finanzas');
+  return _repSinDireccion_(_repDatos_(Number(clave) || 0, false), u);
 }
 
 function refrescarReporteSemanal(auth, clave) {
-  exigirModulo_(auth, 'finanzas');
-  return _repDatos_(Number(clave) || 0, true);
+  var u = exigirModulo_(auth, 'finanzas');
+  return _repSinDireccion_(_repDatos_(Number(clave) || 0, true), u);
+}
+
+/** Las acciones de Reservas y Administracion (29-sep-2026) solo le llegan al dueño. */
+function _repSinDireccion_(d, u) {
+  if (normalizar_(u && u.rol) === 'dueno' || !d || !d.acciones) return d;
+  d.acciones.direccion = [];
+  return d;
 }
 
 /**

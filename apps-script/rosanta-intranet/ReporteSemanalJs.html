@@ -284,7 +284,7 @@
     h += '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Por qué (el dato)</th><th class="no-print"></th></tr></thead><tbody id="acciones">' +
       (ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>') +
       '</tbody></table></div>' +
-      tablaSiguiente(ac) +
+      tablaSiguiente(ac) + tablaDireccion(ac) +
       '<div class="rp-form no-print"><div class="fila"><div><label>Acción</label><input id="ac-accion" placeholder="Qué se hace distinto la semana que viene"></div>' +
       '<div><label>Responsable</label><select id="ac-resp">' + d.departamentos.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select></div></div>' +
       '<label>Por qué</label><textarea id="ac-porque" placeholder="El dato que respalda la acción: el número, la semana, el desvío"></textarea>' +
@@ -308,7 +308,21 @@
     var sem = String(ac.semana_siguiente || '').replace(/^\d{4}-/, '');
     var h = '<h3 style="margin:1.4rem 0 0.3rem">Propuestas para la ' + esc(sem) + '</h3>';
     if (!L.length) return h + '<p class="rp-nota">No hay acciones propuestas para la ' + esc(sem) + '.</p>';
-    return h + '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Meta y por qué</th><th>Estado</th><th class="no-print"></th></tr></thead><tbody>' +
+    return h + tablaPropuestas(L);
+  }
+
+  // Reservas (Vanessa) y Administracion (Juanma), 29-sep-2026: solo las recibe el dueño y
+  // no se imprimen; el PDF y el correo del martes siguen siendo solo de los supervisores.
+  function tablaDireccion(ac) {
+    var L = ac.direccion || [];
+    if (!L.length) return '';
+    var sem = String(ac.semana_siguiente || '').replace(/^\d{4}-/, '');
+    return '<div class="no-print"><h3 style="margin:1.4rem 0 0.3rem">Reservas y Administración · ' + esc(sem) + '</h3>' +
+      '<p class="rp-nota">Solo las ves tú: no salen en el PDF ni en el correo a los supervisores.</p>' + tablaPropuestas(L) + '</div>';
+  }
+
+  function tablaPropuestas(L) {
+    return '<div class="rp-tabla"><table class="rp"><thead><tr><th>Acción</th><th>Responsable</th><th>Meta y por qué</th><th>Estado</th><th class="no-print"></th></tr></thead><tbody>' +
       L.map(function (a) {
         var est = a.estado === 'sugerida' ? 'Propuesta · ' + (a.escrito_por === 'Vigía' ? 'vigía' : 'reporte') : (a.estado === 'pendiente' ? 'Aprobada' : esc(a.estado));
         return '<tr><td class="txt"><b>' + esc(a.accion) + '</b></td><td>' + esc(a.responsable) + '</td>' +
@@ -322,7 +336,8 @@
 
   function marcarSiguiente(b) {
     var a = null;
-    ((D && D.acciones && D.acciones.siguiente) || []).forEach(function (x) { if (String(x.fila) === b.dataset.fila) a = x; });
+    var ac = (D && D.acciones) || {};
+    (ac.siguiente || []).concat(ac.direccion || []).forEach(function (x) { if (String(x.fila) === b.dataset.fila) a = x; });
     if (!a) return;
     var tr = b.closest('tr'), botones = tr.querySelectorAll('.ac-marcar'), texto = b.textContent;
     botones.forEach(function (x) { x.disabled = true; });

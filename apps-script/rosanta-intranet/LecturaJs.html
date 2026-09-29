@@ -49,9 +49,11 @@ window.LECTURA = (function () {
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
   function acciones(el, L, opts) {
-    // Las sugeridas de Cocina, Barra y Sala (Jeffry y José) se aprueban solo en la seccion 8
-    // del reporte semanal; las de los demas (Reservas, Administracion) siguen en su pilar.
-    var A = (L.acciones || []).filter(function (a) { return !(a.estado === 'sugerida' && (a.dueno === 'Jeffry' || a.dueno === 'José')); });
+    // Todas las sugeridas se aprueban solo en la seccion 8 del reporte semanal: Cocina, Barra
+    // y Sala, y aparte Reservas y Administracion (29-sep-2026). El pilar muestra las aprobadas.
+    // Son las personas de MED_PERSONA_A_DEPTO_ (MedicionDatos.js).
+    var EN_SECCION8 = ['Jeffry', 'José', 'Efraín', 'Vanessa', 'Juanma', 'Nadia'];
+    var A = (L.acciones || []).filter(function (a) { return !(a.estado === 'sugerida' && EN_SECCION8.indexOf(a.dueno) !== -1); });
     var h = A.length ? '<ul class="lx-acc">' + A.map(function (a, i) {
       return '<li class="' + esc(a.estado) + '"><span><span class="t">' + esc(a.accion) + '</span><span class="o"> · ' + esc(a.dueno) + ' · ' +
         (a.atrasada ? '<b class="at">atrasada, ' + esc(a.fecha) + '</b>' : esc(a.fecha)) + (a.estado === 'sugerida' ? ' · <b style="color:#5b56a6">' + (a.escrito_por === 'Reporte semanal' ? 'propuesta del reporte semanal' : 'sugerida por el vigía') + '</b>' : (a.estado !== 'pendiente' ? ' · ' + esc(a.estado) : '')) + '</span></span>' +

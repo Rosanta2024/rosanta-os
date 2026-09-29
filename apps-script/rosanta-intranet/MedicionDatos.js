@@ -1085,7 +1085,8 @@ function getLecturaPauta(auth) {
  * 23-sep: sin nombres propios) y el tablero y los mensajes muestran la PERSONA.
  */
 var MED_DEPTO_A_PERSONA_ = { 'Cocina': 'Jeffry', 'Barra': 'José', 'Sala': 'José', 'Reservas': 'Vanessa', 'Administración': 'Juanma' };
-var MED_DEPTO_A_PILAR_ = { 'Cocina': 'profit', 'Barra': 'profit', 'Sala': 'management', 'Reservas': 'marketing', 'Administración': 'finanzas' };
+var MED_DEPTOS_DIRECCION_ = ['Reservas', 'Administración'];   // en la seccion 8 aparte, solo el dueño
+var MED_DEPTO_A_PILAR_ ={ 'Cocina': 'profit', 'Barra': 'profit', 'Sala': 'management', 'Reservas': 'marketing', 'Administración': 'finanzas' };
 /** El departamento de una accion: José es Barra en Profit OS y Sala en lo demas (28-sep-2026). */
 function medDeptoDe_(persona, pilar) {
   persona = String(persona || '');
@@ -1110,9 +1111,15 @@ function medAccionesReporte_(clave) {
   out.semana_siguiente = semSig; out.siguiente = [];
   // Solo lo de los supervisores: Cocina, Barra y Sala (REP_DEPARTAMENTOS).
   function deSupervisor(r) { return REP_DEPARTAMENTOS.indexOf(medDeptoDe_(r[3], r[1])) !== -1; }
+  // Reservas (Vanessa) y Administracion (Juanma), 29-sep-2026: van aparte en `direccion`,
+  // solo para el dueño en el tablero. El PDF y el correo del martes no las leen.
+  function deDireccion(r) { return MED_DEPTOS_DIRECCION_.indexOf(medDeptoDe_(r[3], r[1])) !== -1; }
+  out.direccion = [];
   for (var j = 1; j < v.length; j++) {
-    if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada' || !deSupervisor(v[j])) continue;
-    out.siguiente.push({ fila: j + 1, accion: String(v[j][2] || ''),
+    if (String(v[j][0]) !== semSig || String(v[j][5] || '') === 'descartada') continue;
+    var dir = deDireccion(v[j]);
+    if (!dir && !deSupervisor(v[j])) continue;
+    (dir ? out.direccion : out.siguiente).push({ fila: j + 1, accion: String(v[j][2] || ''),
                          responsable: medDeptoDe_(v[j][3], v[j][1]),
                          porque: iP >= 0 ? String(v[j][iP] || '') : '', meta: iM >= 0 ? String(v[j][iM] || '') : '',
                          escrito_por: String(v[j][6] || ''), estado: String(v[j][5] || '') });
