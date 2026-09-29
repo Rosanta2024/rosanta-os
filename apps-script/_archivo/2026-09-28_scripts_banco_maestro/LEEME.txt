@@ -1,0 +1,4 @@
+Scripts de un solo uso que cargaron el Banco Industrial al maestro (S37-S38 y S39).
+Ya corrieron: S39 el 28-sep-2026 18:09, filas 1107-1126, cuadre al centavo.
+Se sacaron del proyecto Rosanta_MAESTRO_ACTIVO_2026 el 28-sep-2026 por pedido de Juanma
+(no dejar scripts de un solo uso en el proyecto).
