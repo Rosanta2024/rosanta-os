@@ -3,6 +3,8 @@
  * Tanda 3 (19-ago-2026): home (sostenibilidad, hero, coordenadas, MENU),
  * Gift Ideas completa, pie de página y menú de navegación.
  * Español de Juanma, carácter por carácter. Registro + verificación.
+ * 4-oct-2026: Cena Romántica al paquete vigente (Q900: pulpo, dos lomitos,
+ * postre, Cabernet, decoración; anticipo 50%). Ya no lleva regalo.
  */
 'use strict';
 const fs = require('fs');
@@ -57,10 +59,10 @@ const COMPONENTES = [
   ['comp-mszhy56d', [
     ["Some nights ask for something more. A table for two, a quiet corner, and the rest of the world waiting outside.",
      'Hay noches que piden algo más. Una mesa para dos, un rincón tranquilo, y el resto del mundo esperando afuera.'],
-    ["The Romantic Dinner is made for a whole evening: a starter and a dessert to share, two main courses, a bottle of wine to stretch every word, and the table dressed in candles and rose petals that make it a place only yours. To close, a gift to carry home, so the night lingers long after the last light in the garden. Q900 for two, valued at Q1,120.",
-     'La Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q900 para dos, valorada en Q1,120.'],
-    ["Prepared by reservation only, with 24 hours' notice: call 7768-8880 or write to restaurante@rosanta.rest, and we will arrange every detail so all you have to do is arrive.",
-     'Se prepara solo con reservación, con 24 horas de anticipación: llama al 7768-8880 o escribe a restaurante@rosanta.rest, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar.']
+    ["The Romantic Dinner is made for a whole evening: grilled octopus to share, two house tenderloins, a dessert to share, a bottle of Cabernet Sauvignon to stretch every word, and the table dressed in candles, rose petals and the fireplace that make it a place only yours, so the night lingers long after the last light in the garden. Q900 for two, valued at Q1,120.",
+     'La Cena Romántica está hecha para una noche completa: pulpo a la parrilla para compartir, dos Lomitos de la Casa, un postre para compartir, una botella de Cabernet Sauvignon para estirar cada palabra, y la mesa vestida con velas, pétalos de rosa y chimenea que la vuelven un lugar solo suyo, para que la noche siga después de la última luz del jardín. Q900 para dos, valorada en Q1,120.'],
+    ["Prepared by reservation only, with 24 hours' notice and a 50% deposit (Q450): call 7768-8880 or write to restaurante@rosanta.rest, and we will arrange every detail so all you have to do is arrive.",
+     'Se prepara solo con reservación, con 24 horas de anticipación y un anticipo del 50% (Q450): llama al 7768-8880 o escribe a restaurante@rosanta.rest, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar.']
   ]],
   ['comp-mszi0r6k', [["MAKE MEMORIES WORTH KEEPING", 'HAZ RECUERDOS QUE VALGA LA PENA GUARDAR']]],
   ['comp-lhjc19k8', [["CONTACT INFO", 'CONTACTO']]],

@@ -47,7 +47,11 @@ var VC_CHECKS = [
 // servicio, a veces al dia siguiente). Deuda es la que lleva dias abierta.
 var VC_MESA_GRACIA = 3;    // dias de gracia antes de contarla como sin cerrar
 var VC_MESA_TOPE   = 10;   // cuantas se toleran abiertas antes de avisar
-var VC_ABIERTOS    = ['SEATED', 'RESERVED'];
+// Solo RESERVED (Juanma, 28-sep-2026). SEATED es el estado FINAL de una mesa que vino
+// (regla p163: Seated + consumo, y FINISHED solo para pedir la resena), asi que contarla
+// como abierta hacia sonar el aviso por mesas bien cerradas. Las RESERVED vencidas se
+// cierran como NO_SHOW con cerrarMesasNoShow() (CerrarMesasNoShow.js).
+var VC_ABIERTOS    = ['RESERVED'];
 
 // --- Chequeo 5: la URL /exec de los consumidores externos ---
 // Esta es la MISMA URL que tienen configurada la skill de pauta y el snippet

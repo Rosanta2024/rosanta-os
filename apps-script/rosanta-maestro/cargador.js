@@ -314,12 +314,23 @@ function _cargarFEL(ss, datos, emitidas) {
       'Encabezados que trae el archivo: ' + enc.join(' | '));
   }
 
-  var ultima = sh.getLastRow(), previos = {};
+  // SEGUNDA LLAVE: Numero del DTE + Gran Total - agregada el 2-oct-2026.
+  // Hay series de SAT que parecen numeros ("89526E69", "09296263") y Sheets
+  // las guardo como numero (8.9526e+69, 9296263). Con eso la llave
+  // "Serie|Numero" de la hoja ya no coincide con la del archivo y la misma
+  // factura entraba otra vez cada vez que se releia su carpeta: 5 emitidas
+  // de jul-ago quedaron 3 veces (Q5,819 de venta de mas). La segunda llave
+  // no depende de la serie. Y desde ahora Serie y Numero se escriben como
+  // texto (ver mas abajo) para que la serie no se vuelva a danar.
+  var ultima = sh.getLastRow(), previos = {}, porTotal = {};
+  var colSerie = emitidas ? 2 : 3, colTotal = emitidas ? 8 : 10;
   if (ultima >= primera) {
-    var pares = sh.getRange(primera, emitidas ? 2 : 3, ultima - primera + 1, 2).getValues();
+    var pares = sh.getRange(primera, colSerie, ultima - primera + 1, 2).getValues();
+    var totales = sh.getRange(primera, colTotal, ultima - primera + 1, 1).getValues();
     for (var i = 0; i < pares.length; i++) {
       var s = _norm(pares[i][0]), n = _norm(pares[i][1]).replace(/\.0$/, '');
       if (s) previos[s + '|' + n] = true;
+      if (n) porTotal[n + '|' + _numero(totales[i][0]).toFixed(2)] = true;
     }
   }
   var filas = [], saltadas = 0, nuevosProv = {};
@@ -327,8 +338,10 @@ function _cargarFEL(ss, datos, emitidas) {
     var serie = _norm(datos[f][c.serie]);
     var num = _norm(datos[f][c.num]).replace(/\.0$/, '');
     if (!serie) continue;
-    if (previos[serie + '|' + num]) { saltadas++; continue; }
+    var llaveTotal = num + '|' + _numero(datos[f][c.total]).toFixed(2);
+    if (previos[serie + '|' + num] || (num && porTotal[llaveTotal])) { saltadas++; continue; }
     previos[serie + '|' + num] = true;
+    if (num) porTotal[llaveTotal] = true;
     var fecha = _fechaCarga(datos[f][c.fecha]);
     if (!fecha) continue;
     if (emitidas) {
@@ -347,6 +360,7 @@ function _cargarFEL(ss, datos, emitidas) {
   if (!filas.length) return { nuevas: 0, saltadas: saltadas, avisos: [] };
 
   var inicio = ultima + 1, ancho = emitidas ? 9 : 11;
+  sh.getRange(inicio, colSerie, filas.length, 2).setNumberFormat('@');   // Serie y Numero como texto
   sh.getRange(inicio, 1, filas.length, ancho).setValues(filas);
 
   var form = [];

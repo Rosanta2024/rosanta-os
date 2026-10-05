@@ -125,3 +125,5 @@ Todo con el arnés de Node y `node --check` por plantilla. Publicar solo con bat
 - Cerebro v29 instalado en las dos rutas y en `rosanta-cerebro/`; memoria del proyecto; las dos memorias viejas de Cowork del Panel quedaron marcadas OBSOLETO.
 
 **Falta, de Juanma:** capturar la semana, confirmar el activador, correr la batería en /dev, renombrar la pestaña `debates`, dar el sí para publicar (y decidir si se envía el aviso a Vanessa).
+
+**29-sep-2026:** el aviso a Vanessa (actualizado a la @156) lo envió Juanma por WhatsApp, junto con el de recargar Marketing y el del vigía a José y Jeffry. Textos en `2026-09-29_p209_avisos_equipo.md`.
