@@ -220,7 +220,7 @@ function _cajaCalcular_(o) {
   var fin = _finDatos_(!!o.forzar);
   function leer(n) { var h = ss.getSheetByName(n); return h ? h.getDataRange().getValues() : []; }
   var V = leer('02_Ventas_Maestro'), BI = leer('03_Banco_Industrial'), BAC = leer('04_Banco_BAC'),
-      TC = leer('05_Tarjeta_Credito_BAC'), V25 = leer(FIN_HOJA_2025);
+      TC = leer('05_Tarjeta_Credito_BAC'), TCBI = leer('06_Tarjeta_Credito_BI'), V25 = leer(FIN_HOJA_2025);
 
   // ---- movimientos del banco
   var movs = [];
@@ -368,16 +368,19 @@ function _cajaCalcular_(o) {
       G[gr].tramos[_cajaTramo_(m.f.getDate())] += m.deb;
     }
   });
+  // Las dos tarjetas: la BAC y, desde el 5-oct-2026, la de Banco Industrial (mismas columnas).
   var tarjetaCal = 0;
-  for (var r3 = FIN_PRIMERA_FILA - 1; r3 < TC.length; r3++) {
-    var ft = _finDia_(TC[r3][0]);
-    if (!_finEsFecha_(ft)) continue;
-    var kt = _cajaDiaClave_(ft);
-    if (kt < kDesde || kt > kCorte) continue;
-    var ct = String(TC[r3][4] || '').trim();
-    var qt = _finNum_(TC[r3][2]) + _finNum_(TC[r3][3]) * usd;
-    if (qt > 0 && ct !== 'PERSONAL' && ct.indexOf('PAGO_TARJETA') !== 0 && !_cajaEsSi_(TC[r3][5])) tarjetaCal += qt;
-  }
+  [TC, TCBI].forEach(function (T) {
+    for (var r3 = FIN_PRIMERA_FILA - 1; r3 < T.length; r3++) {
+      var ft = _finDia_(T[r3][0]);
+      if (!_finEsFecha_(ft)) continue;
+      var kt = _cajaDiaClave_(ft);
+      if (kt < kDesde || kt > kCorte) continue;
+      var ct = String(T[r3][4] || '').trim();
+      var qt = _finNum_(T[r3][2]) + _finNum_(T[r3][3]) * usd;
+      if (qt > 0 && ct !== 'PERSONAL' && ct.indexOf('PAGO_TARJETA') !== 0 && !_cajaEsSi_(T[r3][5])) tarjetaCal += qt;
+    }
+  });
 
   var MES = 30.4375;
   var conv = ventaCal ? cobroCal / ventaCal : 0;

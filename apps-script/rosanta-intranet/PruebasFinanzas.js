@@ -299,8 +299,12 @@ function prFinanzas_(res) {
     // Con el equilibrio del PRESUPUESTO (28-sep-2026) un mes "incoherente" ya no es un
     // error de formula: es un mes cuyo gasto REAL se aparto del presupuesto. Es AVISO.
     // Lo que si es FALLA es que el equilibrio no cumpla su propia formula.
+    // pe_mc viene redondeado a un decimal y el equilibrio se calcula con el margen exacto:
+    // ese redondeo (hasta 0.05 puntos) mueve bev * pe_mc / 100 hasta bev * 0.0005. La
+    // tolerancia fija de 0.1% del fijo no lo cubria con margenes cerca de 50% (agosto,
+    // 5-oct-2026, al entrar la tarjeta BI). Se tolera exactamente ese redondeo.
     var formula = comparables.filter(function (m) {
-      return Math.abs(m.bev * m.pe_mc / 100 - m.pe_fijo) > Math.max(2, m.pe_fijo * 0.001);
+      return Math.abs(m.bev * m.pe_mc / 100 - m.pe_fijo) > Math.max(2, m.bev * 0.0005 + 1);
     }).map(function (m) { return m.mes; });
     if (formula.length) {
       prAnotar_(g, nombre, 'FALLA', 'el equilibrio no es fijos / margen en: ' + formula.join(', '), 0, comparables.length);
@@ -477,7 +481,7 @@ function prFinanzas_(res) {
     var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
     var total = 0, conHora = [];
     [['01_FEL_Maestro', 1], ['02_Ventas_Maestro', 2], ['03_Banco_Industrial', 1],
-     ['04_Banco_BAC', 1], ['05_Tarjeta_Credito_BAC', 1]].forEach(function (H) {
+     ['04_Banco_BAC', 1], ['05_Tarjeta_Credito_BAC', 1], ['06_Tarjeta_Credito_BI', 1]].forEach(function (H) {
       var sh = ss.getSheetByName(H[0]);
       if (!sh || sh.getLastRow() < FIN_PRIMERA_FILA) return;
       var col = sh.getRange(FIN_PRIMERA_FILA, H[1], sh.getLastRow() - FIN_PRIMERA_FILA + 1, 1).getValues();

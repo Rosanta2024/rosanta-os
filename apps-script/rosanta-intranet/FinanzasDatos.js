@@ -596,7 +596,11 @@ var FIN_LIBROS = [
   { hoja: '01_FEL_Maestro',         monto: 10, usd: 0, cat: 14, pers: 15, iva: 11, prov: 7, nit: 5, estado: 8 },
   { hoja: '03_Banco_Industrial',    monto: 4,  usd: 0, cat: 7,  pers: 8,  desc: 3 },
   { hoja: '04_Banco_BAC',           monto: 5,  usd: 0, cat: 8,  pers: 9,  desc: 4 },
-  { hoja: '05_Tarjeta_Credito_BAC', monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 }
+  { hoja: '05_Tarjeta_Credito_BAC', monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 },
+  // Tarjeta de credito de Banco Industrial (4132), en uso desde jul-2026. Entro el 5-oct-2026,
+  // con las mismas columnas que la BAC. Sus compras llevan la categoria de la FEL del
+  // proveedor, asi la regla 15 las casa con su factura y no se cuentan dos veces.
+  { hoja: '06_Tarjeta_Credito_BI',  monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 }
 ];
 
 // 04_Banco_BAC entro al calculo el 4-sep-2026. Antes solo se leia para el saldo

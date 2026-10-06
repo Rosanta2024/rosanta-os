@@ -644,7 +644,7 @@ function _pagBalance_(anio) {
   };
   // (1) banco y tarjeta
   var bancoHasta = {};
-  [['03_Banco_Industrial', 'Débito', 'Descripción'], ['04_Banco_BAC', 'Débito', 'Descripción'], ['05_Tarjeta_Credito_BAC', 'Quetzales', 'Descripción']].forEach(function (b) {
+  [['03_Banco_Industrial', 'Débito', 'Descripción'], ['04_Banco_BAC', 'Débito', 'Descripción'], ['05_Tarjeta_Credito_BAC', 'Quetzales', 'Descripción'], ['06_Tarjeta_Credito_BI', 'Quetzales', 'Descripción']].forEach(function (b) {
     var sh = ss.getSheetByName(b[0]); if (!sh) return;
     var w = sh.getDataRange().getValues(), h = -1;
     for (var i = 0; i < Math.min(w.length, 10); i++) if (w[i].map(String).indexOf('Categoría') >= 0) { h = i; break; }

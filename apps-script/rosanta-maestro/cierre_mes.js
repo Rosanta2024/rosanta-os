@@ -17,7 +17,8 @@ var LIBROS_CIERRE = [
   ['04_Banco_BAC',           1, 8,  true],
   ['02_Ventas_Maestro',      2, 0,  true],
   ['01_FEL_Maestro',         1, 14, false],
-  ['05_Tarjeta_Credito_BAC', 1, 5,  false]
+  ['05_Tarjeta_Credito_BAC', 1, 5,  false],
+  ['06_Tarjeta_Credito_BI',  1, 5,  false]   // desde jul-2026 (5-oct-2026)
 ];
 
 /**
@@ -70,3 +71,6 @@ function estadoCierreMes(anio, mes) {
     libros: libros
   };
 }
+
+
+
