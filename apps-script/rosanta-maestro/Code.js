@@ -47,14 +47,48 @@ function generarEspejo() {
 
   var blob = respuesta.getBlob().setName(NOMBRE_ESPEJO);
 
+  // Se actualiza el contenido del archivo existente (mismo id) en vez de
+  // borrarlo y crear otro: si no, Drive para escritorio deja el local como
+  // "Rosanta_Maestro_ESPEJO (1).xlsx" y la routine no lo encuentra.
+  // Si hay mas de uno con ese nombre, se queda el mas reciente y el resto
+  // va a la papelera.
   var previos = carpeta.getFilesByName(NOMBRE_ESPEJO);
+  var archivo = null;
   while (previos.hasNext()) {
-    previos.next().setTrashed(true);
+    var f = previos.next();
+    if (!archivo) {
+      archivo = f;
+    } else if (f.getLastUpdated() > archivo.getLastUpdated()) {
+      archivo.setTrashed(true);
+      archivo = f;
+    } else {
+      f.setTrashed(true);
+    }
   }
 
-  var archivo = carpeta.createFile(blob);
+  if (!archivo) {
+    archivo = carpeta.createFile(blob);
+  } else {
+    // DriveApp setContent solo acepta texto; el xlsx es binario, asi que se
+    // sube por la API de Drive (PATCH uploadType=media), que conserva el id.
+    var subida = UrlFetchApp.fetch(
+      'https://www.googleapis.com/upload/drive/v3/files/' + archivo.getId() +
+        '?uploadType=media&supportsAllDrives=true', {
+      method: 'patch',
+      contentType: blob.getContentType(),
+      payload: blob.getBytes(),
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      muteHttpExceptions: true
+    });
+    if (subida.getResponseCode() !== 200) {
+      throw new Error('Drive devolvio ' + subida.getResponseCode() +
+                      ' al actualizar el espejo: ' + subida.getContentText());
+    }
+    archivo = DriveApp.getFileById(archivo.getId());
+  }
+
   Logger.log('Espejo actualizado en "' + carpeta.getName() + '" - ' +
-             Math.round(archivo.getSize() / 1024) + ' KB');
+             Math.round(archivo.getSize() / 1024) + ' KB - id ' + archivo.getId());
   return archivo.getId();
 }
 
