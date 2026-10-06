@@ -1,0 +1,7 @@
+Carga de septiembre 2026 al maestro (5-oct-2026, sesion de Claude Code).
+Corrio cargarSeptiembre2026: BI filas 1127-1140, BAC 293-326, TC BAC 366-390. Cuadre al centavo contra los PDF.
+zz_lectura_temporal.js solo leyo agosto para copiar categorias.
+Ambos se sacaron del proyecto Rosanta_MAESTRO_ACTIVO_2026 el mismo dia.
+zz_tarjeta_bi_2026.js: creo 06_Tarjeta_Credito_BI (filas 5-18, jul-sep 2026) y corrigio BI fila 928 a PAGO_TARJETA_CREDITO.
+zz_lectura_temporal_2.js: lecturas de FEL y BI para elegir categorias.
+zz_lectura_temporal_3.js: busco Q450 en BI y paso a TRANSFERENCIA BAC filas 314, 317 (aporte para SAT) y 325 (aporte de Juanma).
