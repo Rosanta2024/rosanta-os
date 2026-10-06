@@ -53,8 +53,52 @@ function _mnsPendientes_() {
     if (lote.length < limit) break;
     offset += limit;
   }
+
+  // La query de Wix NO devuelve todo (5-oct-2026): trajo 47 reservas, todas con id que
+  // empieza en 0 o 1, y dejo fuera 20 de las 21 mesas de agosto que la pestana `reservas`
+  // tiene en RESERVED. Por eso tambien se lee cada id RESERVED vencido de la pestana y se
+  // pide a Wix uno por uno (estado y revision vigentes). Wix sigue mandando: si alla ya no
+  // esta en RESERVED, no se toca.
+  var vistos = {};
+  out.forEach(function (r) { vistos[r.id || r._id] = true; });
+  var deQuery = out.length, deHoja = 0;
+  _mnsIdsDeHoja_(corte).forEach(function (id) {
+    if (vistos[id]) return;
+    vistos[id] = true;
+    try {
+      var res = wixFetch_('https://www.wixapis.com/table-reservations/reservations/v1/reservations/' + id, {
+        method: 'get',
+        headers: { 'Authorization': cred.apiKey, 'wix-site-id': cred.siteId },
+        muteHttpExceptions: true
+      });
+      var r = JSON.parse(res.getContentText()).reservation;
+      var inicio = new Date((r && r.details && r.details.startDate) || 0);
+      if (r && r.status === 'RESERVED' && inicio < corte && !r.archived) { out.push(r); deHoja++; }
+    } catch (e) {
+      console.log('No pude leer en Wix la reserva ' + id + ' de la pestana: ' + e.message);
+    }
+  });
+
   out.sort(function (a, b) { return String(a.details.startDate).localeCompare(String(b.details.startDate)); });
-  return { lista: out, cred: cred, corte: corte };
+  return { lista: out, cred: cred, corte: corte, deQuery: deQuery, deHoja: deHoja };
+}
+
+/** Ids de la pestana `reservas` que siguen en RESERVED con fecha anterior al corte. */
+function _mnsIdsDeHoja_(corte) {
+  var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName('reservas');
+  if (!sh) return [];
+  var v = sh.getDataRange().getValues(), H = v[0];
+  var iId = H.indexOf('id'), iF = H.indexOf('fecha'), iE = H.indexOf('estado');
+  if (iId < 0 || iF < 0 || iE < 0) return [];
+  var ids = [];
+  for (var i = 1; i < v.length; i++) {
+    if (String(v[i][iE] || '').trim().toUpperCase() !== 'RESERVED') continue;
+    var d = v[i][iF] instanceof Date ? v[i][iF] : new Date(String(v[i][iF]) + 'T12:00:00');
+    if (isNaN(d) || d >= corte) continue;
+    var id = String(v[i][iId] || '').trim();
+    if (id) ids.push(id);
+  }
+  return ids;
 }
 
 function _mnsLinea_(r) {
@@ -68,6 +112,7 @@ function revisarMesasNoShow() {
   console.log('REVISION, no se escribe nada. Corte: antes del ' +
               Utilities.formatDate(p.corte, 'America/Guatemala', 'yyyy-MM-dd HH:mm'));
   p.lista.forEach(function (r) { console.log('  ' + _mnsLinea_(r)); });
+  console.log('Encontradas: ' + p.deQuery + ' por la busqueda de Wix y ' + p.deHoja + ' mas desde la pestana reservas.');
   console.log('Pasarian a NO_SHOW: ' + p.lista.length + (p.lista.length > MNS_TOPE ? '  >> SOBRE EL TOPE, no se cargaria' : ''));
 }
 
