@@ -29,6 +29,9 @@ var VENTAS = {
     { id: '1PlWKHpl40qPIGkyF3Ej9rrDjHZFQ4SYP', nombre: 'Reportes 2026',      recursiva: true  }
   ],
   prefijo: 'ReporteVentasProductos',
+  // El PosFile actualizado (desde el 1-oct-2026) exporta "VentasProductos-DD-MM-AAAA",
+  // con otro formato: ver leerExportVentasNuevo_.
+  prefijoNuevo: 'VentasProductos-',
   hoja:    'VENTAS x PLATO',
   hojaLog: 'SYNC_VENTAS',
 
@@ -160,7 +163,8 @@ function juntarVentasDeCarpeta_(carpetaId, etiqueta, recursiva, out) {
     }
     // PREFIJO EXACTO: ReporteVentas_ y RepProductosConsolid_ viven en las mismas
     // carpetas y no sirven.
-    if (String(f.name).indexOf(VENTAS.prefijo) !== 0) return;
+    if (String(f.name).indexOf(VENTAS.prefijo) !== 0 &&
+        String(f.name).indexOf(VENTAS.prefijoNuevo) !== 0) return;
     // nativa: desde S36 (sep-2026) los reportes se suben ya convertidos a hoja de
     // Google, por decision del proyecto. Un origen nativo NO hay que copiarlo: se
     // lee tal cual. Misma marca que usa catalogoArchivos_ en ConfigPOS.gs.
@@ -277,7 +281,11 @@ function leerExportVentas_(ssId) {
       for (var k in VENTAS.enc) idx[k] = fila.indexOf(VENTAS.enc[k]);
     }
   }
-  if (encFila === -1) return { error: 'No encontre el encabezado (Doc ID / Producto).' };
+  if (encFila === -1) {
+    var e0 = (datos[0] || []).map(normalizar_);
+    if (e0.indexOf('doc no.') !== -1 && e0.indexOf('estado') !== -1) return leerExportVentasNuevo_(datos);
+    return { error: 'No encontre el encabezado (Doc ID / Producto).' };
+  }
   var faltan = Object.keys(VENTAS.enc).filter(function (k) { return idx[k] === -1; });
   if (faltan.length) return { error: 'Faltan columnas: ' + faltan.join(', ') };
 
@@ -343,6 +351,66 @@ function leerExportVentas_(ssId) {
     tickets: Object.keys(tickets).length, productos: Object.keys(productos).length,
     ticketsConDoc: Object.keys(ticketsConDoc).length,
     productosCrudos: Object.keys(productosCrudos).length
+  };
+}
+
+/**
+ * El export de productos del PosFile actualizado (arranco el 1-oct-2026). Cambia en cuatro cosas:
+ *   - "Doc No." es el numero de la factura (1, 2...): se guarda como FT1, FT2..., igual que el
+ *     No. del reporte de facturas que carga el maestro (cargador.js, _cargarPOSFacturas).
+ *   - La linea anulada viene con Estado "eliminado" y Cantidad 0, a veces con el Total lleno:
+ *     se descarta por el estado, no por el total.
+ *   - El servicio viene como una linea "Propina" (Tipo B/S = S): no es producto y no entra.
+ *   - No hay fila de total. El cuadre de la S40 se hizo contra el reporte de facturas
+ *     (productos Q18,620 + servicio Q1,862 = Q20,482, las 29 facturas): aqui se deja en el log.
+ * Devuelve lo mismo que leerExportVentas_.
+ */
+function leerExportVentasNuevo_(datos) {
+  var e = datos[0].map(normalizar_);
+  var idx = { doc: e.indexOf('doc no.'), fecha: e.indexOf('fecha'), producto: e.indexOf('producto'),
+              categoria: e.indexOf('categoria'), cantidad: e.indexOf('cantidad'), precio: e.indexOf('precio'),
+              descuento: e.indexOf('descuento'), total: e.indexOf('total'), vendedor: e.indexOf('vendedor'),
+              estado: e.indexOf('estado'), tipo: e.indexOf('tipo b/s') };
+  var faltan = Object.keys(idx).filter(function (k) { return idx[k] === -1; });
+  if (faltan.length) return { error: 'Formato nuevo del PosFile: faltan columnas ' + faltan.join(', ') };
+
+  var filas = [], anuladas = 0, anuladasUds = 0, cero = 0, ceroUds = 0, servicio = 0;
+  var suma = 0, unidades = 0, desde = null, hasta = null;
+  var tickets = {}, productos = {}, productosCrudos = {}, ticketsConDoc = {};
+  for (var i = 1; i < datos.length; i++) {
+    var f = datos[i];
+    var n = String(f[idx.doc] == null ? '' : f[idx.doc]).trim();
+    if (!n) continue;
+    var doc = /^\d+$/.test(n) ? 'FT' + n : n;
+    ticketsConDoc[doc] = true;
+    var crudo = String(f[idx.producto] == null ? '' : f[idx.producto]);
+    var cant = Number(f[idx.cantidad]) || 0, total = Number(f[idx.total]) || 0;
+    if (normalizar_(f[idx.estado]) === 'eliminado') { anuladas++; anuladasUds += cant; continue; }
+    if (normalizar_(f[idx.tipo]) === 's' || normalizar_(crudo) === 'propina') { servicio += total; continue; }
+    if (total === 0) { cero++; ceroUds += cant; continue; }
+    var fecha = fechaVenta_(f[idx.fecha]);
+    if (!fecha) continue;
+    if (!desde || fecha < desde) desde = fecha;
+    if (!hasta || fecha > hasta) hasta = fecha;
+    var limpio = limpiarNombreProducto_(crudo);
+    tickets[doc] = true;
+    productos[normalizar_(limpio)] = true;
+    productosCrudos[limpio] = true;
+    unidades += cant;
+    suma += total;
+    filas.push([doc, fecha, crudo.trim(), limpio, String(f[idx.categoria] || '').trim(),
+                cant, Number(f[idx.precio]) || 0, Number(f[idx.descuento]) || 0,
+                total, String(f[idx.vendedor] || '').trim(), null]);
+  }
+  if (!filas.length) return { error: 'Formato nuevo del PosFile: ninguna linea valida.' };
+  Logger.log('  formato nuevo del PosFile: productos Q%s + servicio Q%s = Q%s (cuadrar con el reporte de facturas)',
+             suma.toFixed(2), servicio.toFixed(2), (suma + servicio).toFixed(2));
+  return {
+    filas: filas, desde: desde, hasta: hasta,
+    conDoc: filas.length + anuladas + cero, sumaConDoc: suma, totalDelArchivo: suma, unidades: unidades,
+    anuladas: anuladas, anuladasUds: anuladasUds, cero: cero, ceroUds: ceroUds,
+    tickets: Object.keys(tickets).length, productos: Object.keys(productos).length,
+    ticketsConDoc: Object.keys(ticketsConDoc).length, productosCrudos: Object.keys(productosCrudos).length
   };
 }
 

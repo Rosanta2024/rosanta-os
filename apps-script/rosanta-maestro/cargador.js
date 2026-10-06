@@ -7,6 +7,8 @@
 //
 // Que reconoce:
 //   POS            -> tiene columna "TicketId"        -> 02_Ventas_Maestro
+//   POS nuevo      -> "Tipo documento" + "No." + "Total" -> 02_Ventas_Maestro
+//                     (reporte de facturas del PosFile actualizado, desde el 1-oct-2026)
 //   FEL emitidas   -> el EMISOR es CORSAGA            -> 01b_FEL_Emitidas
 //   FEL recibidas  -> el emisor es otro               -> 01_FEL_Maestro
 //   Todo lo demas (PDF, zip, planilla, etc.) se ignora.
@@ -19,6 +21,7 @@
 // contra los totales impresos del banco. Los scripts de un solo uso que
 // los cargaban (cargar_banco_SXX) se sacaron del proyecto el 28-sep-2026:
 // estan en el repo, apps-script/_archivo/2026-09-28_scripts_banco_maestro.
+// El de S40 (corrido el 5-oct-2026, 15 filas) y el de sus 3 proveedores nuevos estan en apps-script/_archivo/2026-10-05_banco_S40.
 // Los lotes de correccion ya corridos (duplicados de mayo, reclasificaciones,
 // fechas con hora, proveedores...) salieron el 29-sep-2026 (p232) a
 // apps-script/_archivo/2026-09-29_lotes_un_solo_uso_maestro.
@@ -132,6 +135,7 @@ function _identificar(datos) {
   for (var i = 0; i < enc.length; i++) {
     if (_norm(enc[i]).toLowerCase() === 'ticketid') return 'POS';
   }
+  if (_col(enc, 'Tipo documento') === 0 && _col(enc, 'No.') >= 0 && _col(enc, 'Total') >= 0) return 'POS_FACTURAS';
   var iEmisor = _col(enc, 'Nombre completo del emisor');
   var iNit    = _col(enc, 'NIT del emisor');
   if (iEmisor < 0 && iNit < 0) return '?';
@@ -252,6 +256,70 @@ function _cargarPOS(ss, datos) {
                 total, _numero(datos[f][c.costo]), _numero(datos[f][c.gan]),
                 notas, com, _norm(datos[f][c.cont]), _norm(datos[f][c.vend]),
                 _norm(datos[f][c.prod])]);
+  }
+  if (filas.length) {
+    var inicio = ultima + 1;
+    sh.getRange(inicio, 1, filas.length, 12).setValues(filas);
+    var form = [];
+    for (var k = 0; k < filas.length; k++) {
+      var r = inicio + k;
+      form.push(['=IF(B' + r + '="","",IFERROR(YEAR(B' + r + '),""))',
+                 '=IF(B' + r + '="","",IFERROR(WEEKNUM(B' + r + ',21),""))',
+                 '=IF(B' + r + '="","",IFERROR(MONTH(B' + r + '),""))']);
+    }
+    sh.getRange(inicio, 13, form.length, 3).setFormulas(form);
+    sh.getRange(inicio, 2, filas.length, 1).setNumberFormat('yyyy-mm-dd');
+  }
+  return { nuevas: filas.length, saltadas: saltados, avisos: avisos };
+}
+
+/**
+ * El PosFile actualizado (arranco el 1-oct-2026, Juanma) empezo de cero y ya no saca el
+ * reporte de tickets: saca el "ReporteFacturas" (Tipo documento, No., Fecha, Notas, Costo,
+ * Ganancia, Total). Mientras la SAT no reciba sus facturas (quedan en "contingencia") es la
+ * unica fuente de la venta, y entra a 02_Ventas_Maestro con las mismas columnas que el POS:
+ *   TicketId   el No. tal cual (FT1, FT2...): no choca con los tickets numericos viejos
+ *   Subtotal   el Total, que ya trae el 10% de servicio (FT1 = 1,000 x 1.10)
+ *   Ganancia   Total / 1.10 - Costo. El archivo trae Ganancia = Total - Costo, con el
+ *              servicio adentro; el motor saca la base sin servicio de Costo + Ganancia
+ *              (regla 14), asi que se guarda como la daba el POS viejo.
+ *   Comensales la columna Notas, igual que antes. Sin hora ni productos: no los trae.
+ * Se saltan la fila TOTAL y las anuladas. Nunca duplica: compara el No. como el TicketId.
+ */
+function _cargarPOSFacturas(ss, datos) {
+  _zonaCargaIgual_(ss);
+  var sh = ss.getSheetByName('02_Ventas_Maestro');
+  var enc = datos[0];
+  var c = {
+    tipo: _col(enc, 'Tipo documento'), id: _col(enc, 'No.'), fecha: _col(enc, 'Fecha'),
+    estado: _col(enc, 'Estado'), vend: _col(enc, 'Vendedor'), cont: _col(enc, 'Contable'),
+    notas: _col(enc, 'Notas'), costo: _col(enc, 'Costo'), tot: _col(enc, 'Total')
+  };
+  var ultima = sh.getLastRow();
+  var previos = {};
+  if (ultima >= 5) {
+    var ids = sh.getRange(5, 1, ultima - 4, 1).getValues();
+    for (var i = 0; i < ids.length; i++) previos[_norm(ids[i][0])] = true;
+  }
+  var filas = [], avisos = [], saltados = 0;
+  for (var f = 1; f < datos.length; f++) {
+    var id = _norm(datos[f][c.id]);
+    if (!id || _norm(datos[f][c.tipo]).toUpperCase() === 'TOTAL') continue;
+    if (/anul/i.test(_norm(datos[f][c.estado]))) continue;
+    if (previos[id]) { saltados++; continue; }
+    previos[id] = true;
+    var fecha = _fechaCarga(datos[f][c.fecha]);
+    if (!fecha) continue;
+    var notas = _norm(datos[f][c.notas]);
+    var com = /^\d+$/.test(notas) ? Number(notas) : '';
+    var total = _numero(datos[f][c.tot]);
+    var costo = _numero(datos[f][c.costo]);
+    if (com === '' && total > 5000) {
+      avisos.push('Factura ' + id + ' de Q' + total.toFixed(2) + ' sin comensales: ' +
+                  'revisa si es un EVENTO PRIVADO antes de dar el reporte por bueno.');
+    }
+    filas.push([id, fecha, '', total, total, costo, Math.round((total / 1.10 - costo) * 100) / 100,
+                notas, com, _norm(datos[f][c.cont]), _norm(datos[f][c.vend]), '']);
   }
   if (filas.length) {
     var inicio = ultima + 1;
@@ -511,6 +579,7 @@ function _barrido(escribir, ventana) {
         continue;
       }
       var res = tipo === 'POS'          ? _cargarPOS(ss, datos)
+              : tipo === 'POS_FACTURAS' ? _cargarPOSFacturas(ss, datos)
               : tipo === 'FEL_EMITIDAS' ? _cargarFEL(ss, datos, true)
               :                           _cargarFEL(ss, datos, false);
       vistos[huella] = 1;
