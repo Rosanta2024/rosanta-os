@@ -75,6 +75,14 @@ t('Hay facturas desde ' + desde, fs_.length > 0, fs_.length + ' facturas, Q' + M
 console.log('      estados: pagada ' + cuenta('Pagada') + ' · pendiente ' + cuenta('Pendiente') + ' · abonada ' + cuenta('Abonada') +
             ' · áreas ' + JSON.stringify(fs_.reduce((a, f) => (a[f.area] = (a[f.area] || 0) + 1, a), {})) +
             ' · banco dudosos ' + est.banco_dudosos.length + ' · sueltos de mercadería ' + est.banco_sueltos.length + ' · banco hasta ' + est.banco_ult);
+// Comisiones de tarjeta fuera de Pagos (8-oct-2026): con control positivo, para que la
+// prueba no pase en verde con un espejo que no las trae.
+const felCom = (() => { const v = maestro['01_FEL_Maestro']; const hi = v.findIndex(r => r.map(String).indexOf('NIT_Emisor') >= 0);
+  const iC = v[hi].indexOf('Categoría'), iF = v[hi].indexOf('Fecha');
+  return v.slice(hi + 1).filter(r => String(r[iC]).trim() === 'COMISION TARJETA DE CREDITO' && ctx.pagDia_(r[iF]) >= ctx.pagDia_(desde)).length; })();
+t('El espejo trae comisiones de tarjeta desde ' + desde + ' (control)', felCom > 0, felCom);
+t('Ninguna comision de tarjeta llega a Pagos', fs_.every(f => f.categoria !== 'COMISION TARJETA DE CREDITO') &&
+  ctx.getPagosProveedores('tok').facturas.every(f => f.categoria !== 'COMISION TARJETA DE CREDITO'));
 t('Ninguna factura sin area', fs_.every(f => ['COCINA', 'BARRA', 'ADMIN'].indexOf(f.area) !== -1));
 const chef = ctx.getPagosProveedores('tokchef'), maco = ctx.getPagosProveedores('tokmaco'), due = ctx.getPagosProveedores('tok');
 t('El chef ve solo cocina', chef.facturas.every(f => f.area === 'COCINA') && chef.facturas.length > 0, chef.facturas.length);

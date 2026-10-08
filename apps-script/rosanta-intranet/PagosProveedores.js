@@ -146,6 +146,10 @@ function pagFacturas_(ss, anteriores) {
     if (!(total > 0) || tipo === 'NCRE') return;   // las notas de credito no se pagan
     var nit = pagNit_(f[iNit]), cat = String(f[iC] || '').trim();
     if (cat === 'PERSONAL' || cat === 'FACTURA_AJENA') return;   // no las paga Rosanta
+    // La comision de tarjeta tampoco se paga: el banco la descuenta del deposito de la
+    // liquidacion. En Pagos quedaba Pendiente para siempre e inflaba la cantidad a pagar
+    // (Juanma, 8-oct-2026). Sigue siendo gasto en el DRE (FinanzasDatos no lee este filtro).
+    if (cat === 'COMISION TARJETA DE CREDITO') return;
     var numero = String(f[iN] || '').trim().replace(/\.0$/, '');
     out.push({
       llave: nit + '|' + numero, nit: nit, dte: numero, serie: String(f[iS] || '').trim(),
