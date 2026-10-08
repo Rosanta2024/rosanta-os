@@ -982,7 +982,9 @@ function prFinanzas_(res) {
     var rp = _repDatos_(0, false);
     var html = _repHtmlPdf_(rp);
     var malos = [];
-    for (var i = 1; i <= 8; i++) if (html.indexOf('<h2' + (i === 1 || i === 2 || i === 4 ? '>' : ' class="salto">') + i + ' · ') === -1) malos.push('falta la seccion ' + i);
+    // Se busca el titulo sin importar si salta de pagina: el 28-sep-2026 (@143) la 8 dejo de
+    // saltar para quedar junto al prime cost, y la prueba la daba por perdida (8-oct-2026).
+    for (var i = 1; i <= 8; i++) if (!new RegExp('<h2(\\s[^>]*)?>' + i + ' · ').test(html)) malos.push('falta la seccion ' + i);
     var venta = 'Q' + Number(rp.kpis.ventas).toLocaleString('en-US', { maximumFractionDigits: 0 });
     if (html.indexOf(venta) === -1) malos.push('el HTML no trae la venta de la semana ' + venta);
     if (/<\?/.test(html)) malos.push('quedo un scriptlet');

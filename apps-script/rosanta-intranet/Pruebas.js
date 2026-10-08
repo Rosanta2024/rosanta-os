@@ -137,7 +137,8 @@ var PRUEBAS_CFG = {
   lineasSinCosto: { COCINA: 0, BARRA: 0 },   // 27-sep-2026: barra 1 -> 0
 
   /** Modulos validos en la hoja USUARIOS. Uno fuera de esta lista es un typo. */
-  modulosValidos: ['finanzas', 'recetario', 'marketing', 'contenido', 'crm', 'consola', 'resenas'],
+  // 'pagos': Pagos a proveedores (p213, 29-sep-2026); lo leen Code.js, CosteoVista e Index.
+  modulosValidos: ['finanzas', 'recetario', 'marketing', 'contenido', 'crm', 'consola', 'resenas', 'pagos'],
 
   /** Propiedades que tienen que existir si o si. */
   propsObligatorias: ['CONFIG_SHEET_ID', 'RECETARIO_COCINA_SHEET_ID'],
@@ -210,6 +211,26 @@ function prCorrer_(grupo, nombre, fn) {
 
 function prIgual_(grupo, nombre, leido, esperado, detalle) {
   prAnotar_(grupo, nombre, leido === esperado ? 'OK' : 'FALLA', detalle || '', leido, esperado);
+}
+
+/* Guardas de un modulo que no siguen la convencion de nombre (exigirX_ / requiereX_).
+   El nombre solo no basta (regla del 12-sep-2026): cada una cuenta como guarda SOLO si su
+   cuerpo resuelve la identidad en el servidor con el auth y lanza (throw). Pagos (p213,
+   29-sep-2026) entra por pagQuien_: las dos pruebas de guardas no la conocian y el
+   8-oct-2026 marcaron abiertas sus 8 funciones, que si estaban cerradas. */
+var PR_GUARDAS_PROPIAS_ = ['pagQuien_'];
+function prGuardasPropias_() {
+  var G = (typeof globalThis !== 'undefined') ? globalThis : this, ok = [], malas = [];
+  PR_GUARDAS_PROPIAS_.forEach(function (n) {
+    var s = typeof G[n] === 'function'
+      ? String(G[n]).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '') : '';
+    if (/(resolverUsuario_|exigirModulo_)\s*\(\s*auth\b/.test(s) && /\bthrow\b/.test(s)) ok.push(n);
+    else malas.push(n);
+  });
+  return { ok: ok, malas: malas,
+           usa: function (src) {
+             return ok.some(function (n) { return new RegExp('\\b' + n + '\\s*\\(\\s*auth\\b').test(src); });
+           } };
 }
 
 // ---------------------------------------------------------------- 1. cimientos
@@ -1048,15 +1069,17 @@ function prPuentePOS_(res) {
       return;
     }
 
-    var sinCerradura = [];
+    var propias = prGuardasPropias_(), sinCerradura = [];
     nombres.forEach(function (fn) {
-      if (!GUARDA.test(String(this[fn]))) sinCerradura.push(fn + ' (' + usadas[fn].join(', ') + ')');
+      var src = String(this[fn]);
+      if (!GUARDA.test(src) && !propias.usa(src)) sinCerradura.push(fn + ' (' + usadas[fn].join(', ') + ')');
     }, this);
 
     if (sinCerradura.length) {
       prAnotar_(g, nombre, 'FALLA',
         sinCerradura.length + ' funcion(es) que las vistas llaman NO verifican quien las ' +
-        'llama: ' + sinCerradura.join(' · ') + '. doGet protege la pagina, no la funcion.',
+        'llama: ' + sinCerradura.join(' · ') + '. doGet protege la pagina, no la funcion.' +
+        (propias.malas.length ? ' Guardas propias que no resuelven identidad ni lanzan: ' + propias.malas.join(', ') + '.' : ''),
         nombres.length - sinCerradura.length, nombres.length);
     } else {
       prAnotar_(g, nombre, 'OK', 'las ' + nombres.length + ' llamadas de las vistas tienen cerradura',
@@ -1507,7 +1530,7 @@ function prCapaWeb_(res) {
       refrescarSemaforoPrecios: 'activador mensual; tambien la llama el aviso del tablero',
       psCapturaLunes: 'activador semanal de pauta; solo lee Meta y reescribe la semana cerrada, con candado de una hora'
     };
-    var abiertas = [], conRol = [], n = 0;
+    var propias = prGuardasPropias_(), abiertas = [], conRol = [], n = 0;
     Object.keys(G).forEach(function (k) {
       var fn = G[k];
       if (typeof fn !== 'function' || k.slice(-1) === '_') return;
@@ -1516,7 +1539,7 @@ function prCapaWeb_(res) {
       var m = s.match(/^function\s+[\w$]+\s*\(([^)]*)\)/);
       var params = (m ? m[1] : '').split(',').map(function (p) { return p.trim(); });
       if (params.indexOf('rol') !== -1 || params.indexOf('quien') !== -1) conRol.push(k + ' (recibe el rol del navegador)');
-      if (!LIBRES.hasOwnProperty(k) && !IDENTIDAD.test(s)) abiertas.push(k);
+      if (!LIBRES.hasOwnProperty(k) && !IDENTIDAD.test(s) && !propias.usa(s)) abiertas.push(k);
     });
     if (n < 40) {
       prAnotar_(g, nombre, 'FALLA', 'Solo vi ' + n + ' funciones publicas: el barrido no esta leyendo el proyecto.', n, '>40');
@@ -1525,7 +1548,8 @@ function prCapaWeb_(res) {
     var mal = abiertas.concat(conRol);
     prAnotar_(g, nombre, mal.length ? 'FALLA' : 'OK',
       mal.length ? 'Se pueden llamar desde cualquier pagina sin identificarse: ' + mal.join(' · ') +
-                   '. Guion bajo al final si nadie la corre desde el editor; si no, soloDueno_() en la primera linea.'
+                   '. Guion bajo al final si nadie la corre desde el editor; si no, soloDueno_() en la primera linea.' +
+                   (propias.malas.length ? ' Guardas propias que no resuelven identidad ni lanzan: ' + propias.malas.join(', ') + '.' : '')
                  : n + ' funciones publicas: todas con guarda, salvo ' + Object.keys(LIBRES).length + ' libres a proposito',
       mal.length, 0);
   });
