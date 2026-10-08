@@ -395,7 +395,11 @@ function _pagEscribir_(filas) {
       o.ID = Utilities.getUuid().slice(0, 8); o.REGISTRADO = new Date();
       return H.map(function (h) { return o.hasOwnProperty(h) ? o[h] : ''; });
     });
-    sh.getRange(sh.getLastRow() + 1, 1, datos.length, H.length).setValues(datos);
+    var desde = sh.getLastRow() + 1, iId = H.indexOf('ID');
+    // El ID como texto: la hoja guardaba "630e50xx" como el numero 6.30E+50 (un pago a
+    // Tiburoncito del 2-oct-2026) y dos IDs asi podian quedar iguales.
+    if (iId > -1) sh.getRange(desde, iId + 1, datos.length, 1).setNumberFormat('@');
+    sh.getRange(desde, 1, datos.length, H.length).setValues(datos);
     SpreadsheetApp.flush();
     return datos.length;
   } finally { lock.releaseLock(); }
