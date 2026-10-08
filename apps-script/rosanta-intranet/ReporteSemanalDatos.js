@@ -86,15 +86,28 @@ function _repRecortarArea_(d, area) {
   };
 }
 
+/**
+ * La llave del cache del reporte: la version del motor (finCacheClave_) y la HUELLA de
+ * sus datos. finCacheClave_ es una version, no un sello de datos: el 28-sep (lunes) el
+ * reporte quedo cacheado con la S38 mientras el motor ya traia la S39. El arreglo de
+ * entonces sellaba solo la venta y los comensales de la ultima semana, y el 8-oct-2026 un
+ * cambio de compra en el maestro (sin cambio de venta) dejo el reporte 30 min con la
+ * compra y el P&L viejos: dos fallas en la bateria. La huella es el MD5 de todo el motor
+ * menos su hora de calculo, asi que cualquier dato que el motor cambie renueva el reporte.
+ * Leer el motor es barato: viene de su propio cache. Una sola funcion para leer y para
+ * borrar: las acciones borraban una llave sin el sello y no borraban nada.
+ */
+function _repCacheClave_(clave) {
+  var dm = _finDatos_(false) || {}, copia = {};
+  Object.keys(dm).forEach(function (k) { if (k !== 'gen') copia[k] = dm[k]; });
+  var huella = Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5,
+    JSON.stringify(copia), Utilities.Charset.UTF_8)).slice(0, 16);
+  return REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_() + '_' + huella;
+}
+
 function _repDatos_(clave, forzar) {
   var cache = CacheService.getScriptCache();
-  // La llave lleva la ULTIMA semana del motor (clave, venta y comensales), no solo la
-  // version del motor: finCacheClave_ es una version, no un sello de datos, y el 28-sep
-  // (lunes) el reporte quedo cacheado con la S38 mientras el motor ya traia la S39 con
-  // los datos del domingo. Leer el motor aqui es barato: viene de su propio cache.
-  var dm = _finDatos_(false), um = (dm && dm.ultima) || {};
-  var sello = (um.clave || 0) + '_' + Math.round(um.ventas || 0) + '_' + (um.com || 0);
-  var k = REP_CACHE + (clave || 'ultima') + '_' + finCacheClave_() + '_' + sello;
+  var k = _repCacheClave_(clave);
   if (!forzar) {
     var g = cache.get(k);
     if (g) { try { return JSON.parse(g); } catch (e) { /* se recalcula */ } }
@@ -511,7 +524,7 @@ function guardarAccionReporte(auth, datos) {
   } finally { candado.releaseLock(); }
   // la pantalla vuelve a pedir el reporte: se invalida su cache
   try {
-    CacheService.getScriptCache().removeAll([REP_CACHE + clave + '_' + finCacheClave_(), REP_CACHE + 'ultima_' + finCacheClave_()]);
+    CacheService.getScriptCache().removeAll([_repCacheClave_(clave), _repCacheClave_(0)]);
   } catch (e) { /* no importa */ }
   return _repAcciones_(clave);
 }
@@ -538,7 +551,7 @@ function borrarAccionReporte(auth, fila) {
     SpreadsheetApp.flush();
   } finally { candado.releaseLock(); }
   try {
-    CacheService.getScriptCache().removeAll([REP_CACHE + clave + '_' + finCacheClave_(), REP_CACHE + 'ultima_' + finCacheClave_()]);
+    CacheService.getScriptCache().removeAll([_repCacheClave_(clave), _repCacheClave_(0)]);
   } catch (e) { /* no importa */ }
   return _repAcciones_(clave);
 }
