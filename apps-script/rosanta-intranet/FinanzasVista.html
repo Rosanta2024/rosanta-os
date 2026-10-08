@@ -24,6 +24,7 @@
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
       font-family: 'Lato', Arial, sans-serif; }
     .fin-boton:hover { background: rgba(78,109,90,0.07); }
+    .fin-boton:disabled { opacity: 0.55; cursor: progress; }
 
     /* --- la cinta de KPIs: la semana, el mes y la caja ---
        Reemplaza a la cinta del año. minmax(150px,1fr) da 5 columnas en
@@ -298,13 +299,23 @@
     document.getElementById('todo').style.display = '';
   }
 
+  // El aviso de "Leyendo el maestro…" queda DEBAJO de la lectura, fuera de la pantalla:
+  // al apretar Actualizar no se veia nada (Juanma, 8-oct-2026). Ahora avisa el boton
+  // y, al terminar, la lectura de arriba se vuelve a pedir con los datos nuevos.
   function cargar(forzar) {
     document.getElementById('todo').style.display = 'none';
     var c = document.getElementById('cargando');
     c.style.display = ''; c.textContent = 'Leyendo el maestro…';
+    var btn = document.getElementById('btn-refrescar'), lx = document.getElementById('lx-modulo');
+    var fin = function () { btn.disabled = false; btn.textContent = 'Actualizar datos'; if (lx) lx.style.opacity = ''; };
+    if (forzar) { btn.disabled = true; btn.textContent = 'Actualizando…'; if (lx) lx.style.opacity = '0.45'; }
     var run = google.script.run
-      .withSuccessHandler(function (d) { pintar(d); cargarMetas(forzar); })
+      .withSuccessHandler(function (d) {
+        pintar(d); cargarMetas(forzar);
+        if (forzar && window.cargarLecturaFin) window.cargarLecturaFin(fin); else fin();
+      })
       .withFailureHandler(function (e) {
+        fin();
         c.innerHTML = '<div class="fin-error">No se pudo leer el maestro.<br>' +
           esc(e && e.message ? e.message : e) + '</div>';
       });
@@ -331,14 +342,20 @@
 </script>
 <?!= incluirCrudo_('LecturaJs') ?>
 <script>
-  (function () {
+  window.cargarLecturaFin = function (listo) {
     var host = document.getElementById('lx-modulo');
-    if (!host || !window.LECTURA) return;
+    listo = listo || function () {};
+    if (!host || !window.LECTURA) { listo(); return; }
     google.script.run
-      .withSuccessHandler(function (r) { if (r && r.lectura) window.LECTURA.pintar(host, r.lectura, {}); else host.style.display = 'none'; })
-      .withFailureHandler(function () { host.style.display = 'none'; })
+      .withSuccessHandler(function (r) {
+        if (r && r.lectura) { host.innerHTML = ''; host.style.display = ''; window.LECTURA.pintar(host, r.lectura, {}); }
+        else host.style.display = 'none';
+        listo();
+      })
+      .withFailureHandler(function () { listo(); })
       .getLecturaPilar(AUTH, 'finanzas');
-  })();
+  };
+  window.cargarLecturaFin();
 </script>
 </body>
 </html>
