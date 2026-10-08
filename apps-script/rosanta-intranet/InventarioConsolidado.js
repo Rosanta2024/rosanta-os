@@ -26,8 +26,15 @@ var INV_CONS = {
             ['INSUMOS', 'Insumos de barra']],
   c: { verde: '#4E6D5A', medio: '#57A77F', lila: '#AEAAE2', crema: '#F2EEEB', negro: '#000000',
        gris: '#555555', sub: '#EAF3EC', blanco: '#FFFFFF' },
-  q: '"Q"#,##0.00'
+  q: '"Q"#,##0.00',
+  // Como las nombraba el informe de junio. Solo la etiqueta del Excel: la hoja no se toca.
+  // Llave = categoria de la hoja en mayusculas y sin tildes.
+  etiquetas: { 'AVES Y LACTEOS': 'Aves y lácteos', 'PRODUCCION ROSANTA': 'Producción Rosanta (elaborados)',
+               'DOORWAYS-VIJUASA': 'Insumos de limpieza (Doorways/Vijusa)', 'DOORWAYS-VIJUSA': 'Insumos de limpieza (Doorways/Vijusa)' }
 };
+
+/** Monto a centavos: lo que se ve en cada linea es lo que suma el subtotal. */
+function invConsQ_(n) { return n == null || n === '' ? '' : Math.round(Number(n) * 100) / 100; }
 
 /** Pantalla: genera el consolidado del mes (AAAA-MM). Escribe solo en la carpeta de reportes. */
 function webInventarioConsolidado(auth, mes) {
@@ -45,7 +52,9 @@ function invConsolidado_(mes, u) {
     var celdaTotal = invConsEscribir_(ss, datos);
     SpreadsheetApp.flush();
     var deLaHoja = Math.round(Number(ss.getSheetByName('Resumen').getRange(celdaTotal).getValue()) * 100) / 100;
-    if (Math.abs(deLaHoja - datos.total) > 0.05) {
+    // cada linea va redondeada al centavo: se tolera medio centavo por linea
+    var tol = 0.01 + 0.005 * (datos.cocina.filas.length + datos.barra.filas.length);
+    if (Math.abs(deLaHoja - datos.total) > tol) {
       throw new Error('El total del consolidado (Q' + deLaHoja + ') no da lo mismo que el inventario (Q' + datos.total +
                       '). No se guardo nada.');
     }
@@ -98,6 +107,8 @@ function invConsMes_(mes) {
 function invConsTitulo_(s) {
   s = String(s || '').trim();
   if (!s) return 'Sin categoria';
+  var llave = s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (INV_CONS.etiquetas[llave]) return INV_CONS.etiquetas[llave];
   if (s !== s.toUpperCase()) return s;
   s = s.charAt(0) + s.slice(1).toLowerCase();
   // los nombres propios que aparecen en las categorias de la hoja
@@ -127,12 +138,17 @@ function invConsEscribir_(ss, d) {
   var C = INV_CONS.c;
 
   // ---- Barra
-  var B = invConsHoja_(), subBarra = {}, totBarraFilas = [];
+  var B = invConsHoja_(), subBarra = {}, totBarraFilas = [], sinValor = [];
   B.add(['BARRA — DETALLE (Cierre ' + d.mesNombre + ' ' + d.anio + ')'], 'titulo');
   B.blanco();
   INV_CONS.bloques.forEach(function (bl) {
     var filas = d.barra.filas.filter(function (f) { return (f[10] || 'INSUMOS') === bl[0]; });
     if (!filas.length) return;
+    // un bloque sin ningun monto (los insumos de barra: cafe, azucar) no se lista; va en la nota
+    if (!filas.some(function (f) { return Math.abs(f[8] || 0) > 0.005; })) {
+      sinValor.push(bl[1].toLowerCase() + ' (' + filas.map(function (f) { return f[2]; }).join(', ') + ')');
+      return;
+    }
     var vinos = bl[0] === 'VINOS';
     B.add([bl[1].toUpperCase(), '', 'Monto (GTQ)'], 'seccion');
     if (vinos) B.add(['', 'Unidades', ''], 'colhead');
@@ -140,12 +156,12 @@ function invConsEscribir_(ss, d) {
     if (bl[0] === 'DESTILADOS') {
       invConsGrupos_(filas, function (f) { return f[1]; }).forEach(function (g) {
         B.add([invConsTitulo_(g.k)], 'subgrupo');
-        g.filas.forEach(function (f) { B.add(['   ' + f[2], '', f[8] || 0], 'item'); });
+        g.filas.forEach(function (f) { B.add(['   ' + f[2], '', invConsQ_(f[8] || 0)], 'item'); });
       });
     } else {
       filas.forEach(function (f) {
-        B.add(vinos ? [f[2] + (f[5] ? ' · ' + f[5] : ''), f[7] == null ? '' : f[7], f[8] || 0]
-                    : ['   ' + f[2], '', f[8] || 0], vinos ? 'itemvino' : 'item');
+        B.add(vinos ? [f[2] + (f[5] ? ' · ' + f[5] : ''), f[7] == null ? '' : f[7], invConsQ_(f[8] || 0)]
+                    : ['   ' + f[2], '', invConsQ_(f[8] || 0)], vinos ? 'itemvino' : 'item');
       });
     }
     var hasta = B.filas.length;
@@ -162,10 +178,10 @@ function invConsEscribir_(ss, d) {
   K.blanco();
   invConsGrupos_(d.cocina.filas, function (f) { return f[1]; }).forEach(function (g) {
     var nom = invConsTitulo_(g.k);
-    K.add([String(g.k || 'Sin categoria').toUpperCase(), 'Existencias', 'Precio', 'Monto (GTQ)'], 'seccion4');
+    K.add([nom.toUpperCase(), 'Existencias', 'Precio', 'Monto (GTQ)'], 'seccion4');
     var desde = K.filas.length + 1;
     g.filas.forEach(function (f) {
-      K.add(['   ' + f[2], f[7] == null ? '' : Math.round(f[7] * 100) / 100, f[6] == null ? '' : f[6], f[8] || 0], 'item4');
+      K.add(['   ' + f[2], f[7] == null ? '' : Math.round(f[7] * 100) / 100, invConsQ_(f[6]), invConsQ_(f[8] || 0)], 'item4');
     });
     var r = K.add(['Subtotal ' + nom, '', '', '=SUM(E' + desde + ':E' + K.filas.length + ')'], 'subtotal4');
     subCocina.push({ fila: r, nombre: nom });
@@ -203,11 +219,12 @@ function invConsEscribir_(ss, d) {
   R.add(['Notas:'], 'notat');
   [
     '•  Valuación: existencia por precio del mes, tal como quedó en el cierre de cada área en la intranet (Profit OS › Inventarios).',
-    '•  En licores y destilados la existencia es fracción de botella; en vinos, unidades.',
+    '•  En licores y destilados la existencia es fracción de botella; en vinos, unidades. Cada monto va redondeado al centavo.',
     '•  Cierre de barra: ' + (d.barra.cierre || '—') + '.  Cierre de cocina: ' + (d.cocina.cierre || '—') + '.',
     '•  Fuentes: Rosanta_Inventario_Barra y Rosanta_Inventario_Cocina, pestaña ' + d.mes + '.',
     '•  Generado el ' + Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm') + '.'
-  ].forEach(function (t) { R.add([t], 'nota'); });
+  ].concat(sinValor.map(function (t) { return '•  Sin valuación en el inventario, no se listan: ' + t + '.'; }))
+   .forEach(function (t) { R.add([t], 'nota'); });
 
   // ---- volcar
   var hR = ss.getSheets()[0].setName('Resumen');
