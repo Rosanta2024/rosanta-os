@@ -167,10 +167,13 @@ function invConfirmarProvs(nombres){
 }
 
 function vistaInventario(){
+  // "Todo" abre el resumen consolidado (8-oct-2026, Juanma): el conteo y el catalogo van por
+  // area, pero el resumen es de las dos. Cocina o Barra en el filtro llevan a sus pestañas.
+  if(!area) return invVistaResumen();
   if(invSub === 'rubros') return invVistaRubros();
   const a = invArea(), datos = INVDATOS[a], ed = invEditable(a);
   const aviso = invAviso ? `<p class="nota" style="border-left:3px solid var(--bosque);padding-left:13px;color:var(--ink)">${esc(invAviso)}</p>` : '';
-  const cab = `<p class="lead">El cierre de ${invNomArea(a)}: lo que había el último día de cada mes, valorizado al precio de ese mes.${area ? '' : ` Con “Todo” se muestra ${a === 'BARRA' ? 'Barra' : 'Cocina'}, porque el inventario va por área.`}</p>
+  const cab = `<p class="lead">El cierre de ${invNomArea(a)}: lo que había el último día de cada mes, valorizado al precio de ese mes. Con “Todo” se ve el resumen de las dos áreas.</p>
     ${ed ? '' : (avisoArea(a) || `<p class="nota" style="border-left:3px solid var(--lila);padding-left:13px">Podés mirar el inventario, pero tu rol no carga ${invNomArea(a)}.</p>`)}${aviso}`;
   if(!datos) return cab + `<p class="empty">Leyendo el inventario de ${invNomArea(a)}…</p>`;
   if(datos.error) return cab + `<p class="empty">No se pudo leer el inventario: ${esc(datos.error)}<br>
@@ -243,13 +246,13 @@ function invRubrosDe(m){
   return {rubros: out, orden};
 }
 
-function invVistaRubros(){
+function invVistaRubros(enResumen){
   const modo = invRubModo || area || 'JUNTOS';
   const areas = modo === 'JUNTOS' ? ['COCINA', 'BARRA'] : [modo];
   // las dos siempre: el consolidado para Contabilidad necesita las dos aunque se mire una
   ['COCINA', 'BARRA'].forEach(x => pedirInventario(x));   // no hace nada si ya esta o se esta pidiendo
 
-  const subs = `<div class="toolbar" style="flex-wrap:wrap">
+  const subs = enResumen ? '' : `<div class="toolbar" style="flex-wrap:wrap">
       <button class="chip" data-invsub="mes">El mes</button>
       <button class="chip" data-invsub="rubros" aria-pressed="true">Por rubro</button>
       <button class="chip" data-invsub="catalogo">Catálogo</button>
@@ -258,7 +261,8 @@ function invVistaRubros(){
     </div>`;
   const modos = `<div class="toolbar">${[['COCINA','Cocina'],['BARRA','Barra'],['JUNTOS','Cocina y barra juntas']].map(x =>
       `<button class="chip" data-invrubmodo="${x[0]}" aria-pressed="${modo === x[0]}">${x[1]}</button>`).join('')}</div>`;
-  const cab = `<p class="lead">Cuánto vale cada rubro del inventario al cierre del mes${modo === 'JUNTOS' ? ', con cocina y barra en la misma vara' : ' de ' + invNomArea(modo)}.</p>`;
+  const cab = enResumen ? `<div class="sec-t">Por rubro</div><p class="nota">Cuánto vale cada rubro al cierre del mes elegido${modo === 'JUNTOS' ? ', con cocina y barra en la misma vara' : ', solo ' + invNomArea(modo)}.</p>`
+    : `<p class="lead">Cuánto vale cada rubro del inventario al cierre del mes${modo === 'JUNTOS' ? ', con cocina y barra en la misma vara' : ' de ' + invNomArea(modo)}.</p>`;
 
   const faltan = areas.filter(x => !INVDATOS[x]);
   const errores = areas.filter(x => INVDATOS[x] && INVDATOS[x].error);
@@ -344,6 +348,70 @@ function invVistaRubros(){
       <thead><tr><th>Rubro</th>${ventana.map(mes => `<th class="r">${invMesNombre(mes).split(' ')[0].slice(0, 3)} ${mes.slice(2, 4)}</th>`).join('')}</tr></thead>
       <tbody>${evo}</tbody></table></div>
     <p class="nota">El rubro es la categoría de la hoja de inventario. El monto es existencia por precio del mes, igual que en “El mes”. Un cambio de 25% o más contra el mes anterior se marca en rojo.</p>`;
+}
+
+/* ---------- resumen consolidado (8-oct-2026) ----------
+   Lo que se ve con "Todo": el mes actual, el historico mensual de cocina y barra, y los
+   rubros (invVistaRubros sin sus pestañas). Mismos datos que "El mes": no pide nada nuevo. */
+function invVistaResumen(){
+  ['COCINA', 'BARRA'].forEach(x => pedirInventario(x));
+  const cab = `<p class="lead">Resumen consolidado de inventarios: cocina y barra juntas, mes a mes. Para contar o corregir un área, elegí Cocina o Barra arriba.</p>`;
+  const faltan = ['COCINA', 'BARRA'].filter(x => !INVDATOS[x]);
+  if(faltan.length) return cab + `<p class="empty">Leyendo el inventario de ${faltan.map(invNomArea).join(' y ')}…</p>`;
+  const err = ['COCINA', 'BARRA'].filter(x => INVDATOS[x].error);
+  if(err.length) return cab + err.map(x => `<p class="empty">No se pudo leer ${invNomArea(x)}: ${esc(INVDATOS[x].error)}<br>
+      <button class="chip" data-invrubreintentar="${x}" style="margin-top:12px">Reintentar</button></p>`).join('');
+
+  const pa = {COCINA: {}, BARRA: {}};
+  ['COCINA', 'BARRA'].forEach(x => INVDATOS[x].meses.forEach(m => { pa[x][m.mes] = m; }));
+  const meses = [...new Set([...Object.keys(pa.COCINA), ...Object.keys(pa.BARRA)])].sort();
+  if(!meses.length) return cab + '<p class="empty">Todavía no hay ningún mes.</p>';
+  const tot = mes => ['COCINA', 'BARRA'].reduce((s, x) => s + (pa[x][mes] ? pa[x][mes].total : 0), 0);
+  const completo = mes => ['COCINA', 'BARRA'].every(x => pa[x][mes] && pa[x][mes].estado === 'CERRADO');
+  const estadoTxt = m => !m ? 'sin conteo' : m.estado === 'ABIERTO'
+    ? `abierto · ${m.filas.filter(f => f[7] != null).length} de ${m.filas.length} contados` : 'cerrado';
+
+  // el mes actual: el ultimo que tenga alguna de las dos areas
+  const act = meses[meses.length - 1];
+  const antC = [...meses].reverse().find(m => m < act && completo(m));
+  const tarjeta = x => {
+    const m = pa[x][act];
+    return `<div style="flex:1;min-width:180px;border-left:3px solid ${INV_RUB_COLOR[x]};padding:4px 0 4px 12px">
+      <div style="font-size:12px;color:var(--muted)">${invRubAreaNom(x)}</div>
+      <div style="font-size:20px;font-weight:700">${m ? Q(m.total) : '—'}</div>
+      <div style="font-size:12px;color:var(--muted)">${estadoTxt(m)}</div></div>`;
+  };
+  const actual = `<div class="sec-t">El mes actual · ${invMesNombre(act)}</div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 4px">${tarjeta('COCINA')}${tarjeta('BARRA')}
+      <div style="flex:1;min-width:180px;border-left:3px solid var(--ink);padding:4px 0 4px 12px">
+        <div style="font-size:12px;color:var(--muted)">Total</div>
+        <div style="font-size:20px;font-weight:700">${Q(tot(act))}</div>
+        <div style="font-size:12px;color:var(--muted)">${completo(act) ? 'las dos áreas cerradas' : 'parcial hasta que cierren las dos áreas'}</div></div></div>
+    ${antC ? `<p class="nota">Último mes cerrado en las dos áreas: ${invMesNombre(antC)}, ${Q(tot(antC))}.</p>` : ''}`;
+
+  // historico: una fila por mes, la barra partida en cocina y barra
+  const max = Math.max(...meses.map(tot), 1);
+  const filas = [...meses].reverse().map((mes, i, arr) => {
+    const c = pa.COCINA[mes], b = pa.BARRA[mes], t = tot(mes), prev = arr[i + 1];
+    const dif = prev && completo(mes) && completo(prev) ? t - tot(prev) : null;
+    const celda = m => m ? `${Q0(m.total)}${m.estado === 'ABIERTO' ? '<div style="font-size:11.5px;color:var(--muted)">abierto</div>' : ''}` : '<span style="color:var(--muted)">—</span>';
+    return `<tr>
+      <td><button class="chip" data-invrubmes="${esc(mes)}" aria-pressed="${mes === invRubMes}" style="padding:2px 10px">${invMesNombre(mes)}</button></td>
+      <td style="width:34%"><div style="display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--line)">
+        ${c ? `<div style="width:${c.total / max * 100}%;background:${INV_RUB_COLOR.COCINA}"></div>` : ''}
+        ${b ? `<div style="width:${b.total / max * 100}%;background:${INV_RUB_COLOR.BARRA}"></div>` : ''}</div></td>
+      <td class="r">${celda(c)}</td><td class="r">${celda(b)}</td>
+      <td class="r"><strong>${Q0(t)}</strong>${completo(mes) ? '' : '<div style="font-size:11.5px;color:var(--muted)">parcial</div>'}</td>
+      <td class="r">${dif == null ? '<span style="color:var(--muted)">—</span>' : `<span style="color:${Math.abs(dif / tot(prev)) >= 0.25 ? 'var(--alto)' : 'var(--muted)'}">${dif >= 0 ? '+' : '−'}${Q0(Math.abs(dif))}</span>`}</td>
+    </tr>`;
+  }).join('');
+  const historico = `<div class="sec-t">Histórico mensual</div>
+    <p class="nota"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${INV_RUB_COLOR.COCINA};margin-right:4px"></span>Cocina · <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${INV_RUB_COLOR.BARRA};margin-right:4px"></span>Barra. Tocá un mes para ver sus rubros abajo. La diferencia solo se calcula entre meses con las dos áreas cerradas.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Mes</th><th></th><th class="r">Cocina</th><th class="r">Barra</th><th class="r">Total</th><th class="r">Contra el anterior</th></tr></thead>
+      <tbody>${filas}</tbody></table></div>`;
+
+  return cab + actual + historico + invVistaRubros(true);
 }
 
 /* El bloque del consolidado: boton si el mes esta cerrado en las dos areas, y el resultado. */
