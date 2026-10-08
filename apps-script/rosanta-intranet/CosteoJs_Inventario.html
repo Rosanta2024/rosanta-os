@@ -225,6 +225,10 @@ function vistaInventario(){
    entre areas aunque se llamen parecido: cada uno lleva su area al lado.
    Un mes con conteo abierto se muestra, pero avisando que es parcial. */
 let invRubModo = null, invRubMes = null;
+/* Consolidado para Contabilidad (8-oct-2026): el .xlsx del cierre, como el de junio, en
+   Reportes 2026 / Reportes Mensual / AAAA-MM. Servidor: InventarioConsolidado.gs.
+   Solo con el mes cerrado en las dos areas; el candado de verdad esta en el servidor. */
+const INVCONS = {};   // mes -> {cargando} | {res} | {error}
 const INV_RUB_COLOR = {COCINA: 'var(--bosque)', BARRA: 'var(--lila)'};
 const invRubAreaNom = a => a === 'BARRA' ? 'Barra' : 'Cocina';
 
@@ -242,7 +246,8 @@ function invRubrosDe(m){
 function invVistaRubros(){
   const modo = invRubModo || area || 'JUNTOS';
   const areas = modo === 'JUNTOS' ? ['COCINA', 'BARRA'] : [modo];
-  areas.forEach(x => pedirInventario(x));   // no hace nada si ya esta o se esta pidiendo
+  // las dos siempre: el consolidado para Contabilidad necesita las dos aunque se mire una
+  ['COCINA', 'BARRA'].forEach(x => pedirInventario(x));   // no hace nada si ya esta o se esta pidiendo
 
   const subs = `<div class="toolbar" style="flex-wrap:wrap">
       <button class="chip" data-invsub="mes">El mes</button>
@@ -330,7 +335,7 @@ function invVistaRubros(){
   }).join('') + (modo === 'JUNTOS' ? `<tr><td style="font-weight:700;padding-top:12px">Total juntos</td>${ventana.map(mes =>
       `<td class="r" style="font-weight:700;padding-top:12px">${Q0(areas.reduce((s, x) => s + (porArea[x][mes] ? porArea[x][mes].total : 0), 0))}</td>`).join('')}</tr>` : '');
 
-  return cab + subs + modos + tira + avisos + resumen +
+  return cab + subs + modos + tira + avisos + resumen + invConsHTML(sel) +
     `<div class="tablewrap"><table>
       <thead><tr><th>Rubro</th><th></th><th class="r">Monto</th><th class="r">Peso</th><th class="r">Productos</th><th class="r">Contra ${antMes ? invMesNombre(antMes).split(' ')[0].toLowerCase() : 'el mes anterior'}</th></tr></thead>
       <tbody>${cuerpo || '<tr><td colspan="6" class="empty">Sin productos en este mes.</td></tr>'}</tbody></table></div>
@@ -339,6 +344,29 @@ function invVistaRubros(){
       <thead><tr><th>Rubro</th>${ventana.map(mes => `<th class="r">${invMesNombre(mes).split(' ')[0].slice(0, 3)} ${mes.slice(2, 4)}</th>`).join('')}</tr></thead>
       <tbody>${evo}</tbody></table></div>
     <p class="nota">El rubro es la categoría de la hoja de inventario. El monto es existencia por precio del mes, igual que en “El mes”. Un cambio de 25% o más contra el mes anterior se marca en rojo.</p>`;
+}
+
+/* El bloque del consolidado: boton si el mes esta cerrado en las dos areas, y el resultado. */
+function invConsHTML(mes){
+  const ok = x => INVDATOS[x] && !INVDATOS[x].error;
+  if(!ok('COCINA') || !ok('BARRA')) return '';
+  const est = x => { const m = INVDATOS[x].meses.find(y => y.mes === mes); return m ? m.estado : ''; };
+  const listo = est('COCINA') === 'CERRADO' && est('BARRA') === 'CERRADO';
+  const puede = !!(window.PUEDE && window.PUEDE.areas && window.PUEDE.areas.length);
+  const c = INVCONS[mes] || {};
+  let cuerpo;
+  if(c.cargando) cuerpo = `<p class="nota">Armando el consolidado de ${invMesNombre(mes).toLowerCase()}… tarda unos segundos.</p>`;
+  else if(c.res) cuerpo = `<p class="nota" style="border-left:3px solid var(--bosque);padding-left:13px;color:var(--ink)">Listo: <a href="${esc(c.res.url)}" target="_blank" rel="noopener">${esc(c.res.nombre)}</a> quedó en <strong>${esc(c.res.carpeta)}</strong>, para que Contabilidad lo descargue. Total ${Q(c.res.total)} (barra ${Q(c.res.barra)} · cocina ${Q(c.res.cocina)}).${c.res.archivado ? ' El que había antes se archivó como ' + esc(c.res.archivado.nombre) + '.' : ''}</p>`;
+  else if(c.error) cuerpo = `<p class="nota" style="border-left:3px solid var(--alto);padding-left:13px;color:var(--ink)">No se generó: ${esc(c.error)}</p>`;
+  else cuerpo = '';
+  const boton = listo && puede
+    ? `<button class="chip" data-invcons="${esc(mes)}" style="${invBtnVerde}"${c.cargando ? ' disabled' : ''}>${c.res ? 'Volver a generar' : 'Generar consolidado para Contabilidad'} · ${invMesNombre(mes)}</button>`
+    : '';
+  const motivo = listo ? (puede ? '' : 'Lo genera cocina, barra o el dueño.')
+    : `Se genera cuando ${invMesNombre(mes).toLowerCase()} está cerrado en cocina y en barra.`;
+  return `<div class="sec-t">Consolidado para Contabilidad</div>
+    <p class="nota">El Excel del cierre con el formato de siempre (resumen, barra y cocina), en Reportes 2026 / Reportes Mensual / ${esc(mes)}. ${motivo}</p>
+    ${boton ? `<div class="toolbar">${boton}</div>` : ''}${cuerpo}`;
 }
 
 const invCoincide = (...campos) => !q || campos.some(c => nrm(c).includes(nrm(q)));
@@ -652,6 +680,16 @@ document.addEventListener('click', e => {
   if(t.dataset.invrubmodo){ invRubModo = t.dataset.invrubmodo; pintar(); return; }
   if(t.dataset.invrubmes){ invRubMes = t.dataset.invrubmes; pintar(); return; }
   if(t.dataset.invrubreintentar){ invRecargar(t.dataset.invrubreintentar); return; }
+  if(t.dataset.invcons){
+    const mes = t.dataset.invcons;
+    if(INVCONS[mes] && INVCONS[mes].cargando) return;
+    INVCONS[mes] = {cargando: true}; pintar();
+    google.script.run
+      .withSuccessHandler(res => { INVCONS[mes] = (res && res.ok) ? {res: res.resultado} : {error: (res && res.error) || 'sin respuesta del servidor'}; pintar(); })
+      .withFailureHandler(e => { INVCONS[mes] = {error: (e && e.message) || 'no se pudo generar'}; pintar(); })
+      .webInventarioConsolidado(AUTH, mes);
+    return;
+  }
   if(t.dataset.invreintentar){ invRecargar(a); return; }
   if(t.dataset.invsin){ invSoloSin = !invSoloSin; pintar(); return; }
   if(t.dataset.invaltatoggle){ invAltaOn = !invAltaOn; pintar(); return; }
