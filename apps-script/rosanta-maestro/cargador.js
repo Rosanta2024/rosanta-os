@@ -726,8 +726,12 @@ function menuOlvidar() { olvidarProgreso(); _avisoLog(); }
    29-sep-2026: el lote que corre es retiros_personales_tc.js (7 adelantos de la
    tarjeta, Q2,400, a PERSONAL). El de reclasificar_sin_clasificar ya corrio el
    12-sep y se archivo. Un lote nuevo se engancha aca, cambiando estas dos
-   llamadas, y el archivo sale del proyecto cuando corrio. */
-function menuReclasRevisar() { revisarRetirosPersonalesTC(); _avisoLog(); }
+   llamadas, y el archivo sale del proyecto cuando corrio.
+   8-oct-2026: corren DOS lotes. El de los adelantos de la tarjeta seguia sin correr
+   (el espejo del 5-oct todavia los tiene en ALIMENTOS_EFECTIVO) y se le suma
+   entre_volcanes_ajena.js (gasolinera, facturas solo para el IVA: de BEBIDAS a FACTURA_AJENA). Los dos se pueden
+   correr dos veces sin dano. */
+function menuReclasRevisar() { revisarRetirosPersonalesTC(); revisarEntreVolcanesAjena(); _avisoLog(); }
 
 function menuReclasAplicar() {
   var ui = SpreadsheetApp.getUi();
@@ -742,6 +746,7 @@ function menuReclasAplicar() {
     return;
   }
   aplicarRetirosPersonalesTC();
+  aplicarEntreVolcanesAjena();
 
   /* 12-sep-2026: este flush NO es decorativo. La primera corrida escribio las 36
      filas correctamente —el Sheet lo confirma— pero el espejo que se genero cinco
@@ -754,7 +759,8 @@ function menuReclasAplicar() {
   ui.alert('Rosanta',
     'Lote aplicado y espejo regenerado.\n\n' +
     'VERIFICA en Extensiones > Apps Script > Ejecuciones que aparezca ' +
-    '"aplicarRetirosPersonalesTC". Si no aparece, no se escribio.',
+    '"menuReclasAplicar" y en su registro los dos lotes (adelantos de la tarjeta y ' +
+    'Entre Volcanes). Si no aparece, no se escribio.',
     ui.ButtonSet.OK);
 }
 function _avisoLog() {
