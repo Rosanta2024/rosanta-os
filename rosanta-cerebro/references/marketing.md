@@ -84,6 +84,8 @@ Demografía Meta: 25–54 (pico 25–44), 57% mujeres, Antigua + Ciudad de Guate
 
 ## Frentes activos
 
+- **Eventos (8-oct-2026):** el estado de cada cotización vive en el Pipeline de Eventos; precios solo en `rosanta-cotizador/PRECIOS.md`; cada cotización 2027 tiene su pendiente y su chat. Ver SKILL.md v33 §4.
+
 - **Eventos y grupos = pilar continuo mes a mes** (mejora #1, Q90–120K/año). NO se cierra. Las cotizaciones salen con `rosanta-cotizador`.
 - **Ocupación entre semana** (mejora #3, Q60–100K/año): kit listo. 10 hoteles boutique en 2 rutas caminables desde Plaza Santa Rosa (día 1 noreste: El Convento, Casa Santo Domingo, Doña Leonor, Pensativo, Mestizo; día 2 centro/sur: San Rafael, Good Hotel, Panza Verde, Posada del Ángel, Porta). Airbnbs vía property managers y welcome books. Medición: QR con UTM único por hotel + código en notas de la reserva + columna fuente del CRM; cruce cada lunes. Fam night con invitación lista (fecha por definir). PDF: `Rosanta_Ocupacion_Entre_Semana_Propuesta_2026-07-13.pdf`.
 - **CRM para Vanessa:** Sheet espejo `CRM_Export_Vanessa` (`19NEHGKGr4h229l0NmQf3vvw9kxsmxkcF8AizYyhucAo`), con filtros por fecha/fuente/segmento/idioma. Se comparte SOLO ese sheet.

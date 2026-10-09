@@ -1,4 +1,4 @@
-# Proyectos de Rosanta — detalle (act. 16 sep 2026)
+# Proyectos de Rosanta — detalle (act. 16 sep 2026; lo del 28-sep al 9-oct en el SKILL.md v33)
 
 Los proyectos se organizan en el **Rosanta OS de 6 pilares**: Marketing OS, Profit OS, Finanzas & Data OS, Back office/Operations Hub, Web Rosanta, Reservas/Ticketing (WIX). Drive está reorganizado igual.
 
@@ -199,6 +199,8 @@ Ver `references/marketing.md` para el detalle de campaña, audiencias y reputaci
 ---
 
 ## §5. Finanzas & Data OS
+
+> **Al 9-oct-2026 (v33 §2):** todo nativo de Google; fuentes crudas solo en `Reportes 2026/SXX` con estados de cuenta en `.pdf`; BI por `cargador.js` desde `BANCO_BI_SXX`; PosFile nuevo desde el 1-oct; tarjeta BI 4132 en `06_Tarjeta_Credito_BI`; Pagos a proveedores reemplaza a COMPRAS_2026 desde el 5-oct; p261 (BAC septiembre) cerrado al centavo.
 
 Arrancó el 2 sep 2026. Es el pilar que faltaba montar. Todo el detalle de números, fuentes y reglas de clasificación está en `references/negocio.md` — **leerlo antes de tocar nada financiero.**
 

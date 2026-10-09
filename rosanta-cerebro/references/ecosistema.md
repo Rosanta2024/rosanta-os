@@ -1,4 +1,4 @@
-# Ecosistema de herramientas de Rosanta (act. 16 sep 2026)
+# Ecosistema de herramientas de Rosanta (act. 16 sep 2026; tareas, artefactos y sub-agentes al 9 oct en el SKILL.md v33 §3, §6 y §7)
 
 > **ACTUALIZADO EL 23-SEP-2026 — leer esto antes que el resto de este archivo.**
 > Todo se mudó a **Claude Code**. Las tareas programadas son routines en `~/.claude/scheduled-tasks/`
@@ -46,6 +46,10 @@ Mapa de skills, artefactos y automatizaciones. Usar la herramienta correcta seg�
 | `rosanta-cotizador` | Cotizaciones de evento en PDF, formato oficial, ES/EN | Recibe bloques "PARA COTIZAR" que genera el bot |
 | `rosanta-maestro` | Reporte financiero maestro: POS/FEL/bancos, planilla, propinas, reporte mensual | **La fuente ya NO es el xlsx sino el Sheet nativo** `1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk`. El reporte del contador quedó descontinuado |
 
+### Sub-agentes (2-oct-2026)
+
+`auditor-finanzas` (solo lee, cuadra maestro contra bancos/FEL/planilla), `revisor-marca` (veredicto SALE / CON CAMBIOS / NO SALE) y `buscador-drive`, en `~/.claude/agents/`. Reglas de uso en `~/.claude/CLAUDE.md`.
+
 ### Decisiones de inventario (no reproponer)
 
 - `rosanta-recetario-costeo`: DESINSTALADA. La fuente real es Profit OS (hoja nativa v14).
@@ -87,7 +91,8 @@ Auditoría cerrada en S35 bajo Rosanta OS de 6 pilares: **10 vivos, 9 borrados, 
 | `rosanta-crm` | CRM sobre los leads | Marketing OS |
 | `rosanta-management-os` / `rosanta-sistema-consolidado` | Sistema de gestión | Back office |
 | `mandala-kalachakra-2x3x5` | Proyecto SIC / Ruta 2×3×5, mejoras de impacto real | SIC |
-| `morning-brief-juanma` | Brief diario L–V con los 3 N1 del tablero | Personal |
+| `morning-brief-juanma` | Brief diario L–V con los 3 N1 del tablero. **Desde el 9-oct, solo Rosanta (nada personal)** | Back office |
+| **Pipeline de Eventos** (8-oct, fijado) | Fuente única del estado de cada cotización de evento: https://claude.ai/artifact/5PV1npns9aDu9oAGKiD69j | Marketing OS · Eventos |
 | `plan-utg-42k` | Plan de la Ultramaratón Guatemala 42K (21 nov 2026) | Personal |
 
 Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificacion-fijo-variable`, `rosanta-scorecard-7-pasos`, `rosanta-ruta-metas`, `sistema-marketing-rosanta`. Personales: `mapa-trekkings-chalten`, `plan-utg-42k` (~~`patagonia-feb-2027`~~ tampoco está en el manifiesto).
@@ -106,6 +111,8 @@ Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificaci
 - Los pendientes cerrados se podan del JSON; su historia vive en `semanas[].consolidados` y las versiones completas en `versions/`.
 
 ## Automatizaciones (tareas programadas, verificadas con `list_scheduled_tasks` el 16 sep 2026)
+
+> **OBSOLETA esta tabla.** La vigente, leída el 9-oct-2026, está en el SKILL.md v33 §6: `rosanta-reporte-semanal` volvió (lunes 16:24), hay `revision-jueves-cotizaciones` (jueves 8:11), los dos latidos diarios y seguimientos de eventos de una vez. Horarios reales: brief 6:06, cierre semanal 18:20, mensual y auditoría Meta día 3.
 
 | Tarea | Cuándo | Qué hace |
 |---|---|---|

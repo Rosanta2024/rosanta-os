@@ -2,6 +2,8 @@
 
 ## Fuente financiera vigente (LEER PRIMERO)
 
+> **9-oct-2026:** nada de `.xlsx` (todo nativo de Google). Fuentes crudas solo en `Reportes 2026/SXX`. PosFile nuevo desde el 1-oct. Hoja nueva `06_Tarjeta_Credito_BI`. Ver SKILL.md v33 §2.
+
 **El maestro es un Google Sheet NATIVO:** `1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk`. Migrado el 2 sep 2026 por decisión de Juanma de alejarse del xlsx.
 
 - ~~`Rosanta_Reporte_Maestro_v2_2026.xlsx` como fuente~~ **OBSOLETO.** Existían **tres** archivos distintos con ese nombre; se desactivaron y quedaron como `ZZ_ARCHIVO_`.

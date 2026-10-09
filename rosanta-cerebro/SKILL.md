@@ -7,7 +7,55 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 28 sep 2026 (v32).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 9 oct 2026 (v33).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Mantenimiento mensual de octubre (v33, 9 oct 2026): lo que pasó del 28-sep al 9-oct
+
+Corrida manual (la programada del 1-oct no quedó registrada). Fuente: memorias de los proyectos, `git log` de `~/Dev/Rosanta`, `list_scheduled_tasks`, la lista de Artifacts y las sesiones. **Al empezar, la copia instalada en `~/.claude/skills/` estaba en la v31 y la fuente en la v32**: hasta hoy Claude Code arrancaba con contexto de dos versiones atrás.
+
+### 1. Intranet: de la @142 a la @168
+- **Producción en la @168 (8-oct)** según el último commit (`a63fbd4`: el caché del reporte semanal lleva la huella del motor). Releer `list-deployments` antes de afirmarlo.
+- **@141 DRE en su formato original** (9 bloques, `?page=dre`): impuestos = gasto operativo, aguinaldo/Bono 14 en Nómina, eventos en "Otros ingresos". **Un solo punto de equilibrio: el del PRESUPUESTO** (`_finEquilibrioPresu_`, ~Q39.8k/semana). No reintroducir otro.
+- **@139 cada KPI vive en UNA pantalla** (su casa); en las demás se quita o es enlace. Antes de agregar un número, buscar si ya vive en otra.
+- **@143–@156 reporte semanal para supervisores**: el PDF oficial VOLVIÓ al estilo S38 (Python, routine `rosanta-reporte-semanal` recreada el 28-sep, lunes 16:24, formato v1.1 en `Maestro/Rosanta_Formato_Reporte_Semanal.md`). Del costo solo va **prime cost**. Página 6 = acciones amarradas a METAS. Se manda por correo a Jeffry y José el **martes 12:00** (`ReporteCorreo.js`). Puente por Drive `PuenteReporte.js`. Las acciones de Vanessa (Reservas) y del dueño (Administración) se aprueban en la sección 8, aparte, sin imprimirse (@155). Lo que en la v28–v32 diga que el reporte vive solo en la intranet o que la tarea del lunes se eliminó queda **OBSOLETO**.
+- **@157–@160 Pagos a proveedores (p213)**: reemplaza a COMPRAS_2026 desde el 5-oct (queda como historial). Módulo `pagos`; Jeffry confirma cocina y Maco barra. Herramienta "Pagos" en Profit OS, con "Balance del año" por proveedor.
+- **@154** comprobantes en Compras en efectivo leídos con Claude. **@161** tarjeta de crédito BI en el cálculo. **@162–@167** Inventarios: por rubro y consolidado del cierre para Contabilidad. **@164** las comisiones de tarjeta salen de Pagos.
+- **`clasp run` funciona** (28-sep) en la intranet, el maestro (desde el 5-oct) y Marketing OS: proyecto GCP 512086396641, `--use-project-scopes`. Corre HEAD. Trampa: si solo borraste archivos, `clasp push` no los saca del remoto.
+
+### 2. Finanzas & Data OS: reglas nuevas
+- **Todo nativo de Google** (5-oct): nada de `.xlsx`. El espejo sigue generándose porque lo leen el reporte y el harness; no proponer soluciones sobre él.
+- **Fuentes crudas solo en `Reportes 2026/SXX/`** (2-oct); `3_Bancos` y `FEL_SAT` son históricas. **No crear carpetas en Reportes 2026**: las del período las crea Juanma (5-oct).
+- **Los estados de cuenta se guardan con extensión `.pdf`**: un archivo sin extensión no se puede leer y deja el cuadre a medias (pasó con la tarjeta de septiembre).
+- **El BI se carga con `cargador.js` desde un Sheet nativo `BANCO_BI_SXX`** en la carpeta SXX (p233, 8-oct, commit `7357045`): frena si no cuadra al centavo contra los totales del PDF o si hay categorías vacías o nuevas. No volver a escribir `cargar_banco_SXX.js`. BAC y tarjetas siguen fuera del cargador.
+- **No código paralelo** (28-sep): extender lo que existe. Se retiró `CargaBanco.js` (@147). Nada de funciones "herramienta" de una sola corrida sin su sí.
+- **PosFile cambió de sistema el 1-oct-2026**: `ReporteFacturas` (lo carga `cargador.js` como POS_FACTURAS) y `VentasProductos` (intranet). Sin FEL emitidas mientras la SAT no reciba.
+- **Tarjeta de crédito BI 4132** (desde ago-2026) en hoja propia `06_Tarjeta_Credito_BI`. Fuente: captura de Bi Banking.
+- **Nómina:** 4 fijos (Jeffry, José, Nadia, Efraín); extras de sala por nombre y de cocina agrupados. La propina de agosto se paga en octubre y se imputa a agosto. La cuenta 974954208 y Tigo 30795252 son PERSONALES de Juanma.
+- **p261 (BAC septiembre) CERRADO el 9-oct**: cuadró al centavo contra los PDF del banco.
+
+### 3. Sub-agentes (2-oct)
+`auditor-finanzas`, `revisor-marca` y `buscador-drive` en `~/.claude/agents/`. Cuándo se llaman está en `~/.claude/CLAUDE.md`. El revisor es obligatorio antes de entregar cotizaciones y correos a clientes.
+
+### 4. Eventos y cotizaciones
+- **Pipeline de Eventos** (artefacto fijado, https://claude.ai/artifact/5PV1npns9aDu9oAGKiD69j, colección `cotizaciones`) es la fuente única del estado de cada cotización (8-oct). Seguimiento con `Procedimiento_Seguimiento_Cotizaciones.md`: 4 recordatorios según la distancia al evento, revisión los jueves (routine `revision-jueves-cotizaciones`). Toda cotización entra como `porenviar`.
+- **Precios solo en `~/.claude/skills/rosanta-cotizador/PRECIOS.md`** (8-oct); las memorias no guardan precios.
+- **Las cotizaciones 2027 tienen pendiente propio y un chat cada una** (una sesión por cliente en `05_Marketing_OS/Eventos_y_Cotizaciones`).
+- Toda cotización lleva portada + "Por qué Rosanta" + cotización, también en inglés (Henry, 2-oct). El 15% de servicio va siempre aparte. Antes de dar algo por abierto, revisar bot, Gmail, Wix y el pipeline (9-oct).
+- El SWIFT del BAC solo se manda si el cliente lo pide. **Peskia solo en títulos cortos** (8-oct); cifras y frases van en Avenir. Queda OBSOLETO "Peskia en titulares y cifras" del reporte.
+- Consola de respuestas @12 (29-sep): botón 📎 para fotos (carpeta "Contenido para clientes") y enlaces clicables; los videos van como enlace de Drive.
+
+### 5. Morning brief
+- **Desde el 9-oct no va nada personal** (PERSONAL, SIC, SoF, salud, entrenamiento): solo Rosanta.
+- En la sesión del brief no se trabaja ningún pendiente: se abre una tarjeta por cliente o pendiente en el folder de su proyecto (2-oct).
+- **Un chat de morning brief que queda abierto parece bloquear los briefs siguientes** (última corrida registrada: 6-oct). Cerrar o archivar la sesión del brief al terminar.
+
+### 6. Tareas programadas (leídas con `list_scheduled_tasks` el 9-oct)
+Recurrentes activas: `morning-brief-juanma` (L–V 6:06), `rosanta-latido-reservas-web` (8:10), `rosanta-latido-repo` (8:24), `rosanta-reporte-semanal` (lunes 16:24, **recreada**), `revision-jueves-cotizaciones` (jueves 8:11, **nueva**), `rosanta-cierre-semanal` (dom 18:20), `rosanta-cerebro-mantenimiento` (día 1, 9:07), `rosanta-reporte-mensual` y `auditoria-meta-ads-rosanta-mensual` (día 3). Apagada: `rosanta-seguimiento-offsite`. De una vez: seguimientos de Daniela Torres (23-oct), Mollie y Clarisa y Porres (24-oct), choque del 20-mar-2027 (28-oct); `rosanta-recordatorio-blogs-7oct` ya corrió y quedó apagada. **Ojo: hay sesiones del recordatorio de blogs que siguen marcadas como "en curso"**.
+
+### 7. Artefactos
+Nuevo: **Pipeline de Eventos** (fijado). El tablero `rosanta-seguimiento-semanal` es https://claude.ai/artifact/NoUtgqdF33nzh59zmihGfj, con su copia en `Projects/03_Finance_Data_OS/tablero/tablero.html`. Los demás nuevos (I Do It Anyways, Active Living, Sesión Ferrer) son personales. `~/Claude/Artifacts/` está vacía: los artefactos son Artifacts publicados.
 
 ---
 
@@ -385,7 +433,7 @@ escribiendo a la vez, una tarea que guarde sola es la forma más rápida de perd
 | `rosanta-latido-reservas-web` | diaria 8:10 | activa |
 | `rosanta-latido-repo` | diaria 8:24 | activa, **nueva** |
 | `morning-brief-juanma` | L–V 6:06 | activa |
-| ~~`rosanta-reporte-semanal`~~ | ~~lunes 16:24~~ | **eliminada el 27-sep-2026** (archivada en `_Archive/2026-09-27_Reporte_Semanal_Python`) |
+| ~~`rosanta-reporte-semanal`~~ | ~~lunes 16:24~~ | **eliminada el 27-sep-2026 y RECREADA el 28-sep** (lunes 16:24, PDF estilo S38; ver v33 §1) |
 | `rosanta-cierre-semanal` | domingos 18:20 | activa |
 | `rosanta-cerebro-mantenimiento` | día 1, 9:07 | activa |
 | `rosanta-reporte-mensual` | día 3, 9:08 | activa |
@@ -1852,7 +1900,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 - **Firma de marca: coordenada 14·91.** Forma oficial **14° N · 91° W**; corta **14·91 / #1491**. Igual en cada plato como sello, sin sufijos por platillo.
 - Stack: todo interno con Google (Apps Script, Sheets, Drive) + Claude. Sin n8n, Make ni plataformas externas. GHL y SonTickets cerrados.
 
-## Mapa de proyectos (estado al 15 sep 2026)
+## Mapa de proyectos (estado al 15 sep 2026; lo posterior, en las secciones de cierre de arriba)
 
 | Pilar / proyecto | Estado | Detalle |
 |---|---|---|
@@ -1863,7 +1911,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **Al 8-oct-2026: @168 (ver v33 §1).** Antes: **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
@@ -1904,7 +1952,7 @@ Antes de trabajar en cualquiera, lee la sección correspondiente de `references/
 
 **Claude Code lo actualiza solo. No se le pide a Juanma que instale nada** — orden explícita del 11-sep-2026. La skill instalada es escribible desde la sesión; el procedimiento completo, con la ruta, está en `~/Dev/Rosanta/CLAUDE.md`, sección "Al CERRAR la sesión".
 
-- Cuando Juanma diga "actualiza el cerebro", "guarda esto en el cerebro" o al cerrar una sesión con avances importantes: regenerar partiendo de la **instalada**, subir versión y fecha, escribir encima, verificar leyendo desde la ruta instalada, y sincronizar la copia de `~/Dev/Rosanta/rosanta-cerebro/` más el `.skill` de respaldo en `tools/`.
+- Cuando Juanma diga "actualiza el cerebro", "guarda esto en el cerebro" o al cerrar una sesión con avances importantes: regenerar partiendo de la **instalada**, subir versión y fecha, escribir encima, verificar leyendo desde la ruta instalada, y sincronizar la copia de `~/Dev/Rosanta/rosanta-cerebro/`. ~~más el `.skill` de respaldo en `tools/`~~ (OBSOLETO: ya no se empaqueta ningún `.skill`; se instala con `cp -R` de la fuente a `~/.claude/skills/rosanta-cerebro/`). **Antes de editar, comparar "Última actualización" de la fuente y la instalada y partir de la más nueva** (el 9-oct la instalada estaba dos versiones atrás).
 - Lo hace también la tarea programada **`rosanta-cerebro-mantenimiento`** (día 1 de cada mes, 9:00).
 - Integrar lo nuevo de la memoria automática y del tablero `rosanta-seguimiento-semanal`.
 - Marcar lo obsoleto como obsoleto en vez de borrarlo, para que Juanma vea qué cambió, **y marcarlo donde vive el dato** (la referencia), no solo en el SKILL.md.
