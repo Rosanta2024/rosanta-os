@@ -16,6 +16,10 @@
 //   6. Run otra vez. El log debe decir "Espejo actualizado"
 //   7. Elegi "instalarTrigger", Run una vez
 //   8. Elegi "regenerarInstrucciones", Run una vez
+//
+// Los lotes de un solo uso, una vez corridos, salen del proyecto a
+// apps-script/_archivo/ (8-oct-2026: retiros_personales_tc y
+// borrar_triplicados_emitidas).
 // ============================================================
 
 var SHEET_ID = '1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk';
