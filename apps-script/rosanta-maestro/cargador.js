@@ -730,8 +730,11 @@ function menuOlvidar() { olvidarProgreso(); _avisoLog(); }
    8-oct-2026: corren DOS lotes. El de los adelantos de la tarjeta seguia sin correr
    (el espejo del 5-oct todavia los tiene en ALIMENTOS_EFECTIVO) y se le suma
    entre_volcanes_ajena.js (gasolinera, facturas solo para el IVA: de BEBIDAS a FACTURA_AJENA). Los dos se pueden
-   correr dos veces sin dano. */
-function menuReclasRevisar() { revisarRetirosPersonalesTC(); revisarEntreVolcanesAjena(); _avisoLog(); }
+   correr dos veces sin dano.
+   8-oct-2026 (tarde): retiros_personales_tc.js ya corrio (las 7 filas estan en
+   PERSONAL) y salio a apps-script/_archivo/2026-10-08_lotes_corridos_maestro.
+   Queda solo entre_volcanes_ajena.js. */
+function menuReclasRevisar() { revisarEntreVolcanesAjena(); _avisoLog(); }
 
 function menuReclasAplicar() {
   var ui = SpreadsheetApp.getUi();
@@ -745,7 +748,6 @@ function menuReclasAplicar() {
     ui.alert('Rosanta', 'No se escribio nada.', ui.ButtonSet.OK);
     return;
   }
-  aplicarRetirosPersonalesTC();
   aplicarEntreVolcanesAjena();
 
   /* 12-sep-2026: este flush NO es decorativo. La primera corrida escribio las 36
@@ -759,8 +761,7 @@ function menuReclasAplicar() {
   ui.alert('Rosanta',
     'Lote aplicado y espejo regenerado.\n\n' +
     'VERIFICA en Extensiones > Apps Script > Ejecuciones que aparezca ' +
-    '"menuReclasAplicar" y en su registro los dos lotes (adelantos de la tarjeta y ' +
-    'Entre Volcanes). Si no aparece, no se escribio.',
+    '"menuReclasAplicar" y en su registro el lote de Entre Volcanes. Si no aparece, no se escribio.',
     ui.ButtonSet.OK);
 }
 function _avisoLog() {
