@@ -11,14 +11,18 @@
 //                     (reporte de facturas del PosFile actualizado, desde el 1-oct-2026)
 //   FEL emitidas   -> el EMISOR es CORSAGA            -> 01b_FEL_Emitidas
 //   FEL recibidas  -> el emisor es otro               -> 01_FEL_Maestro
+//   BANCO_BI       -> Sheet nativo con Docto, Categoria y Total_debitos
+//                     -> 03_Banco_Industrial (desde el 8-oct-2026, p233; ver _cargarBancoBI)
 //   Todo lo demas (PDF, zip, planilla, etc.) se ignora.
 //
 // Nunca duplica: en FEL compara la pareja (Serie, Numero del DTE) y en
 // ventas el TicketId. Si la corres dos veces, la segunda no agrega nada.
 //
-// Los estados de cuenta (Banco Industrial, BAC y tarjeta) NO se cargan
-// aca: vienen en PDF y los procesa Claude una vez al mes, validando
-// contra los totales impresos del banco. Los scripts de un solo uso que
+// Banco Industrial SI se carga aca desde el 8-oct-2026 (p233), pero no desde el
+// PDF: Claude lee el PDF, categoriza y deja en la carpeta SXX un Sheet NATIVO
+// (BANCO_BI_SXX) con los movimientos y los totales impresos del banco; el
+// cargador lo valida y lo agrega. BAC y tarjetas siguen fuera (vienen en PDF/zip).
+// Antes del 8-oct el banco se cargaba con un script de un solo uso por semana. Los scripts de un solo uso que
 // los cargaban (cargar_banco_SXX) se sacaron del proyecto el 28-sep-2026:
 // estan en el repo, apps-script/_archivo/2026-09-28_scripts_banco_maestro.
 // El de S40 (corrido el 5-oct-2026, 15 filas) y el de sus 3 proveedores nuevos estan en apps-script/_archivo/2026-10-05_banco_S40.
@@ -136,6 +140,7 @@ function _identificar(datos) {
     if (_norm(enc[i]).toLowerCase() === 'ticketid') return 'POS';
   }
   if (_col(enc, 'Tipo documento') === 0 && _col(enc, 'No.') >= 0 && _col(enc, 'Total') >= 0) return 'POS_FACTURAS';
+  if (_col(enc, 'Docto') >= 0 && _col(enc, 'Categor') >= 0 && _col(enc, 'Total_debitos') >= 0) return 'BANCO_BI';
   var iEmisor = _col(enc, 'Nombre completo del emisor');
   var iNit    = _col(enc, 'NIT del emisor');
   if (iEmisor < 0 && iNit < 0) return '?';
@@ -335,6 +340,139 @@ function _cargarPOSFacturas(ss, datos) {
     sh.getRange(inicio, 2, filas.length, 1).setNumberFormat('yyyy-mm-dd');
   }
   return { nuevas: filas.length, saltadas: saltados, avisos: avisos };
+}
+
+/**
+ * BANCO_BI (p233, 8-oct-2026): Banco Industrial desde un Sheet NATIVO ya categorizado.
+ *
+ * Lo arma Claude con el PDF de la semana y lo deja en la carpeta SXX como
+ * BANCO_BI_SXX. Primera pestaña, fila 1 de encabezados:
+ *   Fecha | Docto | Descripción | Débito | Crédito | Categoría |
+ *   Total_desde | Total_hasta | Total_debitos | Total_creditos
+ * A-F: un movimiento por fila (fecha AAAA-MM-DD). G-J: una fila por cada PDF, con el
+ * rango y los totales IMPRESOS al pie del banco (pueden ir en las primeras filas).
+ *
+ * FRENA (no escribe nada) si: no hay totales, una fila cae fuera de los rangos, un
+ * rango no cuadra al centavo, una fila no tiene categoria o trae una que nunca se uso
+ * en 03_Banco_Industrial, o el encabezado del maestro cambio. Nunca duplica: la
+ * llave es fecha|docto|debito|credito, la misma de los cargar_banco_SXX archivados.
+ * Es_Personal = "Sí" solo con categoria PERSONAL. Año/Mes/Semana copian la formula
+ * de la ultima fila. La fecha se escribe como TEXTO AAAA-MM-DD (setValue(Date) puede
+ * no cambiar la celda sin avisar, 15-sep-2026).
+ */
+function _cargarBancoBI(ss, datos, escribir) {
+  _zonaCargaIgual_(ss);
+  var HOJA = '03_Banco_Industrial', ENC = 4;
+  var sh = ss.getSheetByName(HOJA);
+  var avisos = [], frenos = [];
+  var r2 = function (n) { return Math.round(n * 100) / 100; };
+  var dia = function (v) {
+    var d = _fechaCarga(v);
+    return d ? Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd') : '';
+  };
+  var clave = function (f, doc, de, cr) {
+    return f + '|' + _norm(doc).replace(/\.0+$/, '') + '|' + r2(de).toFixed(2) + '|' + r2(cr).toFixed(2);
+  };
+
+  // _col quita los acentos en vez de cambiarlos ("Débito" -> "Dbito"): aca se
+  // comparan sin tilde y en minusculas, para aceptar "Débito" y "Debito".
+  var enc = datos[0].map(function (h) {
+    return _norm(h).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  });
+  var col = function (t) { for (var i = 0; i < enc.length; i++) if (enc[i].indexOf(t) === 0) return i; return -1; };
+  var c = {
+    fecha: col('fecha'), doc: col('docto'), desc: col('descrip'),
+    deb: col('debito'), cred: col('credito'), cat: col('categor'),
+    tDesde: col('total_desde'), tHasta: col('total_hasta'),
+    tDeb: col('total_debitos'), tCred: col('total_creditos')
+  };
+  for (var k in c) if (c[k] < 0) frenos.push('BANCO_BI: falta la columna ' + k);
+  if (frenos.length) return { nuevas: 0, avisos: frenos, frenado: true };
+
+  var esperado = ['Fecha', 'Docto', 'Descripción', 'Débito', 'Crédito', 'Saldo', 'Categoría', 'Es_Personal'];
+  var encM = sh.getRange(ENC, 1, 1, 8).getValues()[0];
+  for (var e = 0; e < esperado.length; e++) {
+    if (_norm(encM[e]) !== esperado[e]) frenos.push(HOJA + ': encabezado distinto en la columna ' + (e + 1));
+  }
+
+  // lo que ya esta en el maestro: llaves y categorias conocidas
+  var ultima = sh.getLastRow();
+  var previo = ultima > ENC ? sh.getRange(ENC + 1, 1, ultima - ENC, 7).getValues() : [];
+  var ya = {}, cats = {}, ultimaDatos = ENC;
+  for (var i = 0; i < previo.length; i++) {
+    var p = previo[i];
+    if (_norm(p[0]) === '' && _norm(p[2]) === '') continue;
+    ultimaDatos = ENC + 1 + i;
+    ya[clave(dia(p[0]), p[1], _numero(p[3]), _numero(p[4]))] = 1;
+    if (_norm(p[6])) cats[_norm(p[6])] = 1;
+  }
+
+  var totales = [], movs = [];
+  for (var f = 1; f < datos.length; f++) {
+    var x = datos[f];
+    if (_norm(x[c.tDesde])) {
+      totales.push({ desde: dia(x[c.tDesde]), hasta: dia(x[c.tHasta]),
+                     deb: r2(_numero(x[c.tDeb])), cred: r2(_numero(x[c.tCred])), sd: 0, sc: 0, n: 0 });
+    }
+    if (!_norm(x[c.fecha]) && !_norm(x[c.desc])) continue;
+    var m = { fecha: dia(x[c.fecha]), doc: _norm(x[c.doc]).replace(/\.0+$/, ''), desc: _norm(x[c.desc]),
+              deb: r2(_numero(x[c.deb])), cred: r2(_numero(x[c.cred])), cat: _norm(x[c.cat]), fila: f + 1 };
+    if (!m.fecha) { frenos.push('BANCO_BI fila ' + m.fila + ': fecha ilegible'); continue; }
+    if (!m.cat) frenos.push('BANCO_BI fila ' + m.fila + ' (' + m.desc + '): sin categoria');
+    else if (m.cat === 'POR_CLASIFICAR') frenos.push('BANCO_BI fila ' + m.fila + ' (' + m.desc + '): POR_CLASIFICAR');
+    else if (!cats[m.cat]) frenos.push('BANCO_BI fila ' + m.fila + ': categoria "' + m.cat +
+      '" nunca se uso en ' + HOJA + '. Si es correcta, que Juanma la confirme; si no, corregirla.');
+    movs.push(m);
+  }
+
+  if (!totales.length) frenos.push('BANCO_BI: sin totales del PDF (columnas Total_*): no se puede validar.');
+  movs.forEach(function (m) {
+    var t = totales.filter(function (t) { return m.fecha >= t.desde && m.fecha <= t.hasta; })[0];
+    if (!t) { frenos.push('BANCO_BI fila ' + m.fila + ': ' + m.fecha + ' fuera de los rangos de los PDF'); return; }
+    t.sd += m.deb; t.sc += m.cred; t.n++;
+  });
+  totales.forEach(function (t) {
+    t.sd = r2(t.sd); t.sc = r2(t.sc);
+    Logger.log('  BANCO_BI %s a %s: %s filas · debitos %s / banco %s · creditos %s / banco %s',
+               t.desde, t.hasta, t.n, t.sd.toFixed(2), t.deb.toFixed(2), t.sc.toFixed(2), t.cred.toFixed(2));
+    if (t.sd !== t.deb || t.sc !== t.cred) {
+      frenos.push('BANCO_BI NO CUADRA ' + t.desde + ' a ' + t.hasta + ': archivo ' + t.sd.toFixed(2) + ' / ' +
+                  t.sc.toFixed(2) + ' contra banco ' + t.deb.toFixed(2) + ' / ' + t.cred.toFixed(2));
+    }
+  });
+
+  var nuevas = movs.filter(function (m) { return !ya[clave(m.fecha, m.doc, m.deb, m.cred)]; });
+  if (nuevas.length && nuevas.length !== movs.length) {
+    avisos.push('BANCO_BI: ' + (movs.length - nuevas.length) + ' de ' + movs.length +
+                ' filas ya estaban en ' + HOJA + ' y se saltan. Mirar si alguien cargo parte a mano.');
+  }
+  if (frenos.length) {
+    return { nuevas: 0, avisos: avisos.concat(frenos, ['>> BANCO_BI: NO se escribio nada.']), frenado: true };
+  }
+  if (!escribir || !nuevas.length) return { nuevas: 0, avisos: avisos, frenado: false };
+
+  var formulas = sh.getRange(ultimaDatos, 9, 1, 3).getFormulasR1C1()[0];
+  var bloque = nuevas.map(function (m) {
+    var q = m.fecha.split('-'), d = new Date(Number(q[0]), Number(q[1]) - 1, Number(q[2]));
+    return [m.fecha, m.doc, m.desc, m.deb, m.cred, '', m.cat, m.cat === 'PERSONAL' ? 'Sí' : 'No',
+            formulas[0] || d.getFullYear(), formulas[1] || (d.getMonth() + 1), formulas[2] || _semanaISOCarga(d)];
+  });
+  var inicio = ultimaDatos + 1;
+  sh.getRange(inicio, 1, bloque.length, 8).setValues(bloque.map(function (b) { return b.slice(0, 8); }));
+  var fr = bloque.map(function (b) { return b.slice(8); });
+  if (formulas[0]) sh.getRange(inicio, 9, fr.length, 3).setFormulasR1C1(fr);
+  else sh.getRange(inicio, 9, fr.length, 3).setValues(fr);
+  SpreadsheetApp.flush();
+
+  // releer lo escrito (regla del 15-sep: un script de datos relee lo que escribio)
+  var rel = sh.getRange(inicio, 1, bloque.length, 5).getValues(), mal = 0;
+  for (var j = 0; j < rel.length; j++) {
+    if (clave(dia(rel[j][0]), rel[j][1], _numero(rel[j][3]), _numero(rel[j][4])) !==
+        clave(nuevas[j].fecha, nuevas[j].doc, nuevas[j].deb, nuevas[j].cred)) mal++;
+  }
+  if (mal) avisos.push('BANCO_BI: ' + mal + ' fila(s) no se releyeron igual a lo escrito. Revisar ' + HOJA +
+                       ' desde la fila ' + inicio + '.');
+  return { nuevas: nuevas.length, avisos: avisos, frenado: false };
 }
 
 function _cargarFEL(ss, datos, emitidas) {
@@ -576,13 +714,17 @@ function _barrido(escribir, ventana) {
 
       if (!escribir) {
         lineas.push(carpeta.getName() + '  ' + tipo + '  <-  ' + nombre);
+        if (tipo === 'BANCO_BI') avisos = avisos.concat(_cargarBancoBI(ss, datos, false).avisos);
         continue;
       }
       var res = tipo === 'POS'          ? _cargarPOS(ss, datos)
+              : tipo === 'BANCO_BI'     ? _cargarBancoBI(ss, datos, true)
               : tipo === 'POS_FACTURAS' ? _cargarPOSFacturas(ss, datos)
               : tipo === 'FEL_EMITIDAS' ? _cargarFEL(ss, datos, true)
               :                           _cargarFEL(ss, datos, false);
-      vistos[huella] = 1;
+      // Un banco frenado (no cuadra, categoria nueva...) no se marca como visto:
+      // la proxima corrida lo vuelve a intentar.
+      if (!res.frenado) vistos[huella] = 1;
       tocadas += res.nuevas;
       if (res.nuevas) {
         lineas.push(carpeta.getName() + '  ' + tipo + ': +' + res.nuevas +
@@ -608,7 +750,7 @@ function _barrido(escribir, ventana) {
     Logger.log('>> Me quede sin tiempo. Corre "Cargar lo que falte" otra vez ' +
                'para seguir donde quedo.');
   }
-  Logger.log('Los estados de cuenta del banco no se cargan aca: vienen en PDF.');
+  Logger.log('Banco Industrial entra solo desde un Sheet BANCO_BI_SXX; BAC y tarjetas no se cargan aca.');
 }
 
 function cargarPendientes()  { _barrido(true); }
