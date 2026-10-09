@@ -311,6 +311,7 @@ function askClaude(canal, nombre, mensaje, senderId) {
       if (json && json.respuesta) {
         json.lead = json.lead || {};
         json.lead.canal = canal; // el canal real lo da el webhook; Claude no lo cambia
+        guardaEscalarEvento_(json.lead);
         saveHistory(senderId, mensaje, JSON.stringify(json));
         return json;
       }
@@ -330,6 +331,18 @@ function askClaude(canal, nombre, mensaje, senderId) {
   };
   saveHistory(senderId, mensaje, fb.respuesta);
   return fb;
+}
+
+// Red de seguridad del prompt (Nutrifert, 8-oct-2026): un evento privado con
+// correo y fecha o personas se avisa al equipo aunque el modelo no lo escale.
+// notificarHumano avisa una sola vez por contacto (cotizacionEnviada_).
+function guardaEscalarEvento_(lead) {
+  if (!lead || lead.requiere_humano) return;
+  if (lead.tipo !== 'evento') return;
+  if (lead.accion === 'crear_reserva' || lead.accion === 'cancelar_reserva' || lead.accion === 'redirigir_reservas') return;
+  if (!lead.email || !(lead.fecha || lead.personas)) return;
+  lead.requiere_humano = true;
+  lead.accion = 'escalar_evento';
 }
 
 function intentarParseJson(raw) {
@@ -457,10 +470,11 @@ const MASTER_PROMPT = [
 'EVENTOS PRIVADOS (cumpleaños, corporativos, grupos a cotizar): NO los cotizas ni cierras. Recoge la info en DOS pasos, para no abrumar con muchas preguntas juntas:',
   '  PASO 1 — BÁSICOS: si todavía no los tienes, pregunta tipo de evento, fecha tentativa, número de personas, NOMBRE del cliente y CORREO ELECTRÓNICO (imprescindible: la cotización se envía por correo). Presenta los datos que faltan como una lista corta, con cada uno en negrita usando asteriscos de WhatsApp (ej. "*Tu nombre:*", "*Fecha:*", "*Personas:*", "*Correo:*"), para que el cliente los responda uno por uno. En este paso NO menciones los menús todavía.',
   '  PASO 2 — MENÚ: SOLO cuando ya tengas los básicos, presenta los 3 formatos de menú (ver "Formatos de evento" en la base) y pregunta cuál le interesa.',
-  'MIENTRAS te falte algún básico (nombre, correo, fecha, personas) o el formato de menú: sigue tú la conversación, requiere_humano:false, accion:“responder_info”. SOLO cuando ya tengas TODO (básicos + formato de menú), confírmale que el equipo le enviará la cotización a su correo y marca requiere_humano:true, accion:“escalar_evento”.',
+  'MIENTRAS te falte algún básico (nombre, correo, fecha, personas): sigue tú la conversación, requiere_humano:false, accion:“responder_info”. EN CUANTO tengas los cuatro básicos, marca requiere_humano:true, accion:“escalar_evento”, aunque todavía no haya elegido formato de menú (si no lo ha elegido, preséntale los formatos y dile que el equipo le enviará la cotización a su correo). Así el equipo se entera aunque el cliente deje de responder.',
+  'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que alguien del equipo de ventas se comunicará con él para hacerle una propuesta. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
 'EVENTOS PÚBLICOS DEL MES (maridajes, catas, noches temáticas con precio y cupo que aparezcan en la base): SÍ das la info completa tomada de la base y compartes el link de reservas. NO los escalas salvo grupo grande o caso especial. tipo:"evento", requiere_humano:false.',
 '',
-'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Para EVENTOS privados NO escales automáticamente: maneja la recolección tú mismo y marca requiere_humano:true SOLO cuando ya tengas básicos (nombre, correo, fecha, número de personas) + formato de menú elegido.',
+'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
 '',
 'NO HAGAS: confirmar reservas como definitivas; prometer descuentos/cortesías sin autorización; compartir datos internos; mencionar al cliente el nombre de Juanma ni de ningún empleado (decí siempre "alguien del equipo se comunicará contigo"); salirte del tema del restaurante.',
 '',
