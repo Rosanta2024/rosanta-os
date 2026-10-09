@@ -21,7 +21,10 @@ var SCHEMA = {
      este orden. clientes_nuevos la llena solo el script de Wix (primeras reservas). */
   pauta_semanal: ['wk','gCosto','gClics','gImp','mCosto','mAlcance','reservas','fecha_registro','comensales','comensalesReserva','ticket','clientes_nuevos'],
   aprendizajes:  ['id','fecha','fuente','hallazgo','accion'],
-  propuestas:    ['id','fecha','autor','titulo','estado','contenido']
+  propuestas:    ['id','fecha','autor','titulo','estado','contenido'],
+  /* Brief del mes que escribe Juanma en el Calendario (9-oct-2026). id = AAAA-MM.
+     El generador del plan y el de copy lo leen como instrucción principal. */
+  briefs:        ['id','brief','actualizado']
   /* debates salió el 27-sep-2026 con el Panel de Asesores (decisión de Juanma). Su
      pestaña queda en la Sheet como historial OBSOLETO; fuera de SCHEMA, mktRead,
      mktUpsert y mktReplace ya no la pueden tocar. */
@@ -38,7 +41,7 @@ var SCHEMA = {
  *    aprendizajes. Pestañas de pauta/carritos quedan fuera también del lado
  *    del servidor, no solo de la vista.
  */
-var TABS_CONTENIDO = { calendario: 1, piezas: 1, aprendizajes: 1 };
+var TABS_CONTENIDO = { calendario: 1, piezas: 1, aprendizajes: 1, briefs: 1 };
 
 function requiereMarketing_(tab, auth) {
   var u = resolverUsuario_(auth);
@@ -46,7 +49,7 @@ function requiereMarketing_(tab, auth) {
   if (usuarioTieneModulo(u, 'marketing')) return u;
   if (usuarioTieneModulo(u, 'contenido')) {
     if (tab && !TABS_CONTENIDO[tab]) {
-      throw new Error('Tu usuario es de contenido: acceso solo a calendario, piezas y aprendizajes.');
+      throw new Error('Tu usuario es de contenido: acceso solo a calendario, brief del mes, piezas y aprendizajes.');
     }
     return u;
   }
@@ -199,7 +202,7 @@ function mktUpsert(tab, row, auth) {
  * El guard vive aquí y no solo en la vista: una pestaña abierta con el HTML viejo
  * sigue llamando a mktReplace hasta que se recarga.
  */
-var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1, propuestas: 1 };
+var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1, propuestas: 1, briefs: 1 };
 
 /** Lo que usa el auto-sync del sistema (osAutoPush -> action:'replace'). */
 function mktReplace(tab, rows, auth) {

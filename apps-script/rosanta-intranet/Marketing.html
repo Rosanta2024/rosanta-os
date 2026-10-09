@@ -60,6 +60,8 @@ select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
 /* Calendario */
 .calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .calhead .mes{font-size:16px;font-weight:800;color:var(--verde);text-transform:capitalize}
+.brief-mes{border:1px solid #e3ddd6;border-radius:8px;padding:10px;margin-bottom:12px}
+.brief-mes textarea{width:100%;box-sizing:border-box;margin-top:6px;font:inherit;resize:vertical}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .dow{text-align:center;font-size:11px;color:var(--tierra);font-weight:700;padding:4px 0;text-transform:uppercase}
 .day{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;min-height:86px;padding:5px;cursor:pointer;position:relative;font-size:11px}
@@ -352,16 +354,24 @@ a{color:var(--verde)}
 <section id="tab-cal" class="tab<?!= esFull ? '' : ' act' ?>">
   <div class="pill-note">Cadencia mínima: <b>2 posts por semana</b>, anclados <b>martes y viernes</b> (marcados en verde). Rota los 5 ejes y piensa cada pieza en triple uso: orgánico, pauta y retención.</div>
   <div class="card">
-    <div class="toolbar">
-      <button class="btn sm" onclick="genPlan()">🪄 Generar plan del mes</button>
-      <button class="btn sm" onclick="genContenido()">✍️ Generar contenido</button>
-      <button class="btn sec sm" onclick="briefMes()">📄 Brief de producción (PDF)</button>
-      <span class="muted" id="planStatus">El Creador propone las piezas de martes y viernes (video primero) y puebla el calendario.</span>
-    </div>
     <div class="calhead">
       <button class="btn sec sm" onclick="mvMes(-1)">← Anterior</button>
       <div class="mes" id="mesLbl"></div>
       <button class="btn sec sm" onclick="mvMes(1)">Siguiente →</button>
+    </div>
+    <div class="brief-mes">
+      <label for="briefTxt"><b>📝 Brief del mes</b> <span class="muted">· el plan y el copy salen de aquí</span></label>
+      <textarea id="briefTxt" rows="6" placeholder="Qué queremos lograr este mes, qué empujar y qué no. Ej: objetivo (llenar los jueves, vender eventos de fin de año), fechas clave y eventos (Todos Santos 1-nov, cena de maridaje el 21), platos o cócteles nuevos, promociones vigentes, temas prohibidos, talento disponible para grabar (Jeffry, Maco)." onchange="briefGuardar()"></textarea>
+      <div class="toolbar" style="margin-top:6px">
+        <button class="btn sec sm" onclick="briefGuardar()">💾 Guardar brief</button>
+        <span class="muted" id="briefStatus"></span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn sm" onclick="genPlan()">🪄 Generar plan del mes</button>
+      <button class="btn sm" onclick="genContenido()">✍️ Generar contenido</button>
+      <button class="btn sec sm" onclick="briefMes()">📄 Brief de producción (PDF)</button>
+      <span class="muted" id="planStatus">Escribe el brief del mes y presiona 🪄: el plan de martes y viernes sale de ese brief.</span>
     </div>
     <div class="calgrid" id="calDow"></div>
     <div class="calgrid" id="calDays" style="margin-top:5px"></div>
@@ -541,7 +551,7 @@ a{color:var(--verde)}
     <p>Dentro de <b>✍️ Creador de Contenido</b>, debajo de los generadores Kaprica, vive el creador de anuncios para Meta Ads. Es un cerebro creativo aparte: el orgánico nace de Kaprica (micro-historias); la pauta nace del <b>estándar creativo de pauta de Rosanta</b>: el gancho de los primeros 3 segundos decide, video nativo estilo UGC, el creativo es la segmentación, iterar sobre ganadores y cada concepto es un video distinto (regla Andromeda). A cámara solo Jeffry, Maco o clientes reales. Se elige tema, objetivo, audiencia, formato y cuántos conceptos. Cada concepto sale con gancho literal, guión, texto principal, titular, descripción, botón, utm_content, su hipótesis y la siguiente iteración. <b>Qué se mide no está escrito en el prompt:</b> sale de las reglas del sistema de pauta y solo de los supuestos verificados. Cada concepto trae <b>📋 Registrar como prueba</b>, que lo manda a la bitácora de ⚖️ Decisiones como propuesta, con su métrica juez (reservas o clientes nuevos). Una prueba en curso a la vez, y solo Juanma la arranca. Lo que gana una prueba vuelve al Creador como aprendizaje para el siguiente anuncio.</p>
 
     <h2 style="margin-top:14px">🔄 Flujo mensual (el ciclo completo)</h2>
-    <p><b>Paso 1 · Planear.</b> En <b>📅 Calendario</b>, navega al mes y presiona <b>🪄 Generar plan del mes</b>. El sistema propone una pieza para cada martes y viernes: mínimo la mitad videos, ejes rotados, cada una con título y gancho. Entran como estado <span class="chip off">Idea</span> (se ven atenuadas).</p>
+    <p><b>Paso 1 · Planear.</b> En <b>📅 Calendario</b>, navega al mes, escribe el <b>📝 Brief del mes</b> (objetivos, fechas, eventos, platos, promociones y lo que no se habla) y presiona <b>🪄 Generar plan del mes</b>. Sin brief no genera: cada pieza sale de lo que pide el brief. El sistema propone una pieza para cada martes y viernes: mínimo la mitad videos, ejes rotados, cada una con título y gancho. Entran como estado <span class="chip off">Idea</span> (se ven atenuadas).</p>
     <p><b>Paso 2 · Desarrollar.</b> Abre cada pieza y presiona <b>✍️ Desarrollar</b>: te lleva al generador correcto (🎬 guión, 📝 post o 🎠 carrusel) con el tema pre-llenado. Genera, ajusta si hace falta, y presiona <b>📌 Guardar en la pieza</b>: el copy completo queda dentro de la pieza y pasa a <span class="chip off">Producción</span>.</p>
     <p><b>Paso 3 · Validar.</b> Desde la pieza, presiona <b>✅ Validar</b>: se abre el Checklist con el nombre pre-llenado. Revisa los 8 puntos (gancho, branding 3s, subtítulos, CTA final, UTM, triple uso). Con 8/8 la pieza pasa sola a <span class="chip on">Listo</span>. Una pieza con menos de 8/8 queda fuera del calendario.</p>
     <p><b>Paso 4 · Producir y publicar.</b> Presiona <b>📄 Brief de producción (PDF)</b> en el Calendario: genera el documento del mes con las instrucciones obligatorias y todas las piezas con su copy, listo para el equipo de producción. Al publicar cada pieza, cámbiala a <span class="chip on">Publicado</span>.</p>
@@ -788,6 +798,36 @@ async function tabPull(tab,k){
   return rows;
 }
 function aprPull(){ return tabPull('aprendizajes','rosanta_apr'); }
+/* ===== Brief del mes: lo escribe Juanma; manda sobre el plan y el copy =====
+   Una fila por mes en la pestaña briefs (id = AAAA-MM). */
+function mesPref(){ return calRef.getFullYear()+'-'+String(calRef.getMonth()+1).padStart(2,'0'); }
+function briefDe(pref){ const b=read('rosanta_brief',{}); return String(b[pref]||''); }
+async function briefPull(){
+  const r=await osGet('briefs');
+  const b={}; (r&&r.rows||[]).forEach(x=>{ if(x.id) b[String(x.id)]=String(x.brief||''); });
+  localStorage.setItem('rosanta_brief',JSON.stringify(b));
+  return b;
+}
+function briefPintar(){
+  const pref=mesPref();
+  $('briefTxt').value=briefDe(pref); $('briefTxt').dataset.mes=pref;
+  $('briefStatus').textContent='';
+}
+async function briefGuardar(){
+  const pref=$('briefTxt').dataset.mes||mesPref();
+  const txt=$('briefTxt').value.trim();
+  if(txt===briefDe(pref)){ return true; }
+  const b=read('rosanta_brief',{}); b[pref]=txt; localStorage.setItem('rosanta_brief',JSON.stringify(b));
+  $('briefStatus').textContent='Guardando…';
+  try{
+    await filaUpsertRemoto('briefs',{id:pref,brief:txt,actualizado:new Date().toISOString()});
+    $('briefStatus').textContent='✅ Brief de '+pref+' guardado en la Sheet.';
+    return true;
+  }catch(e){
+    $('briefStatus').textContent='Guardado solo en este dispositivo: la Sheet rechazó ('+(e&&e.message?e.message:e)+').';
+    return false;
+  }
+}
 function carrPull(){ return tabPull('carritos','rosanta_carr'); }
 function pzPull(){ return tabPull('piezas','rosanta_pz'); }
 function propPull(){ return tabPull('propuestas','rosanta_prop'); }
@@ -909,10 +949,11 @@ $('pEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
 $('leyenda').innerHTML=EJES.map(e=>'<span><i style="background:'+e[1]+'"></i>'+e[0]+'</span>').join('');
 $('calDow').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d=>'<div class="dow">'+d+'</div>').join('');
 function ejeColor(n){const f=EJES.find(e=>e[0]===n);return f?f[1]:'#888'}
-function mvMes(d){calRef.setMonth(calRef.getMonth()+d);renderCal()}
+async function mvMes(d){await briefGuardar();calRef.setDate(1);calRef.setMonth(calRef.getMonth()+d);renderCal()}
 function renderCal(){
   const y=calRef.getFullYear(),m=calRef.getMonth();
   $('mesLbl').textContent=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
+  if($('briefTxt').dataset.mes!==mesPref()) briefPintar();
   const posts=read('rosanta_cal',[]);
   const first=new Date(y,m,1);const start=(first.getDay()+6)%7; // lunes=0
   const dim=new Date(y,m+1,0).getDate();
@@ -1032,6 +1073,9 @@ async function genPlan(){
   const dim=new Date(y,m+1,0).getDate();
   const pref=y+'-'+String(m+1).padStart(2,'0');
   const mesNombre=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
+  await briefGuardar();
+  const brief=briefDe(pref).trim();
+  if(!brief){$('planStatus').textContent='Primero escribe el brief de '+mesNombre+': el plan sale de ahí.';$('briefTxt').focus();return}
   $('planStatus').textContent='Leyendo el plan actual de la Sheet…';
   let cal;
   try{ cal=await calPull(); }
@@ -1092,13 +1136,17 @@ async function genPlan(){
   try{
     const apr=read('rosanta_apr',[]).slice(0,12);
     const aprBlock=apr.length?('\n\nAPRENDIZAJES (respétalos):\n'+apr.map(x=>'- ['+x.fuente+'] '+x.hallazgo).join('\n')):'';
-    const t=await askIA(KAPRICA+'\n\n'+VOZ+aprBlock+`\n\nEres el director de contenido de Rosanta. Para ${mesNombre}, propon una pieza por fecha (traen categoría 3-1-1 y eje ya asignados: respétalos):\n${plan.map(pp=>pp.iso+' ('+pp.dia+') · '+pp.tipo+' · '+pp.eje).join('\n')}\n\nReglas:\n- VALOR = enseña o muestra algo de valor. COMUNIDAD = conversación, pregunta abierta. VENTA = invita a reservar.\n- Espíritu Kaprica: micro-historia o momento concreto, jamás anuncio genérico.\n- Considera la temporada en Antigua Guatemala.\n\nResponde SOLO un array JSON, mismo orden y cantidad, sin markdown:\n[{"titulo":"título corto","gancho":"Se ve: ... Subtítulo literal: \\"...\\"","notas":"1-2 líneas de dirección para producción"}]`);
+    const t=await askIA(KAPRICA+'\n\n'+VOZ+aprBlock+`\n\nBRIEF DEL MES (lo escribió el dueño; MANDA sobre todo lo demás):\n${brief}\n\nEres el director de contenido de Rosanta. Para ${mesNombre}, propon una pieza por fecha. Cada pieza tiene que salir del brief: sus objetivos, fechas, eventos, platos y promociones. No inventes temas, promociones ni eventos que el brief no mencione; si el brief no alcanza para todas las fechas, desarrolla más a fondo lo que sí pide. Si el brief marca una fecha o evento, pon la pieza que lo empuja en la fecha ancla anterior más cercana. Las fechas traen una sugerencia de categoría 3-1-1 y eje; cámbialas solo si el brief lo exige.\n${plan.map(pp=>pp.iso+' ('+pp.dia+') · '+pp.tipo+' · '+pp.eje).join('\n')}\n\nReglas:\n- VALOR = enseña o muestra algo de valor. COMUNIDAD = conversación, pregunta abierta. VENTA = invita a reservar.\n- Espíritu Kaprica: micro-historia o momento concreto, jamás anuncio genérico.\n- Considera la temporada en Antigua Guatemala.\n- Ejes válidos: ${EJES_ROT.join(', ')}.\n\nResponde SOLO un array JSON, mismo orden y cantidad, sin markdown:\n[{"titulo":"título corto","tipo":"VALOR|COMUNIDAD|VENTA","eje":"uno de los ejes válidos","gancho":"Se ve: ... Subtítulo literal: \\"...\\"","notas":"1-2 líneas de dirección para producción"}]`);
     let clean=t.trim().replace(/^```json?\s*/i,'').replace(/```\s*$/,'');
     const arr=JSON.parse(clean.slice(clean.indexOf('['),clean.lastIndexOf(']')+1));
 
     let n=0,errores=0;
     for(let i=0;i<plan.length;i++){
-      const pp=plan[i],ia=arr[i]||{},tipo=pp.tipo;
+      const ia=arr[i]||{};
+      const pp=Object.assign({},plan[i],{
+        tipo:CAL_TIPOS.indexOf(ia.tipo)>-1?ia.tipo:plan[i].tipo,
+        eje:EJES_ROT.indexOf(ia.eje)>-1?ia.eje:plan[i].eje
+      }),tipo=pp.tipo;
       const id='cal-'+pp.iso.replace(/-/g,'');
       const notasBase=String(ia.notas||'').trim();
       const row={
@@ -1128,13 +1176,15 @@ async function genContenido(){
   const aprobadas=cal.filter(p=>p.date&&p.date.indexOf(pref)===0&&p.estado==='Aprobada');
   if(!aprobadas.length){$('planStatus').textContent='No hay piezas en estado Aprobada este mes. Apruébalas primero en el Calendario (solo esas reciben copy).';return}
 
+  await briefGuardar();
+  const briefMesTxt=briefDe(pref).trim();
   const REGLAS='REGLAS DE ESCRITURA (obligatorias):\n- Segunda persona, el cliente protagonista, tono conversacional.\n- Prohibido empezar con "En Rosanta".\n- Prohibidos los posesivos de marca: nunca "nuestro/a/os".\n- Prohibidos los em dash (—) y el vocabulario de IA (sumérgete, descubre un mundo de, elevar la experiencia, deleita tu paladar).\n- Máximo 1-2 emojis, al final.\n- Estructura: gancho, cuerpo, CTA (reservar en rosanta.rest), y al final los hashtags tras un salto de línea, sin puntos separadores.\n- Hashtags: usa la base '+HASHTAGS_BASE+' más 3-5 relevantes al eje. Nunca #JardinSantaRosa.';
 
   let n=0,errores=0;
   for(const p of aprobadas){
     $('planStatus').textContent='Escribiendo copy… ('+(n+1)+'/'+aprobadas.length+')';
     try{
-      const prompt=KAPRICA+'\n\n'+VOZ+'\n\n'+REGLAS+`\n\nEscribe el copy final de esta pieza:\n- Título: ${p.title}\n- Tipo: ${p.tipo} · Eje: ${p.eje} · Embudo: ${p.embudo||''}\n- Gancho/primer segundo: ${p.hook||''}\n- Notas de producción: ${(p.notas||'').replace(/\s+/g,' ').slice(0,300)}\n\nDevuelve SOLO el caption listo para publicar (gancho + cuerpo + CTA + salto de línea + hashtags). Sin comillas envolventes ni markdown.`;
+      const prompt=KAPRICA+'\n\n'+VOZ+'\n\n'+REGLAS+(briefMesTxt?'\n\nBRIEF DEL MES (respétalo: no inventes promociones, precios ni eventos fuera de él):\n'+briefMesTxt:'')+`\n\nEscribe el copy final de esta pieza:\n- Título: ${p.title}\n- Tipo: ${p.tipo} · Eje: ${p.eje} · Embudo: ${p.embudo||''}\n- Gancho/primer segundo: ${p.hook||''}\n- Notas de producción: ${(p.notas||'').replace(/\s+/g,' ').slice(0,300)}\n\nDevuelve SOLO el caption listo para publicar (gancho + cuerpo + CTA + salto de línea + hashtags). Sin comillas envolventes ni markdown.`;
       const t=await askIA(prompt);
       const copy=String(t||'').trim().replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim();
       if(!copy){errores++;continue}
@@ -1848,6 +1898,7 @@ $('poEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
 ckUpd();renderPz();renderLib();renderApr();
 pzPull().then(renderPz).catch(function(){}); // piezas: la Sheet manda (p218)
 calPull().then(renderCal).catch(function(){}); // calendario siempre fresco desde la Sheet
+briefPull().then(function(){$('briefTxt').dataset.mes='';renderCal();}).catch(function(){}); // brief del mes: la Sheet manda
 aprPull().then(renderApr).catch(function(){}); // aprendizajes también: la Sheet manda, no el localStorage
 if(FULL){
   osRenderConn();
