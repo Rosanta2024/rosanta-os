@@ -813,6 +813,18 @@ function prFinanzas_(res) {
         'Q' + Math.round(c.debitos) + ' de debitos · Q' + Math.round(c.agrupados) + ' en grupos o fuera', Math.round(dif), '<=1');
     });
 
+    prCorrer_(g, 'La caja proyecta la planilla de un mes cerrado', function () {
+      var nombre = 'La caja proyecta la planilla de un mes cerrado';
+      // 8-oct-2026: la pestana del mes en curso esta a medio llenar y bajaba la planilla
+      // proyectada. Tiene que salir de un mes anterior al de hoy.
+      var mesHoy = new Date().getMonth() + 1, ref = cj.supuestos.planilla_ref_mes;
+      if (mesHoy === 1) { prAnotar_(g, nombre, 'SALTADA', 'en enero no hay mes cerrado del año', 0, '>0'); return; }
+      if (!ref) { prAnotar_(g, nombre, 'SALTADA', 'no hay planilla cargada con que comparar', 0, '>0'); return; }
+      prAnotar_(g, nombre, ref < mesHoy ? 'OK' : 'FALLA',
+        'planilla de ' + FIN_MESES[ref - 1] + ' (Q' + Math.round(cj.supuestos.planilla_mes) + ') · hoy es ' + FIN_MESES[mesHoy - 1],
+        ref, '<' + mesHoy);
+    });
+
     prCorrer_(g, 'Las semanas de la caja llevan su año', function () {
       var nombre = 'Las semanas de la caja llevan su año';
       var s = cj.semanas || [];

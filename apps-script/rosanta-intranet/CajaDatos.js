@@ -395,8 +395,19 @@ function _cajaCalcular_(o) {
     return G[k].tramos.map(function (x) { return t ? x / t : (k === 'planilla' ? 0.5 : 0.25); });
   }
   var anioPlanilla = new Date().getFullYear();
+  // Un mes que no ha cerrado (el en curso o uno futuro) se proyecta con la planilla del
+  // ultimo mes CERRADO. La pestana del mes en curso se va llenando: el 8-oct-2026 la de
+  // 2026-10 traia Q21,700 contra Q28,150 de septiembre, y la caja la tomaba como la
+  // planilla de octubre a diciembre (Q6,450 de menos al mes). En enero no hay mes
+  // cerrado del año y se queda la regla de siempre.
+  var mesCerrado = new Date().getMonth();          // 0 en enero
+  function planillaRef(y, m) {
+    var ref = y === anioPlanilla ? m : 12;
+    if (mesCerrado >= 1 && (y > anioPlanilla || ref > mesCerrado)) ref = mesCerrado;
+    return ref;
+  }
   function planillaMes(y, m) {
-    return _finUltimoDevengado_(planilla.valores, y === anioPlanilla ? m : 12).valor;
+    return _finUltimoDevengado_(planilla.valores, planillaRef(y, m)).valor;
   }
   var colchon = CAJA_COLCHON_DIAS * (fin.gasto_dia || 0);
 
@@ -586,6 +597,8 @@ function _cajaCalcular_(o) {
       sat_pct: _finR_(satPct * 100, 1),
       resto_mes: R(restoDia * MES), tarjeta_mes: R(tarjetaDia * MES),
       planilla_mes: R(planillaMes(corte.getFullYear(), corte.getMonth() + 1)),
+      planilla_ref_mes: _finUltimoDevengado_(planilla.valores,
+                          planillaRef(corte.getFullYear(), corte.getMonth() + 1)).desde,
       propinas_mes: R(fijoMes.propinas), igss_mes: R(fijoMes.igss), alquiler_mes: R(fijoMes.alquiler),
       usd: usd,
       fuera: Object.keys(fuera).reduce(function (a, k) { a[k] = R(fuera[k]); return a; }, {}),
