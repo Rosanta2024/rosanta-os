@@ -609,10 +609,29 @@ function aplicarToques_(toques) {
   //    todavia no calcularon y su total llega vacio.
   SpreadsheetApp.flush();
 
+  // UN PRE-ELABORADO TOCADO MUEVE SU PRECIO EN EL BANCO (11-oct-2026). Su fila del Banco
+  // es una formula a la celda de costo de la ficha (regla del 22-sep), asi que cambiar
+  // una linea de la ficha cambia ese precio sin que nadie toque el Banco. Antes solo se
+  // releia la ficha: el modelo se quedaba con el precio viejo del Banco. Peras Citronela
+  // nacio vacia (precio 0), se le cargaron los ingredientes, y Peras Horneadas mostraba
+  // la linea en Q4.51 pero no la sumaba: subtotal Q4.23 contra Q8.74 de la hoja. Como la
+  // edicion parchea el cache y le renueva la hora, el precio viejo no vencia nunca.
+  // Opcional: si el Banco no tiene una fila con ese nombre, no se pide recargar todo.
+  var opcionales = {};
+
   Object.keys(fichas).forEach(function (k) {
     var f = fichas[k];
     var leida = leerFicha_(fichaDe_(recetarioDe_(f.area), f.ficha), configArea_(f.area));
-    if (leida) cambios.fichas.push(leida);
+    if (!leida) return;
+    cambios.fichas.push(leida);
+    if (leida.tipo === 'preelaborado') {
+      if (!bancos[f.area]) bancos[f.area] = {};
+      nombresEnBanco_(leida.nombre).forEach(function (n) {
+        if (!bancos[f.area][n]) opcionales[f.area + '|' + n] = true;
+        bancos[f.area][n] = true;
+        precios[f.area + '|' + n] = true;
+      });
+    }
   });
 
   Object.keys(bancos).forEach(function (a) {
@@ -626,7 +645,7 @@ function aplicarToques_(toques) {
       var k = a + '|' + n;
       // No aparece: una fila sin precio numerico, que leerBanco_ salta. La pantalla no
       // sabria que hacer con eso; que pida el modelo entero.
-      if (!indice.hasOwnProperty(k)) { cambios.recargar = true; return; }
+      if (!indice.hasOwnProperty(k)) { if (!opcionales[k]) cambios.recargar = true; return; }
       var i = lista[indice[k]];
       delete i.id;
       cambios.insumos.push(i);
@@ -634,7 +653,7 @@ function aplicarToques_(toques) {
   });
 
   // 2. CORREGIR EL MODELO CACHEADO.
-  var sinFactor = false;
+  var sinFactor = false, factores = {}, cascada = [];
   var escaladas = parchearCacheCosteo_(function (modelo) {
     var porReceta = {}, porInsumo = {};
     modelo.recetas.forEach(function (r, i) { porReceta[r.area + '|' + normalizar_(r.nombre)] = i; });
@@ -662,13 +681,38 @@ function aplicarToques_(toques) {
       var pos = porInsumo[k], viejo = modelo.insumos[pos];
       if (precios[k] && viejo.precio !== y.precio) {
         if (typeof viejo.precio === 'number' && viejo.precio > 0 && typeof y.precio === 'number') {
-          tocadas = tocadas.concat(escalarRecetasPorInsumo_(modelo, pos, y.precio / viejo.precio));
+          tocadas = tocadas.concat(escalarRecetasPorInsumo_(modelo, pos, y.precio / viejo.precio, factores));
         } else {
           sinFactor = true;
         }
       }
       modelo.insumos[pos] = copia;
     });
+
+    // EN CASCADA (11-oct-2026). Si lo escalado es un pre-elaborado, su precio en el
+    // Banco es formula a su ficha y se mueve en la misma proporcion; y con el, los
+    // platos que lo usan. Sin esto, subir un insumo de Peras Citronela corregia la
+    // ficha de Peras Citronela pero Peras Horneadas se quedaba con el costo viejo, y
+    // como cada parche renueva la hora del cache, no se corregia solo.
+    var cola = tocadas.slice(), vistos = {};
+    while (cola.length) {
+      var r = cola.shift(), kr = r.area + '|' + normalizar_(r.nombre), f = factores[kr];
+      if (r.tipo !== 'preelaborado' || vistos[kr]) continue;
+      vistos[kr] = true;
+      if (!(f > 0) || f === 1) continue;
+      // por su nombre o por alias: el Banco puede llamarlo distinto que la pestana
+      nombresEnBanco_(r.nombre).forEach(function (n) {
+        var kb = r.area + '|' + n;
+        if (!porInsumo.hasOwnProperty(kb)) return;
+        var pi = porInsumo[kb], ins = modelo.insumos[pi];
+        if (typeof ins.precio !== 'number' || !(ins.precio > 0)) return;
+        ins.precio = ins.precio * f;
+        cascada.push(copiarJson_(ins));
+        var mas = escalarRecetasPorInsumo_(modelo, pi, f, factores);
+        tocadas = tocadas.concat(mas);
+        cola = cola.concat(mas);
+      });
+    }
 
     enlazarModelo_(modelo);
     return tocadas;
@@ -680,6 +724,17 @@ function aplicarToques_(toques) {
     if (Object.keys(precios).length) cambios.recargar = true;
     if (sinFactor) olvidarModeloCosteo_();
   } else {
+    // los precios del Banco que se movieron en cascada: la pantalla los necesita para
+    // que el costo de cada linea coincida con el de la hoja
+    var yaIns = {};
+    cambios.insumos.forEach(function (y) { yaIns[y.area + '|' + normalizar_(y.producto)] = true; });
+    cascada.forEach(function (y) {
+      var k = y.area + '|' + normalizar_(y.producto);
+      if (yaIns[k]) return;
+      yaIns[k] = true;
+      var c = copiarJson_(y); delete c.id; delete c.sub; delete c.usos;
+      cambios.insumos.push(c);
+    });
     var ya = {};
     cambios.fichas.forEach(function (f) { ya[f.area + '|' + normalizar_(f.nombre)] = true; });
     escaladas.forEach(function (r) {
@@ -691,6 +746,28 @@ function aplicarToques_(toques) {
   }
   return cambios;
 }
+
+/**
+ * Los nombres (normalizados) con que el Banco puede nombrar a la ficha de un
+ * pre-elaborado: el de la pestana, y cualquier alias de COSTEO.aliasSubReceta que
+ * apunte a ella ("Pan de la casa" en el Banco -> pestana "Pan de la Casa1"). Mismo
+ * criterio que buscarSubReceta_ y altaPreEnBanco_.
+ */
+function nombresEnBanco_(nombreFicha) {
+  var k = normalizar_(nombreFicha), lista = [k];
+  Object.keys(COSTEO.aliasSubReceta || {}).forEach(function (a) {
+    var na = normalizar_(a);
+    if (normalizar_(COSTEO.aliasSubReceta[a]) === k && lista.indexOf(na) === -1) lista.push(na);
+  });
+  return lista;
+}
+
+/* EL MODELO PARCHEADO VENCE (11-oct-2026). Cada parche le renueva la hora al cache, asi
+   que con el equipo editando seguido el modelo no se reconstruia nunca y cualquier
+   diferencia que un parche no supo corregir vivia para siempre: la de Peras Horneadas
+   duro dias. Pasadas estas horas desde la ultima construccion completa, en vez de
+   parchear se tira el cache y la proxima carga lee las hojas de nuevo. */
+var COSTEO_MAX_HORAS_PARCHE_ = 3;
 
 /**
  * Corrige el modelo cacheado bajo candado. `aplicar(modelo)` lo modifica en el lugar;
@@ -709,6 +786,11 @@ function parchearCacheCosteo_(aplicar) {
   try {
     var modelo = leerModeloCacheado_(cache);
     if (!modelo) return null;
+    var nacio = Date.parse((modelo.meta && modelo.meta.generado) || '');
+    if (!(nacio > 0) || new Date().getTime() - nacio > COSTEO_MAX_HORAS_PARCHE_ * 3600 * 1000) {
+      cache.remove(COSTEO.cacheKey);
+      return null;
+    }
     var extra = aplicar(modelo);
     modelo.meta.parcheado = new Date().toISOString();
     return guardarModeloCacheado_(cache, modelo) ? (extra || []) : null;
@@ -729,7 +811,7 @@ function parchearCacheCosteo_(aplicar) {
  * lineales en la suma de las lineas. Por eso alcanza con escalar, sin releer cada
  * pestana. La reconstruccion de cada hora corrige cualquier redondeo.
  */
-function escalarRecetasPorInsumo_(modelo, pos, factor) {
+function escalarRecetasPorInsumo_(modelo, pos, factor, factores) {
   var tocadas = [];
   modelo.recetas.forEach(function (r) {
     var antes = 0, despues = 0, toca = false;
@@ -742,6 +824,11 @@ function escalarRecetasPorInsumo_(modelo, pos, factor) {
     if (!toca) return;
     if (antes > 0) {
       var k = despues / antes;
+      // cuanto se movio esta receta: si es un pre-elaborado, su precio del Banco se mueve igual
+      if (factores) {
+        var kf = r.area + '|' + normalizar_(r.nombre);
+        factores[kf] = (factores[kf] || 1) * k;
+      }
       ['subtotal', 'costo', 'costoUnit', 'cmv', 'sugerido'].forEach(function (c) {
         if (typeof r[c] === 'number') r[c] = r[c] * k;
       });

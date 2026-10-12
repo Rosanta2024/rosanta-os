@@ -22,20 +22,24 @@
 var PRUEBAS_CFG = {
   /** Numeros que deben dar. Actualizar cuando cambie el recetario, a proposito. */
   esperado: {
-    platosCocina:        35,
-    preelaboradosCocina: 50,   // 27-sep-2026: 45 -> 50 (Vinagreta N'duja, Aderezo Thai Mani y
+    platosCocina:        33,   // 11-oct-2026: 35 -> 33, se archivaron Charlotta y Panacotta Maracuya
+                               // (pestanas "ZZ ARCHIVO · ...", ya no son platos de carta).
+    preelaboradosCocina: 58,   // 11-oct-2026: 50 -> 58, cocina siguio creando pre-elaborados.
+                               // 27-sep-2026: 45 -> 50 (Vinagreta N'duja, Aderezo Thai Mani y
                                // tres fermentados). Desde ese dia la prueba solo FALLA si
                                // bajan (se perdio una pestana); si suben, AVISO para
                                // actualizar este numero. Cocina crea pre-elaborados seguido.
                                // 22-sep-2026: 41 -> 45. Los que Jeffry y Juanma fueron
                                // creando desde la intranet (Aceite Albahaca, los dos
                                // yogures, Mousse Receta). No se habia vuelto a medir.
-    conCmvCocina:        30,   // 27-sep-2026: 28 -> 30, cocina costeo dos platos mas. Desde ese dia
+    conCmvCocina:        33,   // 11-oct-2026: 30 -> 33, cocina costeo tres platos mas.
+                               // 27-sep-2026: 28 -> 30, cocina costeo dos platos mas. Desde ese dia
                                // solo FALLA si bajan; si suben, AVISO para actualizar.
                                // 22-sep-2026: 26 -> 28. Dos platos dejaron de costear en
                                // cero al entrar al Banco los pre-elaborados que les
                                // faltaban: MOUSSE DE CHOCOLATE es uno de ellos.
-    vaciasCocina:         5,   // 27-sep-2026: 7 -> 5 (quedan Arroz Meloso, Lomito de la Casa,
+    vaciasCocina:         0,   // 11-oct-2026: 5 -> 0. Las cinco ya tienen receta o se archivaron.
+                               // 27-sep-2026: 7 -> 5 (quedan Arroz Meloso, Lomito de la Casa,
                                // Estofado de Rabo, Charlotta y Panacotta Maracuya).
                                // 22-sep-2026: 9 -> 7, por lo mismo
     platosMapeadosPOS:   35
@@ -51,7 +55,10 @@ var PRUEBAS_CFG = {
     'tabla de jamones y quesos': 25.3,
     'gratin de papas'          : 22.2,
     'mix de fritas'            : 26.4,
-    'peras horneadas'          : 22.1
+    'peras horneadas'          : 16.6    // 11-oct-2026: 22.1 -> 16.6. Cocina cambio la receta (la pera ahora entra
+                                         // como el pre-elaborado Peras Citronela). 16.6 es lo que da la hoja:
+                                         // Q9.61 de costo sobre Q65 / 1.12. La pantalla mostraba 8.0% por el bug
+                                         // del precio del Banco que no se releia.
   },
   toleranciaCmv: 0.6,
 
@@ -681,6 +688,85 @@ function prRecetario_(res) {
            ' · se reparan con darDeAltaPreelaboradosSinBanco() desde el editor')
         : '',
       lista.length, 0);
+  });
+
+  /* EL PRECIO DE UN PRE-ELABORADO ES EL COSTO DE SU FICHA (11-oct-2026). Se mira en las
+     hojas, recien leidas: la fila del Banco tiene que valer lo mismo que el COSTO POR
+     PORCION de su ficha. Si no, la formula del Banco apunta a otra celda (una fila
+     insertada a mano, una ficha copiada de otra) y todas las recetas que lo usan cuestan
+     mal sin que nada lo marque. */
+  prCorrer_(g, 'Pre-elaborados: Banco = costo de su ficha', function () {
+    // Solo las filas del Banco con FORMULA: los pre-elaborados viejos tienen el precio
+    // escrito a mano por gramo y su ficha cuesta por porcion, asi que no son comparables.
+    var m = prModelo_(), malas = [], vistos = 0, porNombre = {};
+    m.recetas.forEach(function (r) { porNombre[r.area + '|' + normalizar_(r.nombre)] = r; });
+    COSTEO.areas.forEach(function (cfg) {
+      var ss = abrirPorClave_(cfg.clave), h = ss && ss.getSheetByName(EDIT.hojaBanco);
+      if (!h) return;
+      var n = h.getLastRow() - EDIT.filaPrimerDato + 1;
+      if (n < 1) return;
+      var prod = h.getRange(EDIT.filaPrimerDato, EDIT.col.producto, n, 1).getValues();
+      var rng = h.getRange(EDIT.filaPrimerDato, EDIT.col.precioReceta, n, 1);
+      var fx = rng.getFormulas(), val = rng.getValues();
+      for (var i = 0; i < n; i++) {
+        // solo formulas que LEEN una pestana: "=H167/30" es un precio calculado a mano
+        if (String(fx[i][0] || '').indexOf('!') === -1 || !String(prod[i][0] || '').trim()) continue;
+        var k = normalizar_(prod[i][0]), al = COSTEO.aliasSubReceta[k];
+        var r = porNombre[cfg.area + '|' + (al ? normalizar_(al) : k)];
+        if (!r) continue;
+        vistos++;
+        var v = val[i][0], cu = r.costoUnit;
+        if (typeof v !== 'number' || typeof cu !== 'number') {
+          malas.push(cfg.area + ' > ' + prod[i][0] + ': sin costo (' + v + '), revisar la ficha');
+        } else if (Math.abs(v - cu) > Math.max(0.0001, Math.abs(cu) * 0.005)) {
+          malas.push(cfg.area + ' > ' + prod[i][0] + ': Banco ' + v + ' / ficha ' + cu + ' (la formula no llega a su ficha: repararFormulasPreelaborados() en CrearFicha.gs)');
+        }
+      }
+    });
+    prAnotar_(g, 'Pre-elaborados: Banco = costo de su ficha',
+      malas.length === 0 ? 'OK' : 'FALLA',
+      malas.length ? malas.slice(0, 12).join(' · ') : vistos + ' pre-elaborados con precio por formula',
+      malas.length, 0);
+  });
+
+  /* LO QUE VE LA PANTALLA = LO QUE DICEN LAS HOJAS (11-oct-2026). La pantalla no lee las
+     hojas: lee el modelo cacheado, que cada edicion parchea en vez de reconstruir. El
+     11-oct Peras Horneadas mostraba Q4.65 de costo con Q9.61 en la hoja, porque el
+     parche releyo la ficha de Peras Citronela pero no su precio en el Banco. Esto
+     compara el cache contra una lectura completa: cualquier parche que se quede corto,
+     por la causa que sea, sale aca. */
+  prCorrer_(g, 'Modelo de la pantalla = hojas', function () {
+    var cacheado = leerModeloCacheado_(CacheService.getScriptCache());
+    if (!cacheado) {
+      prAnotar_(g, 'Modelo de la pantalla = hojas', 'SALTADA', 'No hay modelo en cache: la pantalla va a leer las hojas');
+      return;
+    }
+    var m = prModelo_(), malas = [];
+    var cerca = function (a, b) {
+      if (typeof a !== 'number' || typeof b !== 'number') return a === b;
+      return Math.abs(a - b) <= Math.max(0.01, Math.abs(b) * 0.01);
+    };
+    var recC = {}, insC = {};
+    cacheado.recetas.forEach(function (r) { recC[r.area + '|' + normalizar_(r.nombre)] = r; });
+    cacheado.insumos.forEach(function (i) {
+      var k = i.area + '|' + normalizar_(i.producto);
+      if (!insC[k]) insC[k] = i;
+    });
+    m.recetas.forEach(function (r) {
+      var c = recC[r.area + '|' + normalizar_(r.nombre)];
+      if (!c) { malas.push(r.area + ' > ' + r.nombre + ': no esta en el cache'); return; }
+      var campo = r.tipo === 'preelaborado' ? 'costoUnit' : 'costo';
+      if (!cerca(c[campo], r[campo])) malas.push(r.area + ' > ' + r.nombre + ': pantalla ' + c[campo] + ' / hoja ' + r[campo]);
+    });
+    m.insumos.forEach(function (i) {
+      var c = insC[i.area + '|' + normalizar_(i.producto)];
+      if (!c) { malas.push(i.area + ' > ' + i.producto + ': producto no esta en el cache'); return; }
+      if (!cerca(c.precio, i.precio)) malas.push(i.area + ' > ' + i.producto + ': precio pantalla ' + c.precio + ' / hoja ' + i.precio);
+    });
+    prAnotar_(g, 'Modelo de la pantalla = hojas',
+      malas.length === 0 ? 'OK' : 'FALLA',
+      malas.length ? malas.slice(0, 12).join(' · ') + ' · se corrige corriendo probarCosteo() en CosteoDatos.gs' : '',
+      malas.length, 0);
   });
 
   // Agregar un ingrediente arranca por bloqueFicha_. Si no ubica el bloque, la ficha

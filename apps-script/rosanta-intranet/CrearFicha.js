@@ -68,6 +68,18 @@ function validarNombreFicha_(ss, nombre) {
   return n;
 }
 
+/**
+ * La pestana de una ficha, lista para una formula, con su nombre EXACTO (11-oct-2026).
+ * El modelo recorta los nombres, pero en barra hay pestanas que terminan en espacio
+ * ("BOTRAN TAMARINDO ", "GIN INFUSIONADO ALBAHACA  "). Con el nombre recortado la
+ * formula apunta a una hoja que no existe, el IFERROR la deja en 0 y el pre-elaborado
+ * cuesta Q0 en toda receta que lo usa, sin que nada lo marque. Asi quedaron esos dos y
+ * el BITTER CARDAMOMO al darlos de alta.
+ */
+function refFicha_(ss, nombre) {
+  return nombreEnFormula_(fichaDe_(ss, String(nombre).trim()).getName());
+}
+
 /** Escapa el nombre para usarlo dentro de una formula. */
 function nombreEnFormula_(n) {
   return "'" + String(n).replace(/'/g, "''") + "'";
@@ -204,7 +216,7 @@ function altaPreEnBanco_(ss, pestana, celdaCosto, unidad) {
   h.getRange(fila, EDIT.col.categoria).setValue(FICHA_NUEVA.categoriaPre);
   h.getRange(fila, EDIT.col.producto).setValue(pestana);
   h.getRange(fila, EDIT.col.precioReceta).setFormula(
-    '=IFERROR(N(' + nombreEnFormula_(pestana) + '!' + celdaCosto + '),0)');
+    '=IFERROR(N(' + refFicha_(ss, pestana) + '!' + celdaCosto + '),0)');
   h.getRange(fila, EDIT.col.unidadReceta).setValue(u);
   h.getRange(fila, EDIT.col.conversion).setValue(
     'Costo por ' + u + ' de la ficha ' + pestana + ' (' + celdaCosto + '). Lo calcula la hoja: no se escribe a mano.');
@@ -677,9 +689,9 @@ function rellenarPreciosVaciosDePreelaborados(soloEstos) {
   var hechos = [];
 
   lista.forEach(function (p) {
-    var h = recetarioDe_(p.area).getSheetByName(EDIT.hojaBanco);
+    var ssA = recetarioDe_(p.area), h = ssA.getSheetByName(EDIT.hojaBanco);
     h.getRange(p.fila, EDIT.col.precioReceta).setFormula(
-      '=IFERROR(N(' + nombreEnFormula_(p.ficha) + '!' + p.celda + '),0)');
+      '=IFERROR(N(' + refFicha_(ssA, p.ficha) + '!' + p.celda + '),0)');
     if (!String(h.getRange(p.fila, EDIT.col.unidadReceta).getValue() || '').trim()) {
       h.getRange(p.fila, EDIT.col.unidadReceta).setValue(p.unidad);
     }
@@ -693,4 +705,66 @@ function rellenarPreciosVaciosDePreelaborados(soloEstos) {
   Logger.log('Llenadas: %s', hechos.length ? hechos.length : 'ninguna');
   hechos.forEach(function (x) { Logger.log('   %s', x); });
   return hechos;
+}
+
+
+/* ==========================================================================
+   FORMULAS DEL BANCO QUE NO LLEGAN A SU FICHA — 11-oct-2026
+
+   Una fila del Banco de un pre-elaborado tiene que ser =IFERROR(N('<pestana>'!<celda
+   de COSTO POR ...>),0). Si la pestana esta mal escrita (el espacio del final) o la
+   celda no es la del costo, el IFERROR devuelve 0 y nadie se entera. La bateria lo
+   marca en "Pre-elaborados: Banco = costo de su ficha". Esto las encuentra y, con
+   reparar = true, reescribe la formula. Solo toca filas cuya formula ya apuntaba a una
+   ficha de pre-elaborado: un precio escrito a mano o calculado de otra forma no se toca.
+   ========================================================================== */
+function formulasPreelaboradoRotas_() {
+  var m = construirModelo_(), fichaPre = {}, malas = [];
+  m.recetas.forEach(function (r) {
+    if (r.tipo === 'preelaborado') fichaPre[r.area + '|' + normalizar_(r.nombre)] = r.nombre;
+  });
+  COSTEO.areas.forEach(function (cfg) {
+    var ss = abrirPorClave_(cfg.clave), h = ss && ss.getSheetByName(EDIT.hojaBanco);
+    if (!h) return;
+    var rango = h.getDataRange(), f = rango.getValues(), fx = rango.getFormulas();
+    for (var i = EDIT.filaPrimerDato - 1; i < f.length; i++) {
+      var formula = String(fx[i][EDIT.col.precioReceta - 1] || '');
+      var ref = formula.match(/^=IFERROR\(N\('((?:[^']|'')+)'!([A-Z]+\d+)\),0\)$/i);
+      if (!ref) continue;
+      var producto = String(f[i][EDIT.col.producto - 1] || '').trim();
+      var k = normalizar_(producto), al = COSTEO.aliasSubReceta[k];
+      var nombreFicha = fichaPre[cfg.area + '|' + k] || (al && fichaPre[cfg.area + '|' + normalizar_(al)]);
+      if (!nombreFicha) continue;
+      var hojaFicha = fichaDe_(ss, nombreFicha), celda = celdaCostoPorUnidad_(hojaFicha);
+      if (!celda) continue;
+      var buena = '=IFERROR(N(' + nombreEnFormula_(hojaFicha.getName()) + '!' + celda.a1 + '),0)';
+      if (formula === buena) continue;
+      malas.push({ area: cfg.area, fila: i + 1, producto: producto, antes: formula, despues: buena });
+    }
+  });
+  return malas;
+}
+
+/** Herramienta de editor. Sin argumento solo LISTA; repararFormulasPreelaborados(true) las corrige. */
+function repararFormulasPreelaborados(reparar) {
+  soloDueno_();
+  var malas = formulasPreelaboradoRotas_();
+  if (!malas.length) { Logger.log('Todas las formulas de pre-elaborados llegan a su ficha.'); return 0; }
+  malas.forEach(function (x) {
+    Logger.log('%s fila %s · %s\n   hoy:   %s\n   queda: %s', x.area, x.fila, x.producto, x.antes, x.despues);
+    if (reparar === true) {
+      recetarioDe_(x.area).getSheetByName(EDIT.hojaBanco).getRange(x.fila, EDIT.col.precioReceta).setFormula(x.despues);
+      bitacora_(DUENO_CORREO_, 'dueno', 'repararFormulaPre', conArea_(EDIT.hojaBanco, x.area), x.producto,
+                'formula precio', x.antes, x.despues, 'la formula no llegaba a la ficha');
+    }
+  });
+  if (reparar === true) { olvidarModeloCosteo_(); Logger.log('Corregidas: %s', malas.length); }
+  else Logger.log('%s por corregir. Para corregirlas: correr repararFormulasPreelaboradosAhora()', malas.length);
+  return malas.length;
+}
+
+/** Lo mismo, corrigiendo. Existe para poder elegirla en el menu del editor, que no pasa argumentos. */
+function repararFormulasPreelaboradosAhora() {
+  soloDueno_();
+  return repararFormulasPreelaborados(true);
 }

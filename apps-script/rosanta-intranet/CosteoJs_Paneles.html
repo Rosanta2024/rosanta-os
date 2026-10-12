@@ -70,7 +70,7 @@ function fichaHTML(r){
         ${/* Lo archivado no se ofrece como ingrediente. Cubre el "ZZ ARCHIVO · " nuevo y
               el "ZZ DUP · " que ya llevaban los duplicados: las dos son filas muertas, y
               ofrecerlas es invitar a que alguien vuelva a costear con una de ellas. */''}
-        <datalist id="banco-prods">${I.filter(x => x.area === r.area && !/^zz\s/i.test(x.p)).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
+        <datalist id="banco-prods">${I.filter(x => x.area === r.area && !/^zz\s/i.test(x.p) && x.sub !== r.id).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Se agrega en el acto y se guarda en la hoja por detrás: podés cargar uno detrás de otro. <kbd>Enter</kbd> en la cantidad también agrega. <strong>La unidad la pone el Banco</strong>, no se escribe a mano: asi no se puede pedir un camote en unidades cuando el Banco lo cotiza por gramo.${puedeCrearInsumo ? ' Si el producto todavía no está en el Banco, escribilo igual: te ofrece crearlo sin salir de la receta.' : ''}</p>
       </div>` : ''}
       ${r.ing.length ? `<dl class="kv">

@@ -229,6 +229,16 @@ function aplicarSincronizacion_(area, cambios, quien) {
       continue;
     }
 
+    // CANDADO 3 (11-oct-2026): un pre-elaborado tiene el precio por formula a su ficha
+    // (regla del 22-sep). Las otras dos puertas de escritura ya lo rechazan; el sync no
+    // lo miraba y podia pisar la formula si un pre-elaborado viejo coincidia de nombre
+    // con una fila del inventario.
+    if (precioSaleDeLaFicha_(hBanco, x.fila, 4)) {
+      log.push([stamp, area, x.producto, x.precioViejo, x.precioNuevo, x.pct, x.proveedor,
+                quien || '', 'SALTADO: el precio sale de la ficha (pre-elaborado)', '', '', idCorrida]);
+      continue;
+    }
+
     hBanco.getRange(x.fila, 4).setValue(x.dNuevo);      // D
     hBanco.getRange(x.fila, 6).setValue(x.precioNuevo); // F
     if (x.proveedor) hBanco.getRange(x.fila, 9).setValue(x.proveedor); // I
@@ -245,7 +255,7 @@ function aplicarSincronizacion_(area, cambios, quien) {
   hLog.getRange(hLog.getLastRow() + 1, 1, log.length, SYNC.colsLog.length).setValues(log);
   bitacoraLote_(bita, stamp);
 
-  CacheService.getScriptCache().remove(COSTEO.cacheKey);
+  olvidarModeloCosteo_();
   var ok = 0;
   for (var j = 0; j < log.length; j++) if (log[j][8] === 'OK') ok++;
   return { escritos: ok, saltados: log.length - ok, corrida: idCorrida };
@@ -585,7 +595,7 @@ function revertirSync_(clave, quien, opts) {
   var hLog = hojaLogSync_(true);
   hLog.getRange(hLog.getLastRow() + 1, 1, log.length, SYNC.colsLog.length).setValues(log);
   bitacoraLote_(bita, stamp);
-  CacheService.getScriptCache().remove(COSTEO.cacheKey);
+  olvidarModeloCosteo_();
 
   var rev = 0;
   for (var k = 0; k < log.length; k++) if (String(log[k][8]).indexOf('REVERTIDO') === 0) rev++;

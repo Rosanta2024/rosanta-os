@@ -95,7 +95,27 @@
       res.avisos + ' avisos · ' + res.saltadas + ' saltadas · ' +
       (res.ms/1000).toFixed(1) + ' s</div></div>';
 
+    // LO QUE HAY QUE MIRAR, ARRIBA (11-oct-2026). Con 180 filas, las fallas quedaban
+    // perdidas entre los OK y habia que bajar toda la pagina para encontrarlas.
+    var atencion = [];
     res.grupos.forEach(function(g){
+      g.pruebas.forEach(function(p){
+        if (p.estado === 'FALLA' || p.estado === 'AVISO') atencion.push({g: g.nombre, p: p});
+      });
+    });
+    var grupos = res.grupos.slice();
+    if (atencion.length) {
+      grupos.unshift({nombre: 'Para mirar primero · ' + atencion.length,
+        pruebas: atencion.sort(function(a, b){ return (a.p.estado === 'FALLA' ? 0 : 1) - (b.p.estado === 'FALLA' ? 0 : 1); })
+          .map(function(x){
+            // corto: el detalle completo sigue abajo, en su grupo
+            var d = String(x.p.detalle || '');
+            return Object.assign({}, x.p, {nombre: x.g.replace(/^\d+\.\s*/, '') + ' › ' + x.p.nombre,
+                                           detalle: d.length > 110 ? d.slice(0, 110) + '…' : d});
+          })});
+    }
+
+    grupos.forEach(function(g){
       h += '<div class="grupo"><h3>' + esc(g.nombre) + '</h3>';
       g.pruebas.forEach(function(p){
         var cifra = '';

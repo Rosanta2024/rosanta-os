@@ -72,7 +72,11 @@ function batch(rid, guard){
   for(const ln of R[rid].ing){
     if(ln.i == null){ s += ln.t || 0; continue; }
     const base = I[ln.i].pr, ef = precioEf(ln.i, g);
+    /* La MISMA regla que el costo de la linea en fichaHTML: lo que se ve en una linea es
+       lo que suma. Antes, con el producto en Q0 en el Banco y la hoja trayendo el total,
+       la linea mostraba el total y aca sumaba cantidad x 0 (Peras Horneadas, 11-oct-2026). */
     if(base && ln.t != null) s += ln.t * (ef / base);
+    else if(ln.t != null) s += ln.t;
     else s += (ln.q || 0) * (ef || 0);
   }
   memo.set(key, s);

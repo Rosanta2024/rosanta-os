@@ -570,6 +570,7 @@ function agregarLinea_(ficha, producto, cantidad, unidad, quien, rol, area) {
   }
 
   var h = fichaDe_(ss, ficha);
+  exigirSinCiclo_(area, h.getName(), encontrado.nombre);
   var b = bloqueFicha_(h);
 
   // Primera fila libre DENTRO del rango que suma el total.
@@ -606,6 +607,46 @@ function agregarLinea_(ficha, producto, cantidad, unidad, quien, rol, area) {
             cantidad + ' ' + (unidad || encontrado.unidad), 'fila ' + destino);
   invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, fila:destino, producto:encontrado.nombre };
+}
+
+/**
+ * UNA RECETA NO PUEDE USARSE A SI MISMA (11-oct-2026). El Pure Espinaca quedo con una
+ * linea "Pure Espinaca 908 porcion" (se queria la espinaca cruda): su costo pasa a ser
+ * referencia circular, la ficha entera da #REF!, su precio del Banco tambien, y el
+ * Lomito de la Casa que lo usa se queda sin costo. Se rechaza el producto si ES esta
+ * ficha (por nombre o alias) o si su ficha, a cualquier profundidad, ya usa esta.
+ * La cadena se recorre en el modelo cacheado; sin cache se mira solo el caso directo.
+ */
+function exigirSinCiclo_(area, ficha, producto) {
+  var a = areaValida_(area), kFicha = normalizar_(ficha);
+  var subDe = function (nombre) {
+    var k = normalizar_(nombre), al = COSTEO.aliasSubReceta[k];
+    return al ? normalizar_(al) : k;
+  };
+  if (subDe(producto) === kFicha) {
+    throw new Error('"' + producto + '" es esta misma receta: no se puede usar como ingrediente de si misma. ' +
+                    'Si buscabas el producto crudo, elegilo del Banco con su nombre (por ejemplo, "espinaca").');
+  }
+  var modelo = leerModeloCacheado_(CacheService.getScriptCache());
+  if (!modelo) return;
+  var porNombre = {};
+  modelo.recetas.forEach(function (r) { if (r.area === a) porNombre[normalizar_(r.nombre)] = r; });
+  var pila = [subDe(producto)], vistos = {};
+  while (pila.length) {
+    var k = pila.pop();
+    if (vistos[k]) continue;
+    vistos[k] = true;
+    var r = porNombre[k];
+    if (!r) continue;
+    for (var i = 0; i < r.ingredientes.length; i++) {
+      var s = subDe(r.ingredientes[i].nombre);
+      if (s === kFicha) {
+        throw new Error('"' + producto + '" ya usa esta receta (a traves de "' + r.nombre + '"): ' +
+                        'agregarla haria una referencia circular y las dos fichas quedarian sin costo.');
+      }
+      pila.push(s);
+    }
+  }
 }
 
 /** Quita una linea. Deja el rastro en la bitacora. */
