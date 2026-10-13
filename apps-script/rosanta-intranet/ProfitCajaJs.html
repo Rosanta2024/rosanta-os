@@ -19,8 +19,11 @@
 /* Caja chica (13-oct-2026). Parcial crudo: PF_CAJA(host, AUTH). El token va PRIMERO.
    El efectivo de cada dia sale del cierre de PosFile; Maco cuenta cada noche y la pantalla
    muestra el descuadre y su causa probable. Pagar una factura de aca la saca de Por pagar. */
+/* OJO (13-oct-2026): google.script.run no devuelve las propiedades que valen null: llegan como
+   undefined. Por eso aca se compara con == null / != null y nunca con === null (un dia sin cierre
+   ni conteo se veia como "contado Q0.00"). */
 window.PF_CAJA = function (HOST, AUTH) {
-  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+  function esc(x) { return String(x == null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function q(n) { return (n < 0 ? '−' : '') + 'Q' + Math.abs(Number(n || 0)).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
@@ -68,14 +71,14 @@ window.PF_CAJA = function (HOST, AUTH) {
     var cta = function (t, n, sub, cls) { return '<span class="' + (cls || '') + '">' + t + (sub ? ' <span class="sub">' + esc(sub) + '</span>' : '') + '</span><span class="' + (cls || '') + '">' + n + '</span>'; };
     var h = '<details class="cj-dia' + (mal ? ' mal' : '') + '"' + (abre ? ' open' : '') + '><summary><h3>' + esc(diaTxt(x.fecha)) + '</h3><span>' +
       '<span class="pg-est ' + (CLASE[x.estado] || '') + '">' + esc(x.estado) + (mal ? ' ' + q(x.abierta) : '') + '</span>' +
-      (x.contado !== null ? ' <span class="pg-nota">contado ' + q(x.contado) + '</span>' : ' <span class="pg-nota">esperado ' + q(x.esperado) + '</span>') + '</span></summary>' +
+      (x.contado != null ? ' <span class="pg-nota">contado ' + q(x.contado) + '</span>' : ' <span class="pg-nota">esperado ' + q(x.esperado) + '</span>') + '</span></summary>' +
       '<div class="cj-cta">' + cta('Inicial', q(x.inicial)) +
-      cta('+ Efectivo del cierre', x.efectivo === null ? (x.fecha === D.hoy ? 'llega esta noche' : 'falta') : q(x.efectivo), x.fuente ? x.fuente + (x.cierre ? ' · venta ' + q(x.cierre.total) + ', tarjeta ' + q(x.cierre.tarjeta) : '') : '') +
+      cta('+ Efectivo del cierre', x.efectivo == null ? (x.fecha === D.hoy ? 'llega esta noche' : 'falta') : q(x.efectivo), x.fuente ? x.fuente + (x.cierre ? ' · venta ' + q(x.cierre.total) + ', tarjeta ' + q(x.cierre.tarjeta) : '') : '') +
       (x.correcciones ? cta('± Correcciones', q(x.correcciones)) : '') + (x.entradas ? cta('+ Entradas', q(x.entradas)) : '') +
       (x.pagos_facturas ? cta('− Facturas', q(x.pagos_facturas)) : '') + (x.pagos_mercado ? cta('− Mercado sin factura', q(x.pagos_mercado)) : '') +
       (x.pagos_otros ? cta('− Otros pagos', q(x.pagos_otros)) : '') +
       cta('= Esperado', q(x.esperado), '', 'tot') +
-      (x.contado !== null ? cta('Contado', q(x.contado)) + cta('Diferencia', q(x.diferencia), x.aceptado ? 'aceptado ' + q(x.aceptado) : '', 'tot') : '') + '</div>' +
+      (x.contado != null ? cta('Contado', q(x.contado)) + cta('Diferencia', q(x.diferencia), x.aceptado ? 'aceptado ' + q(x.aceptado) : '', 'tot') : '') + '</div>' +
       x.pistas.map(function (p) { return '<div class="cj-pista">' + esc(p) + '</div>'; }).join('');
     var lin = x.pagos.map(function (p) {
       return '<div><span>' + (p.mercado ? 'Mercado · ' + esc(p.proveedor) + (p.detalle ? ': ' + esc(p.detalle) : '') : 'Factura ' + esc(p.dte) + ' · ' + esc(p.proveedor)) + ' <span class="pg-nota">(' + esc(p.por) + ')</span></span>' +
@@ -87,8 +90,8 @@ window.PF_CAJA = function (HOST, AUTH) {
         '<span class="n">' + sig + q(m.q) + ' <button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button></span></div>';
     }));
     if (lin.length) h += '<div class="cj-movs">' + lin.join('') + '</div>';
-    h += '<div class="cj-acc"><button type="button" class="pg-b" data-f="conteo" data-dia="' + x.fecha + '">' + (x.contado !== null ? 'Contar de nuevo' : 'Contar') + '</button>' +
-      ((x.efectivo === null && x.fecha !== D.hoy) || x.fuente === 'cierre que no cuadra' ? '<button type="button" class="pg-b" data-f="efectivo" data-dia="' + x.fecha + '">Escribir efectivo del cierre</button>' : '') +
+    h += '<div class="cj-acc"><button type="button" class="pg-b" data-f="conteo" data-dia="' + x.fecha + '">' + (x.contado != null ? 'Contar de nuevo' : 'Contar') + '</button>' +
+      ((x.efectivo == null && x.fecha !== D.hoy) || x.fuente === 'cierre que no cuadra' ? '<button type="button" class="pg-b" data-f="efectivo" data-dia="' + x.fecha + '">Escribir efectivo del cierre</button>' : '') +
       (mal ? '<button type="button" class="pg-b" data-f="correccion" data-dia="' + x.fecha + '" data-q="' + x.abierta + '">Corrección</button>' : '') +
       (mal && D.rol === 'dueno' ? '<button type="button" class="pg-b" data-f="aceptar" data-dia="' + x.fecha + '" data-q="' + x.abierta + '">Aceptar diferencia</button>' : '') + '</div>';
     return h + '</details>';

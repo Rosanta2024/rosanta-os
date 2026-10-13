@@ -71,7 +71,7 @@
    'admin:equipo' | 'admin:banco' | 'admin:balance' | 'admin:iva' son las pestañas del grupo
    Administración de la barra lateral: una sola pestaña cada una, sin fila de pestañas. */
 window.PF_PAGOS = function (HOST, AUTH, MODO) {
-  var ADMIN = /^admin:/.test(MODO || '') ? MODO.slice(6) : null, AGR = null;
+  var ADMIN = /^admin:/.test(MODO || '') ? MODO.slice(6) : null, AGR = null, IVAAGR = null;
   function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -121,7 +121,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var T = { equipo: ['Por devolver', 'Lo que cada quien pagó de su bolsa y Rosanta le devuelve. Es de todos: cada quien agrega lo suyo y todos ven lo de todos.'],
               banco: ['Banco sin casar', 'Pagos del banco que no se casaron solos con una factura.'],
               balance: ['Balance del año', 'Lo facturado contra lo pagado, por proveedor.'],
-              iva: ['Para reducir IVA', 'Facturas a nombre de CORSAGA que solo sirven para el crédito fiscal.'] }[ADMIN] || ['Administración', ''];
+              iva: ['Para reducir IVA', 'Facturas a nombre de CORSAGA que solo sirven para el crédito fiscal. Es de todos: cada quien marca las suyas y todos ven quién marcó cada una.'] }[ADMIN] || ['Administración', ''];
     HOST.innerHTML = '<div class="pg"><h2>' + T[0] + '</h2><p class="pg-intro">' + T[1] + '</p>' +
       '<div class="pg-tabs"><span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo([]) + '</div><div id="pg-sel"></div>' +
@@ -256,15 +256,19 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       // Facturas para reducir IVA (13-oct-2026): FACTURA_AJENA en el FEL. Fuera de Pagos y del DRE.
       var L = D.para_iva || [], sumI = function (k) { return L.reduce(function (a, x) { return a + x[k]; }, 0); };
       return '<p class="pg-nota">Facturas a nombre de CORSAGA que no son de la operación: solo sirven para el crédito fiscal del IVA. ' +
-        'No se pagan desde acá, no entran al DRE ni a ningún gasto de los reportes. Se marcan desde <b>Por pagar</b> → Pagar → <b>Es para reducir IVA</b>. ' +
-        'En el maestro están en la pestaña <b>' + esc(D.hoja_iva) + '</b>.</p>' +
+        'No se pagan desde acá, no entran al DRE ni a ningún gasto de los reportes. Cada quien marca las suyas con el botón <b>+ Marcar factura para reducir IVA</b>. ' +
+        (D.rol === 'dueno' ? 'En el maestro están en la pestaña <b>' + esc(D.hoja_iva) + '</b>.' : '') + '</p>' +
         (D.aviso_iva ? '<p class="pg-err">' + esc(D.aviso_iva) + '</p>' : '') +
+        // Cada quien marca las suyas desde aca (Juanma, 13-oct-2026): las facturas por pagar de su area, sin pagos
+        (IVAAGR ? panelIva() : '<div class="pg-tabs" style="margin:0.6rem 0"><button type="button" class="pg-b pri" data-ivaagr="1">+ Marcar factura para reducir IVA</button></div>') +
         '<div class="pg-res" style="margin-top:0.8rem"><div><b>' + L.length + '</b><span>facturas este año</span></div><div><b>' + q(sumI('total')) + '</b><span>total</span></div>' +
         '<div><b>' + q(sumI('iva')) + '</b><span>IVA (crédito fiscal)</span></div></div>' +
-        (L.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Total</th><th class="n">IVA</th><th></th></tr>' +
+        (L.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Total</th><th class="n">IVA</th><th>Marcó</th><th></th></tr>' +
           L.map(function (x) {
+            // cada quien identifica las suyas: la devuelve quien la marcó, o el dueño
+            var puede = D.rol === 'dueno' || (x.marco && x.marco === D.mi_nombre);
             return '<tr><td>' + esc(ddmm(x.fecha)) + '</td><td>' + esc(x.proveedor) + '</td><td>' + esc(x.dte) + '</td><td class="n">' + q(x.total) + '</td><td class="n">' + q(x.iva) + '</td>' +
-              '<td><button type="button" class="pg-x" data-ivadev="' + esc(x.llave) + '">devolver</button></td></tr>';
+              '<td>' + esc(x.marco || '—') + '</td><td>' + (puede ? '<button type="button" class="pg-x" data-ivadev="' + esc(x.llave) + '">devolver</button>' : '') + '</td></tr>';
           }).join('') + '</table></div>' : '<div class="pg-vacio">Todavía no hay facturas para reducir IVA este año.</div>');
     }
     if (TAB === 'banco') {
@@ -285,7 +289,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
       '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>. Tocá cómo se pagó:</div>' +
       '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
-      (uno && D.rol === 'dueno' && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
+      (uno && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
       '<details><summary class="pg-nota" style="cursor:pointer">Más opciones</summary><div class="pg-mas">' +
       '<label>Fecha pagado <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       (uno ? '<label>Cantidad pagada <input type="number" step="0.01" min="0" data-f="monto" placeholder="' + tot.toFixed(2) + '"></label>' : '') +
@@ -314,6 +318,21 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       '<button type="button" class="pg-b pri" data-agrmerc="' + esc(nombre) + '">Agregar compra</button> <button type="button" class="pg-b" data-agrcerrar="1">Cancelar</button></div><div class="pg-err" data-err></div></div>';
     return h;
   }
+  /* Para reducir IVA: elegir la factura (de las por pagar de su area, sin pagos anotados) y marcarla. */
+  function panelIva() {
+    var L = D.facturas.filter(function (f) {
+      return f.saldo > 0.01 && !f.por_correo && !f.pagos.some(function (p) { return !/antes/i.test(p.estatus); });
+    });
+    var provs = []; L.forEach(function (f) { if (provs.indexOf(f.proveedor) === -1) provs.push(f.proveedor); });
+    provs.sort();
+    var h = '<div class="pg-panel" data-panel="ivaagr"><b>¿Qué factura es para reducir IVA?</b><div class="pg-mas">' +
+      '<label>Proveedor <select data-f="iprov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === IVAAGR.prov ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
+    if (IVAAGR.prov) h += '<div style="width:100%">' + L.filter(function (f) { return f.proveedor === IVAAGR.prov; }).map(function (f) {
+        return '<label style="display:block;padding:0.2rem 0"><input type="radio" name="ivaf" data-ivallave="' + esc(f.llave) + '"> DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.total) + '</label>';
+      }).join('') + '</div><label>Nota <input type="text" data-f="inota" placeholder="ej. compra personal a nombre de CORSAGA"></label>';
+    if (!provs.length) h += '<span class="pg-nota">No hay facturas por pagar sin pagos en tu área.</span>';
+    return h + '<button type="button" class="pg-b pri" data-ivamarcar="1">Marcar para reducir IVA</button> <button type="button" class="pg-b" data-ivacerrar="1">Cancelar</button></div><div class="pg-err" data-err></div></div>';
+  }
   function repintarCuerpo() { var c = HOST.querySelector('#pg-cuerpo'); if (c) c.innerHTML = cuerpo([]); }
 
   function pintarSeleccion() {
@@ -335,7 +354,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var err = panel && panel.querySelector('[data-err]');
     if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     if (err) err.textContent = 'Guardando…';
-    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D = d; ABIERTA = null; SEL = {}; AGR = null; pintar(); })
+    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D = d; ABIERTA = null; SEL = {}; AGR = null; IVAAGR = null; pintar(); })
       .withFailureHandler(function (e) {
         OCUPADO = false;
         if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
@@ -385,6 +404,16 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       return;
     }
     if (b.dataset.agrcerrar) { AGR = null; repintarCuerpo(); return; }
+    if (b.dataset.ivaagr) { IVAAGR = {}; repintarCuerpo(); return; }
+    if (b.dataset.ivacerrar) { IVAAGR = null; repintarCuerpo(); return; }
+    if (b.dataset.ivamarcar && panel) {
+      var rI = panel.querySelector('[data-ivallave]:checked');
+      if (!rI) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
+      var kI = rI.dataset.ivallave, nI = valor(panel, 'inota');
+      if (!confirm('¿Esta factura es ajena a la operación y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE. Se puede devolver desde esta misma lista.')) return;
+      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kI, nI); }, panel);
+      return;
+    }
     if (b.dataset.agrfact && panel) {
       var aks = []; panel.querySelectorAll('[data-allave]').forEach(function (c) { if (c.checked) aks.push(c.dataset.allave); });
       if (!aks.length) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
@@ -456,6 +485,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   HOST.addEventListener('change', function (ev) {
     var c = ev.target;
     if (c.dataset && c.dataset.f === 'aprov' && AGR) { AGR.prov = c.value; repintarCuerpo(); return; }
+    if (c.dataset && c.dataset.f === 'iprov' && IVAAGR) { IVAAGR.prov = c.value; repintarCuerpo(); return; }
     if (!c.dataset || !c.dataset.sel) return;
     SEL[c.dataset.sel] = c.checked; pintarSeleccion();
   });

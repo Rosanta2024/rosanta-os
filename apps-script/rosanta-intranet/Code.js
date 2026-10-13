@@ -87,8 +87,9 @@ function doGet(e) {
   // de CosteoVista.html.
   var esEquipoCost = rolCost === 'chef' || rolCost === 'sala';
   if (vistaCost === 'caja' && !(rolCost === 'dueno' || (rolCost === 'sala' && puedePagos))) vistaCost = '';
-  if (vistaCost === 'adm-equipo' && !(puedePagos && (rolCost === 'dueno' || esEquipoCost))) vistaCost = '';
-  if (['adm-banco', 'adm-balance', 'adm-iva', 'higiene'].indexOf(vistaCost) !== -1 && rolCost !== 'dueno') vistaCost = '';
+  // Por devolver y Para reducir IVA son comunes (13-oct-2026): cada quien agrega lo suyo
+  if ((vistaCost === 'adm-equipo' || vistaCost === 'adm-iva') && !(puedePagos && (rolCost === 'dueno' || esEquipoCost))) vistaCost = '';
+  if (['adm-banco', 'adm-balance', 'higiene'].indexOf(vistaCost) !== -1 && rolCost !== 'dueno') vistaCost = '';
   if (esEquipoCost && ['inicio', 'insumos', 'proveedores', 'menu'].indexOf(vistaCost) !== -1) vistaCost = '';
   if (['hoy', 'cocina', 'barrasala', 'pagos', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
        'recetas', 'insumos', 'proveedores', 'higiene', 'guia', 'inicio'].indexOf(vistaCost) === -1) {

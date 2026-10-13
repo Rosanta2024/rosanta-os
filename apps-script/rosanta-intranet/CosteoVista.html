@@ -146,10 +146,10 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
       <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
       <button role="tab" data-view="menu" aria-selected="false">Menú</button><? } ?>
       <? if (veDevolver || esDueno) { ?><div class="pf-grupo">Administración</div><? } ?>
-      <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button><? } ?>
+      <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button>
+      <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button><? } ?>
       <? if (esDueno) { ?><button role="tab" data-view="adm-banco" aria-selected="false">Banco sin casar</button>
       <button role="tab" data-view="adm-balance" aria-selected="false">Balance del año</button>
-      <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button>
       <button role="tab" data-view="higiene" aria-selected="false">Higiene</button><? } ?>
     </nav>
   </aside>

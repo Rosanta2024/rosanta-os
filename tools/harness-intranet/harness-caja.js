@@ -28,6 +28,7 @@ function Sheet(name, R) {
     setValues: v => { v.forEach((row, i) => { R[r - 1 + i] = R[r - 1 + i] || []; row.forEach((x, j) => { R[r - 1 + i][c - 1 + j] = x; }); }); return g; },
     setValue: x => { R[r - 1] = R[r - 1] || []; R[r - 1][c - 1] = x; return g; },
     clearContent: () => { for (let i = 0; i < (nr || 1); i++) if (R[r - 1 + i]) for (let j = 0; j < (nc || 1); j++) R[r - 1 + i][c - 1 + j] = ''; while (R.length && R[R.length - 1].every(x => x === '')) R.pop(); return g; },
+    getFormula: () => '', setFormula: x => { R[r - 1] = R[r - 1] || []; R[r - 1][c - 1] = 'FORMULA'; return g; },
     setFontWeight: () => g, setNumberFormat: () => g }; return g; };
   const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
     getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
@@ -51,7 +52,7 @@ vm.createContext(ctx);
 ['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'ProfitHoy.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
-vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
+vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; _pagHojaIva_ = function () {}; finCacheClave_ = function () { return 'x'; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
 let ok = 0, mal = 0;
 const t = (n, c, info) => { if (c) ok++; else mal++; console.log((c ? 'OK   ' : 'FALLA') + ' ' + n + (info !== undefined ? '  → ' + info : '')); };
 const tira = fn => { try { fn(); return ''; } catch (e) { return e.message; } };
@@ -139,6 +140,21 @@ if (fCoc) {
 }
 G = ctx.agregarCompraDeSuBolsa('tokchef', '', hoy, 'Mercado', 'limones y menta', 45);
 t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 'Jeffry').pendiente >= 45);
+// Para reducir IVA en comun (13-oct-2026)
+{
+  const P0 = ctx.getPagosProveedores('tokchef');
+  const fc = P0.facturas.find(f => f.saldo > 0.01 && f.area === 'COCINA' && !f.pagos.length && !f.por_correo);
+  const fb = ctx.getPagosProveedores('tokmaco').facturas.find(f => f.saldo > 0.01 && f.area === 'BARRA' && !f.pagos.length && !f.por_correo);
+  t('Jeffry no marca una factura de barra', fb && /BARRA/.test(tira(() => ctx.marcarFacturaParaIva('tokchef', fb.llave, ''))));
+  if (fc) {
+    const P1 = ctx.marcarFacturaParaIva('tokchef', fc.llave, 'gasto de la casa');
+    const x = P1.para_iva.find(a => a.llave === fc.llave);
+    t('Jeffry marca una de cocina y la lista dice que la marcó él', x && x.marco === 'Jeffry', fc.proveedor + ' ' + fc.dte);
+    t('Maco ve la lista y no puede devolver la de Jeffry', ctx.getPagosProveedores('tokmaco').para_iva.some(a => a.llave === fc.llave) && /marcó Jeffry/.test(tira(() => ctx.devolverFacturaParaIva('tokmaco', fc.llave))));
+    const P2 = ctx.devolverFacturaParaIva('tokchef', fc.llave);
+    t('Jeffry la devuelve', !P2.para_iva.some(a => a.llave === fc.llave));
+  }
+}
 // Hoy (13-oct-2026): la lista de cada uno
 vm.runInContext("invEstadoCierre_ = function () { return { esperado: '2026-09', dia_limite: 5, areas: { COCINA: { estado_esperado: 'ABIERTO', zona: 'rojo', dias_atraso: 8 }, BARRA: { estado_esperado: 'CERRADO', zona: 'verde' } } }; };", ctx);
 const H = tok => ctx.getHoyProfit(tok);

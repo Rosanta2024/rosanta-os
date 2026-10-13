@@ -487,12 +487,17 @@ function getPagosProveedores(auth) {
     mi_equipo: (PAG_EQUIPO_.filter(function (e) { return e.rol === Q.rol; })[0] || {}).nombre || '',
     aviso_correo: fec && fec.errores && fec.errores.length ? 'No pude leer todos los avisos del FEL en el correo: ' + fec.errores.slice(0, 2).join(' · ') : ''
   };
+  // Para reducir IVA es comun (Juanma, 13-oct-2026): Maco y Jeffry marcan las suyas y todos ven
+  // la lista con quien marco cada una (la ultima marca de la bitacora de esa factura).
+  var anio = String(new Date().getFullYear()), marco = {};
+  pagMovimientos_().forEach(function (m) { if (m.estatus === PAG_IVA_MARCA_) marco[m.nit + '|' + m.dte] = m.por; });
+  out.para_iva = E.ajenas.filter(function (a) { return a.fecha.slice(0, 4) === anio; })
+    .map(function (a) { a.marco = marco[a.llave] || ''; return a; })
+    .sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
+  out.hoja_iva = PAG_HOJA_IVA_;
+  out.mi_nombre = Q.nombre;
   if (Q.rol === 'dueno') {
     out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos;
-    var anio = String(new Date().getFullYear());
-    out.para_iva = E.ajenas.filter(function (a) { return a.fecha.slice(0, 4) === anio; })
-      .sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
-    out.hoja_iva = PAG_HOJA_IVA_;
     // La pestaña del maestro existe desde que el dueño abre Pagos, aunque no marque nada
     try { _pagHojaIva_(SpreadsheetApp.openById(FIN_MAESTRO_ID)); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
   }
@@ -669,9 +674,10 @@ function _pagHojaIva_(ss) {
  */
 function marcarFacturaParaIva(auth, llave, nota) {
   var Q = pagQuien_(auth);
-  if (Q.rol !== 'dueno') throw new Error('Marcar una factura para reducir IVA lo hace el dueño.');
   var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
   if (!f) throw new Error('No encontre esa factura en Pagos.');
+  // Maco y Jeffry marcan las de su area (13-oct-2026); el dueño, cualquiera
+  if (Q.rol !== 'dueno' && Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + ': la marca quien lleva esa área o el dueño.');
   if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y todavia no esta en el FEL del maestro. Se puede marcar despues de la carga del lunes.');
   var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
   if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
@@ -698,9 +704,13 @@ function marcarFacturaParaIva(auth, llave, nota) {
  */
 function devolverFacturaParaIva(auth, llave) {
   var Q = pagQuien_(auth);
-  if (Q.rol !== 'dueno') throw new Error('Devolver una factura de reducir IVA lo hace el dueño.');
   var a = pagEstado_().ajenas.filter(function (x) { return x.llave === llave; })[0];
   if (!a) throw new Error('Esa factura ya no esta marcada para reducir IVA.');
+  // la devuelve quien la marco, o el dueño
+  if (Q.rol !== 'dueno') {
+    var marco = ''; pagMovimientos_().forEach(function (m) { if (m.estatus === PAG_IVA_MARCA_ && m.nit + '|' + m.dte === llave) marco = m.por; });
+    if (marco !== Q.nombre) throw new Error('Esa factura la marcó ' + (marco || 'el dueño') + ': la devuelve esa persona o el dueño.');
+  }
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
