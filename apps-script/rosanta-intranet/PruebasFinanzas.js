@@ -1177,7 +1177,10 @@ function prFinanzas_(res) {
       ['DTE en la glosa y la otra marcada Banco suman exacto: casan las dos', _pagCasarBanco_([F('a', '1', '111111', 100, 500, [], 104), F('b', '1', '222222', 101, 300, [], 104)], [{ llave: 'p', dia: 105, q: 800, glosa: 'S35 Cofradia 111111' }]), function (r) { return r.casados.a === 'p' && r.casados.b === 'p'; }],
       ['dos NIT marcados con el mismo monto: dudoso', _pagCasarBanco_([F('a', '1', '1', 100, 500, [], 104), F('c', '2', '3', 100, 500, [], 104)], [{ llave: 'p', dia: 105, q: 500, glosa: 'X' }]), function (r) { return !r.casados.a && !r.casados.c && r.dudosos.length === 1; }],
       ['monto exacto sin marca ni nombre en la glosa: suelto', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['xelac'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'OTRO GT' }]), function (r) { return !r.casados.a && r.sueltos.length === 1; }],
-      ['nombre en la glosa y monto exacto: casa', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['xelac'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'S38 XELAC VARIOS' }]), function (r) { return r.casados.a === 'p'; }]
+      ['nombre en la glosa y monto exacto: casa', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['xelac'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'S38 XELAC VARIOS' }]), function (r) { return r.casados.a === 'p'; }],
+      // 13-oct-2026: Banco Industrial pega el nombre ("LATORREANTIGUA2DBGT"); con 5 letras o mas se reconoce
+      ['nombre pegado en la glosa y monto exacto: casa', _pagCasarBanco_([F('a', '1', '1', 100, 266.4, ['supermercados', 'torre'], null)], [{ llave: 'p', dia: 105, q: 266.4, glosa: 'LATORREANTIGUA2DBGT' }]), function (r) { return r.casados.a === 'p'; }],
+      ['nombre pegado de 4 letras: no alcanza', _pagCasarBanco_([F('a', '1', '1', 100, 500, ['mesa'], null)], [{ llave: 'p', dia: 105, q: 500, glosa: 'COMESAGT' }]), function (r) { return !r.casados.a; }]
     ];
     var malos = casos.filter(function (c) { return !c[2](c[1]); }).map(function (c) { return c[0]; });
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos de juguete', malos.length, 0);

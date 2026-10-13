@@ -43,11 +43,15 @@ function getHoyProfit(auth) {
   // 2. Pagos: lo que hay que pagar hoy y lo que sigue pendiente en sus areas
   if (puedePagos) intentar('Pagos', function () {
     var misAreas = esDueno ? ['COCINA', 'BARRA', 'ADMIN'] : areas;
-    var abiertas = pagEstado_().facturas.filter(function (f) { return f.saldo > 0.01 && misAreas.indexOf(f.area) !== -1; });
+    var E = pagEstado_();
+    var abiertas = E.facturas.filter(function (f) { return f.saldo > 0.01 && misAreas.indexOf(f.area) !== -1; });
     var hoyToca = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoyIso; });
     var suma = function (l) { return l.reduce(function (a, f) { return a + f.saldo; }, 0); };
     if (hoyToca.length) add({ urgente: true, texto: hoyToca.length + (hoyToca.length === 1 ? ' factura para pagar hoy' : ' facturas para pagar hoy') + ' (' + Q(suma(hoyToca)) + ')',
       detalle: hoyToca.slice(0, 3).map(function (f) { return f.proveedor; }).join(', ') + (hoyToca.length > 3 ? '…' : ''), vista: 'pagos', boton: 'Pagar' });
+    // el dueño: cargos del banco o de la tarjeta que parecen el pago de una factura (13-oct-2026)
+    if (esDueno && E.posibles && E.posibles.length) add({ urgente: false, texto: E.posibles.length + (E.posibles.length === 1 ? ' posible pago del banco' : ' posibles pagos del banco') + ' para confirmar',
+      detalle: 'Cargos con el monto exacto de una factura pendiente. Si es el pago, la factura sale de Por pagar.', vista: 'pagos', boton: 'Revisar' });
     var resto = abiertas.filter(function (f) { return hoyToca.indexOf(f) === -1; });
     if (resto.length) {
       var vieja = resto.reduce(function (a, f) { return !a || f.fecha < a.fecha ? f : a; }, null);

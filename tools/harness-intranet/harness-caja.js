@@ -155,6 +155,22 @@ t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 
     t('Jeffry la devuelve', !P2.para_iva.some(a => a.llave === fc.llave));
   }
 }
+// Pagos contra banco y tarjetas (13-oct-2026)
+{
+  t('Nombre pegado en la glosa (5+ letras)', ctx._pagNombreEnGlosa_(['supermercados', 'torre'], 'LATORREANTIGUA2DBGT') && !ctx._pagNombreEnGlosa_(['mesa'], 'COMESAGT'));
+  const B = ctx.pagPagosBanco_(ctx.SpreadsheetApp.openById(ctx.FIN_MAESTRO_ID));
+  t('Pagos lee las tarjetas', B.some(p => p.tarjeta), B.filter(p => p.tarjeta).length + ' cargos de tarjeta');
+  const E0 = ctx.pagEstado_();
+  t('Hay posibles pagos y ninguno es un traspaso propio', Array.isArray(E0.posibles) && !E0.posibles.some(x => /CORSAGA|PAGO TARJETA/i.test(x.pago.glosa)), E0.posibles.length + ' posibles');
+  if (E0.posibles.length) {
+    const P = E0.posibles[0], o = P.opciones[0];
+    t('Maco no confirma pagos del banco', /dueño/.test(tira(() => ctx.confirmarPosiblePago('tokmaco', P.pago.llave, o.llaves))));
+    const G2 = ctx.confirmarPosiblePago('tok', P.pago.llave, o.llaves);
+    const E1 = ctx.pagEstado_();
+    t('Confirmado: la factura queda pagada y el pago ya no se ofrece', o.llaves.every(k => E1.facturas.find(f => f.llave === k).saldo <= 0.01) && !E1.posibles.some(x => x.pago.llave === P.pago.llave),
+      o.facturas.map(f => f.proveedor + ' ' + f.dte).join('+') + ' ← ' + P.pago.banco + ' ' + P.pago.glosa);
+  }
+}
 // Hoy (13-oct-2026): la lista de cada uno
 vm.runInContext("invEstadoCierre_ = function () { return { esperado: '2026-09', dia_limite: 5, areas: { COCINA: { estado_esperado: 'ABIERTO', zona: 'rojo', dias_atraso: 8 }, BARRA: { estado_esperado: 'CERRADO', zona: 'verde' } } }; };", ctx);
 const H = tok => ctx.getHoyProfit(tok);

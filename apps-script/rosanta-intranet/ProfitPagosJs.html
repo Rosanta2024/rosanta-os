@@ -106,7 +106,9 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
-      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura'].map(function (t) {
+      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura']
+        // Posibles pagos (13-oct-2026): cargos del banco o de la tarjeta con el monto de una factura. Solo el dueño.
+        .concat(D.posibles && D.posibles.length ? ['posibles:Posibles pagos (' + D.posibles.length + ')'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
@@ -169,7 +171,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         pag.map(function (f) {
           return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
-              '<td class="n">' + q(p.q) + '</td><td>' + esc(p.estatus) + (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
+              '<td class="n">' + q(p.q) + '</td><td>' + esc(p.estatus) + (/confirmad/i.test(p.estatus) && p.por ? ' · <b>' + esc(p.por) + '</b>' : '') + (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
               '<td>' + (p.id ? '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') + '</td></tr>';
           }).join('');
         }).join('') + '</table></div>';
@@ -250,6 +252,21 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
                   '<td>' + (m.id && (!dev || D.rol === 'dueno') ? '<button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button>' : '') + '</td></tr>';
               }).join('') + '</table></div>' : '<div class="pg-vacio">Sin pagos de su bolsa anotados.</div>') +
             '</section>';
+        }).join('');
+    }
+    if (TAB === 'posibles') {
+      var PS = D.posibles || [];
+      if (!PS.length) return '<div class="pg-vacio">No hay pagos del banco ni de la tarjeta por confirmar. ✓</div>';
+      return '<p class="pg-nota">Cargos del banco o de las tarjetas con el monto exacto de una factura pendiente (o de varias del mismo proveedor) que el cruce automático no se atrevió a dar por pagadas. ' +
+        'Si es el pago, tocá <b>Sí, es este pago</b>: la factura sale de Por pagar. Si no, dejalo: no pasa nada.</p>' +
+        PS.map(function (x, i) {
+          return '<section class="pg-prov" data-panel="pos-' + i + '"><header><div><span class="pg-area">' + esc(x.pago.banco) + ' · ' + esc(ddmm(x.pago.fecha)) + '</span><h3>' + esc(x.pago.glosa) + '</h3></div>' +
+            '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
+            x.opciones.map(function (o, j) {
+              return '<div class="pg-mas" style="justify-content:space-between;border-top:1px solid rgba(26,26,26,0.08);padding-top:0.4rem"><span>' +
+                o.facturas.map(function (f) { return esc(f.proveedor) + ' · DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo); }).join('<br>') +
+                '</span><button type="button" class="pg-b pri" data-confpos="' + i + ':' + j + '">Sí, es este pago</button></div>';
+            }).join('') + '<div class="pg-err" data-err></div></section>';
         }).join('');
     }
     if (TAB === 'iva') {
@@ -404,6 +421,14 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       return;
     }
     if (b.dataset.agrcerrar) { AGR = null; repintarCuerpo(); return; }
+    if (b.dataset.confpos) {
+      var ij = b.dataset.confpos.split(':'), PX = D.posibles[+ij[0]], OX = PX && PX.opciones[+ij[1]];
+      if (!OX) return;
+      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es el pago de ' + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
+      var pl = PX.pago.llave, ks2 = OX.llaves;
+      llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel);
+      return;
+    }
     if (b.dataset.ivaagr) { IVAAGR = {}; repintarCuerpo(); return; }
     if (b.dataset.ivacerrar) { IVAAGR = null; repintarCuerpo(); return; }
     if (b.dataset.ivamarcar && panel) {

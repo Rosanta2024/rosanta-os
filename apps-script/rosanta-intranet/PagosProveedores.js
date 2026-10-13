@@ -55,6 +55,10 @@ var PAG_ANTERIOR_ = 'Pendiente anterior';
 var PAG_AJENA_ = 'FACTURA_AJENA';
 var PAG_HOJA_IVA_ = '01c_FEL_Para_IVA';
 var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
+// Posibles pagos (13-oct-2026): un cargo del banco o de una tarjeta con el monto exacto de una
+// factura (o de varias del mismo proveedor) que el cruce automatico no se atrevio a casar. El
+// dueño lo confirma con un toque; la fila guarda la llave del pago para no ofrecerlo de nuevo.
+var PAG_CONF_BANCO_ = 'Confirmado con banco';
 // Lo que José (Maco) y Jeffry pagan de su bolsa a proveedores y Rosanta les devuelve
 // (Juanma, 13-oct-2026). Suma "Pagó X" (facturas y mercado) menos "Devuelto a X".
 // La devolucion la anota el dueño; va con AREA ADMIN, asi solo el dueño la anula.
@@ -233,7 +237,7 @@ function _pagCatPorNit_(filas, iNit, iCat, iPers) {
 /** Los debitos del BI y del BAC desde unos dias antes de PAG_DESDE_, sin retiros de cajero. */
 function pagPagosBanco_(ss) {
   var desde = pagNumDia_(pagDia_(PAG_DESDE_)) - 10, out = [];
-  [['03_Banco_Industrial', 'BI', 'Débito'], ['04_Banco_BAC', 'BAC', 'Débito']].forEach(function (b) {
+  [['03_Banco_Industrial', 'Banco BI', 'Débito'], ['04_Banco_BAC', 'Banco BAC', 'Débito']].forEach(function (b) {
     var sh = ss.getSheetByName(b[0]);
     if (!sh) return;
     var v = sh.getDataRange().getValues(), hi = -1;
@@ -250,11 +254,44 @@ function pagPagosBanco_(ss) {
       if (String(v[r][iP] || '').trim() === 'Sí' || cat === 'PERSONAL' || /^NOMINA|^IGSS|^DEVOLUCION|^PROPINA/.test(cat)) continue;
       var desc = String(v[r][iD] || '').trim();
       if (/^(ATM|RETIRO|A-|F-)/i.test(desc)) continue;   // retiros de cajero: van por Compras en efectivo
-      out.push({ llave: b[0] + '|' + r, banco: b[1], fecha: pagIso_(d), dia: pagNumDia_(d), q: q, glosa: desc, categoria: cat });
+      out.push({ llave: b[0] + '|' + r, banco: b[1] === 'Banco BI' ? _pagMedioBI_(desc) : b[1], fecha: pagIso_(d), dia: pagNumDia_(d), q: q, glosa: desc, categoria: cat });
+    }
+  });
+  // Las dos tarjetas de credito (13-oct-2026). Antes Pagos no las leia: lo pagado con tarjeta
+  // quedaba Pendiente si nadie lo marcaba "Tarjeta" (Delicadezas Españolas, HG Libreria, Tigo).
+  // Mismas columnas que FIN_LIBROS; solo los cargos en quetzales (las facturas son en GTQ).
+  FIN_LIBROS.filter(function (L) { return /^0[56]_Tarjeta/.test(L.hoja); }).forEach(function (L) {
+    var sh = ss.getSheetByName(L.hoja);
+    if (!sh) return;
+    var v = sh.getDataRange().getValues(), nom = L.hoja.indexOf('_BI') > 0 ? 'Tarjeta crédito BI' : 'Tarjeta crédito BAC';
+    for (var r = FIN_PRIMERA_FILA - 1; r < v.length; r++) {
+      var d = pagDia_(v[r][0]);
+      if (!d || pagNumDia_(d) < desde) continue;
+      var q = _finR_(_finNum_(v[r][L.monto - 1]));
+      if (!(q > 0)) continue;
+      var cat = String(v[r][L.cat - 1] || '').trim();
+      if (String(v[r][L.pers - 1] || '').trim() === 'Sí' || cat === 'PERSONAL' || /^PAGO_TARJETA|^MARKETING_DIGITAL/.test(cat)) continue;
+      out.push({ llave: L.hoja + '|' + r, banco: nom, fecha: pagIso_(d), dia: pagNumDia_(d), q: q,
+                 glosa: String(v[r][L.desc - 1] || '').trim(), categoria: cat, tarjeta: true });
     }
   });
   return out;
 }
+
+/**
+ * Con que se pago desde la cuenta BI (Juanma, 13-oct-2026: "identificar qué tarjeta fue usada").
+ * La tarjeta de DEBITO BI cobra de la misma cuenta y el banco escribe el comercio en mayusculas
+ * terminado en GT ("LA TORRE ANTIGUA 3 DB GT", "PARMAVELGT"); las transferencias las escribe
+ * Rosanta a mano ("S31Mercado", "Grupo Eco Septiembre"). Las de credito vienen de su hoja.
+ */
+function _pagMedioBI_(glosa) {
+  var g = String(glosa || '').trim();
+  if (g === g.toUpperCase() && /GT$/.test(g) && !/^(ATM|PORTAL|PAGO|PAG\.|TRANSF|TEF|VISANET)/.test(g)) return 'Tarjeta débito BI';
+  return 'Banco BI';
+}
+
+/** La llave de un pago del banco que no depende de la fila (las hojas se reordenan). */
+function _pagLlavePago_(p) { return p.banco + '|' + p.fecha + '|' + p.q + '|' + String(p.glosa || '').slice(0, 40); }
 
 var PAG_PALABRAS_VACIAS_ = ['sociedad', 'anonima', 'distribuidora', 'distribuidor', 'comercial', 'comercializadora',
   'guatemala', 'industrias', 'industria', 'grupo', 'empresa', 'servicios', 'varios', 'pago', 'pagos', 'transferencia'];
@@ -262,6 +299,17 @@ function _pagPalabras_(s) {
   return normalizar_(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(function (w) {
     return w.length >= 4 && !/^\d+$/.test(w) && PAG_PALABRAS_VACIAS_.indexOf(w) === -1;
   });
+}
+
+/**
+ * El nombre del proveedor en la glosa del banco: como palabra ("S38 XELAC VARIOS") o pegado,
+ * como lo escribe Banco Industrial en los cargos de tarjeta de debito ("LATORREANTIGUA2DBGT",
+ * "PARMAVELGT", "COMESAGT", "Posfilejulio2026"; 13-oct-2026). Pegado pide 5 letras o mas: con
+ * 4, "mesa" o "casa" aparecen dentro de cualquier cosa.
+ */
+function _pagNombreEnGlosa_(palabras, glosa) {
+  var pal = _pagPalabras_(glosa), pegado = normalizar_(glosa).replace(/[^a-z0-9]/g, '');
+  return (palabras || []).some(function (w) { return pal.indexOf(w) !== -1 || (w.length >= 5 && pegado.indexOf(w) !== -1); });
 }
 
 /** Subconjuntos de 2 a 4 facturas que suman q. Corta en 3 soluciones: con mas, es ambiguo igual. */
@@ -330,8 +378,7 @@ function _pagCasarBanco_(facturas, pagos) {
     if (exactos.length === 1 && exactos[0]) return casar(exactos[0], p);
     if (exactos.length) return dudosos.push(p);
     // 3. sin marca: el nombre del proveedor tiene que estar en la glosa
-    var pal = _pagPalabras_(p.glosa);
-    var conNombre = cand.filter(function (f) { return (f.palabras || []).some(function (w) { return pal.indexOf(w) !== -1; }); });
+    var conNombre = cand.filter(function (f) { return _pagNombreEnGlosa_(f.palabras, p.glosa); });
     if (!conNombre.length) return sueltos.push(p);
     var sol = [];
     var uno = conNombre.filter(function (f) { return Math.abs(f.saldo - p.q) < 0.011; });
@@ -344,6 +391,65 @@ function _pagCasarBanco_(facturas, pagos) {
     return sueltos.push(p);
   });
   return { casados: casados, dudosos: dudosos, sueltos: sueltos };
+}
+
+/**
+ * POSIBLES PAGOS (funcion pura). Para cada pago libre del banco o de una tarjeta: las facturas
+ * abiertas con su monto exacto (una sola, o 2 a 4 del mismo NIT que suman) emitidas entre 3
+ * dias despues y 60 dias antes del pago. No casa nada: lo ofrece. Primero los que traen el
+ * nombre del proveedor en la glosa, despues los de tarjeta del mismo dia, despues el resto.
+ */
+// Las categorias del banco que dicen poco de a quien se pago: con estas cualquier factura puede ser.
+var PAG_CAT_GENERICAS_ = ['', 'POR_CLASIFICAR', 'PAGO_FACTURA_FEL', 'TRANSFERENCIA_SALIENTE', 'GASTOS_VARIOS'];
+function _pagCatCompatible_(catPago, catFactura) {
+  if (PAG_CAT_GENERICAS_.indexOf(catPago) !== -1 || !catFactura) return true;
+  var base = function (c) { return String(c).replace(/_EFECTIVO$/, '').replace(/_/g, ' '); };
+  return base(catPago) === base(catFactura);
+}
+
+function _pagPosibles_(abiertas, pagos) {
+  var out = [];
+  pagos.forEach(function (p) {
+    // no son pagos a proveedores: traspasos entre cuentas, pago y cobros de la tarjeta, nomina,
+    // pauta, comisiones (S41 Corsaga BAC, PAGO TARJETA X616..., COBRO ADMTVO.)
+    var cat = p.categoria || '';
+    if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return;
+    if (/^(NOMINA|IGSS|PROPINA|MARKETING|COMISION)/.test(cat)) return;
+    if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return;
+    var cand = abiertas.filter(function (f) { var d = p.dia - f.dia; return d >= -3 && d <= 60 && _pagCatCompatible_(cat, f.categoria); });
+    var ops = cand.filter(function (f) { return Math.abs(f.saldo - p.q) < 0.011; }).map(function (f) { return [f]; });
+    var porNit = {};
+    cand.forEach(function (f) { (porNit[f.nit] = porNit[f.nit] || []).push(f); });
+    Object.keys(porNit).forEach(function (n) { ops = ops.concat(_pagSumas_(porNit[n], p.q)); });
+    if (!ops.length) return;
+    var opciones = ops.slice(0, 3).map(function (l) {
+      return { llaves: l.map(function (f) { return f.llave; }), nombre: l.some(function (f) { return _pagNombreEnGlosa_(f.palabras, p.glosa); }),
+               mismo_dia: /^Tarjeta/.test(p.banco) && l.every(function (f) { return Math.abs(p.dia - f.dia) <= 2; }),
+               facturas: l.map(function (f) { return { dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, saldo: f.saldo, area: f.area }; }) };
+    });
+    opciones.sort(function (a, b) { return (b.nombre ? 2 : b.mismo_dia ? 1 : 0) - (a.nombre ? 2 : a.mismo_dia ? 1 : 0); });
+    out.push({ pago: { llave: _pagLlavePago_(p), banco: p.banco, fecha: p.fecha, q: p.q, glosa: p.glosa }, opciones: opciones,
+               fuerza: opciones[0].nombre ? 2 : opciones[0].mismo_dia ? 1 : 0 });
+  });
+  return out.sort(function (a, b) { return b.fuerza - a.fuerza || (a.pago.fecha < b.pago.fecha ? 1 : -1); });
+}
+
+/** El dueño confirma que un pago del banco o de la tarjeta es el de esa(s) factura(s). */
+function confirmarPosiblePago(auth, pagoLlave, llaves) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Confirmar pagos del banco lo hace el dueño.');
+  llaves = [].concat(llaves || []).sort();
+  var E = pagEstado_();
+  var P = E.posibles.filter(function (x) { return x.pago.llave === pagoLlave; })[0];
+  var op = P && P.opciones.filter(function (o) { return o.llaves.slice().sort().join(',') === llaves.join(','); })[0];
+  if (!op) throw new Error('Ese pago ya no está entre los posibles (¿lo confirmaron recién?). Actualizá la pantalla.');
+  var porLlave = {}; E.facturas.forEach(function (f) { porLlave[f.llave] = f; });
+  _pagEscribir_(op.llaves.map(function (k) {
+    var f = porLlave[k];
+    return { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'FECHA PAGADO': P.pago.fecha, 'CANTIDAD PAGADA': f.saldo,
+             'ESTATUS DE PAGO': PAG_CONF_BANCO_, DETALLE: (P.pago.banco + ' ' + P.pago.glosa).slice(0, 200) + ' · pago: ' + P.pago.llave, 'ESCRITO POR': Q.nombre };
+  }));
+  return getPagosProveedores(auth);
 }
 
 /**
@@ -378,6 +484,11 @@ function pagEstado_() {
   var movs = pagMovimientos_(), anteriores = {};
   movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
   var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas, fecFacturas_()), banco = pagPagosBanco_(ss);
+  // los pagos que el dueño ya confirmo a mano no se vuelven a casar ni a ofrecer
+  var yaConfirmados = {};
+  movs.forEach(function (m) { var k = m.estatus === PAG_CONF_BANCO_ && /pago: (.+)$/.exec(m.detalle); if (k) yaConfirmados[k[1]] = 1; });
+  var bancoUlt = banco.filter(function (p) { return !p.tarjeta; }).reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '');
+  banco = banco.filter(function (p) { return !yaConfirmados[_pagLlavePago_(p)]; });
   var porLlave = {};
   facturas.forEach(function (f) {
     f.pagado = 0; f.favor_usado = 0; f.pagos = []; f.fecha_pagar = ''; f.marca_banco = null;
@@ -428,7 +539,8 @@ function pagEstado_() {
     if (pl) {
       var p = pagoPorLlave[pl], s = _finR_(f.total - f.pagado - f.favor_usado);
       f.pagado += s;
-      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: 'Banco confirmado', por: p.banco, detalle: p.glosa });
+      // por: el medio (Banco BI, Tarjeta débito BI, Tarjeta crédito BI / BAC, Banco BAC)
+      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: /^Tarjeta/.test(p.banco) ? 'Tarjeta confirmada' : 'Banco confirmado', por: p.banco, detalle: p.glosa });
     }
     f.saldo = _finR_(f.total - f.pagado - f.favor_usado);
     f.pagado = _finR_(f.pagado);
@@ -438,9 +550,14 @@ function pagEstado_() {
     delete f.dia; delete f.marca_banco;
   });
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
+  var abiertasYa = facturas.filter(function (f) { return f.saldo > 0.01 && !f.por_correo; }).map(function (f) {
+    return { llave: f.llave, nit: f.nit, dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, dia: pagNumDia_(pagDia_(f.fecha)),
+             saldo: f.saldo, area: f.area, categoria: f.categoria, palabras: _pagPalabras_(f.proveedor + ' ' + f.razon) };
+  });
   return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
-           banco_ult: banco.reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '') };
+           posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; })),
+           banco_ult: bancoUlt };
 }
 
 /** El cuadre por proveedor: facturado, pagado, pendiente, abonos, saldo a favor y pagos de mas. */
@@ -497,7 +614,7 @@ function getPagosProveedores(auth) {
   out.hoja_iva = PAG_HOJA_IVA_;
   out.mi_nombre = Q.nombre;
   if (Q.rol === 'dueno') {
-    out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos;
+    out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; out.posibles = E.posibles;
     // La pestaña del maestro existe desde que el dueño abre Pagos, aunque no marque nada
     try { _pagHojaIva_(SpreadsheetApp.openById(FIN_MAESTRO_ID)); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
   }
