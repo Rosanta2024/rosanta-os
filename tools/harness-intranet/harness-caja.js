@@ -182,6 +182,20 @@ t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 
       fa.proveedor + ' ' + f1.estado + ' saldo ' + f1.saldo + ' por confirmar ' + f1.por_confirmar);
   }
 }
+// Pago fraccionado (13-oct-2026): dos cargos del mismo proveedor que suman la factura
+{
+  const F = [{ llave: 'r', nit: '9', dte: '1', proveedor: 'ARRENDAMIENTOS SANTA ROSA', fecha: '2026-08-18', dia: 100, saldo: 20212.5, area: 'ADMIN', categoria: 'ALQUILERES', palabras: ['arrendamientos', 'santa', 'rosa'] }];
+  const P = [{ llave: 'a', banco: 'Banco BI', fecha: '2026-08-24', dia: 106, q: 15212.5, glosa: '1aRentaAgosto2026', categoria: 'ALQUILERES' },
+             { llave: 'b', banco: 'Banco BI', fecha: '2026-08-31', dia: 113, q: 5000, glosa: '2aRentaAgosto2026', categoria: 'ALQUILERES' },
+             { llave: 'c', banco: 'Banco BI', fecha: '2026-08-31', dia: 113, q: 5000, glosa: 'S35 Mercado', categoria: 'ALIMENTOS_EFECTIVO' }];
+  const R = ctx._pagPosibles_(F, P), fr = R.find(x => x.pagos);
+  const F2 = [['c1', 500, 100], ['c2', 300, 102], ['c3', 700, 104]].map(([k, q, d]) => ({ llave: k, nit: '7', dte: k, proveedor: 'LA COFRADIA DE LOS VINOS', fecha: '2026-08-2' + (d - 100), dia: d, saldo: q, area: 'BARRA', categoria: 'LICORES', palabras: ['cofradia', 'vinos'] }));
+  const P2 = [{ llave: 'x', banco: 'Banco BI', fecha: '2026-08-28', dia: 108, q: 800, glosa: 'S35 Cofradia', categoria: 'LICORES' },
+              { llave: 'y', banco: 'Banco BI', fecha: '2026-08-30', dia: 110, q: 700, glosa: 'S35 Cofradia 2', categoria: 'LICORES' }];
+  const R2 = ctx._pagPosibles_(F2, P2), fr2 = R2.find(x => x.pagos);
+  t('Tres facturas con dos transferencias del mismo proveedor: pago fraccionado', fr2 && fr2.pagos.length === 2 && fr2.opciones[0].llaves.length === 3, fr2 && fr2.opciones[0].llaves.join('+') + ' ← ' + fr2.pago.glosa);
+  t('Renta en dos partes: se ofrece como pago fraccionado', fr && fr.pagos.length === 2 && fr.pagos.every(p => p.glosa.indexOf('Renta') >= 0), fr && fr.pago.glosa);
+}
 // Hoy (13-oct-2026): la lista de cada uno
 vm.runInContext("invEstadoCierre_ = function () { return { esperado: '2026-09', dia_limite: 5, areas: { COCINA: { estado_esperado: 'ABIERTO', zona: 'rojo', dias_atraso: 8 }, BARRA: { estado_esperado: 'CERRADO', zona: 'verde' } } }; };", ctx);
 const H = tok => ctx.getHoyProfit(tok);

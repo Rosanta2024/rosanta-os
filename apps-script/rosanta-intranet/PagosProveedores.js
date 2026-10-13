@@ -445,6 +445,56 @@ function _pagPosibles_(abiertas, pagos) {
     out.push({ pago: { llave: _pagLlavePago_(p), banco: p.banco, fecha: p.fecha, q: p.q, glosa: p.glosa }, opciones: opciones,
                fuerza: opciones[0].nombre ? 2 : opciones[0].mismo_dia ? 1 : 0 });
   });
+  // PAGOS FRACCIONADOS (13-oct-2026, Juanma): una o varias facturas de un mismo proveedor pagadas
+  // con 2 o 3 cargos (la renta de agosto: 15,212.50 + 5,000; tres facturas de Cofradia con dos
+  // transferencias). Por proveedor (NIT): cargos suyos (nombre en la glosa, o la misma categoria
+  // si no es mercaderia) desde 3 dias antes de la primera factura hasta 60 despues de la ultima,
+  // y un grupo de 1 a 4 facturas abiertas cuyos saldos suman exacto lo mismo.
+  var usadosFr = {}, porNitF = {};
+  abiertas.forEach(function (f) { (porNitF[f.nit] = porNitF[f.nit] || []).push(f); });
+  Object.keys(porNitF).forEach(function (nit) {
+    var FS = porNitF[nit].slice().sort(function (a, b) { return a.dia - b.dia; }).slice(0, 10);
+    var dMin = FS[0].dia, dMax = FS[FS.length - 1].dia;
+    var mios = pagos.filter(function (p) {
+      var cat = p.categoria || '';
+      if (p.dia < dMin - 3 || p.dia > dMax + 60 || usadosFr[p.llave]) return false;
+      if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return false;
+      if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return false;
+      return FS.some(function (f) {
+        var catOk = PAG_CAT_GENERICAS_.indexOf(cat) === -1 && cat === f.categoria && !_finEn_(FIN_COGS_CATS, cat);
+        return catOk || _pagNombreEnGlosa_(f.palabras, p.glosa);
+      });
+    }).sort(function (a, b) { return a.dia - b.dia; }).slice(0, 10);
+    if (mios.length < 2) return;
+    // las sumas de 2 o 3 cargos, y las de 1 a 4 facturas (solo facturas emitidas antes del ultimo cargo + 3 dias)
+    var subs = function (lista, min, max, val) {
+      var out2 = [];
+      (function rec(ini, suma, sel) {
+        if (sel.length >= min) out2.push({ sel: sel.slice(), suma: _finR_(suma) });
+        if (sel.length === max) return;
+        for (var i = ini; i < lista.length; i++) { sel.push(lista[i]); rec(i + 1, suma + val(lista[i]), sel); sel.pop(); }
+      })(0, 0, []);
+      return out2;
+    };
+    var sumP = subs(mios, 2, 3, function (p) { return p.q; }), sumF = subs(FS, 1, 4, function (f) { return f.saldo; });
+    var hecho = false;
+    sumP.forEach(function (sp) {
+      if (hecho) return;
+      var ultP = Math.max.apply(null, sp.sel.map(function (p) { return p.dia; }));
+      var sf = sumF.filter(function (x) { return Math.abs(x.suma - sp.suma) < 0.011 && x.sel.every(function (f) { return f.dia <= ultP + 3; }); })[0];
+      if (!sf) return;
+      hecho = true;
+      sp.sel.forEach(function (p) { usadosFr[p.llave] = 1; });
+      var ult = sp.sel[sp.sel.length - 1];
+      out.push({ pago: { llave: sp.sel.map(_pagLlavePago_).join(' + '), banco: sp.sel.map(function (p) { return p.banco; }).filter(function (b, i, l) { return l.indexOf(b) === i; }).join(' y '),
+                         fecha: ult.fecha, q: sp.suma, glosa: sp.sel.map(function (p) { return p.glosa + ' (' + p.fecha.slice(8, 10) + '/' + p.fecha.slice(5, 7) + ', Q' + p.q + ')'; }).join(' + ') },
+                 pagos: sp.sel.map(function (p) { return { llave: _pagLlavePago_(p), banco: p.banco, fecha: p.fecha, q: p.q, glosa: p.glosa }; }),
+                 opciones: [{ llaves: sf.sel.map(function (f) { return f.llave; }), fraccionado: true, mismo_dia: false,
+                              nombre: sp.sel.some(function (p) { return sf.sel.some(function (f) { return _pagNombreEnGlosa_(f.palabras, p.glosa); }); }),
+                              facturas: sf.sel.map(function (f) { return { dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, saldo: f.saldo, area: f.area }; }) }],
+                 fuerza: 1 });
+    });
+  });
   return out.sort(function (a, b) { return b.fuerza - a.fuerza || (a.pago.fecha < b.pago.fecha ? 1 : -1); });
 }
 
@@ -458,6 +508,24 @@ function confirmarPosiblePago(auth, pagoLlave, llaves) {
   var op = P && P.opciones.filter(function (o) { return o.llaves.slice().sort().join(',') === llaves.join(','); })[0];
   if (!op) throw new Error('Ese pago ya no está entre los posibles (¿lo confirmaron recién?). Actualizá la pantalla.');
   var porLlave = {}; E.facturas.forEach(function (f) { porLlave[f.llave] = f; });
+  // un pago fraccionado: una fila por cargo, cada una con su llave (asi ninguno se vuelve a ofrecer)
+  if (op.fraccionado && op.llaves.length > 1) {
+    var llavesP = P.pagos.map(function (pg) { return pg.llave; }).join(' ; ');
+    _pagEscribir_(op.llaves.map(function (k) {
+      var f = porLlave[k];
+      return { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'FECHA PAGADO': P.pago.fecha, 'CANTIDAD PAGADA': f.saldo,
+               'ESTATUS DE PAGO': PAG_CONF_BANCO_, DETALLE: ('Pagos: ' + P.pago.glosa).slice(0, 300) + ' · pago: ' + llavesP, 'ESCRITO POR': Q.nombre };
+    }));
+    return getPagosProveedores(auth);
+  }
+  if (op.fraccionado) {
+    var f0 = porLlave[op.llaves[0]];
+    _pagEscribir_(P.pagos.map(function (pg) {
+      return { AREA: f0.area, PROVEEDOR: f0.proveedor, NIT: f0.nit, DTE: f0.dte, 'FECHA PAGADO': pg.fecha, 'CANTIDAD PAGADA': pg.q,
+               'ESTATUS DE PAGO': PAG_CONF_BANCO_, DETALLE: (pg.banco + ' ' + pg.glosa).slice(0, 200) + ' · pago: ' + pg.llave, 'ESCRITO POR': Q.nombre };
+    }));
+    return getPagosProveedores(auth);
+  }
   _pagEscribir_(op.llaves.map(function (k) {
     var f = porLlave[k];
     // un abono paga el monto del cargo; si no, el saldo de cada factura
@@ -501,7 +569,10 @@ function pagEstado_() {
   var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas, fecFacturas_()), banco = pagPagosBanco_(ss);
   // los pagos que el dueño ya confirmo a mano no se vuelven a casar ni a ofrecer
   var yaConfirmados = {};
-  movs.forEach(function (m) { var k = m.estatus === PAG_CONF_BANCO_ && /pago: (.+)$/.exec(m.detalle); if (k) yaConfirmados[k[1]] = 1; });
+  movs.forEach(function (m) {
+    var k = m.estatus === PAG_CONF_BANCO_ && /pago: (.+)$/.exec(m.detalle);
+    if (k) k[1].split(' ; ').forEach(function (x) { yaConfirmados[x] = 1; });   // un pago fraccionado guarda varias
+  });
   var bancoUlt = banco.filter(function (p) { return !p.tarjeta; }).reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '');
   banco = banco.filter(function (p) { return !yaConfirmados[_pagLlavePago_(p)]; });
   var porLlave = {};

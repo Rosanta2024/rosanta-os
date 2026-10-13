@@ -287,7 +287,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         'Si es el pago, tocá <b>Sí, es este pago</b>: la factura sale de Por pagar. Si no, dejalo: no pasa nada.</p>' +
         PS.map(function (x, i) {
           return '<section class="pg-prov" data-panel="pos-' + i + '"><header><div><span class="pg-area">' + esc(x.pago.banco) + ' · ' + esc(ddmm(x.pago.fecha)) + '</span><h3>' + esc(x.pago.glosa) + '</h3></div>' +
-            '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
+            '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.pagos ? ' · <span class="pg-est abon">' + x.pagos.length + ' cargos para ' + (x.opciones[0].facturas.length === 1 ? '1 factura' : x.opciones[0].facturas.length + ' facturas') + '</span>' : x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
             x.opciones.map(function (o, j) {
               return '<div class="pg-mas" style="justify-content:space-between;border-top:1px solid rgba(26,26,26,0.08);padding-top:0.4rem"><span>' +
                 o.facturas.map(function (f) { return esc(f.proveedor) + ' · DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) +
@@ -452,7 +452,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.confpos) {
       var ij = b.dataset.confpos.split(':'), PX = D.posibles[+ij[0]], OX = PX && PX.opciones[+ij[1]];
       if (!OX) return;
-      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es ' + (OX.abono ? 'un abono a ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
+      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es ' + (OX.abono ? 'un abono a ' : OX.fraccionado ? 'el pago (en ' + PX.pagos.length + ' cargos) de ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
       var pl = PX.pago.llave, ks2 = OX.llaves;
       llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel);
       return;
