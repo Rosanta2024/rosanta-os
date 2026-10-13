@@ -77,13 +77,37 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-  var D = null, TAB = ADMIN || 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false, BAL = null;
+  var D = null, D0 = null, TAB = ADMIN || 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false, BAL = null;
+  /* EL BUSCADOR de arriba (13-oct-2026): D0 es lo que mando el servidor y D lo que se ve,
+     filtrado por proveedor, DTE, razon social o detalle. Todo lo de la pantalla lee D. */
+  function sinAcento(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function filtrar(d) {
+    var b = sinAcento(window.PF_BUSCA || '').trim();
+    if (!d || !b) return d;
+    var ok = function () { return sinAcento([].slice.call(arguments).join(' ')).indexOf(b) !== -1; };
+    var f = Object.assign({}, d);
+    f.facturas = (d.facturas || []).filter(function (x) { return ok(x.proveedor, x.razon, x.dte, x.nit); });
+    f.cuadre = (d.cuadre || []).filter(function (x) { return ok(x.proveedor, x.nit); });
+    f.mercado = (d.mercado || []).filter(function (x) { return ok(x.proveedor, x.detalle, x.dte); });
+    f.para_iva = (d.para_iva || []).filter(function (x) { return ok(x.proveedor, x.dte, x.marco); });
+    f.posibles = (d.posibles || []).filter(function (x) { return ok(x.pago.glosa, x.pago.banco) || x.opciones.some(function (o) { return o.facturas.some(function (y) { return ok(y.proveedor, y.dte); }); }); });
+    f.banco_dudosos = (d.banco_dudosos || []).filter(function (x) { return ok(x.glosa, x.banco); });
+    f.banco_sueltos = (d.banco_sueltos || []).filter(function (x) { return ok(x.glosa, x.banco); });
+    f.por_devolver = (d.por_devolver || []).map(function (x) { return Object.assign({}, x, { movs: x.movs.filter(function (m) { return ok(m.proveedor, m.dte, m.detalle); }) }); });
+    f.filtro = window.PF_BUSCA;
+    return f;
+  }
+  function chipFiltro() {
+    return D.filtro ? '<p class="pg-nota" style="background:#ECEBFA;border-radius:10px;padding:0.4rem 0.7rem">Mostrando solo lo que coincide con «<b>' + esc(D.filtro) + '</b>». ' +
+      '<button type="button" class="pg-x" data-quitarfiltro="1" style="color:#4b4790">quitar filtro</button></p>' : '';
+  }
+  window.addEventListener('pf-buscar', function () { if (D0) { D = filtrar(D0); pintar(); } });
   var CLASE = { 'Pendiente': 'pend', 'Abonada': 'abon', 'Banco por confirmar': 'banco', 'Pagada': 'ok', 'Pagada de más': 'mas' };
   function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e) + '</span>'; }
 
   function cargar() {
     HOST.innerHTML = '<div class="pg-vacio">Leyendo las facturas del FEL y los pagos…</div>';
-    google.script.run.withSuccessHandler(function (r) { D = r; pintar(); })
+    google.script.run.withSuccessHandler(function (r) { D0 = r; D = filtrar(r); pintar(); })
       .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
       .getPagosProveedores(AUTH);
   }
@@ -95,7 +119,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   function favorDe(nit) { var c = (D.cuadre || []).filter(function (x) { return x.nit === nit; })[0]; return c ? c.favor : 0; }
 
   function pintar() {
-    var abiertas = D.facturas.filter(function (f) { return f.saldo > 0.01; });
+    // Por pagar: lo que falta, y lo marcado "Banco" que el banco todavia no confirma (13-oct-2026)
+    var abiertas = D.facturas.filter(function (f) { return f.saldo > 0.01 || f.estado === 'Banco por confirmar'; });
     var pendQ = abiertas.reduce(function (a, f) { return a + f.saldo; }, 0);
     var vence = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoy(); }).length;
     if (ADMIN) return pintarAdmin();
@@ -111,7 +136,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         .concat(D.posibles && D.posibles.length ? ['posibles:Posibles pagos (' + D.posibles.length + ')'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
+      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
       (D.aviso_correo ? '<p class="pg-err">' + esc(D.aviso_correo) + '</p>' : '') +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Las facturas <b>por correo</b> son las que SAT avisó y todavía no entran al FEL del lunes.</p></div>';
     HOST.innerHTML = h;
@@ -126,7 +151,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
               iva: ['Para reducir IVA', 'Facturas a nombre de CORSAGA que solo sirven para el crédito fiscal. Es de todos: cada quien marca las suyas y todos ven quién marcó cada una.'] }[ADMIN] || ['Administración', ''];
     HOST.innerHTML = '<div class="pg"><h2>' + T[0] + '</h2><p class="pg-intro">' + T[1] + '</p>' +
       '<div class="pg-tabs"><span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo([]) + '</div><div id="pg-sel"></div>' +
+      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo([]) + '</div><div id="pg-sel"></div>' +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '.</p></div>';
   }
 
@@ -151,7 +176,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
             var fila = '<div class="pg-l"><span class="c"><input type="checkbox" data-sel="' + esc(f.llave) + '"' + (SEL[f.llave] ? ' checked' : '') + ' aria-label="Elegir"></span>' +
               '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
-              '<span class="n cant">' + q(f.saldo) + (f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + '</span>' : '') + '</span>' +
+              '<span class="n cant">' + q(f.saldo > 0.01 ? f.saldo : f.por_confirmar) + (f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + (f.saldo > 0.01 ? ' · abonado ' + q(f.pagado) : '') + '</span>' : '') +
+                (f.por_confirmar > 0.01 ? '<span class="pg-nota" style="display:block">' + q(f.por_confirmar) + ' por confirmar con el banco</span>' : '') + '</span>' +
               '<span class="est">' + estado(f.estado) + '</span>' +
               '<span class="acc"><button type="button" class="pg-b" data-abrir="' + esc(f.llave) + '">' + (ABIERTA === f.llave ? 'Cerrar' : 'Pagar') + '</button></span></div>';
             if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + panelPago([f]) + '</div>';
@@ -264,7 +290,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
             '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
             x.opciones.map(function (o, j) {
               return '<div class="pg-mas" style="justify-content:space-between;border-top:1px solid rgba(26,26,26,0.08);padding-top:0.4rem"><span>' +
-                o.facturas.map(function (f) { return esc(f.proveedor) + ' · DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo); }).join('<br>') +
+                o.facturas.map(function (f) { return esc(f.proveedor) + ' · DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) +
+                  (o.abono ? ' <span class="pg-est abon">abono: queda ' + q(f.saldo - x.pago.q) + '</span>' : ''); }).join('<br>') +
                 '</span><button type="button" class="pg-b pri" data-confpos="' + i + ':' + j + '">Sí, es este pago</button></div>';
             }).join('') + '<div class="pg-err" data-err></div></section>';
         }).join('');
@@ -371,7 +398,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var err = panel && panel.querySelector('[data-err]');
     if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     if (err) err.textContent = 'Guardando…';
-    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D = d; ABIERTA = null; SEL = {}; AGR = null; IVAAGR = null; pintar(); })
+    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D0 = d; D = filtrar(d); ABIERTA = null; SEL = {}; AGR = null; IVAAGR = null; pintar(); })
       .withFailureHandler(function (e) {
         OCUPADO = false;
         if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
@@ -412,6 +439,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   HOST.addEventListener('click', function (ev) {
     var b = ev.target.closest('button'); if (!b || !D) return;
     var panel = b.closest('[data-panel]');
+    if (b.dataset.quitarfiltro) { var qi = document.getElementById('q'); if (qi) { qi.value = ''; qi.dispatchEvent(new Event('input')); } else { window.PF_BUSCA = ''; D = filtrar(D0); pintar(); } return; }
     if (b.dataset.tab) { TAB = b.dataset.tab; ABIERTA = null; pintar(); return; }
     if (b.dataset.agregar) {
       AGR = { nombre: b.dataset.agregar }; repintarCuerpo();
@@ -424,7 +452,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.confpos) {
       var ij = b.dataset.confpos.split(':'), PX = D.posibles[+ij[0]], OX = PX && PX.opciones[+ij[1]];
       if (!OX) return;
-      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es el pago de ' + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
+      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es ' + (OX.abono ? 'un abono a ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
       var pl = PX.pago.llave, ks2 = OX.llaves;
       llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel);
       return;

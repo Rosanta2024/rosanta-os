@@ -294,7 +294,10 @@ function _pagMedioBI_(glosa) {
 function _pagLlavePago_(p) { return p.banco + '|' + p.fecha + '|' + p.q + '|' + String(p.glosa || '').slice(0, 40); }
 
 var PAG_PALABRAS_VACIAS_ = ['sociedad', 'anonima', 'distribuidora', 'distribuidor', 'comercial', 'comercializadora',
-  'guatemala', 'industrias', 'industria', 'grupo', 'empresa', 'servicios', 'varios', 'pago', 'pagos', 'transferencia'];
+  'guatemala', 'industrias', 'industria', 'grupo', 'empresa', 'servicios', 'varios', 'pago', 'pagos', 'transferencia',
+  // lugares y genericos (13-oct-2026): con los nombres pegados del banco, "antigua" de La Bodegona
+  // aparecia dentro de "LATORREANTIGUA2DBGT"
+  'antigua', 'sacatepequez', 'vieja', 'ciudad', 'zona', 'central', 'super', 'supermercado', 'supermercados', 'market', 'tienda'];
 function _pagPalabras_(s) {
   return normalizar_(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(function (w) {
     return w.length >= 4 && !/^\d+$/.test(w) && PAG_PALABRAS_VACIAS_.indexOf(w) === -1;
@@ -421,9 +424,20 @@ function _pagPosibles_(abiertas, pagos) {
     var porNit = {};
     cand.forEach(function (f) { (porNit[f.nit] = porNit[f.nit] || []).push(f); });
     Object.keys(porNit).forEach(function (n) { ops = ops.concat(_pagSumas_(porNit[n], p.q)); });
+    // Un ABONO (13-oct-2026): si nada da el monto exacto, una factura de la MISMA categoria (no
+    // generica) o con el nombre en la glosa cuyo saldo es mayor que el pago ("1a Septiembre Renta").
+    var abono = false;
+    if (!ops.length) {
+      ops = cand.filter(function (f) {
+        // la mercaderia queda fuera por categoria: hay demasiadas compras chicas de ALIMENTOS
+        var catOk = PAG_CAT_GENERICAS_.indexOf(cat) === -1 && cat === f.categoria && !_finEn_(FIN_COGS_CATS, cat);
+        return f.saldo > p.q + 0.01 && (catOk || _pagNombreEnGlosa_(f.palabras, p.glosa));
+      }).map(function (f) { return [f]; });
+      abono = ops.length > 0;
+    }
     if (!ops.length) return;
     var opciones = ops.slice(0, 3).map(function (l) {
-      return { llaves: l.map(function (f) { return f.llave; }), nombre: l.some(function (f) { return _pagNombreEnGlosa_(f.palabras, p.glosa); }),
+      return { llaves: l.map(function (f) { return f.llave; }), abono: abono, nombre: l.some(function (f) { return _pagNombreEnGlosa_(f.palabras, p.glosa); }),
                mismo_dia: /^Tarjeta/.test(p.banco) && l.every(function (f) { return Math.abs(p.dia - f.dia) <= 2; }),
                facturas: l.map(function (f) { return { dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, saldo: f.saldo, area: f.area }; }) };
     });
@@ -446,7 +460,8 @@ function confirmarPosiblePago(auth, pagoLlave, llaves) {
   var porLlave = {}; E.facturas.forEach(function (f) { porLlave[f.llave] = f; });
   _pagEscribir_(op.llaves.map(function (k) {
     var f = porLlave[k];
-    return { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'FECHA PAGADO': P.pago.fecha, 'CANTIDAD PAGADA': f.saldo,
+    // un abono paga el monto del cargo; si no, el saldo de cada factura
+    return { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'FECHA PAGADO': P.pago.fecha, 'CANTIDAD PAGADA': op.abono ? P.pago.q : f.saldo,
              'ESTATUS DE PAGO': PAG_CONF_BANCO_, DETALLE: (P.pago.banco + ' ' + P.pago.glosa).slice(0, 200) + ' · pago: ' + P.pago.llave, 'ESCRITO POR': Q.nombre };
   }));
   return getPagosProveedores(auth);
@@ -513,7 +528,14 @@ function pagEstado_() {
     }
     if (m.fecha_pagar) f.fecha_pagar = m.fecha_pagar;
     if (m.estatus === 'Saldo a favor usado') { f.favor_usado += m.q; favor[m.nit] = (favor[m.nit] || 0) - m.q; }
-    else if (m.estatus === 'Banco') f.marca_banco = pagNumDia_(pagDia_(m.fecha_pagado) || new Date());
+    else if (m.estatus === 'Banco') {
+      // Un pago marcado "Banco" cuenta YA por su monto (13-oct-2026): un abono baja el saldo y la
+      // factura muestra lo que falta. Queda "por confirmar" hasta que el banco traiga ese monto
+      // (la renta se paga en dos partes: 10,212.50 el 6-oct y 10,000 el 13-oct).
+      f.marca_banco = pagNumDia_(pagDia_(m.fecha_pagado) || new Date());
+      (f.marcas = f.marcas || []).push({ id: m.id, q: m.q, dia: f.marca_banco });
+      f.pagado += m.q;
+    }
     else f.pagado += m.q;
     f.pagos.push({ id: m.id, fecha: m.fecha_pagado, q: m.q, estatus: m.estatus, por: m.por, detalle: m.detalle });
   });
@@ -527,10 +549,36 @@ function pagEstado_() {
     f.pagado = f.total;
     f.pagos.push({ id: '', fecha: c.fecha, q: f.total, estatus: 'Pagado antes (COMPRAS_2026)', por: c.hoja, detalle: c.estatus });
   });
-  // El banco confirma lo que falta pagar
+  // 1. Los pagos marcados "Banco": cada marca se confirma con un pago del banco de SU monto, y
+  //    las marcas de un mismo proveedor que no se confirmaron solas, con un pago que las sume.
+  var usadoMarca = {}, conMarca = facturas.filter(function (f) { return f.marcas; });
+  var enVent = function (p, dia) { var d = p.dia - dia; return d >= -PAG_BANCO_ANTES_ && d <= PAG_BANCO_DESPUES_; };
+  conMarca.forEach(function (f) { f.marcas.forEach(function (mk) {
+    var p = banco.filter(function (p) { return !usadoMarca[p.llave] && Math.abs(p.q - mk.q) < 0.011 && enVent(p, mk.dia); })[0];
+    if (p) { usadoMarca[p.llave] = 1; mk.pago = p; }
+  }); });
+  var sinConf = {};
+  conMarca.forEach(function (f) { f.marcas.forEach(function (mk) { if (!mk.pago) (sinConf[f.nit] = sinConf[f.nit] || []).push(mk); }); });
+  Object.keys(sinConf).forEach(function (n) {
+    var g = sinConf[n], tot = _finR_(g.reduce(function (a, mk) { return a + mk.q; }, 0)), dia = Math.max.apply(null, g.map(function (mk) { return mk.dia; }));
+    if (g.length < 2) return;
+    var p = banco.filter(function (p) { return !usadoMarca[p.llave] && Math.abs(p.q - tot) < 0.011 && enVent(p, dia); })[0];
+    if (p) { usadoMarca[p.llave] = 1; g.forEach(function (mk) { mk.pago = p; }); }
+  });
+  conMarca.forEach(function (f) {
+    f.por_confirmar = 0;
+    f.marcas.forEach(function (mk) {
+      var x = f.pagos.filter(function (y) { return y.id === mk.id; })[0];
+      if (mk.pago && x) { x.estatus = /^Tarjeta/.test(mk.pago.banco) ? 'Tarjeta confirmada' : 'Banco confirmado'; x.por = mk.pago.banco; x.detalle = mk.pago.glosa; x.fecha = mk.pago.fecha; }
+      else f.por_confirmar += mk.q;
+    });
+    f.por_confirmar = _finR_(f.por_confirmar);
+  });
+  banco = banco.filter(function (p) { return !usadoMarca[p.llave]; });
+  // 2. El banco confirma lo que falta pagar (lo que ya tiene marcas, por su saldo)
   var abiertas = facturas.filter(function (f) { return f.total - f.pagado - f.favor_usado > 0.01; }).map(function (f) {
     return { llave: f.llave, nit: f.nit, dte: f.dte, dia: f.dia, saldo: _finR_(f.total - f.pagado - f.favor_usado),
-             palabras: _pagPalabras_(f.proveedor + ' ' + f.razon), marcaBanco: f.marca_banco };
+             palabras: _pagPalabras_(f.proveedor + ' ' + f.razon), marcaBanco: null };
   });
   var cb = _pagCasarBanco_(abiertas, banco), pagoPorLlave = {};
   banco.forEach(function (p) { pagoPorLlave[p.llave] = p; });
@@ -544,10 +592,10 @@ function pagEstado_() {
     }
     f.saldo = _finR_(f.total - f.pagado - f.favor_usado);
     f.pagado = _finR_(f.pagado);
-    f.estado = f.saldo <= 0.01 ? (f.saldo < -0.01 ? 'Pagada de más' : 'Pagada')
-             : (f.marca_banco != null && !pl) ? 'Banco por confirmar'
+    f.por_confirmar = f.por_confirmar || 0;
+    f.estado = f.saldo <= 0.01 ? (f.por_confirmar > 0.01 ? 'Banco por confirmar' : f.saldo < -0.01 ? 'Pagada de más' : 'Pagada')
              : f.pagado > 0.01 ? 'Abonada' : 'Pendiente';
-    delete f.dia; delete f.marca_banco;
+    delete f.dia; delete f.marca_banco; delete f.marcas;
   });
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
   var abiertasYa = facturas.filter(function (f) { return f.saldo > 0.01 && !f.por_correo; }).map(function (f) {
@@ -570,7 +618,7 @@ function _pagCuadre_(facturas, favor) {
     if (f.saldo > 0.01) x.pendiente += f.saldo;
     if (f.saldo < -0.01) x.de_mas -= f.saldo;
     if (f.estado === 'Abonada') x.abonadas++;
-    if (f.estado === 'Banco por confirmar') x.por_confirmar += f.saldo;
+    x.por_confirmar += f.por_confirmar || 0;
   });
   Object.keys(favor).forEach(function (n) { if (P[n]) P[n].favor = favor[n]; });
   return Object.keys(P).map(function (n) {

@@ -559,7 +559,11 @@ document.addEventListener('click', e => {
 });
 let td;
 document.getElementById('q').addEventListener('input', e => {
-  clearTimeout(td); td = setTimeout(() => { q = e.target.value.trim(); pintar(); }, 120);
+  clearTimeout(td); td = setTimeout(() => {
+    q = e.target.value.trim(); pintar();
+    // Pagos y Administracion (PF_PAGOS) filtran con el mismo buscador (13-oct-2026)
+    window.PF_BUSCA = q; window.dispatchEvent(new CustomEvent('pf-buscar', { detail: q }));
+  }, 120);
 });
 /* Enter para cargar rapido: en el producto salta a la cantidad, en la cantidad agrega. */
 document.addEventListener('keydown', e => {
