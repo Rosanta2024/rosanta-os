@@ -55,7 +55,7 @@ Corrida manual (la programada del 1-oct no quedó registrada). Fuente: memorias 
 Recurrentes activas: `morning-brief-juanma` (L–V 6:06), `rosanta-latido-reservas-web` (8:10), `rosanta-latido-repo` (8:24), `rosanta-reporte-semanal` (lunes 16:24, **recreada**), `revision-jueves-cotizaciones` (jueves 8:11, **nueva**), `rosanta-cierre-semanal` (dom 18:20), `rosanta-cerebro-mantenimiento` (día 1, 9:07), `rosanta-reporte-mensual` y `auditoria-meta-ads-rosanta-mensual` (día 3). Apagada: `rosanta-seguimiento-offsite`. De una vez: seguimientos de Daniela Torres (23-oct), Mollie y Clarisa y Porres (24-oct), choque del 20-mar-2027 (28-oct); `rosanta-recordatorio-blogs-7oct` ya corrió y quedó apagada. **Ojo: hay sesiones del recordatorio de blogs que siguen marcadas como "en curso"**.
 
 ### 7. Artefactos
-Nuevo: **Pipeline de Eventos** (fijado). El tablero `rosanta-seguimiento-semanal` es https://claude.ai/artifact/NoUtgqdF33nzh59zmihGfj, con su copia en `Projects/03_Finance_Data_OS/tablero/tablero.html`. Los demás nuevos (I Do It Anyways, Active Living, Sesión Ferrer) son personales. `~/Claude/Artifacts/` está vacía: los artefactos son Artifacts publicados.
+Nuevo: **Pipeline de Eventos** (fijado). El tablero `rosanta-seguimiento-semanal` es https://claude.ai/artifact/NoUtgqdF33nzh59zmihGfj, con su fuente en `Rosanta OS/03_Finance_Data_OS/tablero/tablero.html` (movida desde `~/Documents/Claude/Projects/` el 13-oct-2026). Los demás nuevos (I Do It Anyways, Active Living, Sesión Ferrer) son personales. `~/Claude/Artifacts/` está vacía: los artefactos son Artifacts publicados.
 
 ---
 
