@@ -62,6 +62,18 @@ function calentarCaches() {
     fallo.push('ventas POS: ' + String(e && e.message || e));
   }
 
+  var correo = '';
+  // Las facturas que SAT avisa por correo (FelCorreo.js, 13-oct-2026): asi Pagos las
+  // muestra aunque nadie lo abra. Un correo ya leido se salta: casi siempre es un no-op.
+  try {
+    var fec = fecLeer_();
+    // va aparte de 'reconstruido': es leer datos nuevos, no rehacer un cache
+    if (fec.nuevos) correo = 'FEL por correo: ' + fec.nuevos + ' nuevas';
+    if (fec.errores.length) fallo.push('FEL por correo: ' + fec.errores.slice(0, 2).join(' · '));
+  } catch (e) {
+    fallo.push('FEL por correo: ' + String(e && e.message || e));
+  }
+
   // El caro: ~40 s. Es el que justifica todo este archivo.
   calentar('recetario', function () { return !c.get(COSTEO.cacheKey); },
            function () { getCosteoData(); });
@@ -102,6 +114,7 @@ function calentarCaches() {
   if (cargaNueva) hecho.push('(el maestro tenia filas nuevas)');
   var linea = 'calentarCaches · reconstruido: ' + (hecho.join(', ') || 'nada') +
               ' · ya estaba: ' + (ya.join(', ') || 'nada') +
+              (correo ? ' · leido: ' + correo : '') +
               (fallo.length ? ' · FALLO: ' + fallo.join(' | ') : '');
   Logger.log(linea);
   return linea;

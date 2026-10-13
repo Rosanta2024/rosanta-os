@@ -1136,6 +1136,29 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : '20-sep: Q4,191, tarjeta Q4,191, propina Q381, cuadra por formas de pago', malos.length, 0);
   });
 
+  prCorrer_(g, 'El cierre nuevo de PosFile (desde el 1-oct) se lee y la Caja chica cuadra', function () {
+    var nombre = 'El cierre nuevo de PosFile (desde el 1-oct) se lee y la Caja chica cuadra';
+    // el texto real del cierre del 5-oct-2026 (formato nuevo, la "ti" de efectivo se pierde en el PDF)
+    var c = cieParsear_('CIERRE DE CAJA 051020260001-051020262215\n\nRESUMEN\n\nDescripción TOTAL\n\nTarjetas 3,234.50\n\nCaja (efec\n\nvo) POS 1,688.00\n\n' +
+      'CORTESÍA - PROPINA\n\nDescripción TOTAL\n\nPropina 447.5\n\nCortesía 0\n\nTOTAL GTQ 447.50\n\nVENTAS POR VENDEDORES\n\nTOTAL GTQ 4,922.50\n\n' +
+      'VENTAS POR DOCUMENTO\n\nVENTAS POR DOCUMENTO Tipo Documento TOTAL\n\n30 Factura GTQ 511.50\n\n31 Factura GTQ 764.50\n\n32 Factura GTQ 753.50\n\n33 Factura GTQ 2,893.00\n\n' +
+      'TOTAL GTQ 4922.50\n\nVENTAS POR PRODUCTO\n\nTOTAL 42 GTQ 0.00 GTQ 4922.50\n\nGASTOS\n\nDescripción TOTAL\n\nTOTAL GTQ 0.00\n\n© Soported by www.posfile.com', '');
+    var malos = [];
+    if (c.fecha !== '2026-10-05') malos.push('fecha ' + c.fecha);
+    if (c.efectivo !== 1688 || c.tarjeta !== 3234.5) malos.push('efectivo ' + c.efectivo + ' / tarjeta ' + c.tarjeta);
+    if (c.gran_total !== 4922.5 || c.propina !== 447.5) malos.push('total ' + c.gran_total + ' / propina ' + c.propina);
+    if (!c.cuadra) malos.push('no cuadra');
+    if (c.documentos.length !== 4) malos.push(c.documentos.length + ' documentos');
+    // la caja: 1,861 + 1,688 − 100 = 3,449 esperado; contado 2,937.50 → faltante 511.50, el monto del documento 30
+    var E = cchCalcular_({ arranque: { fecha: '2026-10-04', saldo: 1861, nota: 'prueba' }, hoy: '2026-10-06', cierres: { '2026-10-05': { efectivo: c.efectivo, cuadra: true, documentos: c.documentos, gastos_pos: 0 } },
+      movs: [{ id: 'a', fecha: '2026-10-05', tipo: 'SALIDA', q: 100 }, { id: 'b', fecha: '2026-10-05', tipo: 'CONTEO', q: 2937.5 }], pagos: [] });
+    var d5 = E.dias[0];
+    if (d5.esperado !== 3449) malos.push('esperado ' + d5.esperado);
+    if (d5.estado !== 'Faltante' || d5.abierta !== -511.5) malos.push(d5.estado + ' ' + d5.abierta);
+    if (!/documento 30/.test(d5.pistas.join(' '))) malos.push('sin la pista del documento 30');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : '5-oct: efectivo Q1,688, tarjeta Q3,234.50, 4 documentos · caja: faltante Q511.50 con pista del documento 30', malos.length, 0);
+  });
+
   prCorrer_(g, 'Las fuentes nuevas se leen: reseñas, repeticion y retiros', function () {
     var nombre = 'Las fuentes nuevas se leen: reseñas, repeticion y retiros';
     var hoy = new Date(), malos = [], ok = [];
@@ -1174,6 +1197,38 @@ function prFinanzas_(res) {
       malos ? (dup.length ? 'llave repetida: ' + dup.slice(0, 5).join(', ') + ' ' : '') + (sinArea.length ? 'sin area: ' + sinArea.slice(0, 5).join(', ') : '')
             : E.facturas.length + ' facturas desde el ' + PAG_DESDE_ + ' · ' + E.facturas.filter(function (f) { return f.saldo > 0.01; }).length + ' por pagar · banco hasta ' + (E.banco_ult || 'sin dato'),
       malos, 0);
+  });
+
+  // FEL por correo (13-oct-2026): el aviso de SAT se lee bien y Pagos no duplica la factura
+  // cuando el lunes entra al maestro. El HTML es el del aviso de ECONTRISA del 13-oct.
+  prCorrer_(g, 'Facturas del FEL por correo: se leen y no se duplican', function () {
+    var nombre = 'Facturas del FEL por correo: se leen y no se duplican';
+    var td = function (a, b) { return '<tr><td style=\'x\'>' + a + ' </td><td style=\'y\'>' + b + '</td></tr>'; };
+    var html = '<table><tr><td colspan=5> <b> INFORMACIÓN DEL DOCUMENTO</b></td></tr>' + td('Tipo', 'FACT - Factura') +
+      td('Número Autorización  ', '8E42DDAB-F394-4BE4-8B57-36F650588E39') + td('Serie  ', '8E42DDAB') + td('Número', '4086582244') +
+      td('Emisor  ', '67283667 - ESTRATEGIAS CONTABLES Y TRIBUTARIAS, SOCIEDAD ANONIMA') + td('Establecimiento  ', '1 - ECONTRISA') +
+      td('Fecha de emisión  ', '2026-10-13T10:04:00') + td('Monto  ', 'GTQ - 1,680.00') + '</table>';
+    var p = fecParsear_(html), malos = [];
+    if (!p || p.tipo !== 'FACT' || p.numero !== '4086582244' || p.nit !== '67283667' || p.establecimiento !== 'ECONTRISA' ||
+        p.fecha !== '2026-10-13' || p.moneda !== 'GTQ' || p.monto !== 1680) malos.push('el aviso se leyo mal: ' + JSON.stringify(p));
+    if (fecParsear_('<p>Hola</p>') !== null) malos.push('un correo que no es aviso no da null');
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), base = pagFacturas_(ss, {}, null);
+    if (!base.length) { prAnotar_(g, nombre, 'SALTADA', 'no hay facturas desde el ' + PAG_DESDE_ + ' en el FEL cargado'); return; }
+    var ya = base[base.length - 1], hoy = new Date();
+    var correo = [
+      { fecha: pagDia_(ya.fecha), tipo: 'FACT', serie: ya.serie, numero: ya.dte, nit: ya.nit, nombre: ya.razon, establecimiento: ya.proveedor, moneda: 'GTQ', total: ya.total },
+      { fecha: hoy, tipo: 'FACT', serie: 'X', numero: '999999999901', nit: ya.nit, nombre: ya.razon, establecimiento: ya.proveedor, moneda: 'GTQ', total: 100 },
+      { fecha: hoy, tipo: 'NCRE', serie: 'X', numero: '999999999902', nit: ya.nit, nombre: '', establecimiento: '', moneda: 'GTQ', total: 50 },
+      { fecha: hoy, tipo: 'FACT', serie: 'X', numero: '999999999903', nit: '1', nombre: 'NUEVO', establecimiento: '', moneda: 'GTQ', total: 10 }];
+    var con = pagFacturas_(ss, {}, null, correo), nuevas = con.filter(function (f) { return f.por_correo; });
+    var n1 = nuevas.filter(function (f) { return f.dte === '999999999901'; })[0], n3 = nuevas.filter(function (f) { return f.dte === '999999999903'; })[0];
+    if (con.length !== base.length + 2) malos.push('esperaba ' + (base.length + 2) + ' facturas y vinieron ' + con.length);
+    if (con.filter(function (f) { return f.llave === ya.llave; }).length !== 1) malos.push('la que ya esta en el FEL quedo repetida');
+    if (!n1 || n1.area !== ya.area) malos.push('la nueva de un proveedor conocido no tomo su area (' + (n1 && n1.area) + ' en vez de ' + ya.area + ')');
+    if (!n3 || n3.area !== 'ADMIN' || n3.categoria !== 'POR CLASIFICAR') malos.push('un NIT nuevo no quedo en ADMIN / POR CLASIFICAR');
+    if (nuevas.some(function (f) { return f.dte === '999999999902'; })) malos.push('entro una nota de credito');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : 'aviso leido · ' + base.length + ' del FEL + 2 por correo (la repetida y la nota de credito no entran)', malos.length, 0);
   });
 }
 

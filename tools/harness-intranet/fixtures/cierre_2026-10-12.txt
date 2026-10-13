@@ -1,0 +1,75 @@
+CIERRE DE CAJA 121020260001-121020262115
+
+Generado por: RosantaBarra
+
+RESUMEN
+
+Descripción TOTAL
+
+Caja (efec
+
+vo) POS 297.00
+
+Tarjetas 4,889.50
+
+CORTESÍA - PROPINA
+
+Descripción TOTAL
+
+Propina 471.5
+
+Cortesía 0
+
+TOTAL GTQ 471.50
+
+VENTAS POR VENDEDORES
+
+Descripción TOTAL
+
+Barra Rosanta GTQ 5,186.50
+
+TOTAL GTQ 5,186.50
+
+PROPINA POR VENDEDORES
+
+Descripción TOTAL
+
+Barra Rosanta GTQ 471.50
+
+TOTAL GTQ 471.50
+
+VENTAS POR DOCUMENTO
+
+VENTAS POR DOCUMENTO Tipo Documento TOTAL
+
+68 Factura GTQ 528.00
+
+69 Factura GTQ 3,019.50
+
+70 Factura GTQ 621.50
+
+71 Factura GTQ 720.50
+
+72 Factura GTQ 297.00
+
+TOTAL GTQ 5186.50
+
+VENTAS POR PRODUCTO
+
+Descripción Can
+
+dad Descuento TOTAL
+
+Ensalada Rosanta 2.00 GTQ 0.00 GTQ 150.00
+
+Agua Natural de la casa 1L 4.00 GTQ 0.00 GTQ 120.00
+
+TOTAL 50 GTQ 0.00 GTQ 5186.50
+
+GASTOS
+
+Descripción TOTAL
+
+TOTAL GTQ 0.00
+
+© Soported by www.posfile.com • 10/12/2026 9:25:43 PM

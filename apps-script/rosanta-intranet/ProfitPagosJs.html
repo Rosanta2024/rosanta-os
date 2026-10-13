@@ -101,16 +101,22 @@ window.PF_PAGOS = function (HOST, AUTH) {
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
-      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura', 'equipo:Por devolver'].concat(D.rol === 'dueno' ? ['balance:Balance del año', 'banco:Banco sin casar', 'iva:Para reducir IVA'] : []).map(function (t) {
+      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura', 'equipo:Por devolver']
+        // Caja chica (13-oct-2026): la lleva Maco (sala); el dueño la ve. ProfitCajaJs.html
+        .concat(D.rol === 'sala' || D.rol === 'dueno' ? ['caja:Caja chica'] : []).concat(D.rol === 'dueno' ? ['balance:Balance del año', 'banco:Banco sin casar', 'iva:Para reducir IVA'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
-      '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '.</p></div>';
+      (D.aviso_correo ? '<p class="pg-err">' + esc(D.aviso_correo) + '</p>' : '') +
+      '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Las facturas <b>por correo</b> son las que SAT avisó y todavía no entran al FEL del lunes.</p></div>';
     HOST.innerHTML = h;
     pintarSeleccion();
+    var cj = HOST.querySelector('#pg-caja');
+    if (cj && window.PF_CAJA) window.PF_CAJA(cj, AUTH);
   }
 
   function cuerpo(abiertas) {
+    if (TAB === 'caja') return '<div id="pg-caja"></div>';
     if (TAB === 'pagar') {
       if (!abiertas.length) return '<div class="pg-vacio">No hay facturas por pagar. ✓</div>';
       var grupoAnt = '';
@@ -128,7 +134,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
           '<div class="pg-l cab"><span></span><span>DTE</span><span>Fecha</span><span>Fecha de pagar</span><span class="n">Cantidad a pagar</span><span>Estatus de pago</span><span></span></div>' +
           g.map(function (f) {
             var fila = '<div class="pg-l"><span class="c"><input type="checkbox" data-sel="' + esc(f.llave) + '"' + (SEL[f.llave] ? ' checked' : '') + ' aria-label="Elegir"></span>' +
-              '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
+              '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
               '<span class="n cant">' + q(f.saldo) + (f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + '</span>' : '') + '</span>' +
               '<span class="est">' + estado(f.estado) + '</span>' +
@@ -264,7 +270,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
     return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
       '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>. Tocá cómo se pagó:</div>' +
       '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
-      (uno && D.rol === 'dueno' ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
+      (uno && D.rol === 'dueno' && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
       '<details><summary class="pg-nota" style="cursor:pointer">Más opciones</summary><div class="pg-mas">' +
       '<label>Fecha pagado <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       (uno ? '<label>Cantidad pagada <input type="number" step="0.01" min="0" data-f="monto" placeholder="' + tot.toFixed(2) + '"></label>' : '') +

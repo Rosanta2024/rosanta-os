@@ -39,10 +39,10 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   CacheService: { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) },
   Utilities: { formatDate: d => d.toISOString(), getUuid: () => ('0000000' + (++uuid)).slice(-8) + '-x' },
   Session: { getActiveUser: () => ({ getEmail: () => '' }) },
-  LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => {} }) },
+  LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 const desde = process.argv[2] || '2026-08-01';
 vm.runInContext("PAG_DESDE_ = '" + desde + "';", ctx);
 let ok = 0, mal = 0;
@@ -145,6 +145,45 @@ t('Balance: Altogas cuenta el pago del BAC por alias', alt && alt.banco >= 8456,
 t('Balance: sin explicar = diferencia - ya por pagar', bal.filas.every(x => Math.abs(x.sin_explicar - (x.diferencia - x.pendiente)) < 0.02));
 t('Balance: solo el dueño', /solo para el dueño/.test(tira(() => ctx.getBalanceProveedores('tokchef'))));
 console.log('      top sin explicar: ' + bal.filas.slice(0, 6).map(x => x.proveedor.slice(0, 18) + ' ' + Math.round(x.sin_explicar)).join(' · '));
+
+// 3. FEL por correo (13-oct-2026): un Gmail de mentira con el aviso real de ECONTRISA (el HTML
+//    tal cual llega), el mismo aviso repetido, una factura ya cargada en el FEL y un correo que no es aviso.
+const td = (a, b) => "<tr><td style='background-color: #4682B4;'>" + a + " </td><td style='border: 1px solid black;'>" + b + '</td></tr>';
+const aviso = (tipo, num, emisor, est, fecha, monto) => "<img src='x'><hr><b><h3>Guatemala</h3></b><div align='center'><table width='70%'><tr><td colspan=5> <b> INFORMACIÓN DEL DOCUMENTO</b></td></tr>" +
+  td('Tipo', tipo) + td('Número Autorización  ', '8E42DDAB-F394-4BE4-8B57-36F650588E39') + td('Serie  ', '8E42DDAB') + td('Número', num) +
+  td('Emisor  ', emisor) + td('Establecimiento  ', est) + td('Fecha de emisión  ', fecha) + td('Monto  ', monto) + '</table></div>';
+const b64 = h => Buffer.from(h, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+const MSGS = {
+  m1: aviso('FACT - Factura', '4086582244', '67283667 - ESTRATEGIAS CONTABLES Y TRIBUTARIAS, SOCIEDAD ANONIMA', '1 - ECONTRISA', '2026-10-13T10:04:00', 'GTQ - 1,680.00'),
+  m2: aviso('FACT - Factura', '4086582244', '67283667 - ESTRATEGIAS CONTABLES Y TRIBUTARIAS, SOCIEDAD ANONIMA', '1 - ECONTRISA', '2026-10-13T10:04:00', 'GTQ - 1,680.00'),
+  m3: aviso('FACT - Factura', '4195500623', '76431754 - ESTACION DE SERVICIO EL PANORAMA , SOCIEDAD ANONIMA', '1 - ESTACION DE SERVICIO EL PANORAMA', '2026-10-05T08:13:30.001-06:00', 'GTQ - 200.00'),
+  m4: '<p>Otra cosa</p>' };
+let consultas = [];
+ctx.Gmail = { Users: { Messages: {
+  list: (u, o) => { consultas.push(o); return { messages: Object.keys(MSGS).map(id => ({ id })) }; },
+  get: (u, id) => ({ payload: { mimeType: 'multipart/alternative', parts: [{ mimeType: 'text/html', body: { data: b64(MSGS[id]) } }] } }) } } };
+ctx.Utilities.base64Decode = s => Buffer.from(s, 'base64');
+ctx.Utilities.newBlob = b => ({ getDataAsString: () => Buffer.from(b).toString('utf8') });
+const p1 = ctx.fecParsear_(MSGS.m1);
+t('Aviso de SAT: se lee cada campo', p1 && p1.tipo === 'FACT' && p1.numero === '4086582244' && p1.nit === '67283667' && p1.establecimiento === 'ECONTRISA' && p1.fecha === '2026-10-13' && p1.monto === 1680, JSON.stringify(p1));
+t('Correo que no es aviso: null', ctx.fecParsear_(MSGS.m4) === null);
+const antes = ctx.pagEstado_().facturas.length;
+const r1 = ctx.fecLeer_();
+t('Lectura: 2 nuevas, la repetida se salta, la que no es aviso se anota para no releerla', r1.nuevos === 2 && r1.repetidos === 1 && r1.otros === 1 && !r1.errores.length, JSON.stringify(r1));
+t('Busca tambien en la papelera', consultas[0].includeSpamTrash === true && /notificacionesfel@sat\.gob\.gt/.test(consultas[0].q));
+const r2 = ctx.fecLeer_();
+t('Segunda lectura: nada nuevo', r2.nuevos === 0 && r2.repetidos === 4, JSON.stringify(r2));
+const e2 = ctx.pagEstado_(), ec = e2.facturas.filter(f => f.dte === '4086582244'), pan = e2.facturas.filter(f => f.dte === '4195500623');
+t('ECONTRISA aparece una vez, por correo, en ADMIN', ec.length === 1 && ec[0].por_correo && ec[0].area === 'ADMIN' && ec[0].total === 1680 && ec[0].fecha === '2026-10-13', ec[0] && (ec[0].categoria + ' / ' + ec[0].grupo + ' / ' + ec[0].estado));
+t('El Panorama ya esta en el FEL: no se duplica ni queda como por correo', pan.length <= 1 && pan.every(f => !f.por_correo), pan.length + ' fila(s)');
+t('Total de facturas = las del FEL + 1', e2.facturas.length === antes + 1, antes + ' → ' + e2.facturas.length);
+const dueno = ctx.getPagosProveedores('tok');
+t('La pantalla del dueño la trae y sin aviso de error', dueno.facturas.some(f => f.dte === '4086582244' && f.por_correo) && !dueno.aviso_correo, dueno.aviso_correo);
+t('Cocina no la ve (es de ADMIN)', !ctx.getPagosProveedores('tokchef').facturas.some(f => f.dte === '4086582244'));
+t('Para reducir IVA: no se puede marcar una por correo', /llego por correo/.test(tira(() => ctx.marcarFacturaParaIva('tok', ec[0].llave, ''))));
+ctx.Gmail.Users.Messages.list = () => { throw new Error('Gmail caido'); };
+const caido = ctx.getPagosProveedores('tok');
+t('Si Gmail falla, Pagos abre igual y avisa', caido.facturas.length > 0 && /Gmail caido/.test(caido.aviso_correo), caido.aviso_correo);
 console.log('\nPestaña PAGOS_PROVEEDORES (' + (CONFIG.PAGOS_PROVEEDORES.length - 1) + ' filas):');
 CONFIG.PAGOS_PROVEEDORES.forEach(r => console.log('  ' + r.slice(0, 9).map(x => x instanceof Date ? 'fecha' : String(x)).join(' | ')));
 console.log('\n' + ok + ' OK · ' + mal + ' fallas');

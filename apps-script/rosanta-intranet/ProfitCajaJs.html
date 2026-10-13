@@ -1,0 +1,200 @@
+<style>
+  /* Caja chica (13-oct-2026). Pestaña de Pagos para Maco y el dueño. Usa los estilos .pg de Pagos. */
+  .cj-dia { background: #fff; border-radius: 18px; padding: 0.8rem 1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.8rem; }
+  .cj-dia.mal { border: 2px solid #E3A99B; }
+  .cj-dia summary { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; align-items: baseline; justify-content: space-between; cursor: pointer; list-style: none; }
+  .cj-dia summary::-webkit-details-marker { display: none; }
+  .cj-dia summary h3 { margin: 0; font-size: 1rem; }
+  .cj-cta { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 1rem; font-size: 0.88rem; margin-top: 0.6rem; max-width: 30rem; }
+  .cj-cta span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+  .cj-cta .tot { font-weight: 700; border-top: 1px solid rgba(26,26,26,0.15); padding-top: 0.2rem; }
+  .cj-cta .sub { color: #8a8780; font-size: 0.78rem; }
+  .cj-pista { background: #FBF3E2; border-radius: 10px; padding: 0.45rem 0.7rem; font-size: 0.84rem; margin-top: 0.4rem; }
+  .cj-movs { font-size: 0.82rem; margin-top: 0.6rem; }
+  .cj-movs div { display: flex; gap: 0.6rem; justify-content: space-between; padding: 0.25rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
+  .cj-aviso { background: #F6E4DF; color: #7a2a1e; border-radius: 12px; padding: 0.6rem 0.9rem; font-size: 0.86rem; margin-top: 0.8rem; }
+  .cj-acc { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+</style>
+<script>
+/* Caja chica (13-oct-2026). Parcial crudo: PF_CAJA(host, AUTH). El token va PRIMERO.
+   El efectivo de cada dia sale del cierre de PosFile; Maco cuenta cada noche y la pantalla
+   muestra el descuadre y su causa probable. Pagar una factura de aca la saca de Por pagar. */
+window.PF_CAJA = function (HOST, AUTH) {
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function q(n) { return (n < 0 ? '−' : '') + 'Q' + Math.abs(Number(n || 0)).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
+  var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  function diaTxt(iso) { var p = iso.split('-').map(Number); return DIAS[new Date(p[0], p[1] - 1, p[2]).getDay()] + ' ' + ddmm(iso); }
+  var D = null, FORM = null, FACT = null, OCUPADO = false;
+  var CLASE = { 'Cuadra': 'ok', 'Diferencia aceptada': 'abon', 'Faltante': 'mas', 'Sobrante': 'mas', 'Sin conteo': 'pend', 'Falta el cierre': 'pend', 'En curso': 'banco' };
+
+  function cargar() {
+    HOST.innerHTML = '<div class="pg-vacio">Leyendo la caja y los cierres de PosFile…</div>';
+    google.script.run.withSuccessHandler(function (r) { D = r; pintar(); })
+      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
+      .getCajaChica(AUTH);
+  }
+
+  function pintar() {
+    var R = D.resumen, h = '<div class="pg">' +
+      '<p class="pg-intro">La venta en efectivo entra sola con el cierre de PosFile de cada noche. Vos anotás lo que sale, las correcciones del cierre y, al cerrar, <b>cuánto hay en la caja</b>. ' +
+      'Si no cuadra, la pantalla te dice dónde buscar. Una factura pagada desde acá sale de Por pagar.</p>' +
+      '<div class="pg-res"><div><b>' + q(R.saldo) + '</b><span>en caja (esperado)</span></div>' +
+      '<div><b>' + (R.ultimo_conteo ? q(R.ultimo_conteo.q) : '—') + '</b><span>último conteo' + (R.ultimo_conteo ? ' (' + esc(ddmm(R.ultimo_conteo.fecha)) + ')' : '') + '</span></div>' +
+      '<div><b>' + R.descuadres + '</b><span>días con descuadre' + (R.faltante ? ' · faltan ' + q(R.faltante) : '') + (R.sobrante ? ' · sobran ' + q(R.sobrante) : '') + '</span></div>' +
+      '<div><b>' + R.sin_conteo + '</b><span>días sin contar</span></div></div>';
+    var lc = D.lectura_ahora || D.lectura_cierres;
+    if (lc && lc.errores && lc.errores.length) h += '<div class="cj-aviso">La última lectura de los cierres de PosFile (' + esc(String(lc.cuando || '').slice(0, 10)) + ') no pudo leer ' + lc.errores.length + ' correo(s): ' + esc(lc.errores.slice(0, 3).join(' · ')) + '</div>';
+    if (D.lectura_ahora) h += '<p class="pg-nota">Leí ' + D.lectura_ahora.correos + ' correos de PosFile: ' + D.lectura_ahora.nuevos + ' cierres nuevos o releídos.</p>';
+    if (R.sin_cierre) h += '<div class="cj-aviso">' + R.sin_cierre + ' día(s) sin cierre de PosFile. Tocá <b>Leer cierres</b>; si el correo no llegó, escribí el efectivo del cierre en ese día.</div>';
+    if (D.aviso_maestro) h += '<div class="cj-aviso">' + esc(D.aviso_maestro) + '</div>';
+    h += '<div class="pg-tabs"><button type="button" class="pg-b pri" data-f="conteo">Contar la caja</button>' +
+      '<button type="button" class="pg-b" data-f="factura">Pagar factura</button><button type="button" class="pg-b" data-f="salida">Otro pago</button>' +
+      '<button type="button" class="pg-b" data-f="correccion">Corrección del cierre</button><button type="button" class="pg-b" data-f="entrada">Entrada</button>' +
+      (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-f="arranque">Cambiar arranque</button>' : '') +
+      '<span class="pg-sp"></span><button type="button" class="pg-b" data-acc="leer">Leer cierres</button><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
+      '<div id="cj-form">' + form() + '</div>' +
+      D.dias.map(dia).join('') +
+      '<div class="cj-dia"><h3 style="margin:0;font-size:1rem">Arranque · ' + esc(diaTxt(D.arranque.fecha)) + '</h3><p class="pg-nota">' + q(D.arranque.saldo) + ' confirmado. ' + esc(D.arranque.nota) + '</p></div>' +
+      '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Tolerancia: ' + q(D.tolerancia) + '. ' +
+      (D.maestro ? 'Lo que sale de la caja va al maestro (07_Caja_Chica, ' + D.maestro.filas + ' filas) y de ahí al DRE.' : '') + '</p></div>';
+    HOST.innerHTML = h;
+    if (FORM === 'factura' && !FACT) cargarFacturas();
+  }
+
+  function dia(x) {
+    var mal = x.estado === 'Faltante' || x.estado === 'Sobrante', abre = mal || x.estado === 'Sin conteo' || x.estado === 'En curso' || x.estado === 'Falta el cierre';
+    var cta = function (t, n, sub, cls) { return '<span class="' + (cls || '') + '">' + t + (sub ? ' <span class="sub">' + esc(sub) + '</span>' : '') + '</span><span class="' + (cls || '') + '">' + n + '</span>'; };
+    var h = '<details class="cj-dia' + (mal ? ' mal' : '') + '"' + (abre ? ' open' : '') + '><summary><h3>' + esc(diaTxt(x.fecha)) + '</h3><span>' +
+      '<span class="pg-est ' + (CLASE[x.estado] || '') + '">' + esc(x.estado) + (mal ? ' ' + q(x.abierta) : '') + '</span>' +
+      (x.contado !== null ? ' <span class="pg-nota">contado ' + q(x.contado) + '</span>' : ' <span class="pg-nota">esperado ' + q(x.esperado) + '</span>') + '</span></summary>' +
+      '<div class="cj-cta">' + cta('Inicial', q(x.inicial)) +
+      cta('+ Efectivo del cierre', x.efectivo === null ? (x.fecha === D.hoy ? 'llega esta noche' : 'falta') : q(x.efectivo), x.fuente ? x.fuente + (x.cierre ? ' · venta ' + q(x.cierre.total) + ', tarjeta ' + q(x.cierre.tarjeta) : '') : '') +
+      (x.correcciones ? cta('± Correcciones', q(x.correcciones)) : '') + (x.entradas ? cta('+ Entradas', q(x.entradas)) : '') +
+      (x.pagos_facturas ? cta('− Facturas', q(x.pagos_facturas)) : '') + (x.pagos_mercado ? cta('− Mercado sin factura', q(x.pagos_mercado)) : '') +
+      (x.pagos_otros ? cta('− Otros pagos', q(x.pagos_otros)) : '') +
+      cta('= Esperado', q(x.esperado), '', 'tot') +
+      (x.contado !== null ? cta('Contado', q(x.contado)) + cta('Diferencia', q(x.diferencia), x.aceptado ? 'aceptado ' + q(x.aceptado) : '', 'tot') : '') + '</div>' +
+      x.pistas.map(function (p) { return '<div class="cj-pista">' + esc(p) + '</div>'; }).join('');
+    var lin = x.pagos.map(function (p) {
+      return '<div><span>' + (p.mercado ? 'Mercado · ' + esc(p.proveedor) + (p.detalle ? ': ' + esc(p.detalle) : '') : 'Factura ' + esc(p.dte) + ' · ' + esc(p.proveedor)) + ' <span class="pg-nota">(' + esc(p.por) + ')</span></span>' +
+        '<span class="n">−' + q(p.q) + ' <button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button></span></div>';
+    }).concat(x.movs.map(function (m) {
+      var sig = m.tipo === 'SALIDA' ? '−' : m.tipo === 'ENTRADA' ? '+' : '';
+      var et = { SALIDA: 'Pago', ENTRADA: 'Entrada', CORRECCION: 'Corrección', CONTEO: 'Conteo', EFECTIVO_CIERRE: 'Efectivo del cierre (a mano)', ACEPTADO: 'Diferencia aceptada', ARRANQUE: 'Arranque' }[m.tipo];
+      return '<div><span>' + esc(et) + (m.concepto ? ' · ' + esc(m.concepto) : '') + (m.ref ? ' · ' + esc(m.ref) : '') + ' <span class="pg-nota">(' + esc(m.por) + ')</span></span>' +
+        '<span class="n">' + sig + q(m.q) + ' <button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button></span></div>';
+    }));
+    if (lin.length) h += '<div class="cj-movs">' + lin.join('') + '</div>';
+    h += '<div class="cj-acc"><button type="button" class="pg-b" data-f="conteo" data-dia="' + x.fecha + '">' + (x.contado !== null ? 'Contar de nuevo' : 'Contar') + '</button>' +
+      ((x.efectivo === null && x.fecha !== D.hoy) || x.fuente === 'cierre que no cuadra' ? '<button type="button" class="pg-b" data-f="efectivo" data-dia="' + x.fecha + '">Escribir efectivo del cierre</button>' : '') +
+      (mal ? '<button type="button" class="pg-b" data-f="correccion" data-dia="' + x.fecha + '" data-q="' + x.abierta + '">Corrección</button>' : '') +
+      (mal && D.rol === 'dueno' ? '<button type="button" class="pg-b" data-f="aceptar" data-dia="' + x.fecha + '" data-q="' + x.abierta + '">Aceptar diferencia</button>' : '') + '</div>';
+    return h + '</details>';
+  }
+
+  var DIA_FORM = null, Q_FORM = null;
+  function campoFecha() { return '<label>Fecha <input type="date" data-v="fecha" value="' + (DIA_FORM || D.hoy) + '" max="' + D.hoy + '"></label>'; }
+  function form() {
+    if (!FORM) return '';
+    var cab = { conteo: 'Contar la caja', salida: 'Otro pago desde la caja', entrada: 'Entrada de efectivo (no es venta)', correccion: 'Corrección del cierre',
+      efectivo: 'Efectivo del cierre escrito a mano', aceptar: 'Aceptar la diferencia', arranque: 'Cambiar el arranque', factura: 'Pagar factura desde la caja' }[FORM];
+    var h = '<section class="pg-prov" data-panel="' + FORM + '"><h3>' + cab + '</h3><div class="pg-mas">';
+    if (FORM === 'conteo') h += '<p class="pg-nota" style="width:100%">Contá billetes y monedas al cerrar, después de los pagos del día.</p>' + campoFecha() +
+      '<label>Hay en la caja <input type="number" step="0.01" min="0" data-v="monto"></label><label>Nota <input type="text" data-v="nota" placeholder="opcional"></label>';
+    if (FORM === 'salida') h += campoFecha() + '<label>Categoría <select data-v="cat">' + D.categorias.map(function (c) { return '<option value="' + c.k + '">' + esc(c.t) + '</option>'; }).join('') + '</select></label>' +
+      '<label>A quién o dónde <input type="text" data-v="prov" placeholder="ej. La Torre, Marvin"></label><label>Qué fue <input type="text" data-v="concepto" placeholder="ej. azúcar y limones" style="min-width:12rem"></label>' +
+      '<label>Monto <input type="number" step="0.01" min="0" data-v="monto"></label><label>Factura o ticket <input type="text" data-v="ref" placeholder="si hay"></label>' +
+      '<p class="pg-nota" style="width:100%">Si es una factura del FEL, usá <b>Pagar factura</b>: así sale de Por pagar. Las compras de cocina y barra sin factura quedan también en Pagos › Sin factura.</p>';
+    if (FORM === 'entrada') h += campoFecha() + '<label>Qué fue <input type="text" data-v="concepto" placeholder="ej. anticipo cena del 18-oct" style="min-width:14rem"></label><label>Monto <input type="number" step="0.01" min="0" data-v="monto"></label>';
+    if (FORM === 'correccion') h += '<p class="pg-nota" style="width:100%">Cuando una cuenta se cerró con la forma de pago equivocada. Cerrada en efectivo y cobrada con tarjeta: <b>negativo</b>. Cerrada con tarjeta y cobrada en efectivo: <b>positivo</b>.</p>' +
+      campoFecha() + '<label>Monto (±) <input type="number" step="0.01" data-v="monto" value="' + (Q_FORM || '') + '"></label><label>Ticket o documento <input type="text" data-v="ref" placeholder="ej. ticket 44"></label><label>Nota <input type="text" data-v="concepto" placeholder="opcional"></label>';
+    if (FORM === 'efectivo') h += '<p class="pg-nota" style="width:100%">Solo si el correo del cierre no llegó o no se pudo leer. Copialo del cierre impreso de PosFile ("Caja (efectivo) POS"). Si no hubo venta, escribí 0.</p>' +
+      campoFecha() + '<label>Efectivo del cierre <input type="number" step="0.01" min="0" data-v="monto"></label>';
+    if (FORM === 'aceptar') h += '<p class="pg-nota" style="width:100%">Cuando el descuadre no se pudo explicar. Queda anotado y deja de contar como abierto.</p>' +
+      campoFecha() + '<label>Diferencia <input type="number" step="0.01" data-v="monto" value="' + (Q_FORM || '') + '"></label><label>Por qué <input type="text" data-v="concepto" style="min-width:14rem"></label>';
+    if (FORM === 'arranque') h += '<p class="pg-nota" style="width:100%">El saldo contado de un día, desde el que se calcula todo lo que sigue. Hoy: ' + esc(ddmm(D.arranque.fecha)) + ' con ' + q(D.arranque.saldo) + '.</p>' +
+      campoFecha() + '<label>Saldo contado <input type="number" step="0.01" min="0" data-v="monto"></label><label>Nota <input type="text" data-v="concepto" placeholder="ej. conteo con Maco"></label>';
+    if (FORM === 'factura') h += factura();
+    h += '</div><div class="pg-formas" style="margin-top:0.6rem"><button type="button" data-guardar="' + FORM + '">Guardar</button><button type="button" data-acc="cerrar" style="background:#8a8780">Cancelar</button></div><div class="pg-err" data-err></div></section>';
+    return h;
+  }
+  function factura() {
+    if (!FACT) return '<p class="pg-nota">Leyendo las facturas por pagar…</p>';
+    if (FACT.error) return '<p class="pg-err">' + esc(FACT.error) + '</p>';
+    var provs = []; FACT.lista.forEach(function (f) { if (provs.indexOf(f.proveedor) === -1) provs.push(f.proveedor); });
+    var sel = FACT.prov || '';
+    var h = campoFecha() + '<label>Proveedor <select data-v="prov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === sel ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
+    if (sel) h += '<div style="width:100%">' + FACT.lista.filter(function (f) { return f.proveedor === sel; }).map(function (f) {
+      return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-llave="' + esc(f.llave) + '"> DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + (f.saldo < f.total ? ' de ' + q(f.total) : '') + ' <span class="pg-nota">' + esc(f.estado) + '</span></label>';
+    }).join('') + '</div><label>Cantidad pagada <input type="number" step="0.01" min="0" data-v="monto" placeholder="vacío = el saldo"></label><label>Nota <input type="text" data-v="nota" placeholder="ej. se abona la mitad"></label>';
+    return h;
+  }
+  function cargarFacturas() {
+    google.script.run.withSuccessHandler(function (l) { FACT = { lista: l }; repintarForm(); })
+      .withFailureHandler(function (e) { FACT = { error: String(e && e.message || e) }; repintarForm(); })
+      .getFacturasParaCaja(AUTH);
+  }
+  function repintarForm() { var b = HOST.querySelector('#cj-form'); if (b) b.innerHTML = form(); }
+  function v(panel, k) { var el = panel.querySelector('[data-v="' + k + '"]'); return el ? el.value : ''; }
+
+  function llamar(hacer, panel) {
+    if (OCUPADO) return;
+    OCUPADO = true;
+    var err = panel && panel.querySelector('[data-err]');
+    if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    if (err) err.textContent = 'Guardando…';
+    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D = d; FORM = null; FACT = null; pintar(); })
+      .withFailureHandler(function (e) {
+        OCUPADO = false;
+        if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+        if (err) err.textContent = String(e && e.message || e); else alert(String(e && e.message || e));
+      }));
+  }
+
+  HOST.addEventListener('change', function (ev) {
+    var el = ev.target;
+    if (FORM === 'factura' && el.dataset && el.dataset.v === 'prov') { FACT.prov = el.value; var f = v(HOST.querySelector('[data-panel]'), 'fecha'); DIA_FORM = f; repintarForm(); }
+  });
+  HOST.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b || !D) return;
+    var panel = b.closest('[data-panel]');
+    if (b.dataset.acc === 'recargar') { FORM = null; FACT = null; cargar(); return; }
+    if (b.dataset.acc === 'cerrar') { FORM = null; repintarForm(); return; }
+    if (b.dataset.acc === 'leer') {
+      b.disabled = true; b.textContent = 'Leyendo los correos…';
+      llamar(function (r) { r.leerCierresCaja(AUTH); });
+      return;
+    }
+    if (b.dataset.f) {
+      FORM = b.dataset.f; DIA_FORM = b.dataset.dia || null; Q_FORM = b.dataset.q ? Number(b.dataset.q) : null;
+      // la correccion propone el monto que cierra el descuadre: un faltante resta (−), un sobrante suma (+)
+      repintarForm(); HOST.querySelector('#cj-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (FORM === 'factura' && !FACT) cargarFacturas();
+      return;
+    }
+    if (b.dataset.anular) {
+      if (!confirm('¿Anular este movimiento? Queda en la hoja marcado ANULADO.')) return;
+      var id = b.dataset.anular;
+      llamar(function (r) { r.anularMovimientoCaja(AUTH, id); });
+      return;
+    }
+    if (b.dataset.guardar && panel) {
+      var t = b.dataset.guardar, fecha = v(panel, 'fecha') || D.hoy, monto = v(panel, 'monto');
+      if (t === 'conteo') { llamar(function (r) { r.registrarConteoCaja(AUTH, fecha, monto, v(panel, 'nota')); }, panel); return; }
+      if (t === 'factura') {
+        var ks = []; panel.querySelectorAll('[data-llave]').forEach(function (c) { if (c.checked) ks.push(c.dataset.llave); });
+        if (!ks.length) { panel.querySelector('[data-err]').textContent = 'Elegí al menos una factura.'; return; }
+        var nota = v(panel, 'nota');
+        llamar(function (r) { r.pagarFacturaDeCaja(AUTH, ks, fecha, monto === '' ? null : Number(monto), nota); }, panel);
+        return;
+      }
+      var tipo = { salida: 'SALIDA', entrada: 'ENTRADA', correccion: 'CORRECCION', efectivo: 'EFECTIVO_CIERRE', aceptar: 'ACEPTADO', arranque: 'ARRANQUE' }[t];
+      var cat = v(panel, 'cat'), concepto = v(panel, 'concepto'), ref = v(panel, 'ref'), prov = v(panel, 'prov');
+      llamar(function (r) { r.registrarMovimientoCaja(AUTH, tipo, fecha, cat, concepto, monto, ref, prov); }, panel);
+    }
+  });
+  cargar();
+};
+</script>

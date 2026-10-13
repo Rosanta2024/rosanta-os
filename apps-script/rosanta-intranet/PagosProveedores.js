@@ -140,7 +140,7 @@ function _pagAreaPorNit_(filas, iNit, iCat) {
 }
 
 /** Las facturas desde PAG_DESDE_: ni anuladas ni personales, con su area. */
-function pagFacturas_(ss, anteriores, ajenas) {
+function pagFacturas_(ss, anteriores, ajenas, correo) {
   anteriores = anteriores || {};
   var v = ss.getSheetByName('01_FEL_Maestro').getDataRange().getValues();
   var hi = -1;
@@ -181,8 +181,51 @@ function pagFacturas_(ss, anteriores, ajenas) {
       proveedor: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(),
       razon: String(f[iNom] || '').trim(), fecha: pagIso_(d), dia: pagNumDia_(d), total: total, categoria: cat,
       area: PAG_AREA_CAT_[cat] || porNit[nit] || 'ADMIN',
-      grupo: PAG_GRUPO_CAT_[cat] || (PAG_AREA_CAT_[cat] || porNit[nit] ? (PAG_AREA_CAT_[cat] || porNit[nit]) === 'BARRA' ? 'BEBIDAS Y COCTELERIA' : 'ALIMENTOS' : 'ADMIN')
+      grupo: _pagGrupo_(cat, porNit[nit])
     });
+  });
+  // Las que SAT aviso por correo y el FEL del maestro todavia no trae (FelCorreo.js). La
+  // llave mira TODAS las filas del FEL, anuladas incluidas: si el lunes entro, manda esa.
+  if (correo && correo.length) {
+    var enFel = {}, catNit = _pagCatPorNit_(filas, iNit, iC, iP);
+    filas.forEach(function (f) { enFel[pagNit_(f[iNit]) + '|' + String(f[iN] || '').trim().replace(/\.0$/, '')] = 1; });
+    correo.forEach(function (x) {
+      var llave = x.nit + '|' + x.numero, h = catNit[x.nit] || { cat: '', personal: false };
+      if (enFel[llave] || !x.fecha || x.fecha < desde) return;
+      if (x.tipo === 'NCRE' || x.moneda !== 'GTQ' || !(x.total > 0)) return;   // los dolares entran con el FEL
+      if (h.personal || ['PERSONAL', PAG_AJENA_, 'COMISION TARJETA DE CREDITO'].indexOf(h.cat) !== -1) return;
+      enFel[llave] = 1;
+      var cat = h.cat || 'POR CLASIFICAR';
+      out.push({
+        llave: llave, nit: x.nit, dte: x.numero, serie: x.serie, fila: null, por_correo: true,
+        proveedor: x.establecimiento || x.nombre, razon: x.nombre, fecha: pagIso_(x.fecha), dia: pagNumDia_(x.fecha),
+        total: x.total, categoria: cat, area: PAG_AREA_CAT_[cat] || porNit[x.nit] || 'ADMIN', grupo: _pagGrupo_(cat, porNit[x.nit])
+      });
+    });
+  }
+  return out;
+}
+
+/** El grupo que se ve (el del Excel) segun la categoria y el area de mercaderia del NIT. */
+function _pagGrupo_(cat, areaNit) {
+  var a = PAG_AREA_CAT_[cat] || areaNit;
+  return PAG_GRUPO_CAT_[cat] || (a ? (a === 'BARRA' ? 'BEBIDAS Y COCTELERIA' : 'ALIMENTOS') : 'ADMIN');
+}
+
+/** La categoria que mas usa cada NIT en el FEL, y si la mayoria de sus facturas es personal. */
+function _pagCatPorNit_(filas, iNit, iCat, iPers) {
+  var c = {};
+  filas.forEach(function (f) {
+    var n = pagNit_(f[iNit]), k = String(f[iCat] || '').trim();
+    if (!n) return;
+    var x = c[n] = c[n] || { cats: {}, n: 0, pers: 0 };
+    x.n++; if (String(f[iPers] || '').trim() === 'Sí') x.pers++;
+    if (k && k !== 'POR_CLASIFICAR') x.cats[k] = (x.cats[k] || 0) + 1;
+  });
+  var out = {};
+  Object.keys(c).forEach(function (n) {
+    var x = c[n];
+    out[n] = { cat: Object.keys(x.cats).sort(function (a, b) { return x.cats[b] - x.cats[a]; })[0] || '', personal: x.pers * 2 > x.n };
   });
   return out;
 }
@@ -334,7 +377,7 @@ function pagEstado_() {
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
   var movs = pagMovimientos_(), anteriores = {};
   movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
-  var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas), banco = pagPagosBanco_(ss);
+  var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas, fecFacturas_()), banco = pagPagosBanco_(ss);
   var porLlave = {};
   facturas.forEach(function (f) {
     f.pagado = 0; f.favor_usado = 0; f.pagos = []; f.fecha_pagar = ''; f.marca_banco = null;
@@ -423,6 +466,7 @@ function _pagCuadre_(facturas, favor) {
 /** La pantalla: las facturas del area de quien entra, el mercado y el cuadre. */
 function getPagosProveedores(auth) {
   var Q = pagQuien_(auth);
+  var fec = fecLeerSiToca_();   // las facturas que SAT aviso por correo (FelCorreo.js)
   var E = pagEstado_(), ve = function (a) { return Q.areas.indexOf(a) !== -1; };
   var facturas = E.facturas.filter(function (f) { return ve(f.area); });
   var og = function (g) { var i = PAG_GRUPOS_ORDEN_.indexOf(g); return i < 0 ? 99 : i; };
@@ -438,7 +482,8 @@ function getPagosProveedores(auth) {
     // cada saldo a favor anotado, con su id para poder anularlo si se escribio por error
     favores: E.favores.filter(function (m) { return favor[m.nit] !== undefined; }),
     banco_ult: E.banco_ult,
-    por_devolver: _pagPorDevolver_(Q)
+    por_devolver: _pagPorDevolver_(Q),
+    aviso_correo: fec && fec.errores && fec.errores.length ? 'No pude leer todos los avisos del FEL en el correo: ' + fec.errores.slice(0, 2).join(' · ') : ''
   };
   if (Q.rol === 'dueno') {
     out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos;
@@ -493,7 +538,13 @@ function _pagFechaValida_(s, nombre) {
  * proveedor que se aplica (el Excel: "pagar Q340, saldo a favor de 85").
  */
 function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle) {
-  var Q = pagQuien_(auth);
+  _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle);
+  return getPagosProveedores(auth);
+}
+
+/** El pago en si. Q: { nombre, areas }. La Caja chica lo llama con todas las areas (Maco paga
+ *  de la caja facturas de cocina y de barra). */
+function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle) {
   if (PAG_FORMAS_.indexOf(estatus) === -1) throw new Error('Forma de pago desconocida: ' + estatus);
   fechaPagado = _pagFechaValida_(fechaPagado, 'Fecha pagado');
   llaves = [].concat(llaves || []);
@@ -525,7 +576,7 @@ function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorU
     if (usa > 0) filas.push(Object.assign({}, base, { DTE: f.dte, 'CANTIDAD PAGADA': usa, 'ESTATUS DE PAGO': 'Saldo a favor usado' }));
   });
   _pagEscribir_(filas);
-  return getPagosProveedores(auth);
+  return filas.length;
 }
 
 /** Fecha en que se piensa pagar una factura (la columna FECHA DE PAGAR del Excel). */
@@ -619,6 +670,7 @@ function marcarFacturaParaIva(auth, llave, nota) {
   if (Q.rol !== 'dueno') throw new Error('Marcar una factura para reducir IVA lo hace el dueño.');
   var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
   if (!f) throw new Error('No encontre esa factura en Pagos.');
+  if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y todavia no esta en el FEL del maestro. Se puede marcar despues de la carga del lunes.');
   var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
   if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
     '). Si es para reducir IVA, anulá primero esos pagos.');

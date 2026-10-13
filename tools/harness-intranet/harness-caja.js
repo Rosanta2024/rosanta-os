@@ -1,0 +1,133 @@
+/* Harness de la Caja chica (13-oct-2026): corre CajaChica.js real (con Pagos, Cierres y
+   FinanzasDatos) en Node. La config va en memoria: PAGOS_PROVEEDORES y CIERRES_DIARIOS
+   reales si se pasa CONFIG_XLSX_JSON, mas movimientos armados para cada caso de descuadre.
+   Uso: node harness-caja.js */
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm'), crypto = require('crypto');
+const DIR = path.join(process.env.HOME, 'Dev/Rosanta/apps-script/rosanta-intranet');
+function revive(v) {
+  if (v && typeof v === 'object' && '$d' in v) { const [d, t] = v.$d.split('T'); const [y, m, dd] = d.split('-').map(Number); const [hh, mm, ss] = t.split(':').map(Number); return new Date(y, m - 1, dd, hh, mm, ss); }
+  return v === null || v === undefined ? '' : v;
+}
+const maestro = JSON.parse(fs.readFileSync(path.join(__dirname, 'maestro.json')));
+Object.keys(maestro).forEach(k => { maestro[k] = maestro[k].map(r => r.map(revive)); });
+// el espejo no trae la tarjeta del BI (entro al maestro el 5-oct): vacia, para que Finanzas corra
+if (!maestro['06_Tarjeta_Credito_BI']) maestro['06_Tarjeta_Credito_BI'] = [[], [], [], []];
+const CONFIG = { USUARIOS: [['correo', 'rol', 'modulos', 'puede_editar', 'nombre', 'token'],
+  ['restaurante@rosanta.rest', 'dueno', 'finanzas,recetario', 'SI', 'Juanma', 'tok'],
+  ['chef@x.com', 'chef', 'recetario,pagos', 'SI', 'Jeffry', 'tokchef'],
+  ['maco@x.com', 'sala', 'recetario,pagos', 'SI', 'Maco', 'tokmaco'],
+  ['sala2@x.com', 'sala', 'recetario', 'SI', 'Otro', 'toksala']] };
+if (process.env.CONFIG_JSON) Object.assign(CONFIG, JSON.parse(fs.readFileSync(process.env.CONFIG_JSON)));
+Object.keys(CONFIG).forEach(k => { CONFIG[k] = CONFIG[k].map(r => r.map(revive)); });
+const SHEETS = { '1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk': maestro, CONFIG: CONFIG };
+function Sheet(name, R) {
+  const w = () => R.reduce((a, r) => Math.max(a, r.length), 0);
+  const rng = (r, c, nr, nc) => { const g = {
+    getValues: () => { const o = []; for (let i = 0; i < (nr || 1); i++) { const row = R[r - 1 + i] || []; const x = []; for (let j = 0; j < (nc || 1); j++) x.push(row[c - 1 + j] === undefined ? '' : row[c - 1 + j]); o.push(x); } return o; },
+    setValues: v => { v.forEach((row, i) => { R[r - 1 + i] = R[r - 1 + i] || []; row.forEach((x, j) => { R[r - 1 + i][c - 1 + j] = x; }); }); return g; },
+    setValue: x => { R[r - 1] = R[r - 1] || []; R[r - 1][c - 1] = x; return g; },
+    clearContent: () => { for (let i = 0; i < (nr || 1); i++) if (R[r - 1 + i]) for (let j = 0; j < (nc || 1); j++) R[r - 1 + i][c - 1 + j] = ''; while (R.length && R[R.length - 1].every(x => x === '')) R.pop(); return g; },
+    setFontWeight: () => g, setNumberFormat: () => g }; return g; };
+  const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
+    getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
+    getRange: (a, c, nr, nc) => typeof a === 'string' ? rng(1, 1, 1, 1) : rng(a, c, nr, nc), setFrozenRows: () => self };
+  return self;
+}
+function Spreadsheet(id) {
+  const src = SHEETS[id]; if (!src) throw new Error('openById ' + id);
+  return { getId: () => id, getSheetByName: n => src[n] ? Sheet(n, src[n]) : null, insertSheet: n => { src[n] = []; return Sheet(n, src[n]); } };
+}
+let uuid = 0; const PROPS = { CONFIG_SHEET_ID: 'CONFIG' };
+const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
+  PropertiesService: { getScriptProperties: () => ({ getProperty: k => PROPS[k] || null, setProperty: (k, v) => { PROPS[k] = v; } }) },
+  CacheService: { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) },
+  Utilities: { formatDate: d => d.toISOString(), getUuid: () => ('0000000' + (++uuid)).slice(-8) + '-x',
+    DigestAlgorithm: { MD5: 'md5' }, computeDigest: (a, s) => [...crypto.createHash('md5').update(s).digest()], base64Encode: b => Buffer.from(b).toString('base64') },
+  Session: { getActiveUser: () => ({ getEmail: () => '' }) },
+  LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => {} }) },
+  Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
+vm.createContext(ctx);
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js']
+  .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
+// sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
+vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; if (typeof fecLeerSiToca_ === 'function') fecLeerSiToca_ = function () {}; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
+let ok = 0, mal = 0;
+const t = (n, c, info) => { if (c) ok++; else mal++; console.log((c ? 'OK   ' : 'FALLA') + ' ' + n + (info !== undefined ? '  → ' + info : '')); };
+const tira = fn => { try { fn(); return ''; } catch (e) { return e.message; } };
+
+// ---- 1. el calculo puro, con dias armados
+const C = (efectivo, extra) => Object.assign({ efectivo, cuadra: true, gran_total: efectivo + 1000, tarjeta: 1000, documentos: [], gastos_pos: 0 }, extra || {});
+const M = (fecha, tipo, q, extra) => Object.assign({ id: fecha + tipo + q, fecha, tipo, q, categoria: '', concepto: '', ref: '', por: 'Maco' }, extra || {});
+const E = ctx.cchCalcular_({
+  arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-17',
+  cierres: { '2026-10-11': C(500), '2026-10-12': C(297, { documentos: [{ n: '70', q: 621.5 }, { n: '72', q: 297 }] }),
+             '2026-10-13': C(0), '2026-10-14': C(400), '2026-10-15': C(0, { gastos_pos: 80 }) },
+  movs: [M('2026-10-11', 'SALIDA', 100), M('2026-10-11', 'CONTEO', 2261),                 // cuadra: 1861+500-100
+         M('2026-10-12', 'CONTEO', 1936.5),                                               // faltante 621.5 = doc 70
+         M('2026-10-13', 'CONTEO', 1936.5),                                               // sobrante 200 = pago anotado este dia
+         M('2026-10-14', 'CONTEO', 2136.5),                                               // faltante 200, compensa el 13
+         M('2026-10-15', 'CORRECCION', -50, { ref: 't 9' }), M('2026-10-15', 'CONTEO', 2086.5) ],
+  pagos: [{ id: 'p1', fecha: '2026-10-13', q: 200, proveedor: 'Xelac', dte: '1', mercado: false }] });
+const d = f => E.dias.find(x => x.fecha === f);
+t('11-oct cuadra (1,861 + 500 − 100 = 2,261)', d('2026-10-11').estado === 'Cuadra' && d('2026-10-11').esperado === 2261, d('2026-10-11').estado);
+t('12-oct faltante 621.50 y pista del documento 70', d('2026-10-12').estado === 'Faltante' && d('2026-10-12').abierta === -621.5 && /documento 70/.test(d('2026-10-12').pistas.join()), d('2026-10-12').pistas[0]);
+t('13-oct arranca de lo contado el 12 (1,936.50)', d('2026-10-13').inicial === 1936.5);
+t('13-oct sobrante 200 con pista del pago anotado ese dia', d('2026-10-13').estado === 'Sobrante' && /Xelac/.test(d('2026-10-13').pistas.join()), d('2026-10-13').pistas.join(' | '));
+t('14-oct faltante que compensa el 13', d('2026-10-14').estado === 'Faltante' && /Compensa/.test(d('2026-10-14').pistas.join()), d('2026-10-14').pistas.join(' | '));
+t('15-oct con corrección cuadra y avisa gastos del POS', d('2026-10-15').estado === 'Cuadra' && /POS registró/.test(d('2026-10-15').pistas.join()), d('2026-10-15').pistas.join(' | '));
+t('16-oct sin cierre: Falta el cierre', d('2026-10-16').estado === 'Falta el cierre');
+t('17-oct (hoy) en curso', d('2026-10-17').estado === 'En curso');
+t('resumen: 3 descuadres, falta 821.50, sobra 200', E.resumen.descuadres === 3 && E.resumen.faltante === 821.5 && E.resumen.sobrante === 200, JSON.stringify(E.resumen));
+const E2 = ctx.cchCalcular_({ arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-12', cierres: { '2026-10-11': C(0) },
+  movs: [M('2026-10-11', 'CONTEO', 1800), M('2026-10-11', 'ACEPTADO', -61, { concepto: 'no se encontró' })], pagos: [] });
+t('Diferencia aceptada deja de contar como abierta', E2.dias[0].estado === 'Diferencia aceptada' && E2.resumen.descuadres === 0);
+const E3 = ctx.cchCalcular_({ arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-13', cierres: {},
+  movs: [M('2026-10-11', 'ARRANQUE', 1500, { concepto: 'conteo' }), M('2026-10-12', 'EFECTIVO_CIERRE', 0), M('2026-10-12', 'CONTEO', 1500)], pagos: [] });
+t('Un ARRANQUE del dueño reemplaza al del Excel', E3.arranque.saldo === 1500 && E3.dias[0].fecha === '2026-10-12' && E3.dias[0].estado === 'Cuadra', E3.dias[0].estado);
+
+// ---- 2. la pantalla y las escrituras sobre la config en memoria
+t('El chef no entra a la caja', /lleva Maco/.test(tira(() => ctx.getCajaChica('tokchef'))));
+t('Sala sin el modulo pagos no entra', /lleva Maco/.test(tira(() => ctx.getCajaChica('toksala'))));
+const hoy = ctx.medFechaIso_(new Date());
+const mov = (...a) => ctx.registrarMovimientoCaja(...a);
+t('No se anota antes del arranque', /arranca el/.test(tira(() => mov('tokmaco', 'SALIDA', '2026-10-09', 'otro', 'algo', 10, '', ''))));
+t('Maco no acepta diferencias', /dueño/.test(tira(() => mov('tokmaco', 'ACEPTADO', hoy, '', 'x y z', 5, '', ''))));
+t('Corrección pide el ticket', /ticket/.test(tira(() => mov('tokmaco', 'CORRECCION', hoy, '', '', -198, '', ''))));
+let P = ctx.getCajaChica('tokmaco');
+t('Maco ve la caja', P.dias.length > 0, P.dias.length + ' días desde el ' + P.arranque.fecha + ', saldo ' + P.resumen.saldo);
+P = mov('tokmaco', 'SALIDA', hoy, 'mantenimiento', 'manguera', 75, '', 'Cemaco');
+const nPag = () => Math.max(0, (CONFIG.PAGOS_PROVEEDORES || []).length - 1);
+const antes = nPag();
+P = mov('tokmaco', 'SALIDA', hoy, 'cocina', 'limones y menta', 60, '', 'Mercado');
+t('Compra de cocina sin factura va a Pagos como Pagado de caja', nPag() === antes + 1 && P.dias[0].pagos_mercado >= 60, P.dias[0].pagos_mercado);
+P = ctx.registrarConteoCaja('tokmaco', hoy, P.dias[0].esperado - 100, '');
+t('Conteo con 100 menos: faltante', P.dias[0].estado === 'Faltante' && P.dias[0].abierta === -100, P.dias[0].estado + ' ' + P.dias[0].abierta);
+t('Un monto redondo sin otra pista lo dice', P.dias[0].pistas.length > 0, P.dias[0].pistas.join(' | '));
+const filas07 = maestro['07_Caja_Chica'] || [];
+t('El maestro tiene 07_Caja_Chica con las salidas', filas07.length >= 6 && filas07.slice(4).some(r => r[4] === 'MANTENIMIENTO') && filas07.slice(4).some(r => r[4] === 'ALIMENTOS_EFECTIVO'),
+  (filas07.length - 4) + ' filas: ' + filas07.slice(4).map(r => r[4]).join(', '));
+const idSal = P.dias[0].movs.find(m => m.tipo === 'SALIDA').id;
+t('Otro sala no anula lo de Maco', /lleva Maco|anula el dueño/.test(tira(() => ctx.anularMovimientoCaja('toksala', idSal))));
+P = ctx.anularMovimientoCaja('tokmaco', idSal);
+t('Maco anula su salida', !P.dias[0].movs.some(m => m.id === idSal));
+const idMerc = P.dias[0].pagos.find(p => p.mercado).id;
+P = ctx.anularMovimientoCaja('tokmaco', idMerc);
+t('Maco anula su compra de cocina desde la caja (aunque en Pagos es de cocina)', !P.dias[0].pagos.some(p => p.id === idMerc));
+// pagar una factura de cocina desde la caja la saca de Por pagar
+const facts = ctx.getFacturasParaCaja('tokmaco');
+const coc = facts.find(f => f.grupo === 'ALIMENTOS');
+t('Maco ve facturas de cocina para pagar de caja', !!coc, facts.length + ' por pagar');
+if (coc) {
+  P = ctx.pagarFacturaDeCaja('tokmaco', [coc.llave], hoy, null, 'de caja');
+  const sigue = ctx.getFacturasParaCaja('tokmaco').find(f => f.llave === coc.llave);
+  t('La factura pagada de caja sale de Por pagar y aparece en la caja', !sigue && P.dias[0].pagos.some(p => !p.mercado && p.dte === coc.dte), coc.proveedor + ' ' + coc.dte + ' ' + coc.saldo);
+  t('En el maestro va como PAGO_FACTURA_FEL', (maestro['07_Caja_Chica'] || []).slice(4).some(r => r[4] === 'PAGO_FACTURA_FEL'));
+}
+// el DRE lee 07_Caja_Chica sin romperse
+let fd = ''; try { ctx._finDatos_(true); } catch (e) { fd = e.stack.split('\n').slice(0, 4).join(' | '); }
+t('Finanzas corre con la pestaña nueva', fd === '', fd);
+if (!fd) { const F = ctx._finDatos_(true); const cob = F.integridad && F.integridad.cobertura && F.integridad.cobertura['07_Caja_Chica'];
+  t('El DRE cubre 07_Caja_Chica', !!cob, JSON.stringify(cob)); }
+console.log(mal ? mal + ' FALLAS de ' + (ok + mal) : 'todo OK (' + ok + ')');
+process.exit(mal ? 1 : 0);

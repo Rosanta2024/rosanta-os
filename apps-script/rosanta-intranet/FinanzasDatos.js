@@ -589,7 +589,10 @@ var FIN_FUERA = ['DEVOLUCION_INVERSION', 'CARGO_FRAUDULENTO', 'PAGO_TARJETA_CRED
                  'PAGO_FACTURA_FEL',
                  // 28-sep-2026: gasto del año anterior pagado este año (la renta de
                  // diciembre 2025 pagada el 2-ene). Es de 2025: no entra al DRE de 2026.
-                 'PERIODO_ANTERIOR'];
+                 'PERIODO_ANTERIOR',
+                 // 13-oct-2026: el efectivo devuelto a un cliente desde la caja chica (un cobro
+                 // duplicado, 29-ago). Corrige un cobro: no es gasto de la operacion.
+                 'REINTEGRO_CLIENTE'];
 
 // Hoja -> columnas. Seccion 3 de la especificacion.
 var FIN_LIBROS = [
@@ -600,7 +603,12 @@ var FIN_LIBROS = [
   // Tarjeta de credito de Banco Industrial (4132), en uso desde jul-2026. Entro el 5-oct-2026,
   // con las mismas columnas que la BAC. Sus compras llevan la categoria de la FEL del
   // proveedor, asi la regla 15 las casa con su factura y no se cuentan dos veces.
-  { hoja: '06_Tarjeta_Credito_BI',  monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 }
+  { hoja: '06_Tarjeta_Credito_BI',  monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2 },
+  // Caja chica (13-oct-2026, Juanma: lo que sale del efectivo va al DRE). La escribe sola la
+  // intranet (CajaChica.gs) con las columnas de las tarjetas. Las facturas pagadas de la caja
+  // van como PAGO_FACTURA_FEL (ya cuentan por el FEL); el mercado, como compra sin factura.
+  // opcional: hasta que la caja anota algo, la pestaña no existe y no es error.
+  { hoja: '07_Caja_Chica',          monto: 3,  usd: 4, cat: 5,  pers: 6,  desc: 2, opcional: true }
 ];
 
 // 04_Banco_BAC entro al calculo el 4-sep-2026. Antes solo se leia para el saldo
@@ -909,7 +917,11 @@ function _finCalcular_() {
   }
   // Los cuatro libros se leen UNA vez: la regla 15 necesita verlos todos antes de sumar.
   var hojasFin = {};
-  FIN_LIBROS.forEach(function (L) { hojasFin[L.hoja] = ss.getSheetByName(L.hoja).getDataRange().getValues(); });
+  FIN_LIBROS.forEach(function (L) {
+    var sh = ss.getSheetByName(L.hoja);
+    if (!sh && L.opcional) { hojasFin[L.hoja] = []; return; }
+    hojasFin[L.hoja] = sh.getDataRange().getValues();
+  });
   var conFactura = _finPagosConFactura_(hojasFin, anio, usd);
   var facturaMandaN = 0, facturaMandaQ = 0;
   FIN_LIBROS.forEach(function (L) {
@@ -1002,7 +1014,8 @@ function _finCalcular_() {
         // bonos (Juanma, 28-sep-2026). Van al DRE al armar el mes, abajo.
         Sb.nom_banco = (Sb.nom_banco || 0) + q;
         if (cat === 'IGSS') M.igss += q;
-        else if (/BONO|AGUINALDO/i.test(txt)) M.prest += q;
+        // Los extras pagados de la caja chica tampoco estan en la planilla (13-oct-2026)
+        else if (/BONO|AGUINALDO|EXTRA DE PERSONAL/i.test(txt)) M.prest += q;
         continue;
       }
       M.bloques[d[0]] = (M.bloques[d[0]] || 0) + q;

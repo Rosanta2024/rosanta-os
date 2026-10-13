@@ -115,6 +115,7 @@ function _vigContexto_(hoy) {
   try { var k = mktKpisMes_(d.anio, d); ctx.mkt = k.meses[hoy.getMonth() + 1] || null; } catch (e6) { ctx.mkt = null; }
   try { ctx.acciones = medAcciones_(null); } catch (e7) { ctx.acciones = []; }
   try { ctx.cierres = cieTodos_(); } catch (e8) { ctx.cierres = {}; }
+  try { ctx.caja = cchEstado_(false); } catch (e10) { ctx.caja = null; }   // Caja chica (13-oct-2026)
   ctx.invBanco = {};
   ['COCINA', 'BARRA'].forEach(function (a) { try { ctx.invBanco[a] = invBancoContraInventario_(a); } catch (e9) { ctx.invBanco[a] = null; } });
   return ctx;
@@ -227,6 +228,17 @@ function vigiaReglas_(ctx) {
     var ayer = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
     var fechas = Object.keys(ctx.cierres).sort(), ult = fechas.length ? fechas[fechas.length - 1] : null;
     if (ult && !ctx.cierres[ayer]) aviso('dueno', 'No llegó el cierre de PosFile de ayer (el último es del ' + ult + '). La venta del mes queda hasta ese día.');
+  }
+  // V13 · la caja chica de ayer (13-oct-2026): Maco cuenta todas las noches. Un descuadre se
+  // avisa al dueño y a Maco con su causa probable; un dia sin contar, solo a Maco.
+  if (ctx.caja && ctx.caja.dias) {
+    var ayerC = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
+    var DC = ctx.caja.dias.filter(function (x) { return x.fecha === ayerC; })[0];
+    if (DC && (DC.estado === 'Faltante' || DC.estado === 'Sobrante')) {
+      var txC = 'Caja chica de ayer: ' + DC.estado.toLowerCase() + ' de ' + medQ_(Math.abs(DC.abierta)) + ' (esperado ' + medQ_(DC.esperado) + ', contado ' + medQ_(DC.contado) + ').' +
+                (DC.pistas.length ? ' ' + DC.pistas[0] : '');
+      aviso('dueno', txC, true); aviso('sala', txC + ' Revisalo en Pagos › Caja chica.', true);
+    } else if (DC && DC.estado === 'Sin conteo') aviso('sala', 'La caja chica de ayer no se contó. Contala y anotalo en Pagos › Caja chica.');
   }
   // V12 · la experiencia: el promedio de las reseñas nunca baja de 4.8 (piso duro de la vision)
   if (ctx.resenas && ctx.resenas.estrellas_4 !== null && ctx.resenas.estrellas_4 < MED_VISION_.resenas) {

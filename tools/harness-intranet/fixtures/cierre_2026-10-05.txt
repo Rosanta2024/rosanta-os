@@ -1,0 +1,65 @@
+CIERRE DE CAJA 051020260001-051020262215
+
+Generado por: Admin
+
+RESUMEN
+
+Descripción TOTAL
+
+Tarjetas 3,234.50
+
+Caja (efec
+
+vo) POS 1,688.00
+
+CORTESÍA - PROPINA
+
+Descripción TOTAL
+
+Propina 447.5
+
+Cortesía 0
+
+TOTAL GTQ 447.50
+
+VENTAS POR VENDEDORES
+
+Descripción TOTAL
+
+Admin GTQ 2,029.50
+
+Barra Rosanta GTQ 2,893.00
+
+TOTAL GTQ 4,922.50
+
+VENTAS POR DOCUMENTO
+
+VENTAS POR DOCUMENTO Tipo Documento TOTAL
+
+30 Factura GTQ 511.50
+
+31 Factura GTQ 764.50
+
+32 Factura GTQ 753.50
+
+33 Factura GTQ 2,893.00
+
+TOTAL GTQ 4922.50
+
+VENTAS POR PRODUCTO
+
+Descripción Can
+
+dad Descuento TOTAL
+
+Queso Horneado 3.00 GTQ 0.00 GTQ 420.00
+
+TOTAL 42 GTQ 0.00 GTQ 4922.50
+
+GASTOS
+
+Descripción TOTAL
+
+TOTAL GTQ 0.00
+
+© Soported by www.posfile.com • 10/5/2026 10:15:15 PM
