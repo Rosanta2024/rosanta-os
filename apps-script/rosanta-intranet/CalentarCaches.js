@@ -79,7 +79,17 @@ function calentarCaches() {
 
   // Finanzas (M26, tanda 4, 15-sep-2026): el primero que abria la pestaña pagaba el
   // calculo del maestro entero. La respuesta pesa ~25 KB, lejos de los 100 KB del cache.
-  calentar('finanzas', function () { return !c.get(finCacheClave_()); },
+  // 13-oct-2026: tambien se recalcula si el cargador del maestro agrego filas. Antes una
+  // semana cargada a mano no se veia hasta que la cache (3 h) vencia: el tablero siguio
+  // mostrando la S40 con la S41 ya cargada. El reporte semanal se recalcula solo porque
+  // su clave lleva la huella de la ultima semana del motor.
+  var cargaNueva = false;
+  try {
+    cargaNueva = maestroConFilasNuevas_();
+  } catch (e) {
+    fallo.push('filas del maestro: ' + String(e && e.message || e));
+  }
+  calentar('finanzas', function () { return cargaNueva || !c.get(finCacheClave_()); },
            function () { _finDatos_(true); });
 
   // La tarjeta real contra teorico del tablero: corre ingenieriaDeMenu_ una vez por mes.
@@ -89,9 +99,33 @@ function calentarCaches() {
     return !h || !c.get(cmvRealTeoricoClave_(h));
   }, function () { getCmvRealTeorico(''); });
 
+  if (cargaNueva) hecho.push('(el maestro tenia filas nuevas)');
   var linea = 'calentarCaches · reconstruido: ' + (hecho.join(', ') || 'nada') +
               ' · ya estaba: ' + (ya.join(', ') || 'nada') +
               (fallo.length ? ' · FALLO: ' + fallo.join(' | ') : '');
   Logger.log(linea);
   return linea;
+}
+
+/**
+ * Si el maestro tiene filas nuevas desde la ultima vez que se miro (13-oct-2026).
+ * El cargador solo AGREGA filas al final de las hojas base, asi que una carga se nota
+ * en la ultima fila de cada una (S41: ventas 2,013 -> 2,051, FEL 1,097 -> 1,118,
+ * banco 1,155 -> 1,173). Cuesta ~1 s: un openById y seis getLastRow.
+ * La primera vez solo guarda el sello y devuelve false: sin un antes no hay carga que avisar.
+ */
+var MAESTRO_FILAS_SELLO = 'maestro_filas_sello';
+function maestroConFilasNuevas_() {
+  var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+  var sello = ['01_FEL_Maestro', '02_Ventas_Maestro', '03_Banco_Industrial', '04_Banco_BAC',
+               '05_Tarjeta_Credito_BAC', '06_Tarjeta_Credito_BI'].map(function (n) {
+    var h = ss.getSheetByName(n);
+    return n + ':' + (h ? h.getLastRow() : 0);
+  }).join('|');
+  var p = PropertiesService.getScriptProperties();
+  var antes = p.getProperty(MAESTRO_FILAS_SELLO);
+  if (antes === sello) return false;
+  p.setProperty(MAESTRO_FILAS_SELLO, sello);
+  if (antes !== null) Logger.log('calentarCaches · filas del maestro: ' + antes + ' -> ' + sello);
+  return antes !== null;
 }
