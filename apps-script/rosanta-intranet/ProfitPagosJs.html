@@ -96,12 +96,12 @@ window.PF_PAGOS = function (HOST, AUTH) {
     var vence = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoy(); }).length;
     var h = '<div class="pg">' +
       '<h2>Pagos a proveedores</h2><p class="pg-intro">Las facturas llegan solas del FEL con la carga de los lunes. Cuando pagues, tocá <b>Pagar</b> y elegí cómo. ' +
-      'Lo que no trae factura se anota en <b>+ Compra de mercado</b>. Entran las facturas desde el ' + esc(ddmm(D.desde)) + '; lo anterior quedó en COMPRAS_2026. ' +
+      'Lo que no trae factura se anota en <b>+ Compra de mercado</b>. Entran las facturas desde el ' + esc(ddmm(D.desde)) + ': las de antes del 28/09 que COMPRAS_2026 da por pagadas ya cuentan como pagadas. ' +
       'Las facturas marcadas <b>Banco</b> se confirman solas cuando se carga el estado de cuenta' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</p>' +
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
-      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura'].concat(D.rol === 'dueno' ? ['balance:Balance del año', 'banco:Banco sin casar'] : []).map(function (t) {
+      ['pagar:Por pagar', 'pagadas:Pagadas', 'cuadre:Cuadre por proveedor', 'mercado:Sin factura', 'equipo:Por devolver'].concat(D.rol === 'dueno' ? ['balance:Balance del año', 'banco:Banco sin casar', 'iva:Para reducir IVA'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
       '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
@@ -209,6 +209,43 @@ window.PF_PAGOS = function (HOST, AUTH) {
           carne.map(function (x) { return esc(x.proveedor) + ' ' + q(x.facturado) + ' en ' + x.n + ' facturas'; }).join(' · ') + '.</p>' : '') +
         '<p class="pg-nota" style="margin-top:0.6rem">Un número negativo es más pagado que facturado: facturas de 2025 pagadas este año, o facturas que no llegaron al FEL. Calculado ' + esc(BAL.gen) + '.</p>';
     }
+    if (TAB === 'equipo') {
+      // Lo que José y Jeffry pagaron de su bolsa y Rosanta les devuelve (13-oct-2026).
+      var PD = D.por_devolver || [];
+      return '<p class="pg-nota">Lo que se pagó con <b>Pagó Maco</b> o <b>Pagó Jeffry</b> (facturas y compras de mercado) menos lo que ya se les devolvió.' +
+        (D.rol === 'dueno' ? ' Cuando les devuelvas, anotalo acá.' : '') + '</p>' +
+        PD.map(function (x) {
+          return '<section class="pg-prov" data-panel="dev-' + esc(x.nombre) + '"><header><div><span class="pg-area">' + esc(x.forma) + '</span><h3>' + esc(x.nombre) + '</h3></div>' +
+            '<div class="n"><b>' + q(x.pendiente) + '</b> por devolver</div></header>' +
+            '<p class="pg-nota">Pagó ' + q(x.pagado) + ' en ' + x.n + ' pagos · ya se le devolvió ' + q(x.devuelto) + '.</p>' +
+            (D.rol === 'dueno' && x.pendiente > 0.01 ? '<div class="pg-mas"><label>Cantidad <input type="number" step="0.01" min="0" data-f="monto" value="' + x.pendiente.toFixed(2) + '"></label>' +
+              '<label>Fecha <input type="date" data-f="fecha" value="' + hoy() + '"></label><label>Nota <input type="text" data-f="nota" placeholder="ej. transferencia, efectivo"></label>' +
+              '<button type="button" class="pg-b pri" data-devolver="' + esc(x.nombre) + '">Registrar devolución</button></div><div class="pg-err" data-err></div>' : '') +
+            (x.movs.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Cantidad</th><th>Qué</th><th></th></tr>' +
+              x.movs.map(function (m) {
+                var dev = /^Devuelto/.test(m.estatus);
+                return '<tr><td>' + esc(ddmm(m.fecha)) + '</td><td>' + esc(dev ? 'Devolución' : m.proveedor) + '</td><td>' + esc(m.dte === 'SIN FACTURA' ? '' : m.dte) + '</td>' +
+                  '<td class="n">' + (dev ? '−' : '') + q(m.q) + '</td><td>' + esc(m.detalle || '') + '</td>' +
+                  '<td>' + (m.id && (!dev || D.rol === 'dueno') ? '<button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button>' : '') + '</td></tr>';
+              }).join('') + '</table></div>' : '<div class="pg-vacio">Sin pagos de su bolsa anotados.</div>') +
+            '</section>';
+        }).join('');
+    }
+    if (TAB === 'iva') {
+      // Facturas para reducir IVA (13-oct-2026): FACTURA_AJENA en el FEL. Fuera de Pagos y del DRE.
+      var L = D.para_iva || [], sumI = function (k) { return L.reduce(function (a, x) { return a + x[k]; }, 0); };
+      return '<p class="pg-nota">Facturas a nombre de CORSAGA que no son de la operación: solo sirven para el crédito fiscal del IVA. ' +
+        'No se pagan desde acá, no entran al DRE ni a ningún gasto de los reportes. Se marcan desde <b>Por pagar</b> → Pagar → <b>Es para reducir IVA</b>. ' +
+        'En el maestro están en la pestaña <b>' + esc(D.hoja_iva) + '</b>.</p>' +
+        (D.aviso_iva ? '<p class="pg-err">' + esc(D.aviso_iva) + '</p>' : '') +
+        '<div class="pg-res" style="margin-top:0.8rem"><div><b>' + L.length + '</b><span>facturas este año</span></div><div><b>' + q(sumI('total')) + '</b><span>total</span></div>' +
+        '<div><b>' + q(sumI('iva')) + '</b><span>IVA (crédito fiscal)</span></div></div>' +
+        (L.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Total</th><th class="n">IVA</th><th></th></tr>' +
+          L.map(function (x) {
+            return '<tr><td>' + esc(ddmm(x.fecha)) + '</td><td>' + esc(x.proveedor) + '</td><td>' + esc(x.dte) + '</td><td class="n">' + q(x.total) + '</td><td class="n">' + q(x.iva) + '</td>' +
+              '<td><button type="button" class="pg-x" data-ivadev="' + esc(x.llave) + '">devolver</button></td></tr>';
+          }).join('') + '</table></div>' : '<div class="pg-vacio">Todavía no hay facturas para reducir IVA este año.</div>');
+    }
     if (TAB === 'banco') {
       var fila = function (p) { return '<tr><td>' + esc(ddmm(p.fecha)) + '</td><td class="n">' + q(p.q) + '</td><td>' + esc(p.glosa) + '</td><td>' + esc(p.categoria) + '</td></tr>'; };
       var cab = '<tr><th>Fecha</th><th class="n">Monto</th><th>Glosa del banco</th><th>Categoría</th></tr>';
@@ -227,6 +264,7 @@ window.PF_PAGOS = function (HOST, AUTH) {
     return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
       '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>. Tocá cómo se pagó:</div>' +
       '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+      (uno && D.rol === 'dueno' ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
       '<details><summary class="pg-nota" style="cursor:pointer">Más opciones</summary><div class="pg-mas">' +
       '<label>Fecha pagado <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       (uno ? '<label>Cantidad pagada <input type="number" step="0.01" min="0" data-f="monto" placeholder="' + tot.toFixed(2) + '"></label>' : '') +
@@ -327,6 +365,22 @@ window.PF_PAGOS = function (HOST, AUTH) {
           ma = valor(panel, 'area') || D.areas[0], mforma = b.dataset.merc;
       llamar(function (r) { r.registrarCompraMercado(AUTH, mf, mp, md, mq, ma, mforma); }, panel);
       return;
+    }
+    if (b.dataset.iva && panel) {
+      if (!confirm('¿La factura ' + b.dataset.iva.split('|')[1] + ' es ajena al giro y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE, y en el maestro pasa a FACTURA_AJENA. Se puede devolver desde la pestaña Para reducir IVA.')) return;
+      var kIva = b.dataset.iva, nIva = valor(panel, 'nota');
+      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kIva, nIva); }, panel); return;
+    }
+    if (b.dataset.devolver && panel) {
+      var quien = b.dataset.devolver, dq = Number(valor(panel, 'monto')), dfe = valor(panel, 'fecha') || hoy(), dno = valor(panel, 'nota');
+      if (!(dq > 0)) { panel.querySelector('[data-err]').textContent = 'Escribí cuánto le devolviste.'; return; }
+      if (!confirm('¿Registrar que le devolviste ' + q(dq) + ' a ' + quien + '?')) return;
+      llamar(function (r) { r.registrarDevolucionEquipo(AUTH, quien, dq, dfe, dno); }, panel); return;
+    }
+    if (b.dataset.ivadev) {
+      if (!confirm('¿Devolver esta factura a su categoría de siempre? Vuelve a Pagos y al DRE.')) return;
+      var kDev = b.dataset.ivadev;
+      llamar(function (r) { r.devolverFacturaParaIva(AUTH, kDev); }); return;
     }
     if (b.dataset.anular) { if (confirm('¿Anular este movimiento? Queda en la hoja marcado ANULADO.')) { var id = b.dataset.anular; llamar(function (r) { r.anularMovimientoPago(AUTH, id); }); } return; }
     if (b.dataset.favor) {

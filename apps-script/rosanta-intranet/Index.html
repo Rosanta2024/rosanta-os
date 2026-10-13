@@ -47,6 +47,14 @@
         <? if ((rolTs === 'chef' || rolTs === 'sala') && usuarioTieneModulo(usuario, 'pagos')) { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=pagos<?!= qs ?>">Pagar facturas</a><? } ?>
       </section>
     <? } ?>
+    <? if (rolTs === 'dueno' || ((rolTs === 'chef' || rolTs === 'sala') && usuarioTieneModulo(usuario, 'pagos'))) { ?>
+      <!-- Por devolver al equipo (13-oct-2026): lo que José y Jeffry pagaron de su bolsa a proveedores. -->
+      <section class="ts pd" id="pd" aria-live="polite">
+        <div class="ts-l"><?= rolTs === 'dueno' ? 'Por devolver al equipo' : 'Rosanta te debe' ?></div>
+        <div class="ts-items" id="pd-items"><span class="ts-c">Sumando lo pagado de su bolsa…</span></div>
+        <a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=pagos<?!= qs ?>">Ver en Pagos → Por devolver</a>
+      </section>
+    <? } ?>
     <div class="tarjetas">
       <? if (String(usuario.rol || '').toLowerCase() === 'dueno') { ?>
         <a class="tarjeta" href="<?= urlBase ?>?page=tablero<?!= qs ?>">
@@ -148,6 +156,27 @@
         })
         .withFailureHandler(function (e) { el.innerHTML = '<span class="ts-c">No pude leer tus números: ' + esc(e && e.message || e) + '</span>'; })
         .getMiSemana(AUTH);
+    })();
+  </script>
+  <script>
+    (function () {
+      var el = document.getElementById('pd-items');
+      if (!el) return;
+      var AUTH = '<?= authToken ?>';
+      function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      google.script.run
+        .withSuccessHandler(function (r) {
+          var P = (r && r.personas) || [];
+          if (!P.length) { document.getElementById('pd').style.display = 'none'; return; }
+          el.innerHTML = P.map(function (x) {
+            return '<div class="ts-i"><b style="color:' + (x.pendiente > 0.01 ? '#A33A2A' : '#2E6B3F') + '">' + q(x.pendiente) + '</b><span>' +
+                   esc(r.rol === 'dueno' ? x.nombre : 'por ' + x.n + ' pagos de tu bolsa') + '<br>pagó ' + q(x.pagado) + ' · devuelto ' + q(x.devuelto) + '</span></div>';
+          }).join('') + (r.rol === 'dueno' && P.length > 1 ? '<div class="ts-i"><b>' + q(P.reduce(function (a, x) { return a + x.pendiente; }, 0)) + '</b><span>total<br>por devolver</span></div>' : '');
+        })
+        .withFailureHandler(function (e) { el.innerHTML = '<span class="ts-c">No pude sumar lo por devolver: ' + esc(e && e.message || e) + '</span>'; })
+        .getPorDevolverEquipo(AUTH);
     })();
   </script>
 </body>

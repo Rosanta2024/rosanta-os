@@ -9,6 +9,9 @@
  * Decisiones de Juanma (29-sep-2026):
  *  - COMPRAS_2026 queda como historial de solo lectura; no se migra.
  *  - Entran las facturas desde el 28-sep-2026 (PAG_DESDE_). Lo anterior vive en el Excel.
+ *    13-oct-2026 (Juanma): "todas las no pagadas deben aparecer". PAG_DESDE_ pasa al 1-ago y
+ *    lo de antes del arranque (PAG_ARRANQUE_) que COMPRAS_2026 da por pagado cuenta como
+ *    pagado (_pagPagadasCompras_). El banco casa el resto como siempre.
  *  - Modulo nuevo 'pagos'. El chef ve cocina, sala (Maco) ve barra, el dueño todo.
  *  - Las columnas son las del Excel: AREA · PROVEEDOR · DTE · FECHA DE PAGAR ·
  *    FECHA PAGADO · CANTIDAD PAGADA · ESTATUS DE PAGO.
@@ -21,7 +24,9 @@
 var PAG_HOJA_ = 'PAGOS_PROVEEDORES';
 var PAG_COLS_ = ['AREA', 'PROVEEDOR', 'DTE', 'FECHA DE PAGAR', 'FECHA PAGADO', 'CANTIDAD PAGADA',
                  'ESTATUS DE PAGO', 'NIT', 'DETALLE', 'ESCRITO POR', 'REGISTRADO', 'ID'];
-var PAG_DESDE_ = '2026-09-28';
+var PAG_DESDE_ = '2026-08-01';
+// El dia que esta pantalla reemplazo a COMPRAS_2026: lo pagado antes se anoto alla.
+var PAG_ARRANQUE_ = '2026-09-28';
 // Formas de pago que se eligen con un toque. 'Retiro de cajero' es solo para el mercado.
 var PAG_FORMAS_ = ['Pagado de caja', 'Tarjeta', 'Banco', 'Pagó Maco', 'Pagó Jeffry'];
 var PAG_FORMAS_MERCADO_ = ['Retiro de cajero', 'Pagado de caja', 'Tarjeta', 'Pagó Maco', 'Pagó Jeffry'];
@@ -42,6 +47,19 @@ var PAG_GRUPOS_ORDEN_ = ['ALIMENTOS', 'BEBIDAS Y COCTELERIA', 'GAS', 'MANTENIMIE
 // la fila guarda el SALDO que falta en CANTIDAD PAGADA y la diferencia con el total cuenta
 // como pagada antes. Asi entraron las de la pestaña SEMANA #19 de COMPRAS_2026 (29-sep-2026).
 var PAG_ANTERIOR_ = 'Pendiente anterior';
+// Facturas para reducir IVA (Juanma, 13-oct-2026): facturas a nombre de CORSAGA ajenas al
+// giro, pedidas solo para el credito fiscal. El boton escribe FACTURA_AJENA en la Categoría
+// de esa factura en 01_FEL_Maestro (pisa la formula de esa fila): sale de Pagos y del DRE
+// (FIN_FUERA) y los reportes del maestro no la suman en ninguna categoria de gasto. El IVA lo
+// sigue declarando el contador desde el FEL. La pestaña PAG_HOJA_IVA_ del maestro las lista.
+var PAG_AJENA_ = 'FACTURA_AJENA';
+var PAG_HOJA_IVA_ = '01c_FEL_Para_IVA';
+var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
+// Lo que José (Maco) y Jeffry pagan de su bolsa a proveedores y Rosanta les devuelve
+// (Juanma, 13-oct-2026). Suma "Pagó X" (facturas y mercado) menos "Devuelto a X".
+// La devolucion la anota el dueño; va con AREA ADMIN, asi solo el dueño la anula.
+var PAG_EQUIPO_ = [{ nombre: 'José', forma: 'Pagó Maco', devuelto: 'Devuelto a Maco', rol: 'sala' },
+                   { nombre: 'Jeffry', forma: 'Pagó Jeffry', devuelto: 'Devuelto a Jeffry', rol: 'chef' }];
 // Proveedores sin factura que mas se usan, para el boton de mercado. Medido en las 19
 // pestañas de 2026 de COMPRAS_2026 (29-sep-2026); arriba se suman los que ya se anotaron aca.
 var PAG_PROV_MERCADO_ = ['Mercado', 'Carnicería Nueva Concepción', 'Mariscos', 'La Torre', 'La Bodegona',
@@ -122,7 +140,7 @@ function _pagAreaPorNit_(filas, iNit, iCat) {
 }
 
 /** Las facturas desde PAG_DESDE_: ni anuladas ni personales, con su area. */
-function pagFacturas_(ss, anteriores) {
+function pagFacturas_(ss, anteriores, ajenas) {
   anteriores = anteriores || {};
   var v = ss.getSheetByName('01_FEL_Maestro').getDataRange().getValues();
   var hi = -1;
@@ -134,9 +152,16 @@ function pagFacturas_(ss, anteriores) {
       iEst = c('Establecimiento'), iE = c('Estado'), iT = c('Gran_Total'), iC = c('Categoría'), iP = c('Es_Personal'),
       iTipo = H.indexOf('Tipo_DTE');
   var filas = v.slice(hi + 1), porNit = _pagAreaPorNit_(filas, iNit, iC);
-  var desde = pagDia_(PAG_DESDE_), out = [];
-  filas.forEach(function (f) {
+  var desde = pagDia_(PAG_DESDE_), out = [], iIva = H.indexOf('IVA');
+  filas.forEach(function (f, k) {
     var d = pagDia_(f[iF]);
+    // Las de reducir IVA van a su lista (todo el año, sin importar PAG_DESDE_)
+    if (ajenas && d && String(f[iC] || '').trim() === PAG_AJENA_ && String(f[iE] || '').trim() !== 'Anulado') {
+      var nA = String(f[iN] || '').trim().replace(/\.0$/, '');
+      ajenas.push({ llave: pagNit_(f[iNit]) + '|' + nA, nit: pagNit_(f[iNit]), dte: nA, fila: hi + k + 2, fecha: pagIso_(d),
+        proveedor: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(), total: _finR_(_finNum_(f[iT])),
+        iva: iIva >= 0 ? _finR_(_finNum_(f[iIva])) : 0 });
+    }
     var nitF = pagNit_(f[iNit]), numF = String(f[iN] || '').trim().replace(/\.0$/, '');
     if (!d || (d < desde && !anteriores[nitF + '|' + numF])) return;
     if (String(f[iE] || '').trim() === 'Anulado') return;
@@ -152,7 +177,7 @@ function pagFacturas_(ss, anteriores) {
     if (cat === 'COMISION TARJETA DE CREDITO') return;
     var numero = String(f[iN] || '').trim().replace(/\.0$/, '');
     out.push({
-      llave: nit + '|' + numero, nit: nit, dte: numero, serie: String(f[iS] || '').trim(),
+      llave: nit + '|' + numero, nit: nit, dte: numero, serie: String(f[iS] || '').trim(), fila: hi + k + 2,
       proveedor: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(),
       razon: String(f[iNom] || '').trim(), fecha: pagIso_(d), dia: pagNumDia_(d), total: total, categoria: cat,
       area: PAG_AREA_CAT_[cat] || porNit[nit] || 'ADMIN',
@@ -278,12 +303,38 @@ function _pagCasarBanco_(facturas, pagos) {
   return { casados: casados, dudosos: dudosos, sueltos: sueltos };
 }
 
+/**
+ * Los DTE que COMPRAS_2026 (el Excel de antes del arranque) da por pagados: { dte: {hoja, estatus, fecha} }.
+ * Pagada = la fila trae estatus de pago (caja, tarjeta, BI, Maco...), fecha pagado o referencia
+ * del banco. Una fila sin nada de eso estaba por pagar. Se guarda 6 h: el Excel ya no cambia.
+ */
+function _pagPagadasCompras_() {
+  var cache = CacheService.getScriptCache(), k = 'pag_compras_pagadas_v1', g = cache.get(k);
+  if (g) { try { return JSON.parse(g); } catch (e) { /* se vuelve a leer */ } }
+  var out = {};
+  try {
+    SpreadsheetApp.openById(PAG_COMPRAS_ID_).getSheets().forEach(function (sh) {
+      var hoja = sh.getName().trim();
+      sh.getDataRange().getValues().forEach(function (row) {
+        var dtes = String(row[2] == null ? '' : row[2]).replace(/\.0\b/g, '').match(/\d{6,}/g);
+        if (!dtes) return;
+        var est = String(row[6] == null ? '' : row[6]).trim(), fp = row[4] instanceof Date ? pagIso_(row[4]) : '';
+        var ref = String(row[7] == null ? '' : row[7]).trim();
+        if (!est && !fp && !/\d{5,}/.test(ref)) return;
+        dtes.forEach(function (d) { if (!out[d]) out[d] = { hoja: hoja, estatus: (est || (ref ? 'Ref. ' + ref.replace(/\.0$/, '') : 'Pagado')).slice(0, 60), fecha: fp }; });
+      });
+    });
+    try { cache.put(k, JSON.stringify(out), 6 * 60 * 60); } catch (e) { /* muy grande: se lee cada vez */ }
+  } catch (e) { Logger.log('No pude leer COMPRAS_2026: ' + e.message); }
+  return out;
+}
+
 /** Arma el estado de cada factura y el cuadre por proveedor. Sin filtrar por area. */
 function pagEstado_() {
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
   var movs = pagMovimientos_(), anteriores = {};
   movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
-  var facturas = pagFacturas_(ss, anteriores), banco = pagPagosBanco_(ss);
+  var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas), banco = pagPagosBanco_(ss);
   var porLlave = {};
   facturas.forEach(function (f) {
     f.pagado = 0; f.favor_usado = 0; f.pagos = []; f.fecha_pagar = ''; f.marca_banco = null;
@@ -293,6 +344,8 @@ function pagEstado_() {
   movs.forEach(function (m) {
     if (m.dte === PAG_SIN_FACTURA_) { mercado.push(m); return; }
     if (m.estatus === 'Saldo a favor') { favor[m.nit] = (favor[m.nit] || 0) + m.q; favores.push(m); return; }
+    if (m.estatus === PAG_IVA_MARCA_ || m.estatus === PAG_IVA_DEVUELTA_) return;   // bitacora, no es pago
+    if (PAG_EQUIPO_.some(function (e) { return e.devuelto === m.estatus; })) return;   // devolucion al equipo, no es pago a proveedor
     var f = porLlave[m.nit + '|' + m.dte];
     if (!f) return;
     if (m.estatus === 'Programado') { f.fecha_pagar = m.fecha_pagar; return; }
@@ -309,6 +362,16 @@ function pagEstado_() {
     else if (m.estatus === 'Banco') f.marca_banco = pagNumDia_(pagDia_(m.fecha_pagado) || new Date());
     else f.pagado += m.q;
     f.pagos.push({ id: m.id, fecha: m.fecha_pagado, q: m.q, estatus: m.estatus, por: m.por, detalle: m.detalle });
+  });
+  // Antes del arranque los pagos se anotaban en COMPRAS_2026: lo que alla esta pagado no se debe.
+  // Las traidas a mano (Pendiente anterior) mandan: alguien ya reviso que se deben.
+  var arranque = pagIso_(pagDia_(PAG_ARRANQUE_)), compras = _pagPagadasCompras_();
+  facturas.forEach(function (f) {
+    if (f.anterior || f.fecha >= arranque || f.pagado > 0.01 || f.marca_banco != null) return;
+    var c = compras[f.dte];
+    if (!c) return;
+    f.pagado = f.total;
+    f.pagos.push({ id: '', fecha: c.fecha, q: f.total, estatus: 'Pagado antes (COMPRAS_2026)', por: c.hoja, detalle: c.estatus });
   });
   // El banco confirma lo que falta pagar
   var abiertas = facturas.filter(function (f) { return f.total - f.pagado - f.favor_usado > 0.01; }).map(function (f) {
@@ -332,7 +395,7 @@ function pagEstado_() {
     delete f.dia; delete f.marca_banco;
   });
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
-  return { facturas: facturas, mercado: mercado, favor: favor, favores: favores,
+  return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
            banco_ult: banco.reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '') };
 }
@@ -374,9 +437,18 @@ function getPagosProveedores(auth) {
     proveedores_mercado: _pagProvMercado_(E.mercado), grupos: PAG_GRUPOS_ORDEN_,
     // cada saldo a favor anotado, con su id para poder anularlo si se escribio por error
     favores: E.favores.filter(function (m) { return favor[m.nit] !== undefined; }),
-    banco_ult: E.banco_ult
+    banco_ult: E.banco_ult,
+    por_devolver: _pagPorDevolver_(Q)
   };
-  if (Q.rol === 'dueno') { out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; }
+  if (Q.rol === 'dueno') {
+    out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos;
+    var anio = String(new Date().getFullYear());
+    out.para_iva = E.ajenas.filter(function (a) { return a.fecha.slice(0, 4) === anio; })
+      .sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
+    out.hoja_iva = PAG_HOJA_IVA_;
+    // La pestaña del maestro existe desde que el dueño abre Pagos, aunque no marque nada
+    try { _pagHojaIva_(SpreadsheetApp.openById(FIN_MAESTRO_ID)); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
+  }
   return out;
 }
 
@@ -497,6 +569,140 @@ function traerFacturaAnterior(auth, dte, saldo, nit, detalle) {
     throw new Error('La factura ' + dte + ' ya está en la lista.');
   _pagEscribir_([{ AREA: '', PROVEEDOR: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(), NIT: pagNit_(f[iNit]), DTE: dte,
                    'CANTIDAD PAGADA': saldo, 'ESTATUS DE PAGO': PAG_ANTERIOR_, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+  return getPagosProveedores(auth);
+}
+
+/** La columna Categoría de 01_FEL_Maestro: { hoja, col (1-based) }. */
+function _pagColCategoria_(ss) {
+  var sh = ss.getSheetByName('01_FEL_Maestro'), v = sh.getRange(1, 1, 10, sh.getLastColumn()).getValues();
+  for (var i = 0; i < v.length; i++) {
+    var H = v[i].map(function (h) { return String(h || '').trim(); });
+    if (H.indexOf('NIT_Emisor') >= 0) return { hoja: sh, col: H.indexOf('Categoría') + 1, cNit: H.indexOf('NIT_Emisor') + 1, cDte: H.indexOf('Numero_DTE') + 1 };
+  }
+  throw new Error('No encontre el encabezado de 01_FEL_Maestro.');
+}
+
+/** Confirma que la fila del FEL sigue siendo la factura (NIT + DTE) antes de escribirle. */
+function _pagFilaEs_(C, fila, nit, dte) {
+  var r = C.hoja.getRange(fila, 1, 1, Math.max(C.cNit, C.cDte)).getValues()[0];
+  if (pagNit_(r[C.cNit - 1]) !== nit || String(r[C.cDte - 1] || '').trim().replace(/\.0$/, '') !== dte)
+    throw new Error('El FEL cambio mientras tanto: tocá Actualizar y probá de nuevo.');
+}
+
+/** La pestaña del maestro con las facturas para reducir IVA. Se crea una vez; despues se llena sola. */
+function _pagHojaIva_(ss) {
+  if (ss.getSheetByName(PAG_HOJA_IVA_)) return;
+  var sh = ss.insertSheet(PAG_HOJA_IVA_), F = "'01_FEL_Maestro'!";
+  sh.getRange('A1').setValue('Facturas para reducir IVA (FACTURA_AJENA)').setFontWeight('bold');
+  sh.getRange('A2').setValue('A nombre de CORSAGA pero ajenas al giro: solo sirven para el credito fiscal. No entran en Pagos, ni en el DRE, ni en ninguna categoria de gasto de los reportes. ' +
+    'Se marcan con el boton "Es para reducir IVA" de Pagos en la intranet. Esta pestaña se llena sola desde 01_FEL_Maestro: no escribir aca.');
+  sh.getRange('I1:K1').setValues([['Facturas', 'Total', 'IVA']]).setFontWeight('bold');
+  sh.getRange('I2:K2').setFormulas([[
+    '=COUNTIFS(' + F + 'N5:N4051,"' + PAG_AJENA_ + '",' + F + 'H5:H4051,"Vigente")',
+    '=SUMIFS(' + F + 'J5:J4051,' + F + 'N5:N4051,"' + PAG_AJENA_ + '",' + F + 'H5:H4051,"Vigente")',
+    '=SUMIFS(' + F + 'K5:K4051,' + F + 'N5:N4051,"' + PAG_AJENA_ + '",' + F + 'H5:H4051,"Vigente")']]);
+  sh.getRange('A4:K4').setValues([['Fecha', 'Tipo_DTE', 'Serie', 'Numero_DTE', 'NIT_Emisor', 'Nombre_Emisor', 'Establecimiento', 'Estado', 'Moneda', 'Gran_Total', 'IVA']]).setFontWeight('bold');
+  // Sin llaves {..}: el separador de columnas de un arreglo cambia con la configuracion regional.
+  sh.getRange('A5').setFormula('=IFERROR(SORT(FILTER(' + F + 'A5:K4051,' + F + 'N5:N4051="' + PAG_AJENA_ + '",' +
+    F + 'H5:H4051="Vigente"),1,FALSE),"Sin facturas para IVA")');
+  sh.getRange('A5:A').setNumberFormat('dd/mm/yyyy');
+  sh.setFrozenRows(4);
+}
+
+/**
+ * Marca una factura como "para reducir IVA" (solo el dueño): escribe FACTURA_AJENA en su
+ * Categoría del FEL. No se puede si ya tiene pagos anotados o casados con el banco: una
+ * factura que Rosanta pago es de la operacion.
+ */
+function marcarFacturaParaIva(auth, llave, nota) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Marcar una factura para reducir IVA lo hace el dueño.');
+  var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
+  if (!f) throw new Error('No encontre esa factura en Pagos.');
+  var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
+  if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
+    '). Si es para reducir IVA, anulá primero esos pagos.');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), C = _pagColCategoria_(ss);
+    _pagFilaEs_(C, f.fila, f.nit, f.dte);
+    C.hoja.getRange(f.fila, C.col).setValue(PAG_AJENA_);
+    _pagHojaIva_(ss);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'CANTIDAD PAGADA': f.total, 'ESTATUS DE PAGO': PAG_IVA_MARCA_,
+                   DETALLE: ('Antes ' + f.categoria + '. ' + String(nota || '')).trim().slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+  try { CacheService.getScriptCache().remove(finCacheClave_()); } catch (e) { /* el DRE se pone al dia cuando venza su cache */ }
+  return getPagosProveedores(auth);
+}
+
+/**
+ * Devuelve una factura marcada para IVA a su categoria de siempre (solo el dueño): vuelve a
+ * poner la formula que toma la categoria de 00_Proveedores. Si el proveedor entero esta como
+ * FACTURA_AJENA (la gasolinera), se cambia en 00_Proveedores, no aca.
+ */
+function devolverFacturaParaIva(auth, llave) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Devolver una factura de reducir IVA lo hace el dueño.');
+  var a = pagEstado_().ajenas.filter(function (x) { return x.llave === llave; })[0];
+  if (!a) throw new Error('Esa factura ya no esta marcada para reducir IVA.');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), C = _pagColCategoria_(ss);
+    _pagFilaEs_(C, a.fila, a.nit, a.dte);
+    var celda = C.hoja.getRange(a.fila, C.col);
+    if (celda.getFormula()) throw new Error('El proveedor ' + a.proveedor + ' esta entero como FACTURA_AJENA en 00_Proveedores: se cambia ahi, no factura por factura.');
+    celda.setFormula('=IF(G' + a.fila + '="","",IFERROR(VLOOKUP(G' + a.fila + ",'00_Proveedores'!A:C,3,FALSE()),\"POR_CLASIFICAR\"))");
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  _pagEscribir_([{ PROVEEDOR: a.proveedor, NIT: a.nit, DTE: a.dte, 'CANTIDAD PAGADA': a.total, 'ESTATUS DE PAGO': PAG_IVA_DEVUELTA_, 'ESCRITO POR': Q.nombre }]);
+  try { CacheService.getScriptCache().remove(finCacheClave_()); } catch (e) { /* idem */ }
+  return getPagosProveedores(auth);
+}
+
+/**
+ * Lo que Rosanta le debe a cada uno del equipo por pagar proveedores de su bolsa. Lee solo
+ * PAGOS_PROVEEDORES (sin FEL ni banco): la pantalla de inicio lo pide en cada entrada.
+ * El dueño ve a los dos; José y Jeffry, solo lo suyo.
+ */
+function _pagPorDevolver_(Q) {
+  var movs = pagMovimientos_();
+  return PAG_EQUIPO_.filter(function (e) { return Q.rol === 'dueno' || Q.rol === e.rol; }).map(function (e) {
+    var x = { nombre: e.nombre, forma: e.forma, pagado: 0, devuelto: 0, n: 0, movs: [] };
+    movs.forEach(function (m) {
+      if (m.estatus === e.forma) { x.pagado += m.q; x.n++; }
+      else if (m.estatus === e.devuelto) x.devuelto += m.q;
+      else return;
+      x.movs.push({ id: m.id, fecha: m.fecha_pagado, proveedor: m.proveedor, dte: m.dte, q: m.q, estatus: m.estatus, detalle: m.detalle, por: m.por });
+    });
+    x.movs.sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
+    x.pagado = _finR_(x.pagado); x.devuelto = _finR_(x.devuelto); x.pendiente = _finR_(x.pagado - x.devuelto);
+    return x;
+  });
+}
+
+/** Para la pantalla de inicio: cuanto se le debe a José y a Jeffry. */
+function getPorDevolverEquipo(auth) {
+  var Q = pagQuien_(auth);
+  return { rol: Q.rol, personas: _pagPorDevolver_(Q).map(function (x) {
+    return { nombre: x.nombre, pagado: x.pagado, devuelto: x.devuelto, pendiente: x.pendiente, n: x.n }; }) };
+}
+
+/** El dueño anota que le devolvio a José o a Jeffry lo que pagaron de su bolsa. */
+function registrarDevolucionEquipo(auth, nombre, monto, fecha, detalle) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Registrar una devolución lo hace el dueño.');
+  var e = PAG_EQUIPO_.filter(function (x) { return x.nombre === nombre; })[0];
+  if (!e) throw new Error('No conozco a ' + nombre + '.');
+  fecha = _pagFechaValida_(fecha, 'Fecha');
+  monto = _finR_(Number(monto));
+  if (!(monto > 0)) throw new Error('Monto invalido.');
+  var x = _pagPorDevolver_(Q).filter(function (p) { return p.nombre === nombre; })[0];
+  if (monto > x.pendiente + 0.01) throw new Error('A ' + nombre + ' se le deben Q' + x.pendiente.toFixed(2) + '; no se puede devolver Q' + monto.toFixed(2) + '.');
+  _pagEscribir_([{ AREA: 'ADMIN', PROVEEDOR: 'Devolución a ' + nombre, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto,
+                   'ESTATUS DE PAGO': e.devuelto, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
   return getPagosProveedores(auth);
 }
 
@@ -696,7 +902,7 @@ function _pagBalance_(anio) {
   // (3) este registro, y lo que ya esta cargado por pagar
   var E = pagEstado_();
   pagMovimientos_().forEach(function (m) {
-    if (m.dte === PAG_SIN_FACTURA_ || /Banco|Saldo a favor|Programado|Pendiente anterior/.test(m.estatus)) return;
+    if (m.dte === PAG_SIN_FACTURA_ || /Banco|Saldo a favor|Programado|Pendiente anterior|Devuelto a|Para IVA/.test(m.estatus)) return;
     if (m.fecha_pagado && m.fecha_pagado.slice(0, 4) === String(anio)) anota(m.nit, m.q, m.fecha_pagado, 'registro');
   });
   E.facturas.forEach(function (f) { if (P[f.nit] && f.saldo > 0.01) P[f.nit].pendiente += f.saldo; });
