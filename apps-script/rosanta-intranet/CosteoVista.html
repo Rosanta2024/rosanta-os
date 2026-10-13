@@ -185,6 +185,8 @@ var AUTH = '<?= authToken ?>';
 (function(){ function alto(){ var h=document.querySelector('header.top'); if(h) document.documentElement.style.setProperty('--pf-hdr', h.offsetHeight + 'px'); }
   window.addEventListener('resize', alto); document.addEventListener('DOMContentLoaded', alto); setTimeout(alto, 0); })();
 window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
+window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
+window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
 /* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
    estaba escribiendo). Sin iframe: el cuerpo del reporte se copia del <template> y cada
    area lo pinta con RP_INICIAR dentro de su propia raiz. */

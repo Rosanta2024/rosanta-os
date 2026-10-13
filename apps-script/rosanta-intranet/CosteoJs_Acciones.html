@@ -576,7 +576,14 @@ document.getElementById('foot').textContent =
   `Barra: ${porArea('BARRA').length} cócteles y bebidas, meta ${metaDe('BARRA')}%. ` +
   `${R.length - porArea('COCINA').length - porArea('BARRA').length} pre-elaborados · ${I.length} productos · ${P.length} proveedores. ` +
   `Fuente: ${D.meta.fuente}, leído el ${D.meta.fecha}.`;
+/* ?q= y ?abrir= del enlace (11-oct-2026). Ver Code.js. */
+if(window.PROFIT_Q_INI){ q = window.PROFIT_Q_INI; const el = document.getElementById('q'); if(el) el.value = q; }
 pintar();
+if(window.PROFIT_ABRIR_INI){
+  const k = nrm(window.PROFIT_ABRIR_INI).trim();
+  const r = R.find(x => nrm(x.n).trim() === k) || R.find(x => nrm(x.n).includes(k));
+  if(r) abrirReceta(r.id);
+}
 
 /* Que puede hacer quien entro. Va ACA ADENTRO y no en arrancar(), porque pintar()
    es local a iniciarApp(): desde afuera no se la puede llamar.

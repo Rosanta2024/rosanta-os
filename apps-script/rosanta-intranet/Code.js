@@ -97,6 +97,10 @@ function doGet(e) {
     tplCosteo.authToken = authToken;
     tplCosteo.rol = rolCost;          // que pestañas de area se ven (Cocina, Barra y Sala)
     tplCosteo.vistaIni = vistaCost;   // ?vista= (lista cerrada arriba)
+    // ?q= busca y ?abrir= abre una receta por nombre (11-oct-2026): un enlace que cae
+    // directo en una ficha, para mandarselo a cocina o para verificar sin hacer clics.
+    tplCosteo.buscarIni = String((e && e.parameter && e.parameter.q) || '').slice(0, 60);
+    tplCosteo.abrirIni = String((e && e.parameter && e.parameter.abrir) || '').slice(0, 80);
     tplCosteo.puedePagos = puedePagos; // la herramienta Pagos arriba
     return tplCosteo.evaluate()
       .setTitle('Rosanta \u00b7 Recetario y Proveedores')
