@@ -483,6 +483,8 @@ function getPagosProveedores(auth) {
     favores: E.favores.filter(function (m) { return favor[m.nit] !== undefined; }),
     banco_ult: E.banco_ult,
     por_devolver: _pagPorDevolver_(Q),
+    // quien es el que entra en Por devolver (Jeffry o José), para que agregue lo suyo
+    mi_equipo: (PAG_EQUIPO_.filter(function (e) { return e.rol === Q.rol; })[0] || {}).nombre || '',
     aviso_correo: fec && fec.errores && fec.errores.length ? 'No pude leer todos los avisos del FEL en el correo: ' + fec.errores.slice(0, 2).join(' · ') : ''
   };
   if (Q.rol === 'dueno') {
@@ -721,7 +723,9 @@ function devolverFacturaParaIva(auth, llave) {
  */
 function _pagPorDevolver_(Q) {
   var movs = pagMovimientos_();
-  return PAG_EQUIPO_.filter(function (e) { return Q.rol === 'dueno' || Q.rol === e.rol; }).map(function (e) {
+  // Pestaña en comun (Juanma, 13-oct-2026): cada quien agrega las facturas que pago de su bolsa
+  // y todos ven las de todos, asi cada uno identifica las suyas.
+  return PAG_EQUIPO_.map(function (e) {
     var x = { nombre: e.nombre, forma: e.forma, pagado: 0, devuelto: 0, n: 0, movs: [] };
     movs.forEach(function (m) {
       if (m.estatus === e.forma) { x.pagado += m.q; x.n++; }
@@ -733,6 +737,46 @@ function _pagPorDevolver_(Q) {
     x.pagado = _finR_(x.pagado); x.devuelto = _finR_(x.devuelto); x.pendiente = _finR_(x.pagado - x.devuelto);
     return x;
   });
+}
+
+/** De quien es un pago de su bolsa: el que entra (Jeffry o José); el dueño elige por nombre. */
+function _pagEquipoDe_(Q, nombre) {
+  var e = Q.rol === 'dueno' ? PAG_EQUIPO_.filter(function (x) { return x.nombre === nombre; })[0]
+                            : PAG_EQUIPO_.filter(function (x) { return x.rol === Q.rol; })[0];
+  if (!e) throw new Error('Por devolver es de Jeffry y José.');
+  if (Q.rol !== 'dueno' && nombre && nombre !== e.nombre) throw new Error('Solo podés agregar lo que pagaste vos.');
+  return e;
+}
+
+/** Las facturas por pagar de todas las areas, para elegir la que uno pago de su bolsa. */
+function getFacturasParaDevolver(auth) {
+  pagQuien_(auth);
+  return pagEstado_().facturas.filter(function (f) { return f.saldo > 0.01; }).map(function (f) {
+    return { llave: f.llave, proveedor: f.proveedor, dte: f.dte, fecha: f.fecha, saldo: f.saldo, total: f.total, grupo: f.grupo, estado: f.estado };
+  }).sort(function (a, b) { return a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : (a.fecha < b.fecha ? -1 : 1); });
+}
+
+/** Por devolver: una o varias facturas (del mismo proveedor) que uno pago de su bolsa. Salen de Por pagar. */
+function agregarFacturaDeSuBolsa(auth, nombre, llaves, fecha, monto, nota) {
+  var Q = pagQuien_(auth), e = _pagEquipoDe_(Q, nombre);
+  // cualquier area: Maco a veces paga una factura de cocina y Jeffry una de barra
+  _pagRegistrarPago_({ nombre: Q.nombre, rol: Q.rol, areas: ['COCINA', 'BARRA', 'ADMIN'] }, llaves, e.forma, fecha,
+                     monto === '' || monto == null ? null : monto, 0, nota);
+  return getPagosProveedores(auth);
+}
+
+/** Por devolver: una compra sin factura que uno pago de su bolsa. */
+function agregarCompraDeSuBolsa(auth, nombre, fecha, proveedor, detalle, monto) {
+  var Q = pagQuien_(auth), e = _pagEquipoDe_(Q, nombre);
+  fecha = _pagFechaValida_(fecha, 'Fecha');
+  monto = _finR_(Number(monto));
+  if (!(monto > 0)) throw new Error('Escribí cuánto pagaste.');
+  detalle = String(detalle || '').trim();
+  if (detalle.length < 3) throw new Error('Escribí qué se compró.');
+  _pagEscribir_([{ AREA: e.rol === 'sala' ? 'BARRA' : 'COCINA', PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado',
+                   DTE: PAG_SIN_FACTURA_, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': e.forma,
+                   DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
+  return getPagosProveedores(auth);
 }
 
 /** Para la pantalla de inicio: cuanto se le debe a José y a Jeffry. */
@@ -803,13 +847,16 @@ function anularMovimientoPago(auth, id) {
     var sh = pagHoja_(false);
     if (!sh) throw new Error('No hay movimientos.');
     var v = sh.getDataRange().getValues(), H = v[0].map(function (h) { return String(h || '').trim(); });
-    var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iA = H.indexOf('AREA');
+    var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iA = H.indexOf('AREA'), iP = H.indexOf('ESCRITO POR');
+    var miForma = (PAG_EQUIPO_.filter(function (e) { return e.rol === Q.rol; })[0] || {}).forma;
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][iId]) !== id) continue;
       var est = String(v[r][iE] || '');
       if (/^ANULADO/i.test(est)) break;
       if (est === PAG_ANTERIOR_ && Q.rol !== 'dueno') throw new Error('Esa fila es la que trajo la factura desde COMPRAS_2026, no un pago. Si la factura no se debe, avisá al dueño.');
-      if (Q.rol !== 'dueno' && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
+      // lo que uno agrego en Por devolver lo anula el mismo, aunque la factura sea de la otra area
+      var suyo = miForma && est === miForma && String(v[r][iP]) === Q.nombre;
+      if (Q.rol !== 'dueno' && !suyo && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
       sh.getRange(r + 1, iE + 1).setValue('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');
       SpreadsheetApp.flush();
       break;

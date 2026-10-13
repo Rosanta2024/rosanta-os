@@ -26,13 +26,17 @@
     var qs = authToken ? ('&u=' + authToken) : '';
   ?>
   <main>
-    <!-- Vision 2027 (aprobada por Juanma el 27-sep-2026): la punta de la cadena. -->
+    <? var rolVi = String(usuario.rol || '').toLowerCase(); ?>
+    <? if (rolVi === 'dueno') { ?>
+    <!-- Vision 2027 (aprobada por Juanma el 27-sep-2026): la punta de la cadena.
+         Solo el dueño (13-oct-2026): el equipo de Profit y Marketing ya no la ve. -->
     <section class="vi" id="vi">
       <div class="vi-l">Visión 2027</div>
       <h2 class="vi-t">En 2027 Rosanta se paga sola.</h2>
       <p class="vi-x" id="vi-x">Cubre todos los meses el costo de vida de su dueño, devuelve lo invertido a Raúl, hace de los eventos su segunda línea de negocio y funciona una semana completa sin Juanma, sin bajar la experiencia de mesa ni la cocina de temporada.</p>
       <div class="vi-p" id="vi-p"><span class="vi-c">Leyendo cómo vamos…</span></div>
     </section>
+    <? } ?>
     <h1>Panel principal</h1>
     <p>Elige un modulo para empezar.</p>
     <? var rolTs = String(usuario.rol || '').toLowerCase(); ?>

@@ -1209,9 +1209,10 @@ function medVision_(u) {
   return { titulo: V.titulo, texto: V.texto, puntos: puntos, con_q: conQ };
 }
 
-/** La vision para el panel principal y el tablero. Cualquiera identificado la ve. */
+/** La vision para el panel principal. Solo el dueño la ve (Juanma, 13-oct-2026). */
 function getVision(auth) {
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
+  if (normalizar_(u.rol) !== 'dueno') return null;
   return medVision_(u);
 }

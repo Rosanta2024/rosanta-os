@@ -154,10 +154,14 @@ window.PF_CAJA = function (HOST, AUTH) {
   }
 
   HOST.addEventListener('change', function (ev) {
+    ev.stopPropagation();   // el change de Pagos marca facturas elegidas: no es de la caja
     var el = ev.target;
     if (FORM === 'factura' && el.dataset && el.dataset.v === 'prov') { FACT.prov = el.value; var f = v(HOST.querySelector('[data-panel]'), 'fecha'); DIA_FORM = f; repintarForm(); }
   });
   HOST.addEventListener('click', function (ev) {
+    // La caja vive DENTRO de Pagos: sin esto, el click sube al manejador de Pagos, que tambien
+    // entiende data-acc="recargar" (recargaba Pagos y borraba la caja) y data-anular (anulaba en Pagos).
+    ev.stopPropagation();
     var b = ev.target.closest('button'); if (!b || !D) return;
     var panel = b.closest('[data-panel]');
     if (b.dataset.acc === 'recargar') { FORM = null; FACT = null; cargar(); return; }

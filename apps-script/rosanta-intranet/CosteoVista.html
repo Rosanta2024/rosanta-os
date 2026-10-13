@@ -78,6 +78,11 @@ header.top .wrap{max-width:none;padding:0 28px}
 .pf-lat .nav button small{display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:1px}
 .pf-lat .nav button[aria-selected="true"] small{color:var(--surface);opacity:.8}
 .pf-layout > main{padding:24px 28px 40px;min-width:0;width:100%;max-width:1236px;justify-self:center}
+.pf-filtro{display:flex;justify-content:flex-end;margin:-6px 0 14px}
+.pf-filtro .areas{display:inline-flex;gap:.3rem}
+.pf-filtro .areas button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:.25rem .8rem;cursor:pointer}
+.pf-filtro .areas button[aria-pressed="true"]{background:var(--bosque);color:var(--surface);border-color:var(--bosque)}
+footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
 @media (max-width:860px){
   .pf-layout{grid-template-columns:1fr}
   .pf-lat{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem .7rem}
@@ -103,23 +108,9 @@ header.top .wrap{max-width:none;padding:0 28px}
       </div>
       <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
     </div>
-    <!-- LAS HERRAMIENTAS VAN ARRIBA y los modulos en el lateral (Juanma, 27-sep-2026; la
-         misma regla para toda la intranet). -->
-    <nav class="nav" role="tablist" aria-label="Herramientas">
-      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button>
-      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
-      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
-      <button role="tab" data-view="insumos" aria-selected="false">Productos</button>
-      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
-      <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
-      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button>
-      <button role="tab" data-view="guia" aria-selected="false">Cómo funciona</button>
-      <span class="areas" role="group" aria-label="Área de recetas y productos">
-        <button data-area="COCINA" aria-pressed="true">Cocina</button>
-        <button data-area="BARRA" aria-pressed="false">Barra</button>
-        <button data-area="" aria-pressed="false">Todo</button>
-      </span>
-    </nav>
+    <!-- 13-oct-2026 (Juanma): UN SOLO MENU, el lateral. Arriba queda solo el buscador. La regla
+         del 27-sep (herramientas arriba, modulos al lado) se retiro en Profit OS porque eran dos
+         menus y el equipo no los entendia. -->
   </div>
   <div class="simbar" id="simbar" role="status">
     <span id="simtext"></span>
@@ -133,17 +124,44 @@ header.top .wrap{max-width:none;padding:0 28px}
 </div>
 <div class="pf-layout">
   <aside class="pf-lat">
+    <? var esEquipo = rol === 'chef' || rol === 'sala', esDueno = rol === 'dueno';
+       var veCaja = esDueno || (rol === 'sala' && puedePagos), veDevolver = puedePagos && (esDueno || esEquipo); ?>
+    <!-- UN SOLO MENU, por para que sirve (Juanma, 13-oct-2026). Cada uno ve lo suyo: Jeffry
+         Cocina, Pagos, Inventarios y Recetas; Maco lo mismo de barra mas la Caja chica; el dueño
+         todo. Lo que no se ve tampoco se abre por enlace (Code.js, lista de vistas). -->
     <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
-      <div class="pf-grupo">Módulos</div>
-      <button role="tab" data-view="inicio" aria-selected="true">Profit OS</button>
-      <? if (rol === 'chef' || rol === 'dueno') { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
-      <? if (rol === 'sala' || rol === 'dueno') { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
+      <div class="pf-grupo">Día a día</div>
+      <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
+      <? if (veCaja) { ?><button role="tab" data-view="caja" aria-selected="false">Caja chica</button><? } ?>
+      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
+      <? if (rol === 'chef' || rol === 'sala' || esDueno) { ?><div class="pf-grupo"><?= esDueno ? 'Áreas' : 'Mi área' ?></div><? } ?>
+      <? if (rol === 'chef' || esDueno) { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
+      <? if (rol === 'sala' || esDueno) { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
+      <div class="pf-grupo">Costeo</div>
+      <? if (!esEquipo) { ?><button role="tab" data-view="inicio" aria-selected="true">Resumen</button><? } ?>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <? if (!esEquipo) { ?><button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="menu" aria-selected="false">Menú</button><? } ?>
+      <? if (veDevolver || esDueno) { ?><div class="pf-grupo">Administración</div><? } ?>
+      <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button><? } ?>
+      <? if (esDueno) { ?><button role="tab" data-view="adm-banco" aria-selected="false">Banco sin casar</button>
+      <button role="tab" data-view="adm-balance" aria-selected="false">Balance del año</button>
+      <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button><? } ?>
     </nav>
   </aside>
 <main>
   <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la mercaderia?" arriba del
        inicio, solo para quien le toca (chef y dueño; sin quetzales para el chef). Se
        esconde junto con el inicio cuando se abre otra vista. -->
+  <!-- El filtro Cocina / Barra / Todo de recetas, productos e inventarios. Antes iba en el menu
+       de arriba. El equipo no lo ve: cada uno trabaja en su area (PROFIT_AREA_INI). -->
+  <div class="pf-filtro"<?= (rol === 'chef' || rol === 'sala') ? ' hidden' : '' ?>><span class="areas" role="group" aria-label="Área de recetas y productos">
+    <button data-area="COCINA" aria-pressed="true">Cocina</button>
+    <button data-area="BARRA" aria-pressed="false">Barra</button>
+    <button data-area="" aria-pressed="false">Todo</button>
+  </span></div>
   <section id="lx-modulo" style="margin-bottom:1.4rem"></section>
   <section id="v-inicio"></section>
   <section id="v-menu" hidden></section>
@@ -159,6 +177,11 @@ header.top .wrap{max-width:none;padding:0 28px}
        (montarArea, abajo). Sin iframe: en /dev Google no deja enmarcar la app. -->
   <section id="v-cocina" hidden></section>
   <section id="v-barrasala" hidden></section>
+  <section id="v-caja" hidden></section>
+  <section id="v-adm-equipo" hidden></section>
+  <section id="v-adm-banco" hidden></section>
+  <section id="v-adm-balance" hidden></section>
+  <section id="v-adm-iva" hidden></section>
 </main>
 </div>
 <!-- el cuerpo del reporte, para copiarlo en cada area (cada id se busca dentro de su area) -->
@@ -166,6 +189,7 @@ header.top .wrap{max-width:none;padding:0 28px}
 
 <footer class="wrap pie">
   <span id="foot"></span>
+  <button type="button" class="pf-guia" data-view="guia">Cómo funciona</button>
   <span class="marca-pie">Rosanta · Cocina con Carisma &nbsp;<span class="flor">❀</span>&nbsp; 14° N · 91° W</span>
 </footer>
 
@@ -185,6 +209,8 @@ var AUTH = '<?= authToken ?>';
 (function(){ function alto(){ var h=document.querySelector('header.top'); if(h) document.documentElement.style.setProperty('--pf-hdr', h.offsetHeight + 'px'); }
   window.addEventListener('resize', alto); document.addEventListener('DOMContentLoaded', alto); setTimeout(alto, 0); })();
 window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
+/* el area con la que abren recetas, productos e inventarios: Maco barra, el resto cocina */
+window.PROFIT_AREA_INI = <?!= JSON.stringify(rol === 'sala' ? 'BARRA' : 'COCINA') ?>;
 window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
 window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
 /* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
@@ -225,6 +251,20 @@ function montarPagos(){
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
   window.PF_PAGOS(sec, AUTH);
+}
+/* Caja chica y Administración (13-oct-2026): pestañas de la barra lateral, se pintan una vez. */
+function montarCaja(){
+  var sec = document.getElementById('v-caja');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
+  window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+}
+function montarAdm(v){
+  var sec = document.getElementById('v-' + v);
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_PAGOS(sec, AUTH, 'admin:' + v.slice(4));   // adm-banco -> admin:banco
 }
 
 function iniciarApp(){

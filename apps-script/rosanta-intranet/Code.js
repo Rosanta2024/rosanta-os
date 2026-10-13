@@ -81,7 +81,20 @@ function doGet(e) {
   // Pagos a proveedores (p213, 29-sep-2026): modulo 'pagos' o dueño.
   var puedePagos = rolCost === 'dueno' || usuarioTieneModulo(usuario, 'pagos');
   if (vistaCost === 'pagos' && !puedePagos) vistaCost = '';
-  if (['cocina', 'barrasala', 'pagos', 'menu', 'inventario', 'recetas', 'insumos', 'proveedores', 'higiene', 'guia'].indexOf(vistaCost) === -1) vistaCost = 'inicio';
+  // UN SOLO MENU (13-oct-2026, Juanma): cada uno ve lo suyo y lo que no ve tampoco se abre por
+  // enlace. Jeffry: Cocina, Pagos, Inventarios, Recetas. Maco: Barra y Sala, Pagos, Caja chica,
+  // Inventarios, Recetas. Los dos: Por devolver. El dueño, todo. Mismo criterio que el lateral
+  // de CosteoVista.html.
+  var esEquipoCost = rolCost === 'chef' || rolCost === 'sala';
+  if (vistaCost === 'caja' && !(rolCost === 'dueno' || (rolCost === 'sala' && puedePagos))) vistaCost = '';
+  if (vistaCost === 'adm-equipo' && !(puedePagos && (rolCost === 'dueno' || esEquipoCost))) vistaCost = '';
+  if (['adm-banco', 'adm-balance', 'adm-iva', 'higiene'].indexOf(vistaCost) !== -1 && rolCost !== 'dueno') vistaCost = '';
+  if (esEquipoCost && ['inicio', 'insumos', 'proveedores', 'menu'].indexOf(vistaCost) !== -1) vistaCost = '';
+  if (['cocina', 'barrasala', 'pagos', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
+       'recetas', 'insumos', 'proveedores', 'higiene', 'guia', 'inicio'].indexOf(vistaCost) === -1) {
+    // donde abre cada uno: Jeffry en Cocina, Maco en la Caja chica (o Barra y Sala), el resto en el Resumen
+    vistaCost = rolCost === 'chef' ? 'cocina' : rolCost === 'sala' ? (puedePagos ? 'caja' : 'barrasala') : 'inicio';
+  }
 
   // Recetario visual + Proveedores. Reemplaza a la vista vieja ?page=recetario,
   // retirada el 21 ago 2026: definia leerFicha_ y primerNumero_ con los mismos

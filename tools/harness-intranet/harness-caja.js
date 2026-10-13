@@ -51,7 +51,7 @@ vm.createContext(ctx);
 ['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
-vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; if (typeof fecLeerSiToca_ === 'function') fecLeerSiToca_ = function () {}; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
+vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
 let ok = 0, mal = 0;
 const t = (n, c, info) => { if (c) ok++; else mal++; console.log((c ? 'OK   ' : 'FALLA') + ' ' + n + (info !== undefined ? '  → ' + info : '')); };
 const tira = fn => { try { fn(); return ''; } catch (e) { return e.message; } };
@@ -124,6 +124,21 @@ if (coc) {
   t('La factura pagada de caja sale de Por pagar y aparece en la caja', !sigue && P.dias[0].pagos.some(p => !p.mercado && p.dte === coc.dte), coc.proveedor + ' ' + coc.dte + ' ' + coc.saldo);
   t('En el maestro va como PAGO_FACTURA_FEL', (maestro['07_Caja_Chica'] || []).slice(4).some(r => r[4] === 'PAGO_FACTURA_FEL'));
 }
+// Por devolver en comun (13-oct-2026): todos ven a todos; cada quien agrega lo suyo
+let G = ctx.getPagosProveedores('tokchef');
+t('El chef ve Por devolver de José y de Jeffry', G.por_devolver.length === 2 && G.mi_equipo === 'Jeffry', G.por_devolver.map(x => x.nombre).join(', '));
+t('El chef no agrega a nombre de José', /pagaste vos/.test(tira(() => ctx.agregarCompraDeSuBolsa('tokchef', 'José', hoy, 'Mercado', 'limones', 20))));
+const fCoc = ctx.getFacturasParaDevolver('tokmaco').find(f => f.grupo === 'ALIMENTOS');
+if (fCoc) {
+  G = ctx.agregarFacturaDeSuBolsa('tokmaco', 'José', [fCoc.llave], hoy, null, 'de mi bolsa');
+  const jose = G.por_devolver.find(x => x.nombre === 'José');
+  t('Maco agrega una factura de cocina que pagó de su bolsa', jose.movs.some(m => m.dte === fCoc.dte), fCoc.proveedor + ' ' + fCoc.saldo);
+  const idJ = jose.movs.find(m => m.dte === fCoc.dte).id;
+  G = ctx.anularMovimientoPago('tokmaco', idJ);
+  t('Maco anula lo suyo aunque la factura sea de cocina', !G.por_devolver.find(x => x.nombre === 'José').movs.some(m => m.id === idJ));
+}
+G = ctx.agregarCompraDeSuBolsa('tokchef', '', hoy, 'Mercado', 'limones y menta', 45);
+t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 'Jeffry').pendiente >= 45);
 // el DRE lee 07_Caja_Chica sin romperse
 let fd = ''; try { ctx._finDatos_(true); } catch (e) { fd = e.stack.split('\n').slice(0, 4).join(' | '); }
 t('Finanzas corre con la pestaña nueva', fd === '', fd);
