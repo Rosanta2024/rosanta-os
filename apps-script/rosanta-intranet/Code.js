@@ -90,10 +90,10 @@ function doGet(e) {
   if (vistaCost === 'adm-equipo' && !(puedePagos && (rolCost === 'dueno' || esEquipoCost))) vistaCost = '';
   if (['adm-banco', 'adm-balance', 'adm-iva', 'higiene'].indexOf(vistaCost) !== -1 && rolCost !== 'dueno') vistaCost = '';
   if (esEquipoCost && ['inicio', 'insumos', 'proveedores', 'menu'].indexOf(vistaCost) !== -1) vistaCost = '';
-  if (['cocina', 'barrasala', 'pagos', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
+  if (['hoy', 'cocina', 'barrasala', 'pagos', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
        'recetas', 'insumos', 'proveedores', 'higiene', 'guia', 'inicio'].indexOf(vistaCost) === -1) {
-    // donde abre cada uno: Jeffry en Cocina, Maco en la Caja chica (o Barra y Sala), el resto en el Resumen
-    vistaCost = rolCost === 'chef' ? 'cocina' : rolCost === 'sala' ? (puedePagos ? 'caja' : 'barrasala') : 'inicio';
+    // todos abren en Hoy: lo que le toca a cada uno (13-oct-2026, ProfitHoy.js)
+    vistaCost = 'hoy';
   }
 
   // Recetario visual + Proveedores. Reemplaza a la vista vieja ?page=recetario,

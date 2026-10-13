@@ -98,6 +98,7 @@ function pintar(){
   if(view==='guia')        document.getElementById('v-guia').innerHTML = vistaGuia();
   if(view==='cocina' || view==='barrasala') montarArea(view);
   if(view==='pagos') montarPagos();
+  if(view==='hoy') montarHoy();
   if(view==='caja') montarCaja();
   if(view.indexOf('adm-')===0) montarAdm(view);
   // el filtro Cocina / Barra / Todo solo sirve en recetas, productos, proveedores, inventarios y menu

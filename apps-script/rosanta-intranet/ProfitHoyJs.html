@@ -1,0 +1,51 @@
+<style>
+  /* Hoy (13-oct-2026): la primera pantalla de Profit OS. Lo que le toca a cada uno, con su boton. */
+  .hy { color: #1a1a1a; max-width: 46rem; }
+  .hy h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0 0 0.2rem; }
+  .hy-sub { color: #52514e; font-size: 0.9rem; margin: 0 0 1rem; }
+  .hy-it { display: flex; gap: 0.9rem; align-items: center; background: #fff; border-radius: 16px; padding: 0.8rem 1rem; margin-top: 0.6rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+  .hy-it.urg { border-left: 4px solid #C0563F; }
+  .hy-it .tx { flex: 1; min-width: 0; }
+  .hy-it b { display: block; font-size: 0.98rem; }
+  .hy-it span { display: block; font-size: 0.84rem; color: #52514e; margin-top: 0.15rem; }
+  .hy-it button { font: inherit; font-size: 0.86rem; background: #4E6D5A; color: #fff; border: 0; border-radius: 10px; padding: 0.5rem 0.9rem; cursor: pointer; white-space: nowrap; }
+  .hy-ok { background: #fff; border-radius: 16px; padding: 1.4rem; text-align: center; color: #2E6B3F; font-size: 1rem; }
+  .hy-pie { font-size: 0.78rem; color: #8a8780; margin-top: 1rem; display: flex; gap: 1rem; align-items: center; }
+  .hy-pie button { font: inherit; font-size: 0.78rem; background: none; border: 0; color: #4E6D5A; text-decoration: underline; cursor: pointer; padding: 0; }
+  .hy-falla { font-size: 0.8rem; color: #A33A2A; margin-top: 0.6rem; }
+  @media (max-width: 640px) { .hy-it { flex-wrap: wrap; } .hy-it button { width: 100%; } }
+</style>
+<script>
+/* Hoy (13-oct-2026). Parcial crudo: PF_HOY(host, AUTH). El token va PRIMERO.
+   Cada boton lleva data-view: lo atiende el click general de Profit OS, que cambia de pestaña. */
+window.PF_HOY = function (HOST, AUTH) {
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  function cargar() {
+    HOST.innerHTML = '<div class="hy"><h2>Hoy</h2><p class="hy-sub">Revisando lo que te toca…</p></div>';
+    google.script.run.withSuccessHandler(pintar)
+      .withFailureHandler(function (e) { HOST.innerHTML = '<div class="hy"><h2>Hoy</h2><p class="hy-falla">' + esc(e && e.message || e) + '</p></div>'; })
+      .getHoyProfit(AUTH);
+  }
+  function pintar(D) {
+    var p = D.fecha.split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2]);
+    var urg = D.items.filter(function (x) { return x.urgente; }).length;
+    var h = '<div class="hy"><h2>Hola' + (D.nombre ? ', ' + esc(D.nombre) : '') + '</h2>' +
+      '<p class="hy-sub">' + DIAS[d.getDay()] + ' ' + p[2] + '/' + p[1] + ' · ' +
+      (D.items.length ? D.items.length + (D.items.length === 1 ? ' cosa' : ' cosas') + ' para hoy' + (urg ? ', ' + urg + ' urgente' + (urg === 1 ? '' : 's') : '') : 'todo al día') + '</p>';
+    h += D.items.length ? D.items.map(function (x) {
+      return '<div class="hy-it' + (x.urgente ? ' urg' : '') + '"><div class="tx"><b>' + esc(x.texto) + '</b>' + (x.detalle ? '<span>' + esc(x.detalle) + '</span>' : '') + '</div>' +
+        (x.vista ? '<button type="button" data-view="' + esc(x.vista) + '">' + esc(x.boton || 'Abrir') + '</button>' : '') + '</div>';
+    }).join('') : '<div class="hy-ok">Todo al día. ✓</div>';
+    if (D.fallas.length) h += '<p class="hy-falla">No pude revisar: ' + esc(D.fallas.join(' · ')) + '</p>';
+    h += '<div class="hy-pie"><span>Actualizado ' + esc(D.gen) + '</span><button type="button" data-hy="recargar">Actualizar</button></div></div>';
+    HOST.innerHTML = h;
+  }
+  HOST.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button');
+    if (b && b.dataset.hy === 'recargar') cargar();
+  });
+  cargar();
+};
+</script>

@@ -130,6 +130,8 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
          Cocina, Pagos, Inventarios y Recetas; Maco lo mismo de barra mas la Caja chica; el dueño
          todo. Lo que no se ve tampoco se abre por enlace (Code.js, lista de vistas). -->
     <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
+      <!-- Hoy (13-oct-2026): lo que le toca a cada uno. Es donde abre Profit OS. -->
+      <button role="tab" data-view="hoy" aria-selected="true">Hoy</button>
       <div class="pf-grupo">Día a día</div>
       <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
       <? if (veCaja) { ?><button role="tab" data-view="caja" aria-selected="false">Caja chica</button><? } ?>
@@ -138,7 +140,7 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
       <? if (rol === 'chef' || esDueno) { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
       <? if (rol === 'sala' || esDueno) { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
       <div class="pf-grupo">Costeo</div>
-      <? if (!esEquipo) { ?><button role="tab" data-view="inicio" aria-selected="true">Resumen</button><? } ?>
+      <? if (!esEquipo) { ?><button role="tab" data-view="inicio" aria-selected="false">Resumen</button><? } ?>
       <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
       <? if (!esEquipo) { ?><button role="tab" data-view="insumos" aria-selected="false">Productos</button>
       <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
@@ -177,6 +179,7 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
        (montarArea, abajo). Sin iframe: en /dev Google no deja enmarcar la app. -->
   <section id="v-cocina" hidden></section>
   <section id="v-barrasala" hidden></section>
+  <section id="v-hoy" hidden></section>
   <section id="v-caja" hidden></section>
   <section id="v-adm-equipo" hidden></section>
   <section id="v-adm-banco" hidden></section>
@@ -259,6 +262,12 @@ function montarCaja(){
   sec.dataset.listo = '1';
   sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
   window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+}
+function montarHoy(){
+  var sec = document.getElementById('v-hoy');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_HOY(sec, AUTH);
 }
 function montarAdm(v){
   var sec = document.getElementById('v-' + v);
@@ -354,6 +363,7 @@ google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCos
 <?!= incluirCrudo_('ProfitRetirosJs') ?>
 <?!= incluirCrudo_('ProfitPagosJs') ?>
 <?!= incluirCrudo_('ProfitCajaJs') ?>
+<?!= incluirCrudo_('ProfitHoyJs') ?>
 <script>
   (function () {
     var host = document.getElementById('lx-modulo');

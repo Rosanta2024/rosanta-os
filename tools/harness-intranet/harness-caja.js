@@ -48,7 +48,7 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'ProfitHoy.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
 vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
@@ -139,6 +139,16 @@ if (fCoc) {
 }
 G = ctx.agregarCompraDeSuBolsa('tokchef', '', hoy, 'Mercado', 'limones y menta', 45);
 t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 'Jeffry').pendiente >= 45);
+// Hoy (13-oct-2026): la lista de cada uno
+vm.runInContext("invEstadoCierre_ = function () { return { esperado: '2026-09', dia_limite: 5, areas: { COCINA: { estado_esperado: 'ABIERTO', zona: 'rojo', dias_atraso: 8 }, BARRA: { estado_esperado: 'CERRADO', zona: 'verde' } } }; };", ctx);
+const H = tok => ctx.getHoyProfit(tok);
+const hD = H('tok'), hC = H('tokchef'), hM = H('tokmaco');
+const vistas = h => h.items.map(x => x.vista).join(',');
+t('Hoy del dueño: pagos, inventario, caja, retiros', /pagos/.test(vistas(hD)) && /inventario/.test(vistas(hD)) && hD.fallas.length === 0, hD.items.map(x => (x.urgente ? '!' : '') + x.texto).join(' | ') + (hD.fallas.length ? ' FALLAS ' + hD.fallas : ''));
+t('Hoy de Jeffry: sin caja, con inventario de cocina', !/caja/.test(vistas(hC)) && hC.items.some(x => /cocina de septiembre/.test(x.texto)) && hC.fallas.length === 0, hC.items.map(x => x.texto).join(' | '));
+t('Hoy de Maco: con caja, sin inventario de barra (cerrado), sin retiros', /caja/.test(vistas(hM)) && !hM.items.some(x => /inventario/.test(x.texto)) && !/cocina/.test(vistas(hM)), hM.items.map(x => x.texto).join(' | '));
+t('Hoy: lo urgente va primero', hD.items.every((x, i, a) => i === 0 || !x.urgente || a[i - 1].urgente));
+t('Hoy: Jeffry ve lo que se le debe', hC.items.some(x => /te debe/.test(x.texto)));
 // el DRE lee 07_Caja_Chica sin romperse
 let fd = ''; try { ctx._finDatos_(true); } catch (e) { fd = e.stack.split('\n').slice(0, 4).join(' | '); }
 t('Finanzas corre con la pestaña nueva', fd === '', fd);
