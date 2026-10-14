@@ -761,7 +761,10 @@ function finCacheClave_() {
   // mb_comensal, com_lmx_dia, medios). Una cache v10 dejaria el tablero sin ellos.
   // v12 (27-sep-2026): Sistema de Medicion. El ticket divide solo la venta de tickets con
   // comensales y cada mes trae tp, com_est y venta_lmx. Una cache v11 daria el ticket inflado.
-  return 'finanzas_v14_m' + m.global + '-' + m.BARRA;
+  // v15 (14-oct-2026, Fase 3 de la auditoria): la labor semanal lleva el IGSS, el año sin
+  // venta da null y no NaN, y integridad trae meses_sin_venta_dre. Una cache v14 mezclaba el
+  // prime semanal viejo con el nuevo: la bateria lo cazo (K06 y la prueba del IGSS).
+  return 'finanzas_v15_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
