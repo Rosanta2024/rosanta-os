@@ -25,7 +25,7 @@ var CIE_COLS_ = ['FECHA', 'GRAN_TOTAL', 'SIN_PROPINA', 'PROPINA', 'TARJETA', 'EF
                  'CUADRA', 'MENSAJE_ID', 'LEIDO',
                  // 13-oct-2026, formato nuevo de PosFile: los gastos anotados en el POS y cada
                  // documento con su monto (JSON), que usa la Caja chica para explicar un descuadre
-                 'GASTOS_POS', 'DOCUMENTOS', 'FORMATO'];
+                 'GASTOS_POS', 'DOCUMENTOS', 'FORMATO', 'TEXTO_SI_NO_CUADRA'];
 var CIE_QUERY_ = 'from:noreply@posfile.com subject:"Cierre de Caja"';
 
 function _cieNum_(txt, etiqueta) {
@@ -95,47 +95,56 @@ var CIE_FORMAS_NUEVO_ = [
 ];
 
 function _cieParsearNuevo_(t, asunto) {
+  // RENGLON POR RENGLON (13-oct-2026). El texto que saca Google Drive del PDF trae las secciones
+  // en otro orden que el PDF (la propina total quedaba dentro de "ventas por documento" y el
+  // RESUMEN vacio: los 12 cierres de octubre se guardaron con efectivo 0). Cada renglon si queda
+  // entero ("Tarjetas 4,889.50", "72 Factura GTQ 297.00"), asi que cada dato se busca por su
+  // renglon en todo el texto, sin depender de donde empieza o termina una seccion.
   var r = { tarjeta: 0, efectivo: 0, transferencia: 0, pedidos_ya: 0, uber_eats: 0, tickets: null, formato: 'nuevo' };
+  var num = '(-?\\d[\\d,]*(?:\\.\\d+)?)';
   // La fecha: el codigo del titulo (DDMMAAAAHHMM-...) o el asunto del correo (DD/MM/AAAA)
   var f = /CIERRE DE CAJA\s+(\d{2})(\d{2})(\d{4})\d{4}\s*-/i.exec(t) || /Cierre de Caja\s+(\d{2})\/(\d{2})\/(\d{4})/i.exec(String(asunto || ''));
   r.fecha = f ? f[3] + '-' + f[2] + '-' + f[1] : null;
-  // RESUMEN: etiquetas y montos en orden. Se emparejan por posicion, asi da lo mismo si el
-  // texto del PDF los trae intercalados (etiqueta monto) o por columnas (etiquetas, montos).
-  var res = _cieBloque_(t, /RESUMEN/i, [/CORTES[IÍ]A/i, /VENTAS POR/i]).replace(/Descripci[oó]n\s+TOTAL/i, ' ');
-  var etiquetas = [];
+  // Las formas de pago: "etiqueta monto" al final del renglon (sin GTQ: el RESUMEN no lo lleva)
+  var vistas = 0;
   CIE_FORMAS_NUEVO_.forEach(function (fp) {
-    var re = new RegExp(fp[1].source, 'ig'), m;
-    while ((m = re.exec(res))) etiquetas.push({ k: fp[0], i: m.index, fin: m.index + m[0].length });
+    // etiqueta y monto en el MISMO renglon (si el monto esta abajo, va por el plan B)
+    var re = new RegExp('(?:^|\\n)[ \\t]*(?:' + fp[1].source + ')[ \\t]*:?[ \\t]*' + num + '[ \\t]*(?=\\n|$)', 'gi'), m;
+    while ((m = re.exec(t))) { r[fp[0]] += _cieNumero_(m[1]); vistas++; }
   });
-  etiquetas.sort(function (a, b) { return a.i - b.i; });
-  var sinEtiquetas = res, montos = [];
-  etiquetas.slice().reverse().forEach(function (e) { sinEtiquetas = sinEtiquetas.slice(0, e.i) + ' ' + sinEtiquetas.slice(e.fin); });
-  var reN = /-?\d[\d,]*(?:\.\d+)?/g, mn;
-  while ((mn = reN.exec(sinEtiquetas))) montos.push(_cieNumero_(mn[0]));
-  var formasOk = etiquetas.length > 0 && etiquetas.length === montos.length;
-  if (formasOk) etiquetas.forEach(function (e, i) { r[e.k] += montos[i]; });
-  var cp = _cieBloque_(t, /CORTES[IÍ]A\s*-\s*PROPINA/i, [/VENTAS POR/i]);
-  var mp = /Propina\s*:?\s*(-?[\d,]+(?:\.\d+)?)/i.exec(cp), mc = /Cortes[ií]a\s*:?\s*(-?[\d,]+(?:\.\d+)?)/i.exec(cp);
+  // Plan B: si ningun renglon trae "etiqueta monto", el RESUMEN viene por columnas (primero las
+  // etiquetas y despues los montos): se emparejan por posicion dentro del bloque.
+  if (!vistas) {
+    var res = _cieBloque_(t, /RESUMEN/i, [/CORTES[IÍ]A/i, /VENTAS POR/i]).replace(/Descripci[oó]n\s+TOTAL/i, ' ');
+    var etq = [];
+    CIE_FORMAS_NUEVO_.forEach(function (fp) { var re = new RegExp(fp[1].source, 'ig'), m; while ((m = re.exec(res))) etq.push({ k: fp[0], i: m.index, fin: m.index + m[0].length }); });
+    etq.sort(function (a, b) { return a.i - b.i; });
+    var sinEtq = res, montos = [];
+    etq.slice().reverse().forEach(function (e) { sinEtq = sinEtq.slice(0, e.i) + ' ' + sinEtq.slice(e.fin); });
+    var reN = /-?\d[\d,]*(?:\.\d+)?/g, mn;
+    while ((mn = reN.exec(sinEtq))) montos.push(_cieNumero_(mn[0]));
+    if (etq.length && etq.length === montos.length) { etq.forEach(function (e, i) { r[e.k] += montos[i]; }); vistas = etq.length; }
+  }
+  // Los documentos: "68 Factura GTQ 528.00". La venta del dia es su suma (incluye la propina).
+  r.documentos = [];
+  var reD = /(?:^|\n)\s*(\d+)\s+([A-Za-zÁÉÍÓÚáéíóúñ]+)\s+GTQ\s*([\d,]+\.\d{2})\s*(?=\n|$)/g, md;
+  while ((md = reD.exec(t))) if (!/^total$/i.test(md[2])) r.documentos.push({ n: md[1], tipo: md[2], q: _cieNumero_(md[3]) });
+  var sumaDocs = Math.round(r.documentos.reduce(function (a, d) { return a + d.q; }, 0) * 100) / 100;
+  var pagos = Math.round((r.tarjeta + r.efectivo + r.transferencia + r.pedidos_ya + r.uber_eats) * 100) / 100;
+  r.gran_total = r.documentos.length ? sumaDocs : (vistas ? pagos : null);
+  // Propina y cortesia: "Propina 471.5" solo (el renglon de productos sigue con GTQ y no cuenta)
+  var mp = new RegExp('(?:^|\\n)\\s*Propina\\s*:?\\s*' + num + '\\s*(?=\\n|$)', 'i').exec(t);
+  var mc = new RegExp('(?:^|\\n)\\s*Cortes[ií]a\\s*:?\\s*' + num + '\\s*(?=\\n|$)', 'i').exec(t);
   r.propina = mp ? _cieNumero_(mp[1]) : null;
   r.cortesia = mc ? Math.abs(_cieNumero_(mc[1])) : null;
-  // VENTAS POR DOCUMENTO: cada documento con su monto, y el total (incluye la propina)
-  var doc = _cieBloque_(t, /VENTAS POR DOCUMENTO/i, [/VENTAS POR PRODUCTO/i, /\bGASTOS\b/]);
-  r.documentos = [];
-  var reD = /(\d+)\s+([A-Za-zÁÉÍÓÚáéíóúñ]+)\s+GTQ\s*([\d,]+\.\d{2})/g, md;
-  while ((md = reD.exec(doc))) r.documentos.push({ n: md[1], tipo: md[2], q: _cieNumero_(md[3]) });
-  var td = /TOTAL\s+GTQ\s*([\d,]+(?:\.\d+)?)/i.exec(doc);
-  var totalDocs = td ? _cieNumero_(td[1]) : null;
-  var pagos = r.tarjeta + r.efectivo + r.transferencia + r.pedidos_ya + r.uber_eats;
-  r.gran_total = totalDocs !== null ? totalDocs : (formasOk ? Math.round(pagos * 100) / 100 : null);
   r.sin_propina = r.gran_total !== null && r.propina !== null ? Math.round((r.gran_total - r.propina) * 100) / 100 : null;
-  var mpr = /TOTAL\s+(\d+)\s+GTQ\s*[\d,.]+\s+GTQ/i.exec(_cieBloque_(t, /VENTAS POR PRODUCTO/i, [/\bGASTOS\b/]));
+  var mpr = /TOTAL\s+(\d+)\s+GTQ\s*[\d,.]+\s+GTQ/i.exec(t);
   r.productos = mpr ? Number(mpr[1]) : null;
-  // GASTOS: lo que se anoto como gasto en el POS (la Caja chica lo compara con lo suyo)
-  var gs = _cieBloque_(t, /\bGASTOS\b/, [/©|Soported/i]);
-  var tg = /TOTAL\s+GTQ\s*([\d,]+(?:\.\d+)?)/i.exec(gs);
+  // GASTOS: el "TOTAL GTQ" que sigue a la ULTIMA palabra GASTOS del texto
+  var ig = t.search(/\bGASTOS\b(?![\s\S]*\bGASTOS\b)/), tg = ig >= 0 ? /TOTAL\s+GTQ\s*([\d,]+(?:\.\d+)?)/i.exec(t.slice(ig)) : null;
   r.gastos_pos = tg ? _cieNumero_(tg[1]) : null;
-  // Cuadra = las formas de pago suman el total de los documentos
-  r.cuadra = formasOk && r.gran_total !== null && Math.abs(pagos - r.gran_total) < 0.02;
+  // Cuadra = las formas de pago suman los documentos
+  r.cuadra = vistas > 0 && r.documentos.length > 0 && Math.abs(pagos - sumaDocs) < 0.02;
   return r;
 }
 
@@ -219,11 +228,13 @@ function cieLeer_(dias) {
       var att = Gmail.Users.Messages.Attachments.get('me', mm.id, partes[0].body.attachmentId);
       var blob = Utilities.newBlob(_cieBytes_(att.data), 'application/pdf', partes[0].filename);
       var asunto = ((msg.payload.headers || []).filter(function (h) { return /^subject$/i.test(h.name); })[0] || {}).value || '';
-      var c = cieParsear_(_ciePdfTexto_(blob), asunto);
+      var texto = _ciePdfTexto_(blob), c = cieParsear_(texto, asunto);
       if (!c.fecha || c.gran_total === null) throw new Error('no pude leer la fecha o el total (' + asunto + ')');
       var row = [c.fecha, c.gran_total, c.sin_propina, c.propina, c.tarjeta, c.efectivo, c.transferencia, c.pedidos_ya,
                  c.uber_eats, c.cortesia, c.tickets, c.productos, _cieComensalesReserva_(c.fecha), c.cuadra ? 'SI' : 'NO', mm.id, new Date(),
-                 c.gastos_pos, JSON.stringify(c.documentos || []).slice(0, 45000), c.formato];
+                 c.gastos_pos, JSON.stringify(c.documentos || []).slice(0, 45000), c.formato,
+                 // el texto de Drive, solo si no cuadra: para ver por que (13-oct-2026)
+                 c.cuadra ? '' : String(texto || '').slice(0, 20000)];
       if (fila[c.fecha]) sh.getRange(fila[c.fecha], 1, 1, row.length).setValues([row]);
       else { sh.appendRow(row); fila[c.fecha] = sh.getLastRow(); }
       rep.nuevos++;

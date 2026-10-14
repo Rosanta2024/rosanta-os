@@ -186,10 +186,13 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
               '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
               '<span class="n cant">' + q(f.saldo > 0.01 ? f.saldo : f.por_confirmar) + (f.saldo > 0.01 && f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + ' · abonado ' + q(f.pagado) + '</span>' : '') +
-                (f.por_confirmar > 0.01 ? '<span class="pg-nota" style="display:block">' + esc(marcaTxt(f)) + '</span>' : '') + '</span>' +
+                '</span>' +
               '<span class="est">' + estado(f.estado) + '</span>' +
-              '<span class="acc"><button type="button" class="pg-b" data-abrir="' + esc(f.llave) + '">' + (ABIERTA === f.llave ? 'Cerrar' : 'Pagar') + '</button></span></div>';
-            if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + panelPago([f]) + '</div>';
+              // ya marcada y sin saldo: no se paga de nuevo, se VE la marca (y se puede anular)
+              '<span class="acc"><button type="button" class="pg-b" data-abrir="' + esc(f.llave) + '">' + (ABIERTA === f.llave ? 'Cerrar' : f.saldo > 0.01 ? 'Pagar' : 'Ver') + '</button></span>' +
+              // el aviso de la marca en su propio renglon (antes se montaba sobre el boton)
+              (f.por_confirmar > 0.01 ? '<span class="pg-lp pg-nota" style="text-align:right">' + esc(marcaTxt(f)) + '</span>' : '') + '</div>';
+            if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + (f.saldo > 0.01 ? panelPago([f]) : panelMarcada(f)) + '</div>';
             return fila;
           }).join('') + '</section>';
         })();
@@ -339,6 +342,16 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
 
   /* El panel de pago: un toque en la forma registra el pago completo con fecha de hoy. "Más
      opciones" deja cambiar la fecha, abonar (una sola factura) o usar el saldo a favor. */
+  /* Una factura ya marcada que el banco todavia no registra: la marca y como corregirla. */
+  function panelMarcada(f) {
+    var marcas = (f.pagos || []).filter(function (p) { return p.estatus === 'Banco' && p.id; });
+    return '<div class="pg-panel"><div class="pg-nota">Ya está marcada como pagada. Queda <b>por confirmar</b> hasta que se cargue el estado de cuenta que traiga ese movimiento; ahí pasa sola a Pagada.</div>' +
+      marcas.map(function (p) {
+        var med = /^\[([^\]]+)\]/.exec(p.detalle || '');
+        return '<div class="pg-mas" style="justify-content:space-between"><span>' + q(p.q) + ' · ' + esc(nom(med ? med[1] : 'Banco')) + ' · ' + esc(ddmm(p.fecha)) + (p.por ? ' · marcó ' + esc(p.por) : '') + '</span>' +
+          '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular (para marcarla de nuevo)</button></div>';
+      }).join('') + '</div>';
+  }
   function panelPago(fs) {
     var tot = fs.reduce(function (a, f) { return a + f.saldo; }, 0), fav = favorDe(fs[0].nit), uno = fs.length === 1;
     return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
