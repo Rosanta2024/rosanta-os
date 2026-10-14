@@ -106,18 +106,18 @@ function _vigContexto_(hoy) {
   var d = _finDatos_(false), P = tabParametros_();
   var M = medMetasMes_(hoy.getFullYear(), hoy.getMonth() + 1, P);
   var c = medCascadaResumen_(d, P, M, hoy);
-  var ctx = { hoy: hoy, d: d, P: P, M: M, c: c };
-  try { var cj = _cajaDatos_(_cajaOpciones_({})); ctx.cruza_cero = cj.escenarios && cj.escenarios.base ? cj.escenarios.base.cruza_cero : null; } catch (e) { ctx.cruza_cero = null; }
-  try { ctx.mesas = medMesasPorCerrar_(hoy); } catch (e2) { ctx.mesas = null; }
-  try { ctx.retiros = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1); } catch (e3) { ctx.retiros = null; }
-  try { ctx.inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor); } catch (e4) { ctx.inv = null; }
-  try { ctx.resenas = medResenas_(hoy); } catch (e5) { ctx.resenas = null; }
-  try { var k = mktKpisMes_(d.anio, d); ctx.mkt = k.meses[hoy.getMonth() + 1] || null; } catch (e6) { ctx.mkt = null; }
-  try { ctx.acciones = medAcciones_(null); } catch (e7) { ctx.acciones = []; }
-  try { ctx.cierres = cieTodos_(); } catch (e8) { ctx.cierres = {}; }
-  try { ctx.caja = cchEstado_(false); } catch (e10) { ctx.caja = null; }   // Caja chica (13-oct-2026)
+  var ctx = { hoy: hoy, d: d, P: P, M: M, c: c, faltan: [] };   // faltan: lo que no se pudo leer (14-oct-2026)
+  try { var cj = _cajaDatos_(_cajaOpciones_({})); ctx.cruza_cero = cj.escenarios && cj.escenarios.base ? cj.escenarios.base.cruza_cero : null; } catch (e) { ctx.cruza_cero = null; ctx.faltan.push('caja'); }
+  try { ctx.mesas = medMesasPorCerrar_(hoy); } catch (e2) { ctx.mesas = null; ctx.faltan.push('mesas por cerrar'); }
+  try { ctx.retiros = medRetirosMes_(hoy.getFullYear(), hoy.getMonth() + 1); } catch (e3) { ctx.retiros = null; ctx.faltan.push('retiros'); }
+  try { ctx.inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor); } catch (e4) { ctx.inv = null; ctx.faltan.push('inventario'); }
+  try { ctx.resenas = medResenas_(hoy); } catch (e5) { ctx.resenas = null; ctx.faltan.push('reseñas'); }
+  try { var k = mktKpisMes_(d.anio, d); ctx.mkt = k.meses[hoy.getMonth() + 1] || null; } catch (e6) { ctx.mkt = null; ctx.faltan.push('marketing'); }
+  try { ctx.acciones = medAcciones_(null); } catch (e7) { ctx.acciones = []; ctx.faltan.push('acciones'); }
+  try { ctx.cierres = cieTodos_(); } catch (e8) { ctx.cierres = {}; ctx.faltan.push('cierres de PosFile'); }
+  try { ctx.caja = cchEstado_(false); } catch (e10) { ctx.caja = null; ctx.faltan.push('caja chica'); }   // Caja chica (13-oct-2026)
   ctx.invBanco = {};
-  ['COCINA', 'BARRA'].forEach(function (a) { try { ctx.invBanco[a] = invBancoContraInventario_(a); } catch (e9) { ctx.invBanco[a] = null; } });
+  ['COCINA', 'BARRA'].forEach(function (a) { try { ctx.invBanco[a] = invBancoContraInventario_(a); } catch (e9) { ctx.invBanco[a] = null; ctx.faltan.push('inventario contra Productos (' + a.toLowerCase() + ')'); } });
   return ctx;
 }
 
@@ -323,6 +323,8 @@ function vigiaMensaje_(dest, ctx, reglas) {
   if (avisos.length) { lineas.push(''); lineas.push('Lo importante hoy:'); avisos.slice(0, 5).forEach(function (a) { lineas.push((a.urgente ? '⚠️ ' : '• ') + a.texto); }); }
   if (mias.length) { lineas.push(''); lineas.push('Tus acciones de la semana:'); mias.slice(0, 5).forEach(function (a) { lineas.push('☐ ' + a.accion + ' (' + a.fecha + ')'); }); }
   if (sugeridas) { lineas.push(''); lineas.push('El vigía dejó ' + sugeridas + ' acción(es) sugerida(s) para aprobar en el tablero.'); }
+  // 14-oct-2026: una seccion que no se pudo leer ya no desaparece en silencio.
+  if (rol === 'dueno' && ctx.faltan && ctx.faltan.length) { lineas.push(''); lineas.push('Sin dato (error al leer): ' + ctx.faltan.join(', ') + '.'); }
   lineas.push(''); lineas.push('Abrir: ' + link + ' (con tu enlace personal)');
   return { destino: dest.nombre, rol: rol, asunto: 'Rosanta · tu resumen del ' + dias + ' · ' + (items[0] ? items[0].nombre + ' ' + items[0].valor : ''),
            texto: lineas.join('\n'), principal: principal, top: top, link: link, avisos: avisos.length, sugeridas: sugeridas };
@@ -392,7 +394,9 @@ function _vigYaHoy_() {
   var hoy = Utilities.formatDate(new Date(), VIG_TZ_, 'yyyy-MM-dd'), out = {};
   if (!sh || sh.getLastRow() < 2) return out;
   sh.getDataRange().getValues().slice(1).forEach(function (r) {
-    if (r[0] instanceof Date && Utilities.formatDate(r[0], VIG_TZ_, 'yyyy-MM-dd') === hoy && String(r[3]) === 'SI') out[String(r[1])] = true;
+    // el envio del reporte semanal tambien queda en el log (canal 'reporte'): no es el resumen
+    // del dia, y contarlo dejaba a los supervisores sin su resumen los martes (14-oct-2026)
+    if (r[0] instanceof Date && Utilities.formatDate(r[0], VIG_TZ_, 'yyyy-MM-dd') === hoy && String(r[3]) === 'SI' && String(r[2]) !== 'reporte') out[String(r[1])] = true;
   });
   return out;
 }
@@ -423,6 +427,9 @@ function leerCorreosDelDia_() {
   var r = { cuando: new Date().toISOString() };
   try { r.cierres = cieLeer_(20); } catch (e1) { r.cierres = { errores: [String(e1 && e1.message || e1)] }; }
   try { r.fel = fecLeer_(); } catch (e2) { r.fel = { errores: [String(e2 && e2.message || e2)] }; }
+  // Marca para Procesos.js. "Otra lectura en curso" no es una falla: la hizo otro.
+  var errC = ((r.cierres && r.cierres.errores) || []).filter(function (x) { return !/en curso/.test(x); });
+  procMarcar_('cierres', errC.length ? errC.slice(0, 2).join(' · ') : null);
   try { PropertiesService.getScriptProperties().setProperty('CORREOS_DEL_DIA', JSON.stringify(r).slice(0, 8000)); } catch (e3) { /* sin propiedades */ }
   return r;
 }
@@ -435,17 +442,25 @@ function leerCorreosDelDia() {
   return r;
 }
 
+var VIG_REINTENTO_H_ = 3;
+
 function vigiaCadaHora() {
   soloDueno_();
+  procMarcar_('vigia');   // Procesos.js: "el vigia corrio" (14-oct-2026)
   // Puente con el reporte semanal (28-sep-2026): importa las acciones que propuso la tarea
   // del lunes y exporta METAS y ACCIONES para la proxima corrida. Nunca frena al vigia.
-  try { Logger.log(puenteReporte_()); } catch (eP) { Logger.log('Puente del reporte: ' + eP); }
+  // Desde el 14-oct-2026 un fallo deja marca y, si se repite 3 h, le llega un correo al dueño.
+  try { Logger.log(puenteReporte_()); procMarcar_('puente'); } catch (eP) { Logger.log('Puente del reporte: ' + eP); procMarcar_('puente', eP); }
   // El reporte semanal por correo a los supervisores, martes 12:00 (28-sep-2026).
-  try { Logger.log(repCorreoCadaHora_(new Date())); } catch (eR) { Logger.log('Reporte por correo: ' + eR); }
+  try { Logger.log(repCorreoCadaHora_(new Date())); procMarcar_('correo'); } catch (eR) { Logger.log('Reporte por correo: ' + eR); procMarcar_('correo', eR); }
+  Logger.log(procAvisar_('el vigía'));
   var hoy = new Date(), hora = hoy.getHours(), dia = _vigDia_(hoy);
   var destinos = vigiaDestinos_();
   var ya = _vigYaHoy_();
-  var toca = destinos.filter(function (x) { return x.hora === hora && _vigTocaHoy_(x.dias, dia) && !ya[x.nombre]; });
+  // Hasta 3 h tarde (14-oct-2026): si el envio de su hora fallo (queda OK=NO en el log) o el
+  // activador se salto esa hora, se reintenta en las siguientes. _vigYaHoy_ solo cuenta los
+  // que salieron bien, asi que nadie recibe dos.
+  var toca = destinos.filter(function (x) { return x.hora <= hora && hora - x.hora <= VIG_REINTENTO_H_ && _vigTocaHoy_(x.dias, dia) && !ya[x.nombre]; });
   // A las 10:00, los correos del dia (Juanma, 13-oct-2026): el cierre de PosFile de anoche y
   // las facturas del FEL que avisa SAT. Va colgado de este disparador, que ya corre cada hora.
   if (hora === 10) { try { Logger.log(JSON.stringify(leerCorreosDelDia_())); } catch (eD) { Logger.log('Correos del dia: ' + eD); } }

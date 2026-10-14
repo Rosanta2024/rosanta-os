@@ -139,10 +139,22 @@ function latido() {
     return null;
   });
 
+  // Septima señal (auditoria 14-oct-2026): los PROCESOS, no los datos. El vigia y el
+  // calentador ya se vigilan entre ellos y le mandan correo al dueño (Procesos.js); esto es
+  // el respaldo de los lunes por si se cayeron los dos a la vez.
+  revisar_(frios, vivos, 'procesos automáticos', function () {
+    var prob = procProblemas_();
+    var p = PropertiesService.getScriptProperties();
+    ['vigia', 'calentar'].forEach(function (k) {
+      if (!p.getProperty('PROC_' + k)) prob.push(PROCESOS[k].nombre + ': nunca dejó marca. ¿Está su activador?');
+    });
+    return prob.length ? prob.join(' · ') : null;
+  });
+
   Logger.log('Latido · al día: ' + (vivos.join(', ') || 'ninguno'));
 
   if (frios.length) {
-    throw new Error('LATIDO ROSANTA · ' + frios.length + ' de 6 señales frías:\n· ' +
+    throw new Error('LATIDO ROSANTA · ' + frios.length + ' de ' + (frios.length + vivos.length) + ' señales frías:\n· ' +
                     frios.join('\n· ') +
                     '\nAl día: ' + (vivos.join(', ') || 'ninguno') + '.');
   }

@@ -1285,6 +1285,45 @@ function prPuentePOS_(res) {
     }
     prAnotar_(g, nombre, 'OK', usos + ' campos escapados en Marketing · 0 crudos', 0, 0);
   });
+  /* Auditoria 14-oct-2026 (Fase 2): los procesos automaticos dejan marca y se vigilan entre
+     ellos (Procesos.js). Esta prueba no escribe nada: le pasa a procProblemas_ marcas
+     inventadas y revisa que el vigia, el calentador y la carga de ventas sigan conectados. */
+  prCorrer_(g, 'Los procesos automaticos se vigilan entre ellos', function () {
+    var nombre = 'Los procesos automaticos se vigilan entre ellos';
+    if (typeof procProblemas_ !== 'function' || typeof PROCESOS !== 'object') {
+      prAnotar_(g, nombre, 'FALLA', 'No existe Procesos.js (procProblemas_ / PROCESOS).');
+      return;
+    }
+    var H = 36e5, t = Date.UTC(2026, 9, 14, 18);
+    var sano = { PROC_vigia: JSON.stringify({ ok: t - 0.5 * H }), PROC_calentar: JSON.stringify({ ok: t - 0.1 * H }) };
+    var caido = { PROC_vigia: JSON.stringify({ ok: t - 5 * H }) };
+    var falla = { PROC_calentar: JSON.stringify({ ok: t - 4 * H, err: t - 3 * H, msg: 'x' }) };
+    var suelto = { PROC_calentar: JSON.stringify({ ok: t - 0.2 * H, err: t - 0.1 * H, msg: 'x' }) };
+    var r = [procProblemas_(t, sano).length, procProblemas_(t, caido).length, procProblemas_(t, falla).length,
+             procProblemas_(t, suelto).length, procProblemas_(t, {}).length];
+    // control: caido y falla TIENEN que dar problema; sano, un error suelto y sin marcas, no
+    if (r.join(',') !== '0,1,1,0,0') {
+      prAnotar_(g, nombre, 'FALLA', 'procProblemas_ no distingue: sano/caido/falla/suelto/vacio = ' + r.join('/') + ' (esperado 0/1/1/0/0).');
+      return;
+    }
+    var faltan = [];
+    var conectados = { vigiaCadaHora: ["procMarcar_('vigia')", 'procAvisar_('], calentarCaches: ["procMarcar_('calentar'", 'procAvisar_(', "procMarcar_('ventas'", "procMarcar_('fel'"],
+                       leerCorreosDelDia_: ["procMarcar_('cierres'"], latido: ['procProblemas_('] };
+    Object.keys(conectados).forEach(function (fn) {
+      var src = typeof globalThis[fn] === 'function' ? String(globalThis[fn]) : '';
+      if (!src) { faltan.push(fn + ' no existe'); return; }
+      conectados[fn].forEach(function (x) { if (src.indexOf(x) === -1) faltan.push(fn + ' sin ' + x); });
+    });
+    if (typeof cargarVentasSiHayPendientes_ === 'function' && /LockService/.test(String(cargarVentasSiHayPendientes_)))
+      faltan.push('cargarVentasSiHayPendientes_ volvio a tomar el ScriptLock (bloquea Pagos y Compras durante la carga)');
+    if (faltan.length) {
+      prAnotar_(g, nombre, 'FALLA', faltan.join(' · '), faltan.length, 0);
+      return;
+    }
+    var hoy = procProblemas_();
+    prAnotar_(g, nombre, hoy.length ? 'AVISO' : 'OK', hoy.length ? 'Hoy: ' + hoy.join(' · ')
+      : Object.keys(PROCESOS).length + ' procesos con marca · vigia y calentador se cuidan · sin problemas hoy', hoy.length, 0);
+  });
 }
 
 /* Llamadas por el dispatcher srv('nombre', ...args) de Marketing.html, que termina en

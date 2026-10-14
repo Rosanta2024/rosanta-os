@@ -34,19 +34,30 @@
  *
  * SI SE APAGA, no se rompe nada: se vuelve a la conducta de antes, el primero que
  * abre paga la construccion. Por eso no lanza excepcion cuando algo falla — no es
- * un monitor, es una comodidad. Latido.gs es el que avisa.
+ * un monitor, es una comodidad. Lo que falla queda marcado con procMarcar_ y el que
+ * avisa es Procesos.js (correo al dueño, via este calentador o el vigia); el Latido
+ * del lunes lo repite. Antes este comentario decia "Latido.gs es el que avisa", y el
+ * Latido no miraba a los procesos (auditoria 14-oct-2026).
  */
 
 function calentarCaches() {
   var c = CacheService.getScriptCache();
   var hecho = [], ya = [], fallo = [];
 
-  function calentar(nombre, estaFrio, construir) {
+  function calentar(nombre, estaFrio, construir, sigueFrio) {
     try {
       if (!estaFrio()) { ya.push(nombre); return; }
+      // NO CUPO (14-oct-2026): si la ultima reconstruccion no quedo guardada (el valor paso
+      // el tope del cache y el put fallo callado), no se repite cada 5 min: se espera 1 h.
+      // Sin esto el recetario (~40 s) se rehacia 288 veces al dia sin que nadie se enterara.
+      if (c.get('calentar_nocupo_' + nombre)) { fallo.push(nombre + ': no cabe en el caché (se reintenta en menos de 1 h)'); return; }
       var a = new Date().getTime();
       construir();
       hecho.push(nombre + ' (' + ((new Date().getTime() - a) / 1000).toFixed(1) + 's)');
+      if ((sigueFrio || estaFrio)()) {   // sigueFrio: solo "no esta en el cache", sin otras razones para rehacer
+        c.put('calentar_nocupo_' + nombre, '1', 3600);
+        fallo.push(nombre + ': se reconstruyó pero no quedó en el caché (¿pasó el tope de 100 KB?)');
+      }
     } catch (e) {
       fallo.push(nombre + ': ' + String(e && e.message || e));
     }
@@ -58,8 +69,14 @@ function calentarCaches() {
   try {
     var carga = cargarVentasSiHayPendientes_();
     if (carga && carga.pendientes) hecho.push('ventas POS (' + carga.pendientes + ' export)');
+    if (carga) {   // null = no le tocaba revisar (cada 30 min) u otra carga en curso: sin marca
+      var rech = (carga.archivos || []).filter(function (x) { return x.error; });
+      procMarcar_('ventas', rech.length ? rech.map(function (x) { return x.archivo + ': ' + x.error; }).join(' · ') : null);
+      if (rech.length) fallo.push('ventas POS: ' + rech.length + ' export rechazado(s)');
+    }
   } catch (e) {
     fallo.push('ventas POS: ' + String(e && e.message || e));
+    procMarcar_('ventas', e);
   }
 
   var correo = '';
@@ -70,8 +87,11 @@ function calentarCaches() {
     // va aparte de 'reconstruido': es leer datos nuevos, no rehacer un cache
     if (fec.nuevos) correo = 'FEL por correo: ' + fec.nuevos + ' nuevas';
     if (fec.errores.length) fallo.push('FEL por correo: ' + fec.errores.slice(0, 2).join(' · '));
+    var errFec = fec.errores.filter(function (x) { return !/en curso/.test(x); });   // otra lectura no es falla
+    procMarcar_('fel', errFec.length ? errFec.slice(0, 2).join(' · ') : null);
   } catch (e) {
     fallo.push('FEL por correo: ' + String(e && e.message || e));
+    procMarcar_('fel', e);
   }
 
   // El caro: ~40 s. Es el que justifica todo este archivo.
@@ -83,7 +103,10 @@ function calentarCaches() {
   calentar('tablero', function () {
     var h = huellaDatos_();
     return !h || !c.get(claveProfitOS_(13, h));   // la misma clave que arma getProfitOS
-  }, function () { getProfitOS('', 13); });
+  }, function () { getProfitOS('', 13); }, function () {
+    var h = huellaDatos_();
+    return !!h && !c.get(claveProfitOS_(13, h));   // sin huella no hay clave que mirar: no se marca
+  });
 
   // Los avisos: 7 s, casi todo recorriendo Drive.
   calentar('avisos', function () { return !c.get(AVISOS_CACHE.clave); },
@@ -102,20 +125,29 @@ function calentarCaches() {
     fallo.push('filas del maestro: ' + String(e && e.message || e));
   }
   calentar('finanzas', function () { return cargaNueva || !c.get(finCacheClave_()); },
-           function () { _finDatos_(true); });
+           function () { _finDatos_(true); },
+           function () { return !c.get(finCacheClave_()); });
 
   // La tarjeta real contra teorico del tablero: corre ingenieriaDeMenu_ una vez por mes.
   // Va despues de finanzas porque lee su calculo. Misma clave que getCmvRealTeorico.
   calentar('real contra teorico', function () {
     var h = huellaDatos_();
     return !h || !c.get(cmvRealTeoricoClave_(h));
-  }, function () { getCmvRealTeorico(''); });
+  }, function () { getCmvRealTeorico(''); }, function () {
+    var h = huellaDatos_();
+    return !!h && !c.get(cmvRealTeoricoClave_(h));
+  });
 
   if (cargaNueva) hecho.push('(el maestro tenia filas nuevas)');
+  // Procesos.js (14-oct-2026): el calentador deja su marca y revisa a los demas, incluido el
+  // vigia (si se cae el vigia, avisa este; si se cae este, avisa el vigia). Un fallo suelto
+  // no avisa: hace falta una racha de 2 h.
+  procMarcar_('calentar', fallo.length ? fallo.join(' | ') : null);
+  var aviso = procAvisar_('el calentador de cachés');
   var linea = 'calentarCaches · reconstruido: ' + (hecho.join(', ') || 'nada') +
               ' · ya estaba: ' + (ya.join(', ') || 'nada') +
               (correo ? ' · leido: ' + correo : '') +
-              (fallo.length ? ' · FALLO: ' + fallo.join(' | ') : '');
+              (fallo.length ? ' · FALLO: ' + fallo.join(' | ') : '') + ' · ' + aviso;
   Logger.log(linea);
   return linea;
 }

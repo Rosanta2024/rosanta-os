@@ -469,22 +469,27 @@ function escribirVentas_(filas, desde, hasta, cuando) {
  *
  * Revisa Drive como mucho cada VENTAS_AUTO.segs: listar las carpetas cuesta ~7 s y
  * no hace falta cada 5 minutos. Si no hay nada nuevo, no escribe nada.
- * El candado evita que dos corridas carguen el mismo archivo a la vez: escribirVentas_
- * reemplaza por rango y es idempotente, pero dos escrituras simultaneas sobre la
- * misma hoja no lo son.
+ * La marca 'ventas_cargando' evita que dos corridas carguen el mismo archivo a la vez:
+ * escribirVentas_ reemplaza por rango y es idempotente, pero dos escrituras simultaneas
+ * sobre la misma hoja no lo son. (Hasta el 14-oct-2026 era el ScriptLock; ver abajo.)
  */
 var VENTAS_AUTO = { clave: 'ventas_auto_revisado_v1', segs: 1800 };
 
 function cargarVentasSiHayPendientes_() {
   var c = CacheService.getScriptCache();
   if (c.get(VENTAS_AUTO.clave)) return null;
-  var candado = LockService.getScriptLock();
-  if (!candado.tryLock(0)) return null;
+  // MARCA EN CACHE Y NO ScriptLock (14-oct-2026, auditoria). El ScriptLock es UNO para todo
+  // el proyecto, y la carga lo retenia varios minutos: mientras tanto fallaban los guardados
+  // de Pagos y Compras (_pagConCandado_, tryLock de 20-30 s) con "Alguien mas esta guardando".
+  // Misma solucion que cieLeer_ ('cie_leyendo'). La marca de 30 min (VENTAS_AUTO.clave) se
+  // pone ANTES de cargar, asi que la siguiente corrida del calentador ya no entra.
+  if (c.get('ventas_cargando')) return null;
+  c.put(VENTAS_AUTO.clave, '1', VENTAS_AUTO.segs);
+  c.put('ventas_cargando', '1', 600);
   try {
-    c.put(VENTAS_AUTO.clave, '1', VENTAS_AUTO.segs);
     return cargarVentasPorProducto_();
   } finally {
-    candado.releaseLock();
+    try { c.remove('ventas_cargando'); } catch (e) { /* se vence sola en 10 min */ }
   }
 }
 
