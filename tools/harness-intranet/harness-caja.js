@@ -176,7 +176,8 @@ t('Jeffry agrega una compra sin factura', G.por_devolver.find(x => x.nombre === 
   const fa = ctx.pagEstado_().facturas.find(f => f.saldo > 100 && f.area === 'COCINA' && !f.pagos.length && !f.por_correo);
   if (fa) {
     const mitad = Math.round(fa.saldo / 2 * 100) / 100;
-    ctx.registrarPagoFacturas('tokchef', [fa.llave], 'Banco', ctx.medFechaIso_(new Date()), mitad, 0, 'abono');
+    ctx.registrarPagoFacturas('tokchef', [fa.llave], 'Banco', ctx.medFechaIso_(new Date()), mitad, 0, 'abono', 'Banco BI');
+    t('Banco sin cuenta no se guarda', /transferencia/.test(tira(() => ctx.registrarPagoFacturas('tokchef', [fa.llave], 'Banco', ctx.medFechaIso_(new Date()), 1, 0, '', ''))));
     const f1 = ctx.pagEstado_().facturas.find(f => f.llave === fa.llave);
     t('Un abono marcado Banco baja el saldo y queda por confirmar', f1.estado === 'Abonada' && Math.abs(f1.saldo - (fa.saldo - mitad)) < 0.02 && Math.abs(f1.por_confirmar - mitad) < 0.02,
       fa.proveedor + ' ' + f1.estado + ' saldo ' + f1.saldo + ' por confirmar ' + f1.por_confirmar);

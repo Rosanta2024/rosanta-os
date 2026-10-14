@@ -280,15 +280,34 @@ function cchSincronizarMaestro_(E) {
 
 // ---------------------------------------------------------------- pantalla
 
+/**
+ * Si falta el cierre de algun dia ya pasado, lee los correos de PosFile antes de pintar
+ * (13-oct-2026: el boton "Leer cierres" dependia de que alguien lo tocara y la caja seguia
+ * diciendo "Falta el cierre"). Una vez cada 20 minutos como mucho: leer un PDF tarda segundos.
+ */
+function _cchLeerSiFaltan_() {
+  var cierres = cieTodos_(), hoy = medFechaIso_(new Date()), falta = null;
+  for (var f = _cchMasDia_(CCH_ARRANQUE_.fecha, 1); f < hoy; f = _cchMasDia_(f, 1)) if (!cierres[f]) { falta = f; break; }
+  if (!falta) return null;
+  var props = PropertiesService.getScriptProperties(), ult = Number(props.getProperty('CCH_LECTURA_AUTO') || 0);
+  if (Date.now() - ult < 20 * 60 * 1000) return null;
+  props.setProperty('CCH_LECTURA_AUTO', String(Date.now()));
+  // 20 dias: tambien entran los del 1 al 10-oct (la venta del mes). Los correos ya guardados
+  // se saltan sin abrir el PDF, asi que releer la ventana entera es barato.
+  return cieLeer_(20);
+}
+
 /** La pantalla de la caja chica. */
 function getCajaChica(auth) {
   var Q = cchQuien_(auth);
+  var auto = null;
+  try { auto = _cchLeerSiFaltan_(); } catch (eL) { auto = { errores: ['No pude leer los correos de PosFile: ' + eL.message], correos: 0, nuevos: 0 }; }
   var E = cchEstado_(true);
   return {
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm'), hoy: medFechaIso_(new Date()),
     rol: Q.rol, nombre: Q.nombre, arranque: E.arranque, resumen: E.resumen,
     dias: E.dias.slice().reverse(), categorias: CCH_CATS_.map(function (c) { return { k: c.k, t: c.t }; }),
-    tolerancia: CCH_TOLERANCIA_, lectura_cierres: cieUltimaLectura_(),
+    tolerancia: CCH_TOLERANCIA_, lectura_cierres: cieUltimaLectura_(), lectura_ahora: auto || undefined,
     maestro: E.maestro || null, aviso_maestro: E.aviso_maestro || ''
   };
 }

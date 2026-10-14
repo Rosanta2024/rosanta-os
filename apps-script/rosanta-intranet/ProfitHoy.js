@@ -106,6 +106,15 @@ function getHoyProfit(auth) {
     });
   });
 
+  // 7. La lectura de los correos de las 10:00 (cierres de PosFile y FEL): si fallo, el dueño lo ve
+  if (esDueno) intentar('Correos del día', function () {
+    var C = JSON.parse(PropertiesService.getScriptProperties().getProperty('CORREOS_DEL_DIA') || 'null');
+    if (!C) return;
+    var err = [].concat((C.cierres && C.cierres.errores) || [], (C.fel && C.fel.errores) || []);
+    if (err.length) add({ urgente: true, texto: 'La lectura de correos de las 10:00 tuvo ' + err.length + (err.length === 1 ? ' error' : ' errores'),
+      detalle: err.slice(0, 2).join(' · '), vista: 'caja', boton: 'Ver caja' });
+  });
+
   items.sort(function (a, b) { return (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0); });
   return { nombre: nombre.split(' ')[0], rol: rol, fecha: hoyIso, items: items, fallas: fallas,
            gen: Utilities.formatDate(hoy, 'America/Guatemala', 'dd/MM/yyyy HH:mm') };

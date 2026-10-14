@@ -59,6 +59,9 @@ var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
 // factura (o de varias del mismo proveedor) que el cruce automatico no se atrevio a casar. El
 // dueño lo confirma con un toque; la fila guarda la llave del pago para no ofrecerlo de nuevo.
 var PAG_CONF_BANCO_ = 'Confirmado con banco';
+// Las cuentas y tarjetas (los nombres que usa pagPagosBanco_ para cada cargo)
+var PAG_MEDIOS_BANCO_ = ['Banco BI', 'Banco BAC'];
+var PAG_MEDIOS_TARJETA_ = ['Tarjeta débito BI', 'Tarjeta crédito BI', 'Tarjeta crédito BAC'];
 // Lo que José (Maco) y Jeffry pagan de su bolsa a proveedores y Rosanta les devuelve
 // (Juanma, 13-oct-2026). Suma "Pagó X" (facturas y mercado) menos "Devuelto a X".
 // La devolucion la anota el dueño; va con AREA ADMIN, asi solo el dueño la anula.
@@ -410,6 +413,17 @@ function _pagCatCompatible_(catPago, catFactura) {
   return base(catPago) === base(catFactura);
 }
 
+/**
+ * La ventana entre un pago y su factura. La mercaderia se factura al comprar y se paga despues
+ * (3 dias antes a 60 despues). La renta y los servicios se facturan DESPUES de cobrar (Juanma,
+ * 13-oct-2026: la renta de agosto se pago el 22 y el 29-ago y la factura es del 18-sep): ahi el
+ * pago puede ser hasta 45 dias anterior a la factura.
+ */
+function _pagEnVentanaPosible_(p, f) {
+  var d = p.dia - f.dia, antes = _finEn_(FIN_COGS_CATS, f.categoria) ? 3 : 45;
+  return d >= -antes && d <= 60;
+}
+
 function _pagPosibles_(abiertas, pagos) {
   var out = [];
   pagos.forEach(function (p) {
@@ -419,7 +433,7 @@ function _pagPosibles_(abiertas, pagos) {
     if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return;
     if (/^(NOMINA|IGSS|PROPINA|MARKETING|COMISION)/.test(cat)) return;
     if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return;
-    var cand = abiertas.filter(function (f) { var d = p.dia - f.dia; return d >= -3 && d <= 60 && _pagCatCompatible_(cat, f.categoria); });
+    var cand = abiertas.filter(function (f) { return _pagEnVentanaPosible_(p, f) && _pagCatCompatible_(cat, f.categoria); });
     var ops = cand.filter(function (f) { return Math.abs(f.saldo - p.q) < 0.011; }).map(function (f) { return [f]; });
     var porNit = {};
     cand.forEach(function (f) { (porNit[f.nit] = porNit[f.nit] || []).push(f); });
@@ -457,7 +471,7 @@ function _pagPosibles_(abiertas, pagos) {
     var dMin = FS[0].dia, dMax = FS[FS.length - 1].dia;
     var mios = pagos.filter(function (p) {
       var cat = p.categoria || '';
-      if (p.dia < dMin - 3 || p.dia > dMax + 60 || usadosFr[p.llave]) return false;
+      if (p.dia < dMin - 45 || p.dia > dMax + 60 || usadosFr[p.llave]) return false;
       if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return false;
       if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return false;
       return FS.some(function (f) {
@@ -480,8 +494,8 @@ function _pagPosibles_(abiertas, pagos) {
     var hecho = false;
     sumP.forEach(function (sp) {
       if (hecho) return;
-      var ultP = Math.max.apply(null, sp.sel.map(function (p) { return p.dia; }));
-      var sf = sumF.filter(function (x) { return Math.abs(x.suma - sp.suma) < 0.011 && x.sel.every(function (f) { return f.dia <= ultP + 3; }); })[0];
+      // cada factura del grupo en la ventana de cada cargo (la renta: cargos antes de la factura)
+      var sf = sumF.filter(function (x) { return Math.abs(x.suma - sp.suma) < 0.011 && x.sel.every(function (f) { return sp.sel.every(function (p) { return _pagEnVentanaPosible_(p, f); }); }); })[0];
       if (!sf) return;
       hecho = true;
       sp.sel.forEach(function (p) { usadosFr[p.llave] = 1; });
@@ -494,6 +508,16 @@ function _pagPosibles_(abiertas, pagos) {
                               facturas: sf.sel.map(function (f) { return { dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, saldo: f.saldo, area: f.area }; }) }],
                  fuerza: 1 });
     });
+  });
+  // Lo fraccionado manda: un cargo que ya explica una factura junto con otros no se ofrece suelto,
+  // y a esa factura no se le ofrecen abonos de otros cargos (el 6-oct no es abono de la renta de agosto).
+  var enFr = {}, factFr = {};
+  out.forEach(function (x) { if (x.pagos) { x.pagos.forEach(function (p) { enFr[p.llave] = 1; }); x.opciones[0].llaves.forEach(function (k) { factFr[k] = 1; }); } });
+  out = out.filter(function (x) {
+    if (x.pagos) return true;
+    if (enFr[x.pago.llave]) return false;
+    x.opciones = x.opciones.filter(function (o) { return !o.llaves.some(function (k) { return factFr[k]; }); });
+    return x.opciones.length > 0;
   });
   return out.sort(function (a, b) { return b.fuerza - a.fuerza || (a.pago.fecha < b.pago.fecha ? 1 : -1); });
 }
@@ -604,7 +628,8 @@ function pagEstado_() {
       // factura muestra lo que falta. Queda "por confirmar" hasta que el banco traiga ese monto
       // (la renta se paga en dos partes: 10,212.50 el 6-oct y 10,000 el 13-oct).
       f.marca_banco = pagNumDia_(pagDia_(m.fecha_pagado) || new Date());
-      (f.marcas = f.marcas || []).push({ id: m.id, q: m.q, dia: f.marca_banco });
+      var med = /^\[([^\]]+)\]/.exec(m.detalle || '');
+      (f.marcas = f.marcas || []).push({ id: m.id, q: m.q, dia: f.marca_banco, medio: med ? med[1] : '' });
       f.pagado += m.q;
     }
     else f.pagado += m.q;
@@ -625,7 +650,9 @@ function pagEstado_() {
   var usadoMarca = {}, conMarca = facturas.filter(function (f) { return f.marcas; });
   var enVent = function (p, dia) { var d = p.dia - dia; return d >= -PAG_BANCO_ANTES_ && d <= PAG_BANCO_DESPUES_; };
   conMarca.forEach(function (f) { f.marcas.forEach(function (mk) {
-    var p = banco.filter(function (p) { return !usadoMarca[p.llave] && Math.abs(p.q - mk.q) < 0.011 && enVent(p, mk.dia); })[0];
+    // de la cuenta elegida (Banco BI incluye lo pagado con la tarjeta de debito, que sale de la misma cuenta)
+    var medioOk = function (p) { return !mk.medio || p.banco === mk.medio || (mk.medio === 'Banco BI' && p.banco === 'Tarjeta débito BI'); };
+    var p = banco.filter(function (p) { return !usadoMarca[p.llave] && medioOk(p) && Math.abs(p.q - mk.q) < 0.011 && enVent(p, mk.dia); })[0];
     if (p) { usadoMarca[p.llave] = 1; mk.pago = p; }
   }); });
   var sinConf = {};
@@ -640,7 +667,8 @@ function pagEstado_() {
     f.por_confirmar = 0;
     f.marcas.forEach(function (mk) {
       var x = f.pagos.filter(function (y) { return y.id === mk.id; })[0];
-      if (mk.pago && x) { x.estatus = /^Tarjeta/.test(mk.pago.banco) ? 'Tarjeta confirmada' : 'Banco confirmado'; x.por = mk.pago.banco; x.detalle = mk.pago.glosa; x.fecha = mk.pago.fecha; }
+      // la fecha que se anoto (el dia del pago) y la que trae el banco (el dia que lo registro)
+      if (mk.pago && x) { x.estatus = /^Tarjeta/.test(mk.pago.banco) ? 'Tarjeta confirmada' : 'Banco confirmado'; x.por = mk.pago.banco; x.detalle = mk.pago.glosa; x.fecha_marca = x.fecha; x.fecha = mk.pago.fecha; }
       else f.por_confirmar += mk.q;
     });
     f.por_confirmar = _finR_(f.por_confirmar);
@@ -712,6 +740,7 @@ function getPagosProveedores(auth) {
   var out = {
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm'), desde: PAG_DESDE_,
     rol: Q.rol, areas: Q.areas, formas: PAG_FORMAS_, formas_mercado: PAG_FORMAS_MERCADO_,
+    medios_banco: PAG_MEDIOS_BANCO_, medios_tarjeta: PAG_MEDIOS_TARJETA_,
     facturas: facturas, cuadre: _pagCuadre_(facturas, favor),
     mercado: E.mercado.filter(function (m) { return ve(m.area); }),
     proveedores_mercado: _pagProvMercado_(E.mercado), grupos: PAG_GRUPOS_ORDEN_,
@@ -780,14 +809,21 @@ function _pagFechaValida_(s, nombre) {
  * y un monto menor a su saldo, es un abono. favorUsado: parte del saldo a favor del
  * proveedor que se aplica (el Excel: "pagar Q340, saldo a favor de 85").
  */
-function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle) {
-  _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle);
+function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
+  _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
   return getPagosProveedores(auth);
 }
 
 /** El pago en si. Q: { nombre, areas }. La Caja chica lo llama con todas las areas (Maco paga
  *  de la caja facturas de cocina y de barra). */
-function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle) {
+function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
+  // Con que se pago (13-oct-2026, Juanma: "¿cómo se identifica con qué banco fue pagado?"). Banco y
+  // Tarjeta piden la cuenta o la tarjeta; va al inicio del DETALLE entre corchetes, y un "Banco"
+  // solo se confirma con un pago de ESE medio.
+  medio = String(medio || '').trim();
+  if (estatus === 'Banco' && PAG_MEDIOS_BANCO_.indexOf(medio) === -1) throw new Error('Elegí de qué cuenta salió la transferencia: BI o BAC.');
+  if (estatus === 'Tarjeta' && PAG_MEDIOS_TARJETA_.indexOf(medio) === -1) throw new Error('Elegí con qué tarjeta: ' + PAG_MEDIOS_TARJETA_.join(', ') + '.');
+  if (medio && (estatus === 'Banco' || estatus === 'Tarjeta')) detalle = '[' + medio + '] ' + String(detalle || '');
   if (PAG_FORMAS_.indexOf(estatus) === -1) throw new Error('Forma de pago desconocida: ' + estatus);
   fechaPagado = _pagFechaValida_(fechaPagado, 'Fecha pagado');
   llaves = [].concat(llaves || []);

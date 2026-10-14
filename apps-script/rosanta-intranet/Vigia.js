@@ -413,6 +413,28 @@ function _vigTocaHoy_(dias, dia) {
  * Guarda: soloDueno_ — un activador corre como Juanma; desde el navegador de otra
  * persona tira, asi nadie puede disparar envios.
  */
+/**
+ * LOS CORREOS DEL DIA (13-oct-2026). Lee los cierres de caja de PosFile (llegan en la noche) y
+ * los avisos de factura del FEL que manda SAT. Corre todos los dias a las 10:00 desde
+ * vigiaCadaHora. El resultado queda en la propiedad CORREOS_DEL_DIA (y los cierres, ademas,
+ * en CIE_ULTIMA_LECTURA, que muestra la Caja chica).
+ */
+function leerCorreosDelDia_() {
+  var r = { cuando: new Date().toISOString() };
+  try { r.cierres = cieLeer_(20); } catch (e1) { r.cierres = { errores: [String(e1 && e1.message || e1)] }; }
+  try { r.fel = fecLeer_(); } catch (e2) { r.fel = { errores: [String(e2 && e2.message || e2)] }; }
+  try { PropertiesService.getScriptProperties().setProperty('CORREOS_DEL_DIA', JSON.stringify(r).slice(0, 8000)); } catch (e3) { /* sin propiedades */ }
+  return r;
+}
+
+/** Para correrlo a mano desde el editor (Vigia.gs): leer ya los cierres y el FEL. */
+function leerCorreosDelDia() {
+  soloDueno_();
+  var r = leerCorreosDelDia_();
+  Logger.log(JSON.stringify(r));
+  return r;
+}
+
 function vigiaCadaHora() {
   soloDueno_();
   // Puente con el reporte semanal (28-sep-2026): importa las acciones que propuso la tarea
@@ -424,8 +446,11 @@ function vigiaCadaHora() {
   var destinos = vigiaDestinos_();
   var ya = _vigYaHoy_();
   var toca = destinos.filter(function (x) { return x.hora === hora && _vigTocaHoy_(x.dias, dia) && !ya[x.nombre]; });
-  if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
+  // A las 10:00, los correos del dia (Juanma, 13-oct-2026): el cierre de PosFile de anoche y
+  // las facturas del FEL que avisa SAT. Va colgado de este disparador, que ya corre cada hora.
+  if (hora === 10) { try { Logger.log(JSON.stringify(leerCorreosDelDia_())); } catch (eD) { Logger.log('Correos del dia: ' + eD); } }
   if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }
+  if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
   var ctx = _vigContexto_(hoy), reglas = vigiaReglas_(ctx);
   if (hora === 6 || hora === 7) { _vigSugerir_(reglas.sugerencias); ctx.acciones = medAcciones_(null); }
   var log = [];

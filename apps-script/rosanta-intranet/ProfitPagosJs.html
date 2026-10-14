@@ -103,7 +103,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   }
   window.addEventListener('pf-buscar', function () { if (D0) { D = filtrar(D0); pintar(); } });
   var CLASE = { 'Pendiente': 'pend', 'Abonada': 'abon', 'Banco por confirmar': 'banco', 'Pagada': 'ok', 'Pagada de más': 'mas' };
-  function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e) + '</span>'; }
+  function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e === 'Banco por confirmar' ? 'Por confirmar con el banco' : e) + '</span>'; }
 
   function cargar() {
     HOST.innerHTML = '<div class="pg-vacio">Leyendo las facturas del FEL y los pagos…</div>';
@@ -111,6 +111,15 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
       .getPagosProveedores(AUTH);
   }
+  /* "marcada Banco BI el 06/10, falta que el banco la confirme" */
+  function marcaTxt(f) {
+    var mk = (f.pagos || []).filter(function (p) { return p.estatus === 'Banco'; }).pop();
+    var med = mk && /^\[([^\]]+)\]/.exec(mk.detalle || '');
+    return (f.saldo > 0.01 ? q(f.por_confirmar) + ' ' : '') + 'pagada por ' + nom(med ? med[1] : 'Banco') + (mk && mk.fecha ? ' el ' + ddmm(mk.fecha) : '') + ', falta que el banco la registre';
+  }
+  /* "Banco" se ve como "Transferencia" (Juanma, 13-oct-2026). Por dentro sigue siendo "Banco":
+     asi quedan bien los pagos ya guardados y las llaves de los pagos confirmados. */
+  function nom(x) { return String(x || '').replace(/^Banco confirmado$/, 'Transferencia confirmada').replace(/^Banco(?= |$)/, 'Transferencia'); }
   function porProveedor(lista) {
     var g = {}, orden = [];
     lista.forEach(function (f) { if (!g[f.nit]) { g[f.nit] = []; orden.push(f.nit); } g[f.nit].push(f); });
@@ -127,7 +136,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var h = '<div class="pg">' +
       '<h2>Pagos a proveedores</h2><p class="pg-intro">Las facturas llegan solas del FEL con la carga de los lunes. Cuando pagues, tocá <b>Pagar</b> y elegí cómo. ' +
       'Lo que no trae factura se anota en <b>+ Compra de mercado</b>. Entran las facturas desde el ' + esc(ddmm(D.desde)) + ': las de antes del 28/09 que COMPRAS_2026 da por pagadas ya cuentan como pagadas. ' +
-      'Las facturas marcadas <b>Banco</b> se confirman solas cuando se carga el estado de cuenta' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</p>' +
+      'Las pagadas por <b>Transferencia</b> se confirman solas cuando el banco registra el pago (se carga el estado de cuenta)' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</p>' +
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
@@ -176,8 +185,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
             var fila = '<div class="pg-l"><span class="c"><input type="checkbox" data-sel="' + esc(f.llave) + '"' + (SEL[f.llave] ? ' checked' : '') + ' aria-label="Elegir"></span>' +
               '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
-              '<span class="n cant">' + q(f.saldo > 0.01 ? f.saldo : f.por_confirmar) + (f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + (f.saldo > 0.01 ? ' · abonado ' + q(f.pagado) : '') + '</span>' : '') +
-                (f.por_confirmar > 0.01 ? '<span class="pg-nota" style="display:block">' + q(f.por_confirmar) + ' por confirmar con el banco</span>' : '') + '</span>' +
+              '<span class="n cant">' + q(f.saldo > 0.01 ? f.saldo : f.por_confirmar) + (f.saldo > 0.01 && f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + ' · abonado ' + q(f.pagado) + '</span>' : '') +
+                (f.por_confirmar > 0.01 ? '<span class="pg-nota" style="display:block">' + esc(marcaTxt(f)) + '</span>' : '') + '</span>' +
               '<span class="est">' + estado(f.estado) + '</span>' +
               '<span class="acc"><button type="button" class="pg-b" data-abrir="' + esc(f.llave) + '">' + (ABIERTA === f.llave ? 'Cerrar' : 'Pagar') + '</button></span></div>';
             if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + panelPago([f]) + '</div>';
@@ -197,7 +206,9 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         pag.map(function (f) {
           return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
-              '<td class="n">' + q(p.q) + '</td><td>' + esc(p.estatus) + (/confirmad/i.test(p.estatus) && p.por ? ' · <b>' + esc(p.por) + '</b>' : '') + (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
+              '<td class="n">' + q(p.q) + '</td><td>' + esc(nom(p.estatus)) + (/confirmad/i.test(p.estatus) && p.por ? ' · <b>' + esc(nom(p.por)) + '</b>' : '') +
+                (p.fecha_marca && p.fecha_marca !== p.fecha ? '<div class="pg-nota">pagado el ' + esc(ddmm(p.fecha_marca)) + ' · el banco lo registró el ' + esc(ddmm(p.fecha)) + '</div>' : '') +
+                (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
               '<td>' + (p.id ? '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') + '</td></tr>';
           }).join('');
         }).join('') + '</table></div>';
@@ -286,7 +297,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       return '<p class="pg-nota">Cargos del banco o de las tarjetas con el monto exacto de una factura pendiente (o de varias del mismo proveedor) que el cruce automático no se atrevió a dar por pagadas. ' +
         'Si es el pago, tocá <b>Sí, es este pago</b>: la factura sale de Por pagar. Si no, dejalo: no pasa nada.</p>' +
         PS.map(function (x, i) {
-          return '<section class="pg-prov" data-panel="pos-' + i + '"><header><div><span class="pg-area">' + esc(x.pago.banco) + ' · ' + esc(ddmm(x.pago.fecha)) + '</span><h3>' + esc(x.pago.glosa) + '</h3></div>' +
+          return '<section class="pg-prov" data-panel="pos-' + i + '"><header><div><span class="pg-area">' + esc(nom(x.pago.banco)) + ' · ' + esc(ddmm(x.pago.fecha)) + '</span><h3>' + esc(x.pago.glosa) + '</h3></div>' +
             '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.pagos ? ' · <span class="pg-est abon">' + x.pagos.length + ' cargos para ' + (x.opciones[0].facturas.length === 1 ? '1 factura' : x.opciones[0].facturas.length + ' facturas') + '</span>' : x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
             x.opciones.map(function (o, j) {
               return '<div class="pg-mas" style="justify-content:space-between;border-top:1px solid rgba(26,26,26,0.08);padding-top:0.4rem"><span>' +
@@ -318,7 +329,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (TAB === 'banco') {
       var fila = function (p) { return '<tr><td>' + esc(ddmm(p.fecha)) + '</td><td class="n">' + q(p.q) + '</td><td>' + esc(p.glosa) + '</td><td>' + esc(p.categoria) + '</td></tr>'; };
       var cab = '<tr><th>Fecha</th><th class="n">Monto</th><th>Glosa del banco</th><th>Categoría</th></tr>';
-      return '<p class="pg-nota">Pagos del banco que no se casaron solos con una factura. Para cerrarlos, buscá la factura en <b>Por pagar</b> y marcala <b>Banco</b>: con la marca, el mismo pago casa. ' +
+      return '<p class="pg-nota">Pagos del banco que no se casaron solos con una factura. Para cerrarlos, buscá la factura en <b>Por pagar</b> y pagala por <b>Transferencia</b>: con la marca, el mismo pago casa. ' +
         'Dudosos = calzan con más de una factura; sueltos = pagos de mercadería sin factura que calce.</p>' +
         '<h3 style="margin-top:1rem">Dudosos (' + D.banco_dudosos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_dudosos.map(fila).join('') + '</table></div>' +
         '<h3 style="margin-top:1rem">Sueltos (' + D.banco_sueltos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_sueltos.map(fila).join('') + '</table></div>';
@@ -331,11 +342,15 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   function panelPago(fs) {
     var tot = fs.reduce(function (a, f) { return a + f.saldo; }, 0), fav = favorDe(fs[0].nit), uno = fs.length === 1;
     return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
-      '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>. Tocá cómo se pagó:</div>' +
-      '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+      '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>.</div>' +
+      // la fecha y la cuenta o tarjeta, a la vista (13-oct-2026): con eso el banco confirma el pago
+      '<div class="pg-mas"><label title="El día que hiciste el pago. El banco puede registrarlo días después (fin de semana, feriado, fuera de horario): se busca hasta 45 días después.">Fecha en que pagaste <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
+      '<label>Si fue transferencia o tarjeta, ¿cuál? <select data-f="medio"><option value="">—</option>' +
+      (D.medios_banco || []).concat(D.medios_tarjeta || []).map(function (m) { return '<option value="' + esc(m) + '">' + esc(nom(m)) + '</option>'; }).join('') + '</select></label></div>' +
+      '<div class="pg-nota" style="margin-top:0.4rem">Tocá cómo se pagó:</div>' +
+      '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(nom(x)) + '</button>'; }).join('') + '</div>' +
       (uno && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
       '<details><summary class="pg-nota" style="cursor:pointer">Más opciones</summary><div class="pg-mas">' +
-      '<label>Fecha pagado <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       (uno ? '<label>Cantidad pagada <input type="number" step="0.01" min="0" data-f="monto" placeholder="' + tot.toFixed(2) + '"></label>' : '') +
       (fav > 0.01 ? '<label>Usar saldo a favor <input type="number" step="0.01" min="0" max="' + fav + '" data-f="favor" placeholder="hasta ' + fav.toFixed(2) + '"></label>' : '') +
       '<label>Nota <input type="text" data-f="nota" placeholder="ej. queda saldo de Q64"></label>' +
@@ -452,7 +467,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.confpos) {
       var ij = b.dataset.confpos.split(':'), PX = D.posibles[+ij[0]], OX = PX && PX.opciones[+ij[1]];
       if (!OX) return;
-      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + PX.pago.banco + ') es ' + (OX.abono ? 'un abono a ' : OX.fraccionado ? 'el pago (en ' + PX.pagos.length + ' cargos) de ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
+      if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + nom(PX.pago.banco) + ') es ' + (OX.abono ? 'un abono a ' : OX.fraccionado ? 'el pago (en ' + PX.pagos.length + ' cargos) de ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
       var pl = PX.pago.llave, ks2 = OX.llaves;
       llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel);
       return;
@@ -496,8 +511,12 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.abrir) { ABIERTA = ABIERTA === b.dataset.abrir ? null : b.dataset.abrir; pintar(); return; }
     if (b.dataset.forma && panel) {
       var ks = panel.dataset.panel.split(','), m = valor(panel, 'monto');
-      var forma = b.dataset.forma, fecha = valor(panel, 'fecha') || hoy(), favor = Number(valor(panel, 'favor')) || 0, nota = valor(panel, 'nota');
-      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, forma, fecha, m === '' ? null : Number(m), favor, nota); }, panel);
+      var forma = b.dataset.forma, fecha = valor(panel, 'fecha') || hoy(), favor = Number(valor(panel, 'favor')) || 0, nota = valor(panel, 'nota'), medio = valor(panel, 'medio');
+      // Banco pide la cuenta y Tarjeta la tarjeta: con eso el banco confirma el pago solo
+      if (forma === 'Banco' && (D.medios_banco || []).indexOf(medio) === -1) { panel.querySelector('[data-err]').textContent = 'Elegí de qué cuenta salió la transferencia (' + (D.medios_banco || []).map(nom).join(' o ') + ').'; return; }
+      if (forma === 'Tarjeta' && (D.medios_tarjeta || []).indexOf(medio) === -1) { panel.querySelector('[data-err]').textContent = 'Elegí con qué tarjeta se pagó.'; return; }
+      if (forma !== 'Banco' && forma !== 'Tarjeta') medio = '';
+      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, forma, fecha, m === '' ? null : Number(m), favor, nota, medio); }, panel);
       return;
     }
     if (b.dataset.programar && panel) {
