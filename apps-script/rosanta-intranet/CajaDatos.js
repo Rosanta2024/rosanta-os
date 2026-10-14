@@ -66,7 +66,9 @@ var CAJA_HORIZONTE = 90;           // dias desde hoy
 var CAJA_SEMANAS_BASE = 8;
 var CAJA_SEMANAS_CALIBRA = 16;
 var CAJA_SEMANAS_ESCENARIO = 20;
-var CAJA_COLCHON_DIAS = 7;         // Juanma, 15-sep-2026
+var CAJA_COLCHON_DIAS = 7;         // Juanma, 15-sep-2026. Es el DEFECTO: manda PARAMETROS!caja_colchon_dias
+/** El colchon en dias, de PARAMETROS (auditoria 14-oct-2026: el tablero lo leia de ahi y la Caja no). */
+function _cajaColchonDias_() { return _finParametro_('caja_colchon_dias', CAJA_COLCHON_DIAS); }
 var CAJA_CACHE = 'caja_v1_';
 // tramos del mes: [desde, hasta, dia en que se proyecta el pago del tramo]
 var CAJA_TRAMOS = [[1, 7, 4], [8, 14, 11], [15, 21, 18], [22, 31, 26]];
@@ -409,7 +411,8 @@ function _cajaCalcular_(o) {
   function planillaMes(y, m) {
     return _finUltimoDevengado_(planilla.valores, planillaRef(y, m)).valor;
   }
-  var colchon = CAJA_COLCHON_DIAS * (fin.gasto_dia || 0);
+  var colchonDias = _cajaColchonDias_();
+  var colchon = colchonDias * (fin.gasto_dia || 0);
 
   // ---- el calendario, sin escenario: venta de referencia y pagos fijos por dia
   var hoyReal = new Date(); hoyReal = new Date(hoyReal.getFullYear(), hoyReal.getMonth(), hoyReal.getDate());
@@ -571,7 +574,7 @@ function _cajaCalcular_(o) {
     saldo_bancos: { bi: R(saldo.bi || 0), bac: R(saldo.bac || 0),
                     fecha_bi: fechaSaldo.bi ? _finFecha_(fechaSaldo.bi) : '',
                     fecha_bac: fechaSaldo.bac ? _finFecha_(fechaSaldo.bac) : '' },
-    colchon: R(colchon), colchon_dias: CAJA_COLCHON_DIAS, gasto_dia: R(fin.gasto_dia || 0),
+    colchon: R(colchon), colchon_dias: colchonDias, gasto_dia: R(fin.gasto_dia || 0),
     fechas: diasP.map(function (x) { return _finDDMM_(x.f); }),
     marcas: { d30: marca(30), d60: marca(60), d90: marca(90) },
     escenarios: esc,

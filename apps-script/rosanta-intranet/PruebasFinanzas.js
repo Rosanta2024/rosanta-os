@@ -877,6 +877,63 @@ function prFinanzas_(res) {
       malos.length, 0);
   });
 
+  /* Fase 3 de la auditoria (14-oct-2026): que cada numero se calcule de una sola forma. */
+  prCorrer_(g, 'El DRE y Finanzas dan el mismo lucro del año', function () {
+    var nombre = 'El DRE y Finanzas dan el mismo lucro del año';
+    // El DRE suma los meses del motor MAS los meses con gasto y sin venta cargada. Antes no
+    // los sumaba y la utilidad del año era distinta en las dos pantallas.
+    if (String(getDreData).indexOf('meses_sin_venta_dre') === -1) {
+      prAnotar_(g, nombre, 'FALLA', 'getDreData no lee integridad.meses_sin_venta_dre: el DRE deja afuera los meses sin venta.');
+      return;
+    }
+    var lucro = 0, sv = (d.integridad && d.integridad.meses_sin_venta_dre) || [];
+    d.meses.forEach(function (x) {
+      var gop = 0; Object.keys(x.bloques || {}).forEach(function (b) { gop += x.bloques[b]; });
+      lucro += (x.ventas + (x.eventos || 0)) - x.cogs - gop;
+    });
+    sv.forEach(function (x) {
+      var gop = 0; Object.keys(x.bloques || {}).forEach(function (b) { gop += x.bloques[b]; });
+      lucro -= (x.cogs || 0) + gop;
+    });
+    var dif = Math.abs(lucro - d.total.neto);
+    prAnotar_(g, nombre, dif > 2 ? 'FALLA' : 'OK',
+      (dif > 2 ? 'DRE Q' + Math.round(lucro) + ' contra Finanzas Q' + Math.round(d.total.neto) : 'Q' + Math.round(d.total.neto)) +
+      ' · ' + sv.length + ' mes(es) con gasto y sin venta', Math.round(dif), 0);
+  });
+
+  prCorrer_(g, 'La labor semanal lleva el IGSS, igual que la del mes', function () {
+    var nombre = 'La labor semanal lleva el IGSS, igual que la del mes';
+    // En un mes cerrado, labor de la semana x semanas del mes = labor del mes (planilla + IGSS).
+    // Antes la semana no llevaba IGSS y el prime semanal salia mas sano que el mensual.
+    var porMes = {}, ultimo = d.meses.length ? d.meses[d.meses.length - 1].m : 0, malos = [], n = 0;
+    d.meses.forEach(function (x) { porMes[x.m] = x; });
+    (d.semanas || []).forEach(function (w) {
+      var m = Number(String(w.ini || '').split('/')[1]), M = porMes[m];
+      if (!M || m >= ultimo || !M.igss) return;   // el mes en curso va en proporcion: no se compara
+      n++;
+      var semanaPorMes = w.labor * FIN_SEMANAS_MES;
+      if (Math.abs(semanaPorMes - M.labor) > 2) malos.push('S' + w.w + ': ' + Math.round(semanaPorMes) + ' vs ' + M.mes + ' ' + Math.round(M.labor));
+    });
+    if (!n) { prAnotar_(g, nombre, 'SALTADA', 'Sin semanas de meses cerrados con IGSS para comparar'); return; }
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.slice(0, 5).join(' · ') : n + ' semanas de meses cerrados: labor x ' + FIN_SEMANAS_MES + ' = labor del mes',
+      malos.length, 0);
+  });
+
+  prCorrer_(g, 'PARAMETROS se lee igual con formato de porcentaje o celda vacia', function () {
+    var nombre = 'PARAMETROS se lee igual con formato de porcentaje o celda vacia';
+    if (typeof _finParamCelda_ !== 'function') { prAnotar_(g, nombre, 'FALLA', 'No existe _finParamCelda_'); return; }
+    var casos = [[28, '28', 28], [0.28, '28%', 28], [0.28, '28.0 %', 28], [0.065, '6,5%', 6.5], ['', '', null],
+                 [null, '', null], ['abc', 'abc', null], [7, '7', 7]];
+    var malos = casos.filter(function (c) { return _finParamCelda_(c[0], c[1]) !== c[2]; })
+      .map(function (c) { return JSON.stringify(c[0]) + '/' + c[1] + ' -> ' + _finParamCelda_(c[0], c[1]) + ' (esperado ' + c[2] + ')'; });
+    // y los dos lectores de PARAMETROS la usan
+    ['_finParametro_', 'tabParametros_'].forEach(function (fn) {
+      if (String(globalThis[fn] || '').indexOf('_finParamCelda_') === -1) malos.push(fn + ' no usa _finParamCelda_');
+    });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos · 2 lectores', malos.length, 0);
+  });
+
   prCorrer_(g, 'EBITDA = neto + Impuestos, en cada mes', function () {
     var nombre = 'EBITDA = neto + Impuestos, en cada mes';
     // Desde el 28-sep-2026 el neto ya lleva la venta de eventos y los impuestos (DRE).

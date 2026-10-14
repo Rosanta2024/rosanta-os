@@ -158,7 +158,7 @@
       var tm = ms.filter(function (m) { return Math.ceil(m / 3) === t; });
       if (tm.length) out.push({ k: 't' + t, n: t + 'T ' + D.anio + (tm.length < 3 ? ' (parcial)' : ''), ms: tm });
     });
-    D.meses.slice().reverse().forEach(function (m) { out.push({ k: 'm' + m.m, n: m.mes + ' ' + D.anio + (m.parte < 1 ? ' (en curso)' : ''), ms: [m.m] }); });
+    D.meses.slice().reverse().forEach(function (m) { out.push({ k: 'm' + m.m, n: m.mes + ' ' + D.anio + (m.sin_venta ? ' (sin venta cargada)' : m.parte < 1 ? ' (en curso)' : ''), ms: [m.m] }); });
     return out;
   }
 
@@ -169,7 +169,7 @@
     D.meses.forEach(function (m) {
       if (ms.indexOf(m.m) === -1) return;
       P.n++;
-      if (m.parte < 1) P.parcial = true;
+      if (m.parte < 1 || m.sin_venta) P.parcial = true;
       ['venta_cocina', 'venta_bar', 'otros', 'cmv_cocina', 'cmv_bar', 'cmv_otros', 'com'].forEach(function (k) { P[k] += m[k] || 0; });
       if (m.pe !== null && m.pe !== undefined) { P.pe += m.pe; P.pe_meses++; }
       Object.keys(m.bloques).forEach(function (b) { P.bloques[b] = (P.bloques[b] || 0) + m.bloques[b]; });
@@ -262,7 +262,7 @@
     var V = P.venta, ab = P.venta_cocina + P.venta_bar;
     var dias = 0;
     D.meses.forEach(function (m) {
-      if (per.ms.indexOf(m.m) === -1) return;
+      if (per.ms.indexOf(m.m) === -1 || m.sin_venta) return;   // sin venta cargada: sin dias de venta
       dias += Math.round(new Date(D.anio, m.m, 0).getDate() * (m.parte || 1));
     });
     function k(t, n, c, cls) {
@@ -271,7 +271,9 @@
     }
     var h = '<h3>Break even point</h3>';
     h += k('Venta bruta del período', q(V), 'cocina ' + pct(P.venta_cocina / V) + ' · bar ' + pct(P.venta_bar / V) + (P.otros ? ' · eventos ' + pct(P.otros / V) : ''));
-    h += k('CMV total', q(P.cmv), pct(P.cmv / V) + ' de la venta · referencia 28–32%', '');
+    // Sobre la venta TOTAL (con servicio y eventos), como todo el DRE (Juanma, 15-sep-2026).
+    // No es el food cost de Finanzas, que va sobre la venta sin servicio: por eso sale mas bajo.
+    h += k('CMV total', q(P.cmv), pct(P.cmv / V) + ' de la venta total · el food cost (sin servicio) está en Finanzas · meta ' + (D.meta_fc ? D.meta_fc + '%' : '—'), '');
     h += k('Margen de contribución', q(P.mb), 'índice ' + (V ? (P.mb / V).toFixed(4) : '—'));
     h += k('Total gasto operativo', q(P.gop), pct(P.gop / V) + ' de la venta');
     if (P.pe_meses) {

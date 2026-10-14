@@ -55,11 +55,13 @@ var TAB_PILARES = ['fundamentos', 'management', 'finanzas', 'profit', 'marketing
 function tabParametros_() {
   var hoja = {};
   try {
-    var filas = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'))
-                  .getSheetByName('PARAMETROS').getDataRange().getValues();
+    var rango = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('PARAMETROS').getDataRange();
+    var filas = rango.getValues(), vistos = rango.getDisplayValues();
     for (var i = 1; i < filas.length; i++) {
-      var k = String(filas[i][0] || '').trim(), v = Number(filas[i][1]);
-      if (k && !isNaN(v)) hoja[k] = v;
+      // _finParamCelda_ (14-oct-2026): una celda vacia ya no se lee como 0 (Number('') es 0)
+      // y una celda con formato % se lee como se ve.
+      var k = String(filas[i][0] || '').trim(), v = _finParamCelda_(filas[i][1], vistos[i][1]);
+      if (k && v !== null) hoja[k] = v;
     }
   } catch (e) { /* sin config: todo queda en defecto y la pantalla lo dice */ }
   var out = {};
@@ -199,8 +201,9 @@ function _tabFundamentos_(out, P, hoy, auth) {
   out.pilares = [
     tabKpi_({ clave: '03 · Juanma', nombre: 'Días de caja', valor: d.dias_caja, unidad: 'dias',
       periodo: 'banco al ' + ((d.integridad && d.integridad.ult && d.integridad.ult['03_Banco_Industrial']) || '?'),
-      meta: M.dias_caja.valor, meta_origen: M.dias_caja.origen, meta_texto: 'meta del mes ≥' + M.dias_caja.valor + ' · rojo bajo 3',
-      zona: tabZona_(d.dias_caja, M.dias_caja.valor, 3, 'mayor'), enlace: 'finanzas&sub=caja', fuente: 'FinanzasDatos › dias_caja' }),
+      meta: M.dias_caja.valor, meta_origen: M.dias_caja.origen, meta_texto: 'meta del mes ≥' + M.dias_caja.valor + ' · rojo bajo ' + P.caja_colchon_dias.valor,
+      // el rojo es el colchon de PARAMETROS (antes un 3 escrito a mano; auditoria 14-oct-2026)
+      zona: tabZona_(d.dias_caja, M.dias_caja.valor, P.caja_colchon_dias.valor, 'mayor'), enlace: 'finanzas&sub=caja', fuente: 'FinanzasDatos › dias_caja' }),
     tabKpi_({ clave: '05 · Juanma', nombre: 'Comensales del mes (ritmo)', valor: c.com_ritmo, unidad: 'comensales',
       periodo: M.mes + (mc.ultimo ? ' · ' + mc.ultimo.mes + ' cerro en ' + (mc.ultimo.com_est || '?') : ''),
       meta: M.comensales, meta_origen: M.venta_rest.origen,
@@ -306,7 +309,7 @@ function _tabFinanzas_(out, P, hoy, auth) {
     periodo: 'banco al ' + fechaBanco,
     meta: MM.dias_caja.valor, meta_origen: MM.dias_caja.origen,
     meta_texto: 'meta del mes ≥' + MM.dias_caja.valor + ' dias · colchon ' + P.caja_colchon_dias.valor + ' · verde pleno desde ' + P.caja_dias_verde.valor,
-    zona: tabZona_(d.dias_caja, MM.dias_caja.valor, 3, 'mayor'),
+    zona: tabZona_(d.dias_caja, MM.dias_caja.valor, P.caja_colchon_dias.valor, 'mayor'),   // rojo = colchon (antes 3 a mano)
     tendencia: null,
     fuente: 'FinanzasDatos › dias_caja = caja ÷ gasto_dia', enlace: 'finanzas&sub=caja',
     nota: 'Q' + Number(d.caja || 0).toLocaleString('es-GT') + ' en bancos · Q' + Number(d.gasto_dia || 0).toLocaleString('es-GT') + ' de gasto por dia',

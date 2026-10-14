@@ -229,6 +229,23 @@ var FIN_AREA_CAT = {
  * define la meta.
  */
 
+/**
+ * El numero de una celda de PARAMETROS, o null si esta vacia (auditoria 14-oct-2026).
+ * Si la celda tiene formato de porcentaje, Sheets entrega 0.28 por un 28 %: se lee lo que
+ * se VE (texto mostrado) y la meta queda en 28, no en 0.28 (que pintaba todo en rojo).
+ * La usan los dos lectores de PARAMETROS: _finParametro_ y tabParametros_ (TableroDatos).
+ */
+function _finParamCelda_(v, mostrado) {
+  if (v === '' || v === null || v === undefined) return null;
+  var t = String(mostrado || '').trim();
+  if (/%$/.test(t)) {
+    var p = Number(t.replace(/\s|%/g, '').replace(',', '.'));
+    if (!isNaN(p)) return p;
+  }
+  var n = Number(v);
+  return isNaN(n) ? null : n;
+}
+
 /** Un parametro de la pestana PARAMETROS del Sheet de config. Cachea 10 minutos. */
 function _finParametro_(clave, defecto) {
   var cache = CacheService.getScriptCache();
@@ -246,11 +263,11 @@ function _finParametro_(clave, defecto) {
     var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'))
                  .getSheetByName('PARAMETROS');
     if (hoja) {
-      var filas = hoja.getDataRange().getValues();
+      var rango = hoja.getDataRange(), filas = rango.getValues(), vistos = rango.getDisplayValues();
       for (var i = 1; i < filas.length; i++) {
         if (String(filas[i][0] || '').trim() === clave) {
-          var v = Number(filas[i][1]);
-          if (!isNaN(v) && v !== 0) val = v;
+          var v = _finParamCelda_(filas[i][1], vistos[i][1]);
+          if (v !== null && v !== 0) val = v;   // el 0 sigue contando como vacio (ver cerebro)
           break;
         }
       }
@@ -1240,9 +1257,12 @@ function _finCalcular_() {
   });
   anioTot.ebitdap = (anioTot.ventas + anioTot.eventos)
     ? _finR_(anioTot.ebitda / (anioTot.ventas + anioTot.eventos) * 100, 1) : 0;
-  anioTot.cogsp = _finR_(anioTot.cogs / (anioTot.ventas_ss || anioTot.ventas) * 100, 1);   // regla 14
-  anioTot.laborp = _finR_(anioTot.labor / anioTot.ventas * 100, 1);
-  anioTot.primep = _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1);
+  // Sin venta cargada en el año (los primeros dias de enero) no hay porcentaje: null, que la
+  // pantalla muestra como "—", y no NaN o Infinity (auditoria 14-oct-2026).
+  var vAnio = anioTot.ventas_ss || anioTot.ventas;
+  anioTot.cogsp = vAnio ? _finR_(anioTot.cogs / vAnio * 100, 1) : null;   // regla 14
+  anioTot.laborp = anioTot.ventas ? _finR_(anioTot.labor / anioTot.ventas * 100, 1) : null;
+  anioTot.primep = anioTot.ventas ? _finR_((anioTot.cogs + anioTot.labor) / anioTot.ventas * 100, 1) : null;
   anioTot.venta_total = _finR_(anioTot.ventas + anioTot.eventos);
   anioTot.netop = anioTot.venta_total ? _finR_(anioTot.neto / anioTot.venta_total * 100, 1) : 0;
 
@@ -1270,6 +1290,11 @@ function _finCalcular_() {
   // descartaba: su COGS no entraba en ninguna semana y la movil saltaba por encima
   // como si las semanas de al lado fueran seguidas.
   var S = [];
+  // El IGSS de cada mes, para la labor semanal (auditoria 14-oct-2026): la semana usaba solo
+  // la planilla y el mes planilla + IGSS, asi que el prime semanal salia mas sano que el
+  // mensual con los mismos datos. Ahora las dos usan la misma labor.
+  var igssMes = {};
+  meses.forEach(function (x) { igssMes[x.m] = x.igss || 0; });
   var conVenta = Object.keys(sem).map(Number)
     .filter(function (k) { return sem[k].v > 0; }).sort(function (a, b) { return a - b; });
   if (conVenta.length) {
@@ -1292,8 +1317,10 @@ function _finCalcular_() {
           iSaldo[b]++;
         }
       });
-      // regla 11: sin planilla del mes, la ultima cargada (antes: 29000 fijo)
-      var lab = _finUltimoDevengado_(planilla.valores, ini.getMonth() + 1).valor / FIN_SEMANAS_MES;
+      // regla 11: sin planilla del mes, la ultima cargada (antes: 29000 fijo). Mas el IGSS
+      // del mes, igual que la labor mensual (regla 4).
+      var lab = (_finUltimoDevengado_(planilla.valores, ini.getMonth() + 1).valor +
+                 (igssMes[ini.getMonth() + 1] || 0)) / FIN_SEMANAS_MES;
       S.push({ w: k % 100, clave: k, ini: _finDDMM_(ini), fin: _finDDMM_(fin),
                ventas: _finR_(d.v), ventas_ss: _finR_(d.v_ss), com: d.com, tickets: d.tickets,
                // Sistema de Medicion (27-sep-2026): solo la venta de tickets con
@@ -1390,6 +1417,11 @@ function _finCalcular_() {
       // M20: meses con gasto y sin venta. No se pintan, pero su dinero esta en el año.
       meses_sin_venta: sinVenta.map(function (x) {
         return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), gop: _finR_(x.gop) };
+      }),
+      // Para el DRE (auditoria 14-oct-2026): con sus bloques, asi el DRE suma el mismo gasto
+      // que Finanzas y la utilidad del año cuadra entre las dos pantallas.
+      meses_sin_venta_dre: sinVenta.map(function (x) {
+        return { m: x.m, mes: x.mes, cogs: _finR_(x.cogs), bloques: _finRedondear_(x.bloques || {}), sub: x.sub || {} };
       }),
       // regla 13: facturas anuladas en SAT que quedaron fuera del calculo
       anuladas: { n: anuladasN, q: _finR_(anuladasQ) },

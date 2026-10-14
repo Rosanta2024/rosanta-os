@@ -38,8 +38,22 @@ function getDreData(auth) {
       planilla_origen: m.labor_origen
     };
   });
+  // Los meses con gasto y sin venta cargada todavia (los primeros dias del mes, antes del
+  // POS). Finanzas ya los sumaba al año y el DRE no: la utilidad del año no cuadraba entre
+  // las dos pantallas (auditoria 14-oct-2026). Entran con venta 0 y marcados.
+  (((d.integridad || {}).meses_sin_venta_dre) || []).forEach(function (x) {
+    var cc = (d.compra && d.compra.cocina && d.compra.cocina.mes[x.m]) || 0;
+    var cb = (d.compra && d.compra.barra && d.compra.barra.mes[x.m]) || 0;
+    meses.push({ m: x.m, mes: x.mes, venta_cocina: 0, venta_bar: 0, otros: 0,
+                 cmv_cocina: _finR_(cc), cmv_bar: _finR_(cb), cmv_otros: _finR_((x.cogs || 0) - cc - cb),
+                 sub: x.sub || {}, bloques: x.bloques || {}, neto: null, com: 0,
+                 pe: null, pe_sin_presupuesto: true, parte: 0, sin_venta: true, planilla_origen: null });
+  });
+  meses.sort(function (a, b) { return a.m - b.m; });
   return {
     anio: d.anio, gen: d.gen, meses: meses, mix: mix,
+    // la meta de food cost de PARAMETROS: el DRE ya no la escribe a mano (decia 28-32%)
+    meta_fc: metasFoodCost_().global,
     bloques: FIN_DRE.map(function (x) { return { b: x.b, ref: x.ref, subs: FIN_DRE_SUBS[x.b] || [] }; }),
     notas: [
       'Venta cocina y bar repartida con el mix del POS (cocina ' + mix.cocina + '% · bar ' + mix.barra + '%).',
