@@ -540,6 +540,17 @@ function medRetirosMes_(anio, m) {
       }
     }
   });
+  // Compras en efectivo (14-oct-2026, ComprasEfectivo.js): desde CPE_ARRANQUE_ un retiro tiene
+  // detalle si lo registrado en efectivo lo cubre (cpeRetirosJustificados_). Lo de antes quedo
+  // cerrado en el cuadre del 14-oct-2026 (Juanma: "cierra todas las cuentas").
+  var just = null;
+  try { just = cpeRetirosJustificados_(ss, CPE_ARRANQUE_, '').retiros.filter(function (r) { return r.origen === 'banco'; }); } catch (e3) { just = null; }
+  lista.forEach(function (x) {
+    if (x.detalle) return;
+    if (x.fecha < CPE_ARRANQUE_) { x.detalle = 'Cerrado en el cuadre del 14-oct-2026'; x.area = x.area || 'COCINA'; return; }
+    var r = just && just.filter(function (y) { return !y.usado && y.fecha === x.fecha && Math.abs(y.q - x.monto) < 0.01; })[0];
+    if (r) { r.usado = true; if (r.ok) x.detalle = 'Compras registradas por Q' + r.justificado; }
+  });
   lista.sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
   var con = lista.filter(function (x) { return x.detalle; });
   var q = function (arr) { return _finR_(arr.reduce(function (a, x) { return a + x.monto; }, 0)); };

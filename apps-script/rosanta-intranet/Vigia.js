@@ -186,8 +186,8 @@ function vigiaReglas_(ctx) {
     var lim = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 3));
     var viejos = ctx.retiros.lista.filter(function (x) { return !x.detalle && x.fecha <= lim; });
     if (viejos.length) {
-      aviso('chef', viejos.length + ' retiros de cajero sin detalle: anotar qué se compró en Profit OS › Cocina › Compras en efectivo.', viejos.length >= 5);
-      if (viejos.length >= 3) sugerir('V5-retiros', 'profit', 'Jeffry', 'Anotar el detalle de ' + viejos.length + ' retiros de cajero de ' + ctx.retiros.mes + ' en Profit OS › Cocina › Compras en efectivo.');
+      aviso('chef', viejos.length + ' retiros de cajero sin detalle: registrar las compras en Profit OS › Compras.', viejos.length >= 5);
+      if (viejos.length >= 3) sugerir('V5-retiros', 'profit', 'Jeffry', 'Anotar el detalle de ' + viejos.length + ' retiros de cajero de ' + ctx.retiros.mes + ' en Profit OS › Compras.');
     }
   }
   // V6 · inventario del mes anterior

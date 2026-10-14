@@ -225,7 +225,7 @@ function prIgual_(grupo, nombre, leido, esperado, detalle) {
    cuerpo resuelve la identidad en el servidor con el auth y lanza (throw). Pagos (p213,
    29-sep-2026) entra por pagQuien_: las dos pruebas de guardas no la conocian y el
    8-oct-2026 marcaron abiertas sus 8 funciones, que si estaban cerradas. */
-var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_'];   // cchQuien_: Caja chica (13-oct-2026)
+var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_', 'cpeQuien_'];   // cchQuien_: Caja chica (13-oct-2026); cpeQuien_: Compras (14-oct-2026)
 function prGuardasPropias_() {
   var G = (typeof globalThis !== 'undefined') ? globalThis : this, ok = [], malas = [];
   PR_GUARDAS_PROPIAS_.forEach(function (n) {
@@ -399,7 +399,7 @@ function prCimientos_(res) {
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
                   'TableroVista', 'ReporteSemanalVista',
                   // Sistema de Medicion (27-sep-2026): Sala, Retiros y el molde de lectura.
-                  'ProfitSalaJs', 'ProfitRetirosJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs',
+                  'ProfitSalaJs', 'ProfitComprasJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs',
                   // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     var MINIMO = 15;
@@ -1096,7 +1096,7 @@ function prPuentePOS_(res) {
                   // ReporteSemanalVista: el reporte semanal en vivo (25-sep-2026)
                   'TableroVista', 'ReporteSemanalVista',
                   // Sistema de Medicion (27-sep-2026): Sala, Retiros y el molde de lectura.
-                  'ProfitSalaJs', 'ProfitRetirosJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs',
+                  'ProfitSalaJs', 'ProfitComprasJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs',
                   // sus parciales crudos (26-sep-2026): el JS con las llamadas vive en ReporteSemanalJs
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs'];
     // Piso de alarma, no meta: el 10-sep-2026 habia 21. Si de golpe caen a menos de
@@ -1195,7 +1195,7 @@ function prPuentePOS_(res) {
                   'SistemaFinanzas', 'EscenariosVista', 'CajaVista', 'FinanzasGastoVista', 'TableroVista',
                   'ReporteSemanalVista',
                   'ReporteSemanalEstilo', 'ReporteSemanalCuerpo', 'ReporteSemanalJs',
-                  'ProfitSalaJs', 'ProfitRetirosJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs', 'LecturaEstilo',
+                  'ProfitSalaJs', 'ProfitComprasJs', 'ProfitPagosJs', 'ProfitCajaJs', 'ProfitHoyJs', 'ProfitAreaEstilo', 'LecturaJs', 'LecturaEstilo',
                   // sin llamadas hoy, pero son vistas: lo que no se lee, no se revisa
                   'CosteoEstilos', 'Estilos', 'Logo'];
     var MINIMO = 25;    // el 12-sep-2026 habia 36 google.script.run en estas vistas

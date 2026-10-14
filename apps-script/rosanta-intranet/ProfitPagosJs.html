@@ -440,7 +440,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (box.innerHTML) { box.innerHTML = ''; return; }
     var areas = D.areas.filter(function (a) { return a !== 'ADMIN'; });
     box.innerHTML = '<section class="pg-prov" data-panel="mercado"><h3>Compra de mercado sin factura</h3>' +
-      '<p class="pg-nota">Si se pagó con un retiro de cajero, elegí <b>Retiro de cajero</b>: cuando entre el banco, Compras en efectivo la ofrece como detalle de ese retiro.</p>' +
+      '<p class="pg-nota">Si se pagó con efectivo del cajero, elegí <b>Retiro de cajero</b>: cuenta en el cuadre de <b>Compras</b>.</p>' +
       '<div class="pg-mas"><label>Fecha <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       '<label>Proveedor <input type="text" data-f="prov" list="pg-provs" placeholder="elegí o escribí"></label>' +
       '<datalist id="pg-provs">' + (D.proveedores_mercado || []).map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>' +

@@ -15,7 +15,7 @@
  *    Antigua y varios vinos: usar el precio historico daria un margen que ya no existe.
  *
  * 2. Solo entra a la clasificacion y al MC promedio lo que tiene COSTO FIRME.
- *    Cocina: ESTADO DEL COSTEO == 'costeado' exacto. Barra: Pcompra > 0.
+ *    Cocina: la ficha tiene costo sensato (cocinaFirme_). Barra: Pcompra > 0.
  *    El resto sale como SIN CLASIFICAR y va al contador del punto ciego.
  *    Clasificar sin costo seria inventar, y una matriz con datos inventados es peor
  *    que no tener matriz.
@@ -34,7 +34,14 @@ var IMENU = {
   // De RESUMEN CMV. Tiene una columna A vacia, por eso POS_CFG usa colPlato:2.
   encCmv: { plato: 'plato', categoria: 'categoria', precio: 'precio 2027',
             costo: 'costo', estado: 'estado del costeo', pos: 'nombre en el pos' },
-  estadoFirme: 'costeado',
+  // 14-oct-2026: la firmeza de cocina ya NO es la etiqueta ESTADO DEL COSTEO == 'costeado'.
+  // Esa columna se escribe a mano y quedo congelada el 24-ago: cocina lleno las siete
+  // fichas nuevas (Coliflor, Brocoli, Bok Choy, Vegetales, Arroz Meloso, Lomito de la
+  // Casa, Rabo) y la pantalla las seguia contando "sin costo". Y "costeado · opcion del
+  // boton de postre" (Peras) no pasaba el igual exacto. Ahora manda la ficha: tiene costo
+  // y es sensato. La etiqueta solo puede FRENAR, cuando dice algo de esta lista.
+  estadoNoFirme: ['provisional', 'incompleta', 'archivado'],
+  cmvMaxSensato: 0.60,       // arriba de 60% sobre neto es una ficha rota (el Mousse da 2,239%)
   factorUmbral: 0.70,
   ventaMinimaAlMes: 1        // piso de demanda para la lista de sala
 };
@@ -51,6 +58,13 @@ function indicePorEncabezado_(fila) {
     if (k && idx[k] === undefined) idx[k] = i;
   });
   return idx;
+}
+
+/** Un plato de cocina tiene costo firme si su ficha lo dice, no si alguien lo anoto. */
+function cocinaFirme_(reg) {
+  if (!(reg.costo > 0) || !(reg.precio > 0)) return false;
+  if (reg.costo / (reg.precio / 1.12) > IMENU.cmvMaxSensato) return false;
+  return !IMENU.estadoNoFirme.some(function (p) { return reg.estado.indexOf(p) !== -1; });
 }
 
 /** RESUMEN CMV del recetario de cocina, por nombre de plato normalizado. */
@@ -248,7 +262,7 @@ function ingenieriaDeMenu_(desde, hasta, ventas) {
         var k = 'COCINA|' + normalizar_(ficha);
         if (!prod[k]) prod[k] = { area: 'COCINA', nombre: reg.plato, categoria: reg.categoria,
                                   precio: reg.precio, costo: reg.costo,
-                                  firme: reg.estado === IMENU.estadoFirme, uds: 0, venta: 0 };
+                                  firme: cocinaFirme_(reg), uds: 0, venta: 0 };
         prod[k].uds += l.cantidad; prod[k].venta += l.total;
         return;
       }

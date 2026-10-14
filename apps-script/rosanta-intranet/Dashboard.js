@@ -110,6 +110,13 @@ function huellaDatosCalculada_() {
     // catalogoInfo_ y no catalogoPOS_: hace falta saber CUAL es, no abrirlo.
     var cat = catalogoInfo_();
     sello += '|' + cat.id + ':' + (cat.fecha ? cat.fecha.getTime() : 0);
+    // 14-oct-2026: y la ultima edicion de los dos recetarios. Cocina llena las fichas
+    // directo en la hoja, sin pasar por la bitacora de la intranet, y el tablero seguia
+    // sirviendo el calculo viejo hasta que el cache vencia (6 h).
+    ['RECETARIO_COCINA_SHEET_ID', 'RECETARIO_BARRA_SHEET_ID'].forEach(function (k) {
+      var id = PropertiesService.getScriptProperties().getProperty(k);
+      if (id) sello += '|' + DriveApp.getFileById(id).getLastUpdated().getTime();
+    });
     return Utilities.base64EncodeWebSafe(
       Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, sello)).slice(0, 16);
   } catch (e) { return ''; }

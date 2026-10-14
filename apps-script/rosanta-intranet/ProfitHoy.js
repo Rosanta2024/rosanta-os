@@ -7,7 +7,7 @@
  *   Pagos         facturas con fecha de pagar hasta hoy y las que siguen por pagar (pagEstado_)
  *   Caja chica    la caja de anoche: sin contar, con descuadre o sin cierre (cchEstado_)
  *   Inventarios   el mes anterior sin cerrar (invEstadoCierre_, mismo dia limite que el vigia)
- *   Retiros       retiros de cajero sin "que se compro", este mes y el anterior (medRetirosMes_)
+ *   Compras       efectivo retirado sin compras registradas y cargos de debito sin registro (cpeCuadre_)
  *   Por devolver  lo que se le debe a cada uno (_pagPorDevolver_)
  *   Acciones      las acciones de la semana a nombre de la persona (medAcciones_)
  * Cada bloque va en su try: si una fuente falla, la lista lo dice y sigue con el resto.
@@ -74,15 +74,18 @@ function getHoyProfit(auth) {
     });
   });
 
-  // 4. Retiros de cajero sin detalle (cocina y el dueño)
-  if (rol === 'chef' || esDueno) intentar('Retiros', function () {
-    var falt = 0, q = 0;
-    [0, 1].forEach(function (k) {
-      var d = new Date(hoy.getFullYear(), hoy.getMonth() - k, 1), R = medRetirosMes_(d.getFullYear(), d.getMonth() + 1);
-      R.lista.forEach(function (x) { if (!x.detalle) { falt++; q += x.monto; } });
-    });
-    if (falt) add({ urgente: falt >= 3, texto: 'Anotar qué se compró en ' + falt + (falt === 1 ? ' retiro de cajero' : ' retiros de cajero') + ' (' + Q(q) + ')',
-      detalle: 'Sin eso el food cost no se puede auditar.', vista: 'cocina', boton: 'Anotar' });
+  // 4. Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js): el efectivo retirado
+  //    que nadie registro y los cargos de la tarjeta de debito sin compra ni factura
+  if (puedePagos && (esDueno || rol === 'chef' || rol === 'sala')) intentar('Compras', function () {
+    var C = cpeCuadre_(SpreadsheetApp.openById(FIN_MAESTRO_ID), pagEstado_());
+    var R = C.resumen, sinJ = C.retiros.filter(function (r) { return !r.ok && _cpeDias_(r.fecha, hoyIso) >= 1; });
+    if (R.por_justificar > 0.01 && sinJ.length) add({ urgente: sinJ.length >= 2,
+      texto: 'Registrar las compras de ' + Q(R.por_justificar) + ' en efectivo',
+      detalle: sinJ.length + (sinJ.length === 1 ? ' retiro de cajero' : ' retiros de cajero') + ' sin compras que lo cubran. Sin eso el food cost no se puede auditar.',
+      vista: 'compras', boton: 'Registrar' });
+    if (R.debito_sin_registro) add({ urgente: false,
+      texto: R.debito_sin_registro + (R.debito_sin_registro === 1 ? ' cargo' : ' cargos') + ' de la tarjeta de débito sin registrar (' + Q(R.q_debito_sin_registro) + ')',
+      detalle: 'Decí qué se compró, o subí la foto del recibo.', vista: 'compras', boton: 'Registrar' });
   });
 
   // 5. Por devolver

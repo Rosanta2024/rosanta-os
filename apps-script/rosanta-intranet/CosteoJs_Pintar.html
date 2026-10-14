@@ -100,6 +100,7 @@ function pintar(){
   if(view==='pagos') montarPagos();
   if(view==='hoy') montarHoy();
   if(view==='caja') montarCaja();
+  if(view==='compras') montarCompras();
   if(view.indexOf('adm-')===0) montarAdm(view);
   // el filtro Cocina / Barra / Todo solo sirve en recetas, productos, proveedores, inventarios y menu
   var selArea = document.querySelector('.pf-filtro');

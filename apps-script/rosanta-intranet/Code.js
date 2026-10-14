@@ -74,7 +74,7 @@ function doGet(e) {
   var rolCost = normalizar_(usuario.rol);
   var vistaCost = (e && e.parameter && e.parameter.vista) || '';
   if (pagina === 'sala') { pagina = 'costeo'; vistaCost = 'barrasala'; }
-  if (pagina === 'retiros') { pagina = 'costeo'; vistaCost = 'cocina'; }
+  if (pagina === 'retiros') { pagina = 'costeo'; vistaCost = 'compras'; }
   // Cada pestaña de area es de su jefe y del dueño; a quien no le toca, abre el inicio.
   if ((vistaCost === 'cocina' || vistaCost === 'barrasala') &&
       REP_AREAS_ROLES[vistaCost].indexOf(rolCost) === -1) vistaCost = '';
@@ -90,8 +90,10 @@ function doGet(e) {
   // Por devolver y Para reducir IVA son comunes (13-oct-2026): cada quien agrega lo suyo
   if ((vistaCost === 'adm-equipo' || vistaCost === 'adm-iva') && !(puedePagos && (rolCost === 'dueno' || esEquipoCost))) vistaCost = '';
   if (['adm-banco', 'adm-balance', 'higiene'].indexOf(vistaCost) !== -1 && rolCost !== 'dueno') vistaCost = '';
+  // Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js): cocina, barra y el dueño, con pagos
+  if (vistaCost === 'compras' && !(rolCost === 'dueno' || (esEquipoCost && puedePagos))) vistaCost = '';
   if (esEquipoCost && ['inicio', 'insumos', 'proveedores', 'menu'].indexOf(vistaCost) !== -1) vistaCost = '';
-  if (['hoy', 'cocina', 'barrasala', 'pagos', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
+  if (['hoy', 'cocina', 'barrasala', 'pagos', 'compras', 'caja', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva', 'menu', 'inventario',
        'recetas', 'insumos', 'proveedores', 'higiene', 'guia', 'inicio'].indexOf(vistaCost) === -1) {
     // todos abren en Hoy: lo que le toca a cada uno (13-oct-2026, ProfitHoy.js)
     vistaCost = 'hoy';

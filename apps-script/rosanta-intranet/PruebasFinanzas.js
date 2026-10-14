@@ -1168,6 +1168,23 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : ok.join(' · '), malos.length, 0);
   });
 
+  // Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js): el cuadre se lee sobre el
+  // banco real y la pestaña solo la ve quien tiene pagos. Control positivo: con el arranque en
+  // agosto tiene que haber retiros (agosto tuvo 18).
+  prCorrer_(g, 'Compras en efectivo: el cuadre lee retiros y debito', function () {
+    var nombre = 'Compras en efectivo: el cuadre lee retiros y debito';
+    var malos = [], ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+    var R = cpeRetirosJustificados_(ss, '2026-08-01', '');
+    if (!R.banco.length) malos.push('no encontre retiros de cajero desde agosto');
+    var C = cpeCuadre_(ss, pagEstado_());
+    if (Math.abs(C.resumen.por_justificar - (C.resumen.retirado - C.resumen.registrado)) > 0.01) malos.push('por justificar no es retirado menos registrado');
+    var src = String(cpeQuien_);
+    if (src.indexOf("usuarioTieneModulo(u, 'pagos')") === -1) malos.push('cpeQuien_ no exige el modulo pagos');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') :
+      R.banco.length + ' retiros desde agosto · desde el arranque: retirado Q' + C.resumen.retirado + ', registrado Q' + C.resumen.registrado +
+      ', ' + C.resumen.debito_sin_registro + ' cargos de debito sin registro', malos.length, 0);
+  });
+
   // ---------------------------------------------------------------- pagos a proveedores (p213)
   prCorrer_(g, 'El banco solo cierra una factura cuando la casada es segura', function () {
     var nombre = 'El banco solo cierra una factura cuando la casada es segura';

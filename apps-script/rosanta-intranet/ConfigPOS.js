@@ -345,6 +345,27 @@ function resolverCatalogoPOS_() {
   } catch (e) {
     return alRespaldo('no pude leer la carpeta: ' + (e && e.message || e));
   }
+  // 14-oct-2026: y TAMBIEN los exports que quedaron fuera de la carpeta, tipicamente en
+  // Downloads, donde los deja Drive Desktop. Antes solo se avisaba ("hay un export mas
+  // nuevo sin archivar") y la pantalla siguio leyendo el del 30-ago mientras el del 8-oct
+  // estaba en Downloads. Moverlo a mano era el paso que nadie hacia: ahora no hace falta.
+  // Un xlsx de afuera se convierte DENTRO de la carpeta (carpeta: la del catalogo).
+  try {
+    var vistos = {};
+    enCarpeta.forEach(function (f) { vistos[f.id] = true; });
+    drivesListar_("name contains '" + CAT_POS.prefijo + "' and trashed = false").forEach(function (f) {
+      if (vistos[f.id]) return;
+      var nom = String(f.name);
+      var esNativa = nom.indexOf('~nativa ') === 0;
+      var base = esNativa ? nom.slice('~nativa '.length) : nom;
+      if (base.indexOf(CAT_POS.prefijo) !== 0) return;
+      var fecha = fechaDeNombreInventario_(base);
+      if (!fecha) return;
+      enCarpeta.push({ id: f.id, nombre: nom, fecha: fecha, carpeta: carpeta,
+                       mod: f.modifiedTime ? new Date(f.modifiedTime).getTime() : 0,
+                       nativa: f.mimeType === MimeType.GOOGLE_SHEETS });
+    });
+  } catch (e) { /* si la busqueda global falla, queda lo de la carpeta, como antes */ }
   if (!enCarpeta.length) return alRespaldo('la carpeta no tiene ningun "' + CAT_POS.prefijo + '"');
 
   // El mas nuevo: primero por DIA del nombre, y dentro del mismo dia por
@@ -384,21 +405,8 @@ function resolverCatalogoPOS_() {
     }
   }
 
-  // Y avisar si hay uno MAS NUEVO fuera de la carpeta —tipicamente en Downloads, donde
-  // lo deja Drive Desktop—. Mover y convertir son dos pasos manuales y ninguno avisa
-  // si se olvida; al menos que el Log lo diga.
-  try {
-    var sueltos = drivesListar_("name contains '" + CAT_POS.prefijo + "' and trashed = false")
-      .filter(function (f) { return String(f.name).indexOf(CAT_POS.prefijo) === 0; })
-      .map(function (f) { return { nombre: f.name, fecha: fechaDeNombreInventario_(f.name) }; })
-      // Estrictamente de un dia POSTERIOR: dentro del mismo dia no se puede comparar
-      // por nombre, y el xlsx del export elegido vive fuera de la carpeta de nativas.
-      .filter(function (f) { return f.fecha && elegido.fecha && f.fecha > elegido.fecha; });
-    if (sueltos.length) {
-      aviso = 'hay un export mas nuevo sin archivar: ' + sueltos[0].nombre;
-      Logger.log('CATALOGO POS: %s', aviso);
-    }
-  } catch (e) { /* el aviso es un extra: si falla, no rompe nada */ }
+  // El aviso de "export mas nuevo sin archivar" se fue el 14-oct-2026: los de fuera de la
+  // carpeta ya entran a la eleccion de arriba, asi que el elegido siempre es el mas nuevo.
 
   Logger.log('CATALOGO POS: uso "%s" (%s)', nombre,
              elegido.fecha ? Utilities.formatDate(elegido.fecha, 'America/Guatemala', 'yyyy-MM-dd') : 'sin fecha');

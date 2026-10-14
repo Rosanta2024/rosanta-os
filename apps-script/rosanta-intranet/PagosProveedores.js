@@ -27,8 +27,10 @@ var PAG_COLS_ = ['AREA', 'PROVEEDOR', 'DTE', 'FECHA DE PAGAR', 'FECHA PAGADO', '
 var PAG_DESDE_ = '2026-08-01';
 // El dia que esta pantalla reemplazo a COMPRAS_2026: lo pagado antes se anoto alla.
 var PAG_ARRANQUE_ = '2026-09-28';
-// Formas de pago que se eligen con un toque. 'Retiro de cajero' es solo para el mercado.
-var PAG_FORMAS_ = ['Pagado de caja', 'Tarjeta', 'Banco', 'Pagó Maco', 'Pagó Jeffry'];
+// Formas de pago que se eligen con un toque.
+// 'Retiro de cajero' tambien paga facturas (14-oct-2026): lo que se paga con el efectivo del cajero
+// cuenta en el cuadre de Compras en efectivo (ComprasEfectivo.js).
+var PAG_FORMAS_ = ['Pagado de caja', 'Tarjeta', 'Banco', 'Retiro de cajero', 'Pagó Maco', 'Pagó Jeffry'];
 var PAG_FORMAS_MERCADO_ = ['Retiro de cajero', 'Pagado de caja', 'Tarjeta', 'Pagó Maco', 'Pagó Jeffry'];
 var PAG_SIN_FACTURA_ = 'SIN FACTURA';
 // El banco confirma una factura marcada "Banco" entre 3 dias antes y 45 despues de la marca,

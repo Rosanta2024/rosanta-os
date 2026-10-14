@@ -134,6 +134,8 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
       <button role="tab" data-view="hoy" aria-selected="true">Hoy</button>
       <div class="pf-grupo">Día a día</div>
       <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
+      <!-- Compras en efectivo y con debito (14-oct-2026): reemplaza a la seccion de Cocina -->
+      <? if (esDueno || (esEquipo && puedePagos)) { ?><button role="tab" data-view="compras" aria-selected="false">Compras</button><? } ?>
       <? if (veCaja) { ?><button role="tab" data-view="caja" aria-selected="false">Caja chica</button><? } ?>
       <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
       <? if (rol === 'chef' || rol === 'sala' || esDueno) { ?><div class="pf-grupo"><?= esDueno ? 'Áreas' : 'Mi área' ?></div><? } ?>
@@ -144,7 +146,7 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
       <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
       <? if (!esEquipo) { ?><button role="tab" data-view="insumos" aria-selected="false">Productos</button>
       <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
-      <button role="tab" data-view="menu" aria-selected="false">Menú</button><? } ?>
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button><? } ?>
       <? if (veDevolver || esDueno) { ?><div class="pf-grupo">Administración</div><? } ?>
       <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button>
       <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button><? } ?>
@@ -174,13 +176,13 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
   <section id="v-inventario" hidden></section>
   <section id="v-higiene" hidden></section>
   <section id="v-guia" hidden></section>
-  <!-- Pestañas de area (27-sep-2026): el reporte semanal de cada area mas Compras en efectivo
-       (cocina) y Sala (barra y sala). Se pintan aca adentro la primera vez que se abren
+  <!-- Pestañas de area (27-sep-2026): el reporte semanal de cada area y Sala (barra y sala). Se pintan aca adentro la primera vez que se abren
        (montarArea, abajo). Sin iframe: en /dev Google no deja enmarcar la app. -->
   <section id="v-cocina" hidden></section>
   <section id="v-barrasala" hidden></section>
   <section id="v-hoy" hidden></section>
   <section id="v-caja" hidden></section>
+  <section id="v-compras" hidden></section>
   <section id="v-adm-equipo" hidden></section>
   <section id="v-adm-banco" hidden></section>
   <section id="v-adm-balance" hidden></section>
@@ -226,10 +228,8 @@ function montarArea(v){
   sec.classList.add('pf-area');
   var rep = '<section class="pa-sec pf-rep" style="margin-top:0"></section>';
   if(v === 'cocina'){
-    sec.innerHTML = rep +
-      '<section class="pa-sec"><h2>Compras en efectivo</h2><p class="pa-intro">Cada retiro de cajero para compras de mercado necesita decir qué se compró. Sin eso el food cost no se puede auditar. Los retiros aparecen cuando se carga el estado de cuenta del banco.</p>' +
-      '<div class="pf-rt"><div class="rt-box">Leyendo los retiros del banco…</div></div></section>';
-    window.PF_RETIROS(sec.querySelector('.pf-rt'), AUTH);
+    // Compras en efectivo salio de aca el 14-oct-2026: ahora es la pestaña Compras (Día a día)
+    sec.innerHTML = rep;
   } else {
     sec.innerHTML = '<section class="pa-sec" style="margin-top:0"><h2>Sala</h2><p class="pa-intro">El número de sala es el ticket por comensal. Lo mueven la ocupación de lunes a miércoles, las reseñas y las mesas bien cerradas en Wix.</p>' +
       '<div class="pf-lx" style="margin:1rem 0 1.2rem"></div><div class="pf-sl"><div class="sl-cargando">Leyendo las reservas y las reseñas…</div></div></section>' +
@@ -262,6 +262,14 @@ function montarCaja(){
   sec.dataset.listo = '1';
   sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
   window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+}
+/* Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js) */
+function montarCompras(){
+  var sec = document.getElementById('v-compras');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.innerHTML = '<div class="pg"><h2>Compras en efectivo y con débito</h2></div><div class="ce-host"></div>';
+  window.PF_COMPRAS(sec.querySelector('.ce-host'), AUTH);
 }
 function montarHoy(){
   var sec = document.getElementById('v-hoy');
@@ -360,7 +368,7 @@ google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCos
 <?!= incluirCrudo_('LecturaJs') ?>
 <?!= incluirCrudo_('ReporteSemanalJs') ?>
 <?!= incluirCrudo_('ProfitSalaJs') ?>
-<?!= incluirCrudo_('ProfitRetirosJs') ?>
+<?!= incluirCrudo_('ProfitComprasJs') ?>
 <?!= incluirCrudo_('ProfitPagosJs') ?>
 <?!= incluirCrudo_('ProfitCajaJs') ?>
 <?!= incluirCrudo_('ProfitHoyJs') ?>
