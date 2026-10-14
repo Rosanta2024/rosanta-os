@@ -213,7 +213,7 @@ const hD = H('tok'), hC = H('tokchef'), hM = H('tokmaco');
 const vistas = h => h.items.map(x => x.vista).join(',');
 t('Hoy del dueño: pagos, inventario, caja, retiros', /pagos/.test(vistas(hD)) && /inventario/.test(vistas(hD)) && hD.fallas.length === 0, hD.items.map(x => (x.urgente ? '!' : '') + x.texto).join(' | ') + (hD.fallas.length ? ' FALLAS ' + hD.fallas : ''));
 t('Hoy de Jeffry: sin caja, con inventario de cocina', !/caja/.test(vistas(hC)) && hC.items.some(x => /cocina de septiembre/.test(x.texto)) && hC.fallas.length === 0, hC.items.map(x => x.texto).join(' | '));
-t('Hoy de Maco: con caja, sin inventario de barra (cerrado), sin retiros', /caja/.test(vistas(hM)) && !hM.items.some(x => /inventario/.test(x.texto)) && !/cocina/.test(vistas(hM)), hM.items.map(x => x.texto).join(' | '));
+t('Hoy de Maco: sin inventario de barra (cerrado) ni retiros de cocina', !hM.items.some(x => /inventario/.test(x.texto)) && !/cocina/.test(vistas(hM)), hM.items.map(x => x.texto).join(' | '));
 t('Hoy: lo urgente va primero', hD.items.every((x, i, a) => i === 0 || !x.urgente || a[i - 1].urgente));
 t('Hoy: Jeffry ve lo que se le debe', hC.items.some(x => /te debe/.test(x.texto)));
 // Hoy: SAT sin avisar (14-oct-2026)

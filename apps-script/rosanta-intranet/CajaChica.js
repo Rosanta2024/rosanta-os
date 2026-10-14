@@ -34,10 +34,13 @@
 var CCH_HOJA_ = 'CAJA_CHICA';
 var CCH_COLS_ = ['FECHA', 'TIPO', 'CATEGORIA', 'CONCEPTO', 'MONTO', 'REFERENCIA', 'ESCRITO POR', 'REGISTRADO', 'ID', 'ESTATUS'];
 var CCH_HOJA_MAESTRO_ = '07_Caja_Chica';
-// Ultimo dia del Excel "Caja Rosanta" con movimiento (pestaña Octubre): saldo al cierre del
-// 10-oct = 117 inicial − 45 + 1,680 − 90 − 200 + 341 − 65 + 627 − 250 − 254 = Q1,861. El
-// dueño lo puede reemplazar con un movimiento ARRANQUE (por ejemplo, despues de un conteo).
-var CCH_ARRANQUE_ = { fecha: '2026-10-10', saldo: 1861, nota: 'Saldo final del Excel Caja Rosanta (10-oct-2026).' };
+// Ultimo dia del Excel "Caja Rosanta" con movimiento, como CONFIRMADO (regla de Juanma). Version
+// del 14-oct-2026 (pestaña Octubre, hasta el 13-oct): 117 inicial − 45 + 1,680 − 90 − 200 + 341
+// − 65 + 627 − 250 − 254 + 973 − 150 + 209 + 297 − 272 − 242 = Q2,676. Cruzado con los cierres de
+// PosFile: coinciden salvo lo que el propio Excel explica (1-oct: Q1,100 cerrados en efectivo que
+// fueron tarjeta; 8-oct: ticket 44, Q198) y Q22 el 4-oct y Q8 el 5-oct.
+// (Antes: 10-oct con Q1,861.) El dueño lo puede reemplazar con un movimiento ARRANQUE.
+var CCH_ARRANQUE_ = { fecha: '2026-10-13', saldo: 2676, nota: 'Saldo final del Excel Caja Rosanta al 13-oct-2026 (versión del 14-oct).' };
 var CCH_TOLERANCIA_ = 1;   // Q1: menos que eso es redondeo, no descuadre
 // Los tipos de movimiento. MONTO siempre positivo salvo CORRECCION (con signo: + entra a la caja).
 //   SALIDA          un pago desde la caja que no es una factura del FEL
