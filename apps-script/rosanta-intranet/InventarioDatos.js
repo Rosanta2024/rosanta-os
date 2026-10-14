@@ -1463,13 +1463,6 @@ function invTotalMes_(d) {
   return null;
 }
 
-/** Para el tablero global: pide finanzas y rol dueno, como todo lo del tablero. */
-function getInventarioCierre(auth) {
-  var u = exigirModulo_(auth, 'finanzas');
-  invExigirDueno_(u);
-  return invEstadoCierre_(new Date(), _finParametro_('inventario_cierre_dia', 5));
-}
-
 /* ------------------------------------------------- Banco contra inventario ----
  * p226, 29-sep-2026. Solo LEE.
  *

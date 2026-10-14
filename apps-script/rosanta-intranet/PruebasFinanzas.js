@@ -17,7 +17,7 @@
  *      miente justo sobre el dinero que se cae en silencio. La prueba las
  *      enfrenta en cada corrida.
  *
- * Ninguna escribe. La de guardarRaa prueba los rechazos, que es lo unico que se
+ * Ninguna escribe. (Las de guardarRaa, que probaban rechazos, se fueron con el RAA el 14-oct-2026.) Lo unico que se
  * puede probar sin dejar una fila de mentira en la hoja.
  */
 
@@ -367,53 +367,14 @@ function prFinanzas_(res) {
   });
 
   // ---------------------------------------------------------------- 5. RAA
-  prCorrer_(g, 'La pestana RAA existe', function () {
-    var nombre = 'La pestana RAA existe';
-    var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(RAA_HOJA);
-    if (!hoja) {
-      prAnotar_(g, nombre, 'FALLA', 'falta: correr instalarRAA() una vez', 0, 1);
-      return;
-    }
-    var cab = hoja.getRange(1, 1, 1, RAA_COLS.length).getValues()[0].join(',');
-    prIgual_(g, nombre, cab, RAA_COLS.join(','), Math.max(hoja.getLastRow() - 1, 0) + ' filas');
-  });
-
-  prCorrer_(g, 'Las cuatro tarjetas del RAA se arman', function () {
-    var nombre = 'Las cuatro tarjetas del RAA se arman';
-    var t = _raaTarjetas_(d);
-    var ZONAS = ['verde', 'amarillo', 'rojo', 'gris'];
-    var malas = t.filter(function (x) {
-      return ZONAS.indexOf(x.zona) === -1 || !x.resultado || x.costo === undefined;
-    });
-    prAnotar_(g, nombre, (t.length === 4 && malas.length === 0) ? 'OK' : 'FALLA',
-      t.map(function (x) { return x.ind + ':' + x.zona; }).join(' · '), t.length, 4);
-  });
-
-  prCorrer_(g, 'El RAA no acepta una accion sin responsable', function () {
-    var nombre = 'El RAA no acepta una accion sin responsable';
-    // Prueba de RECHAZO: si pasa, no se escribio nada. Si algun dia deja de
-    // reventar, la hoja se llena de acciones sin dueño y volvemos al "todos son
-    // responsables", que es lo mismo que nadie.
-    var rechazo = '';
-    try {
-      guardarRaa('', { ind: 'food', analisis: 'prueba', accion: 'prueba', responsable: '' });
-    } catch (e) {
-      rechazo = String(e && e.message || e);
-    }
-    prAnotar_(g, nombre, rechazo ? 'OK' : 'FALLA',
-      rechazo || 'ACEPTO una fila sin responsable', rechazo ? 'rechazado' : 'aceptado', 'rechazado');
-  });
-
-  prCorrer_(g, 'El RAA no acepta un indicador inventado', function () {
-    var nombre = 'El RAA no acepta un indicador inventado';
-    var rechazo = '';
-    try {
-      guardarRaa('', { ind: 'loquesea', analisis: 'x', accion: 'x', responsable: 'Juanma' });
-    } catch (e) {
-      rechazo = String(e && e.message || e);
-    }
-    prAnotar_(g, nombre, rechazo ? 'OK' : 'FALLA',
-      rechazo || 'ACEPTO un indicador que no existe', rechazo ? 'rechazado' : 'aceptado', 'rechazado');
+  // La pantalla RAA se retiro el 28-sep-2026 y RaaDatos.js se archivo el 14-oct-2026
+  // (auditoria, Fase 4): seguian publicas getRaaData y guardarRaa, que escribia en la hoja.
+  // Lo que importa ahora es que nadie las reviva sin pantalla.
+  prCorrer_(g, 'El RAA quedo archivado', function () {
+    var nombre = 'El RAA quedo archivado';
+    var vivas = ['getRaaData', 'guardarRaa', 'instalarRAA', '_raaTarjetas_'].filter(function (n) { return typeof globalThis[n] === 'function'; });
+    prAnotar_(g, nombre, vivas.length ? 'FALLA' : 'OK',
+      vivas.length ? 'siguen en el proyecto: ' + vivas.join(', ') : 'sin funciones del RAA (la pestaña RAA queda como historial)', vivas.length, 0);
   });
 
   // ------------------------------------------------- 6. la puerta de finanzas
@@ -424,7 +385,7 @@ function prFinanzas_(res) {
     // llamaba con notacion de corchetes —run['getFinanzasData']()— y el barrido
     // de Pruebas.gs solo reconoce run.nombre(). Esta prueba mira la funcion.
     var FN = ['getFinanzasData', 'refrescarFinanzas', 'getMetasData',
-              'getComparativoData', 'getRaaData', 'guardarRaa', 'getCajaData', 'getCmvRealTeorico', 'getDreData'];
+              'getComparativoData', 'getCajaData', 'getCmvRealTeorico', 'getDreData'];   // RAA archivado el 14-oct-2026
     var sinGuarda = FN.filter(function (n) {
       var fn = globalThis[n];
       if (typeof fn !== 'function') return true;
@@ -644,14 +605,7 @@ function prFinanzas_(res) {
   });
 
   // ------------------------------------------------ 10. tanda 4 (15-sep-2026)
-  prCorrer_(g, 'El RAA guarda con candado', function () {
-    var nombre = 'El RAA guarda con candado';
-    // M9: dos guardados a la vez elegian la misma fila libre y uno se perdia.
-    var txt = String(guardarRaa);
-    var ok = txt.indexOf('tryLock') !== -1 && txt.indexOf('releaseLock') !== -1;
-    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
-      ok ? 'guardarRaa toma y suelta el candado' : 'guardarRaa escribe sin LockService', ok ? 1 : 0, 1);
-  });
+  // 'El RAA guarda con candado' se fue con RaaDatos.js (archivado el 14-oct-2026).
 
   prCorrer_(g, 'El comparativo compara contra el año anterior', function () {
     var nombre = 'El comparativo compara contra el año anterior';

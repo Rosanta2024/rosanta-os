@@ -152,17 +152,6 @@ function mktRead(tab, auth) {
     });
 }
 
-function mktReadAll(auth) {
-  var u = requiereMarketing_(null, auth);
-  var full = usuarioTieneModulo(u, 'marketing');
-  var out = {};
-  Object.keys(SCHEMA).forEach(function (tab) {
-    if (tab === 'calendario_versiones') return; // respaldo; se lee aparte, no en cada arranque
-    if (full || TABS_CONTENIDO[tab]) out[tab] = mktRead(tab, auth);
-  });
-  return out;
-}
-
 function mktUpsert(tab, row, auth) {
   requiereEdicionMarketing_(tab, auth);
   var head = SCHEMA[tab];
@@ -302,11 +291,4 @@ function mktKpisMes_(anio, finanzas) {
     };
   });
   return { anio: anio, meses: meses, altas_error: altasError, gen: d.gen };
-}
-
-/** Para el tablero global: finanzas + rol dueno. */
-function getMarketingKpisMes(auth) {
-  var u = exigirModulo_(auth, 'finanzas');
-  invExigirDueno_(u);
-  return mktKpisMes_(new Date().getFullYear(), null);
 }

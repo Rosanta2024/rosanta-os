@@ -1484,7 +1484,6 @@ function prAccesos_(res) {
       ['webCambiarPrecioMenu',   webCambiarPrecioMenu],
       ['webCrearFicha',          webCrearFicha],
       ['webCrearInsumo',         webCrearInsumo],
-      ['webCambiarPrecioInsumo', webCambiarPrecioInsumo],
       ['webAsignarProveedor',    webAsignarProveedor]
     ];
     var sueltas = [];
@@ -1566,10 +1565,12 @@ function prModulos_(res) {
   // El semaforo del Excel del cierre se retiro el 15-sep-2026 (auditoria A6): los precios
   // entran por el cierre de inventario de la intranet, que mira el grupo 8. Esta prueba
   // leia el .xlsx y avisaba precios que ya ningun camino aplica.
+  // 14-oct-2026: SemaforoPrecios.js se archivo entero (auditoria, Fase 4).
   prCorrer_(g, 'Precios del Excel del cierre', function () {
-    prAnotar_(g, 'Precios del Excel del cierre', SEMAFORO.retirado ? 'OK' : 'AVISO',
-              SEMAFORO.retirado ? 'retirado: los precios entran por el cierre de inventario (grupo 8)'
-                                : 'el semaforo del Excel sigue activo');
+    var vivo = typeof refrescarSemaforoPrecios === 'function';
+    prAnotar_(g, 'Precios del Excel del cierre', vivo ? 'AVISO' : 'OK',
+              vivo ? 'el semaforo del Excel sigue en el proyecto'
+                   : 'archivado: los precios entran por el cierre de inventario (grupo 8)');
   });
 
   if (PRUEBAS_CFG.incluirRed) {
@@ -1602,9 +1603,8 @@ function prCapaWeb_(res) {
 
   var esperadas = ['webEstadoEdicion', 'webEditarCantidad', 'webAgregarLinea',
                    'webQuitarLinea', 'webCambiarPrecioMenu', 'webCrearFicha',
-                   'webCrearInsumo', 'webCambiarPrecioInsumo', 'webCrearProveedor',
-                   'webAsignarProveedor', 'webBuscarSimilares', 'webContenidosTipicos',
-                   'webProbarConversion'];
+                   'webCrearInsumo', 'webCrearProveedor',
+                   'webAsignarProveedor'];   // 14-oct-2026: las otras cuatro no las llamaba ninguna pantalla (archivadas)
 
   prCorrer_(g, 'Las funciones web existen', function () {
     var faltan = esperadas.filter(function (n) { return typeof globalThis[n] !== 'function'; });
@@ -1639,7 +1639,7 @@ function prCapaWeb_(res) {
   prCorrer_(g, 'Las que escriben resuelven el area', function () {
     var escriben = ['webEditarCantidad', 'webAgregarLinea', 'webQuitarLinea',
                     'webCambiarPrecioMenu', 'webCambiarRinde', 'webCrearFicha', 'webCrearInsumo',
-                    'webCambiarPrecioInsumo', 'webAsignarProveedor',
+                    'webAsignarProveedor',
                     'webArchivarFicha', 'webArchivarInsumo'];
     var sinArea = escriben.filter(function (n) {
       var fn = globalThis[n];
@@ -1687,7 +1687,6 @@ function prCapaWeb_(res) {
       getUsuarioActual: 'devuelve solo la fila de quien llama',
       calentarCaches: 'activador cada 5 minutos',
       latido: 'activador',
-      refrescarSemaforoPrecios: 'activador mensual; tambien la llama el aviso del tablero',
       psCapturaLunes: 'activador semanal de pauta; solo lee Meta y reescribe la semana cerrada, con candado de una hora'
     };
     var propias = prGuardasPropias_(), abiertas = [], conRol = [], n = 0;
@@ -1996,8 +1995,7 @@ function prSyncPrecios_(res) {
   var g = prGrupo_(res, '7. Sync de precios: deshacer y rastro');
 
   var nuevas = ['revertirSync_', 'listarCorridasSync', 'nuevaCorrida_', 'hojaLogSync_',
-                'leerCorridas_', 'refrescarSemaforoPrecios', 'aprobadosDelSemaforo_',
-                'esAprobable_', 'estaTildado_', 'historialDe', 'leerBitacora_',
+                'leerCorridas_', 'historialDe', 'leerBitacora_',   // las del semaforo, archivadas el 14-oct-2026
                 'refrescarResumenBitacora', 'bitacoraLote_'];
 
   prCorrer_(g, 'Las piezas nuevas existen', function () {
@@ -2013,7 +2011,7 @@ function prSyncPrecios_(res) {
     // Hasta el 15-sep-2026 esta prueba miraba si los nombres DE SU PROPIA LISTA terminaban
     // en guion bajo, y pasaba siempre. Ahora mira el codigo: la privada tiene que existir y
     // no puede quedar una publica con el mismo nombre sin el guion.
-    var deberianSerPrivadas = ['revertirSync_', 'aprobadosDelSemaforo_', 'hojaLogSync_',
+    var deberianSerPrivadas = ['revertirSync_', 'hojaLogSync_',
                                'aplicarSincronizacion_', 'sincronizarPreciosDeCierre_'];
     var expuestas = deberianSerPrivadas.filter(function (n) {
       return typeof globalThis[n] !== 'function' || typeof globalThis[n.slice(0, -1)] === 'function';
@@ -2056,7 +2054,7 @@ function prSyncPrecios_(res) {
   });
 
   prCorrer_(g, 'Las pestanas de servicio no se leen como recetas', function () {
-    var servicio = [SYNC.hojaLog, SEMAFORO.hoja, EDIT.hojaBitacora, BIT.hojaResumen];
+    var servicio = [SYNC.hojaLog, 'SEMAFORO_PRECIOS', EDIT.hojaBitacora, BIT.hojaResumen];   // la pestaña queda como historial
     var coladas = servicio.filter(function (h) { return !esHojaDeControl_(h); });
     prAnotar_(g, 'Las pestanas de servicio no se leen como recetas',
       coladas.length === 0 ? 'OK' : 'FALLA',
@@ -2123,7 +2121,7 @@ function prSyncPrecios_(res) {
     var h = hojaCosteo_().getSheetByName(COSTEO.hojas.indice);
     if (!h || h.getLastRow() < 2) {
       prAnotar_(g, 'El indice insumo-receta cubre las mismas areas que el modelo', 'SALTADA',
-                'la pestana ' + COSTEO.hojas.indice + ' esta vacia. Correr REGENERAR_INDICE.');
+                'la pestana ' + COSTEO.hojas.indice + ' esta vacia. Correr regenerarIndice() desde el editor.');
       return;
     }
     var enIndice = {};
@@ -2142,7 +2140,7 @@ function prSyncPrecios_(res) {
     prAnotar_(g, 'El indice insumo-receta cubre las mismas areas que el modelo',
       faltan.length === 0 ? 'OK' : 'FALLA',
       faltan.length ? 'el indice NO tiene nada de: ' + faltan.join(', ') +
-                      '. Esta viejo — correr REGENERAR_INDICE. ' + detalle
+                      '. Esta viejo — correr regenerarIndice() desde el editor. ' + detalle
                     : detalle,
       Object.keys(enIndice).length, Object.keys(enModelo).length);
   });
@@ -2151,11 +2149,11 @@ function prSyncPrecios_(res) {
   // APLICAR escribian en el Banco desde el Excel.
   prCorrer_(g, 'El semaforo del Excel quedo retirado', function () {
     var vivos = ['APLICAR_SEMAFORO', 'APLICAR_BARRA'].filter(function (n) { return typeof globalThis[n] === 'function'; });
+    if (typeof refrescarSemaforoPrecios === 'function') vivos.push('refrescarSemaforoPrecios');
     prAnotar_(g, 'El semaforo del Excel quedo retirado',
-      SEMAFORO.retirado && !vivos.length ? 'OK' : 'FALLA',
+      !vivos.length ? 'OK' : 'FALLA',
       vivos.length ? 'siguen en el proyecto: ' + vivos.join(' · ') + ' (escriben precios desde el Excel)'
-                   : SEMAFORO.retirado ? 'sin APLICAR_SEMAFORO ni APLICAR_BARRA; el activador mensual ya no lee el Excel'
-                                       : 'SEMAFORO.retirado no esta en true',
+                   : 'SemaforoPrecios.js archivado el 14-oct-2026: ni el activador ni los APLICAR',
       vivos.length, 0);
   });
 }

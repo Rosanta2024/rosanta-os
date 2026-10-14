@@ -1,0 +1,44 @@
+LIMPIEZA DE LA INTRANET · 14-oct-2026 · Fase 4 de la auditoria
+================================================================
+
+Sale del proyecto vivo (apps-script/rosanta-intranet) codigo que nadie llamaba. Nada se
+borro: los archivos y las funciones estan aca, tal como estaban, y en el historial de git.
+Antes de archivar cada cosa se reviso, sobre el codigo de la @190, que no la llamara otro
+.js, ninguna pantalla (google.script.run), ningun activador ni ningun menu.
+
+ARCHIVOS ENTEROS
+  RaaDatos.js           La pantalla RAA se retiro el 28-sep-2026. Seguian publicas
+                        getRaaData y guardarRaa (que escribia en la hoja). La pestaña RAA
+                        del config queda como historial.
+  SemaforoPrecios.js    Retirado el 15-sep-2026 (retirado:true); refrescarSemaforoPrecios
+                        salia al instante. Su activador ya no existia (revisado el 14-oct en
+                        Editor > Activadores). La pestaña SEMAFORO_PRECIOS queda como historial.
+  REGENERAR_INDICE.js   Atajo a regenerarIndice() (Proveedores.js), que sigue y se corre
+                        desde el editor.
+  PROMPT_*.txt          Encargos de agosto (recetario v11 y v15), ya hechos.
+  _logo_tmp.txt         Copia del logo que ya esta en Logo.html (borrado; queda en git).
+
+FUNCIONES (cada archivo <origen>_funciones_archivadas.js)
+  Presupuesto           migrarPresupuestoATipos y etiquetarExtrasPorArea con sus tablas
+                        (ya corrieron el 22-sep-2026) y _finPresuDe_ (sin llamadas).
+  FinanzasDatos         instalarMetas (ya corrio; FIN_METAS_COLS se queda) y _finAnio2025_.
+  ReporteSemanalDatos   instalarReporteAcciones, _repHojaAcciones_ (OBSOLETAS desde el
+                        27-sep: las acciones viven en ACCIONES) y _repFijosPresupuesto_.
+  EdicionWeb            webCambiarPrecioInsumo, webBuscarSimilares, webContenidosTipicos y
+                        webProbarConversion: publicas, ninguna pantalla las llamaba.
+  MarketingDatos        mktReadAll y getMarketingKpisMes (mktKpisMes_ se queda: lo usa el vigia).
+  CrmDatos              getCrmAltasMes (crmAltasPorMes_ se queda).
+  InventarioDatos       getInventarioCierre (invEstadoCierre_ se queda).
+  Dashboard             getDashboard (lo reemplazo getProfitOS).
+  IngenieriaMenu        getIngenieriaMenu (idem) y ventanaVentas_.
+  CosteoDatos           refrescarCosteo (el boton que la llamaba ya no existe).
+  ConfigPOS             pestanaDeFicha_.
+
+QUEDARON A PROPOSITO (se revisaron y NO se archivaron)
+  mktReplace            Nadie la llama, pero una prueba de Marketing la usa para vigilar que
+                        ninguna pestaña se reemplace entera. Sacarla pide rehacer esa prueba.
+  Retiros viejos de MedicionDatos (getRetirosPendientes, registrarRetiro,
+  leerComprobanteRetiros)  Mezclados con medRetirosMes_ y medPuedeRetiros_, que si se usan.
+  Herramientas de editor  probar*, revisar*, correrPruebas*, latidoEnSeco, setupInicial...
+
+Si algo de esto hace falta, se copia de vuelta al proyecto y se hace un push.

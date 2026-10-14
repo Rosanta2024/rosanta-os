@@ -291,10 +291,3 @@ function crmAltasPorMes_(anio) {
   });
   return out;
 }
-
-/** Para el tablero global: finanzas + rol dueno. */
-function getCrmAltasMes(auth) {
-  var u = exigirModulo_(auth, 'finanzas');
-  invExigirDueno_(u);
-  return crmAltasPorMes_(new Date().getFullYear());
-}

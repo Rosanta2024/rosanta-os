@@ -38,13 +38,6 @@ function getCosteoData(auth) {
   return modelo;
 }
 
-/** Boton "actualizar" de la vista. */
-function refrescarCosteo() {
-  soloDueno_();
-  olvidarModeloCosteo_();
-  return getCosteoData();
-}
-
 function construirModelo_() {
   var insumos = [], recetas = [], porNombreInsumo = {}, porNombreReceta = {};
 
