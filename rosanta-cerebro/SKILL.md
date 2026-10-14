@@ -7,7 +7,25 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 9 oct 2026 (v33).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 14 oct 2026 (v34).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 14 oct 2026 (v34): candado de publicación de la intranet
+
+**Dos reglas del CLAUDE.md de Apps Script dejaron de ser solo texto: ahora las hace cumplir un hook.** Está en main (`f6d595e`, en GitHub) y es configuración de Claude Code: no tocó el código de la intranet.
+
+- **`.claude/settings.json` + `.claude/hooks/candado-clasp.py`** (PreToolUse y PostToolUse sobre Bash) hacen tres cosas:
+  1. **Bloquea `clasp pull` que baje DENTRO de `~/Dev/Rosanta`**, en cualquier proyecto. Se permite bajar a una carpeta aparte: copiar el `.clasp.json` fuera del repo y hacer `cd` ahí, o usar `-P` apuntando a esa copia. **clasp 3.3 no tiene `--rootDir` en pull.**
+  2. **Bloquea `create-version`/`version`/`update-deployment`/`redeploy`/`deploy` de la intranet** (por scriptId) si no hay un sello vigente en `~/.rosanta-sellos/bateria-intranet.json`. Vigente = 0 fallas y posterior al último push registrado. Así se respeta publicar SIN push.
+  3. **Anota cada `clasp push` de la intranet** en `~/.rosanta-sellos/ultimo-push-intranet.json`, ya desde el Pre: un push fallido también invalida el sello.
+- **El sello se crea SOLO con `.claude/hooks/sellar-bateria.py --ok --fallas --avisos --saltadas --fuente`** y con el conteo REAL que Juanma reporta o que se lee en su Chrome. **Nunca inventarlo ni editarlo para destrabar.** Si el total de pruebas baja frente al historial (`bateria-intranet-historial.jsonl`), se rechaza salvo `--acepto-conteo-menor "motivo"`.
+- **Primer sello real (14-oct, 16:55): 183 OK · 0 fallas · 2 avisos · 2 saltadas = 187 pruebas, 252 s.** Avisos: el equilibrio concuerda con el resultado en 7 meses de 10 esperados (el gasto se aparta del presupuesto), y la caja no arranca del saldo de los bancos (falta un estado de cuenta reciente). **Ojo:** el commit `1d45806` (Calentador, 16:53) es casi de la misma hora. Si se subió con push después de la batería, el sello no lo cubre: repetir la batería antes de publicar.
+- **Límites:** no ve los push hechos fuera de Claude (la terminal de Juanma, otra máquina). Solo aplica a sesiones abiertas DESPUÉS de que el hook llegó a main. La prueba en vivo quedó pendiente para la primera sesión nueva: `false && cd apps-script/rosanta-intranet && clasp pull` tiene que salir "Bloqueado". Simulado: 20/20.
+- **Lecciones técnicas:**
+  - **Una sesión abierta NO toma hooks nuevos.** Ni un `settings.json` nuevo ni hooks agregados a un `settings.local.json` existente; se verificó con un registro temporal que nunca se escribió. Se prueban en una sesión nueva.
+  - `claude -p` desde la terminal no sirve para eso hoy: "OAuth session expired".
+  - `.gitignore` ahora excluye `.claude/settings.local.json`, `.claude/worktrees/` y `__pycache__/`.
 
 ---
 
