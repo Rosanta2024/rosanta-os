@@ -23,8 +23,8 @@
    undefined. Por eso aca se compara con == null / != null y nunca con === null (un dia sin cierre
    ni conteo se veia como "contado Q0.00"). */
 window.PF_CAJA = function (HOST, AUTH) {
-  function esc(x) { return String(x == null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(x) { return String(x == null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function q(n) { return (n < 0 ? '−' : '') + 'Q' + Math.abs(Number(n || 0)).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
   var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -35,14 +35,18 @@ window.PF_CAJA = function (HOST, AUTH) {
   function cargar() {
     HOST.innerHTML = '<div class="pg-vacio">Leyendo la caja y los cierres de PosFile…</div>';
     google.script.run.withSuccessHandler(function (r) { D = r; pintar(); })
-      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
+      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(PF_ERROR(e)) + '</p>'; })
       .getCajaChica(AUTH);
   }
 
   function pintar() {
+    // el punto exacto desde Hoy (14-oct-2026): 'contar:AAAA-MM-DD' abre el conteo de ese dia; 'dia:...' lleva al dia
+    var ir = window.PF_TOMAR_IR && window.PF_TOMAR_IR('caja'), irDia = null;
+    if (ir && ir.indexOf('contar:') === 0) { FORM = 'conteo'; DIA_FORM = ir.slice(7); Q_FORM = null; }
+    else if (ir && ir.indexOf('dia:') === 0) irDia = ir.slice(4);
     var R = D.resumen, h = '<div class="pg">' +
-      '<p class="pg-intro">La venta en efectivo entra sola con el cierre de PosFile de cada noche. Vos anotás lo que sale, las correcciones del cierre y, al cerrar, <b>cuánto hay en la caja</b>. ' +
-      'Si no cuadra, la pantalla te dice dónde buscar. Una factura pagada desde acá sale de Por pagar.</p>' +
+      '<p class="pg-intro">La venta en efectivo entra sola con el cierre de PosFile de cada noche. Vos anotás lo que sale y, al cerrar, <b>cuánto hay en la caja</b>. ' +
+      'Si no cuadra, la pantalla te dice dónde buscar.</p>' + window.PF_DONDE('caja') +
       '<div class="pg-res"><div><b>' + q(R.saldo) + '</b><span>en caja (esperado)</span></div>' +
       '<div><b>' + (R.ultimo_conteo ? q(R.ultimo_conteo.q) : '—') + '</b><span>último conteo' + (R.ultimo_conteo ? ' (' + esc(ddmm(R.ultimo_conteo.fecha)) + ')' : '') + '</span></div>' +
       '<div><b>' + R.descuadres + '</b><span>días con descuadre' + (R.faltante ? ' · faltan ' + q(R.faltante) : '') + (R.sobrante ? ' · sobran ' + q(R.sobrante) : '') + '</span></div>' +
@@ -64,13 +68,18 @@ window.PF_CAJA = function (HOST, AUTH) {
       (D.maestro ? 'Lo que sale de la caja va al maestro (07_Caja_Chica, ' + D.maestro.filas + ' filas) y de ahí al DRE.' : '') + '</p></div>';
     HOST.innerHTML = h;
     if (FORM === 'factura' && !FACT) cargarFacturas();
+    if (ir && FORM === 'conteo') { var fc = HOST.querySelector('#cj-form'); if (fc) { fc.scrollIntoView({ block: 'start' }); var mi = fc.querySelector('[data-v="monto"]'); if (mi) mi.focus(); } }
+    if (irDia) { var de = HOST.querySelector('#cj-d-' + irDia); if (de) { de.open = true; de.scrollIntoView({ block: 'start' }); } }
   }
+  window.addEventListener('pf-ir', function () { if (D && window.PF_IR && window.PF_IR.vista === 'caja') pintar(); });
 
   function dia(x) {
-    var mal = x.estado === 'Faltante' || x.estado === 'Sobrante', abre = mal || x.estado === 'Sin conteo' || x.estado === 'En curso' || x.estado === 'Falta el cierre';
+    var mal = x.estado === 'Faltante' || x.estado === 'Sobrante', abre = mal || (x.estado === 'Sin conteo' && !x.cubierto) || x.estado === 'En curso' || x.estado === 'Falta el cierre';
     var cta = function (t, n, sub, cls) { return '<span class="' + (cls || '') + '">' + t + (sub ? ' <span class="sub">' + esc(sub) + '</span>' : '') + '</span><span class="' + (cls || '') + '">' + n + '</span>'; };
-    var h = '<details class="cj-dia' + (mal ? ' mal' : '') + '"' + (abre ? ' open' : '') + '><summary><h3>' + esc(diaTxt(x.fecha)) + '</h3><span>' +
-      '<span class="pg-est ' + (CLASE[x.estado] || '') + '">' + esc(x.estado) + (mal ? ' ' + q(x.abierta) : '') + '</span>' +
+    var h = '<details id="cj-d-' + esc(x.fecha) + '" class="cj-dia' + (mal ? ' mal' : '') + '"' + (abre ? ' open' : '') + '><summary><h3>' + esc(diaTxt(x.fecha)) + '</h3><span>' +
+      // sin conteo pero cubierto por un conteo posterior (14-oct-2026): ya no queda pendiente
+      (x.cubierto ? '<span class="pg-est ok">Cubierto por el conteo del ' + esc(x.cubierto.slice(8, 10) + '/' + x.cubierto.slice(5, 7)) + '</span>'
+        : '<span class="pg-est ' + (CLASE[x.estado] || '') + '">' + esc(x.estado) + (mal ? ' ' + q(x.abierta) : '') + '</span>') +
       (x.contado != null ? ' <span class="pg-nota">contado ' + q(x.contado) + '</span>' : ' <span class="pg-nota">esperado ' + q(x.esperado) + '</span>') + '</span></summary>' +
       '<div class="cj-cta">' + cta('Inicial', q(x.inicial)) +
       cta('+ Efectivo del cierre', x.efectivo == null ? (x.fecha === D.hoy ? 'llega esta noche' : 'falta') : q(x.efectivo), x.fuente ? x.fuente + (x.cierre ? ' · venta ' + q(x.cierre.total) + ', tarjeta ' + q(x.cierre.tarjeta) : '') : '') +
@@ -109,7 +118,7 @@ window.PF_CAJA = function (HOST, AUTH) {
     if (FORM === 'salida') h += campoFecha() + '<label>Categoría <select data-v="cat">' + D.categorias.map(function (c) { return '<option value="' + c.k + '">' + esc(c.t) + '</option>'; }).join('') + '</select></label>' +
       '<label>A quién o dónde <input type="text" data-v="prov" placeholder="ej. La Torre, Marvin"></label><label>Qué fue <input type="text" data-v="concepto" placeholder="ej. azúcar y limones" style="min-width:12rem"></label>' +
       '<label>Monto <input type="number" step="0.01" min="0" data-v="monto"></label><label>Factura o ticket <input type="text" data-v="ref" placeholder="si hay"></label>' +
-      '<p class="pg-nota" style="width:100%">Si es una factura del FEL, usá <b>Pagar factura</b>: así sale de Por pagar. Las compras de cocina y barra sin factura quedan también en Pagos › Sin factura.</p>';
+      '<p class="pg-nota" style="width:100%">Si es una factura, usá <b>Pagar factura</b>: así sale de Por pagar. Las compras de cocina y barra sin factura quedan también en Pagos › Sin factura.</p>';
     if (FORM === 'entrada') h += campoFecha() + '<label>Qué fue <input type="text" data-v="concepto" placeholder="ej. anticipo cena del 18-oct" style="min-width:14rem"></label><label>Monto <input type="number" step="0.01" min="0" data-v="monto"></label>';
     if (FORM === 'correccion') h += '<p class="pg-nota" style="width:100%">Cuando una cuenta se cerró con la forma de pago equivocada. Cerrada en efectivo y cobrada con tarjeta: <b>negativo</b>. Cerrada con tarjeta y cobrada en efectivo: <b>positivo</b>.</p>' +
       campoFecha() + '<label>Monto (±) <input type="number" step="0.01" data-v="monto" value="' + (Q_FORM || '') + '"></label><label>Ticket o documento <input type="text" data-v="ref" placeholder="ej. ticket 44"></label><label>Nota <input type="text" data-v="concepto" placeholder="opcional"></label>';
@@ -130,13 +139,13 @@ window.PF_CAJA = function (HOST, AUTH) {
     var sel = FACT.prov || '';
     var h = campoFecha() + '<label>Proveedor <select data-v="prov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === sel ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
     if (sel) h += '<div style="width:100%">' + FACT.lista.filter(function (f) { return f.proveedor === sel; }).map(function (f) {
-      return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-llave="' + esc(f.llave) + '"> DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + (f.saldo < f.total ? ' de ' + q(f.total) : '') + ' <span class="pg-nota">' + esc(f.estado) + '</span></label>';
+      return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-llave="' + esc(f.llave) + '"> Factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + (f.saldo < f.total ? ' de ' + q(f.total) : '') + ' <span class="pg-nota">' + esc(f.estado) + '</span></label>';
     }).join('') + '</div><label>Cantidad pagada <input type="number" step="0.01" min="0" data-v="monto" placeholder="vacío = el saldo"></label><label>Nota <input type="text" data-v="nota" placeholder="ej. se abona la mitad"></label>';
     return h;
   }
   function cargarFacturas() {
     google.script.run.withSuccessHandler(function (l) { FACT = { lista: l }; repintarForm(); })
-      .withFailureHandler(function (e) { FACT = { error: String(e && e.message || e) }; repintarForm(); })
+      .withFailureHandler(function (e) { FACT = { error: PF_ERROR(e) }; repintarForm(); })
       .getFacturasParaCaja(AUTH);
   }
   function repintarForm() { var b = HOST.querySelector('#cj-form'); if (b) b.innerHTML = form(); }
@@ -152,7 +161,7 @@ window.PF_CAJA = function (HOST, AUTH) {
       .withFailureHandler(function (e) {
         OCUPADO = false;
         if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-        if (err) err.textContent = String(e && e.message || e); else alert(String(e && e.message || e));
+        if (err) err.textContent = PF_ERROR(e); else alert(PF_ERROR(e));
       }));
   }
 

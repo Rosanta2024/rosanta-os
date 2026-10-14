@@ -1,0 +1,217 @@
+RESUMEN 
+CIERRE DE CAJA 121020260001-121020262115 Generado por: RosantaBarra 
+
+
+Descripción 
+	TOTAL
+	Caja (efecvo) POS 
+	297.00
+	Tarjetas 
+	4,889.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	471.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 471.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Barra Rosanta 
+	GTQ 5,186.50
+	TOTAL 
+	GTQ 5,186.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Barra Rosanta 
+	GTQ 471.50
+	TOTAL 
+	GTQ 471.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	68 
+	Factura 
+	GTQ 528.00
+	69 
+	Factura 
+	GTQ 3,019.50
+	70 
+	Factura 
+	GTQ 621.50
+	71 
+	Factura 
+	GTQ 720.50
+	72 
+	Factura 
+	GTQ 297.00
+	TOTAL 
+	GTQ 5186.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Ensalada Rosanta 
+	2.00 
+	GTQ 0.00 
+	GTQ 150.00
+	Hamburguesa de Lomito 
+	2.00 
+	GTQ 0.00 
+	GTQ 260.00
+	Propina 
+	5.00 
+	GTQ 0.00 
+	GTQ 471.50
+	Mezcal a la Piña 
+	3.00 
+	GTQ 0.00 
+	GTQ 240.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Coca Cola Cero 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Pulpo a la Parrilla 
+	2.00 
+	GTQ 0.00 
+	GTQ 300.00
+	Lomito ROSANTA 
+	3.00 
+	GTQ 0.00 
+	GTQ 570.00
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Cabernet Sauvignon 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Pasta de la casa 
+	3.00 
+	GTQ 0.00 
+	GTQ 465.00
+	
+
+
+
+© Soported by www.posfile.com • 10/12/2026 9:25:43 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Extra pollo 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Ginger Beer 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Gallo Botella 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Mix de Michelada 
+	1.00 
+	GTQ 0.00 
+	GTQ 25.00
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Brisket de Res 
+	3.00 
+	GTQ 0.00 
+	GTQ 540.00
+	MockTails 
+	2.00 
+	GTQ 0.00 
+	GTQ 110.00
+	Jamones y Quesos 
+	1.00 
+	GTQ 0.00 
+	GTQ 210.00
+	Pasta con Lomito 
+	2.00 
+	GTQ 0.00 
+	GTQ 370.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Estafado de Rabo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Pasta con Camarones 
+	1.00 
+	GTQ 0.00 
+	GTQ 195.00
+	Naranjada 
+	4.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Beetrot Negroni 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Cabro 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Agua Natural de la casa 1L 
+	4.00 
+	GTQ 0.00 
+	GTQ 120.00
+	TOTAL 
+	50 
+	GTQ 0.00 
+	GTQ 5186.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/12/2026 9:25:43 PM

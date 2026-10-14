@@ -79,16 +79,23 @@ header.top .wrap{max-width:none;padding:0 28px}
 .pf-lat .nav button[aria-selected="true"] small{color:var(--surface);opacity:.8}
 .pf-layout > main{padding:24px 28px 40px;min-width:0;width:100%;max-width:1236px;justify-self:center}
 .pf-filtro{display:flex;justify-content:flex-end;margin:-6px 0 14px}
+.pf-filtro[hidden]{display:none !important}   /* el equipo no lo ve: el display:flex le ganaba a hidden (14-oct-2026) */
 .pf-filtro .areas{display:inline-flex;gap:.3rem}
 .pf-filtro .areas button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:.25rem .8rem;cursor:pointer}
 .pf-filtro .areas button[aria-pressed="true"]{background:var(--bosque);color:var(--surface);border-color:var(--bosque)}
 footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+/* EL MENU EN EL TELEFONO (14-oct-2026): antes era una tira que se movia de lado y no se veia
+   todo. Ahora un boton "☰ Secciones · <la pestaña de ahora>" que despliega el menu entero, con
+   sus grupos, y se cierra al elegir. En la computadora el boton no existe. */
+.pf-menu-btn{display:none}
 @media (max-width:860px){
   .pf-layout{grid-template-columns:1fr}
   .pf-lat{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem .7rem}
-  .pf-lat .nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto}
-  .pf-lat .pf-grupo{display:none}
-  .pf-lat .nav button{width:auto;white-space:nowrap;flex:0 0 auto}
+  .pf-menu-btn{display:flex;width:100%;align-items:center;justify-content:space-between;gap:.6rem;font:inherit;font-size:.95rem;
+    background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;cursor:pointer}
+  .pf-menu-btn b{color:var(--bosque)}
+  .pf-lat .nav{display:none}
+  .pf-lat.abierto .nav{display:flex;margin-top:.5rem}
   .pf-lat .nav button small{display:none}
   .pf-layout > main{padding:16px 16px 32px}
   header.top .wrap{padding:0 16px}
@@ -118,10 +125,6 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
   </div>
 </header>
 
-<div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
-  <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
-  <p style="margin:0;font-size:13.5px">Leyendo las fichas y el Banco de Datos.</p>
-</div>
 <div class="pf-layout">
   <aside class="pf-lat">
     <? var esEquipo = rol === 'chef' || rol === 'sala', esDueno = rol === 'dueno';
@@ -129,7 +132,8 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
     <!-- UN SOLO MENU, por para que sirve (Juanma, 13-oct-2026). Cada uno ve lo suyo: Jeffry
          Cocina, Pagos, Inventarios y Recetas; Maco lo mismo de barra mas la Caja chica; el dueño
          todo. Lo que no se ve tampoco se abre por enlace (Code.js, lista de vistas). -->
-    <nav class="nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
+    <button type="button" class="pf-menu-btn" aria-expanded="false" aria-controls="pf-nav"><span>☰ Secciones</span><b id="pf-menu-act">Hoy</b></button>
+    <nav class="nav" id="pf-nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
       <!-- Hoy (13-oct-2026): lo que le toca a cada uno. Es donde abre Profit OS. -->
       <button role="tab" data-view="hoy" aria-selected="true">Hoy</button>
       <div class="pf-grupo">Día a día</div>
@@ -150,12 +154,18 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
       <? if (veDevolver || esDueno) { ?><div class="pf-grupo">Administración</div><? } ?>
       <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button>
       <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button><? } ?>
-      <? if (esDueno) { ?><button role="tab" data-view="adm-banco" aria-selected="false">Banco sin casar</button>
+      <? if (esDueno) { ?><button role="tab" data-view="adm-banco" aria-selected="false">Banco por revisar</button>
       <button role="tab" data-view="adm-balance" aria-selected="false">Balance del año</button>
       <button role="tab" data-view="higiene" aria-selected="false">Higiene</button><? } ?>
     </nav>
   </aside>
 <main>
+  <!-- Dentro de main (14-oct-2026): se ve solo en las pestañas que usan el recetario. Hoy, Pagos,
+       Compras, Caja y las areas abren sin esperarlo (ver "EL MENU SIN ESPERAR", al final). -->
+  <div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
+    <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+    <p style="margin:0;font-size:13.5px">Tarda unos segundos. Mientras tanto podés usar Hoy, Pagos, Compras o la Caja.</p>
+  </div>
   <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la mercaderia?" arriba del
        inicio, solo para quien le toca (chef y dueño; sin quetzales para el chef). Se
        esconde junto con el inicio cuando se abre otra vista. -->
@@ -210,12 +220,37 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
    recetario". Asi le paso a Jeffry, que fue el primero en entrar de verdad al
    modulo. Si agregas una llamada nueva, pasale AUTH. */
 var AUTH = '<?= authToken ?>';
+/* LOS ERRORES EN CRISTIANO (14-oct-2026, Juanma: "que todo el sistema sea user friendly").
+   Toda pantalla de Profit OS pasa el error por aca antes de mostrarlo. Los errores tecnicos de
+   Google o del navegador (en ingles, con "Exception", "TypeError", tiempos agotados) se cambian
+   por una frase que dice que hacer; los mensajes propios del sistema ya vienen en español y
+   pasan tal cual. El original queda en la consola para quien tenga que revisarlo.
+   x: el error (Error, {message}) o un texto. defecto: si no vino nada. */
+window.PF_ERROR = function (x, defecto) {
+  var m = x && x.message ? String(x.message) : (x == null || x === '' ? String(defecto || '') : String(x));
+  try { if (m) console.warn('[intranet] error:', m); } catch (e0) { /* sin consola */ }
+  m = m.replace(/^\s*(Error|Exception|Excepción)\s*:\s*/i, '');
+  var T = [
+    [/sin respuesta|no response|empty response/i, 'No llegó respuesta del servidor. Probá de nuevo en un momento.'],
+    [/Lock timeout|could not obtain lock|otra lectura en curso/i, 'Alguien más está guardando en este momento. Esperá unos segundos y probá de nuevo.'],
+    [/NetworkError|Failed to fetch|network|timed? ?out|tiempo de espera|Exceeded maximum execution time|tiempo m[aá]ximo de ejecuci/i, 'Se tardó demasiado o se cortó el internet. Probá de nuevo en un momento.'],
+    [/too many times|Service invoked|quota|Rate Limit|Limit Exceeded|demasiadas veces/i, 'Google está saturado un momento. Probá de nuevo en un minuto.'],
+    [/Authorization is required|authorization.*expired|sesi[oó]n venci/i, 'Tu sesión venció. Recargá la página.'],
+    [/permission|Access denied|not have access|You need access|Sin acceso/i, 'No tenés permiso para esto. Si debería poder, avisale a Juanma.'],
+    [/^(TypeError|ReferenceError|SyntaxError|RangeError|InternalError)\b|Cannot read propert|is not defined|is not a function|Unexpected token|ScriptError/i, 'Algo falló en la intranet. Probá de nuevo; si sigue, avisale a Juanma.']
+  ];
+  for (var i = 0; i < T.length; i++) if (T[i][0].test(m)) return T[i][1];
+  return m ? m.charAt(0).toUpperCase() + m.slice(1) : 'No se pudo completar. Probá de nuevo.';
+};
 /* la pestaña con la que abre (?vista=, lista cerrada en Code.js) */
 (function(){ function alto(){ var h=document.querySelector('header.top'); if(h) document.documentElement.style.setProperty('--pf-hdr', h.offsetHeight + 'px'); }
   window.addEventListener('resize', alto); document.addEventListener('DOMContentLoaded', alto); setTimeout(alto, 0); })();
 window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
 /* el area con la que abren recetas, productos e inventarios: Maco barra, el resto cocina */
 window.PROFIT_AREA_INI = <?!= JSON.stringify(rol === 'sala' ? 'BARRA' : 'COCINA') ?>;
+/* el rol, solo para simplificar la INTERFAZ (Inventarios del equipo, 14-oct-2026). Los permisos
+   de verdad los revisa el servidor en cada llamada. */
+window.PROFIT_ROL = <?!= JSON.stringify(rol || '') ?>;
 window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
 window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
 /* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
@@ -268,7 +303,7 @@ function montarCompras(){
   var sec = document.getElementById('v-compras');
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
-  sec.innerHTML = '<div class="pg"><h2>Compras en efectivo y con débito</h2></div><div class="ce-host"></div>';
+  sec.innerHTML = '<div class="pg"><h2>Compras en efectivo</h2></div><div class="ce-host"></div>';
   window.PF_COMPRAS(sec.querySelector('.ce-host'), AUTH);
 }
 function montarHoy(){
@@ -332,11 +367,13 @@ function arrancar(m){
   window.__DATA__ = adaptar(m);
   document.getElementById('cargando').remove();
   iniciarApp();
+  window.__APP_LISTA__ = true;   // desde aca manda la navegacion de la app (CosteoJs_Acciones)
 }
 function fallar(e){
+  window.__RECETARIO_FALLO__ = true;
   document.getElementById('cargando').innerHTML =
-    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">' +
-    (e && e.message ? e.message : e) + '</p>';
+    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">Revisá el internet y recargá la página. Hoy, Pagos, Compras y la Caja siguen funcionando.</p>' +
+    '<p style="font-size:12px;color:var(--muted)">' + String(PF_ERROR(e)).replace(/</g, '&lt;') + '</p>';
 }
 /* LAS DOS LLAMADAS SALEN JUNTAS, no una despues de la otra.
    getCosteoData tarda lo suyo (es el recetario entero) y getProfitOS tambien, y
@@ -357,7 +394,7 @@ google.script.run
   })
   .withFailureHandler(function(e){
     window.__POSCARGANDO__ = null;
-    var err = {ok:false, error:(e && e.message) || 'No se pudo leer'};
+    var err = {ok:false, error:PF_ERROR(e, 'No se pudo leer')};
     window.__POS_CACHE__[13] = {tablero:err, menu:err};
     if(window.__profitListo) window.__profitListo(13);
   })
@@ -372,6 +409,53 @@ google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCos
 <?!= incluirCrudo_('ProfitPagosJs') ?>
 <?!= incluirCrudo_('ProfitCajaJs') ?>
 <?!= incluirCrudo_('ProfitHoyJs') ?>
+<script>
+/* EL MENU SIN ESPERAR EL RECETARIO (14-oct-2026, Juanma: "que todo el sistema sea user friendly").
+   La navegacion vive en iniciarApp, que corre cuando llega getCosteoData (el recetario entero, lo
+   mas lento de la intranet): Maco no podia abrir la Caja hasta que cargaba un recetario que no
+   usa. Esto navega YA entre las pestañas que no lo necesitan; las que si lo necesitan muestran
+   "Cargando el recetario…". Cuando llega, iniciarApp arranca en la pestaña donde esta la persona
+   (PROFIT_VISTA_INI) y esto se apaga (__APP_LISTA__). */
+(function () {
+  var SIN_RECETARIO = ['hoy', 'pagos', 'compras', 'caja', 'cocina', 'barrasala', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva'];
+  var MONTAR = { hoy: montarHoy, pagos: montarPagos, compras: montarCompras, caja: montarCaja,
+                 cocina: function () { montarArea('cocina'); }, barrasala: function () { montarArea('barrasala'); } };
+  function lista() { return !!window.__APP_LISTA__; }
+  function mostrar(v) {
+    window.PROFIT_VISTA_INI = v;   // iniciarApp abre aca
+    var sin = SIN_RECETARIO.indexOf(v) !== -1, carg = document.getElementById('cargando');
+    if (carg) carg.style.display = sin ? 'none' : '';
+    document.querySelectorAll('main > section[id^="v-"]').forEach(function (s) { s.hidden = s.id !== 'v-' + v; });
+    var f = document.querySelector('.pf-filtro'); if (f) f.style.display = 'none';
+    document.querySelectorAll('.nav button[data-view]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.view === v)); });
+    if (MONTAR[v]) MONTAR[v](); else if (v.indexOf('adm-') === 0) montarAdm(v);
+  }
+  document.addEventListener('click', function (e) {
+    if (lista()) return;
+    var t = e.target.closest && e.target.closest('button[data-view]');
+    if (t) mostrar(t.dataset.view);
+  });
+  // el buscador filtra Pagos y Administracion desde ya (la app hace lo mismo cuando arranca)
+  var qi = document.getElementById('q');
+  if (qi) qi.addEventListener('input', function (e) {
+    if (lista()) return;
+    window.PF_BUSCA = e.target.value.trim(); window.dispatchEvent(new CustomEvent('pf-buscar', { detail: window.PF_BUSCA }));
+  });
+  if (!lista()) mostrar(window.PROFIT_VISTA_INI || 'hoy');
+})();
+/* El boton del menu en el telefono: abre y cierra, se cierra al elegir y muestra la pestaña de
+   ahora (la lee de aria-selected, que ponen tanto el navegador liviano como la app). */
+(function () {
+  var lat = document.querySelector('.pf-lat'), btn = lat && lat.querySelector('.pf-menu-btn'), nav = document.getElementById('pf-nav');
+  if (!btn || !nav) return;
+  function abrir(si) { lat.classList.toggle('abierto', si); btn.setAttribute('aria-expanded', String(si)); }
+  function rotulo() { var b = nav.querySelector('button[aria-selected="true"]'); document.getElementById('pf-menu-act').textContent = b ? b.textContent.trim() : ''; }
+  btn.addEventListener('click', function () { abrir(!lat.classList.contains('abierto')); });
+  nav.addEventListener('click', function (e) { if (e.target.closest('button[data-view]')) abrir(false); });
+  new MutationObserver(rotulo).observe(nav, { subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+  rotulo();
+})();
+</script>
 <script>
   (function () {
     var host = document.getElementById('lx-modulo');

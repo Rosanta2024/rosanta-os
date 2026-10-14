@@ -1,0 +1,229 @@
+RESUMEN 
+CIERRE DE CAJA 021020260001-021020262359 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	4,416.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	401.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 401.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 4,416.50
+	TOTAL 
+	GTQ 4,416.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 401.50
+	TOTAL 
+	GTQ 401.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	9 
+	Factura 
+	GTQ 357.50
+	10 
+	Factura 
+	GTQ 759.00
+	11 
+	Factura 
+	GTQ 621.50
+	12 
+	Factura 
+	GTQ 583.00
+	13 
+	Factura 
+	GTQ 951.50
+	14 
+	Factura 
+	GTQ 1,028.50
+	15 
+	Factura 
+	GTQ 115.50
+	TOTAL 
+	GTQ 4416.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Bol Mediterraneo con Tofu 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Pasta de la casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 155.00
+	Coca Cola Cero 
+	2.00 
+	GTQ 0.00 
+	GTQ 60.00
+	Tés - Gengibre con Lemongrass 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Propina 
+	7.00 
+	GTQ 0.00 
+	GTQ 401.50
+	Pasta con Camarones 
+	3.00 
+	GTQ 0.00 
+	GTQ 585.00
+	Pachamama Tropical 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	Jade Negro 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	Refresco de Citronela 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Naranjada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:49:38 AM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Mousse de Chocolate 
+	3.00 
+	GTQ 0.00 
+	GTQ 195.00
+	Pulpo a la Parrilla 
+	3.00 
+	GTQ 0.00 
+	GTQ 450.00
+	Pasta con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Mezcal a la Piña 
+	3.00 
+	GTQ 0.00 
+	GTQ 240.00
+	Margarita 
+	2.00 
+	GTQ 0.00 
+	GTQ 150.00
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Coliflor en Romesco 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Chiatenango 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Beetrot Negroni 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Kombucha 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	La val Copa 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Porción Pan 
+	1.00 
+	GTQ 0.00 
+	GTQ 20.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Brisket de Res 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Agua con Gas 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Tinto - La Linda 
+	3.00 
+	GTQ 0.00 
+	GTQ 210.00
+	Vegetales Fermentados 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Cabernet Sauvignon 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Gallo Botella 
+	3.00 
+	GTQ 0.00 
+	GTQ 105.00
+	TOTAL 
+	53 
+	GTQ 0.00 
+	GTQ 4416.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:49:38 AM

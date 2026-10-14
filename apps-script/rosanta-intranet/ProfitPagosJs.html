@@ -32,13 +32,27 @@
   .pg-formas { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0; }
   .pg-formas button { font: inherit; font-size: 0.86rem; background: var(--vb); color: #fff; border: 0; border-radius: 10px; padding: 0.55rem 0.9rem; cursor: pointer; }
   .pg-formas button:disabled { opacity: 0.5; }
+  /* Elegir y despues Guardar (14-oct-2026, Juanma: "se pueden cometer errores de selección"):
+     la forma elegida queda marcada; las otras, en blanco. */
+  .pg-formas button[data-elegir] { background: #fff; color: var(--vb); border: 1px solid rgba(78,109,90,0.45); }
+  .pg-formas button[data-elegir][aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
+  .pg-formas button[data-elegir][aria-pressed="true"]::before { content: '✓ '; }
+  .pg-medio { margin: 0.4rem 0; }
+  .pg-medio select { font-size: 0.95rem !important; padding: 0.45rem 0.6rem !important; border: 2px solid var(--lila) !important; }
+  .pg-medio select.falta { border-color: #A33A2A !important; }
+  .pg-resumen { margin-top: 0.6rem; font-size: 0.86rem; background: #fff; border-radius: 10px; padding: 0.5rem 0.7rem; border: 1px dashed rgba(78,109,90,0.45); }
+  .pg-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+  .pg-acciones .pg-b { font-size: 0.9rem; padding: 0.5rem 1.2rem; }
+  .pg-hist td { background: #FAF8F5; }
+  .pg-varias { margin-top: 0.6rem; background: #ECEBFA; border-radius: 12px; padding: 0.6rem 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center; }
+  .pg-varias > .pg-panel { width: 100%; margin: 0; }
+  .pg-hist table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .pg-hist th, .pg-hist td td { padding: 0.35rem 0.4rem; }
   .pg-mas { font-size: 0.8rem; margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; align-items: center; }
   .pg input[type=text], .pg input[type=number], .pg input[type=date], .pg select { font: inherit; font-size: 0.85rem; padding: 0.3rem 0.45rem; border: 1px solid rgba(26,26,26,0.2); border-radius: 8px; background: #fff; }
   .pg input[type=number] { width: 7rem; }
   .pg-err { color: #A33A2A; font-size: 0.82rem; margin-top: 0.3rem; }
   .pg-nota { font-size: 0.8rem; color: #52514e; line-height: 1.5; }
-  .pg-barra { position: sticky; bottom: 0.6rem; z-index: 5; background: #1a1a1a; color: #fff; border-radius: 14px; padding: 0.7rem 0.9rem; margin-top: 1rem; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
-  .pg-barra .pg-formas button { background: #fff; color: #1a1a1a; }
   .pg-t { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: #fff; border-radius: 18px; overflow: hidden; }
   .pg-t td, .pg-t th { padding: 0.5rem 0.45rem; border-bottom: 1px solid rgba(26,26,26,0.08); text-align: left; }
   .pg-scroll { overflow-x: auto; margin-top: 0.9rem; border-radius: 18px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
@@ -72,12 +86,12 @@
    Administración de la barra lateral: una sola pestaña cada una, sin fila de pestañas. */
 window.PF_PAGOS = function (HOST, AUTH, MODO) {
   var ADMIN = /^admin:/.test(MODO || '') ? MODO.slice(6) : null, AGR = null, IVAAGR = null;
-  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
   function hoy() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-  var D = null, D0 = null, TAB = ADMIN || 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false, BAL = null;
+  var D = null, D0 = null, TAB = ADMIN || 'pagar', ABIERTA = null, SEL = {}, OCUPADO = false, BAL = null, HIST = null;
   /* EL BUSCADOR de arriba (13-oct-2026): D0 es lo que mando el servidor y D lo que se ve,
      filtrado por proveedor, DTE, razon social o detalle. Todo lo de la pantalla lee D. */
   function sinAcento(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
@@ -102,13 +116,14 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       '<button type="button" class="pg-x" data-quitarfiltro="1" style="color:#4b4790">quitar filtro</button></p>' : '';
   }
   window.addEventListener('pf-buscar', function () { if (D0) { D = filtrar(D0); pintar(); } });
+  window.addEventListener('pf-ir', function () { if (D && !ADMIN && window.PF_IR && window.PF_IR.vista === 'pagos') pintar(); });
   var CLASE = { 'Pendiente': 'pend', 'Abonada': 'abon', 'Banco por confirmar': 'banco', 'Pagada': 'ok', 'Pagada de más': 'mas' };
-  function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e === 'Banco por confirmar' ? 'Por confirmar con el banco' : e) + '</span>'; }
+  function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e === 'Banco por confirmar' ? 'Pagada · falta que el banco la registre' : e) + '</span>'; }
 
   function cargar() {
-    HOST.innerHTML = '<div class="pg-vacio">Leyendo las facturas del FEL y los pagos…</div>';
+    HOST.innerHTML = '<div class="pg-vacio">Leyendo las facturas y los pagos…</div>';
     google.script.run.withSuccessHandler(function (r) { D0 = r; D = filtrar(r); pintar(); })
-      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
+      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(PF_ERROR(e)) + '</p>'; })
       .getPagosProveedores(AUTH);
   }
   /* "marcada Banco BI el 06/10, falta que el banco la confirme" */
@@ -128,15 +143,20 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   function favorDe(nit) { var c = (D.cuadre || []).filter(function (x) { return x.nit === nit; })[0]; return c ? c.favor : 0; }
 
   function pintar() {
+    // el punto exacto desde Hoy (14-oct-2026): 'pagar' o 'posibles'
+    var ir = !ADMIN && window.PF_TOMAR_IR && window.PF_TOMAR_IR('pagos');
+    if (ir) { TAB = ir; ABIERTA = null; }
     // Por pagar: lo que falta, y lo marcado "Banco" que el banco todavia no confirma (13-oct-2026)
     var abiertas = D.facturas.filter(function (f) { return f.saldo > 0.01 || f.estado === 'Banco por confirmar'; });
     var pendQ = abiertas.reduce(function (a, f) { return a + f.saldo; }, 0);
     var vence = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoy(); }).length;
     if (ADMIN) return pintarAdmin();
     var h = '<div class="pg">' +
-      '<h2>Pagos a proveedores</h2><p class="pg-intro">Las facturas llegan solas del FEL con la carga de los lunes. Cuando pagues, tocá <b>Pagar</b> y elegí cómo. ' +
-      'Lo que no trae factura se anota en <b>+ Compra de mercado</b>. Entran las facturas desde el ' + esc(ddmm(D.desde)) + ': las de antes del 28/09 que COMPRAS_2026 da por pagadas ya cuentan como pagadas. ' +
-      'Las pagadas por <b>Transferencia</b> se confirman solas cuando el banco registra el pago (se carga el estado de cuenta)' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</p>' +
+      // Una linea de que hacer y la guia de donde va cada pago (14-oct-2026); el resto, en "¿Cómo funciona?"
+      '<h2>Pagos a proveedores</h2><p class="pg-intro">Cuando pagues una factura, tocá <b>Pagar</b>, elegí cómo y tocá <b>Guardar pago</b>.</p>' + window.PF_DONDE('pagos') +
+      '<details class="pg-nota" style="margin:0.3rem 0 0.8rem"><summary style="cursor:pointer">¿Cómo funciona?</summary>Las facturas llegan solas: SAT avisa cada factura al correo el mismo día, y el lunes entra la carga completa. ' +
+      'Entran desde el ' + esc(ddmm(D.desde)) + '; las de antes del 28/09 que ya estaban pagadas cuentan como pagadas. ' +
+      'Las pagadas por <b>Transferencia</b> o <b>Tarjeta</b> se confirman solas cuando se carga el estado de cuenta del banco' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</details>' +
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
@@ -145,22 +165,21 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         .concat(D.posibles && D.posibles.length ? ['posibles:Posibles pagos (' + D.posibles.length + ')'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div><div id="pg-sel"></div>' +
+      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div>' +
       (D.aviso_correo ? '<p class="pg-err">' + esc(D.aviso_correo) + '</p>' : '') +
-      '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Las facturas <b>por correo</b> son las que SAT avisó y todavía no entran al FEL del lunes.</p></div>';
+      '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Las facturas <b>por correo</b> son las que SAT avisó y todavía no entran en la carga del lunes.</p></div>';
     HOST.innerHTML = h;
-    pintarSeleccion();
   }
 
   /* Administración: una pestaña de la barra lateral, con el mismo cuerpo de siempre. */
   function pintarAdmin() {
     var T = { equipo: ['Por devolver', 'Lo que cada quien pagó de su bolsa y Rosanta le devuelve. Es de todos: cada quien agrega lo suyo y todos ven lo de todos.'],
-              banco: ['Banco sin casar', 'Pagos del banco que no se casaron solos con una factura.'],
+              banco: ['Banco por revisar', 'Pagos del banco que no se pudieron unir solos con una factura.'],
               balance: ['Balance del año', 'Lo facturado contra lo pagado, por proveedor.'],
               iva: ['Para reducir IVA', 'Facturas a nombre de CORSAGA que solo sirven para el crédito fiscal. Es de todos: cada quien marca las suyas y todos ven quién marcó cada una.'] }[ADMIN] || ['Administración', ''];
     HOST.innerHTML = '<div class="pg"><h2>' + T[0] + '</h2><p class="pg-intro">' + T[1] + '</p>' +
       '<div class="pg-tabs"><span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo([]) + '</div><div id="pg-sel"></div>' +
+      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo([]) + '</div>' +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '.</p></div>';
   }
 
@@ -178,12 +197,17 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         }
         return cab + (function () {
         var f0 = g[0], tot = g.reduce(function (a, f) { return a + f.saldo; }, 0), fav = favorDe(f0.nit);
-        return '<section class="pg-prov"><header><div><span class="pg-area">' + esc(f0.grupo) + '</span><h3>' + esc(f0.proveedor) + '</h3></div>' +
+        // Varias a la vez (14-oct-2026, Juanma: "no hay botón para cerrarlas todas juntas"): el
+        // boton vive en la tarjeta del proveedor. Antes salia en una barra al pie de toda la lista.
+        var pagables = g.filter(function (f) { return f.saldo > 0.01; }), elegidas = pagables.filter(function (f) { return SEL[f.llave]; });
+        var todas = pagables.length > 1 && elegidas.length === pagables.length, abiertaSel = ABIERTA === 'sel:' + f0.nit && elegidas.length > 1;
+        return '<section class="pg-prov"><header><div><span class="pg-area">' + esc(f0.grupo) + '</span><h3>' + esc(f0.proveedor) + '</h3>' +
+          '<button type="button" class="pg-x" style="color:var(--vb)" data-hist="' + esc(f0.nit) + '">ver historial de facturas y pagos</button></div>' +
           '<div class="n"><b>' + q(tot) + '</b>' + (fav > 0.01 ? ' · <span class="pg-est ok">' + q(fav) + ' a favor</span>' : '') + '</div></header>' +
-          '<div class="pg-l cab"><span></span><span>DTE</span><span>Fecha</span><span>Fecha de pagar</span><span class="n">Cantidad a pagar</span><span>Estatus de pago</span><span></span></div>' +
+          '<div class="pg-l cab"><span>' + (pagables.length > 1 ? '<input type="checkbox" data-selprov="' + esc(f0.nit) + '"' + (todas ? ' checked' : '') + ' aria-label="Elegir todas" title="Elegir todas">' : '') + '</span><span>DTE</span><span>Fecha</span><span>Fecha de pagar</span><span class="n">Cantidad a pagar</span><span>Estatus de pago</span><span></span></div>' +
           g.map(function (f) {
             var fila = '<div class="pg-l"><span class="c"><input type="checkbox" data-sel="' + esc(f.llave) + '"' + (SEL[f.llave] ? ' checked' : '') + ' aria-label="Elegir"></span>' +
-              '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída de COMPRAS_2026">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
+              '<span class="dte">' + esc(f.dte) + (f.anterior ? ' <span class="pg-est abon" title="Traída del Excel de compras de antes">anterior</span>' : '') + (f.por_correo ? ' <span class="pg-est abon" title="Avisada por SAT al correo. Entra al FEL del maestro con la carga del lunes.">por correo</span>' : '') + '<span class="m">' + esc(ddmm(f.fecha)) + (f.fecha_pagar ? ' · pagar ' + esc(ddmm(f.fecha_pagar)) : '') + '</span></span>' +
               '<span class="d">' + esc(ddmm(f.fecha)) + '</span><span class="d">' + esc(ddmm(f.fecha_pagar)) + '</span>' +
               '<span class="n cant">' + q(f.saldo > 0.01 ? f.saldo : f.por_confirmar) + (f.saldo > 0.01 && f.pagado > 0.01 ? '<span class="pg-nota" style="display:block">de ' + q(f.total) + ' · abonado ' + q(f.pagado) + '</span>' : '') +
                 '</span>' +
@@ -194,7 +218,13 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
               (f.por_confirmar > 0.01 ? '<span class="pg-lp pg-nota" style="text-align:right">' + esc(marcaTxt(f)) + '</span>' : '') + '</div>';
             if (ABIERTA === f.llave) fila += '<div class="pg-lp">' + (f.saldo > 0.01 ? panelPago([f]) : panelMarcada(f)) + '</div>';
             return fila;
-          }).join('') + '</section>';
+          }).join('') +
+          (elegidas.length > 1 ? '<div class="pg-varias">' + (abiertaSel ? panelPago(elegidas)
+            : '<span><b>' + elegidas.length + ' facturas elegidas</b> · ' + q(elegidas.reduce(function (a, f) { return a + f.saldo; }, 0)) + '</span>' +
+              '<span><button type="button" class="pg-b pri" data-abrir="sel:' + esc(f0.nit) + '">Pagar las ' + elegidas.length + ' juntas</button> ' +
+              '<button type="button" class="pg-b" data-quitarsel="' + esc(f0.nit) + '">Quitar selección</button></span>') + '</div>'
+            : pagables.length > 1 ? '<p class="pg-nota" style="margin:0.4rem 0 0">Para pagar varias juntas, marcá sus casillas o <button type="button" class="pg-x" style="color:var(--vb)" data-todasprov="' + esc(f0.nit) + '">elegí todas</button>.</p>' : '') +
+          '</section>';
         })();
       }).join('');
     }
@@ -205,7 +235,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       var esPago = function (p) { return !/antes/i.test(p.estatus); };
       var pag = D.facturas.filter(function (f) { return f.pagos.some(esPago); }).slice().reverse();
       if (!pag.length) return '<div class="pg-vacio">Todavía no hay pagos anotados.</div>';
-      return '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>DTE</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
+      return '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>Factura</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
         pag.map(function (f) {
           return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
@@ -218,13 +248,16 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     }
     if (TAB === 'cuadre') {
       if (!D.cuadre.length) return '<div class="pg-vacio">Sin facturas todavía.</div>';
-      return '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Área</th><th class="n">Facturas</th><th class="n">Facturado</th><th class="n">Pagado</th><th class="n">Pendiente</th>' +
+      var tituloC = '<p class="pg-nota">Tocá un proveedor para ver sus facturas desde el ' + esc(ddmm(D.desde)) + ' y cuándo y cómo se pagó cada una: con eso se cuadra contra su estado de cuenta.</p>';
+      return tituloC + '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Área</th><th class="n">Facturas</th><th class="n">Facturado</th><th class="n">Pagado</th><th class="n">Pendiente</th>' +
         '<th class="n">Banco por confirmar</th><th class="n">Abonadas</th><th class="n">A favor</th><th class="n">Pagado de más</th><th></th></tr>' +
         D.cuadre.map(function (x) {
-          return '<tr><td>' + esc(x.proveedor) + '</td><td>' + esc(x.grupo) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.pagado) + '</td>' +
+          var abierto = HIST === x.nit;
+          return '<tr id="pg-c-' + esc(x.nit) + '"><td><button type="button" class="pg-x" style="color:var(--vb);font-size:0.86rem;text-align:left" data-hist="' + esc(x.nit) + '">' + (abierto ? '▾ ' : '▸ ') + esc(x.proveedor) + '</button></td><td>' + esc(x.grupo) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.pagado) + '</td>' +
             '<td class="n"><b>' + q(x.pendiente) + '</b></td><td class="n">' + (x.por_confirmar ? q(x.por_confirmar) : '') + '</td><td class="n">' + (x.abonadas || '') + '</td>' +
             '<td class="n">' + (x.favor ? q(x.favor) : '') + '</td><td class="n">' + (x.de_mas ? q(x.de_mas) : '') + '</td>' +
-            '<td><button type="button" class="pg-x" style="color:var(--vb)" data-favor="' + esc(x.nit) + '">+ saldo a favor</button></td></tr>';
+            '<td><button type="button" class="pg-x" style="color:var(--vb)" data-favor="' + esc(x.nit) + '">+ saldo a favor</button></td></tr>' +
+            (abierto ? '<tr class="pg-hist"><td colspan="11">' + historial(x.nit) + '</td></tr>' : '');
         }).join('') + '</table></div>' +
         ((D.favores || []).length ? '<h3 style="margin-top:1.2rem">Saldos a favor anotados</h3><div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Fecha</th><th class="n">Cantidad</th><th>De dónde sale</th><th>Anotó</th><th></th></tr>' +
           D.favores.map(function (m) { return '<tr><td>' + esc(m.proveedor) + '</td><td>' + esc(ddmm(m.fecha_pagado)) + '</td><td class="n">' + q(m.q) + '</td><td>' + esc(m.detalle) + '</td><td>' + esc(m.por) + '</td><td><button type="button" class="pg-x" data-anular="' + esc(m.id) + '">anular</button></td></tr>'; }).join('') +
@@ -242,17 +275,18 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (TAB === 'balance') {
       if (!BAL) {
         google.script.run.withSuccessHandler(function (r) { BAL = r; if (TAB === 'balance') pintar(); })
-          .withFailureHandler(function (e) { BAL = { error: String(e && e.message || e) }; if (TAB === 'balance') pintar(); })
+          .withFailureHandler(function (e) { BAL = { error: PF_ERROR(e) }; if (TAB === 'balance') pintar(); })
           .getBalanceProveedores(AUTH, false);
-        return '<div class="pg-vacio">Cruzando las facturas del año con el banco y COMPRAS_2026…</div>';
+        return '<div class="pg-vacio">Cruzando las facturas del año con el banco y el Excel de compras de antes…</div>';
       }
       if (BAL.error) return '<p class="pg-err">' + esc(BAL.error) + '</p>';
       var filasB = BAL.filas.filter(function (x) { return !x.efectivo; }), carne = BAL.filas.filter(function (x) { return x.efectivo; });
       var hasta = Object.keys(BAL.banco_hasta || {}).map(function (k) { return k.replace(/^\d+_/, '').replace(/_/g, ' ') + ' al ' + ddmm(BAL.banco_hasta[k]); }).join(' · ');
       var sum = function (k) { return filasB.reduce(function (a, x) { return a + x[k]; }, 0); };
-      return '<p class="pg-nota">Lo facturado en ' + BAL.anio + ' (FEL) contra lo pagado: el banco y la tarjeta cuando la glosa trae el DTE o el nombre del proveedor, lo pagado de caja, tarjeta o por Maco/Jeffry en COMPRAS_2026, y lo anotado en esta pantalla. ' +
+      return '<p class="pg-nota"><b>Sin explicar</b> = lo facturado menos lo pagado y lo que ya está por pagar: es lo que hay que preguntar.</p>' +
+        '<details class="pg-nota"><summary style="cursor:pointer">¿Cómo funciona?</summary>Lo facturado en ' + BAL.anio + ' contra lo pagado: el banco y la tarjeta cuando la descripción trae el número de factura o el nombre del proveedor, lo pagado de caja, tarjeta o por Maco/Jeffry en el Excel de compras de antes, y lo anotado en esta pantalla. ' +
         '<b>La diferencia no es deuda confirmada</b>: lo pagado en enero puede ser de diciembre, el banco llega hasta su última carga (' + esc(hasta) + ') y un pago cuya glosa no nombra al proveedor no se cuenta. ' +
-        '<b>Sin explicar</b> = diferencia menos lo que ya está cargado por pagar: es lo que hay que preguntar.</p>' +
+        '</details>' +
         (BAL.avisos || []).map(function (a) { return '<p class="pg-err">' + esc(a) + '</p>'; }).join('') +
         '<div class="pg-tabs" style="margin:0.6rem 0"><span class="pg-sp"></span>' +
         '<button type="button" class="pg-b" data-acc="balrecalc">Recalcular</button></div>' +
@@ -268,12 +302,12 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         '<th class="n">' + q(sum('diferencia')) + '</th><th class="n">' + q(sum('pendiente')) + '</th><th class="n">' + q(sum('sin_explicar')) + '</th><th></th></tr></table></div>' +
         (carne.length ? '<p class="pg-nota" style="margin-top:0.8rem"><b>Se pagan en efectivo</b> (la carne), fuera del total: ' +
           carne.map(function (x) { return esc(x.proveedor) + ' ' + q(x.facturado) + ' en ' + x.n + ' facturas'; }).join(' · ') + '.</p>' : '') +
-        '<p class="pg-nota" style="margin-top:0.6rem">Un número negativo es más pagado que facturado: facturas de 2025 pagadas este año, o facturas que no llegaron al FEL. Calculado ' + esc(BAL.gen) + '.</p>';
+        '<p class="pg-nota" style="margin-top:0.6rem">Un número negativo es más pagado que facturado: facturas de 2025 pagadas este año, o facturas que no llegaron a SAT. Calculado ' + esc(BAL.gen) + '.</p>';
     }
     if (TAB === 'equipo') {
       // Lo que José y Jeffry pagaron de su bolsa y Rosanta les devuelve (13-oct-2026).
       var PD = D.por_devolver || [];
-      return '<p class="pg-nota">Cada quien agrega acá lo que pagó de su bolsa (una factura del FEL sale de Por pagar). Se suma lo pagado menos lo que ya se le devolvió.' +
+      return '<p class="pg-nota">Agregá acá lo que pagaste de tu bolsa: Rosanta te lo devuelve.' +
         (D.rol === 'dueno' ? ' Cuando les devuelvas, anotalo acá.' : '') + '</p>' +
         PD.map(function (x) {
           return '<section class="pg-prov" data-panel="dev-' + esc(x.nombre) + '"><header><div><span class="pg-area">' + esc(x.forma) + '</span><h3>' + esc(x.nombre) + '</h3></div>' +
@@ -284,7 +318,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
             (D.rol === 'dueno' && x.pendiente > 0.01 ? '<div class="pg-mas"><label>Cantidad <input type="number" step="0.01" min="0" data-f="monto" value="' + x.pendiente.toFixed(2) + '"></label>' +
               '<label>Fecha <input type="date" data-f="fecha" value="' + hoy() + '"></label><label>Nota <input type="text" data-f="nota" placeholder="ej. transferencia, efectivo"></label>' +
               '<button type="button" class="pg-b pri" data-devolver="' + esc(x.nombre) + '">Registrar devolución</button></div><div class="pg-err" data-err></div>' : '') +
-            (x.movs.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Cantidad</th><th>Qué</th><th></th></tr>' +
+            (x.movs.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>Factura</th><th class="n">Cantidad</th><th>Qué</th><th></th></tr>' +
               x.movs.map(function (m) {
                 var dev = /^Devuelto/.test(m.estatus);
                 return '<tr><td>' + esc(ddmm(m.fecha)) + '</td><td>' + esc(dev ? 'Devolución' : m.proveedor) + '</td><td>' + esc(m.dte === 'SIN FACTURA' ? '' : m.dte) + '</td>' +
@@ -297,14 +331,13 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (TAB === 'posibles') {
       var PS = D.posibles || [];
       if (!PS.length) return '<div class="pg-vacio">No hay pagos del banco ni de la tarjeta por confirmar. ✓</div>';
-      return '<p class="pg-nota">Cargos del banco o de las tarjetas con el monto exacto de una factura pendiente (o de varias del mismo proveedor) que el cruce automático no se atrevió a dar por pagadas. ' +
-        'Si es el pago, tocá <b>Sí, es este pago</b>: la factura sale de Por pagar. Si no, dejalo: no pasa nada.</p>' +
+      return '<p class="pg-nota">Cargos del banco o de la tarjeta con el monto de una factura pendiente. Si es el pago, tocá <b>Sí, es este pago</b>; si no, dejalo.</p>' +
         PS.map(function (x, i) {
           return '<section class="pg-prov" data-panel="pos-' + i + '"><header><div><span class="pg-area">' + esc(nom(x.pago.banco)) + ' · ' + esc(ddmm(x.pago.fecha)) + '</span><h3>' + esc(x.pago.glosa) + '</h3></div>' +
             '<div class="n"><b>' + q(x.pago.q) + '</b>' + (x.pagos ? ' · <span class="pg-est abon">' + x.pagos.length + ' cargos para ' + (x.opciones[0].facturas.length === 1 ? '1 factura' : x.opciones[0].facturas.length + ' facturas') + '</span>' : x.fuerza === 2 ? ' · <span class="pg-est ok">el nombre coincide</span>' : x.fuerza === 1 ? ' · <span class="pg-est banco">tarjeta, mismo día</span>' : '') + '</div></header>' +
             x.opciones.map(function (o, j) {
               return '<div class="pg-mas" style="justify-content:space-between;border-top:1px solid rgba(26,26,26,0.08);padding-top:0.4rem"><span>' +
-                o.facturas.map(function (f) { return esc(f.proveedor) + ' · DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) +
+                o.facturas.map(function (f) { return esc(f.proveedor) + ' · factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) +
                   (o.abono ? ' <span class="pg-est abon">abono: queda ' + q(f.saldo - x.pago.q) + '</span>' : ''); }).join('<br>') +
                 '</span><button type="button" class="pg-b pri" data-confpos="' + i + ':' + j + '">Sí, es este pago</button></div>';
             }).join('') + '<div class="pg-err" data-err></div></section>';
@@ -313,15 +346,14 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (TAB === 'iva') {
       // Facturas para reducir IVA (13-oct-2026): FACTURA_AJENA en el FEL. Fuera de Pagos y del DRE.
       var L = D.para_iva || [], sumI = function (k) { return L.reduce(function (a, x) { return a + x[k]; }, 0); };
-      return '<p class="pg-nota">Facturas a nombre de CORSAGA que no son de la operación: solo sirven para el crédito fiscal del IVA. ' +
-        'No se pagan desde acá, no entran al DRE ni a ningún gasto de los reportes. Cada quien marca las suyas con el botón <b>+ Marcar factura para reducir IVA</b>. ' +
-        (D.rol === 'dueno' ? 'En el maestro están en la pestaña <b>' + esc(D.hoja_iva) + '</b>.' : '') + '</p>' +
+      return '<p class="pg-nota">Facturas a nombre de CORSAGA que no son del restaurante: solo sirven para el IVA y no se pagan desde acá. Marcá las tuyas con <b>+ Marcar factura para reducir IVA</b>.</p>' +
+        (D.rol === 'dueno' ? '<details class="pg-nota"><summary style="cursor:pointer">¿Cómo funciona?</summary>No entran al DRE ni a ningún gasto de los reportes. En el maestro están en la pestaña <b>' + esc(D.hoja_iva) + '</b>.</details>' : '') +
         (D.aviso_iva ? '<p class="pg-err">' + esc(D.aviso_iva) + '</p>' : '') +
         // Cada quien marca las suyas desde aca (Juanma, 13-oct-2026): las facturas por pagar de su area, sin pagos
         (IVAAGR ? panelIva() : '<div class="pg-tabs" style="margin:0.6rem 0"><button type="button" class="pg-b pri" data-ivaagr="1">+ Marcar factura para reducir IVA</button></div>') +
         '<div class="pg-res" style="margin-top:0.8rem"><div><b>' + L.length + '</b><span>facturas este año</span></div><div><b>' + q(sumI('total')) + '</b><span>total</span></div>' +
         '<div><b>' + q(sumI('iva')) + '</b><span>IVA (crédito fiscal)</span></div></div>' +
-        (L.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>DTE</th><th class="n">Total</th><th class="n">IVA</th><th>Marcó</th><th></th></tr>' +
+        (L.length ? '<div class="pg-scroll"><table class="pg-t"><tr><th>Fecha</th><th>Proveedor</th><th>Factura</th><th class="n">Total</th><th class="n">IVA</th><th>Marcó</th><th></th></tr>' +
           L.map(function (x) {
             // cada quien identifica las suyas: la devuelve quien la marcó, o el dueño
             var puede = D.rol === 'dueno' || (x.marco && x.marco === D.mi_nombre);
@@ -332,16 +364,40 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (TAB === 'banco') {
       var fila = function (p) { return '<tr><td>' + esc(ddmm(p.fecha)) + '</td><td class="n">' + q(p.q) + '</td><td>' + esc(p.glosa) + '</td><td>' + esc(p.categoria) + '</td></tr>'; };
       var cab = '<tr><th>Fecha</th><th class="n">Monto</th><th>Glosa del banco</th><th>Categoría</th></tr>';
-      return '<p class="pg-nota">Pagos del banco que no se casaron solos con una factura. Para cerrarlos, buscá la factura en <b>Por pagar</b> y pagala por <b>Transferencia</b>: con la marca, el mismo pago casa. ' +
-        'Dudosos = calzan con más de una factura; sueltos = pagos de mercadería sin factura que calce.</p>' +
+      return '<p class="pg-nota">Para cerrar uno, buscá su factura en <b>Por pagar</b> y pagala por <b>Transferencia</b>: el pago se une solo. ' +
+        '<b>Dudosos</b>: podrían ser de más de una factura. <b>Sueltos</b>: pagos de mercadería sin factura que coincida.</p>' +
         '<h3 style="margin-top:1rem">Dudosos (' + D.banco_dudosos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_dudosos.map(fila).join('') + '</table></div>' +
         '<h3 style="margin-top:1rem">Sueltos (' + D.banco_sueltos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_sueltos.map(fila).join('') + '</table></div>';
     }
     return '';
   }
 
-  /* El panel de pago: un toque en la forma registra el pago completo con fecha de hoy. "Más
-     opciones" deja cambiar la fecha, abonar (una sola factura) o usar el saldo a favor. */
+  /* El historial de un proveedor (14-oct-2026, Juanma: "al consolidar un proveedor con su mayor
+     deberíamos ver por lo menos los últimos 2 meses de facturas y las fechas de los pagos").
+     Todas sus facturas desde PAG_DESDE_ (01/08), la más nueva arriba, con cada pago: fecha,
+     forma (y cuenta o tarjeta) y cantidad. Abajo, los saldos a favor anotados. */
+  function pagoTxt(p) {
+    var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = /confirmad/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
+    return esc(p.fecha ? ddmm(p.fecha) : 's/f') + ' · ' + esc(nom(forma)) + ' · ' + q(p.q) +
+      (/confirmad/i.test(p.estatus) ? ' <span class="pg-est ok">banco</span>' : p.estatus === 'Banco' ? ' <span class="pg-est banco">por confirmar</span>' : '') +
+      (p.fecha_marca && p.fecha_marca !== p.fecha ? ' <span class="pg-nota">(marcado el ' + esc(ddmm(p.fecha_marca)) + ')</span>' : '');
+  }
+  function historial(nit) {
+    var fs = D.facturas.filter(function (f) { return f.nit === nit; }).slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; });
+    var fav = (D.favores || []).filter(function (m) { return m.nit === nit; });
+    var sum = function (k) { return fs.reduce(function (a, f) { return a + (f[k] || 0); }, 0); };
+    if (!fs.length) return '<div class="pg-nota">Sin facturas desde el ' + esc(ddmm(D.desde)) + '.</div>';
+    return '<table><tr><th>Fecha factura</th><th>Factura</th><th class="n">Total</th><th>Pagos (fecha · forma · cantidad)</th><th class="n">Saldo</th><th>Estatus</th></tr>' +
+      fs.map(function (f) {
+        var ps = (f.pagos || []).filter(function (p) { return p.q > 0.001; });
+        return '<tr><td>' + esc(ddmm(f.fecha)) + '</td><td>' + esc(f.dte) + (f.por_correo ? ' <span class="pg-est abon">por correo</span>' : '') + '</td><td class="n">' + q(f.total) + '</td>' +
+          '<td>' + (ps.length ? ps.map(pagoTxt).join('<br>') : '<span class="pg-nota">sin pagos</span>') + (f.favor_usado > 0.01 ? '<br>' + q(f.favor_usado) + ' de saldo a favor' : '') + '</td>' +
+          '<td class="n">' + (f.saldo > 0.01 ? '<b>' + q(f.saldo) + '</b>' : '') + '</td><td>' + estado(f.estado) + '</td></tr>';
+      }).join('') +
+      '<tr><th>' + fs.length + ' facturas</th><th></th><th class="n">' + q(sum('total')) + '</th><th>pagado ' + q(sum('pagado') + sum('favor_usado')) + '</th><th class="n">' + q(fs.reduce(function (a, f) { return a + Math.max(f.saldo, 0); }, 0)) + '</th><th></th></tr></table>' +
+      (fav.length ? '<div class="pg-nota" style="margin-top:0.4rem">Saldo a favor anotado: ' + fav.map(function (m) { return esc(ddmm(m.fecha_pagado)) + ' ' + q(m.q) + ' (' + esc(m.detalle) + ')'; }).join(' · ') + '</div>' : '');
+  }
+  /* El panel de pago: ver panelPago (elegir la forma, la cuenta o tarjeta, y Guardar). */
   /* Una factura ya marcada que el banco todavia no registra: la marca y como corregirla. */
   function panelMarcada(f) {
     var marcas = (f.pagos || []).filter(function (p) { return p.estatus === 'Banco' && p.id; });
@@ -352,23 +408,64 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
           '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular (para marcarla de nuevo)</button></div>';
       }).join('') + '</div>';
   }
+  /* El panel de pago (14-oct-2026, Juanma: "al darle a tarjeta me debería salir la lista de
+     tarjetas" y "un botón de guardar y para volver atrás"). Antes un toque en la forma guardaba
+     el pago, y la cuenta o la tarjeta se elegía en una lista aparte con las cinco mezcladas.
+     Ahora: 1) se toca la forma, 2) si es Transferencia o Tarjeta sale la lista de ESA forma
+     (cuentas o tarjetas, sin nada elegido), 3) se ve el resumen y se toca Guardar pago.
+     Cancelar cierra el panel sin guardar. */
+  /* Lo pagado con efectivo del cajero se anota en Compras, con su retiro (14-oct-2026: un solo
+     lugar para cada forma de pago). Pagos ya no lo ofrece; lo guardado antes se sigue viendo. */
+  function sinCajero(x) { return x !== 'Retiro de cajero'; }
+  var MEDIOS_DE = function (forma) { return forma === 'Banco' ? D.medios_banco || [] : forma === 'Tarjeta' ? D.medios_tarjeta || [] : []; };
   function panelPago(fs) {
     var tot = fs.reduce(function (a, f) { return a + f.saldo; }, 0), fav = favorDe(fs[0].nit), uno = fs.length === 1;
-    return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '">' +
-      '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' por <b>' + q(tot) + '</b>.</div>' +
-      // la fecha y la cuenta o tarjeta, a la vista (13-oct-2026): con eso el banco confirma el pago
-      '<div class="pg-mas"><label title="El día que hiciste el pago. El banco puede registrarlo días después (fin de semana, feriado, fuera de horario): se busca hasta 45 días después.">Fecha en que pagaste <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
-      '<label>Si fue transferencia o tarjeta, ¿cuál? <select data-f="medio"><option value="">—</option>' +
-      (D.medios_banco || []).concat(D.medios_tarjeta || []).map(function (m) { return '<option value="' + esc(m) + '">' + esc(nom(m)) + '</option>'; }).join('') + '</select></label></div>' +
-      '<div class="pg-nota" style="margin-top:0.4rem">Tocá cómo se pagó:</div>' +
-      '<div class="pg-formas">' + D.formas.map(function (x) { return '<button type="button" data-forma="' + esc(x) + '">' + esc(nom(x)) + '</button>'; }).join('') + '</div>' +
-      (uno && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.2rem 0 0.4rem">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
-      '<details><summary class="pg-nota" style="cursor:pointer">Más opciones</summary><div class="pg-mas">' +
+    return '<div class="pg-panel" data-panel="' + esc(fs.map(function (f) { return f.llave; }).join(',')) + '" data-total="' + tot.toFixed(2) + '">' +
+      '<div class="pg-nota">Pagar ' + (uno ? 'la factura ' + esc(fs[0].dte) : fs.length + ' facturas') + ' de <b>' + esc(fs[0].proveedor) + '</b> por <b>' + q(tot) + '</b>.</div>' +
+      '<div class="pg-mas"><label title="El día que hiciste el pago. El banco puede registrarlo días después (fin de semana, feriado, fuera de horario): se busca hasta 45 días después.">Fecha en que pagaste <input type="date" data-f="fecha" value="' + hoy() + '"></label></div>' +
+      '<div class="pg-nota" style="margin-top:0.4rem">¿Cómo se pagó?</div>' +
+      '<div class="pg-formas">' + D.formas.filter(sinCajero).map(function (x) { return '<button type="button" data-elegir="' + esc(x) + '" aria-pressed="false">' + esc(nom(x)) + '</button>'; }).join('') + '</div>' +
+      '<div class="pg-medio" data-mediobox></div>' +
+      '<details><summary class="pg-nota" style="cursor:pointer">Más opciones (abono, saldo a favor, nota, fecha de pagar)</summary><div class="pg-mas">' +
       (uno ? '<label>Cantidad pagada <input type="number" step="0.01" min="0" data-f="monto" placeholder="' + tot.toFixed(2) + '"></label>' : '') +
       (fav > 0.01 ? '<label>Usar saldo a favor <input type="number" step="0.01" min="0" max="' + fav + '" data-f="favor" placeholder="hasta ' + fav.toFixed(2) + '"></label>' : '') +
       '<label>Nota <input type="text" data-f="nota" placeholder="ej. queda saldo de Q64"></label>' +
       (uno ? '<label>Fecha de pagar <input type="date" data-f="fpagar" value="' + (fs[0].fecha_pagar || '') + '"></label> <button type="button" class="pg-b" data-programar="' + esc(fs[0].llave) + '">Guardar fecha de pagar</button>' : '') +
-      '</div></details><div class="pg-err" data-err></div></div>';
+      '</div></details>' +
+      (uno && !fs[0].por_correo ? '<div class="pg-nota" style="margin:0.4rem 0 0">¿No es de la operación? <button type="button" class="pg-b" data-iva="' + esc(fs[0].llave) + '">Es para reducir IVA</button></div>' : '') +
+      '<div class="pg-resumen" data-resumen>Elegí cómo se pagó.</div>' +
+      '<div class="pg-acciones"><button type="button" class="pg-b pri" data-guardar="1" disabled>Guardar pago</button>' +
+      '<button type="button" class="pg-b" data-cancelar="1">Cancelar</button></div>' +
+      '<div class="pg-err" data-err></div></div>';
+  }
+  /* Lo elegido en el panel: { forma, medio, falta } y el resumen de lo que se va a guardar. */
+  function leerPanel(panel) {
+    var forma = panel.dataset.forma || '', sel = panel.querySelector('[data-f="medio"]'), medio = sel ? sel.value : '';
+    var falta = !forma ? 'Elegí cómo se pagó.' : MEDIOS_DE(forma).length && MEDIOS_DE(forma).indexOf(medio) === -1
+      ? (forma === 'Banco' ? 'Elegí de qué cuenta salió la transferencia.' : 'Elegí con qué tarjeta se pagó.') : '';
+    // la compra sin factura: tambien la cantidad y que se compro
+    if (!falta && panel.dataset.panel === 'mercado') falta = !(Number(valor(panel, 'monto')) > 0) ? 'Escribí la cantidad.' : valor(panel, 'det').trim().length < 3 ? 'Escribí qué se compró.' : '';
+    return { forma: forma, medio: MEDIOS_DE(forma).length ? medio : '', falta: falta };
+  }
+  function actualizarPanel(panel) {
+    var L = leerPanel(panel), res = panel.querySelector('[data-resumen]'), g = panel.querySelector('[data-guardar]');
+    var sel = panel.querySelector('[data-f="medio"]'); if (sel) sel.classList.toggle('falta', !sel.value);
+    if (g) g.disabled = !!L.falta;
+    if (!res) return;
+    if (L.falta) { res.innerHTML = esc(L.falta); return; }
+    var tot = Number(panel.dataset.total) || 0, m = valor(panel, 'monto'), fav = Number(valor(panel, 'favor')) || 0;
+    var cant = m !== '' ? Number(m) : tot - fav, fe = valor(panel, 'fecha') || hoy();
+    res.innerHTML = 'Vas a guardar: <b>' + q(cant) + '</b>' + (fav > 0 ? ' + ' + q(fav) + ' de saldo a favor' : '') + ' · <b>' + esc(nom(L.medio || L.forma)) + '</b> · pagado el <b>' + esc(ddmm(fe)) + '</b>' +
+      (m !== '' && cant + fav < tot - 0.01 ? ' · <b>abono</b>, queda ' + q(tot - cant - fav) : '') + '. Si algo no está bien, cambialo o tocá Cancelar.';
+  }
+  function elegirForma(panel, forma) {
+    panel.dataset.forma = forma;
+    panel.querySelectorAll('[data-elegir]').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.elegir === forma)); });
+    var box = panel.querySelector('[data-mediobox]'), M = MEDIOS_DE(forma);
+    if (box) box.innerHTML = M.length ? '<label><b>' + (forma === 'Banco' ? '¿De qué cuenta salió?' : '¿Con qué tarjeta?') + '</b> <select data-f="medio"><option value="">' +
+      (forma === 'Banco' ? 'elegí la cuenta' : 'elegí la tarjeta') + '</option>' + M.map(function (x) { return '<option value="' + esc(x) + '">' + esc(nom(x)) + '</option>'; }).join('') + '</select></label>' : '';
+    actualizarPanel(panel);
+    var sel = box && box.querySelector('select'); if (sel) sel.focus();
   }
   /* Por devolver: una factura del FEL (sale de Por pagar) o una compra sin factura. */
   function panelAgregar(nombre) {
@@ -379,7 +476,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       var provs = []; AGR.lista.forEach(function (f) { if (provs.indexOf(f.proveedor) === -1) provs.push(f.proveedor); });
       h += '<label>Proveedor <select data-f="aprov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === AGR.prov ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
       if (AGR.prov) h += '<div style="width:100%">' + AGR.lista.filter(function (f) { return f.proveedor === AGR.prov; }).map(function (f) {
-          return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-allave="' + esc(f.llave) + '"> DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + '</label>';
+          return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-allave="' + esc(f.llave) + '"> Factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + '</label>';
         }).join('') + '</div><label>Cantidad <input type="number" step="0.01" min="0" data-f="amonto" placeholder="vacío = el saldo"></label>' +
         '<label>Fecha <input type="date" data-f="afecha" value="' + hoy() + '"></label><label>Nota <input type="text" data-f="anota"></label>' +
         '<button type="button" class="pg-b pri" data-agrfact="' + esc(nombre) + '">Agregar factura</button>';
@@ -400,23 +497,12 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var h = '<div class="pg-panel" data-panel="ivaagr"><b>¿Qué factura es para reducir IVA?</b><div class="pg-mas">' +
       '<label>Proveedor <select data-f="iprov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === IVAAGR.prov ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
     if (IVAAGR.prov) h += '<div style="width:100%">' + L.filter(function (f) { return f.proveedor === IVAAGR.prov; }).map(function (f) {
-        return '<label style="display:block;padding:0.2rem 0"><input type="radio" name="ivaf" data-ivallave="' + esc(f.llave) + '"> DTE ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.total) + '</label>';
+        return '<label style="display:block;padding:0.2rem 0"><input type="radio" name="ivaf" data-ivallave="' + esc(f.llave) + '"> Factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.total) + '</label>';
       }).join('') + '</div><label>Nota <input type="text" data-f="inota" placeholder="ej. compra personal a nombre de CORSAGA"></label>';
     if (!provs.length) h += '<span class="pg-nota">No hay facturas por pagar sin pagos en tu área.</span>';
     return h + '<button type="button" class="pg-b pri" data-ivamarcar="1">Marcar para reducir IVA</button> <button type="button" class="pg-b" data-ivacerrar="1">Cancelar</button></div><div class="pg-err" data-err></div></div>';
   }
   function repintarCuerpo() { var c = HOST.querySelector('#pg-cuerpo'); if (c) c.innerHTML = cuerpo([]); }
-
-  function pintarSeleccion() {
-    var box = HOST.querySelector('#pg-sel'); if (!box) return;
-    var ks = Object.keys(SEL).filter(function (k) { return SEL[k]; });
-    var fs = D.facturas.filter(function (f) { return ks.indexOf(f.llave) !== -1 && f.saldo > 0.01; });
-    if (TAB !== 'pagar' || fs.length < 2) { box.innerHTML = ''; return; }
-    var nits = {}; fs.forEach(function (f) { nits[f.nit] = 1; });
-    box.innerHTML = '<div class="pg-barra">' + (Object.keys(nits).length > 1
-      ? 'Elegiste facturas de ' + Object.keys(nits).length + ' proveedores. Un pago junta facturas de un solo proveedor.'
-      : panelPago(fs)) + '</div>';
-  }
 
   /* hacer(r) recibe el google.script.run ya armado y llama a la funcion por su nombre
      literal, con AUTH primero: la bateria revisa cada llamada y su guarda. */
@@ -426,11 +512,13 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var err = panel && panel.querySelector('[data-err]');
     if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
     if (err) err.textContent = 'Guardando…';
+    var gb = panel && panel.querySelector('[data-guardar]'); if (gb) gb.textContent = 'Guardando…';
     hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D0 = d; D = filtrar(d); ABIERTA = null; SEL = {}; AGR = null; IVAAGR = null; pintar(); })
       .withFailureHandler(function (e) {
         OCUPADO = false;
         if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-        if (err) err.textContent = String(e && e.message || e); else alert(String(e && e.message || e));
+        if (gb) gb.textContent = gb.closest('[data-panel="mercado"]') ? 'Guardar compra' : 'Guardar pago';
+        if (err) err.textContent = PF_ERROR(e); else alert(PF_ERROR(e));
       }));
   }
   function valor(panel, k) { var el = panel.querySelector('[data-f="' + k + '"]'); return el ? el.value : ''; }
@@ -440,7 +528,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (box.innerHTML) { box.innerHTML = ''; return; }
     var areas = D.areas.filter(function (a) { return a !== 'ADMIN'; });
     box.innerHTML = '<section class="pg-prov" data-panel="mercado"><h3>Compra de mercado sin factura</h3>' +
-      '<p class="pg-nota">Si se pagó con efectivo del cajero, elegí <b>Retiro de cajero</b>: cuenta en el cuadre de <b>Compras</b>.</p>' +
+      '<p class="pg-nota">¿Se pagó con efectivo del cajero? Eso va en <b>Compras</b>, junto con el retiro.</p>' +
       '<div class="pg-mas"><label>Fecha <input type="date" data-f="fecha" value="' + hoy() + '"></label>' +
       '<label>Proveedor <input type="text" data-f="prov" list="pg-provs" placeholder="elegí o escribí"></label>' +
       '<datalist id="pg-provs">' + (D.proveedores_mercado || []).map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>' +
@@ -448,7 +536,10 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       '<label>Cantidad <input type="number" step="0.01" min="0" data-f="monto"></label>' +
       (areas.length > 1 ? '<label>Área <select data-f="area">' + areas.map(function (a) { return '<option>' + a + '</option>'; }).join('') + '</select></label>' : '') +
       '</div><div class="pg-nota" style="margin-top:0.5rem">¿Cómo se pagó?</div><div class="pg-formas">' +
-      D.formas_mercado.map(function (x) { return '<button type="button" data-merc="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div><div class="pg-err" data-err></div></section>';
+      D.formas_mercado.filter(sinCajero).map(function (x) { return '<button type="button" data-elegir="' + esc(x) + '" aria-pressed="false">' + esc(x) + '</button>'; }).join('') + '</div>' +
+      '<div class="pg-medio" data-mediobox></div><div class="pg-resumen" data-resumen>Elegí cómo se pagó.</div>' +
+      '<div class="pg-acciones"><button type="button" class="pg-b pri" data-guardar="1" disabled>Guardar compra</button>' +
+      '<button type="button" class="pg-b" data-cancelar="1">Cancelar</button></div><div class="pg-err" data-err></div></section>';
   }
 
   /* Una factura de antes del arranque que sigue sin pagar (solo el dueño). */
@@ -457,7 +548,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (box.innerHTML) { box.innerHTML = ''; return; }
     box.innerHTML = '<section class="pg-prov" data-panel="anterior"><h3>Traer una factura anterior</h3>' +
       '<p class="pg-nota">Para una factura de antes del ' + esc(ddmm(D.desde)) + ' que sigue sin pagar. Si ya se abonó una parte, escribí solo lo que falta.</p>' +
-      '<div class="pg-mas"><label>DTE <input type="text" data-f="dte" placeholder="número de la factura"></label>' +
+      '<div class="pg-mas"><label>Factura <input type="text" data-f="dte" placeholder="número de la factura"></label>' +
       '<label>Falta pagar <input type="number" step="0.01" min="0" data-f="saldo" placeholder="vacío = toda"></label>' +
       '<label>NIT <input type="text" data-f="nit" placeholder="solo si se repite el número"></label>' +
       '<label>Nota <input type="text" data-f="det" placeholder="ej. venía de la semana 19"></label>' +
@@ -469,10 +560,17 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var panel = b.closest('[data-panel]');
     if (b.dataset.quitarfiltro) { var qi = document.getElementById('q'); if (qi) { qi.value = ''; qi.dispatchEvent(new Event('input')); } else { window.PF_BUSCA = ''; D = filtrar(D0); pintar(); } return; }
     if (b.dataset.tab) { TAB = b.dataset.tab; ABIERTA = null; pintar(); return; }
+    if (b.dataset.hist) {
+      var irA = TAB !== 'cuadre';
+      HIST = HIST === b.dataset.hist && !irA ? null : b.dataset.hist; TAB = 'cuadre'; ABIERTA = null; pintar();
+      var fila = HOST.querySelector('#pg-c-' + (window.CSS && CSS.escape ? CSS.escape(HIST || '') : HIST));
+      if (irA && fila) fila.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
     if (b.dataset.agregar) {
       AGR = { nombre: b.dataset.agregar }; repintarCuerpo();
       google.script.run.withSuccessHandler(function (l) { if (AGR) { AGR.lista = l; repintarCuerpo(); } })
-        .withFailureHandler(function (e) { if (AGR) { AGR.lista = []; AGR.error = String(e && e.message || e); repintarCuerpo(); } })
+        .withFailureHandler(function (e) { if (AGR) { AGR.lista = []; AGR.error = PF_ERROR(e); repintarCuerpo(); } })
         .getFacturasParaDevolver(AUTH);
       return;
     }
@@ -511,7 +609,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.acc === 'balrecalc') {
       BAL = null; HOST.querySelector('#pg-cuerpo').innerHTML = '<div class="pg-vacio">Recalculando…</div>';
       google.script.run.withSuccessHandler(function (r) { BAL = r; pintar(); })
-        .withFailureHandler(function (e) { BAL = { error: String(e && e.message || e) }; pintar(); })
+        .withFailureHandler(function (e) { BAL = { error: PF_ERROR(e) }; pintar(); })
         .getBalanceProveedores(AUTH, true);
       return;
     }
@@ -521,27 +619,34 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       var dte = valor(panel, 'dte'), sal = valor(panel, 'saldo'), nitA = valor(panel, 'nit'), detA = valor(panel, 'det');
       llamar(function (r) { r.traerFacturaAnterior(AUTH, dte, sal === '' ? null : Number(sal), nitA, detA); }, panel); return;
     }
+    if (b.dataset.todasprov) { D.facturas.forEach(function (f) { if (f.nit === b.dataset.todasprov && f.saldo > 0.01) SEL[f.llave] = true; }); pintar(); return; }
+    if (b.dataset.quitarsel) { D.facturas.forEach(function (f) { if (f.nit === b.dataset.quitarsel) delete SEL[f.llave]; }); if (ABIERTA === 'sel:' + b.dataset.quitarsel) ABIERTA = null; pintar(); return; }
     if (b.dataset.abrir) { ABIERTA = ABIERTA === b.dataset.abrir ? null : b.dataset.abrir; pintar(); return; }
-    if (b.dataset.forma && panel) {
+    // Elegir la forma no guarda nada: marca la forma y, si hace falta, pide la cuenta o la tarjeta
+    if (b.dataset.elegir && panel) { elegirForma(panel, b.dataset.elegir); panel.querySelector('[data-err]').textContent = ''; return; }
+    if (b.dataset.cancelar && panel) {
+      if (panel.dataset.panel === 'mercado') { HOST.querySelector('#pg-merc').innerHTML = ''; return; }
+      ABIERTA = null; pintar(); return;
+    }
+    if (b.dataset.guardar && panel) {
+      var L = leerPanel(panel), errG = panel.querySelector('[data-err]');
+      if (L.falta) { errG.textContent = L.falta; return; }
+      if (panel.dataset.panel === 'mercado') {
+        var mf = valor(panel, 'fecha'), mp = valor(panel, 'prov'), md = valor(panel, 'det'), mq = Number(valor(panel, 'monto')),
+            ma = valor(panel, 'area') || D.areas[0];
+        if (!(mq > 0)) { errG.textContent = 'Escribí la cantidad.'; return; }
+        llamar(function (r) { r.registrarCompraMercado(AUTH, mf, mp, md, mq, ma, L.forma, L.medio); }, panel);
+        return;
+      }
       var ks = panel.dataset.panel.split(','), m = valor(panel, 'monto');
-      var forma = b.dataset.forma, fecha = valor(panel, 'fecha') || hoy(), favor = Number(valor(panel, 'favor')) || 0, nota = valor(panel, 'nota'), medio = valor(panel, 'medio');
-      // Banco pide la cuenta y Tarjeta la tarjeta: con eso el banco confirma el pago solo
-      if (forma === 'Banco' && (D.medios_banco || []).indexOf(medio) === -1) { panel.querySelector('[data-err]').textContent = 'Elegí de qué cuenta salió la transferencia (' + (D.medios_banco || []).map(nom).join(' o ') + ').'; return; }
-      if (forma === 'Tarjeta' && (D.medios_tarjeta || []).indexOf(medio) === -1) { panel.querySelector('[data-err]').textContent = 'Elegí con qué tarjeta se pagó.'; return; }
-      if (forma !== 'Banco' && forma !== 'Tarjeta') medio = '';
-      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, forma, fecha, m === '' ? null : Number(m), favor, nota, medio); }, panel);
+      var fecha = valor(panel, 'fecha') || hoy(), favor = Number(valor(panel, 'favor')) || 0, nota = valor(panel, 'nota');
+      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, L.forma, fecha, m === '' ? null : Number(m), favor, nota, L.medio); }, panel);
       return;
     }
     if (b.dataset.programar && panel) {
       if (!valor(panel, 'fpagar')) { panel.querySelector('[data-err]').textContent = 'Elegí la fecha de pagar.'; return; }
       var llave = b.dataset.programar, fp = valor(panel, 'fpagar');
       llamar(function (r) { r.programarPagoFactura(AUTH, llave, fp); }, panel); return;
-    }
-    if (b.dataset.merc && panel) {
-      var mf = valor(panel, 'fecha'), mp = valor(panel, 'prov'), md = valor(panel, 'det'), mq = Number(valor(panel, 'monto')),
-          ma = valor(panel, 'area') || D.areas[0], mforma = b.dataset.merc;
-      llamar(function (r) { r.registrarCompraMercado(AUTH, mf, mp, md, mq, ma, mforma); }, panel);
-      return;
     }
     if (b.dataset.iva && panel) {
       if (!confirm('¿La factura ' + b.dataset.iva.split('|')[1] + ' es ajena al giro y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE, y en el maestro pasa a FACTURA_AJENA. Se puede devolver desde la pestaña Para reducir IVA.')) return;
@@ -567,12 +672,23 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       llamar(function (r) { r.registrarSaldoFavor(AUTH, nit, Number(monto), det); });
     }
   });
+  // el resumen de lo que se va a guardar se pone al dia con cada cambio del panel
+  HOST.addEventListener('input', function (ev) {
+    var pn = ev.target.closest && ev.target.closest('[data-panel]');
+    if (pn && pn.querySelector('[data-resumen]')) actualizarPanel(pn);
+  });
   HOST.addEventListener('change', function (ev) {
     var c = ev.target;
+    var pn = c.closest && c.closest('[data-panel]');
+    if (pn && pn.querySelector('[data-resumen]')) { actualizarPanel(pn); if (c.dataset && c.dataset.f === 'medio') return; }
     if (c.dataset && c.dataset.f === 'aprov' && AGR) { AGR.prov = c.value; repintarCuerpo(); return; }
     if (c.dataset && c.dataset.f === 'iprov' && IVAAGR) { IVAAGR.prov = c.value; repintarCuerpo(); return; }
+    if (c.dataset && c.dataset.selprov) {
+      D.facturas.forEach(function (f) { if (f.nit === c.dataset.selprov && f.saldo > 0.01) SEL[f.llave] = c.checked; });
+      pintar(); return;
+    }
     if (!c.dataset || !c.dataset.sel) return;
-    SEL[c.dataset.sel] = c.checked; pintarSeleccion();
+    SEL[c.dataset.sel] = c.checked; pintar();
   });
   cargar();
 };

@@ -1,0 +1,203 @@
+RESUMEN 
+CIERRE DE CAJA 041020260001-041020262013 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	4,131.50
+	Banco Principal 
+	450.00
+	Caja (efecvo) POS 
+	22.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	418.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 418.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 4,603.50
+	TOTAL 
+	GTQ 4,603.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 418.50
+	TOTAL 
+	GTQ 418.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	25 
+	Factura 
+	GTQ 1,353.00
+	26 
+	Factura 
+	GTQ 1,012.00
+	27 
+	Factura 
+	GTQ 401.50
+	28 
+	Factura 
+	GTQ 847.00
+	29 
+	Factura 
+	GTQ 990.00
+	TOTAL 
+	GTQ 4603.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Lomito de la Casa 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Estafado de Rabo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Hamburgesa Portobello 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Propina 
+	5.00 
+	GTQ 0.00 
+	GTQ 418.50
+	Lan Reserva 
+	1.00 
+	GTQ 0.00 
+	GTQ 520.00
+	Limonada 
+	2.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Queso Horneado 
+	1.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Brisket de Res 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 8:16:38 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Mezcal a la Piña 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	La Chef 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Boga 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Pulpo a la Parrilla 
+	1.00 
+	GTQ 0.00 
+	GTQ 150.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Lomito ROSANTA 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Porción Pan 
+	1.00 
+	GTQ 0.00 
+	GTQ 20.00
+	La Loteria 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tinto - Mariluna 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Cena Romanca 
+	1.00 
+	GTQ 0.00 
+	GTQ 900.00
+	TOTAL 
+	31 
+	GTQ 0.00 
+	GTQ 4603.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 8:16:38 PM

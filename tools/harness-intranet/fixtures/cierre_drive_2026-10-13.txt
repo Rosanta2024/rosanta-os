@@ -1,0 +1,200 @@
+RESUMEN 
+CIERRE DE CAJA 131020260001-131020262145 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	3,129.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	284.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 284.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Barra Rosanta 
+	GTQ 2,453.00
+	Admin 
+	GTQ 676.50
+	TOTAL 
+	GTQ 3,129.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Barra Rosanta 
+	GTQ 223.00
+	Admin 
+	GTQ 61.50
+	TOTAL 
+	GTQ 284.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	73 
+	Factura 
+	GTQ 533.50
+	74 
+	Factura 
+	GTQ 709.50
+	75 
+	Factura 
+	GTQ 676.50
+	76 
+	Factura 
+	GTQ 1,210.00
+	TOTAL 
+	GTQ 3129.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Mix de Fritas 
+	2.00 
+	GTQ 0.00 
+	GTQ 90.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Propina 
+	4.00 
+	GTQ 0.00 
+	GTQ 284.50
+	Ginger Beer 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Tés - Gengibre con Lemongrass 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Lomito ROSANTA 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Pasta con Camarones 
+	2.00 
+	GTQ 0.00 
+	GTQ 390.00
+	Ensalada Rosanta 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Coliflor en Romesco 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Limonada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Coca Cola Cero 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Queso Horneado 
+	1.00 
+	GTQ 0.00 
+	GTQ 140.00
+	
+
+
+
+© Soported by www.posfile.com • 10/13/2026 9:46:05 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Camarones al horno 
+	2.00 
+	GTQ 0.00 
+	GTQ 380.00
+	Agua con Gas 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Bol Mediterraneo con Tofu 
+	2.00 
+	GTQ 0.00 
+	GTQ 210.00
+	Peras Horneadas 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Mezcal a la Piña 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Soda del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	TOTAL 
+	31 
+	GTQ 0.00 
+	GTQ 3129.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/13/2026 9:46:05 PM

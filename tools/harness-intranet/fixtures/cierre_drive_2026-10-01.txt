@@ -1,0 +1,222 @@
+RESUMEN 
+CIERRE DE CAJA 011020260001-011020262359 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Caja (efecvo) POS 
+	1,100.00
+	Tarjetas 
+	4,702.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	527.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 527.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 5,802.50
+	TOTAL 
+	GTQ 5,802.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 527.50
+	TOTAL 
+	GTQ 527.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	1 
+	Factura 
+	GTQ 1,100.00
+	2 
+	Factura 
+	GTQ 924.00
+	3 
+	Factura 
+	GTQ 880.00
+	4 
+	Factura 
+	GTQ 269.50
+	5 
+	Factura 
+	GTQ 599.50
+	6 
+	Factura 
+	GTQ 704.00
+	7 
+	Factura 
+	GTQ 693.00
+	8 
+	Factura 
+	GTQ 632.50
+	TOTAL 
+	GTQ 5802.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Queso Horneado 
+	3.00 
+	GTQ 0.00 
+	GTQ 420.00
+	Lomito ROSANTA 
+	2.00 
+	GTQ 0.00 
+	GTQ 380.00
+	Tinto - Mariluna 
+	3.00 
+	GTQ 0.00 
+	GTQ 490.00
+	Pasta con Lomito 
+	3.00 
+	GTQ 0.00 
+	GTQ 555.00
+	Gallo Botella 
+	8.00 
+	GTQ 0.00 
+	GTQ 280.00
+	Mousse de Chocolate 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Propina 
+	8.00 
+	GTQ 0.00 
+	GTQ 527.50
+	Coliflor en Romesco 
+	2.00 
+	GTQ 0.00 
+	GTQ 230.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:49:53 AM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Cousiño Chardonnay 
+	4.00 
+	GTQ 0.00 
+	GTQ 280.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Soda del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Pescado del día 
+	4.00 
+	GTQ 0.00 
+	GTQ 740.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Cocteleria Clásica 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Arroz Meloso 
+	2.00 
+	GTQ 0.00 
+	GTQ 330.00
+	Chiatenango 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Angua - Sin Novia 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	La Val Albariño 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	La Chef 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	El Colonial 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Tartar de Hongos 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Ensalada con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Bol Mediterraneo con Tofu 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Pachamama Tropical 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	TOTAL 
+	57 
+	GTQ 0.00 
+	GTQ 5802.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:49:53 AM

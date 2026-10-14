@@ -7,7 +7,7 @@ function tarjeta(r){
     d = `<span class="delta" style="color:var(--${up?'alto':'meta'})">${up?'▲':'▼'} ${Math.abs(cmv-base).toFixed(1)} pts</span>`;
   }
   const tercera = r.t === 'plato'
-    ? `<span class="fig"><span class="lbl">CMV · meta ${r.obj}%</span><span class="val big s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</span>${d}</span>`
+    ? `<span class="fig"><span class="lbl">Food cost · meta ${r.obj}%</span><span class="val big s-${st}">${cmv!=null?cmv.toFixed(1)+'%':'—'}</span>${d}</span>`
     : `<span class="fig"><span class="lbl">Por ${esc(r.unidadCosto||'porción')}</span><span class="val big">${QU(c)}</span></span>`;
   return `<button class="card" data-r="${r.id}">
     <span class="stripe b-${st}"></span>

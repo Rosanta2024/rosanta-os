@@ -31,13 +31,13 @@
 const INVDATOS = {}, invCargando = {}, invMesSel = {}, invBorr = {};
 let invSub = 'mes', invAltaOn = false, invSoloSin = false, invAviso = '', invClas = null, invSaliendo = false;
 const INV_SIN_BANCO = ['PREPARADO', 'LIMPIEZA', 'REVENTA'];
-const INV_TIPOS = [['INSUMO','Insumo','su precio alimenta el Banco de Datos y las recetas'],
+const INV_TIPOS = [['INSUMO','Insumo','su precio llega a Productos y a las recetas'],
                    ['PREPARADO','Preparado','se cuenta, pero su costo lo da su propia receta'],
                    ['REVENTA','Reventa','se vende tal cual; solo valoriza el inventario'],
                    ['LIMPIEZA','Limpieza','solo valoriza el inventario']];
 const INV_BLOQUES = [['DESTILADOS','Destilados'],['VINOS','Vinos'],['CERVEZA','Cervezas y refrescos'],['INSUMOS','Insumos de barra']];
 const INV_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const INV_VINCULO = {EXACTO:'mismo nombre', ALIAS:'alias', OTRA_AREA:'Banco de la otra área', TIPEO:'nombre corregido',
+const INV_VINCULO = {EXACTO:'mismo nombre', ALIAS:'alias', OTRA_AREA:'Productos de la otra área', TIPEO:'nombre corregido',
                      MANUAL:'conectado a mano', PENDIENTE:'sin conectar'};
 const INV_VOLVER = 'rosanta-inv-volver';
 let INVPRECIOS = null, invCargandoPrecios = false;   // entrega 3: lo que espera aprobacion y las tandas
@@ -81,7 +81,7 @@ function invDespues(a, r, aviso, cambios){
   invAviso = aviso; invRecargar(a);
 }
 const invEcos = r => [
-  r && r.bancoNuevo ? 'se creó en el Banco de Datos' : '',
+  r && r.bancoNuevo ? 'se creó en Productos' : '',
   r && r.bancoActualizados && r.bancoActualizados.length ? `proveedor actualizado en ${r.bancoActualizados.length} producto${r.bancoActualizados.length === 1 ? '' : 's'} del Banco` : '',
   r && r.proveedoresNuevos && r.proveedoresNuevos.length ? 'proveedor nuevo en Proveedores: ' + r.proveedoresNuevos.join(', ') : ''
 ].filter(Boolean).join(' · ');
@@ -92,17 +92,49 @@ function pedirInventario(a){
   google.script.run
     .withSuccessHandler(function(res){
       invCargando[a] = false;
-      INVDATOS[a] = (res && res.ok) ? res.resultado : {error: (res && res.error) || 'sin respuesta del servidor'};
+      INVDATOS[a] = (res && res.ok) ? res.resultado : {error: PF_ERROR((res && res.error) || 'sin respuesta del servidor')};
+      invLimpiarBorrador(a);
       if(view === 'inventario') pintar();
     })
     .withFailureHandler(function(e){
       invCargando[a] = false;
-      INVDATOS[a] = {error: (e && e.message) || 'no se pudo leer'};
+      INVDATOS[a] = {error: PF_ERROR(e, 'no se pudo leer')};
       if(view === 'inventario') pintar();
     })
     .webInventario(AUTH, a);
 }
 function invRecargar(a){ delete INVDATOS[a]; pintar(); }
+
+/* EL CONTEO NO SE PIERDE (14-oct-2026). Lo escrito y no guardado vivia solo en memoria: si el
+   telefono se bloqueaba o recargaba la pagina, se perdia el conteo entero. Ahora se guarda en
+   ESTE navegador con cada tecla y vuelve al abrir Inventarios. Se borra al Guardar o Descartar,
+   y lo de un mes que ya no esta abierto se tira al leer el inventario. */
+const INV_BORRADOR = 'rosanta-inv-borrador';
+let invRecuperado = 0;
+try {
+  const g = JSON.parse(localStorage.getItem(INV_BORRADOR) || 'null');
+  if(g && typeof g === 'object') Object.keys(g).forEach(k => { invBorr[k] = g[k]; invRecuperado += Object.keys(g[k] || {}).length; });
+} catch(e){ /* sin localStorage: queda solo en memoria, como antes */ }
+function invGuardarBorrador(){
+  try {
+    const vivos = {}; Object.keys(invBorr).forEach(k => { if(Object.keys(invBorr[k] || {}).length) vivos[k] = invBorr[k]; });
+    if(Object.keys(vivos).length) localStorage.setItem(INV_BORRADOR, JSON.stringify(vivos)); else localStorage.removeItem(INV_BORRADOR);
+  } catch(e){ /* lleno o bloqueado: sigue en memoria */ }
+}
+/* Al llegar el inventario de un area: fuera los borradores de meses que ya no estan abiertos. */
+function invLimpiarBorrador(a){
+  const d = INVDATOS[a]; if(!d || !d.meses) return;
+  Object.keys(invBorr).forEach(k => {
+    const [ka, mes] = k.split('|'); if(ka !== a) return;
+    const m = d.meses.find(x => x.mes === mes);
+    if(!m || m.estado !== 'ABIERTO') delete invBorr[k];
+  });
+  invGuardarBorrador();
+}
+/* El equipo (chef, barra y sala) ve solo Contar y Agregar (14-oct-2026). El catalogo, los
+   rubros, Por conectar y Precios al Banco son del dueño. */
+const invSimple = () => window.PROFIT_ROL === 'chef' || window.PROFIT_ROL === 'sala';
+let invMovilTodo = false;   // en el telefono: mostrar tambien precio y proveedor
 
 /* Los cambios de verdad de un mes: lo escrito que difiere de lo que hay en la hoja. */
 function invCambios(a, m){
@@ -170,10 +202,12 @@ function vistaInventario(){
   // "Todo" abre el resumen consolidado (8-oct-2026, Juanma): el conteo y el catalogo van por
   // area, pero el resumen es de las dos. Cocina o Barra en el filtro llevan a sus pestañas.
   if(!area) return invVistaResumen();
+  if(invSimple() && invSub !== 'mes') invSub = 'mes';   // el equipo: solo contar (y agregar)
   if(invSub === 'rubros') return invVistaRubros();
   const a = invArea(), datos = INVDATOS[a], ed = invEditable(a);
   const aviso = invAviso ? `<p class="nota" style="border-left:3px solid var(--bosque);padding-left:13px;color:var(--ink)">${esc(invAviso)}</p>` : '';
-  const cab = `<p class="lead">El cierre de ${invNomArea(a)}: lo que había el último día de cada mes, valorizado al precio de ese mes. Con “Todo” se ve el resumen de las dos áreas.</p>
+  const cab = `<p class="lead">${invSimple() ? `El conteo de ${invNomArea(a)}: lo que hay el último día de cada mes. Contá, escribí la existencia y tocá <strong>Guardar</strong>.`
+      : `El cierre de ${invNomArea(a)}: lo que había el último día de cada mes, valorizado al precio de ese mes. Con “Todo” se ve el resumen de las dos áreas.`}</p>
     ${ed ? '' : (avisoArea(a) || `<p class="nota" style="border-left:3px solid var(--lila);padding-left:13px">Podés mirar el inventario, pero tu rol no carga ${invNomArea(a)}.</p>`)}${aviso}`;
   if(!datos) return cab + `<p class="empty">Leyendo el inventario de ${invNomArea(a)}…</p>`;
   if(datos.error) return cab + `<p class="empty">No se pudo leer el inventario: ${esc(datos.error)}<br>
@@ -199,14 +233,15 @@ function vistaInventario(){
                 : ` en ${m.filas.length} productos contados`}
       ${delta != null ? ` · <span style="color:var(--muted)">${delta >= 0 ? '+' : '−'}${Q(Math.abs(delta))} contra ${invMesNombre(ant.mes).toLowerCase()}${ant.total ? ` (${delta >= 0 ? '+' : '−'}${Math.abs(delta / ant.total * 100).toFixed(1)}%)` : ''}</span>` : ''}
       ${!abierto && m.estado ? ` · <span style="color:var(--muted)">${esc(m.estado.toLowerCase())}</span>` : ''}</p>
-    ${m.cuadra ? '' : `<p class="nota" style="border-left:3px solid var(--alto);padding-left:13px;color:var(--ink)">La fila TOTAL de la hoja dice <strong>${Q(m.totalHoja)}</strong>, pero los productos suman <strong>${Q(m.total)}</strong>. Se muestra la suma de los productos. Hay que revisar la pestaña ${esc(m.mes)}.</p>`}`;
+    ${m.cuadra ? '' : `<p class="nota" style="border-left:3px solid var(--alto);padding-left:13px;color:var(--ink)">La fila TOTAL de la hoja dice <strong>${Q(m.totalHoja)}</strong>, pero los productos suman <strong>${Q(m.total)}</strong>. Se muestra la suma de los productos. Hay que revisar la hoja de ese mes.</p>`}`;
 
+  const simple = invSimple();
   const subs = `<div class="toolbar">
-      <button class="chip" data-invsub="mes" aria-pressed="${invSub === 'mes'}">El mes</button>
+      ${simple ? '' : `<button class="chip" data-invsub="mes" aria-pressed="${invSub === 'mes'}">El mes</button>
       <button class="chip" data-invsub="rubros" aria-pressed="${invSub === 'rubros'}">Por rubro</button>
       <button class="chip" data-invsub="catalogo" aria-pressed="${invSub === 'catalogo'}">Catálogo · ${datos.productos.length}</button>
       <button class="chip" data-invsub="conectar" aria-pressed="${invSub === 'conectar'}">Por conectar · ${conectar.length}</button>
-      <button class="chip" data-invsub="precios" aria-pressed="${invSub === 'precios'}">Precios al Banco${INVPRECIOS && INVPRECIOS.pendientes && INVPRECIOS.pendientes.length ? ' · ' + INVPRECIOS.pendientes.length + ' por aprobar' : ''}</button>
+      <button class="chip" data-invsub="precios" aria-pressed="${invSub === 'precios'}">Precios al Banco${INVPRECIOS && INVPRECIOS.pendientes && INVPRECIOS.pendientes.length ? ' · ' + INVPRECIOS.pendientes.length + ' por aprobar' : ''}</button>`}
       ${ed ? `<button class="chip" data-invaltatoggle="1" aria-pressed="${invAltaOn}" style="${invAltaOn ? '' : invBtnVerde}">+ Agregar un producto</button>` : ''}
       <span class="count">Leído el ${esc(datos.leido)}</span>
     </div>
@@ -474,7 +509,7 @@ function invMes(m, ant){
   return `<div class="tablewrap"><table>
       <thead><tr><th>Producto</th><th>Proveedor</th><th class="r">Precio</th><th class="r">Existencia</th><th class="r">Monto</th></tr></thead>
       <tbody>${cuerpo}</tbody></table></div>
-    ${m.cerradoPor ? `<p class="nota">Cerrado por ${esc(m.cerradoPor)}.${m.corrida ? ' Los precios de este cierre que cambiaron menos de 10% ya están en el Banco de Datos: ver <strong>Precios al Banco</strong>.' : ''}</p>` : ''}
+    ${m.cerradoPor ? `<p class="nota">Cerrado por ${esc(m.cerradoPor)}.${m.corrida ? ' Los precios de este cierre que cambiaron menos de 10% ya están en Productos: ver <strong>Precios al Banco</strong>.' : ''}</p>` : ''}
     <p class="nota">La existencia sale del monto dividido entre el precio, que es como se valorizó cada mes. Lo que la persona anotó está debajo, como “contado”: en barra es el porcentaje de botella. Un cambio de precio de 10% o más contra el mes anterior se marca en rojo.</p>`;
 }
 
@@ -492,7 +527,7 @@ function invMesEditable(m, ant, a, datos){
       ${nCambios ? '<button class="chip" data-invdescartar="1">Descartar</button>' : ''}
       <button class="chip" data-invsin="1" aria-pressed="${invSoloSin}">Solo sin contar</button>
       ${nCambios ? '<span class="count">Guardá antes de cerrar el mes</span>'
-                 : `<button class="chip" data-invcerrar="${esc(m.mes)}" style="margin-left:auto">Cerrar ${invMesNombre(m.mes).split(' ')[0].toLowerCase()}</button>`}
+                 : `<button class="chip" data-invcerrar="${esc(m.mes)}" style="margin-left:auto">Cerrar ${invMesNombre(m.mes).split(' ')[0].toLowerCase()}${(() => { const n = m.filas.filter(f => f[7] == null).length; return n ? ` · faltan ${n} sin contar` : ''; })()}</button>`}
     </div>`;
 
   const cuerpo = invGrupos(filas).map(g =>
@@ -505,7 +540,7 @@ function invMesEditable(m, ant, a, datos){
       const campo = (c, v, extra) => `data-invkey="${esc(key)}" data-invid="${esc(f[0])}" data-invcampo="${c}" value="${esc(v)}" ${extra}`;
       return `<tr>
         <td>${esc(f[2])}<div style="color:var(--muted);font-size:11.5px">${esc([f[3], f[4]].filter(Boolean).join(' · '))}</div></td>
-        <td class="r"><input type="number" step="any" min="0" style="width:96px" placeholder="sin contar" ${campo('existencia', vEx, `aria-label="Existencia de ${esc(f[2])}"`)}>
+        <td class="r"><input type="number" step="any" min="0" inputmode="decimal" style="width:96px" placeholder="sin contar" ${campo('existencia', vEx, `aria-label="Existencia de ${esc(f[2])}"`)}>
           <span style="color:var(--muted);font-size:12px">${dest ? '%' : ''}</span>
           ${pa && pa[7] != null ? `<div style="color:var(--muted);font-size:11.5px">${invMesNombre(ant.mes).split(' ')[0].toLowerCase()}: ${invVerEx(pa)}${dest ? '%' : ''}</div>` : ''}</td>
         <td class="r"><input type="number" step="0.01" min="0" style="width:96px" ${campo('precio', vPr, `aria-label="Precio de ${esc(f[2])}"`)}>
@@ -515,13 +550,20 @@ function invMesEditable(m, ant, a, datos){
       </tr>`;
     }).join('')).join('');
 
-  return `${barra}
+  const nRec = invRecuperado && nCambios ? nCambios : 0;
+  // la barra fija de abajo: se ve apenas hay algo sin guardar (el input la muestra sin repintar)
+  const fija = `<div class="inv-fijo" data-invfijo${nCambios ? '' : ' hidden'}>
+      <button class="chip" data-invguardar="1" style="${invBtnVerde}"${nCambios ? '' : ' disabled'}>${nCambios ? `Guardar ${nCambios} producto${nCambios === 1 ? '' : 's'}` : 'Sin cambios'}</button>
+      <button class="chip" data-invdescartar="1">Descartar</button></div>`;
+  return `${nRec ? `<p class="nota" style="border-left:3px solid var(--bosque);padding-left:13px;color:var(--ink)">Recuperé lo que escribiste y no se guardó (${nRec} producto${nRec === 1 ? '' : 's'}). Revisalo y tocá <strong>Guardar</strong>, o <strong>Descartar</strong>.</p>` : ''}${barra}
+    <button class="chip inv-solomovil" data-invmovil="1" aria-pressed="${invMovilTodo}">${invMovilTodo ? 'Ver solo la existencia' : 'Ver también precio y proveedor'}</button>
     <datalist id="inv-provs">${invProvsConocidos().sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist>
-    ${filas.length ? `<div class="tablewrap"><table>
+    ${filas.length ? `<div class="tablewrap"><table class="inv-conteo${invMovilTodo ? ' inv-todo' : ''}">
       <thead><tr><th>Producto</th><th class="r">Existencia</th><th class="r">Precio</th><th>Proveedor</th><th></th></tr></thead>
       <tbody>${cuerpo}</tbody></table></div>` : `<p class="empty">${invSoloSin ? 'No queda nada sin contar.' : 'Sin resultados.'}</p>`}
-    <p class="nota">Vacío es <strong>sin contar</strong>; si no hay nada, escribí 0. ${a === 'BARRA' ? 'En destilados la existencia va en <strong>% de botella</strong>, como siempre: 3 botellas y media son 350. ' : ''}La existencia va en la unidad de la presentación (libra, unidad, caja…). Lo que escribís se guarda recién al tocar <strong>Guardar</strong>; el monto y el total se recalculan en la hoja. Un proveedor nuevo pasa también a Proveedores y al producto del Banco. El precio llega al Banco al cerrar el mes.</p>
-    ${nCambios ? barra : ''}`;
+    <p class="nota">Vacío es <strong>sin contar</strong>; si no hay nada, escribí 0. ${a === 'BARRA' ? 'En destilados va el <strong>% de botella</strong>: 3 botellas y media son 350. ' : ''}La existencia va en la unidad de la presentación (libra, unidad, caja…).</p>
+    ${invSimple() ? '' : '<details class="nota"><summary style="cursor:pointer">¿Cómo funciona?</summary>Lo escrito se guarda al tocar <strong>Guardar</strong>; el monto y el total se recalculan en la hoja. Un proveedor nuevo pasa también a Proveedores y al producto. El precio llega a Productos al cerrar el mes.</details>'}
+    ${fija}`;
 }
 
 function invAltaHTML(m, a, datos){
@@ -550,7 +592,7 @@ function invAltaHTML(m, a, datos){
       <datalist id="inva-cats">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
       <datalist id="inv-banco">${I.filter(x => x.area === a).map(x => `<option value="${esc(x.p)}">`).join('')}</datalist>
       <datalist id="inv-unidades"><option value="g"><option value="ml"><option value="unidad"></datalist>
-      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Un <strong>insumo</strong> tiene que existir en el Banco de Datos para que su precio llegue a las recetas. Si ya está, elegilo. Si no está, se crea en el Banco con este precio, la presentación como unidad de compra y la unidad de receta que pongas: aparece en Productos y se puede usar en recetas. <strong>Contenido</strong> solo hace falta con envases: cuántos g o ml trae una caja, un frasco, un manojo. Reventa, limpieza y preparados no van al Banco. Antes de crear se avisa si ya hay algo parecido.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Un <strong>insumo</strong> tiene que existir en Productos para que su precio llegue a las recetas. Si ya está, elegilo. Si no está, se crea en el Banco con este precio, la presentación como unidad de compra y la unidad de receta que pongas: aparece en Productos y se puede usar en recetas. <strong>Contenido</strong> solo hace falta con envases: cuántos g o ml trae una caja, un frasco, un manojo. Reventa, limpieza y preparados no van al Banco. Antes de crear se avisa si ya hay algo parecido.</p>
     </div>`;
 }
 
@@ -581,12 +623,12 @@ function invCatalogo(productos, a, ed){
               <button class="chip" data-invactivo="${esc(p[0])}" data-invactivar="${inactivo ? 'SI' : 'NO'}">${inactivo ? 'Reactivar' : 'Inactivar'}</button></td>` : ''}
         </tr>`;
       }).join('')}</tbody></table></div>
-    <p class="nota">Los inactivos no entran al próximo conteo, pero se guardan para no perder el historial.${ed ? ' <strong>Clasificar</strong> define qué es cada producto y, si es insumo, con cuál del Banco de Datos se conecta.' : ''}</p>`;
+    <p class="nota">Los inactivos no entran al próximo conteo, pero se guardan para no perder el historial.${ed ? ' <strong>Clasificar</strong> define qué es cada producto y, si es insumo, con cuál del Productos se conecta.' : ''}</p>`;
 }
 
 function invPorConectar(lista, a, ed){
   const vis = lista.filter(p => invCoincide(p[2], p[1], p[8]));
-  return `<p class="nota" style="margin:0 0 12px">Estos productos llevan precio y todavía no están conectados con un producto del Banco de Datos de ${invNomArea(a)}. Mientras no se conecten, su precio no puede llegar a las recetas. ${ed ? 'Tocá <strong>Conectar</strong>: elegí el producto del Banco, o crealo ahí si no existe. Si en realidad es reventa, limpieza o un preparado, marcalo así y sale de esta lista.' : 'Los conecta quien lleva el área.'}</p>
+  return `<p class="nota" style="margin:0 0 12px">Estos productos llevan precio y todavía no están conectados con un producto de Productos de ${invNomArea(a)}. Mientras no se conecten, su precio no puede llegar a las recetas. ${ed ? 'Tocá <strong>Conectar</strong>: elegí el producto del Banco, o crealo ahí si no existe. Si en realidad es reventa, limpieza o un preparado, marcalo así y sale de esta lista.' : 'Los conecta quien lleva el área.'}</p>
     ${vis.length ? `<div class="tablewrap"><table>
       <thead><tr><th>Producto</th><th>Tipo</th><th>Proveedor</th><th class="r">Precio actual</th><th>Último mes</th>${ed ? '<th></th>' : ''}</tr></thead>
       <tbody>${vis.map(p => `<tr${p[10] === 'NO' ? ' style="opacity:.55"' : ''}>
@@ -621,7 +663,7 @@ function invClasHTML(){
         <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">${t ? esc(t[1] + ': ' + t[2]) + '.' : 'Elegí uno.'}</p>
       </div>
       ${insumo ? `<div>
-        <div class="sec-t">En el Banco de Datos</div>
+        <div class="sec-t">En Productos</div>
         <div class="simrow" style="flex-wrap:wrap">
           <button class="chip" data-invcrear="NO" aria-pressed="${!crear}">Ya está en el Banco</button>
           <button class="chip" data-invcrear="SI" aria-pressed="${!!crear}">No está: crearlo</button>
@@ -655,7 +697,7 @@ function invPreguntaBanco(b, nombre){
     return false;
   }
   if(b.similares && b.similares.length){
-    return confirm('En el Banco de Datos ya hay algo parecido a "' + nombre + '":\n\n' +
+    return confirm('En Productos ya hay algo parecido a "' + nombre + '":\n\n' +
       b.similares.slice(0, 8).map(s => '  · ' + s.producto + '  (' + s.similitud + '%, Q' + s.precio + ' / ' + s.unidad + ')').join('\n') +
       '\n\n¿Crearlo igual?\n\nSi es el mismo producto, cancelá y elegí "Ya está en el Banco".');
   }
@@ -674,12 +716,12 @@ function pedirPrecios(){
   google.script.run
     .withSuccessHandler(function(res){
       invCargandoPrecios = false;
-      INVPRECIOS = (res && res.ok) ? res.resultado : {error: (res && res.error) || 'sin respuesta del servidor'};
+      INVPRECIOS = (res && res.ok) ? res.resultado : {error: PF_ERROR((res && res.error) || 'sin respuesta del servidor')};
       if(view === 'inventario') pintar();
     })
     .withFailureHandler(function(e){
       invCargandoPrecios = false;
-      INVPRECIOS = {error: (e && e.message) || 'no se pudo leer'};
+      INVPRECIOS = {error: PF_ERROR(e, 'no se pudo leer')};
       if(view === 'inventario') pintar();
     })
     .webInventarioPrecios(AUTH);
@@ -691,7 +733,7 @@ function invVistaPrecios(){
   if(!d){ pedirPrecios(); return '<p class="empty">Leyendo los precios…</p>'; }
   if(d.error) return `<p class="empty">No se pudo leer: ${esc(d.error)}<br><button class="chip" data-invpreciosre="1" style="margin-top:12px">Reintentar</button></p>`;
   const jefe = d.esDueno, pend = d.pendientes;
-  return `<p class="nota" style="margin:0 0 12px">Al cerrar un mes, los precios de los insumos conectados que se cambiaron en ese conteo pasan al Banco de Datos y de ahí a las recetas. Si cambiaron <strong>menos de 10%</strong> entran solos; si cambiaron <strong>10% o más</strong> esperan acá a que Juanma los apruebe. Preparados, reventa y limpieza nunca van al Banco. Cada tanda aplicada se puede deshacer.</p>
+  return `<p class="nota" style="margin:0 0 12px">Al cerrar un mes, los precios de los insumos conectados que se cambiaron en ese conteo pasan a Productos y de ahí a las recetas. Si cambiaron <strong>menos de 10%</strong> entran solos; si cambiaron <strong>10% o más</strong> esperan acá a que Juanma los apruebe. Preparados, reventa y limpieza nunca van al Banco. Cada tanda aplicada se puede deshacer.</p>
     <div class="sec-t">Por aprobar · ${pend.length}</div>
     ${pend.length ? `${jefe && pend.length > 1 ? `<div class="toolbar"><button class="chip" data-invaprobartodos="1" style="${invBtnVerde}">Aprobar los ${pend.length}</button></div>` : ''}
       <div class="tablewrap"><table>
@@ -723,6 +765,7 @@ document.addEventListener('input', e => {
   if(!el || !el.dataset || !el.dataset.invcampo) return;
   const b = invBorr[el.dataset.invkey] || (invBorr[el.dataset.invkey] = {});
   (b[el.dataset.invid] || (b[el.dataset.invid] = {}))[el.dataset.invcampo] = el.value;
+  invGuardarBorrador();
   /* Sin repintar (se perderia el foco): solo el rotulo del boton. */
   const a = invArea(), d = INVDATOS[a], mes = el.dataset.invkey.split('|')[1];
   const m = d && d.meses && d.meses.find(x => x.mes === mes);
@@ -730,6 +773,7 @@ document.addEventListener('input', e => {
   document.querySelectorAll('[data-invguardar]').forEach(x => {
     x.disabled = !n; x.textContent = n ? `Guardar ${n} producto${n === 1 ? '' : 's'}` : 'Sin cambios';
   });
+  document.querySelectorAll('[data-invfijo]').forEach(x => { x.hidden = !n; });   // la barra fija de abajo
 });
 window.addEventListener('beforeunload', e => { if(!invSaliendo && invHayPendientes()){ e.preventDefault(); e.returnValue = ''; } });
 
@@ -753,8 +797,8 @@ document.addEventListener('click', e => {
     if(INVCONS[mes] && INVCONS[mes].cargando) return;
     INVCONS[mes] = {cargando: true}; pintar();
     google.script.run
-      .withSuccessHandler(res => { INVCONS[mes] = (res && res.ok) ? {res: res.resultado} : {error: (res && res.error) || 'sin respuesta del servidor'}; pintar(); })
-      .withFailureHandler(e => { INVCONS[mes] = {error: (e && e.message) || 'no se pudo generar'}; pintar(); })
+      .withSuccessHandler(res => { INVCONS[mes] = (res && res.ok) ? {res: res.resultado} : {error: PF_ERROR((res && res.error) || 'sin respuesta del servidor')}; pintar(); })
+      .withFailureHandler(e => { INVCONS[mes] = {error: PF_ERROR(e, 'no se pudo generar')}; pintar(); })
       .webInventarioConsolidado(AUTH, mes);
     return;
   }
@@ -764,8 +808,9 @@ document.addEventListener('click', e => {
   if(t.dataset.invdescartar){
     const d = INVDATOS[a], mes = invMesSel[a] || (d && d.meses.length && d.meses[d.meses.length - 1].mes);
     if(!confirm('¿Descartar lo que escribiste y no guardaste?')) return;
-    delete invBorr[a + '|' + mes]; pintar(); return;
+    delete invBorr[a + '|' + mes]; invRecuperado = 0; invGuardarBorrador(); pintar(); return;
   }
+  if(t.dataset.invmovil){ invMovilTodo = !invMovilTodo; pintar(); return; }
 
   // --- abrir el conteo del mes siguiente
   if(t.dataset.invabrir){
@@ -775,12 +820,12 @@ document.addEventListener('click', e => {
     t.disabled = true; t.textContent = 'Abriendo…';
     google.script.run
       .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; alert('No se abrió: ' + ((res && res.error) || 'sin respuesta')); pintar(); return; }
+        if(!res || !res.ok){ t.disabled = false; alert('No se abrió: ' + PF_ERROR((res && res.error) || 'sin respuesta')); pintar(); return; }
         invMesSel[a] = res.resultado.mes; invSub = 'mes';
         invAviso = `Listo: el conteo de ${invMesNombre(res.resultado.mes)} está abierto con ${res.resultado.productos} productos.`;
         invRecargar(a);
       })
-      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo abrir: ' + err.message); pintar(); })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo abrir: ' + PF_ERROR(err)); pintar(); })
       .webInventarioAbrirMes(AUTH, a);
     return;
   }
@@ -792,20 +837,22 @@ document.addEventListener('click', e => {
     const mes = t.dataset.invcerrar, d = INVDATOS[a], m = d.meses.find(x => x.mes === mes);
     if(!m) return;
     if(invHayPendientes()){ alert('Tenés cambios sin guardar. Guardalos antes de cerrar el mes.'); return; }
-    const sin = m.filas.filter(f => f[7] == null).length;
+    // los que faltan, con su nombre (14-oct-2026: septiembre de cocina quedo abierto por uno solo)
+    const faltan = m.filas.filter(f => f[7] == null).map(f => f[2]), sin = faltan.length;
     if(!confirm(`¿Cerrar ${invMesNombre(mes)} en ${invNomArea(a)}?\n\n` +
       `· El mes queda congelado: ya no se edita.\n` +
-      `· Los precios que se cambiaron en este conteo pasan al Banco de Datos y a las recetas si la diferencia es menor a 10%.\n` +
-      `· Los de 10% o más esperan la aprobación de Juanma. Un precio que no se tocó en el conteo no cambia el Banco.\n` +
+      `· Los precios que se cambiaron en este conteo pasan a Productos y a las recetas si la diferencia es menor a 10%.\n` +
+      `· Los de 10% o más esperan la aprobación de Juanma. Un precio que no se tocó en el conteo no cambia Productos.\n` +
       `· Se abre el conteo de ${invMesNombre(invMesSig(mes))}.` +
-      (sin ? `\n\nOJO: hay ${sin} producto${sin === 1 ? '' : 's'} sin contar.` : ''))) return;
+      (sin ? `\n\nOJO: hay ${sin} producto${sin === 1 ? '' : 's'} sin contar:\n` + faltan.slice(0, 15).map(n => '  · ' + n).join('\n') + (sin > 15 ? '\n  · …' : '') +
+             '\nSi seguís, se te pregunta si cerrarlos en 0.' : ''))) return;
     const lista = xs => xs.slice(0, 15).map(n => '  · ' + n).join('\n') + (xs.length > 15 ? '\n  · …' : '');
     const mandar = function(ceros, sinPrecio){
       t.disabled = true; t.textContent = 'Cerrando…';
       google.script.run
         .withSuccessHandler(function(res){
           t.disabled = false; t.textContent = 'Cerrar';
-          if(!res || !res.ok){ alert('No se cerró: ' + ((res && res.error) || 'sin respuesta')); return; }
+          if(!res || !res.ok){ alert('No se cerró: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
           const r = res.resultado;
           if(!r.cerrado){
             const sc = r.sinContar || [], sp = r.sinPrecio || [], partesAviso = [];
@@ -814,6 +861,11 @@ document.addEventListener('click', e => {
             if(sp.length) partesAviso.push(`Hay ${sp.length} producto${sp.length === 1 ? '' : 's'} contado${sp.length === 1 ? '' : 's'} y sin precio:\n\n` + lista(sp) +
               '\n\nSu monto queda en Q0 y el total del mes sale corto. Si sabés el precio, cancelá y cargalo primero.');
             if(confirm(partesAviso.join('\n\n— — —\n\n') + '\n\n¿Cerrar igual?')) mandar(ceros || sc.length > 0, sinPrecio || sp.length > 0);
+            else {
+              // antes quedaba abierto sin ningun aviso (14-oct-2026)
+              invAviso = `${invMesNombre(mes)} sigue ABIERTO: no se cerró. ` + (sc.length ? `Contá ${sc.length === 1 ? 'el que falta' : 'los ' + sc.length + ' que faltan'} (o escribí 0) y volvé a tocar Cerrar.` : 'Cargá los precios que faltan y volvé a tocar Cerrar.');
+              alert(invAviso); pintar();
+            }
             return;
           }
           const partes = [`${invMesNombre(r.mes)} cerrado en ${Q(r.total)}.`];
@@ -833,7 +885,7 @@ document.addEventListener('click', e => {
           invMesSel[a] = r.mes; INVPRECIOS = null;
           invDespues(a, r, partes.join(' '), res.cambios);
         })
-        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Cerrar'; alert('No se pudo cerrar: ' + err.message); })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Cerrar'; alert('No se pudo cerrar: ' + PF_ERROR(err)); })
         .webInventarioCerrarMes(AUTH, a, mes, ceros, sinPrecio);
     };
     mandar(false, false);
@@ -848,37 +900,37 @@ document.addEventListener('click', e => {
     const elegidos = INVPRECIOS.pendientes.filter(x => filas.indexOf(x.fila) !== -1);
     const lista = elegidos
       .map(x => `  · ${x.producto}: Q${x.anterior} → Q${x.nuevo} (${x.pct > 0 ? '+' : ''}${x.pct}%)`);
-    if(!confirm((aprobar ? '¿Aprobar y llevar al Banco de Datos?\n\n' : '¿Rechazar? El Banco se queda con el precio que tiene.\n\n') +
+    if(!confirm((aprobar ? '¿Aprobar y llevar a Productos?\n\n' : '¿Rechazar? Productos se queda con el precio que tiene.\n\n') +
                 lista.join('\n') + (aprobar ? '\n\nLas recetas se recalculan con el precio nuevo.' : ''))) return;
     if(aprobar && !invSinPendientes()) return;
     t.disabled = true;
     google.script.run
       .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; alert('No se pudo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        if(!res || !res.ok){ t.disabled = false; alert('No se pudo: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
         const r = res.resultado; INVPRECIOS = null;
         if(r.saltados.length) alert('Algunos no se aplicaron:\n\n' + r.saltados.map(x => '  · ' + x).join('\n'));
         invDespues(a, r, aprobar ? `${r.aprobados} precio${r.aprobados === 1 ? '' : 's'} aprobado${r.aprobados === 1 ? '' : 's'} y en el Banco.`
                                  : `${r.rechazados} precio${r.rechazados === 1 ? '' : 's'} rechazado${r.rechazados === 1 ? '' : 's'}.`, res.cambios);
       })
-      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo: ' + err.message); })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo: ' + PF_ERROR(err)); })
       .webInventarioResolverPrecios(AUTH, elegidos.map(x => ({ fila: x.fila, area: x.area, mes: x.mes, producto: x.producto, nuevo: x.nuevo })), aprobar);
     return;
   }
 
   // --- deshacer una tanda (solo dueno)
   if(t.dataset.invdeshacer){
-    if(!confirm('¿Deshacer esta tanda?\n\nCada producto vuelve en el Banco de Datos al precio que tenía antes. Si alguien cambió ese precio después, ese producto no se toca.')) return;
+    if(!confirm('¿Deshacer esta tanda?\n\nCada producto vuelve en Productos al precio que tenía antes. Si alguien cambió ese precio después, ese producto no se toca.')) return;
     if(!invSinPendientes()) return;
     t.disabled = true;
     google.script.run
       .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; alert('No se deshizo: ' + ((res && res.error) || 'sin respuesta')); return; }
+        if(!res || !res.ok){ t.disabled = false; alert('No se deshizo: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
         const r = res.resultado; INVPRECIOS = null;
         const salt = (r.plan || []).filter(p => p.accion).map(p => '  · ' + p.accion);
         if(salt.length) alert('Algunos no se devolvieron:\n\n' + salt.join('\n'));
         invDespues(a, {recetario: r.revertidos > 0}, `Tanda deshecha: ${r.revertidos} precio${r.revertidos === 1 ? '' : 's'} devuelto${r.revertidos === 1 ? '' : 's'} en el Banco.`, res.cambios);
       })
-      .withFailureHandler(function(err){ t.disabled = false; alert('No se deshizo: ' + err.message); })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se deshizo: ' + PF_ERROR(err)); })
       .webInventarioDeshacerPrecios(AUTH, t.dataset.invdeshacer);
     return;
   }
@@ -896,13 +948,13 @@ document.addEventListener('click', e => {
     document.querySelectorAll('[data-invguardar]').forEach(x => { x.disabled = true; x.textContent = 'Guardando…'; });
     google.script.run
       .withSuccessHandler(function(res){
-        if(!res || !res.ok){ alert('No se guardó: ' + ((res && res.error) || 'sin respuesta')); pintar(); return; }
+        if(!res || !res.ok){ alert('No se guardó: ' + PF_ERROR((res && res.error) || 'sin respuesta')); pintar(); return; }
         const r = res.resultado;
-        delete invBorr[a + '|' + m.mes];
+        delete invBorr[a + '|' + m.mes]; invRecuperado = 0; invGuardarBorrador();
         const ecos = invEcos(r);
         invDespues(a, r, `Guardado: ${r.productos} producto${r.productos === 1 ? '' : 's'} de ${invMesNombre(m.mes)}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
       })
-      .withFailureHandler(function(err){ alert('No se pudo guardar: ' + err.message + '\n\nLo que escribiste sigue en pantalla.'); pintar(); })
+      .withFailureHandler(function(err){ alert('No se pudo guardar: ' + PF_ERROR(err) + '\n\nLo que escribiste sigue en pantalla.'); pintar(); })
       .webInventarioGuardar(AUTH, a, m.mes, envio);
     return;
   }
@@ -916,9 +968,9 @@ document.addEventListener('click', e => {
                     precio: val('inva-precio'), banco: val('inva-banco'), unidadReceta: val('inva-ur'), contenido: val('inva-cont') };
     if(!datos.producto){ alert('Falta el nombre del producto.'); return; }
     if(!datos.categoria){ alert('Falta la categoría.'); return; }
-    if(datos.tipo !== 'INSUMO' && (datos.banco || datos.unidadReceta)){ alert('Solo un insumo va al Banco de Datos. Borrá los campos de "Si es insumo" o cambiá el tipo a Insumo.'); return; }
+    if(datos.tipo !== 'INSUMO' && (datos.banco || datos.unidadReceta)){ alert('Solo un insumo va a Productos. Borrá los campos de "Si es insumo" o cambiá el tipo a Insumo.'); return; }
     if(datos.tipo === 'INSUMO' && !datos.banco){
-      if(!datos.unidadReceta){ alert('Este insumo no está en el Banco de Datos, así que se crea ahí. Falta la unidad de receta (g, ml o unidad).\n\nSi ya existe en el Banco, elegilo en "Producto del Banco".'); return; }
+      if(!datos.unidadReceta){ alert('Este insumo no está en Productos, así que se crea ahí. Falta la unidad de receta (g, ml o unidad).\n\nSi ya existe en el Banco, elegilo en "Producto del Banco".'); return; }
       if(!datos.presentacion){ alert('Falta la presentación: en el Banco es la unidad de compra (libra, 750 ml, caja…).'); return; }
       if(!(parseFloat(datos.precio) > 0)){ alert('Para crearlo en el Banco hace falta el precio.'); return; }
     }
@@ -928,7 +980,7 @@ document.addEventListener('click', e => {
       google.script.run
         .withSuccessHandler(function(res){
           t.disabled = false; t.textContent = 'Agregar';
-          if(!res || !res.ok){ alert('No se agregó: ' + ((res && res.error) || 'sin respuesta')); return; }
+          if(!res || !res.ok){ alert('No se agregó: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
           const r = res.resultado;
           if(!r.creado && r.banco){ if(invPreguntaBanco(r.banco, datos.producto)) mandar(confirmar, true); return; }
           if(!r.creado){
@@ -940,7 +992,7 @@ document.addEventListener('click', e => {
           const ecos = invEcos(r);
           invDespues(a, r, `Agregado: ${datos.producto} (${r.id}) ${r.mes ? 'al conteo de ' + invMesNombre(r.mes) : 'al catálogo; entra al próximo conteo que se abra'}.${ecos ? ' ' + ecos + '.' : ''}`, res.cambios);
         })
-        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + err.message); })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Agregar'; alert('No se pudo agregar: ' + PF_ERROR(err)); })
         .webInventarioAlta(AUTH, a, Object.assign({}, datos, {confirmarBanco: !!confirmarBanco}), confirmar);
     };
     mandar(false, false);
@@ -965,11 +1017,11 @@ document.addEventListener('click', e => {
     t.disabled = true;
     google.script.run
       .withSuccessHandler(function(res){
-        if(!res || !res.ok){ t.disabled = false; alert('No se cambió: ' + ((res && res.error) || 'sin respuesta')); return; }
+        if(!res || !res.ok){ t.disabled = false; alert('No se cambió: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
         invAviso = `${p[2]}: ${activar ? 'reactivado' : 'inactivado'}${res.resultado && res.resultado.nota ? ' · ' + res.resultado.nota : ''}.`;
         invRecargar(a);
       })
-      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo cambiar: ' + err.message); })
+      .withFailureHandler(function(err){ t.disabled = false; alert('No se pudo cambiar: ' + PF_ERROR(err)); })
       .webInventarioActivo(AUTH, a, p[0], activar);
     return;
   }
@@ -997,13 +1049,13 @@ document.addEventListener('click', e => {
       if(p && !p[7]){ alert('Este producto no tiene presentación, que en el Banco es la unidad de compra. Sin eso no se puede crear.'); return; }
       if(p && !invConfirmarProvs([p[8]])) return;
     }
-    if(tipo === 'INSUMO' && !crear && !banco){ alert('Elegí el producto del Banco de Datos con el que se conecta, o marcá "No está: crearlo".'); return; }
+    if(tipo === 'INSUMO' && !crear && !banco){ alert('Elegí el producto de Productos con el que se conecta, o marcá "No está: crearlo".'); return; }
     const mandar = function(){
       t.disabled = true; t.textContent = 'Guardando…';
       google.script.run
         .withSuccessHandler(function(res){
           t.disabled = false; t.textContent = 'Guardar';
-          if(!res || !res.ok){ alert('No se guardó: ' + ((res && res.error) || 'sin respuesta')); return; }
+          if(!res || !res.ok){ alert('No se guardó: ' + PF_ERROR((res && res.error) || 'sin respuesta')); return; }
           const r = res.resultado;
           if(!r.cambiado && r.banco && typeof r.banco === 'object'){
             if(invPreguntaBanco(r.banco, p ? p[2] : id)){ datosCrear.confirmar = true; mandar(); }
@@ -1014,7 +1066,7 @@ document.addEventListener('click', e => {
           invClas = null; cerrar();
           invDespues(ca, r, aviso, res.cambios);
         })
-        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + err.message); })
+        .withFailureHandler(function(err){ t.disabled = false; t.textContent = 'Guardar'; alert('No se pudo guardar: ' + PF_ERROR(err)); })
         .webInventarioClasificar(AUTH, ca, id, tipo, banco, datosCrear);
     };
     mandar();

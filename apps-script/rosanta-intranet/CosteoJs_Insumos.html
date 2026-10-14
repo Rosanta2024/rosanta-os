@@ -1,9 +1,14 @@
+/* De 50 en 50 (14-oct-2026): se dibujaban los ~400 de una vez. Cambiar filtro o busqueda vuelve a 50. */
+let insMax = 50, insClave = '';
 function vistaInsumos(){
   const list = insumosVis();
+  const clave = [area, filt.ins, filt.prov, q].join('|');
+  if(clave !== insClave){ insClave = clave; insMax = 50; }
+  const vis = list.slice(0, insMax);
   const f = [['todos','Todos'],['usados','En uso'],['sinuso','Sin uso en fichas'],['produccion','Producción Rosanta']];
   /* La barra de agregar va ARRIBA. Son 400 productos: al pie no la ve nadie. */
   return `  ${(window.PUEDE && window.PUEDE.crearInsumo) ? (AREA_EDITABLE(area) ? `<div class="addrow">
-        <div class="sec-t" style="margin-top:0">Agregar un producto al Banco de Datos</div>
+        <div class="sec-t" style="margin-top:0">Agregar un producto</div>
         <div class="simrow" style="flex-wrap:wrap">
           <input id="ni-prod" placeholder="Producto" style="width:210px" autocomplete="off">
           <input id="ni-cat" list="lista-cats" placeholder="Categoría" style="width:150px" autocomplete="off">
@@ -31,7 +36,7 @@ function vistaInsumos(){
         <th>Producto</th><th>Proveedor</th><th class="r">Precio compra</th>
         <th class="r">Por unidad receta</th><th class="r">Recetas</th>
       </tr></thead><tbody>
-      ${list.map(i => {
+      ${vis.map(i => {
         const ef = precioEf(i.id), ch = sim.has(i.id) || (i.pr && Math.abs(ef - i.pr) > 1e-6);
         return `<tr>
           <td><button class="rowbtn" data-i="${i.id}">${i.sub!=null?'<span class="dot" title="Tiene ficha de sub-receta"></span>':''}${esc(Tt(i.p))}</button>
@@ -44,5 +49,6 @@ function vistaInsumos(){
         </tr>`;
       }).join('')}
       </tbody></table></div>
+      ${list.length > vis.length ? `<div style="text-align:center;margin:12px 0"><button class="chip" data-insmas="1">Ver 50 más · quedan ${list.length - vis.length}</button></div>` : ''}
       ${list.length?'':'<p class="empty">Sin resultados.</p>'}`;
 }

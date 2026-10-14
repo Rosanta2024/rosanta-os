@@ -1,0 +1,247 @@
+RESUMEN 
+CIERRE DE CAJA 031020260001-031020262359 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	5,659.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	514.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 514.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 5,659.50
+	TOTAL 
+	GTQ 5,659.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 514.50
+	TOTAL 
+	GTQ 514.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	16 
+	Factura 
+	GTQ 489.50
+	17 
+	Factura 
+	GTQ 374.00
+	18 
+	Factura 
+	GTQ 396.00
+	19 
+	Factura 
+	GTQ 352.00
+	20 
+	Factura 
+	GTQ 885.50
+	21 
+	Factura 
+	GTQ 731.50
+	22 
+	Factura 
+	GTQ 792.00
+	23 
+	Factura 
+	GTQ 1,078.00
+	24 
+	Factura 
+	GTQ 561.00
+	TOTAL 
+	GTQ 5659.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Brisket de Res 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Coca Cola Cero 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Porción Pan 
+	1.00 
+	GTQ 0.00 
+	GTQ 20.00
+	Gallo Botella 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Propina 
+	9.00 
+	GTQ 0.00 
+	GTQ 514.50
+	Ejotes al aceite de ajonjolí y ajo 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Arroz Meloso 
+	2.00 
+	GTQ 0.00 
+	GTQ 330.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:47:17 AM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Mousse de Chocolate 
+	3.00 
+	GTQ 0.00 
+	GTQ 195.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Infusiones - Jade negro 
+	2.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Queso Horneado 
+	1.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Mix de Fritas 
+	3.00 
+	GTQ 0.00 
+	GTQ 135.00
+	Agua Natural de la casa 1L 
+	4.00 
+	GTQ 0.00 
+	GTQ 120.00
+	Ginger Beer 
+	2.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Bol Mediterraneo con Tofu 
+	2.00 
+	GTQ 0.00 
+	GTQ 210.00
+	Coliflor en Romesco 
+	2.00 
+	GTQ 0.00 
+	GTQ 230.00
+	Ensalada con Camarones 
+	1.00 
+	GTQ 0.00 
+	GTQ 135.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Tinto - Mariluna 
+	4.00 
+	GTQ 0.00 
+	GTQ 280.00
+	Estafado de Rabo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Infusiones - Pachamama Blends 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Kombucha 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Pulpo a la Parrilla 
+	2.00 
+	GTQ 0.00 
+	GTQ 300.00
+	Lomito ROSANTA 
+	2.00 
+	GTQ 0.00 
+	GTQ 380.00
+	Pollo en Salsa de Tamarindo 
+	2.00 
+	GTQ 0.00 
+	GTQ 330.00
+	Fufuruto 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	El canche 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Copa Albariño 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Naranjada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Camarones al horno 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	TOTAL 
+	62 
+	GTQ 0.00 
+	GTQ 5659.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/4/2026 9:47:17 AM

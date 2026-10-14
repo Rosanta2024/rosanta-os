@@ -40,6 +40,11 @@ var CPE_JUSTIFICADO_ = 0.9;
 var CPE_LUGARES_ = ['ATM 095 Agencia Recolección Antigua', 'ATM 603 Despensa Antigua', 'ATM 152 Agencia Antigua 5'];
 var CPE_CARPETA_ = 'Comprobantes_compras';
 var CPE_FACTURAS_DIAS_ = 45;
+// Una compra cuya factura todavia no se emite (14-oct-2026, Juanma: "no es que sea sin factura,
+// la factura esta pendiente de ser emitida"). Va como SIN FACTURA con esta marca al inicio del
+// DETALLE; cuando la factura llega al FEL se le asigna (asignarFacturaACompra) y pasa a ser el
+// pago de esa factura. Lo que de verdad no factura (el mercado) va sin la marca.
+var CPE_PENDIENTE_ = '[Factura pendiente]';
 // Los proveedores que se pagan en efectivo o con la tarjeta de debito: la lista de Juanma del
 // 14-oct-2026, con sus nombres y en su orden (primero los tres que antes no facturaban), y despues
 // los otros comercios del debito que pidio sumar al cuadre. nit (varios con |): para mostrar solo
@@ -228,11 +233,15 @@ function getComprasEfectivo(auth) {
   var Q = cpeQuien_(auth);
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), E = pagEstado_(), C = cpeCuadre_(ss, E);
   var ve = function (a) { return Q.areas.indexOf(a) !== -1; };
-  var reg = C.efectivo.concat(C.debito).filter(function (m) { return Q.rol === 'dueno' || ve(m.area) || m.por === Q.nombre; })
+  // la fecha de la factura (emision), aparte de la del pago (Juanma, 14-oct-2026)
+  var emision = {}; E.facturas.forEach(function (f) { emision[f.llave] = f.fecha; });
+  // solo efectivo (14-oct-2026: el debito se paga desde Pagos con Tarjeta débito BI)
+  var reg = C.efectivo.filter(function (m) { return Q.rol === 'dueno' || ve(m.area) || m.por === Q.nombre; })
     .sort(function (a, b) { return a.fecha_pagado < b.fecha_pagado ? 1 : -1; })
     .map(function (m) {
       return { id: m.id, fecha: m.fecha_pagado, metodo: m.estatus === CPE_EFECTIVO_ ? 'Efectivo' : 'Débito',
-               proveedor: m.proveedor, factura: m.dte === PAG_SIN_FACTURA_ ? '' : m.dte, q: m.q, area: m.area,
+               proveedor: m.proveedor, factura: m.dte === PAG_SIN_FACTURA_ ? '' : m.dte, fecha_factura: emision[m.nit + '|' + m.dte] || '', q: m.q, area: m.area,
+               pendiente: m.dte === PAG_SIN_FACTURA_ && m.detalle.indexOf(CPE_PENDIENTE_) === 0,
                detalle: m.detalle.replace(/^\[[^\]]+\]\s*/, ''), por: m.por };
     });
   // las facturas que se pueden pagar desde aca: las abiertas de sus areas de los ultimos
@@ -267,16 +276,23 @@ function _cpeProveedores_(movs) {
 }
 
 /** Solicitud de retiro: lugar y cantidad. Queda registrada; no se aprueba. */
-function solicitarRetiro(auth, fecha, lugar, monto, nota) {
-  var Q = cpeQuien_(auth);
+/* Privada desde el 14-oct-2026 (auditoria): la pantalla usa registrarRetiroYCompras. Queda para el harness. */
+function solicitarRetiro_(auth, fecha, lugar, monto, nota) {
+  _cpeAnotarRetiro_(cpeQuien_(auth), fecha, lugar, monto, nota);
+  return getComprasEfectivo(auth);
+}
+function _cpeValidarRetiro_(fecha, lugar, monto) {
   fecha = _pagFechaValida_(fecha, 'Fecha');
   lugar = String(lugar || '').trim();
-  if (lugar.length < 3) throw new Error('Escribí en qué cajero vas a retirar.');
+  if (lugar.length < 3) throw new Error('Escribí en qué cajero se retiró.');
   monto = _finR_(Number(monto));
-  if (!(monto > 0)) throw new Error('Monto invalido.');
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
+  if (!(monto > 0)) throw new Error('Escribí cuánto se retiró.');
+  return { fecha: fecha, lugar: lugar, monto: monto };
+}
+function _cpeAnotarRetiro_(Q, fecha, lugar, monto, nota) {
+  var V = _cpeValidarRetiro_(fecha, lugar, monto);
+  fecha = V.fecha; lugar = V.lugar; monto = V.monto;
+  _pagConCandado_(function () {   // el mismo candado que Pagos: puede ir dentro de registrarRetiroYCompras
     var sh = _cpeSolHoja_(true);
     var fila = [fecha, lugar.slice(0, 120), monto, Q.rol === 'sala' ? 'BARRA' : 'COCINA', String(nota || '').trim().slice(0, 300),
                 Q.nombre, new Date(), Utilities.getUuid().slice(0, 8), ''];
@@ -284,8 +300,7 @@ function solicitarRetiro(auth, fecha, lugar, monto, nota) {
     sh.getRange(r, 8).setNumberFormat('@');
     sh.getRange(r, 1, 1, fila.length).setValues([fila]);
     SpreadsheetApp.flush();
-  } finally { lock.releaseLock(); }
-  return getComprasEfectivo(auth);
+  });
 }
 
 /** Anula una solicitud: quien la hizo o el dueño. */
@@ -327,7 +342,8 @@ function _cpeGuardarArchivo_(a) {
  * c: { fecha, metodo: 'efectivo'|'debito', proveedor, detalle, monto, area, llave (factura, opcional),
  *      archivo: {nombre, mime, datos} (opcional), archivo_url (si la foto ya se subio al leerla) }
  */
-function registrarCompraEfectivo(auth, c) {
+/* Privada desde el 14-oct-2026 (auditoria): la pantalla usa registrarRetiroYCompras. Queda para el harness. */
+function registrarCompraEfectivo_(auth, c) {
   var Q = cpeQuien_(auth);
   c = c || {};
   var metodo = c.metodo === 'debito' ? 'debito' : c.metodo === 'efectivo' ? 'efectivo' : '';
@@ -335,7 +351,7 @@ function registrarCompraEfectivo(auth, c) {
   var fecha = _pagFechaValida_(c.fecha, 'Fecha');
   var monto = _finR_(Number(c.monto));
   if (!(monto > 0)) throw new Error('Monto invalido.');
-  var url = String(c.archivo_url || '');
+  var url = _cpeUrlRecibo_(c.archivo_url);
   if (!url && c.archivo && c.archivo.datos) url = _cpeGuardarArchivo_(c.archivo);
   var detalle = String(c.detalle || '').trim();
   if (url) detalle += (detalle ? ' · ' : '') + 'recibo: ' + url;
@@ -360,6 +376,105 @@ function anularCompraEfectivo(auth, id) {
   cpeQuien_(auth);
   anularMovimientoPago(auth, id);
   return getComprasEfectivo(auth);
+}
+
+/**
+ * El retiro y sus compras en un solo guardado (14-oct-2026, Juanma: "primero se registra el
+ * retiro en el cajero respectivo" y "agrega 5 pestañas de qué se compró, para guardar una sola
+ * vez"). x: { fecha, retiro: {lugar, monto, nota} | null (ya estaba registrado),
+ *             compras: [{ proveedor, llave (factura) | '', sin_factura (no dan factura), detalle,
+ *                         monto, area, archivo_url }] }
+ * Auditoria del 14-oct-2026: todo bajo UN candado; adentro se relee y se valida todo, las compras
+ * se escriben en UNA sola escritura y el retiro va al final (si algo falla antes, no queda un
+ * retiro suelto que al reintentar se duplique). Si una fila esta mal no se guarda nada.
+ */
+function registrarRetiroYCompras(auth, x) {
+  var Q = cpeQuien_(auth);
+  x = x || {};
+  var fecha = _pagFechaValida_(x.fecha, 'Fecha');
+  var ret = x.retiro && (x.retiro.lugar || Number(x.retiro.monto) > 0) ? x.retiro : null;
+  var compras = (x.compras || []).filter(function (c) {
+    return c && (Number(c.monto) > 0 || String(c.detalle || '').trim() || c.llave || String(c.proveedor || '').trim());
+  });
+  if (!ret && !compras.length) throw new Error('Anotá el retiro o al menos una compra.');
+  if (ret) _cpeValidarRetiro_(fecha, ret.lugar, ret.monto);
+  compras.forEach(function (c, i) {
+    var n = 'Compra ' + (i + 1) + ': ';
+    c.monto = _finR_(Number(c.monto));
+    if (!(c.monto > 0)) throw new Error(n + 'falta el monto.');
+    if (!c.llave && String(c.detalle || '').trim().length < 3) throw new Error(n + 'escribí qué se compró.');
+    if (c.archivo_url) c.archivo_url = _cpeUrlRecibo_(c.archivo_url);
+  });
+  _pagConCandado_(function () {
+    _pagOlvidar_(true);   // adentro del candado se relee todo
+    var porLlave = {}, vistas = {};
+    if (compras.some(function (c) { return c.llave; })) pagEstado_().facturas.forEach(function (f) { porLlave[f.llave] = f; });
+    compras.forEach(function (c, i) {
+      if (!c.llave) return;
+      var n = 'Compra ' + (i + 1) + ': ', f = porLlave[c.llave];
+      if (!f) throw new Error(n + 'no encontré esa factura. Tocá Actualizar.');
+      if (Q.areas.indexOf(f.area) === -1) throw new Error(n + 'la factura ' + f.dte + ' es de ' + f.area + '.');
+      if (f.saldo <= 0.01) throw new Error(n + 'la factura ' + f.dte + ' ya está pagada.');
+      if (vistas[c.llave]) throw new Error(n + 'la factura ' + f.dte + ' está dos veces.');
+      vistas[c.llave] = 1;
+    });
+    var filas = [];
+    compras.forEach(function (c) {
+      var detalle = String(c.detalle || '').trim();
+      if (c.archivo_url) detalle += (detalle ? ' · ' : '') + 'recibo: ' + c.archivo_url;
+      if (c.llave) { filas = filas.concat(_pagRegistrarPago_(Q, [c.llave], CPE_EFECTIVO_, fecha, c.monto, 0, detalle, '', true)); return; }
+      var area = String(c.area || '').toUpperCase();
+      if (Q.areas.indexOf(area) === -1 || area === 'ADMIN') area = Q.areas[0];
+      filas.push({ AREA: area, PROVEEDOR: String(c.proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado', DTE: PAG_SIN_FACTURA_,
+                   'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': c.monto, 'ESTATUS DE PAGO': CPE_EFECTIVO_,
+                   DETALLE: ((c.sin_factura ? '' : CPE_PENDIENTE_ + ' ') + detalle).slice(0, 900), 'ESCRITO POR': Q.nombre });
+    });
+    if (filas.length) _pagEscribir_(filas);
+    if (ret) _cpeAnotarRetiro_(Q, fecha, ret.lugar, ret.monto, ret.nota);   // al final
+  }, 30000);
+  return getComprasEfectivo(auth);
+}
+
+/**
+ * Llego la factura de una compra que estaba "factura pendiente": la compra pasa a ser el pago
+ * de esa factura (misma fecha, cantidad y forma) y el registro pendiente queda anulado. Asi la
+ * factura no aparece por pagar ni la compra cuenta dos veces.
+ * Auditoria del 14-oct-2026 (bloqueaba la @188): todo bajo UN candado y releyendo adentro (dos
+ * toques seguidos pagaban la factura dos veces); PRIMERO se anula la compra ("ANULADO: asignada
+ * a la factura ...") y DESPUES se paga, y si el pago falla la compra vuelve a como estaba; solo
+ * compras con la marca [Factura pendiente], del mismo NIT si la compra lo trae, y sin pasarse del
+ * saldo de la factura.
+ */
+function asignarFacturaACompra(auth, id, llave) {
+  var Q = cpeQuien_(auth);
+  id = String(id || ''); llave = String(llave || '');
+  _pagConCandado_(function () {
+    _pagOlvidar_(true);
+    var m = pagMovimientos_().filter(function (x) { return x.id === id; })[0];
+    if (!m || m.dte !== PAG_SIN_FACTURA_ || m.estatus !== CPE_EFECTIVO_) throw new Error('No encontré esa compra (¿ya se asignó?). Tocá Actualizar.');
+    if (m.detalle.indexOf(CPE_PENDIENTE_) !== 0) throw new Error('Esa compra no está marcada como factura pendiente.');
+    if (Q.rol !== 'dueno' && m.por !== Q.nombre && Q.areas.indexOf(m.area) === -1) throw new Error('Esa compra es de ' + m.area + '.');
+    var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
+    if (!f) throw new Error('No encontré esa factura. Tocá Actualizar.');
+    if (Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + '.');
+    if (f.saldo <= 0.01) throw new Error('La factura ' + f.dte + ' ya está pagada.');
+    if (m.nit && f.nit !== m.nit) throw new Error('La factura ' + f.dte + ' es de otro proveedor.');
+    if (m.q > f.saldo + 0.01) throw new Error('La compra es de Q' + m.q + ' y la factura ' + f.dte + ' debe Q' + f.saldo + ': no coinciden. Revisá que sea la factura correcta.');
+    var det = m.detalle.replace(/^\[[^\]]+\]\s*/, '');
+    var A = _pagAnular_({ nombre: Q.nombre, rol: 'dueno', areas: ['COCINA', 'BARRA', 'ADMIN'] }, m.id,
+                        'ANULADO: asignada a la factura ' + f.dte + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');
+    try {
+      _pagRegistrarPago_(Q, [llave], CPE_EFECTIVO_, m.fecha_pagado, m.q, 0,
+                         ('Era la compra del ' + m.fecha_pagado + ' con factura pendiente. ' + det).slice(0, 300), '');
+    } catch (e) { _pagDesanular_(A); throw e; }
+  }, 30000);
+  return getComprasEfectivo(auth);
+}
+
+/** El enlace del recibo: solo uno de Google Drive (auditoria, 14-oct-2026). Vacio si no lo es. */
+function _cpeUrlRecibo_(u) {
+  u = String(u || '').trim();
+  return u.split(/\s+/).filter(function (x) { return /^https:\/\/(drive|docs)\.google\.com\//.test(x); }).join(' ');
 }
 
 /* ---- Leer la foto del recibo o la captura ----

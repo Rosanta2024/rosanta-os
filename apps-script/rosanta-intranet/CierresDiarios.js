@@ -89,7 +89,9 @@ function _cieBloque_(t, desde, hasta) {
 var CIE_FORMAS_NUEVO_ = [
   ['efectivo', /Caja\s*\(\s*efec[\s\S]{0,8}?\)\s*POS|Efectivo/i],
   ['tarjeta', /Tarjetas?|T-Cr[eé]dito/i],
-  ['transferencia', /Transferencias?/i],
+  // "Banco Principal" (4-oct) y "Otras Plataformas" (7-oct): formas del POS nuevo que no son
+  // efectivo; van con transferencia para que el cierre cuadre (14-oct-2026)
+  ['transferencia', /Transferencias?|Banco\s+Principal|Otras\s+Plataformas/i],
   ['pedidos_ya', /Pedidos\s*Ya/i],
   ['uber_eats', /Uber\s*Eats/i]
 ];
@@ -105,31 +107,62 @@ function _cieParsearNuevo_(t, asunto) {
   // La fecha: el codigo del titulo (DDMMAAAAHHMM-...) o el asunto del correo (DD/MM/AAAA)
   var f = /CIERRE DE CAJA\s+(\d{2})(\d{2})(\d{4})\d{4}\s*-/i.exec(t) || /Cierre de Caja\s+(\d{2})\/(\d{2})\/(\d{4})/i.exec(String(asunto || ''));
   r.fecha = f ? f[3] + '-' + f[2] + '-' + f[1] : null;
-  // Las formas de pago: "etiqueta monto" al final del renglon (sin GTQ: el RESUMEN no lo lleva)
-  var vistas = 0;
-  CIE_FORMAS_NUEVO_.forEach(function (fp) {
-    // etiqueta y monto en el MISMO renglon (si el monto esta abajo, va por el plan B)
-    var re = new RegExp('(?:^|\\n)[ \\t]*(?:' + fp[1].source + ')[ \\t]*:?[ \\t]*' + num + '[ \\t]*(?=\\n|$)', 'gi'), m;
-    while ((m = re.exec(t))) { r[fp[0]] += _cieNumero_(m[1]); vistas++; }
-  });
-  // Plan B: si ningun renglon trae "etiqueta monto", el RESUMEN viene por columnas (primero las
-  // etiquetas y despues los montos): se emparejan por posicion dentro del bloque.
-  if (!vistas) {
-    var res = _cieBloque_(t, /RESUMEN/i, [/CORTES[IÍ]A/i, /VENTAS POR/i]).replace(/Descripci[oó]n\s+TOTAL/i, ' ');
-    var etq = [];
-    CIE_FORMAS_NUEVO_.forEach(function (fp) { var re = new RegExp(fp[1].source, 'ig'), m; while ((m = re.exec(res))) etq.push({ k: fp[0], i: m.index, fin: m.index + m[0].length }); });
-    etq.sort(function (a, b) { return a.i - b.i; });
-    var sinEtq = res, montos = [];
-    etq.slice().reverse().forEach(function (e) { sinEtq = sinEtq.slice(0, e.i) + ' ' + sinEtq.slice(e.fin); });
-    var reN = /-?\d[\d,]*(?:\.\d+)?/g, mn;
-    while ((mn = reN.exec(sinEtq))) montos.push(_cieNumero_(mn[0]));
-    if (etq.length && etq.length === montos.length) { etq.forEach(function (e, i) { r[e.k] += montos[i]; }); vistas = etq.length; }
-  }
   // Los documentos: "68 Factura GTQ 528.00". La venta del dia es su suma (incluye la propina).
   r.documentos = [];
   var reD = /(?:^|\n)\s*(\d+)\s+([A-Za-zÁÉÍÓÚáéíóúñ]+)\s+GTQ\s*([\d,]+\.\d{2})\s*(?=\n|$)/g, md;
   while ((md = reD.exec(t))) if (!/^total$/i.test(md[2])) r.documentos.push({ n: md[1], tipo: md[2], q: _cieNumero_(md[3]) });
   var sumaDocs = Math.round(r.documentos.reduce(function (a, d) { return a + d.q; }, 0) * 100) / 100;
+
+  // LAS FORMAS DE PAGO, por cuatro caminos (14-oct-2026, auditoria): Drive saca el texto del PDF
+  // de distintas formas. Se prueba cada camino y gana EL PRIMERO QUE CUADRA con la suma de los
+  // documentos; si ninguno cuadra, el primero que encontro algo (como antes). Asi una etiqueta
+  // suelta en otra parte (un gasto "Efectivo") o dos bloques iguales no dejan el cierre en 0
+  // ni lo suman dos veces.
+  var res = _cieBloque_(t, /RESUMEN/i, [/CORTES[IÍ]A/i, /VENTAS POR/i]);
+  var camino = function (fn) { var v = { tarjeta: 0, efectivo: 0, transferencia: 0, pedidos_ya: 0, uber_eats: 0 }, n = fn(v); return n ? { v: v, n: n } : null; };
+  // 1. etiqueta y monto en el MISMO renglon ("Tarjetas 4,889.50"), en todo el texto
+  var mismo = function (v) {
+    var n = 0;
+    CIE_FORMAS_NUEVO_.forEach(function (fp) {
+      var re = new RegExp('(?:^|\\n)[ \\t]*(?:' + fp[1].source + ')[ \\t]*:?[ \\t]*' + num + '[ \\t]*(?=\\n|$)', 'gi'), m;
+      while ((m = re.exec(t))) { v[fp[0]] += _cieNumero_(m[1]); n++; }
+    });
+    return n;
+  };
+  // 2 y 3. el monto en el renglon de ABAJO ("\tTarjetas \n\t1,771.00"), asi lo saca Drive. Vale si
+  // TODAS las etiquetas solas del texto tienen su monto abajo (si no, el RESUMEN viene por columnas)
+  var abajo = function (texto) {
+    return function (v) {
+      var solas = 0, pares = [];
+      CIE_FORMAS_NUEVO_.forEach(function (fp) {
+        var reS = new RegExp('(?:^|\\n)[ \\t]*(?:' + fp[1].source + ')[ \\t]*:?[ \\t]*(?=\\n|$)', 'gi');
+        while (reS.exec(texto)) solas++;
+        var reP = new RegExp('(?:^|\\n)[ \\t]*(?:' + fp[1].source + ')[ \\t]*:?[ \\t]*\\n[ \\t]*' + num + '[ \\t]*(?=\\n|$)', 'gi'), mp2;
+        while ((mp2 = reP.exec(texto))) pares.push([fp[0], _cieNumero_(mp2[1])]);
+      });
+      if (!pares.length || pares.length !== solas) return 0;
+      pares.forEach(function (x) { v[x[0]] += x[1]; });
+      return pares.length;
+    };
+  };
+  // 4. por columnas: primero las etiquetas y despues los montos, emparejados por posicion en el bloque
+  var columnas = function (v) {
+    var b = res.replace(/Descripci[oó]n\s+TOTAL/i, ' '), etq = [];
+    CIE_FORMAS_NUEVO_.forEach(function (fp) { var re = new RegExp(fp[1].source, 'ig'), m; while ((m = re.exec(b))) etq.push({ k: fp[0], i: m.index, fin: m.index + m[0].length }); });
+    etq.sort(function (a, c) { return a.i - c.i; });
+    var sinEtq = b, montos = [];
+    etq.slice().reverse().forEach(function (e) { sinEtq = sinEtq.slice(0, e.i) + ' ' + sinEtq.slice(e.fin); });
+    var reN = /-?\d[\d,]*(?:\.\d+)?/g, mn;
+    while ((mn = reN.exec(sinEtq))) montos.push(_cieNumero_(mn[0]));
+    if (!etq.length || etq.length !== montos.length) return 0;
+    etq.forEach(function (e, k) { v[e.k] += montos[k]; });
+    return etq.length;
+  };
+  var caminos = [camino(mismo), camino(abajo(t)), camino(abajo(res)), camino(columnas)].filter(Boolean);
+  var sumaDe = function (v) { return Math.round((v.tarjeta + v.efectivo + v.transferencia + v.pedidos_ya + v.uber_eats) * 100) / 100; };
+  var elegido = (r.documentos.length ? caminos.filter(function (c) { return Math.abs(sumaDe(c.v) - sumaDocs) < 0.02; })[0] : null) || caminos[0] || null;
+  var vistas = elegido ? elegido.n : 0;
+  if (elegido) Object.keys(elegido.v).forEach(function (k) { r[k] = elegido.v[k]; });
   var pagos = Math.round((r.tarjeta + r.efectivo + r.transferencia + r.pedidos_ya + r.uber_eats) * 100) / 100;
   r.gran_total = r.documentos.length ? sumaDocs : (vistas ? pagos : null);
   // Propina y cortesia: "Propina 471.5" solo (el renglon de productos sigue con GTQ y no cuenta)
@@ -196,7 +229,16 @@ function _cieBytes_(data) {
   return Utilities.base64Decode(t);
 }
 
-function cieLeer_(dias) {
+function cieLeer_(dias, forzar) {
+  // UNA LECTURA A LA VEZ (14-oct-2026, auditoria): el vigia de las 10:00 y "Leer cierres" podian
+  // correr juntos y agregar la misma fecha dos veces. No es un ScriptLock a proposito: convertir
+  // los PDF tarda minutos y bloquearia los guardados de Pagos, que usan ese candado.
+  var cache = CacheService.getScriptCache();
+  try { if (cache.get('cie_leyendo')) return { correos: 0, nuevos: 0, repetidos: 0, errores: ['otra lectura de cierres en curso: probá en un par de minutos'] }; } catch (e0) { /* sin cache: se lee */ }
+  try { cache.put('cie_leyendo', '1', 600); } catch (e1) { /* idem */ }
+  try { return _cieLeer_(dias, forzar); } finally { try { cache.remove('cie_leyendo'); } catch (e2) { /* se vence sola en 10 min */ } }
+}
+function _cieLeer_(dias, forzar) {
   dias = dias || 7;
   var lista = Gmail.Users.Messages.list('me', { q: CIE_QUERY_ + ' newer_than:' + dias + 'd', maxResults: 60 });
   var msgs = (lista && lista.messages) || [];
@@ -214,7 +256,9 @@ function cieLeer_(dias) {
   for (var i = 1; i < v.length; i++) {
     // la fecha llega como Date: String(Date) daba "Tue Sep 29" y un dia releido se agregaba de nuevo
     fila[v[i][0] instanceof Date ? medFechaIso_(v[i][0]) : String(v[i][0]).slice(0, 10)] = i + 1;
-    if (String(v[i][13]) === 'SI') idsLeidos[String(v[i][14])] = true;
+    // uno que no cuadra se relee, pero a lo sumo una vez cada 20 horas (antes, cada 20 minutos)
+    var leido = v[i][15] instanceof Date ? v[i][15] : null;
+    if (String(v[i][13]) === 'SI' || (!forzar && leido && new Date() - leido < 20 * 3600000)) idsLeidos[String(v[i][14])] = true;
   }
   var rep = { correos: msgs.length, nuevos: 0, repetidos: 0, errores: [] };
   // del mas viejo al mas nuevo: si un dia llega dos veces, el ultimo pisa al primero

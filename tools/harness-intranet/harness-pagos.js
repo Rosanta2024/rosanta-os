@@ -182,6 +182,8 @@ t('La pantalla del dueño la trae y sin aviso de error', dueno.facturas.some(f =
 t('Cocina no la ve (es de ADMIN)', !ctx.getPagosProveedores('tokchef').facturas.some(f => f.dte === '4086582244'));
 t('Para reducir IVA: no se puede marcar una por correo', /llego por correo/.test(tira(() => ctx.marcarFacturaParaIva('tok', ec[0].llave, ''))));
 ctx.Gmail.Users.Messages.list = () => { throw new Error('Gmail caido'); };
+// una ejecucion nueva de Apps Script: lo leido en la anterior (y la marca de que se guardo) no sigue
+ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
 const caido = ctx.getPagosProveedores('tok');
 t('Si Gmail falla, Pagos abre igual y avisa', caido.facturas.length > 0 && /Gmail caido/.test(caido.aviso_correo), caido.aviso_correo);
 console.log('\nPestaña PAGOS_PROVEEDORES (' + (CONFIG.PAGOS_PROVEEDORES.length - 1) + ' filas):');

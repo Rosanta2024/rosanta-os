@@ -1,0 +1,134 @@
+RESUMEN 
+CIERRE DE CAJA 061020260001-061020262056 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	1,188.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	108
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 108.00
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 1,188.00
+	TOTAL 
+	GTQ 1,188.00
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 108.00
+	TOTAL 
+	GTQ 108.00
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	34 
+	Factura 
+	GTQ 748.00
+	35 
+	Factura 
+	GTQ 440.00
+	TOTAL 
+	GTQ 1188.00
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Queso Horneado 
+	1.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Propina 
+	2.00 
+	GTQ 0.00 
+	GTQ 108.00
+	Coliflor en Romesco 
+	2.00 
+	GTQ 0.00 
+	GTQ 230.00
+	Mousse de Chocolate 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Mezcal a la Piña 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tartar de Hongos 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Hamburgesa Portobello 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Red Pepper Old Fashion 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Beetrot Negroni 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Chiatenango 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Kombucha 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	TOTAL 
+	14 
+	GTQ 0.00 
+	GTQ 1188.00
+	
+
+
+
+GASTOS 
+© Soported by www.posfile.com • 10/6/2026 8:57:14 PM
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/6/2026 8:57:14 PM

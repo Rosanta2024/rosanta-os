@@ -150,6 +150,39 @@ function fecLeerSiToca_() {
   try { return fecLeer_(); } catch (e) { return { errores: [String(e && e.message || e)] }; }
 }
 
+/**
+ * El ultimo aviso de SAT que entro (14-oct-2026, Juanma: "agrega la alerta en Hoy cuando SAT no
+ * avise"). Del 13 al 14-oct SAT dejo de mandar avisos y nadie se dio cuenta: las facturas de la
+ * semana no entraban a Pagos. LEIDO es cuando la intranet lo encontro (cada 5 minutos), asi que
+ * es la llegada del correo con 5 minutos de margen. null si la hoja no tiene avisos.
+ */
+function fecUltimoAviso_() {
+  var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(FEC_HOJA_);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var v = sh.getDataRange().getValues(), H = v[0].map(function (h) { return String(h || '').trim(); });
+  var iL = H.indexOf('LEIDO'), iN = H.indexOf('NUMERO'), iF = H.indexOf('FECHA'), iE = H.indexOf('ESTABLECIMIENTO'), iM = H.indexOf('MONTO');
+  var ult = null;
+  for (var r = 1; r < v.length; r++) {
+    if (!String(v[r][iN] || '').trim() || !(v[r][iL] instanceof Date)) continue;   // "no es aviso de DTE" no cuenta
+    var fe = pagIso_(pagDia_(v[r][iF]));
+    if (!ult || v[r][iL] > ult.leido || (+v[r][iL] === +ult.leido && fe > ult.fecha))
+      ult = { leido: v[r][iL], fecha: fe, proveedor: String(v[r][iE] || ''), monto: _finNum_(v[r][iM]) };
+  }
+  return ult;
+}
+
+/**
+ * Los dias habiles (lunes a sabado: los proveedores entregan tambien el sabado) que pasaron
+ * COMPLETOS sin ningun aviso: los que hay entre el dia del ultimo aviso y hoy, sin contar
+ * ninguno de los dos. Pura (la prueba la corre con fechas fijas).
+ */
+function fecDiasSinAviso_(ultimo, ahora) {
+  if (!ultimo) return 0;
+  var d = new Date(ultimo.getFullYear(), ultimo.getMonth(), ultimo.getDate() + 1), hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()), n = 0;
+  for (; d < hoy; d.setDate(d.getDate() + 1)) if (d.getDay() !== 0) n++;
+  return n;
+}
+
 /** Las facturas anotadas desde el correo. Solo lee la hoja: no toca Gmail. */
 function fecFacturas_() {
   var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(FEC_HOJA_);

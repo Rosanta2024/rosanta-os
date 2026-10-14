@@ -1,0 +1,276 @@
+RESUMEN 
+CIERRE DE CAJA 091020260001-091020262213 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	7,480.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	680.0
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 680.00
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 7,480.00
+	TOTAL 
+	GTQ 7,480.00
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 680.00
+	TOTAL 
+	GTQ 680.00
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	52 
+	Factura 
+	GTQ 187.00
+	53 
+	Factura 
+	GTQ 159.50
+	54 
+	Factura 
+	GTQ 781.00
+	55 
+	Factura 
+	GTQ 968.00
+	56 
+	Factura 
+	GTQ 1,463.00
+	57 
+	Factura 
+	GTQ 907.50
+	58 
+	Factura 
+	GTQ 1,738.00
+	59 
+	Factura 
+	GTQ 1,276.00
+	TOTAL 
+	GTQ 7480.00
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Queso Horneado 
+	2.00 
+	GTQ 0.00 
+	GTQ 280.00
+	Hamburguesa de Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 130.00
+	Propina 
+	8.00 
+	GTQ 0.00 
+	GTQ 680.00
+	Soda del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Lomito ROSANTA 
+	4.00 
+	GTQ 0.00 
+	GTQ 760.00
+	Tartar de Hongos 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Pescado del día 
+	3.00 
+	GTQ 0.00 
+	GTQ 555.00
+	Camarones al horno 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Pulpo a la Parrilla 
+	1.00 
+	GTQ 0.00 
+	GTQ 150.00
+	
+
+
+
+© Soported by www.posfile.com • 10/9/2026 10:21:14 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Coliflor en Romesco 
+	3.00 
+	GTQ 0.00 
+	GTQ 345.00
+	Agua Natural de la casa 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 60.00
+	Ensalada Rosanta 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Brisket de Res 
+	5.00 
+	GTQ 0.00 
+	GTQ 900.00
+	Cabernet Sauvignon 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Canche 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	3.00 
+	GTQ 0.00 
+	GTQ 540.00
+	Cabro 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Cava - Bohigas Brut Gran Reserva 
+	1.00 
+	GTQ 0.00 
+	GTQ 375.00
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Chiatenango 
+	4.00 
+	GTQ 0.00 
+	GTQ 320.00
+	El Colonial 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Beetrot Negroni 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	La Loteria 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Red Pepper Old Fashion 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	El Canche 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Fufuruto 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tinto - La Linda 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	El Mero, Mero 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Cousiño Chardonnay 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Tinto - Mariluna 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Gallo Botella 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Mix de Michelada 
+	1.00 
+	GTQ 0.00 
+	GTQ 25.00
+	Pasta de la casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 155.00
+	Pollo en Salsa de Tamarindo 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Naranjada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Tés - Manzanilla 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Mezcal a la Piña 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Mousse de Chocolate 
+	3.00 
+	GTQ 0.00 
+	GTQ 195.00
+	Peras Horneadas 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Angua - Sin Novia 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	TOTAL 
+	68 
+	GTQ 0.00 
+	GTQ 7480.00
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/9/2026 10:21:14 PM

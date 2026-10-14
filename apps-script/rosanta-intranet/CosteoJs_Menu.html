@@ -136,7 +136,7 @@ function imMatriz(pts, sin){
     circ.push([x,y,rad]);
     s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}" fill="${IM_COLOR[p.clase]}" opacity=".8"><title>${esc(p.n)} — ${esc(p.cat)}
 ${p.uds} uds · margen ${imQ(p.mc)} · contribución ${imQ(p.contrib)}
-Precio de carta ${imQ(p.precio)} · neto ${imQ(p.precioNeto)} · costo ${imQ(p.costo)} · CMV ${(p.cmv*100).toFixed(1)}%</title></circle>`;
+Precio de carta ${imQ(p.precio)} · neto ${imQ(p.precioNeto)} · costo ${imQ(p.costo)} · food cost ${(p.cmv*100).toFixed(1)}%</title></circle>`;
   });
 
   const choca = (b, saltar) => {
@@ -198,7 +198,7 @@ function vistaMenu(){
 
   const a = d.areas[imArea], c = a.conteo;
   const lead = `<p class="im-lead">${a.productos} productos con venta · ${a.firmes} con costo firme ·
-    CMV ponderado <strong>${(a.cmv*100).toFixed(1)}%</strong> ·
+    Food cost promedio <strong>${(a.cmv*100).toFixed(1)}%</strong> ·
     contribución <strong>${imQ(a.contribucion)}</strong> ·
     recuperable contra meta <strong>${imQ(a.recuperable)}/año</strong></p>`;
 
@@ -245,7 +245,7 @@ function vistaMenu(){
 
   const secMeta = `<div class="im-panel">
       <h3 style="color:var(--im-alerta)">Fuera de meta</h3>
-      <p class="im-h">Lo que cuesta al año no llegar al objetivo de CMV de su categoría.
+      <p class="im-h">Lo que cuesta al año no llegar a la meta de food cost de su categoría.
         Acá la palanca es el costo o la receta, no la sala.</p>
       <ul class="im-acc">${meta}</ul>
     </div>`;

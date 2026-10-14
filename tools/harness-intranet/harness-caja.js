@@ -46,10 +46,10 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   Utilities: { formatDate: d => d.toISOString(), getUuid: () => ('0000000' + (++uuid)).slice(-8) + '-x',
     DigestAlgorithm: { MD5: 'md5' }, computeDigest: (a, s) => [...crypto.createHash('md5').update(s).digest()], base64Encode: b => Buffer.from(b).toString('base64') },
   Session: { getActiveUser: () => ({ getEmail: () => '' }) },
-  LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => {} }) },
+  LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'ProfitHoy.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'FelCorreo.js', 'ComprasEfectivo.js', 'ProfitHoy.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
 vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; _pagHojaIva_ = function () {}; finCacheClave_ = function () { return 'x'; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);
@@ -86,6 +86,15 @@ t('Diferencia aceptada deja de contar como abierta', E2.dias[0].estado === 'Dife
 const E3 = ctx.cchCalcular_({ arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-13', cierres: {},
   movs: [M('2026-10-11', 'ARRANQUE', 1500, { concepto: 'conteo' }), M('2026-10-12', 'EFECTIVO_CIERRE', 0), M('2026-10-12', 'CONTEO', 1500)], pagos: [] });
 t('Un ARRANQUE del dueño reemplaza al del Excel', E3.arranque.saldo === 1500 && E3.dias[0].fecha === '2026-10-12' && E3.dias[0].estado === 'Cuadra', E3.dias[0].estado);
+
+// Sin conteo cubierto por un conteo posterior (14-oct-2026)
+const E4 = ctx.cchCalcular_({ arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-15',
+  cierres: { '2026-10-11': C(209), '2026-10-12': C(297), '2026-10-13': C(0) }, movs: [M('2026-10-13', 'CONTEO', 2367)], pagos: [] });
+t('11 y 12 sin conteo quedan cubiertos por el conteo del 13', E4.dias[0].cubierto === '2026-10-13' && E4.dias[1].cubierto === '2026-10-13' && E4.resumen.sin_conteo === 0,
+  E4.dias.map(d => d.fecha.slice(8) + ' ' + d.estado + (d.cubierto ? ' cubierto' : '')).join(' · '));
+const E5 = ctx.cchCalcular_({ arranque: { fecha: '2026-10-10', saldo: 1861, nota: 'Excel' }, hoy: '2026-10-15',
+  cierres: { '2026-10-11': C(209), '2026-10-12': C(297), '2026-10-13': C(0) }, movs: [M('2026-10-11', 'CONTEO', 2070)], pagos: [] });
+t('Sin conteo DESPUES del ultimo conteo sigue pendiente', !E5.dias[1].cubierto && !E5.dias[2].cubierto && E5.resumen.sin_conteo === 2);
 
 // ---- 2. la pantalla y las escrituras sobre la config en memoria
 t('El chef no entra a la caja', /lleva Maco/.test(tira(() => ctx.getCajaChica('tokchef'))));
@@ -207,6 +216,39 @@ t('Hoy de Jeffry: sin caja, con inventario de cocina', !/caja/.test(vistas(hC)) 
 t('Hoy de Maco: con caja, sin inventario de barra (cerrado), sin retiros', /caja/.test(vistas(hM)) && !hM.items.some(x => /inventario/.test(x.texto)) && !/cocina/.test(vistas(hM)), hM.items.map(x => x.texto).join(' | '));
 t('Hoy: lo urgente va primero', hD.items.every((x, i, a) => i === 0 || !x.urgente || a[i - 1].urgente));
 t('Hoy: Jeffry ve lo que se le debe', hC.items.some(x => /te debe/.test(x.texto)));
+// Hoy: SAT sin avisar (14-oct-2026)
+const D_ = (y, m, d, h) => new Date(y, m - 1, d, h || 10);
+t('SAT: el dia siguiente al ultimo aviso todavia no avisa', ctx.fecDiasSinAviso_(D_(2026, 10, 13), D_(2026, 10, 14, 18)) === 0);
+t('SAT: un dia habil completo sin avisos', ctx.fecDiasSinAviso_(D_(2026, 10, 13), D_(2026, 10, 15)) === 1);
+t('SAT: el domingo no cuenta', ctx.fecDiasSinAviso_(D_(2026, 10, 17), D_(2026, 10, 19)) === 0 && ctx.fecDiasSinAviso_(D_(2026, 10, 13), D_(2026, 10, 19)) === 4);
+const FC = ['FECHA', 'TIPO', 'SERIE', 'NUMERO', 'NIT', 'NOMBRE', 'ESTABLECIMIENTO', 'MONEDA', 'MONTO', 'AUTORIZACION', 'MENSAJE_ID', 'LEIDO'];
+const hace = n => { const d = new Date(); d.setDate(d.getDate() - n); return d; };
+CONFIG.FEL_CORREO = [FC, ['2026-10-01', 'FACT', 'A', '111', '1', 'X', 'ECONTRISA', 'GTQ', 1680, 'a', 'm1', hace(4)],
+                         ['', '', '', '', '', 'no es aviso de DTE', '', '', '', '', 'm2', hace(0)]];
+let hS = H('tok');
+const sat = hS.items.filter(x => /SAT no avisa/.test(x.texto))[0];
+t('Hoy del dueño: avisa que SAT no manda avisos (el "no es aviso" no cuenta)', sat && sat.vista === 'pagos' && /ECONTRISA/.test(sat.detalle), sat ? sat.texto + ' · ' + sat.detalle : hS.fallas.join(' | '));
+t('Jeffry no ve la alerta de SAT', !H('tokchef').items.some(x => /SAT/.test(x.texto)));
+CONFIG.FEL_CORREO[1][11] = hace(0);
+t('Con un aviso de hoy no hay alerta', !H('tok').items.some(x => /SAT no avisa/.test(x.texto)));
+PROPS.CORREOS_DEL_DIA = JSON.stringify({ cuando: new Date().toISOString(), fel: { errores: ['Gmail caido'] } });
+const hErr = H('tok').items.filter(x => /lectura de correos de las 10:00|No se pudo leer el correo/.test(x.texto));
+t('Si la lectura de las 10:00 falló, avisa UNA vez (Correos del día)', hErr.length === 1 && hErr[0].urgente, hErr.map(x => x.texto).join(' | '));
+delete PROPS.CORREOS_DEL_DIA; delete CONFIG.FEL_CORREO;
+// Hoy: cada boton lleva al punto exacto y las acciones tienen "Listo" (14-oct-2026)
+t('Hoy: cada boton de Pagos y Caja lleva su punto exacto', hD.items.filter(x => x.vista === 'pagos' || x.vista === 'caja').every(x => x.sub), hD.items.map(x => x.vista + ':' + (x.sub || '-')).join(' '));
+const hoyIso = new Date().toISOString().slice(0, 10);
+CONFIG.ACCIONES = [['SEMANA', 'PILAR', 'ACCION', 'DUENO', 'FECHA_LIMITE', 'ESTADO', 'ESCRITO_POR', 'CREADA', 'CERRADA', 'REGLA', 'PORQUE', 'META'],
+  ['2026-S42', 'profit', 'Revisar porciones del lomito', 'Jeffry', hoyIso, 'pendiente', 'Vigía', new Date(), '', '', '', ''],
+  ['2026-S42', 'profit', 'Llamar cotizaciones', 'Juanma', hoyIso, 'pendiente', 'Vigía', new Date(), '', '', '', '']];
+let hJ = H('tokchef'), accJ = hJ.items.filter(x => x.accion)[0];
+t('Jeffry ve su acción con Listo (y no la de Juanma)', accJ && accJ.accion.fila === 2 && !hJ.items.some(x => /cotizaciones/.test(x.texto)), hJ.items.map(x => x.texto).join(' | '));
+t('Jeffry no marca la de Juanma', /es de Juanma/.test(tira(() => ctx.marcarAccionHoy('tokchef', 3, 'Llamar cotizaciones'))));
+t('Texto cambiado: no se marca', /cambió/.test(tira(() => ctx.marcarAccionHoy('tokchef', 2, 'otra cosa'))));
+hJ = ctx.marcarAccionHoy('tokchef', 2, 'Revisar porciones del lomito');
+t('Jeffry marca la suya: queda hecha y sale de Hoy', CONFIG.ACCIONES[1][5] === 'hecha' && !hJ.items.some(x => x.accion));
+delete CONFIG.ACCIONES;
+
 // el DRE lee 07_Caja_Chica sin romperse
 let fd = ''; try { ctx._finDatos_(true); } catch (e) { fd = e.stack.split('\n').slice(0, 4).join(' | '); }
 t('Finanzas corre con la pestaña nueva', fd === '', fd);

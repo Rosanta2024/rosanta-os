@@ -119,6 +119,19 @@ main{padding:24px 0 80px}
 
 .tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
 table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+/* El conteo de inventario (14-oct-2026): Guardar fijo abajo apenas hay algo sin guardar, y en el
+   telefono solo Producto + Existencia (precio y proveedor detras de un boton). */
+.inv-fijo{position:sticky; bottom:10px; z-index:6; display:flex; gap:8px; justify-content:center; margin-top:12px;
+  background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:8px; box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.inv-fijo[hidden]{display:none}
+.inv-solomovil{display:none}
+@media (max-width:760px){
+  .inv-solomovil{display:inline-flex; margin:6px 0}
+  table.inv-conteo{min-width:0}
+  table.inv-conteo:not(.inv-todo) th:nth-child(n+3), table.inv-conteo:not(.inv-todo) td:nth-child(n+3){display:none}
+  table.inv-conteo input{font-size:16px}
+  .inv-fijo .chip{font-size:15px; padding:10px 16px}
+}
 th{text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
   font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel)}
 td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
@@ -166,7 +179,12 @@ td.r,th.r{text-align:right}
      background:var(--surface); color:var(--ink); font:inherit; font-size:13px}
 .qin:focus{outline:2px solid var(--verde); outline-offset:1px}
 .qsave{border:1px solid var(--bosque); background:var(--bosque); color:var(--surface);
-       border-radius:7px; padding:4px 9px; font-size:12.5px; line-height:1.2; cursor:pointer}
+       border-radius:9px; min-width:40px; min-height:36px; padding:6px 10px; font-size:15px; line-height:1.2; cursor:pointer}   /* 14-oct-2026: mas grande, se tocaba con el dedo */
+/* El aviso con Deshacer (14-oct-2026): abajo, unos segundos, despues de guardar una cantidad */
+.pf-toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:60; display:flex; gap:12px; align-items:center;
+  background:var(--ink); color:var(--surface); border-radius:12px; padding:10px 14px; font-size:14px; box-shadow:0 8px 24px rgba(0,0,0,.25); max-width:calc(100vw - 32px)}
+.pf-toast[hidden]{display:none}
+.pf-toast button{font:inherit; font-weight:700; background:none; border:0; color:var(--lila, #AEAAE2); cursor:pointer; padding:4px 6px; text-decoration:underline}
 .qsave[disabled]{opacity:.55; cursor:default}
 .simrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel); border-radius:var(--r); padding:13px 15px}
 .simrow input{width:110px; padding:7px 10px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit}

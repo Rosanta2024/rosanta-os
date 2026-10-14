@@ -1,0 +1,209 @@
+RESUMEN 
+CIERRE DE CAJA 071020260001-071020262105 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	3,213.00
+	Caja (efecvo) POS 
+	341.00
+	Otras Plataformas 
+	450.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	364.0
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 364.00
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 4,004.00
+	TOTAL 
+	GTQ 4,004.00
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 364.00
+	TOTAL 
+	GTQ 364.00
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	36 
+	Factura 
+	GTQ 291.50
+	37 
+	Factura 
+	GTQ 990.00
+	38 
+	Factura 
+	GTQ 654.50
+	39 
+	Factura 
+	GTQ 819.50
+	40 
+	Factura 
+	GTQ 412.50
+	41 
+	Factura 
+	GTQ 341.00
+	42 
+	Factura 
+	GTQ 495.00
+	TOTAL 
+	GTQ 4004.00
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Pasta con Camarones 
+	2.00 
+	GTQ 0.00 
+	GTQ 390.00
+	Propina 
+	7.00 
+	GTQ 0.00 
+	GTQ 364.00
+	Agua con Gas 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Café Americano 
+	1.00 
+	GTQ 0.00 
+	GTQ 25.00
+	Pasta de la casa 
+	2.00 
+	GTQ 0.00 
+	GTQ 310.00
+	Ensalada Rosanta 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Naranjada 
+	2.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Hamburguesa de Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 130.00
+	
+
+
+
+© Soported by www.posfile.com • 10/7/2026 9:29:36 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Limonada 
+	2.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Camarones al horno 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Fufuruto 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	MockTails 
+	2.00 
+	GTQ 0.00 
+	GTQ 110.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	La Feria 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	El Colonial 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tinto - La Linda 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Pasta con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Mix de Fritas 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	Cena Romanca 
+	1.00 
+	GTQ 0.00 
+	GTQ 900.00
+	TOTAL 
+	35 
+	GTQ 0.00 
+	GTQ 4004.00
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/7/2026 9:29:36 PM

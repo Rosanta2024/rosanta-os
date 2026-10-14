@@ -2,7 +2,7 @@ function vistaHigiene(){
   const h = window.__HIG__;
   if(!h) return `<p class="empty">Leyendo el recetario…</p>`;
   const B = [
-    ['Líneas fuera del Banco de Datos','lineasFueraDelBanco','El nombre que escribió cocina no coincide con ningún producto. Esas líneas cuestan Q0.'],
+    ['Ingredientes que no están en Productos','lineasFueraDelBanco','El nombre que escribió cocina no coincide con ningún producto. Esas líneas cuestan Q0.'],
     ['Fichas vacías','fichasVacias','Sin ingredientes cargados. No tienen costo.'],
     ['Platos sobre meta','platosSobreMeta','Comparados contra la meta de su área.'],
     ['Insumos sin precio de compra','insumosSinPrecioDeCompra','No se les puede registrar un precio nuevo hasta corregirlos a mano una vez.'],
@@ -26,7 +26,7 @@ function vistaGuia(){
     Si un dato está mal, se corrige allá, no acá.</p>
 
     <h2>Cómo leer una ficha</h2>
-    <p>Cada plato trae tres cifras: lo que cuesta hacerlo, lo que se cobra y el CMV, que es el
+    <p>Cada plato trae tres cifras: lo que cuesta hacerlo, lo que se cobra y el food cost, que es el
     porcentaje del precio que se va en materia prima. La meta no es la misma en todas partes:
     <strong>${metas}</strong>. Un cóctel al 18% está bien; un plato al 18% está bajo.</p>
     <div class="leyenda">
@@ -56,7 +56,7 @@ function vistaGuia(){
     </div>
     <div class="caja">
       <h3>Registrar precio</h3>
-      <p style="margin:0">Guarda de verdad. Escribe el precio en el Banco de Datos, deja la fila en
+      <p style="margin:0">Guarda de verdad. Escribe el precio en Productos, deja la fila en
       el histórico con fecha, factura y tu nombre, y todas las fichas se recalculan solas. Te pide
       el número de factura: ponelo siempre que lo tengas, es lo que hace auditable el costeo.</p>
     </div>
@@ -67,7 +67,7 @@ function vistaGuia(){
     <h2>Cuando algo no cuadra</h2>
     <ul>
       <li><strong>Un ingrediente dice "fuera del banco".</strong> El nombre que escribió cocina en la
-      ficha no coincide con ningún producto del Banco de Datos. Esa línea cuesta Q0 y el plato sale
+      ficha no coincide con ningún producto de Productos. Esa línea cuesta Q0 y el plato sale
       más barato de lo que es. Se arregla igualando el nombre en la ficha.</li>
       <li><strong>Un plato marca "Muy bajo".</strong> Casi siempre falta un ingrediente, no es que el
       plato sea una ganga.</li>
@@ -88,7 +88,7 @@ function vistaGuia(){
     <ul>
       <li><strong>Cocina y barra</strong> corrigen recetas y cantidades en las hojas del recetario.</li>
       <li><strong>Administración</strong> registra los precios de compra desde acá, con factura.</li>
-      <li><strong>Dirección</strong> decide precios de carta mirando el CMV.</li>
+      <li><strong>Dirección</strong> decide precios de carta mirando el food cost.</li>
     </ul>
     <p style="color:var(--muted);font-size:13px">Si algo se ve raro, lo más probable es que sea un
     dato del recetario y no la página. Revisá la ficha en Sheets antes de dar por buena una cifra.</p>

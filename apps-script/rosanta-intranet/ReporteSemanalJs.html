@@ -28,7 +28,7 @@
   }
   function pct(n, dec) { return (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toFixed(dec === undefined ? 1 : dec) + '%'; }
   function num(n) { return (n === null || n === undefined) ? '—' : Number(n).toLocaleString('es-GT'); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function signo(n) { return n > 0 ? '+' : ''; }
   function kpi(cls, et, val, det) {
     return '<div class="rp-kpi ' + (cls || '') + '"><div class="et">' + esc(et) + '</div><div class="val">' + val + '</div><div class="det">' + (det || '') + '</div></div>';
@@ -76,9 +76,12 @@
     var pdfDrive = $('rp-pdf-drive');
     if (pdfDrive && SECC) pdfDrive.style.display = 'none';
     var enviar = $('rp-enviar');
-    if (enviar && (SECC || AREA)) enviar.style.display = 'none';
+    // en Cocina y en Barra y Sala el equipo no imprime el reporte (14-oct-2026)
+    var impr = $('rp-imprimir');
+    if (impr && AREA) { impr.style.display = 'none'; }
+    if (enviar && (SECC || AREA)) { enviar.style.display = 'none'; }
     else if (pdfDrive) pdfDrive.href = (CFG.base || '') + '?page=reporte-semanal-pdf&semana=' + CLAVE + (CFG.t || '');
-    $('rp-sub').textContent = 'Revisión con jefes de departamento · Semana ' + d.semana.w + ' de ' + d.semana.anio +
+    $('rp-sub').textContent = (AREA ? '' : 'Revisión con jefes de departamento · ') + 'Semana ' + d.semana.w + ' de ' + d.semana.anio +
       ' · ' + d.semana.ini + ' al ' + d.semana.fin + (d.semana.corta ? ' · semana corta' : '') + ' · calculado ' + d.gen;
     $('rp-fuentes').textContent = 'Fuentes: ' + d.fuentes;
     var sel = $('rp-sel');
@@ -142,12 +145,14 @@
       h += '<div class="rp-error">No se pudieron leer las reservas: ' + esc(r.error) + '</div>';
     } else {
       var estados = Object.keys(r.con_estado || {}).map(function (k) { return esc(k) + ' ' + r.con_estado[k]; }).join(' · ');
-      h += '<p class="rp-nota">Estados en la pestaña reservas esta semana: ' + (estados || 'ninguno') + '. Cuentan como canceladas CANCEL, DECLIN y NO SHOW; como sin cerrar, RESERVED.</p>' +
+      // Dentro de Barra y Sala (AREA) no va la nota de estados de Wix ni "Reservas sin cerrar": la caja
+      // "Mesas por cerrar en Wix" de arriba ya las muestra, con su enlace (14-oct-2026: no repetir)
+      h += (AREA ? '' : '<p class="rp-nota">Estados en la pestaña reservas esta semana: ' + (estados || 'ninguno') + '. Cuentan como canceladas CANCEL, DECLIN y NO SHOW; como sin cerrar, RESERVED.</p>') +
         '<div class="rp-kpis">' +
         kpi('', 'Reservas de la semana', num(r.validas), num(r.personas) + ' personas · ' + num(r.total) + ' recibidas') +
         kpi(r.canceladas_pct > 20 ? 'rojo' : (r.canceladas ? 'amarillo' : 'verde'), 'Canceladas', num(r.canceladas), pct(r.canceladas_pct) + ' · ' + num(r.personas_canceladas) + ' personas perdidas') +
         kpi('', 'Walk-ins', r.walkins === null ? '—' : num(r.walkins), pct(r.walkins_pct) + ' de los comensales') +
-        kpi(r.sin_cerrar ? 'amarillo' : 'verde', 'Reservas sin cerrar', num(r.sin_cerrar), 'siguen en RESERVED: el estado sin cerrar rompe el seguimiento post-visita') +
+        (AREA ? '' : kpi(r.sin_cerrar ? 'amarillo' : 'verde', 'Reservas sin cerrar', num(r.sin_cerrar), 'siguen en RESERVED: el estado sin cerrar rompe el seguimiento post-visita')) +
         '</div>' +
         '<div class="rp-tabla"><table class="rp"><thead><tr><th>Día</th><th>Reservas</th><th>Personas</th><th>Comensales POS</th>' + (AREA ? '' : '<th>Walk-ins</th>') + '<th>Canceladas</th></tr></thead><tbody>' +
         d.dias.map(function (x) {
@@ -162,7 +167,7 @@
     if (ver(5)) {
     var enArea = function (nom) { return AREAS_VER.indexOf(nom) !== -1; };
     h += '<section class="rp"><h2>' + tit(5, AREA ? 'Food cost de ' + AREAS_VER[0].toLowerCase() : 'Food cost') + '</h2>' +
-      '<p class="rp-nota">Sobre venta sin IVA ni servicio, contra las metas de PARAMETROS: global ' + pct(fc.meta_global, 0) + ', cocina ' + pct(fc.cocina.meta, 0) + ', barra ' + pct(fc.barra.meta, 0) + '. ' + esc(fc.aviso_barra) + '</p>' +
+      '<p class="rp-nota">Sobre venta sin IVA ni servicio, contra las metas: global ' + pct(fc.meta_global, 0) + ', cocina ' + pct(fc.cocina.meta, 0) + ', barra ' + pct(fc.barra.meta, 0) + '. ' + esc(fc.aviso_barra) + '</p>' +
       '<div class="rp-kpis">' +
       // Limpieza del 28-sep-2026: dentro de un area (Profit OS) no van los dos food cost GLOBALES,
       // que salian con titulo de cocina o barra, ni la tabla de 8 columnas que repetia las tarjetas.
@@ -352,7 +357,7 @@
       })
       .withFailureHandler(function (e) {
         botones.forEach(function (x) { x.disabled = false; }); b.textContent = texto;
-        alert(String(e && e.message || e));
+        alert((window.PF_ERROR ? window.PF_ERROR(e) : String(e && e.message || e)));
       })
       .marcarAccion(AUTH, a.fila, b.dataset.e, a.accion);
   }
@@ -372,7 +377,7 @@
         $('acciones').innerHTML = ac.lista.map(filaAccion).join('');
         ROOT.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
       })
-      .withFailureHandler(function (e) { msg.textContent = String(e && e.message || e); })
+      .withFailureHandler(function (e) { msg.textContent = (window.PF_ERROR ? window.PF_ERROR(e) : String(e && e.message || e)); })
       .guardarAccionReporte(AUTH, { clave: CLAVE, accion: $('ac-accion').value,
                                     responsable: $('ac-resp').value, porque: $('ac-porque').value });
   }
@@ -383,7 +388,7 @@
         $('acciones').innerHTML = ac.lista.length ? ac.lista.map(filaAccion).join('') : '<tr><td class="txt" colspan="4" style="opacity:0.7">Sin acciones escritas para esta semana.</td></tr>';
         ROOT.querySelectorAll('.ac-borrar').forEach(function (b) { b.addEventListener('click', function () { borrarAccion(b.dataset.fila); }); });
       })
-      .withFailureHandler(function (e) { window.alert(String(e && e.message || e)); })
+      .withFailureHandler(function (e) { window.alert((window.PF_ERROR ? window.PF_ERROR(e) : String(e && e.message || e))); })
       .borrarAccionReporte(AUTH, Number(fila));
   }
 
@@ -396,7 +401,7 @@
       .withFailureHandler(function (e) {
         $('rp-cargando').hidden = true;
         var el = $('rp-error');
-        el.textContent = String(e && e.message || e); el.hidden = false;
+        el.textContent = (window.PF_ERROR ? window.PF_ERROR(e) : String(e && e.message || e)); el.hidden = false;
       });
     if (AREA) run.getReporteArea(AUTH, clave || 0, AREA, !!forzar);
     else if (forzar) run.refrescarReporteSemanal(AUTH, clave || 0); else run.getReporteSemanal(AUTH, clave || 0);
@@ -413,7 +418,7 @@
         if (r.ya_enviado) { if (confirm(r.detalle + ' ¿Enviarlo otra vez?')) enviarSupervisores(true); return; }
         alert(r.ok ? r.detalle : 'No se envió: ' + r.detalle);
       })
-      .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Enviar a supervisores'; alert(String(e && e.message || e)); })
+      .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Enviar a supervisores'; alert((window.PF_ERROR ? window.PF_ERROR(e) : String(e && e.message || e))); })
       .enviarReporteSupervisores(AUTH, CLAVE, !!reenviar);
   }
   if ($('rp-enviar')) $('rp-enviar').addEventListener('click', function () {

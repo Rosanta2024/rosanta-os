@@ -1,0 +1,170 @@
+RESUMEN 
+CIERRE DE CAJA 101020260001-101020262231 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	1,072.50
+	Caja (efecvo) POS 
+	973.50
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	186.0
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 186.00
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 2,046.00
+	TOTAL 
+	GTQ 2,046.00
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 186.00
+	TOTAL 
+	GTQ 186.00
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	60 
+	Factura 
+	GTQ 506.00
+	61 
+	Factura 
+	GTQ 693.00
+	62 
+	Factura 
+	GTQ 379.50
+	63 
+	Factura 
+	GTQ 467.50
+	TOTAL 
+	GTQ 2046.00
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Ensalada con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Pollo en Salsa de Tamarindo 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Propina 
+	4.00 
+	GTQ 0.00 
+	GTQ 186.00
+	Agua con Gas 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Pachamama Tropical 500ml 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	Queso Horneado 
+	2.00 
+	GTQ 0.00 
+	GTQ 280.00
+	Pulpo a la Parrilla 
+	1.00 
+	GTQ 0.00 
+	GTQ 150.00
+	laval 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Naranjada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	
+
+
+
+© Soported by www.posfile.com • 10/10/2026 10:33:33 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Soda del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Peras Horneadas 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Camarones al horno 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Porcion pan 
+	1.00 
+	GTQ 0.00 
+	GTQ 20.00
+	TOTAL 
+	23 
+	GTQ 0.00 
+	GTQ 2046.00
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/10/2026 10:33:33 PM

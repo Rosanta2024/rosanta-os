@@ -1,0 +1,257 @@
+RESUMEN 
+CIERRE DE CAJA 081020260001-081020262054 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	4,401.50
+	Caja (efecvo) POS 
+	825.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	511.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 511.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 5,226.50
+	TOTAL 
+	GTQ 5,226.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 511.50
+	TOTAL 
+	GTQ 511.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	43 
+	Factura 
+	GTQ 324.50
+	44 
+	Factura 
+	GTQ 198.00
+	45 
+	Factura 
+	GTQ 638.00
+	46 
+	Factura 
+	GTQ 627.00
+	47 
+	Factura 
+	GTQ 159.50
+	48 
+	Factura 
+	GTQ 973.50
+	49 
+	Factura 
+	GTQ 1,380.50
+	50 
+	Factura 
+	GTQ 447.00
+	51 
+	Factura 
+	GTQ 478.50
+	TOTAL 
+	GTQ 5226.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Coliflor en Romesco 
+	3.00 
+	GTQ 0.00 
+	GTQ 345.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Propina 
+	9.00 
+	GTQ 0.00 
+	GTQ 511.50
+	El Colonial 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Limonada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Pulpo a la Parrilla 
+	1.00 
+	GTQ 0.00 
+	GTQ 150.00
+	
+
+
+
+© Soported by www.posfile.com • 10/8/2026 9:00:16 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Agua Natural de la casa 1L 
+	2.00 
+	GTQ 0.00 
+	GTQ 60.00
+	Ensalada Rosanta 
+	2.00 
+	GTQ 0.00 
+	GTQ 150.00
+	Soda del día 
+	3.00 
+	GTQ 0.00 
+	GTQ 120.00
+	Tartar de Hongos 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Queso Horneado 
+	3.00 
+	GTQ 0.00 
+	GTQ 420.00
+	Cousiño Chardonnay 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Peras Horneadas 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Naranjada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Lomito ROSANTA 
+	2.00 
+	GTQ 0.00 
+	GTQ 380.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Bowl Mediterraneo 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Mezcal a la Piña 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Los Penitentes 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	El canche 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Mousse de Chocolate 
+	1.00 
+	GTQ 0.00 
+	GTQ 65.00
+	Brocoli con Nduja 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Tinto - La Linda 
+	3.00 
+	GTQ 0.00 
+	GTQ 210.00
+	Tinto - Mariluna 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Pasta con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Camarones al horno 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Bol Mediterraneo 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Ensalada con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Boga 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Beetrot Negroni 
+	2.00 
+	GTQ 0.00 
+	GTQ 160.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Negroni clasico 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	TOTAL 
+	56 
+	GTQ 0.00 
+	GTQ 5226.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/8/2026 9:00:16 PM

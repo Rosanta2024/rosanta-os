@@ -29,7 +29,7 @@ function pedirProfitOS(semanas){
     })
     .withFailureHandler(function(e){
       window.__POSCARGANDO__ = null;
-      const err = {ok:false, error:e.message};
+      const err = {ok:false, error:PF_ERROR(e)};
       aplicarProfitOS(semanas, {tablero:err, menu:err});
       pedirAvisos();
     })
@@ -59,7 +59,7 @@ function pedirCmvReal(){
   google.script.run
     .withSuccessHandler(function(r){ window.__DBCMV__ = r || { ok:false };
                                      if(view==='inicio') pintar(); })
-    .withFailureHandler(function(e){ window.__DBCMV__ = { ok:false, error:(e && e.message) || String(e) };
+    .withFailureHandler(function(e){ window.__DBCMV__ = { ok:false, error:PF_ERROR(e) };
                                      window.__DBCMVCARGANDO__ = false;
                                      if(view==='inicio') pintar(); })
     .getCmvRealTeorico(AUTH);
@@ -118,7 +118,7 @@ function pintar(){
     if(!window.__HIG__ && !window.__HIGCARGANDO__){
       window.__HIGCARGANDO__ = true;
       google.script.run.withSuccessHandler(function(h){ window.__HIG__ = h; if(view==='higiene') pintar(); })
-        .withFailureHandler(function(e){ document.getElementById('v-higiene').innerHTML = '<p class="empty">'+e.message+'</p>'; })
+        .withFailureHandler(function(e){ document.getElementById('v-higiene').innerHTML = '<p class="empty">'+esc(PF_ERROR(e))+'</p>'; })
         .getReporteHigiene(AUTH);
     }
   }
@@ -215,7 +215,7 @@ function siguienteEnCola(){
     siguienteEnCola();
   };
   try { it.enviar(listo); }
-  catch(e){ listo(); avisarError(it.etiqueta + ':\n\n' + ((e && e.message) || e)); }
+  catch(e){ listo(); avisarError(it.etiqueta + ':\n\n' + PF_ERROR(e)); }
 }
 /* Una ficha (o un producto) con algo en fila. Mientras tanto no se ofrece editar sus
    cantidades: el numero de fila que se ve podria no ser el que queda en la hoja. */
@@ -246,5 +246,5 @@ function estadoCola(mensaje){
   pildora.className = 'guardando';
 }
 function avisar(mensaje){ if(!COLA.length) estadoCola(mensaje); }
-function avisarError(mensaje){ alert(mensaje); }
+function avisarError(mensaje){ alert(mensaje); }   // los errores ya llegan traducidos por PF_ERROR (14-oct-2026)
 window.addEventListener('beforeunload', e => { if(COLA.length){ e.preventDefault(); e.returnValue = ''; } });

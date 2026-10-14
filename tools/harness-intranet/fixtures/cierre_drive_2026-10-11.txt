@@ -1,0 +1,158 @@
+RESUMEN 
+CIERRE DE CAJA 111020260001-111020262016 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	1,771.00
+	Caja (efecvo) POS 
+	209.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	180.0
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 180.00
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 1,980.00
+	TOTAL 
+	GTQ 1,980.00
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 180.00
+	TOTAL 
+	GTQ 180.00
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	64 
+	Factura 
+	GTQ 209.00
+	65 
+	Factura 
+	GTQ 720.50
+	66 
+	Factura 
+	GTQ 484.00
+	67 
+	Factura 
+	GTQ 566.50
+	TOTAL 
+	GTQ 1980.00
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Lomito ROSANTA 
+	2.00 
+	GTQ 0.00 
+	GTQ 380.00
+	Pollo en Salsa de Tamarindo 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Propina 
+	4.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Angua - Muy Noble 
+	2.00 
+	GTQ 0.00 
+	GTQ 90.00
+	La Val 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Pulpo a la Parrilla 
+	2.00 
+	GTQ 0.00 
+	GTQ 300.00
+	Gallo Botella 
+	3.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Agua con Gas 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Ensalada con Camarones 
+	1.00 
+	GTQ 0.00 
+	GTQ 135.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Brisket de Res 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Naranjada 
+	3.00 
+	GTQ 0.00 
+	GTQ 120.00
+	
+
+
+
+© Soported by www.posfile.com • 10/11/2026 8:23:26 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Refresco de Citronela 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	TOTAL 
+	23 
+	GTQ 0.00 
+	GTQ 1980.00
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/11/2026 8:23:26 PM

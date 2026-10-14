@@ -1,0 +1,238 @@
+RESUMEN 
+CIERRE DE CAJA 051020260001-051020262215 Generado por: Admin 
+
+
+Descripción 
+	TOTAL
+	Tarjetas 
+	3,234.50
+	Caja (efecvo) POS 
+	1,688.00
+	
+
+
+
+CORTESÍA - PROPINA 
+Descripción 
+	TOTAL
+	Propina 
+	447.5
+	Cortesía 
+	0
+	TOTAL 
+	GTQ 447.50
+	
+
+
+
+VENTAS POR VENDEDORESPROPINA POR VENDEDORES 
+
+
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 2,029.50
+	Barra Rosanta 
+	GTQ 2,893.00
+	TOTAL 
+	GTQ 4,922.50
+	
+
+
+
+VENTAS POR DOCUMENTO 
+Descripción 
+	TOTAL
+	Admin 
+	GTQ 184.50
+	Barra Rosanta 
+	GTQ 263.00
+	TOTAL 
+	GTQ 447.50
+	
+
+
+
+
+
+VENTAS POR DOCUMENTO 
+	Tipo Documento 
+	TOTAL
+	30 
+	Factura 
+	GTQ 511.50
+	31 
+	Factura 
+	GTQ 764.50
+	32 
+	Factura 
+	GTQ 753.50
+	33 
+	Factura 
+	GTQ 2,893.00
+	TOTAL 
+	GTQ 4922.50
+	
+
+
+
+VENTAS POR PRODUCTO 
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Queso Horneado 
+	3.00 
+	GTQ 0.00 
+	GTQ 420.00
+	Coslla de Cerdo Salda de Cafe y Cardamomo 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Mix de Fritas 
+	1.00 
+	GTQ 0.00 
+	GTQ 45.00
+	Propina 
+	4.00 
+	GTQ 0.00 
+	GTQ 447.50
+	Tinto - La Linda 
+	1.00 
+	GTQ 0.00 
+	GTQ 70.00
+	Agua Natural de la casa 1L 
+	1.00 
+	GTQ 0.00 
+	GTQ 30.00
+	Ejotes al aceite de ajonjolí y ajo 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	Ensalada Rosanta 
+	1.00 
+	GTQ 0.00 
+	GTQ 75.00
+	Pulpo a la Parrilla 
+	1.00 
+	GTQ 0.00 
+	GTQ 150.00
+	Hamburguesa de Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 130.00
+	Estafado de Rabo 
+	2.00 
+	GTQ 0.00 
+	GTQ 360.00
+	Limonada 
+	1.00 
+	GTQ 0.00 
+	GTQ 40.00
+	
+
+
+
+© Soported by www.posfile.com • 10/5/2026 10:15:15 PM
+Descripción 
+	Candad 
+	Descuento 
+	TOTAL
+	Soda del día 
+	2.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tés - Hierbaluisa con Menta 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Infusiones - Jade negro 
+	1.00 
+	GTQ 0.00 
+	GTQ 35.00
+	Bowl Mediterraneo 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Tartar de Hongos 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Pescado del día 
+	1.00 
+	GTQ 0.00 
+	GTQ 185.00
+	Cousiño Chardonnay 
+	2.00 
+	GTQ 0.00 
+	GTQ 700.00
+	Brisket de Res 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Lomito de la Casa 
+	1.00 
+	GTQ 0.00 
+	GTQ 180.00
+	Hamburgesa Portobello 
+	1.00 
+	GTQ 0.00 
+	GTQ 105.00
+	Ensalada con Camarones 
+	1.00 
+	GTQ 0.00 
+	GTQ 135.00
+	Ensalada con Lomito 
+	1.00 
+	GTQ 0.00 
+	GTQ 100.00
+	Vegetales Fermentados 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Coliflor en Romesco 
+	1.00 
+	GTQ 0.00 
+	GTQ 115.00
+	Fufuruto 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	Tinto - Mariluna 
+	2.00 
+	GTQ 0.00 
+	GTQ 140.00
+	Lomito ROSANTA 
+	1.00 
+	GTQ 0.00 
+	GTQ 190.00
+	Arroz Meloso 
+	1.00 
+	GTQ 0.00 
+	GTQ 165.00
+	Mezcal a la Piña 
+	1.00 
+	GTQ 0.00 
+	GTQ 80.00
+	MockTails 
+	2.00 
+	GTQ 0.00 
+	GTQ 110.00
+	TOTAL 
+	42 
+	GTQ 0.00 
+	GTQ 4922.50
+	
+
+
+
+GASTOS 
+Descripción 
+	TOTAL
+	TOTAL 
+	GTQ 0.00
+	
+
+
+
+© Soported by www.posfile.com • 10/5/2026 10:15:15 PM

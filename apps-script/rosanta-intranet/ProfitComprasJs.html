@@ -1,134 +1,183 @@
 <style>
-  /* Compras en efectivo y con debito (14-oct-2026). Usa los estilos .pg de Pagos. */
+  /* Compras en efectivo (14-oct-2026). Usa los estilos .pg de Pagos. */
   .ce-scroll { overflow-x: auto; }
   .ce-ok { color: #2E6B3F; }
   .ce-mal { color: #A33A2A; }
   .ce-prop { border-top: 1px solid rgba(26,26,26,0.08); padding-top: 0.6rem; margin-top: 0.6rem; }
-  .ce-metodo { display: flex; gap: 0.4rem; width: 100%; }
-  .ce-metodo button[aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
-  .ce-foto { width: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .ce-paso { font-family: 'Playfair Display', Georgia, serif; font-size: 1rem; margin: 0.9rem 0 0.4rem; }
+  .ce-paso:first-of-type { margin-top: 0.2rem; }
+  .ce-modo { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .ce-modo button[aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
+  .ce-foto { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
+  /* Las compras: una fila cada una, cinco de entrada (Juanma, 14-oct-2026) */
+  .ce-fila { display: grid; grid-template-columns: 1.4rem minmax(9rem,1.2fr) minmax(11rem,1.4fr) minmax(10rem,1.6fr) 6.5rem auto 1.6rem;
+    gap: 0.35rem; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
+  .ce-fila.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; font-weight: 600; border-bottom: 0; }
+  .ce-fila input, .ce-fila select { width: 100%; box-sizing: border-box; }
+  .ce-fila .ce-n { font-size: 0.78rem; color: #8a8780; text-align: right; }
+  .ce-fila .ce-x { font: inherit; background: none; border: 0; color: #A33A2A; cursor: pointer; font-size: 1rem; }
+  .ce-suma { margin-top: 0.6rem; font-size: 0.88rem; background: #F7F5F2; border-radius: 10px; padding: 0.5rem 0.7rem; }
+  @media (max-width: 760px) {
+    .ce-fila { grid-template-columns: 1.4rem 1fr 6.5rem 1.6rem; grid-template-areas: "n prov monto x" ". fac fac fac" ". det det det" ". area area area"; }
+    .ce-fila.cab { display: none; }
+    .ce-fila > .ce-n { grid-area: n; } .ce-fila > [data-c="prov"] { grid-area: prov; } .ce-fila > [data-c="monto"] { grid-area: monto; }
+    .ce-fila > [data-c="llave"] { grid-area: fac; } .ce-fila > [data-c="det"] { grid-area: det; } .ce-fila > [data-c="area"] { grid-area: area; }
+    .ce-fila > .ce-x { grid-area: x; } .ce-fila > span:empty { display: none; }
+  }
 </style>
 <script>
-/* Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js). Parcial crudo:
-   PF_COMPRAS(host, AUTH). El token va PRIMERO en cada llamada.
-   Tres cosas: pedir un retiro (lugar y cantidad), registrar cada compra (a mano o con la foto
-   del recibo) y ver el cuadre: lo retirado contra lo registrado y los cargos de debito sin
-   registro. Las compras quedan en el registro de Pagos. */
+/* Compras en efectivo (14-oct-2026, ComprasEfectivo.js). Parcial crudo: PF_COMPRAS(host, AUTH).
+   El token va PRIMERO en cada llamada.
+   Rediseño del 14-oct-2026 (Juanma: "esta pestaña es muy confusa"): solo efectivo (el debito se
+   paga desde Pagos), un solo formulario con el retiro primero y despues las compras (cinco filas
+   y "+ Agregar otra compra"), un solo Guardar. Una compra sin factura todavia es "factura
+   pendiente de emitir": cuando la factura llega se le asigna desde Compras registradas. */
 window.PF_COMPRAS = function (HOST, AUTH) {
-  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function q(n) { return (n < 0 ? '−' : '') + 'Q' + Math.abs(Number(n || 0)).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function ddmm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
-  var D = null, FORM = 'compra', METODO = 'efectivo', PRE = {}, LEIDO = null, OCUPADO = false;
+  var FILAS_INICIO = 5, NO_DAN = '__no';
+  var D = null, FILAS = [], RET = { modo: 'nuevo', lugar: '', monto: '' }, FECHA = '', LEIDO = null, OCUPADO = false, ASIGNAR = null;
+  function filaVacia() { return { prov: '', llave: '', det: '', monto: '', area: '', url: '' }; }
+  function reiniciar() { FILAS = []; for (var i = 0; i < FILAS_INICIO; i++) FILAS.push(filaVacia()); RET = { modo: 'nuevo', lugar: '', monto: '' }; FECHA = ''; LEIDO = null; }
+  reiniciar();
 
   function cargar() {
-    HOST.innerHTML = '<div class="pg-vacio">Leyendo los retiros, la tarjeta de débito y lo registrado…</div>';
+    HOST.innerHTML = '<div class="pg-vacio">Leyendo los retiros y las compras…</div>';
     google.script.run.withSuccessHandler(function (r) { D = r; pintar(); })
-      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(e && e.message || e) + '</p>'; })
+      .withFailureHandler(function (e) { HOST.innerHTML = '<p class="pg-err">' + esc(PF_ERROR(e)) + '</p>'; })
       .getComprasEfectivo(AUTH);
   }
 
   function pintar() {
     var R = D.resumen;
-    var h = '<div class="pg"><p class="pg-intro">Toda compra pagada en <b>efectivo</b> o con la <b>tarjeta de débito</b> se registra acá, el mismo día: ' +
-      'a mano o con la foto del recibo. Antes de ir al cajero, pedí el retiro con el lugar y la cantidad. ' +
-      'El banco confirma solo cada retiro y cada cargo de la tarjeta.</p>' +
+    HOST.innerHTML = '<div class="pg"><p class="pg-intro">Primero el <b>retiro</b> del cajero; después, <b>qué se compró</b> con esa plata. Se guarda todo de una vez, el mismo día.</p>' +
+      window.PF_DONDE('compras') +
       '<div class="pg-res"><div><b>' + q(R.retirado) + '</b><span>retirado desde el ' + esc(ddmm(D.desde)) + '</span></div>' +
       '<div><b>' + q(R.registrado) + '</b><span>compras en efectivo registradas</span></div>' +
-      '<div><b class="' + (R.por_justificar > 0.01 ? 'ce-mal' : 'ce-ok') + '">' + q(R.por_justificar) + '</b><span>efectivo por justificar</span></div>' +
-      '<div><b class="' + (R.debito_sin_registro ? 'ce-mal' : 'ce-ok') + '">' + R.debito_sin_registro + '</b><span>cargos de débito sin registrar' + (R.debito_sin_registro ? ' (' + q(R.q_debito_sin_registro) + ')' : '') + '</span></div></div>' +
-      '<div class="pg-tabs"><button type="button" class="pg-b' + (FORM === 'compra' ? ' pri' : '') + '" data-f="compra">Registrar compra</button>' +
-      '<button type="button" class="pg-b' + (FORM === 'retiro' ? ' pri' : '') + '" data-f="retiro">Pedir retiro</button>' +
-      '<span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      '<div id="ce-form">' + (FORM === 'retiro' ? formRetiro() : formCompra()) + '</div>' +
-      tablaRetiros() + tablaDebito() + tablaRegistradas() +
+      '<div><b class="' + (R.por_justificar > 0.01 ? 'ce-mal' : 'ce-ok') + '">' + q(R.por_justificar) + '</b><span>efectivo sin compras que lo cubran</span></div></div>' +
+      '<div class="pg-tabs"><span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
+      '<div id="ce-form">' + formulario() + '</div>' +
+      tablaRetiros() + tablaRegistradas() +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Banco cargado hasta el ' + esc(ddmm(D.banco_ult)) + '. ' +
       'Lo de antes del ' + esc(ddmm(D.desde)) + ' quedó cerrado en el cuadre del 14-oct-2026.</p></div>';
-    HOST.innerHTML = h;
-    pintarLeido();
+    pintarLeido(); sumar();
   }
 
   function campo(nombre, html) { return '<label>' + nombre + ' ' + html + '</label>'; }
 
-  function formRetiro() {
-    return '<section class="pg-prov"><h3>Pedir retiro</h3><div class="pg-mas">' +
-      '<p class="pg-nota" style="width:100%">Anotalo antes de ir al cajero. Cuando llegue el banco, el retiro se casa solo con esta solicitud.</p>' +
-      campo('Fecha', '<input type="date" data-v="fecha" value="' + esc(D.hoy) + '">') +
-      campo('Cajero', '<input type="text" data-v="lugar" list="ce-lugares" placeholder="ej. ATM 095 Agencia Recolección" style="min-width:16rem">') +
-      '<datalist id="ce-lugares">' + D.lugares.map(function (l) { return '<option value="' + esc(l) + '">'; }).join('') + '</datalist>' +
-      campo('Cantidad', '<input type="number" step="0.01" min="0" data-v="monto">') +
-      campo('Para qué', '<input type="text" data-v="nota" placeholder="ej. mercado del martes" style="min-width:12rem">') +
-      '</div><div class="pg-formas" style="margin-top:0.6rem"><button type="button" data-guardar="retiro">Guardar solicitud</button></div><div class="pg-err" data-err></div></section>';
+  /* Con un proveedor de la lista, solo sus facturas abiertas. */
+  function facturasDe(prov, llave) {
+    var pv = (D.proveedores || []).filter(function (x) { return x.nit && x.n === prov; })[0];
+    return pv ? D.facturas.filter(function (f) { return pv.nit.split('|').indexOf(f.nit) !== -1 || f.llave === llave; }) : D.facturas;
   }
 
-  function formCompra() {
-    var p = PRE, conF = !!p.llave;
-    // con un proveedor de la lista elegido, solo sus facturas
-    var pv = (D.proveedores || []).filter(function (x) { return x.nit && x.n === p.proveedor; })[0];
-    var facts = pv ? D.facturas.filter(function (f) { return pv.nit.split('|').indexOf(f.nit) !== -1 || f.llave === p.llave; }) : D.facturas;
-    var opFact = '<option value="">' + (pv ? 'Sin factura (' + facts.length + ' facturas abiertas de este proveedor)' : 'Sin factura') + '</option>' + facts.map(function (f) {
-      return '<option value="' + esc(f.llave) + '"' + (f.llave === p.llave ? ' selected' : '') + '>' + esc(f.proveedor) + ' · ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.saldo) + '</option>';
+  function formulario() {
+    var nuevo = RET.modo === 'nuevo';
+    var areas = D.areas.length > 1;
+    var h = '<section class="pg-prov" data-form="1"><h3>Registrar retiro y compras</h3>' +
+      '<div class="ce-paso">1 · El retiro del cajero</div>' +
+      '<div class="ce-modo"><button type="button" class="pg-b" data-modo="nuevo" aria-pressed="' + nuevo + '">Retiré efectivo</button>' +
+      '<button type="button" class="pg-b" data-modo="ya" aria-pressed="' + !nuevo + '">El retiro ya está registrado</button></div>' +
+      '<div class="pg-mas">' + campo('Fecha', '<input type="date" data-v="fecha" value="' + esc(FECHA || D.hoy) + '">') +
+      (nuevo ? campo('Cajero', '<input type="text" data-v="lugar" list="ce-lugares" value="' + esc(RET.lugar) + '" placeholder="ej. ATM 095 Agencia Recolección" style="min-width:16rem">') +
+        '<datalist id="ce-lugares">' + D.lugares.map(function (l) { return '<option value="' + esc(l) + '">'; }).join('') + '</datalist>' +
+        campo('Cantidad retirada', '<input type="number" step="0.01" min="0" data-v="retmonto" value="' + esc(RET.monto) + '">')
+        : '<span class="pg-nota">Las compras salen del efectivo que ya se retiró (' + q(D.resumen.por_justificar > 0 ? D.resumen.por_justificar : 0) + ' sin compras que lo cubran).</span>') +
+      '</div>' +
+      '<div class="ce-paso">2 · Qué se compró con ese efectivo</div>' +
+      '<div class="ce-foto"><input type="file" id="ce-arch" accept="image/*" multiple> <button type="button" class="pg-b" data-acc="leer">Leer fotos</button>' +
+      '<span class="pg-nota">Fotos de los recibos o facturas: la intranet llena las filas; vos revisás.</span></div>' +
+      '<div class="ce-fila cab"><span></span><span>Proveedor</span><span>Factura</span><span>Qué se compró</span><span class="n">Monto</span><span>' + (areas ? 'Área' : '') + '</span><span></span></div>';
+    h += FILAS.map(function (f, i) {
+      var opts = '<option value=""' + (!f.llave ? ' selected' : '') + '>Factura pendiente de emitir</option>' +
+        '<option value="' + NO_DAN + '"' + (f.llave === NO_DAN ? ' selected' : '') + '>No dan factura (mercado)</option>' +
+        facturasDe(f.prov, f.llave).map(function (x) {
+          return '<option value="' + esc(x.llave) + '"' + (x.llave === f.llave ? ' selected' : '') + '>Factura ' + esc(x.dte) + ' · ' + esc(ddmm(x.fecha)) + ' · ' + q(x.saldo) + (f.prov ? '' : ' · ' + esc(x.proveedor)) + '</option>';
+        }).join('');
+      return '<div class="ce-fila" data-i="' + i + '"><span class="ce-n">' + (i + 1) + '</span>' +
+        '<input type="text" data-c="prov" list="ce-provs" value="' + esc(f.prov) + '" placeholder="Proveedor">' +
+        '<select data-c="llave" class="ce-fac">' + opts + '</select>' +
+        '<input type="text" data-c="det" value="' + esc(f.det) + '" placeholder="ej. 10 lb tomate">' +
+        '<input type="number" step="0.01" min="0" data-c="monto" value="' + esc(f.monto) + '" placeholder="Q">' +
+        (areas ? '<select data-c="area">' + D.areas.map(function (a) { return '<option' + (a === f.area ? ' selected' : '') + '>' + esc(a) + '</option>'; }).join('') + '</select>' : '<span></span>') +
+        (i >= FILAS_INICIO ? '<button type="button" class="ce-x" data-quitar="' + i + '" title="Quitar esta fila">×</button>' : '<span></span>') +
+        (f.url ? '<span class="pg-nota" style="grid-column:2 / -1">con la foto del recibo</span>' : '') + '</div>';
     }).join('');
-    var areas = D.areas.length > 1 ? campo('Área', '<select data-v="area">' + D.areas.map(function (a) { return '<option' + (a === p.area ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>') : '';
-    return '<section class="pg-prov"><h3>Registrar compra</h3><div class="pg-mas">' +
-      '<div class="ce-metodo"><button type="button" class="pg-b" data-metodo="efectivo" aria-pressed="' + (METODO === 'efectivo') + '">Efectivo</button>' +
-      '<button type="button" class="pg-b" data-metodo="debito" aria-pressed="' + (METODO === 'debito') + '">Tarjeta de débito</button></div>' +
-      '<div class="ce-foto"><input type="file" id="ce-arch" accept="image/*" multiple> <button type="button" class="pg-b" data-acc="leer">Leer foto</button>' +
-      '<span class="pg-nota">Foto del recibo, la factura, el voucher o la captura del chat. La intranet llena los datos; vos revisás.</span></div>' +
-      campo('Fecha', '<input type="date" data-v="fecha" value="' + esc(p.fecha || D.hoy) + '">') +
-      campo('Factura', '<select data-v="llave" style="max-width:22rem">' + opFact + '</select>') +
-      campo('Proveedor', '<input type="text" data-v="prov" list="ce-provs" value="' + esc(p.proveedor || '') + '" placeholder="ej. Doña Mina"' + (conF ? ' disabled' : '') + '>') +
-      '<datalist id="ce-provs">' + (D.proveedores || []).map(function (x) { return '<option value="' + esc(x.n) + '">'; }).join('') + '</datalist>' +
-      campo('Qué se compró', '<input type="text" data-v="detalle" value="' + esc(p.detalle || '') + '" placeholder="ej. 10 lb tomate, 5 lb cebolla" style="min-width:16rem">') +
-      campo('Monto', '<input type="number" step="0.01" min="0" data-v="monto" value="' + esc(p.monto || '') + '">') + areas +
-      (p.archivo_url ? '<p class="pg-nota" style="width:100%">La foto ya quedó guardada y se adjunta a este registro.</p>' : '') +
-      '<p class="pg-nota" style="width:100%">Si la compra tiene factura del FEL, elegila en <b>Factura</b>: así se paga esa factura y no queda doble. Si todavía no aparece, registrala sin factura.</p>' +
-      '</div><div class="pg-formas" style="margin-top:0.6rem"><button type="button" data-guardar="compra">Guardar compra</button>' +
-      (Object.keys(PRE).length ? '<button type="button" data-acc="limpiar" style="background:#8a8780">Limpiar</button>' : '') +
-      '</div><div class="pg-err" data-err></div><div id="ce-leido"></div></section>';
+    h += '<datalist id="ce-provs">' + (D.proveedores || []).map(function (x) { return '<option value="' + esc(x.n) + '">'; }).join('') + '</datalist>' +
+      '<div class="pg-tabs" style="margin:0.5rem 0 0"><button type="button" class="pg-b" data-acc="otra">+ Agregar otra compra</button></div>' +
+      '<p class="pg-nota">Si la factura ya llegó, elegila en <b>Factura</b>: así se paga esa factura y no queda doble. Si todavía no la emiten, dejá <b>Factura pendiente de emitir</b> y asignala cuando llegue (abajo, en Compras registradas).</p>' +
+      '<div class="ce-suma" data-suma></div>' +
+      '<div class="pg-acciones" style="display:flex;gap:0.5rem;margin-top:0.6rem"><button type="button" class="pg-b pri" data-acc="guardar">Guardar todo</button>' +
+      '<button type="button" class="pg-b" data-acc="limpiar">Limpiar</button></div>' +
+      '<div class="pg-err" data-err></div><div id="ce-leido"></div></section>';
+    return h;
+  }
+
+  /* Lo escrito en el formulario, antes de volver a pintarlo (nada se pierde). */
+  function leerForm() {
+    var sec = HOST.querySelector('[data-form]'); if (!sec) return;
+    var v = function (k) { var el = sec.querySelector('[data-v="' + k + '"]'); return el ? el.value : null; };
+    if (v('fecha') !== null) FECHA = v('fecha');
+    if (v('lugar') !== null) RET.lugar = v('lugar');
+    if (v('retmonto') !== null) RET.monto = v('retmonto');
+    sec.querySelectorAll('.ce-fila[data-i]').forEach(function (row) {
+      var f = FILAS[+row.dataset.i]; if (!f) return;
+      ['prov', 'llave', 'det', 'monto', 'area'].forEach(function (k) { var el = row.querySelector('[data-c="' + k + '"]'); if (el) f[k] = el.value; });
+    });
+  }
+  function llenas() {
+    return FILAS.filter(function (f) { return Number(f.monto) > 0 || String(f.det).trim() || String(f.prov).trim() || (f.llave && f.llave !== NO_DAN); });
+  }
+  function sumar() {
+    var el = HOST.querySelector('[data-suma]'); if (!el) return;
+    leerForm();
+    var L = llenas(), tot = L.reduce(function (a, f) { return a + (Number(f.monto) || 0); }, 0);
+    var ret = RET.modo === 'nuevo' ? Number(RET.monto) || 0 : 0;
+    el.innerHTML = (RET.modo === 'nuevo' ? 'Retiro <b>' + q(ret) + '</b> · ' : '') + 'Compras <b>' + q(tot) + '</b> (' + L.length + ')' +
+      (RET.modo === 'nuevo' && ret > 0 ? ' · ' + (ret - tot >= -0.005 ? 'queda <b>' + q(ret - tot) + '</b> en efectivo' : '<b class="ce-mal">las compras pasan el retiro por ' + q(tot - ret) + '</b>') : '');
   }
 
   function tablaRetiros() {
     var filas = D.retiros.slice().reverse().map(function (r) {
       var est = r.origen === 'solicitud' ? '<span class="pg-est pend">Falta cargar el banco</span>' :
-        (r.solicitud ? '<span class="pg-est banco">En el banco</span>' : '<span class="pg-est mas">Sin solicitud</span>');
+        (r.solicitud ? '<span class="pg-est banco">En el banco</span>' : '<span class="pg-est mas">No se registró</span>');
       return '<tr><td>' + esc(ddmm(r.fecha)) + '<div class="pg-nota">' + esc(r.lugar) + (r.por ? ' · ' + esc(r.por) : '') + '</div></td><td class="n">' + q(r.q) + '</td>' +
         '<td class="n ' + (r.ok ? 'ce-ok' : 'ce-mal') + '">' + q(r.justificado) + '</td><td>' + est + '</td></tr>';
     }).join('');
     var perdidas = D.solicitudes.filter(function (s) { return s.estado === 'No aparece en el banco'; });
     var mias = D.solicitudes.filter(function (s) { return s.estado === 'Falta cargar el banco' && (D.rol === 'dueno' || s.por === D.nombre); });
-    return '<section class="pg-prov"><header><h3>Retiros de cajero</h3><span class="pg-nota">Lo justificado sale de las compras en efectivo, en orden.</span></header>' +
-      (filas ? '<div class="ce-scroll"><table><tr><th>Fecha y cajero</th><th class="n">Retirado</th><th class="n">Justificado</th><th>Estado</th></tr>' + filas + '</table></div>'
+    return '<section class="pg-prov"><header><h3>Retiros de cajero</h3><span class="pg-nota">Las compras cubren los retiros en orden, del más viejo al más nuevo.</span></header>' +
+      (filas ? '<div class="ce-scroll"><table class="pg-t"><tr><th>Fecha y cajero</th><th class="n">Retirado</th><th class="n">Cubierto con compras</th><th>Estado</th></tr>' + filas + '</table></div>'
              : '<p class="pg-nota">Todavía no hay retiros desde el ' + esc(ddmm(D.desde)) + '.</p>') +
-      (perdidas.length ? '<p class="pg-err">' + perdidas.length + ' solicitud(es) que el banco no trae: ' + perdidas.map(function (s) { return ddmm(s.fecha) + ' ' + q(s.q); }).join(', ') + '. ¿Se cancelaron? Anulalas.</p>' : '') +
-      (mias.concat(perdidas).length ? '<div class="pg-formas">' + mias.concat(perdidas).map(function (s) {
-        return '<button type="button" data-anular-sol="' + esc(s.id) + '" style="background:#8a8780">Anular solicitud ' + esc(ddmm(s.fecha)) + ' ' + q(s.q) + '</button>'; }).join('') + '</div>' : '') +
+      (perdidas.length ? '<p class="pg-err">' + perdidas.length + ' retiro(s) que el banco no trae: ' + perdidas.map(function (s) { return esc(ddmm(s.fecha)) + ' ' + q(s.q); }).join(', ') + '. ¿Se anotaron por error? Anulalos.</p>' : '') +
+      (mias.concat(perdidas).length ? '<div class="pg-tabs">' + mias.concat(perdidas).map(function (s) {
+        return '<button type="button" class="pg-b" data-anular-sol="' + esc(s.id) + '">Anular retiro ' + esc(ddmm(s.fecha)) + ' ' + q(s.q) + '</button>'; }).join('') + '</div>' : '') +
       '</section>';
-  }
-
-  function tablaDebito() {
-    if (!D.cargos_debito.length) return '';
-    var filas = D.cargos_debito.slice().reverse().map(function (c, i) {
-      return '<tr><td>' + esc(ddmm(c.fecha)) + '<div class="pg-nota">' + esc(c.glosa) + '</div></td><td class="n">' + q(c.q) + '</td><td>' +
-        (c.casado ? '<span class="ce-ok">' + esc(c.casado) + '</span>' : '<button type="button" class="pg-b" data-deb="' + (D.cargos_debito.length - 1 - i) + '">Registrar</button>') + '</td></tr>';
-    }).join('');
-    return '<section class="pg-prov"><header><h3>Tarjeta de débito (del banco)</h3><span class="pg-nota">Cada cargo necesita su factura o su compra registrada.</span></header>' +
-      '<div class="ce-scroll"><table><tr><th>Fecha y comercio</th><th class="n">Monto</th><th>Registro</th></tr>' + filas + '</table></div></section>';
   }
 
   function tablaRegistradas() {
     if (!D.registradas.length) return '<section class="pg-prov"><h3>Compras registradas</h3><p class="pg-nota">Todavía no hay compras registradas desde el ' + esc(ddmm(D.desde)) + '.</p></section>';
     var filas = D.registradas.map(function (m) {
-      var url = /recibo: (\S+)/.exec(m.detalle), det = m.detalle.replace(/\s*·?\s*recibo: \S+/, '');
+      var url = /recibo: (https:\/\/(?:drive|docs)\.google\.com\/\S+)/i.exec(m.detalle), det = m.detalle.replace(/\s*·?\s*recibo: \S+/, '');
       var puede = D.rol === 'dueno' || m.por === D.nombre;
-      return '<tr><td>' + esc(ddmm(m.fecha)) + '<div class="pg-nota">' + esc(m.metodo) + '</div></td><td>' + esc(m.proveedor) + (m.factura ? ' <span class="pg-nota">· factura ' + esc(m.factura) + '</span>' : '') +
-        '<div class="pg-nota">' + esc(det) + (url ? ' · <a href="' + esc(url[1]) + '" target="_blank" rel="noopener">recibo</a>' : '') + ' · ' + esc(m.por) + '</div></td><td class="n">' + q(m.q) + '</td>' +
-        '<td>' + (puede ? '<button type="button" class="pg-b" data-anular="' + esc(m.id) + '">Anular</button>' : '') + '</td></tr>';
+      var fac = m.factura ? esc(ddmm(m.fecha_factura)) + '<div class="pg-nota">' + esc(m.factura) + '</div>'
+        : m.pendiente ? '<span class="pg-est pend">Pendiente de emitir</span>' + (puede ? ' <button type="button" class="pg-x" style="color:var(--vb)" data-asignar="' + esc(m.id) + '">asignar factura</button>' : '')
+        : '<span class="pg-nota">no dan factura</span>';
+      var asig = ASIGNAR === m.id ? '<tr><td colspan="5"><div class="pg-panel" data-asig="' + esc(m.id) + '"><b>¿Qué factura es?</b> ' +
+        '<select data-v="asigllave" style="max-width:28rem"><option value="">elegí la factura</option>' + facturasDe(m.proveedor, '').concat(D.facturas).filter(function (x, i, a) { return a.indexOf(x) === i; }).map(function (x) {
+          return '<option value="' + esc(x.llave) + '">' + esc(x.proveedor) + ' · ' + esc(x.dte) + ' · ' + esc(ddmm(x.fecha)) + ' · ' + q(x.saldo) + (Math.abs(x.saldo - m.q) < 0.01 ? ' (mismo monto)' : '') + '</option>';
+        }).join('') + '</select> <button type="button" class="pg-b pri" data-asigok="' + esc(m.id) + '">Asignar</button> <button type="button" class="pg-b" data-asignar="">Cancelar</button>' +
+        '<div class="pg-nota">La compra pasa a ser el pago de esa factura (misma fecha y cantidad) y la factura sale de Por pagar.</div><div class="pg-err" data-err></div></div></td></tr>' : '';
+      return '<tr><td>' + esc(ddmm(m.fecha)) + '</td><td>' + fac + '</td>' +
+        '<td>' + esc(m.proveedor) + '<div class="pg-nota">' + esc(det) + (url ? ' · <a href="' + esc(url[1]) + '" target="_blank" rel="noopener">recibo</a>' : '') + ' · ' + esc(m.por) + '</div></td><td class="n">' + q(m.q) + '</td>' +
+        '<td>' + (puede ? '<button type="button" class="pg-b" data-anular="' + esc(m.id) + '">Anular</button>' : '') + '</td></tr>' + asig;
     }).join('');
-    return '<section class="pg-prov"><h3>Compras registradas</h3><div class="ce-scroll"><table><tr><th>Fecha</th><th>Proveedor y qué</th><th class="n">Monto</th><th></th></tr>' + filas + '</table></div></section>';
+    return '<section class="pg-prov"><h3>Compras registradas</h3><div class="ce-scroll"><table class="pg-t"><tr><th>Fecha de pago</th><th>Factura</th><th>Proveedor y qué</th><th class="n">Monto</th><th></th></tr>' + filas + '</table></div></section>';
   }
 
-  /* ---- la foto ---- */
+  /* ---- las fotos ---- */
   function aBase64(file) {
     return new Promise(function (ok, mal) {
       var fr = new FileReader();
@@ -148,108 +197,113 @@ window.PF_COMPRAS = function (HOST, AUTH) {
       fr.readAsDataURL(file);
     });
   }
+  /* Cada compra que se lee de las fotos llena una fila vacia (o agrega una). */
   function leerFoto(b) {
     var files = [].slice.call((HOST.querySelector('#ce-arch') || {}).files || []), err = HOST.querySelector('#ce-form [data-err]');
-    if (!files.length) { err.textContent = 'Elegí una foto o captura.'; return; }
+    if (!files.length) { err.textContent = 'Elegí una o varias fotos.'; return; }
     err.textContent = ''; b.disabled = true; b.textContent = 'Leyendo… (puede tardar un minuto)';
     Promise.all(files.map(aBase64)).then(function (arch) {
       google.script.run
         .withSuccessHandler(function (r) {
-          LEIDO = r;
-          if (r.compras.length === 1) { usarLeida(0); return; }
-          b.disabled = false; b.textContent = 'Leer foto'; pintarLeido();
+          leerForm();
+          var n = 0;
+          (r.compras || []).forEach(function (c) {
+            var f = FILAS.filter(function (x) { return !llenas().some(function (y) { return y === x; }); })[0];
+            if (!f) { f = filaVacia(); FILAS.push(f); }
+            f.prov = c.proveedor || ''; f.det = c.detalle || ''; f.monto = c.total || ''; f.llave = c.llave || ''; f.url = r.archivo_url; n++;
+            if (c.fecha && !FECHA) FECHA = c.fecha;
+          });
+          LEIDO = { n: n, notas: (r.compras || []).filter(function (c) { return c.nota; }).map(function (c) { return (c.proveedor || '') + ': ' + c.nota; }) };
+          pintar();
         })
-        .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Leer foto'; err.textContent = e && e.message || e; })
+        .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Leer fotos'; err.textContent = PF_ERROR(e); })
         .leerComprobanteCompra(AUTH, arch);
-    }, function (e) { b.disabled = false; b.textContent = 'Leer foto'; err.textContent = e.message; });
+    }, function (e) { b.disabled = false; b.textContent = 'Leer fotos'; err.textContent = PF_ERROR(e); });
   }
   function pintarLeido() {
     var el = HOST.querySelector('#ce-leido');
     if (!el || !LEIDO) return;
-    if (!LEIDO.compras.length) { el.innerHTML = '<p class="pg-err">No encontré compras en la foto. Registrala a mano.</p>'; return; }
-    el.innerHTML = '<div class="ce-prop"><p class="pg-nota">Encontré ' + LEIDO.compras.length + ' compras. Elegí una para llenar el registro; después volvés por la siguiente.</p>' +
-      LEIDO.compras.map(function (c, i) {
-        return '<div style="margin:0.3rem 0"><button type="button" class="pg-b" data-usar="' + i + '">Usar</button> ' + esc(c.fecha ? ddmm(c.fecha) + ' · ' : '') +
-          esc(c.proveedor || 'sin proveedor') + ' · ' + q(c.total) + ' · ' + esc(c.detalle) + (c.factura_txt ? ' · <b>factura ' + esc(c.factura_txt) + '</b>' : '') +
-          (c.nota ? ' <span class="pg-nota">(' + esc(c.nota) + ')</span>' : '') + '</div>';
-      }).join('') + '</div>';
-  }
-  function usarLeida(i) {
-    var c = LEIDO.compras[i];
-    PRE = { fecha: c.fecha || D.hoy, proveedor: c.proveedor, detalle: c.detalle, monto: c.total || '', llave: c.llave || '', archivo_url: LEIDO.archivo_url };
-    if (c.metodo === 'efectivo' || c.metodo === 'debito') METODO = c.metodo;
-    LEIDO.compras.splice(i, 1);
-    if (!LEIDO.compras.length) LEIDO = null;
-    FORM = 'compra'; pintar();
+    el.innerHTML = '<div class="ce-prop"><p class="pg-nota">' + (LEIDO.n ? 'Llené ' + LEIDO.n + (LEIDO.n === 1 ? ' fila' : ' filas') + ' con las fotos. Revisalas antes de guardar.' : 'No encontré compras en las fotos. Llenalas a mano.') + '</p>' +
+      LEIDO.notas.map(function (t) { return '<p class="pg-nota">• ' + esc(t) + '</p>'; }).join('') + '</div>';
   }
 
   /* ---- guardar ---- */
-  function val(sec, k) { var el = sec.querySelector('[data-v="' + k + '"]'); return el ? el.value : ''; }
   function guardar(b) {
     if (OCUPADO) return;
-    var sec = b.closest('section'), err = sec.querySelector('[data-err]');
+    leerForm();
+    var sec = HOST.querySelector('[data-form]'), err = sec.querySelector('[data-err]');
     err.textContent = '';
-    var listo = function (r) { OCUPADO = false; D = r; pintar(); };
-    var falla = function (e) { OCUPADO = false; b.disabled = false; b.textContent = 'Guardar'; err.textContent = e && e.message || e; };
-    if (b.getAttribute('data-guardar') === 'retiro') {
-      OCUPADO = true; b.disabled = true; b.textContent = 'Guardando…';
-      google.script.run.withSuccessHandler(function (r) { FORM = 'compra'; listo(r); }).withFailureHandler(falla)
-        .solicitarRetiro(AUTH, val(sec, 'fecha'), val(sec, 'lugar'), val(sec, 'monto'), val(sec, 'nota'));
-      return;
+    var L = llenas(), nuevo = RET.modo === 'nuevo';
+    if (nuevo && !(Number(RET.monto) > 0) && !String(RET.lugar).trim()) {
+      if (!L.length) { err.textContent = 'Anotá el retiro y lo que se compró.'; return; }
+      err.textContent = 'Anotá el retiro (cajero y cantidad), o tocá "El retiro ya está registrado".'; return;
     }
-    var c = { fecha: val(sec, 'fecha'), metodo: METODO, llave: val(sec, 'llave'), proveedor: val(sec, 'prov'), detalle: val(sec, 'detalle'),
-              monto: val(sec, 'monto'), area: val(sec, 'area') || D.areas[0], archivo_url: PRE.archivo_url || '' };
-    var files = [].slice.call((sec.querySelector('#ce-arch') || {}).files || []);
+    if (nuevo && (!(Number(RET.monto) > 0) || String(RET.lugar).trim().length < 3)) { err.textContent = 'Al retiro le falta el cajero o la cantidad.'; return; }
+    var malas = [];
+    L.forEach(function (f) {
+      var i = FILAS.indexOf(f) + 1;
+      if (!(Number(f.monto) > 0)) malas.push('compra ' + i + ': falta el monto');
+      else if ((!f.llave || f.llave === NO_DAN) && String(f.det).trim().length < 3) malas.push('compra ' + i + ': falta qué se compró');
+    });
+    if (malas.length) { err.textContent = 'Revisá: ' + malas.join(' · ') + '.'; return; }
+    var x = { fecha: FECHA || D.hoy, retiro: nuevo ? { lugar: RET.lugar, monto: RET.monto } : null,
+      compras: L.map(function (f) {
+        var fac = f.llave && f.llave !== NO_DAN;
+        return { proveedor: f.prov, llave: fac ? f.llave : '', sin_factura: f.llave === NO_DAN, detalle: f.det, monto: f.monto, area: f.area || D.areas[0], archivo_url: f.url };
+      }) };
+    var resumen = (nuevo ? 'Retiro de ' + q(Number(RET.monto)) + ' en ' + RET.lugar + '\n' : '') + L.length + (L.length === 1 ? ' compra' : ' compras') + ' por ' +
+      q(L.reduce(function (a, f) { return a + Number(f.monto); }, 0)) + ', fecha ' + ddmm(x.fecha) + '.\n\n¿Guardar?';
+    if (!confirm(resumen)) return;
     OCUPADO = true; b.disabled = true; b.textContent = 'Guardando…';
-    var mandar = function () {
-      google.script.run.withSuccessHandler(function (r) { PRE = {}; listo(r); }).withFailureHandler(falla).registrarCompraEfectivo(AUTH, c);
-    };
-    // una foto elegida y no leida tambien queda como respaldo
-    if (!c.archivo_url && files.length) aBase64(files[0]).then(function (a) { c.archivo = a; mandar(); }, falla);
-    else mandar();
+    google.script.run
+      .withSuccessHandler(function (r) { OCUPADO = false; D = r; reiniciar(); pintar(); })
+      .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; b.textContent = 'Guardar todo'; err.textContent = PF_ERROR(e); })
+      .registrarRetiroYCompras(AUTH, x);
   }
 
   HOST.addEventListener('click', function (ev) {
     var b = ev.target.closest('button');
     if (!b || !HOST.contains(b) || OCUPADO) return;
-    if (b.hasAttribute('data-f')) { FORM = b.getAttribute('data-f'); pintar(); return; }
-    if (b.hasAttribute('data-metodo')) { METODO = b.getAttribute('data-metodo'); guardarBorrador(); pintar(); return; }
-    if (b.hasAttribute('data-guardar')) { guardar(b); return; }
-    if (b.hasAttribute('data-usar')) { usarLeida(Number(b.getAttribute('data-usar'))); return; }
-    if (b.hasAttribute('data-deb')) {
-      var c = D.cargos_debito[Number(b.getAttribute('data-deb'))];
-      PRE = { fecha: c.fecha, proveedor: c.glosa, monto: c.q }; METODO = 'debito'; FORM = 'compra'; pintar();
-      HOST.querySelector('#ce-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (b.hasAttribute('data-modo')) { leerForm(); RET.modo = b.getAttribute('data-modo'); pintar(); return; }
+    if (b.hasAttribute('data-quitar')) { leerForm(); FILAS.splice(+b.getAttribute('data-quitar'), 1); pintar(); return; }
+    if (b.hasAttribute('data-asignar')) { leerForm(); ASIGNAR = b.getAttribute('data-asignar') || null; pintar(); return; }
+    if (b.hasAttribute('data-asigok')) {
+      var pa = b.closest('[data-asig]'), sel = pa.querySelector('[data-v="asigllave"]');
+      if (!sel.value) { pa.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
+      leerForm(); OCUPADO = true; b.disabled = true; b.textContent = 'Asignando…';
+      google.script.run.withSuccessHandler(function (r) { OCUPADO = false; ASIGNAR = null; D = r; pintar(); })
+        .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; b.textContent = 'Asignar'; pa.querySelector('[data-err]').textContent = PF_ERROR(e); })
+        .asignarFacturaACompra(AUTH, b.getAttribute('data-asigok'), sel.value);
       return;
     }
     if (b.hasAttribute('data-anular') || b.hasAttribute('data-anular-sol')) {
       var sol = b.hasAttribute('data-anular-sol'), id = b.getAttribute(sol ? 'data-anular-sol' : 'data-anular');
-      if (!confirm(sol ? '¿Anular esta solicitud de retiro?' : '¿Anular esta compra? Queda marcada como anulada en Pagos.')) return;
-      OCUPADO = true; b.disabled = true;
+      if (!confirm(sol ? '¿Anular este retiro?' : '¿Anular esta compra? Queda marcada como anulada en Pagos.')) return;
+      leerForm(); OCUPADO = true; b.disabled = true;
       var run = google.script.run.withSuccessHandler(function (r) { OCUPADO = false; D = r; pintar(); })
-        .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; alert(e && e.message || e); });
+        .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; alert(PF_ERROR(e)); });
       if (sol) run.anularSolicitudRetiro(AUTH, id); else run.anularCompraEfectivo(AUTH, id);
       return;
     }
     var acc = b.getAttribute('data-acc');
-    if (acc === 'recargar') cargar();
+    if (acc === 'recargar') { leerForm(); cargar(); }
     if (acc === 'leer') leerFoto(b);
-    if (acc === 'limpiar') { PRE = {}; LEIDO = null; pintar(); }
+    if (acc === 'guardar') guardar(b);
+    if (acc === 'otra') { leerForm(); FILAS.push(filaVacia()); pintar(); var u = HOST.querySelectorAll('.ce-fila[data-i]'); if (u.length) u[u.length - 1].querySelector('input').focus(); }
+    if (acc === 'limpiar') { if (llenas().length && !confirm('¿Borrar lo que escribiste?')) return; reiniciar(); pintar(); }
   });
-  // lo escrito no se pierde al cambiar entre efectivo y debito
-  function guardarBorrador() {
-    var sec = HOST.querySelector('#ce-form section');
-    if (!sec || FORM !== 'compra') return;
-    PRE = Object.assign({}, PRE, { fecha: val(sec, 'fecha'), llave: val(sec, 'llave'), proveedor: val(sec, 'prov'), detalle: val(sec, 'detalle'), monto: val(sec, 'monto'), area: val(sec, 'area') });
-  }
-  // elegir una factura llena el proveedor y el saldo; elegir un proveedor filtra sus facturas
+  HOST.addEventListener('input', function (ev) { if (ev.target.closest('[data-form]')) sumar(); });
+  // elegir una factura llena el proveedor y el saldo; cambiar el proveedor filtra sus facturas
   HOST.addEventListener('change', function (ev) {
-    if (ev.target.getAttribute('data-v') === 'prov') { guardarBorrador(); pintar(); return; }
-    if (ev.target.getAttribute('data-v') !== 'llave') return;
-    guardarBorrador();
-    var f = D.facturas.filter(function (x) { return x.llave === PRE.llave; })[0];
-    if (f) { PRE.proveedor = f.proveedor; PRE.monto = f.saldo; }
-    pintar();
+    var t = ev.target, row = t.closest('.ce-fila[data-i]');
+    if (!row) return;
+    leerForm();
+    var f = FILAS[+row.dataset.i], c = t.getAttribute('data-c');
+    if (c === 'llave' && f.llave && f.llave !== NO_DAN) {
+      var x = D.facturas.filter(function (y) { return y.llave === f.llave; })[0];
+      if (x) { f.prov = x.proveedor; if (!f.monto) f.monto = x.saldo; }
+      pintar();
+    } else if (c === 'prov') pintar();
   });
   cargar();
 };

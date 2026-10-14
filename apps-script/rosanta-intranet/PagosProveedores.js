@@ -110,8 +110,32 @@ function pagHoja_(crear) {
   return sh;
 }
 
-/** Los movimientos anotados, sin los anulados. */
+/*
+ * Lo leido en ESTA ejecucion (14-oct-2026, Juanma: "el periodo de guardado es muy largo").
+ * Guardar un pago armaba el estado dos veces (antes de escribir y para devolver la pantalla):
+ * leia dos veces el FEL, los dos bancos y las dos tarjetas del maestro, y cuatro veces
+ * PAGOS_PROVEEDORES. Ahora el maestro se lee una vez por ejecucion y los movimientos una vez
+ * entre escritura y escritura. Toda escritura llama a _pagOlvidar_ (movs, o todo si toco el FEL).
+ */
+var _PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+function _pagOlvidar_(todo) {
+  _PAG_LEIDO_.movs = null; _PAG_LEIDO_.escribio = true;
+  if (todo) { _PAG_LEIDO_.hojas = {}; _PAG_LEIDO_.ss = null; }
+}
+function _pagMaestro_() { return _PAG_LEIDO_.ss || (_PAG_LEIDO_.ss = SpreadsheetApp.openById(FIN_MAESTRO_ID)); }
+/** Los valores de una pestaña del maestro (null si no existe), una sola lectura por ejecucion. */
+function _pagValores_(ss, nombre) {
+  if (ss !== _PAG_LEIDO_.ss) { var sh0 = ss.getSheetByName(nombre); return sh0 ? sh0.getDataRange().getValues() : null; }
+  if (!(nombre in _PAG_LEIDO_.hojas)) { var sh = ss.getSheetByName(nombre); _PAG_LEIDO_.hojas[nombre] = sh ? sh.getDataRange().getValues() : null; }
+  return _PAG_LEIDO_.hojas[nombre];
+}
+
+/** Los movimientos anotados, sin los anulados. Copias: quien los use puede cambiarlos. */
 function pagMovimientos_() {
+  if (!_PAG_LEIDO_.movs) _PAG_LEIDO_.movs = _pagLeerMovimientos_();
+  return _PAG_LEIDO_.movs.map(function (m) { return Object.assign({}, m); });
+}
+function _pagLeerMovimientos_() {
   var sh = pagHoja_(false);
   if (!sh || sh.getLastRow() < 2) return [];
   var v = sh.getDataRange().getValues(), H = v[0].map(function (h) { return String(h || '').trim(); });
@@ -151,7 +175,7 @@ function _pagAreaPorNit_(filas, iNit, iCat) {
 /** Las facturas desde PAG_DESDE_: ni anuladas ni personales, con su area. */
 function pagFacturas_(ss, anteriores, ajenas, correo) {
   anteriores = anteriores || {};
-  var v = ss.getSheetByName('01_FEL_Maestro').getDataRange().getValues();
+  var v = _pagValores_(ss, '01_FEL_Maestro');
   var hi = -1;
   for (var i = 0; i < Math.min(v.length, 10); i++) if (v[i].map(String).indexOf('NIT_Emisor') >= 0) { hi = i; break; }
   if (hi < 0) throw new Error('No encontre el encabezado de 01_FEL_Maestro.');
@@ -243,9 +267,8 @@ function _pagCatPorNit_(filas, iNit, iCat, iPers) {
 function pagPagosBanco_(ss) {
   var desde = pagNumDia_(pagDia_(PAG_DESDE_)) - 10, out = [];
   [['03_Banco_Industrial', 'Banco BI', 'Débito'], ['04_Banco_BAC', 'Banco BAC', 'Débito']].forEach(function (b) {
-    var sh = ss.getSheetByName(b[0]);
-    if (!sh) return;
-    var v = sh.getDataRange().getValues(), hi = -1;
+    var v = _pagValores_(ss, b[0]), hi = -1;
+    if (!v) return;
     for (var i = 0; i < Math.min(v.length, 10); i++) if (v[i].map(String).indexOf('Categoría') >= 0) { hi = i; break; }
     if (hi < 0) return;
     var H = v[hi].map(function (h) { return String(h || '').trim(); });
@@ -266,9 +289,9 @@ function pagPagosBanco_(ss) {
   // quedaba Pendiente si nadie lo marcaba "Tarjeta" (Delicadezas Españolas, HG Libreria, Tigo).
   // Mismas columnas que FIN_LIBROS; solo los cargos en quetzales (las facturas son en GTQ).
   FIN_LIBROS.filter(function (L) { return /^0[56]_Tarjeta/.test(L.hoja); }).forEach(function (L) {
-    var sh = ss.getSheetByName(L.hoja);
-    if (!sh) return;
-    var v = sh.getDataRange().getValues(), nom = L.hoja.indexOf('_BI') > 0 ? 'Tarjeta crédito BI' : 'Tarjeta crédito BAC';
+    var v = _pagValores_(ss, L.hoja);
+    if (!v) return;
+    var nom = L.hoja.indexOf('_BI') > 0 ? 'Tarjeta crédito BI' : 'Tarjeta crédito BAC';
     for (var r = FIN_PRIMERA_FILA - 1; r < v.length; r++) {
       var d = pagDia_(v[r][0]);
       if (!d || pagNumDia_(d) < desde) continue;
@@ -589,7 +612,7 @@ function _pagPagadasCompras_() {
 
 /** Arma el estado de cada factura y el cuadre por proveedor. Sin filtrar por area. */
 function pagEstado_() {
-  var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
+  var ss = _pagMaestro_();
   var movs = pagMovimientos_(), anteriores = {};
   movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
   var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas, fecFacturas_()), banco = pagPagosBanco_(ss);
@@ -732,7 +755,9 @@ function _pagCuadre_(facturas, favor) {
 /** La pantalla: las facturas del area de quien entra, el mercado y el cuadre. */
 function getPagosProveedores(auth) {
   var Q = pagQuien_(auth);
-  var fec = fecLeerSiToca_();   // las facturas que SAT aviso por correo (FelCorreo.js)
+  // las facturas que SAT aviso por correo (FelCorreo.js). Despues de guardar no se lee Gmail:
+  // es lo mas lento y la pantalla se refresca al abrirla o con Actualizar (14-oct-2026)
+  var fec = _PAG_LEIDO_.escribio ? null : fecLeerSiToca_();
   var E = pagEstado_(), ve = function (a) { return Q.areas.indexOf(a) !== -1; };
   var facturas = E.facturas.filter(function (f) { return ve(f.area); });
   var og = function (g) { var i = PAG_GRUPOS_ORDEN_.indexOf(g); return i < 0 ? 99 : i; };
@@ -766,7 +791,7 @@ function getPagosProveedores(auth) {
   if (Q.rol === 'dueno') {
     out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; out.posibles = E.posibles;
     // La pestaña del maestro existe desde que el dueño abre Pagos, aunque no marque nada
-    try { _pagHojaIva_(SpreadsheetApp.openById(FIN_MAESTRO_ID)); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
+    if (!_PAG_LEIDO_.escribio) try { _pagHojaIva_(_pagMaestro_()); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
   }
   return out;
 }
@@ -780,10 +805,24 @@ function _pagProvMercado_(mercado) {
   return usados;
 }
 
-function _pagEscribir_(filas) {
+/*
+ * EL CANDADO, REENTRANTE (14-oct-2026, auditoria de la @188). LockService.getScriptLock() es uno
+ * solo por proyecto: si una funcion lo toma y llama a otra que tambien lo toma y lo suelta, el
+ * releaseLock de adentro suelta el de afuera. _pagConCandado_ lo toma solo la primera vez en la
+ * ejecucion; las de adentro corren sin volver a tomarlo y solo la de afuera lo suelta. Asi una
+ * operacion entera (asignar una factura, guardar un retiro con sus compras) va bajo UN candado.
+ */
+var _PAG_CANDADO_ = 0;
+function _pagConCandado_(fn, ms) {
+  if (_PAG_CANDADO_ > 0) return fn();
   var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
+  if (!lock.tryLock(ms || 20000)) throw new Error('Alguien más está guardando en este momento. Esperá unos segundos y probá de nuevo.');
+  _PAG_CANDADO_++;
+  try { return fn(); } finally { _PAG_CANDADO_--; lock.releaseLock(); }
+}
+
+function _pagEscribir_(filas) {
+  return _pagConCandado_(function () {
     var sh = pagHoja_(true);
     var H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h || '').trim(); });
     var datos = filas.map(function (o) {
@@ -796,8 +835,9 @@ function _pagEscribir_(filas) {
     if (iId > -1) sh.getRange(desde, iId + 1, datos.length, 1).setNumberFormat('@');
     sh.getRange(desde, 1, datos.length, H.length).setValues(datos);
     SpreadsheetApp.flush();
+    _pagOlvidar_(false);
     return datos.length;
-  } finally { lock.releaseLock(); }
+  });
 }
 
 function _pagFechaValida_(s, nombre) {
@@ -818,7 +858,7 @@ function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorU
 
 /** El pago en si. Q: { nombre, areas }. La Caja chica lo llama con todas las areas (Maco paga
  *  de la caja facturas de cocina y de barra). */
-function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
+function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio, soloFilas) {
   // Con que se pago (13-oct-2026, Juanma: "¿cómo se identifica con qué banco fue pagado?"). Banco y
   // Tarjeta piden la cuenta o la tarjeta; va al inicio del DETALLE entre corchetes, y un "Banco"
   // solo se confirma con un pago de ESE medio.
@@ -856,6 +896,7 @@ function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, 
     if (q > 0 || estatus === 'Banco') filas.push(Object.assign({}, base, { DTE: f.dte, 'CANTIDAD PAGADA': q }));
     if (usa > 0) filas.push(Object.assign({}, base, { DTE: f.dte, 'CANTIDAD PAGADA': usa, 'ESTATUS DE PAGO': 'Saldo a favor usado' }));
   });
+  if (soloFilas) return filas;   // registrarRetiroYCompras junta todo y escribe una sola vez
   _pagEscribir_(filas);
   return filas.length;
 }
@@ -964,6 +1005,7 @@ function marcarFacturaParaIva(auth, llave, nota) {
     C.hoja.getRange(f.fila, C.col).setValue(PAG_AJENA_);
     _pagHojaIva_(ss);
     SpreadsheetApp.flush();
+    _pagOlvidar_(true);   // cambio la Categoria del FEL: el maestro se vuelve a leer
   } finally { lock.releaseLock(); }
   _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'CANTIDAD PAGADA': f.total, 'ESTATUS DE PAGO': PAG_IVA_MARCA_,
                    DETALLE: ('Antes ' + f.categoria + '. ' + String(nota || '')).trim().slice(0, 300), 'ESCRITO POR': Q.nombre }]);
@@ -994,6 +1036,7 @@ function devolverFacturaParaIva(auth, llave) {
     if (celda.getFormula()) throw new Error('El proveedor ' + a.proveedor + ' esta entero como FACTURA_AJENA en 00_Proveedores: se cambia ahi, no factura por factura.');
     celda.setFormula('=IF(G' + a.fila + '="","",IFERROR(VLOOKUP(G' + a.fila + ",'00_Proveedores'!A:C,3,FALSE()),\"POR_CLASIFICAR\"))");
     SpreadsheetApp.flush();
+    _pagOlvidar_(true);
   } finally { lock.releaseLock(); }
   _pagEscribir_([{ PROVEEDOR: a.proveedor, NIT: a.nit, DTE: a.dte, 'CANTIDAD PAGADA': a.total, 'ESTATUS DE PAGO': PAG_IVA_DEVUELTA_, 'ESCRITO POR': Q.nombre }]);
   try { CacheService.getScriptCache().remove(finCacheClave_()); } catch (e) { /* idem */ }
@@ -1104,7 +1147,7 @@ function registrarSaldoFavor(auth, nit, monto, detalle) {
  * Excel: "MERCADO", "Gas evento SIN DTE"). Si salio de un retiro de cajero, Compras en efectivo
  * la ofrece como detalle de ese retiro cuando el banco lo traiga (medMercadoDeRetiros_).
  */
-function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, estatus) {
+function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, estatus, medio) {
   var Q = pagQuien_(auth);
   fecha = _pagFechaValida_(fecha, 'Fecha');
   monto = _finR_(Number(monto));
@@ -1112,6 +1155,13 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
   detalle = String(detalle || '').trim();
   if (detalle.length < 3) throw new Error('Escribí qué se compró.');
   if (PAG_FORMAS_MERCADO_.indexOf(estatus) === -1) throw new Error('Forma de pago desconocida: ' + estatus);
+  // con Tarjeta, cual (14-oct-2026): igual que en las facturas, entre corchetes al inicio del
+  // DETALLE. "[Tarjeta débito BI]" es lo que lee el cuadre de Compras (ComprasEfectivo.js).
+  medio = String(medio || '').trim();
+  if (estatus === 'Tarjeta') {
+    if (PAG_MEDIOS_TARJETA_.indexOf(medio) === -1) throw new Error('Elegí con qué tarjeta: ' + PAG_MEDIOS_TARJETA_.join(', ') + '.');
+    detalle = '[' + medio + '] ' + detalle;
+  }
   area = String(area || '').toUpperCase();
   if (Q.areas.indexOf(area) === -1 || area === 'ADMIN') area = Q.areas[0];
   _pagEscribir_([{ AREA: area, PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado', DTE: PAG_SIN_FACTURA_,
@@ -1122,12 +1172,19 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
 
 /** Anula un movimiento anotado por error. No se borra: el estatus pasa a "ANULADO: ...". */
 function anularMovimientoPago(auth, id) {
-  var Q = pagQuien_(auth);
+  _pagAnular_(pagQuien_(auth), id);
+  return getPagosProveedores(auth);
+}
+/**
+ * El anular en si. Q: { nombre, rol, areas }. Tambien lo usa Compras al asignar la factura.
+ * texto: el estatus nuevo (por defecto "ANULADO: <el de antes> (quien, fecha)"). Devuelve
+ * { fila, col, antes } para poder devolverlo (_pagDesanular_). Desde el 14-oct-2026 avisa si no
+ * encontro el movimiento o si ya estaba anulado (antes salia callado).
+ */
+function _pagAnular_(Q, id, texto) {
   id = String(id || '').trim();
   if (!id) throw new Error('Falta el movimiento.');
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
+  return _pagConCandado_(function () {
     var sh = pagHoja_(false);
     if (!sh) throw new Error('No hay movimientos.');
     var v = sh.getDataRange().getValues(), H = v[0].map(function (h) { return String(h || '').trim(); });
@@ -1136,17 +1193,26 @@ function anularMovimientoPago(auth, id) {
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][iId]) !== id) continue;
       var est = String(v[r][iE] || '');
-      if (/^ANULADO/i.test(est)) break;
+      if (/^ANULADO/i.test(est)) throw new Error('Ese movimiento ya estaba anulado. Tocá Actualizar.');
       if (est === PAG_ANTERIOR_ && Q.rol !== 'dueno') throw new Error('Esa fila es la que trajo la factura desde COMPRAS_2026, no un pago. Si la factura no se debe, avisá al dueño.');
       // lo que uno agrego en Por devolver lo anula el mismo, aunque la factura sea de la otra area
       var suyo = miForma && est === miForma && String(v[r][iP]) === Q.nombre;
       if (Q.rol !== 'dueno' && !suyo && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
-      sh.getRange(r + 1, iE + 1).setValue('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');
+      sh.getRange(r + 1, iE + 1).setValue(texto || ('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')'));
       SpreadsheetApp.flush();
-      break;
+      _pagOlvidar_(false);
+      return { fila: r + 1, col: iE + 1, antes: est };
     }
-  } finally { lock.releaseLock(); }
-  return getPagosProveedores(auth);
+    throw new Error('No encontré ese movimiento. Tocá Actualizar.');
+  });
+}
+/** Devuelve el estatus que tenia un movimiento antes de _pagAnular_ (si lo que seguia fallo). */
+function _pagDesanular_(A) {
+  return _pagConCandado_(function () {
+    pagHoja_(false).getRange(A.fila, A.col).setValue(A.antes);
+    SpreadsheetApp.flush();
+    _pagOlvidar_(false);
+  });
 }
 
 /**

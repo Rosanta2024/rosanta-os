@@ -8,6 +8,7 @@
  *   Caja chica    la caja de anoche: sin contar, con descuadre o sin cierre (cchEstado_)
  *   Inventarios   el mes anterior sin cerrar (invEstadoCierre_, mismo dia limite que el vigia)
  *   Compras       efectivo retirado sin compras registradas y cargos de debito sin registro (cpeCuadre_)
+ *   SAT           (dueño) un dia habil completo sin avisos de factura por correo (fecUltimoAviso_)
  *   Por devolver  lo que se le debe a cada uno (_pagPorDevolver_)
  *   Acciones      las acciones de la semana a nombre de la persona (medAcciones_)
  * Cada bloque va en su try: si una fuente falla, la lista lo dice y sigue con el resto.
@@ -31,13 +32,13 @@ function getHoyProfit(auth) {
   if (esDueno || (rol === 'sala' && puedePagos)) intentar('Caja chica', function () {
     var E = cchEstado_(false), ayer = medFechaIso_(new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1));
     var A = E.dias.filter(function (d) { return d.fecha === ayer; })[0];
-    if (A && A.estado === 'Sin conteo') add({ urgente: true, texto: 'Contar la caja de anoche', detalle: 'Debería haber ' + Q(A.esperado) + '.', vista: 'caja', boton: 'Contar' });
+    if (A && A.estado === 'Sin conteo') add({ urgente: true, texto: 'Contar la caja de anoche', detalle: 'Debería haber ' + Q(A.esperado) + '.', vista: 'caja', sub: 'contar:' + ayer, boton: 'Contar' });
     if (A && (A.estado === 'Faltante' || A.estado === 'Sobrante')) add({ urgente: true, texto: 'La caja de anoche no cuadra: ' + A.estado.toLowerCase() + ' de ' + Q(Math.abs(A.abierta)),
-      detalle: A.pistas[0] || 'Revisá los pagos del día y las cuentas cerradas con otra forma de pago.', vista: 'caja', boton: 'Revisar' });
-    if (A && A.estado === 'Falta el cierre') add({ urgente: !esDueno, texto: 'No llegó el cierre de PosFile de anoche', detalle: 'Tocá Leer cierres en la Caja chica; si no llega, escribí el efectivo del cierre impreso.', vista: 'caja', boton: 'Abrir caja' });
-    var otros = E.dias.filter(function (d) { return d.fecha !== ayer && d.fecha !== hoyIso && (d.estado === 'Sin conteo' || d.abierta); });
+      detalle: A.pistas[0] || 'Revisá los pagos del día y las cuentas cerradas con otra forma de pago.', vista: 'caja', sub: 'dia:' + ayer, boton: 'Revisar' });
+    if (A && A.estado === 'Falta el cierre') add({ urgente: !esDueno, texto: 'No llegó el cierre de PosFile de anoche', detalle: 'Tocá Leer cierres en la Caja chica; si no llega, escribí el efectivo del cierre impreso.', vista: 'caja', sub: 'dia:' + ayer, boton: 'Abrir caja' });
+    var otros = E.dias.filter(function (d) { return d.fecha !== ayer && d.fecha !== hoyIso && ((d.estado === 'Sin conteo' && !d.cubierto) || d.abierta); });
     if (otros.length) add({ urgente: false, texto: otros.length + (otros.length === 1 ? ' día anterior' : ' días anteriores') + ' de la caja sin cerrar bien',
-      detalle: otros.map(function (d) { return d.fecha.slice(8, 10) + '/' + d.fecha.slice(5, 7) + ' ' + d.estado.toLowerCase(); }).slice(0, 4).join(' · '), vista: 'caja', boton: 'Ver' });
+      detalle: otros.map(function (d) { return d.fecha.slice(8, 10) + '/' + d.fecha.slice(5, 7) + ' ' + d.estado.toLowerCase(); }).slice(0, 4).join(' · '), vista: 'caja', sub: 'dia:' + otros[0].fecha, boton: 'Ver' });
   });
 
   // 2. Pagos: lo que hay que pagar hoy y lo que sigue pendiente en sus areas
@@ -48,16 +49,27 @@ function getHoyProfit(auth) {
     var hoyToca = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoyIso; });
     var suma = function (l) { return l.reduce(function (a, f) { return a + f.saldo; }, 0); };
     if (hoyToca.length) add({ urgente: true, texto: hoyToca.length + (hoyToca.length === 1 ? ' factura para pagar hoy' : ' facturas para pagar hoy') + ' (' + Q(suma(hoyToca)) + ')',
-      detalle: hoyToca.slice(0, 3).map(function (f) { return f.proveedor; }).join(', ') + (hoyToca.length > 3 ? '…' : ''), vista: 'pagos', boton: 'Pagar' });
+      detalle: hoyToca.slice(0, 3).map(function (f) { return f.proveedor; }).join(', ') + (hoyToca.length > 3 ? '…' : ''), vista: 'pagos', sub: 'pagar', boton: 'Pagar' });
     // el dueño: cargos del banco o de la tarjeta que parecen el pago de una factura (13-oct-2026)
     if (esDueno && E.posibles && E.posibles.length) add({ urgente: false, texto: E.posibles.length + (E.posibles.length === 1 ? ' posible pago del banco' : ' posibles pagos del banco') + ' para confirmar',
-      detalle: 'Cargos con el monto exacto de una factura pendiente. Si es el pago, la factura sale de Por pagar.', vista: 'pagos', boton: 'Revisar' });
+      detalle: 'Cargos con el monto exacto de una factura pendiente. Si es el pago, la factura sale de Por pagar.', vista: 'pagos', sub: 'posibles', boton: 'Revisar' });
     var resto = abiertas.filter(function (f) { return hoyToca.indexOf(f) === -1; });
     if (resto.length) {
       var vieja = resto.reduce(function (a, f) { return !a || f.fecha < a.fecha ? f : a; }, null);
       add({ urgente: false, texto: resto.length + (resto.length === 1 ? ' factura por pagar' : ' facturas por pagar') + ' (' + Q(suma(resto)) + ')',
-        detalle: 'La más vieja es de ' + vieja.proveedor + ', del ' + vieja.fecha.slice(8, 10) + '/' + vieja.fecha.slice(5, 7) + '. Si ya la pagaste, marcala.', vista: 'pagos', boton: 'Ver' });
+        detalle: 'La más vieja es de ' + vieja.proveedor + ', del ' + vieja.fecha.slice(8, 10) + '/' + vieja.fecha.slice(5, 7) + '. Si ya la pagaste, marcala.', vista: 'pagos', sub: 'pagar', boton: 'Ver' });
     }
+  });
+
+  // 2b. SAT sin avisar (14-oct-2026): si SAT deja de mandar los avisos, las facturas nuevas no
+  //     entran a Pagos hasta el FEL del lunes. Solo el dueño: es quien lo revisa en la Agencia Virtual.
+  if (esDueno) intentar('Avisos de SAT', function () {
+    var U = fecUltimoAviso_(), n = U ? fecDiasSinAviso_(U.leido, hoy) : 0;
+    var cuando = U ? Utilities.formatDate(U.leido, 'America/Guatemala', 'dd/MM') + ' a las ' + Utilities.formatDate(U.leido, 'America/Guatemala', 'HH:mm') : '';
+    if (n >= 1) add({ urgente: n >= 2, texto: 'SAT no avisa facturas desde el ' + cuando,
+      detalle: (n === 1 ? 'Pasó un día hábil completo' : 'Pasaron ' + n + ' días hábiles completos') + ' sin avisos al correo (el último fue ' + U.proveedor + ', ' + Q(U.monto) +
+        '). Las facturas nuevas no entran a Pagos hasta el FEL del lunes: revisá los recibidos en la Agencia Virtual de SAT.', vista: 'pagos', boton: 'Ver Pagos' });
+    // si la lectura de las 10:00 fallo, lo avisa "Correos del dia" (abajo)
   });
 
   // 3. Inventarios: el mes anterior cerrado antes del dia limite
@@ -85,7 +97,8 @@ function getHoyProfit(auth) {
       vista: 'compras', boton: 'Registrar' });
     if (R.debito_sin_registro) add({ urgente: false,
       texto: R.debito_sin_registro + (R.debito_sin_registro === 1 ? ' cargo' : ' cargos') + ' de la tarjeta de débito sin registrar (' + Q(R.q_debito_sin_registro) + ')',
-      detalle: 'Decí qué se compró, o subí la foto del recibo.', vista: 'compras', boton: 'Registrar' });
+      // desde el 14-oct-2026 el debito se anota en Pagos (Compras quedo solo para el efectivo)
+      detalle: 'En Pagos: pagá su factura con Tarjeta › Tarjeta débito BI, o anotala en + Compra de mercado.', vista: 'pagos', boton: 'Ir a Pagos' });
   });
 
   // 5. Por devolver
@@ -105,7 +118,9 @@ function getHoyProfit(auth) {
   // 6. Las acciones de la semana a su nombre
   intentar('Acciones', function () {
     medAcciones_(null).filter(function (x) { return x.estado === 'pendiente' && normalizar_(x.dueno) === normalizar_(String(u.nombre || '').split(' ')[0]); }).forEach(function (x) {
-      add({ urgente: !!x.atrasada, texto: x.accion, detalle: (x.atrasada ? 'Venció el ' : 'Para el ') + x.fecha.slice(8, 10) + '/' + x.fecha.slice(5, 7) + '. Acción de la semana.', vista: '', boton: '' });
+      // con "Listo" (14-oct-2026): cada uno marca las suyas desde Hoy (marcarAccionHoy)
+      add({ urgente: !!x.atrasada, texto: x.accion, detalle: (x.atrasada ? 'Venció el ' : 'Para el ') + x.fecha.slice(8, 10) + '/' + x.fecha.slice(5, 7) + '. Acción de la semana.', vista: '', boton: '',
+            accion: { fila: x.fila, texto: x.accion } });
     });
   });
 
@@ -121,4 +136,28 @@ function getHoyProfit(auth) {
   items.sort(function (a, b) { return (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0); });
   return { nombre: nombre.split(' ')[0], rol: rol, fecha: hoyIso, items: items, fallas: fallas,
            gen: Utilities.formatDate(hoy, 'America/Guatemala', 'dd/MM/yyyy HH:mm') };
+}
+
+/**
+ * "Listo" en una accion de la semana, desde Hoy (14-oct-2026). marcarAccion (el tablero) es solo
+ * del dueño; aca cada uno marca las SUYAS: la fila tiene que estar a su nombre. Se verifica el
+ * texto, como en marcarAccion: si alguien inserto una fila, no se marca otra.
+ */
+function marcarAccionHoy(auth, fila, textoEsperado) {
+  var u = exigirModulo_(auth, 'recetario');
+  var rol = normalizar_(u.rol), yo = normalizar_(String(u.nombre || '').split(' ')[0]);
+  fila = Number(fila);
+  if (!(fila >= 2) || fila !== Math.floor(fila)) throw new Error('Esa acción no existe. Tocá Actualizar.');   // la fila 1 es el encabezado
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName(MED_ACC_HOJA_);
+    if (!sh) throw new Error('No hay acciones.');
+    var f = sh.getRange(Number(fila), 1, 1, MED_ACC_COLS_.length).getValues()[0];
+    if (String(f[2]) !== String(textoEsperado)) throw new Error('Esa acción cambió. Tocá Actualizar.');
+    if (rol !== 'dueno' && normalizar_(String(f[3])) !== yo) throw new Error('Esa acción es de ' + f[3] + ': la marca esa persona.');
+    sh.getRange(Number(fila), 6).setValue('hecha');
+    sh.getRange(Number(fila), 9).setValue(new Date());
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return getHoyProfit(auth);
 }

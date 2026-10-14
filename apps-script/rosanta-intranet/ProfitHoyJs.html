@@ -8,6 +8,7 @@
   .hy-it .tx { flex: 1; min-width: 0; }
   .hy-it b { display: block; font-size: 0.98rem; }
   .hy-it span { display: block; font-size: 0.84rem; color: #52514e; margin-top: 0.15rem; }
+  .hy-it button[data-hylisto] { background: #fff; color: #4E6D5A; border: 1px solid #4E6D5A; }
   .hy-it button { font: inherit; font-size: 0.86rem; background: #4E6D5A; color: #fff; border: 0; border-radius: 10px; padding: 0.5rem 0.9rem; cursor: pointer; white-space: nowrap; }
   .hy-ok { background: #fff; border-radius: 16px; padding: 1.4rem; text-align: center; color: #2E6B3F; font-size: 1rem; }
   .hy-pie { font-size: 0.78rem; color: #8a8780; margin-top: 1rem; display: flex; gap: 1rem; align-items: center; }
@@ -16,16 +17,36 @@
   @media (max-width: 640px) { .hy-it { flex-wrap: wrap; } .hy-it button { width: 100%; } }
 </style>
 <script>
+/* DONDE SE ANOTA CADA PAGO (14-oct-2026, Juanma: "que todo el sistema sea user friendly"). Habia
+   cuatro lugares para anotar un pago y el equipo no sabia cual. La misma guia, arriba de Pagos,
+   Compras y Caja chica, marcando la pantalla en la que se esta. */
+window.PF_DONDE = function (aqui) {
+  var L = [['pagos', 'Pagos', 'facturas pagadas por transferencia o con tarjeta (crédito o débito)'],
+           ['compras', 'Compras', 'lo pagado con efectivo del cajero, con su retiro'],
+           ['caja', 'Caja chica', 'lo pagado con la caja del restaurante']];
+  return '<p class="pg-nota pf-donde" style="background:#F7F5F2;border-radius:10px;padding:0.45rem 0.7rem;margin:0.4rem 0 0.8rem">¿Dónde se anota? ' +
+    L.map(function (x) { return x[0] === aqui ? '<b>' + x[1] + ' (acá): ' + x[2] + '</b>' : x[1] + ': ' + x[2]; }).join(' · ') + '. Lo que pagaste de tu bolsa va en <b>Por devolver</b>.</p>';
+};
+/* IR AL PUNTO EXACTO (14-oct-2026): un boton de Hoy deja {vista, sub} en PF_IR y la pantalla de
+   destino lo toma al pintarse (PF_TOMAR_IR). sub: 'pagar' | 'posibles' en Pagos; 'contar:AAAA-MM-DD'
+   o 'dia:AAAA-MM-DD' en la Caja. Si la pantalla ya estaba abierta, la avisa el evento pf-ir. */
+window.PF_IR = null;
+window.PF_TOMAR_IR = function (vista) {
+  var x = window.PF_IR;
+  if (!x || x.vista !== vista) return null;
+  window.PF_IR = null;
+  return x.sub || '';
+};
 /* Hoy (13-oct-2026). Parcial crudo: PF_HOY(host, AUTH). El token va PRIMERO.
    Cada boton lleva data-view: lo atiende el click general de Profit OS, que cambia de pestaña. */
 window.PF_HOY = function (HOST, AUTH) {
-  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
   function cargar() {
     HOST.innerHTML = '<div class="hy"><h2>Hoy</h2><p class="hy-sub">Revisando lo que te toca…</p></div>';
     google.script.run.withSuccessHandler(pintar)
-      .withFailureHandler(function (e) { HOST.innerHTML = '<div class="hy"><h2>Hoy</h2><p class="hy-falla">' + esc(e && e.message || e) + '</p></div>'; })
+      .withFailureHandler(function (e) { HOST.innerHTML = '<div class="hy"><h2>Hoy</h2><p class="hy-falla">' + esc(PF_ERROR(e)) + '</p></div>'; })
       .getHoyProfit(AUTH);
   }
   function pintar(D) {
@@ -36,7 +57,8 @@ window.PF_HOY = function (HOST, AUTH) {
       (D.items.length ? D.items.length + (D.items.length === 1 ? ' cosa' : ' cosas') + ' para hoy' + (urg ? ', ' + urg + ' urgente' + (urg === 1 ? '' : 's') : '') : 'todo al día') + '</p>';
     h += D.items.length ? D.items.map(function (x) {
       return '<div class="hy-it' + (x.urgente ? ' urg' : '') + '"><div class="tx"><b>' + esc(x.texto) + '</b>' + (x.detalle ? '<span>' + esc(x.detalle) + '</span>' : '') + '</div>' +
-        (x.vista ? '<button type="button" data-view="' + esc(x.vista) + '">' + esc(x.boton || 'Abrir') + '</button>' : '') + '</div>';
+        (x.vista ? '<button type="button" data-view="' + esc(x.vista) + '"' + (x.sub ? ' data-sub="' + esc(x.sub) + '"' : '') + '>' + esc(x.boton || 'Abrir') + '</button>' : '') +
+        (x.accion ? '<button type="button" data-hylisto="' + esc(x.accion.fila) + '" data-hytexto="' + esc(x.accion.texto) + '">Listo</button>' : '') + '</div>';
     }).join('') : '<div class="hy-ok">Todo al día. ✓</div>';
     if (D.fallas.length) h += '<p class="hy-falla">No pude revisar: ' + esc(D.fallas.join(' · ')) + '</p>';
     h += '<div class="hy-pie"><span>Actualizado ' + esc(D.gen) + '</span><button type="button" data-hy="recargar">Actualizar</button></div></div>';
@@ -44,7 +66,21 @@ window.PF_HOY = function (HOST, AUTH) {
   }
   HOST.addEventListener('click', function (ev) {
     var b = ev.target.closest('button');
-    if (b && b.dataset.hy === 'recargar') cargar();
+    if (!b) return;
+    if (b.dataset.hy === 'recargar') { cargar(); return; }
+    // el boton lleva a la pestaña (lo hace el click general, con data-view) y deja el punto exacto
+    if (b.dataset.view) {
+      window.PF_IR = { vista: b.dataset.view, sub: b.dataset.sub || '' };
+      setTimeout(function () { window.dispatchEvent(new CustomEvent('pf-ir')); }, 0);
+      return;
+    }
+    if (b.dataset.hylisto) {
+      if (!confirm('¿Marcar como hecha?\n\n' + b.dataset.hytexto)) return;
+      b.disabled = true; b.textContent = 'Guardando…';
+      google.script.run.withSuccessHandler(pintar)
+        .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'Listo'; alert(PF_ERROR(e)); })
+        .marcarAccionHoy(AUTH, Number(b.dataset.hylisto), b.dataset.hytexto);
+    }
   });
   cargar();
 };

@@ -61,19 +61,19 @@ function vistaInicio(){
              /^\d{4}-\d{2}$/.test(String(b0.desde)) && /^\d{4}-\d{2}$/.test(String(b0.hasta)) ? b0 : null;
   const dbMes = m => ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m.slice(5, 7) - 1];
   const tReal = rb ? dbTile({
-    titulo:'CMV real contra teórico',
+    titulo:'Food cost real contra el de las recetas',
     color: rb.brecha_pts < -2 ? 'var(--bajo)'
          : rb.brecha_pts <= 2 ? 'var(--meta)'
          : rb.brecha_pts <= 4 ? 'color-mix(in srgb, var(--alto) 60%, var(--muted))' : 'var(--alto)',
     valor: (rb.brecha_pts > 0 ? '+' : '') + rb.brecha_pts.toFixed(1) + '<small> pts</small>',
-    sub:`${dbMes(rb.desde)}–${dbMes(rb.hasta)} · real ${rb.real_pct.toFixed(1)}% · teórico ${rb.teorico_pct.toFixed(1)}%`,
-    pie:`${rb.brecha_pts < 0 ? 'El real queda bajo el teórico: suele ser inventario sin cerrar o compra sin registrar.'
+    sub:`${dbMes(rb.desde)}–${dbMes(rb.hasta)} · real ${rb.real_pct.toFixed(1)}% · según recetas ${rb.teorico_pct.toFixed(1)}%`,
+    pie:`${rb.brecha_pts < 0 ? 'El real queda bajo el de las recetas: suele ser inventario sin cerrar o compra sin registrar.'
          : rb.brecha_pts <= 2 ? 'Merma normal.'
          : rb.brecha_pts <= 4 ? 'Revisar porcionado.'
          : 'Fuga: auditar recepción, almacén y porciones.'}
          Últimos ${rb.meses} meses cerrados, no la ventana de arriba. ${esc((rt.notas || []).join(' '))}`
   }) : dbTile({
-    titulo:'CMV real contra teórico', color:'var(--muted)',
+    titulo:'Food cost real contra el de las recetas', color:'var(--muted)',
     valor: rt ? '<span class="db-falta">Falta</span>' : '<span class="db-falta">Buscando…</span>',
     sub:'el indicador que justifica el pilar',
     pie:`Mientras no exista, el ${dbPct(c.global)} es una hipótesis bien construida, no un hecho.

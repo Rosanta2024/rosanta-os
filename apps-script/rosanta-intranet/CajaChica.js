@@ -167,6 +167,14 @@ function cchCalcular_(o) {
     dias.push(D);
     saldo = D.contado !== null ? D.contado : D.esperado;
   }
+  // Un dia sin conteo queda CUBIERTO por el siguiente conteo (14-oct-2026): el saldo se arrastra,
+  // asi que contar un dia comprueba tambien los anteriores. Un dia pasado no se puede contar
+  // despues, y el aviso "sin conteo" no se iba nunca (Juanma: "el aviso dice que siguen pendientes").
+  var cuenta = null;
+  for (var k = dias.length - 1; k >= 0; k--) {
+    if (dias[k].contado !== null) cuenta = dias[k].fecha;
+    else if (dias[k].estado === 'Sin conteo' && cuenta) dias[k].cubierto = cuenta;
+  }
   dias.forEach(function (D, i) { D.pistas = _cchPistas_(D, dias.slice(Math.max(0, i - 3), i), pagos, cierres[D.fecha]); });
   var ult = dias.length ? dias[dias.length - 1] : null, conteos = dias.filter(function (D) { return D.contado !== null; });
   var abiertos = dias.filter(function (D) { return D.abierta; });
@@ -178,7 +186,7 @@ function cchCalcular_(o) {
       descuadres: abiertos.length,
       faltante: _finR_(-abiertos.filter(function (D) { return D.abierta < 0; }).reduce(function (a, D) { return a + D.abierta; }, 0)),
       sobrante: _finR_(abiertos.filter(function (D) { return D.abierta > 0; }).reduce(function (a, D) { return a + D.abierta; }, 0)),
-      sin_conteo: dias.filter(function (D) { return D.estado === 'Sin conteo'; }).length,
+      sin_conteo: dias.filter(function (D) { return D.estado === 'Sin conteo' && !D.cubierto; }).length,
       sin_cierre: dias.filter(function (D) { return D.estado === 'Falta el cierre'; }).length
     }
   };
@@ -447,6 +455,7 @@ function _cchAnularPagoDeCaja_(Q, id) {
     if (Q.rol !== 'dueno' && String(v[r][iP]) !== Q.nombre) throw new Error('Ese pago lo anotó ' + v[r][iP] + ': lo anula el dueño.');
     sh.getRange(r + 1, iE + 1).setValue('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')');
     SpreadsheetApp.flush();
+    _pagOlvidar_(false);
     return true;
   }
   return false;
@@ -455,7 +464,7 @@ function _cchAnularPagoDeCaja_(Q, id) {
 /** Leer ya los cierres de PosFile de los ultimos 20 dias (normalmente lo hace el vigia a las 6:00). */
 function leerCierresCaja(auth) {
   cchQuien_(auth);
-  var rep = cieLeer_(20), out = getCajaChica(auth);
+  var rep = cieLeer_(20, true), out = getCajaChica(auth);   // el boton fuerza releer los que no cuadran
   out.lectura_ahora = rep;
   return out;
 }
