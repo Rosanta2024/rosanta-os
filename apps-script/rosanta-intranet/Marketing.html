@@ -685,6 +685,13 @@ a{color:var(--verde)}
 </div>
 
 <script>
+// Texto que viene de afuera (Wix, Meta, la hoja) se escapa antes de pintarlo:
+// sin esto, un nombre con codigo adentro corre con la sesion de quien abre la pantalla.
+function escH(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+// Para meter un valor como argumento de un onclick: string de JS, escapado para el atributo.
+function escJ(v){return escH(JSON.stringify(String(v==null?'':v)))}
+// Solo enlaces https; cualquier otro esquema (javascript:, data:) queda en '#'.
+function escUrl(v){var u=String(v==null?'':v).trim();return /^https:\/\//i.test(u)?escH(u):'#'}
 /* ================= util ================= */
 const $=id=>document.getElementById(id);
 /* Rol de acceso: true = módulo marketing completo; false = módulo "contenido"
@@ -922,7 +929,7 @@ function renderKpis(live){
 function renderTable(rows){
   const objMap={OUTCOME_ENGAGEMENT:'Interacción',OUTCOME_AWARENESS:'Alcance',LINK_CLICKS:'Clics / VisitasIG',MESSAGES:'Mensajes'};
   const html='<div style="overflow-x:auto"><table><thead><tr><th>Campaña</th><th>Estado</th><th>Objetivo</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th></tr></thead><tbody>'+
-  rows.sort((a,b)=>(b.spend||0)-(a.spend||0)).map(x=>'<tr><td><b>'+x.name+'</b></td>'+
+  rows.sort((a,b)=>(b.spend||0)-(a.spend||0)).map(x=>'<tr><td><b>'+escH(x.name)+'</b></td>'+
     '<td><span class="chip '+(x.status==='ACTIVE'?'on':'off')+'">'+(x.status==='ACTIVE'?'Activa':'Pausada')+'</span></td>'+
     '<td>'+(objMap[x.objective]||x.objective)+'</td>'+
     '<td>'+(x.spend!=null?fmtQ(x.spend):'—')+'</td><td>'+(x.imp!=null?fmtN(x.imp):'—')+'</td>'+
@@ -1066,7 +1073,7 @@ async function delApr(id){
 }
 function renderApr(){
   const a=read('rosanta_apr',[]);
-  $('aprList').innerHTML=a.length?a.slice(0,15).map(x=>'<div class="ckitem"><span style="flex:1">'+aprIcon(x.fuente)+' '+x.hallazgo+' <span class="muted">· '+x.fecha+'</span></span><button class="btn danger" onclick="delApr(\''+x.id+'\')">✕</button></div>').join(''):'<p class="muted">Sin aprendizajes aún. Agrega el primero o espera el reporte del lunes.</p>';
+  $('aprList').innerHTML=a.length?a.slice(0,15).map(x=>'<div class="ckitem"><span style="flex:1">'+aprIcon(x.fuente)+' '+escH(x.hallazgo)+' <span class="muted">· '+escH(x.fecha)+'</span></span><button class="btn danger" onclick="delApr('+escJ(x.id)+')">✕</button></div>').join(''):'<p class="muted">Sin aprendizajes aún. Agrega el primero o espera el reporte del lunes.</p>';
 }
 async function genPlan(){
   const y=calRef.getFullYear(),m=calRef.getMonth();
@@ -1293,13 +1300,13 @@ function renderCarr(){
   $('carrKpis').innerHTML=k.map(x=>'<div class="card kpi"><div class="lbl">'+x[0]+'</div><div class="val">'+x[1]+'</div><div class="det">'+x[2]+'</div></div>').join('');
   const opts=['Pendiente','Contactado','Recuperado','Perdido'];
   $('carrTable').innerHTML=c.length?'<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Contacto</th><th>Canal</th><th>Permiso</th><th>Valor</th><th>Estado</th><th></th><th></th></tr></thead><tbody>'+
-    c.map(x=>'<tr><td>'+x.fecha+'</td><td><b>'+x.nombre+'</b>'+(x.contacto?'<br><span class="muted" style="font-size:11px">'+x.contacto+'</span>':'')+'</td><td>'+x.canal+'</td>'+
+    c.map(x=>'<tr><td>'+escH(x.fecha)+'</td><td><b>'+escH(x.nombre)+'</b>'+(x.contacto?'<br><span class="muted" style="font-size:11px">'+escH(x.contacto)+'</span>':'')+'</td><td>'+escH(x.canal)+'</td>'+
     '<td><span class="chip '+(String(x.consentimiento).toUpperCase()==='SI'?'on':'off')+'">'+(String(x.consentimiento).toUpperCase()==='SI'?'Sí':'—')+'</span></td>'+
     '<td>'+fmtQ(x.valor)+'</td>'+
-    '<td><select onchange="carrEstado(\''+x.id+'\',this.value)">'+opts.map(o=>'<option'+(o===x.estado?' selected':'')+'>'+o+'</option>').join('')+'</select></td>'+
-    '<td><button class="btn sec sm" onclick="msgCarr(\''+x.id+'\')">💬 Mensaje</button></td>'+
-    '<td><button class="btn danger" onclick="delCarr(\''+x.id+'\')">✕</button></td></tr>'+
-    '<tr><td colspan="8" style="padding:0;border:none"><div id="msg_'+x.id+'"></div></td></tr>').join('')+'</tbody></table></div>':'<p class="muted">Sin registros. Empieza con los abandonos de esta semana desde SonTickets.</p>';
+    '<td><select onchange="carrEstado('+escJ(x.id)+',this.value)">'+opts.map(o=>'<option'+(o===x.estado?' selected':'')+'>'+o+'</option>').join('')+'</select></td>'+
+    '<td><button class="btn sec sm" onclick="msgCarr('+escJ(x.id)+')">💬 Mensaje</button></td>'+
+    '<td><button class="btn danger" onclick="delCarr('+escJ(x.id)+')">✕</button></td></tr>'+
+    '<tr><td colspan="8" style="padding:0;border:none"><div id="msg_'+escH(x.id)+'"></div></td></tr>').join('')+'</tbody></table></div>':'<p class="muted">Sin registros. Empieza con los abandonos de esta semana desde SonTickets.</p>';
 }
 /* ================= PAUTA SEMANAL desde la Sheet Marketing OS =================
    (parseReporte/b64utf8/numloc quedan del lector de reportes de Drive, hoy sin
@@ -1411,8 +1418,8 @@ function renderLib(){
   $('genLib').innerHTML=l.length?l.map(x=>'<details style="border-bottom:1px dashed var(--borde);padding:8px 0">'+
     '<summary style="cursor:pointer;font-weight:700">'+({guion:'🎬',post:'📝',carrusel:'🎠',pauta:'🎯'}[x.tipo]||'📄')+' '+x.tema+' <span class="muted">· '+x.fecha+'</span></summary>'+
     '<div style="padding:10px;font-size:12.5px">'+md2html(x.texto)+'</div>'+
-    '<button class="btn sec sm" onclick="libCopy(\''+x.id+'\')">Copiar</button> '+
-    '<button class="btn danger" onclick="libDel(\''+x.id+'\')">✕</button></details>').join('')
+    '<button class="btn sec sm" onclick="libCopy('+escJ(x.id)+')">Copiar</button> '+
+    '<button class="btn danger" onclick="libDel('+escJ(x.id)+')">✕</button></details>').join('')
     :'<p class="muted">Sin borradores guardados. Genera un guión o carrusel arriba.</p>';
 }
 async function genGuion(){
@@ -1552,7 +1559,7 @@ function renderUtmHist(){
   $('utmHist').innerHTML=h.length?'<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Campaña</th><th>Source / Medium</th><th>Content</th><th>URL</th><th></th></tr></thead><tbody>'+
     h.map(x=>'<tr><td>'+x.fecha+'</td><td><b>'+x.campaign+'</b></td><td>'+x.source+' / '+x.medium+'</td><td>'+(x.content||'—')+'</td>'+
     '<td style="max-width:280px;word-break:break-all;font-size:11px">'+x.url+'</td>'+
-    '<td><button class="btn sec sm" onclick="utmCopy(\''+x.id+'\')">Copiar</button></td></tr>').join('')+'</tbody></table></div>'
+    '<td><button class="btn sec sm" onclick="utmCopy('+escJ(x.id)+')">Copiar</button></td></tr>').join('')+'</tbody></table></div>'
   :'<p class="muted">Sin UTMs generadas aún. Arma la primera arriba.</p>';
 }
 /* ================= DECISIONES DE PAUTA (PautaSistema.gs) =================
@@ -1658,7 +1665,7 @@ function psPintarSupuestos(){
   $('psSupuestos').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Afirmación</th><th>Estado</th><th>Fuente</th><th>Vence</th><th>Cómo se verifica</th></tr></thead><tbody>'+
     t.supuestos.map(x=>{
       const e=PS_EST[x.estado]||[x.estado,'off'],vencido=x.vence_el&&String(x.vence_el)<hoy;
-      const est=t.esDueno?'<select onchange="psSupEstado(\''+x.id+'\',this.value)">'+Object.keys(PS_EST).map(k=>'<option value="'+k+'"'+(k===x.estado?' selected':'')+'>'+PS_EST[k][0]+'</option>').join('')+'</select>'
+      const est=t.esDueno?'<select onchange="psSupEstado('+escJ(x.id)+',this.value)">'+Object.keys(PS_EST).map(k=>'<option value="'+k+'"'+(k===x.estado?' selected':'')+'>'+PS_EST[k][0]+'</option>').join('')+'</select>'
         :'<span class="chip '+e[1]+'">'+e[0]+'</span>';
       return '<tr><td>'+psEsc(x.afirmacion)+'</td><td>'+est+(vencido?'<div class="muted">⏰ vencido</div>':'')+'</td><td>'+psEsc(x.fuente)+'</td><td>'+psEsc(x.vence_el||'—')+'</td><td>'+psEsc(x.como_verificar)+'</td></tr>'}).join('')+'</tbody></table></div>';
   $('psSupNuevo').innerHTML=t.esDueno?'<div class="row" style="margin-top:10px"><div class="fld"><label>Nuevo supuesto</label><input id="psSupAf" placeholder="Afirmación"></div><div class="fld"><label>Cómo se verifica</label><input id="psSupCv"></div></div><button class="btn sm sec" onclick="psSupAgregar()">Agregar como por verificar</button>':'';
@@ -1719,10 +1726,10 @@ async function loadEspia(){
     const byPage={};ads.forEach(a=>{byPage[a.page_name]=(byPage[a.page_name]||0)+1});
     $('espTable').innerHTML='<p class="muted" style="margin-bottom:8px">~'+(res.estimated_total_count??ads.length)+' anuncios activos en total · mostrando '+ads.length+'</p>'+
       '<div style="overflow-x:auto"><table><thead><tr><th>Página</th><th>Título del ad</th><th>Creado</th><th>Ver</th></tr></thead><tbody>'+
-      ads.map(a=>'<tr><td><b>'+a.page_name+'</b> <span class="muted">('+byPage[a.page_name]+' ads)</span></td>'+
-      '<td>'+(a.ad_creative_link_title||'—')+'</td>'+
+      ads.map(a=>'<tr><td><b>'+escH(a.page_name)+'</b> <span class="muted">('+byPage[a.page_name]+' ads)</span></td>'+
+      '<td>'+escH(a.ad_creative_link_title||'—')+'</td>'+
       '<td>'+new Date(a.ad_creation_time*1000).toLocaleDateString('es-GT')+'</td>'+
-      '<td><a href="'+a.ad_snapshot_url+'" target="_blank">Abrir ↗</a></td></tr>').join('')+'</tbody></table></div>';
+      '<td><a href="'+escUrl(a.ad_snapshot_url)+'" target="_blank" rel="noopener">Abrir ↗</a></td></tr>').join('')+'</tbody></table></div>';
     $('espIABtn').style.display='inline-block';
     $('espStatus').textContent=Object.keys(byPage).length+' páginas activas';
   }catch(err){$('espTable').innerHTML=espMsgError(err);$('espStatus').textContent='';$('espIABtn').style.display='none'}

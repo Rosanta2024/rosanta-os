@@ -163,7 +163,9 @@ function doGet(e) {
 
   // Diagnóstico de Meta en el navegador: evita el editor de Apps Script y su
   // cache. Muestra el JSON crudo de /insights y /campaigns y la fila ya mapeada.
-  if (pagina === 'diag' && usuarioTieneModulo(usuario, 'marketing')) {
+  // Solo dueno (auditoria 14-oct-2026): muestra datos crudos de Meta y los nombres
+  // de las propiedades del script; antes lo abria cualquiera con el modulo marketing.
+  if (pagina === 'diag' && String(usuario.rol || '').toLowerCase() === 'dueno') {
     var diag;
     try {
       diag = metaDiagnosticoJson_();

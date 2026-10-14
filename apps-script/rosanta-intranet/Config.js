@@ -178,7 +178,7 @@ function resolverUsuario_(auth) {
   return (auth ? getUsuarioPorToken_(auth) : null) || getUsuarioActual();
 }
 
-/** Genera tokens para quien no tenga. Ejecutar desde el editor y leer el Log. */
+/** Genera tokens para quien no tenga. Ejecutar desde el editor y leer el Log (solo salen los nuevos). */
 function generarTokensUsuarios() {
   soloDueno_();
   var hoja = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS');
@@ -194,10 +194,10 @@ function generarTokensUsuarios() {
     var correo = String(filas[i][0] || '').trim();
     if (!correo) continue;
     var t = String(filas[i][5] || '').trim();
-    if (!t) {
-      t = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
-      hoja.getRange(i + 1, 6).setValue(t);
-    }
+    if (t) continue;  // ya tiene enlace: no se vuelve a escribir en el Log (auditoria 14-oct-2026)
+    t = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+    hoja.getRange(i + 1, 6).setValue(t);
+    // Solo los enlaces NUEVOS, que hay que repartir. Los demas se arman con la columna token.
     Logger.log(correo + '  ->  ' + base + '?u=' + t);
   }
 }

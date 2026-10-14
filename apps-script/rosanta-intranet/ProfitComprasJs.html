@@ -119,7 +119,8 @@ window.PF_COMPRAS = function (HOST, AUTH) {
   function tablaRegistradas() {
     if (!D.registradas.length) return '<section class="pg-prov"><h3>Compras registradas</h3><p class="pg-nota">Todavía no hay compras registradas desde el ' + esc(ddmm(D.desde)) + '.</p></section>';
     var filas = D.registradas.map(function (m) {
-      var url = /recibo: (\S+)/.exec(m.detalle), det = m.detalle.replace(/\s*·?\s*recibo: \S+/, '');
+      var url = /recibo: (https:\/\/\S+)/i.exec(m.detalle),  // solo https: el detalle se escribe a mano
+          det = m.detalle.replace(/\s*·?\s*recibo: \S+/, '');
       var puede = D.rol === 'dueno' || m.por === D.nombre;
       return '<tr><td>' + esc(ddmm(m.fecha)) + '<div class="pg-nota">' + esc(m.metodo) + '</div></td><td>' + esc(m.proveedor) + (m.factura ? ' <span class="pg-nota">· factura ' + esc(m.factura) + '</span>' : '') +
         '<div class="pg-nota">' + esc(det) + (url ? ' · <a href="' + esc(url[1]) + '" target="_blank" rel="noopener">recibo</a>' : '') + ' · ' + esc(m.por) + '</div></td><td class="n">' + q(m.q) + '</td>' +

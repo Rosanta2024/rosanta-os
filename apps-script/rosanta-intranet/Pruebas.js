@@ -1250,6 +1250,41 @@ function prPuentePOS_(res) {
     prAnotar_(g, nombre, 'OK', sitios + ' google.script.run en ' + VISTAS.length + ' vistas · 1 excepcion: ' +
       'srv() de Marketing, cubierto (' + srvMarketing + ' llamadas srv revisadas)', culpables.length, 0);
   });
+  /* Auditoria 14-oct-2026: Marketing pintaba sin escapar texto que llega de afuera
+     (carritos que escribe el webhook de Wix, anuncios ajenos del Espia, aprendizajes,
+     campanas). Un nombre con codigo adentro corria con la sesion de quien abria la
+     pantalla. Esta prueba falla si alguno de esos campos vuelve a pegarse crudo. */
+  prCorrer_(g, 'Marketing escapa el texto que llega de afuera', function () {
+    var nombre = 'Marketing escapa el texto que llega de afuera';
+    var CRUDO = /'\s*\+\s*\(?\s*(?:x|a)\.(?:nombre|contacto|canal|hallazgo|name|page_name|ad_creative_link_title|ad_snapshot_url|id)\s*(?:\+|\|\|)/;
+    // control negativo: si el patron no reconoce un caso crudo, la prueba no prueba nada
+    if (!CRUDO.test("'<b>'+x.nombre+'</b>'") || CRUDO.test("'<b>'+escH(x.nombre)+'</b>'")) {
+      prAnotar_(g, nombre, 'FALLA', 'El patron de la prueba no distingue un campo crudo de uno escapado.');
+      return;
+    }
+    var txt = '';
+    try { txt = HtmlService.createTemplateFromFile('Marketing').getRawContent(); }
+    catch (e) { prAnotar_(g, nombre, 'FALLA', 'No pude leer Marketing: ' + e.message); return; }
+    if (!/function escH\(/.test(txt) || !/function escJ\(/.test(txt) || !/function escUrl\(/.test(txt)) {
+      prAnotar_(g, nombre, 'FALLA', 'Faltan escH / escJ / escUrl en Marketing.html.');
+      return;
+    }
+    var usos = (txt.match(/\besc(?:H|J|Url)\(/g) || []).length;
+    var culpables = [];
+    txt.split('\n').forEach(function (l, i) { if (CRUDO.test(l)) culpables.push('linea ' + (i + 1)); });
+    if (culpables.length) {
+      prAnotar_(g, nombre, 'FALLA', 'Campos de afuera pegados sin escapar en Marketing: ' + culpables.join(' · '),
+        culpables.length, 0);
+      return;
+    }
+    var MIN_USOS = 20;  // 14-oct-2026: 24 usos (carritos, Espia, aprendizajes, campanas, botones)
+    if (usos < MIN_USOS) {
+      prAnotar_(g, nombre, 'FALLA', 'Solo ' + usos + ' usos de escH/escJ/escUrl (minimo ' + MIN_USOS +
+        '): alguien quito el escapado.', usos, MIN_USOS);
+      return;
+    }
+    prAnotar_(g, nombre, 'OK', usos + ' campos escapados en Marketing · 0 crudos', 0, 0);
+  });
 }
 
 /* Llamadas por el dispatcher srv('nombre', ...args) de Marketing.html, que termina en
