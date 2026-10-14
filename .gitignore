@@ -21,3 +21,9 @@ tools/ui-ux-pro-max-skill/
 
 # Salida generada del banco de pruebas de Finanzas: se regenera con construir.py
 tools/preview-finanzas/salida/
+
+# Claude Code: los ajustes locales y los worktrees son de cada máquina/sesión.
+# .claude/settings.json y .claude/hooks/ SÍ se versionan (el candado de clasp).
+.claude/settings.local.json
+.claude/worktrees/
+__pycache__/

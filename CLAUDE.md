@@ -78,6 +78,12 @@ sincroniza la carpeta**, nunca al revés. El respaldo de la v8 quedó en
   en verde.
 - **Un iframe vacío visto desde Claude en Chrome no prueba nada:** esa ventana bloquea
   cookies de terceros. Se confirma en el Chrome de la persona.
+- **Candado (14-oct-2026, `.claude/hooks/candado-clasp.py`):** bloquea `clasp pull` que baje
+  dentro del repo, y `create-version`/`update-deployment`/`deploy` de la intranet sin sello
+  vigente de la batería (`~/.rosanta-sellos/bateria-intranet.json`: posterior al último push
+  y con 0 fallas). El sello se crea SOLO con `.claude/hooks/sellar-bateria.py` y el conteo
+  REAL que Juanma reporta o que se lee en su Chrome. **Nunca crear ni editar el sello sin
+  ese resultado, ni para "destrabar".**
 
 ## Reglas que no cambian
 
