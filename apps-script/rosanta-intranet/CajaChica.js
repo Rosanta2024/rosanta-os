@@ -287,7 +287,8 @@ function cchSincronizarMaestro_(E) {
  */
 function _cchLeerSiFaltan_() {
   var cierres = cieTodos_(), hoy = medFechaIso_(new Date()), falta = null;
-  for (var f = _cchMasDia_(CCH_ARRANQUE_.fecha, 1); f < hoy; f = _cchMasDia_(f, 1)) if (!cierres[f]) { falta = f; break; }
+  // falta o no cuadra (un cierre mal leido se vuelve a leer: cieLeer_ relee los que no cuadran)
+  for (var f = _cchMasDia_(CCH_ARRANQUE_.fecha, 1); f < hoy; f = _cchMasDia_(f, 1)) if (!cierres[f] || !cierres[f].cuadra) { falta = f; break; }
   if (!falta) return null;
   var props = PropertiesService.getScriptProperties(), ult = Number(props.getProperty('CCH_LECTURA_AUTO') || 0);
   if (Date.now() - ult < 20 * 60 * 1000) return null;
