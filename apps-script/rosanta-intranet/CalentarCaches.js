@@ -47,16 +47,26 @@ function calentarCaches() {
   function calentar(nombre, estaFrio, construir, sigueFrio) {
     try {
       if (!estaFrio()) { ya.push(nombre); return; }
-      // NO CUPO (14-oct-2026): si la ultima reconstruccion no quedo guardada (el valor paso
-      // el tope del cache y el put fallo callado), no se repite cada 5 min: se espera 1 h.
+      // NO CUPO (14-oct-2026): si las reconstrucciones no quedan guardadas (el valor paso
+      // el tope del cache y el put fallo callado), no se repite cada 5 min: se espera 30 min.
       // Sin esto el recetario (~40 s) se rehacia 288 veces al dia sin que nadie se enterara.
-      if (c.get('calentar_nocupo_' + nombre)) { fallo.push(nombre + ': no cabe en el caché (se reintenta en menos de 1 h)'); return; }
+      if (c.get('calentar_nocupo_' + nombre)) { fallo.push(nombre + ': no cabe en el caché (se reintenta en menos de 30 min)'); return; }
       var a = new Date().getTime();
       construir();
       hecho.push(nombre + ' (' + ((new Date().getTime() - a) / 1000).toFixed(1) + 's)');
+      // Una sola vez no alcanza para decir "no cabe": el recetario NO guarda a proposito un
+      // modelo que se cruzo con una edicion (marca de generacion, CosteoDatos). Se frena
+      // recien a la SEGUNDA reconstruccion seguida que no queda, y por 30 min.
+      var kN = 'calentar_nocupo_n_' + nombre;
       if ((sigueFrio || estaFrio)()) {   // sigueFrio: solo "no esta en el cache", sin otras razones para rehacer
-        c.put('calentar_nocupo_' + nombre, '1', 3600);
-        fallo.push(nombre + ': se reconstruyó pero no quedó en el caché (¿pasó el tope de 100 KB?)');
+        var n = Number(c.get(kN) || 0) + 1;
+        c.put(kN, String(n), 7200);
+        if (n >= 2) {
+          c.put('calentar_nocupo_' + nombre, '1', 1800);
+          fallo.push(nombre + ': se reconstruyó ' + n + ' veces seguidas y no quedó en el caché (¿pasó el tope de 100 KB?)');
+        }
+      } else {
+        c.remove(kN);
       }
     } catch (e) {
       fallo.push(nombre + ': ' + String(e && e.message || e));
