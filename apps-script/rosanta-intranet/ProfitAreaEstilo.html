@@ -18,6 +18,12 @@
     .sl-box a.b { display: inline-block; border: 1px solid rgba(78,109,90,0.35); color: var(--verde-bosque); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.78rem; text-decoration: none; white-space: nowrap; }
     .sl-p { display: inline-block; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--alerta-tint); color: var(--alerta); font-family:var(--rosanta-font-label)}
     .sl-p.r { background: var(--mal-tint); color: var(--mal); }
+    .sl-p.ok { background: var(--ok-tint); color: var(--ok); }
+    .sl-bts { display: inline-flex; gap: 0.4rem; margin: 0 0.4rem 0.3rem 0; flex-wrap: wrap; }
+    .sl-bt { min-height: 44px; padding: 0 1rem; border-radius: 22px; font: inherit; font-size: 0.9rem; cursor: pointer; border: 1px solid var(--linea); background: var(--superficie); color: var(--texto); }
+    .sl-bt.si { background: var(--ok); border-color: var(--ok); color: var(--superficie); }
+    .sl-bt.no { border-color: var(--mal); color: var(--mal); }
+    .sl-bt:disabled { opacity: 0.5; cursor: default; }
     .sl-big { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
     .sl-nota { font-size: 0.8rem; color: var(--texto-2); line-height: 1.5; margin-top: 0.5rem; }
     .sl-cargando { padding: 2rem 0; text-align: center; opacity: 0.6; }
