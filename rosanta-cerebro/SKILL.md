@@ -51,7 +51,7 @@ total (decisión del 15-sep), solo se rotula.
 
 **Pendientes que deja:**
 - **Latido del lunes 13-oct con 100% de error** = encontró una señal fría y avisó por correo: mirar cuál.
-- Pruebas a mano de Profit OS en producción: pagar 2 juntas y anular; Compras retiro + 3 filas + asignar factura; Caja › Leer cierres (11 y 12-oct: Q209 y Q297); Barra y Sala.
+- ~~Pruebas a mano de Profit OS en producción~~ **HECHO (Juanma, 14-oct noche): "todo funciona correctamente"** — pagar 2 juntas y anular; Compras retiro + 3 filas + asignar factura; Caja › Leer cierres; Barra y Sala.
 - Precio escrito A MANO en la hoja con coma decimal ("12,5") se lee 125 (siempre fue así; la pantalla de Inventario ya convierte).
 - Opcional: `mktReplace` y el bloque viejo de retiros de MedicionDatos (ver LEEME del archivo).
 
