@@ -133,6 +133,123 @@ function crmClavesConChat(auth) {
    lee las conversaciones por su cuenta. crmClavesConChat() sigue en uso — marca
    que contactos tienen chat sin traer los mensajes de cada uno. */
 
+/* ============================================================================
+ * FICHA DE CLIENTE (15-oct-2026)
+ * ----------------------------------------------------------------------------
+ * Todo lo que se sabe de UNA persona, de las fuentes que ya existen (solo lectura):
+ *   · reservas y visitas: Marketing OS › reservas (el webhook de Wix);
+ *   · chats del bot: Rosanta Leads › Conversaciones (últimos 20 mensajes);
+ *   · lo que el bot entendió: Rosanta Leads › Fichas (pestaña de la sesión del bot,
+ *     15-oct-2026; si todavía no existe, se omite) y las consultas de evento de Leads;
+ *   · cotizaciones: Marketing OS › cotizaciones, cuando el Pipeline de Eventos se mude
+ *     a Sheets (decisión de Juanma del 15-oct-2026). Mientras no exista, "sin datos".
+ * La persona (nombre, segmento, idioma…) ya la tiene la pantalla: viene de crmContactos.
+ * Cruce por los últimos 8 dígitos del teléfono (telClave_) o por el email.
+ * ============================================================================ */
+function crmFicha(auth, clave, email) {
+  requiereCrm_(auth);
+  clave = telClave_(clave);
+  email = normEmailCrm_(email);
+  if (!clave && !email) throw new Error('Ese contacto no tiene teléfono ni email para cruzar.');
+  var cache = CacheService.getScriptCache(), ck = 'crm_ficha_v1_' + clave + '_' + email;
+  try { var c = cache.get(ck); if (c) return JSON.parse(c); } catch (e0) {}
+  var es = function (tel, mail) {
+    return (clave && telClave_(tel) === clave) || (email && String(mail || '').trim().toLowerCase() === email);
+  };
+  var out = { reservas: [], chats: [], bot: null, consultas: [], cotizaciones: null, avisos: [] };
+
+  // ---- reservas y visitas
+  try {
+    out.reservas = crmReservasFilas_().filter(function (r) { return es(r.telefono, r.email); })
+      .map(function (r) { return { fecha: r.fecha, personas: r.personas, estado: r.estado, gasto: r.gasto }; })
+      .sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
+  } catch (e1) { out.avisos.push('Reservas: ' + (e1 && e1.message || e1)); }
+
+  // ---- Rosanta Leads: chats, Fichas del bot y consultas de evento
+  var ss = null;
+  try { ss = SpreadsheetApp.openById(leadsSheetId_()); } catch (e2) { out.avisos.push('Leads: ' + (e2 && e2.message || e2)); }
+  if (ss && clave) {
+    try {
+      var sc = ss.getSheetByName('Conversaciones');
+      if (sc && sc.getLastRow() > 1) {
+        var V = sc.getRange(2, 1, sc.getLastRow() - 1, 7).getValues();   // Fecha/Hora, Canal, ContactoID, Nombre, Direccion, Autor, Texto
+        for (var i = 0; i < V.length; i++) {
+          if (telClave_(V[i][2]) !== clave) continue;
+          out.chats.push({ fecha: V[i][0] instanceof Date ? Utilities.formatDate(V[i][0], 'America/Guatemala', 'yyyy-MM-dd HH:mm') : String(V[i][0] || ''),
+                           canal: String(V[i][1] || ''), dir: String(V[i][4] || ''), autor: String(V[i][5] || ''),
+                           texto: String(V[i][6] || '').slice(0, 600) });
+        }
+        out.chats_total = out.chats.length;
+        out.chats = out.chats.slice(-20);
+      }
+    } catch (e3) { out.avisos.push('Conversaciones: ' + (e3 && e3.message || e3)); }
+  }
+  if (ss) {
+    try {
+      var sf = ss.getSheetByName('Fichas');
+      if (sf && sf.getLastRow() > 1) {
+        var F = sf.getDataRange().getValues(), hf = F.shift().map(function (x) { return String(x).trim().toLowerCase(); });
+        var col = function (n) { return hf.indexOf(n); };
+        var CAMPOS = ['canal', 'nombre', 'idioma', 'tipo', 'tipo_evento', 'fecha', 'personas', 'presupuesto',
+                      'formato_menu', 'es_evento', 'fecha_consulta', 'etapa_pipeline', 'ultimo_boton', 'resumen',
+                      'primer_contacto', 'actualizado'];
+        for (var j = F.length - 1; j >= 0; j--) {
+          var tel = col('telefono') >= 0 ? F[j][col('telefono')] : '', cid = col('contacto_id') >= 0 ? F[j][col('contacto_id')] : '';
+          if (!(es(tel, col('email') >= 0 ? F[j][col('email')] : '') || (clave && telClave_(cid) === clave))) continue;
+          var b = {};
+          CAMPOS.forEach(function (n) {
+            if (col(n) < 0) return;
+            var v = F[j][col(n)];
+            b[n] = v instanceof Date ? Utilities.formatDate(v, 'America/Guatemala', 'yyyy-MM-dd') : String(v == null ? '' : v);
+          });
+          out.bot = b;
+          break;
+        }
+      }
+    } catch (e4) { out.avisos.push('Fichas del bot: ' + (e4 && e4.message || e4)); }
+    try {
+      var sl = ss.getSheetByName('Leads');
+      if (sl && sl.getLastRow() > 1) {
+        var L = sl.getRange(2, 1, sl.getLastRow() - 1, 16).getValues();   // A Fecha · B Canal · C Idioma · E Teléfono · F Tipo · H Resumen · L ID destino · O Email
+        for (var k = 0; k < L.length; k++) {
+          if (String(L[k][5] || '').trim().toLowerCase() !== 'evento') continue;
+          if (!(es(L[k][4], L[k][14]) || (clave && telClave_(L[k][11]) === clave))) continue;
+          out.consultas.push({ fecha: L[k][0] instanceof Date ? Utilities.formatDate(L[k][0], 'America/Guatemala', 'yyyy-MM-dd') : String(L[k][0] || '').slice(0, 10),
+                               canal: String(L[k][1] || ''), resumen: String(L[k][7] || '').slice(0, 300) });
+        }
+        out.consultas = out.consultas.slice(-10).reverse();
+      }
+    } catch (e5) { out.avisos.push('Leads: ' + (e5 && e5.message || e5)); }
+  }
+
+  // ---- cotizaciones (cuando el pipeline viva en Marketing OS)
+  try {
+    var sq = SpreadsheetApp.openById(MKT_SHEET_ID).getSheetByName('cotizaciones');
+    if (sq && sq.getLastRow() > 1) {
+      var Q = sq.getDataRange().getValues(), hq = Q.shift().map(function (x) { return String(x).trim().toLowerCase(); });
+      var q = function (r, n) { var i = hq.indexOf(n); return i < 0 ? '' : r[i]; };
+      out.cotizaciones = Q.filter(function (r) { return es(q(r, 'telefono'), q(r, 'email')); }).map(function (r) {
+        var f = q(r, 'fecha_evento');
+        return { evento: String(q(r, 'evento') || ''), fecha_evento: f instanceof Date ? Utilities.formatDate(f, 'America/Guatemala', 'yyyy-MM-dd') : String(f || ''),
+                 pax: q(r, 'pax'), monto_q: Number(q(r, 'monto_q')) || 0, etapa: String(q(r, 'etapa') || '') };
+      });
+    }
+  } catch (e6) { out.avisos.push('Cotizaciones: ' + (e6 && e6.message || e6)); }
+
+  // ---- totales
+  var T = { visitas: 0, noShows: 0, canceladas: 0, gasto: 0, conGasto: 0 };
+  out.reservas.forEach(function (r) {
+    if (r.estado.indexOf('CANCEL') >= 0 || r.estado.indexOf('DECLIN') >= 0) T.canceladas++;
+    else if (r.gasto > 0 || r.estado === 'SEATED' || r.estado === 'FINISHED') T.visitas++;
+    else if (r.estado === 'NO_SHOW') T.noShows++;
+    if (r.gasto > 0) { T.gasto += r.gasto; T.conGasto++; }
+  });
+  T.ticket = T.conGasto ? Math.round(T.gasto / T.conGasto) : null;
+  out.totales = T;
+  try { cache.put(ck, JSON.stringify(out), 300); } catch (e7) {}
+  return out;
+}
+
 // ==================== IMPORTAR CSV a la maestra ====================
 // Escribe en Rosanta_CRM_Maestra. Misma normalizacion y dedup que el menu
 // "CRM Rosanta" del proyecto ligado a la Sheet, para que las dos vias sean
@@ -283,11 +400,75 @@ function crmAltasPorMes_(anio) {
     else if (seg === 'reserva historica') M.historica++;
     else M.otras++;
   }
+  // La lectura ya no sale de las altas (15-oct-2026): se mide por RESERVA, con la fecha
+  // de la mesa. Ver crmLecturaCalc_. visito/historica se quedan: visito es el CAC.
+  var res = crmReservasFilas_();
   Object.keys(out).forEach(function (m) {
-    var M = out[m], base = M.visito + M.historica;
-    M.lectura = base ? Math.round(M.visito / base * 1000) / 10 : null;
+    var M = out[m];
+    var L = crmLecturaCalc_(res, new Date(anio, m - 1, 1), new Date(anio, m, 1), new Date());
+    M.lectura = L.base ? Math.round(L.lectura * 1000) / 10 : null;
+    M.lectura_base = L.base;
     M.publicable = M.lectura === null ? false : M.lectura >= 50;
     M.comparable = M.lectura !== null && M.lectura >= 90;
   });
   return out;
+}
+
+/* ============================================================================
+ * LECTURA DEL CRM, POR RESERVA (15-oct-2026)
+ * ----------------------------------------------------------------------------
+ * Antes la lectura era visitó / (visitó + Reserva histórica) sobre las ALTAS del
+ * mes (fecha_alta = el día en que la persona reservó). Eso contaba como "no sabemos":
+ *   · reservas para fechas que todavía no llegan (una alta del 11-oct para el 22-ene);
+ *   · reservas canceladas, porque el segmento del CRM nunca baja de rango.
+ * Octubre daba 35% con el salón cerrando 26 de 27 mesas. Ahora se mide en la pestaña
+ * `reservas` del Marketing OS, por la fecha de la mesa:
+ *   base   = reservas con fecha en [desde, hasta), ya pasadas hace más de 3 días
+ *            (el consumo se teclea al terminar o al día siguiente) y no canceladas.
+ *   leídas = consumo > 0, SEATED o FINISHED, o NO_SHOW desde el 15-oct-2026.
+ *            Antes de esa fecha un NO_SHOW quería decir "no sabemos" (regla del 23-sep).
+ * ============================================================================ */
+var CRM_LECTURA_GRACIA_DIAS = 3;
+var CRM_NOSHOW_CONFIABLE_DESDE = '2026-10-15';
+
+/** Filas de la pestaña reservas del Marketing OS, como objetos. */
+function crmReservasFilas_() {
+  var v = mktSheet_('reservas').getDataRange().getValues();
+  var h = v.shift().map(function (x) { return String(x).trim().toLowerCase(); });
+  var iF = h.indexOf('fecha'), iE = h.indexOf('estado'), iG = h.indexOf('gasto'),
+      iId = h.indexOf('id'), iN = h.indexOf('nombre'), iM = h.indexOf('email'),
+      iT = h.indexOf('telefono'), iP = h.indexOf('personas');
+  if (iF < 0 || iE < 0) throw new Error('La pestaña reservas no tiene fecha o estado.');
+  return v.map(function (r) {
+    return {
+      id: iId >= 0 ? String(r[iId] || '') : '', fecha: fechaTxt_(r[iF]).slice(0, 10),
+      estado: String(r[iE] || '').trim().toUpperCase(), gasto: Number(r[iG]) || 0,
+      nombre: iN >= 0 ? String(r[iN] || '') : '', email: iM >= 0 ? String(r[iM] || '').trim().toLowerCase() : '',
+      telefono: iT >= 0 ? String(r[iT] || '') : '', personas: iP >= 0 ? Number(r[iP]) || 0 : 0
+    };
+  });
+}
+
+/** Cálculo puro (lo prueba la batería con datos de juguete). desde, hasta y hoy son Date. */
+function crmLecturaCalc_(filas, desde, hasta, hoy) {
+  var tz = 'America/Guatemala';
+  var dTxt = Utilities.formatDate(desde, tz, 'yyyy-MM-dd'), hTxt = Utilities.formatDate(hasta, tz, 'yyyy-MM-dd');
+  var corte = Utilities.formatDate(new Date(hoy.getTime() - CRM_LECTURA_GRACIA_DIAS * 86400000), tz, 'yyyy-MM-dd');
+  var out = { base: 0, visito: 0, noShow: 0, leidas: 0, lectura: 0 };
+  filas.forEach(function (r) {
+    var f = r.fecha;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(f) || f < dTxt || f >= hTxt || f >= corte) return;
+    var e = r.estado;
+    if (e.indexOf('CANCEL') >= 0 || e.indexOf('DECLIN') >= 0) return;
+    out.base++;
+    if (r.gasto > 0 || e === 'SEATED' || e === 'FINISHED') { out.visito++; out.leidas++; }
+    else if (e === 'NO_SHOW' && f >= CRM_NOSHOW_CONFIABLE_DESDE) { out.noShow++; out.leidas++; }
+  });
+  out.lectura = out.base ? out.leidas / out.base : 0;
+  return out;
+}
+
+/** La lectura de una ventana [desde, hasta) contra hoy. La usa el Latido. */
+function crmLecturaReservas_(desde, hasta) {
+  return crmLecturaCalc_(crmReservasFilas_(), desde, hasta, new Date());
 }

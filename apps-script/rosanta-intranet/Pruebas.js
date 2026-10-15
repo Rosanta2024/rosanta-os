@@ -225,7 +225,7 @@ function prIgual_(grupo, nombre, leido, esperado, detalle) {
    cuerpo resuelve la identidad en el servidor con el auth y lanza (throw). Pagos (p213,
    29-sep-2026) entra por pagQuien_: las dos pruebas de guardas no la conocian y el
    8-oct-2026 marcaron abiertas sus 8 funciones, que si estaban cerradas. */
-var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_', 'cpeQuien_', 'exigirDuenoTiempos_'];   // cchQuien_: Caja chica (13-oct-2026); cpeQuien_: Compras (14-oct-2026); exigirDuenoTiempos_: Tiempos (15-oct-2026)
+var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_', 'cpeQuien_', 'exigirDuenoTiempos_', 'exigirSala_'];   // cchQuien_: Caja chica (13-oct-2026); cpeQuien_: Compras (14-oct-2026); exigirDuenoTiempos_: Tiempos (15-oct-2026); exigirSala_: cerrar mesas desde Sala (15-oct-2026)
 function prGuardasPropias_() {
   var G = (typeof globalThis !== 'undefined') ? globalThis : this, ok = [], malas = [];
   PR_GUARDAS_PROPIAS_.forEach(function (n) {
@@ -1665,6 +1665,50 @@ function prModulos_(res) {
     var c = crmContactos();
     var n = c && c.length ? c.length : 0;
     prAnotar_(g, 'CRM (crmContactos)', n >= 0 ? 'OK' : 'FALLA', n + ' contactos', n);
+  });
+
+  /* Ficha de cliente (15-oct-2026): con el contacto más reciente que tenga teléfono. */
+  prCorrer_(g, 'CRM (crmFicha)', function () {
+    var c = (crmContactos() || []).filter(function (x) { return x.clave; })
+      .sort(function (a, b) { return String(b.ultimaReserva || '') < String(a.ultimaReserva || '') ? -1 : 1; })[0];
+    if (!c) { prAnotar_(g, 'CRM (crmFicha)', 'SALTADA', 'ningún contacto con teléfono'); return; }
+    var f = crmFicha(undefined, c.clave, c.email);
+    var ok = f && f.totales && Array.isArray(f.reservas) && Array.isArray(f.chats);
+    prAnotar_(g, 'CRM (crmFicha)', ok ? 'OK' : 'FALLA',
+              ok ? f.reservas.length + ' reservas · ' + (f.chats_total || 0) + ' mensajes · ' + f.consultas.length + ' consultas de evento' +
+                   (f.avisos.length ? ' · avisos: ' + f.avisos.join('; ') : '') : 'no devolvió la forma esperada');
+  });
+
+  /* 15-oct-2026: la lectura del CRM se mide por reserva. Con el cálculo viejo (sobre las
+     altas) octubre daba 35% con 26 de 27 mesas cerradas: contaba reservas futuras y
+     canceladas como "no sabemos". Datos de juguete con hoy = 20-oct: 2 que cuentan (una
+     SEATED y una NO_SHOW confiable) y 4 que no deben contar (futura, cancelada, dentro de
+     los 3 días de gracia, fuera del mes). Control negativo: el conteo ingenuo, que mete
+     todo lo que no sea visita en el denominador, tiene que dar distinto. */
+  prCorrer_(g, 'La lectura no cuenta reservas futuras ni canceladas', function () {
+    var hoy = new Date(2026, 9, 20, 12), F = [
+      { fecha: '2026-10-05', estado: 'SEATED', gasto: 0 },
+      { fecha: '2026-10-16', estado: 'NO_SHOW', gasto: 0 },
+      { fecha: '2026-10-28', estado: 'RESERVED', gasto: 0 },
+      { fecha: '2026-10-07', estado: 'CANCELED', gasto: 0 },
+      { fecha: '2026-10-18', estado: 'RESERVED', gasto: 0 },
+      { fecha: '2026-09-30', estado: 'RESERVED', gasto: 0 }];
+    var L = crmLecturaCalc_(F, new Date(2026, 9, 1), new Date(2026, 10, 1), hoy);
+    var ingenua = F.filter(function (r) { return r.fecha >= '2026-10-01'; });
+    var ingLect = ingenua.filter(function (r) { return r.estado === 'SEATED'; }).length / ingenua.length;
+    var ok = L.base === 2 && L.leidas === 2 && L.lectura === 1 && ingLect !== L.lectura;
+    prAnotar_(g, 'La lectura no cuenta reservas futuras ni canceladas', ok ? 'OK' : 'FALLA',
+              'base ' + L.base + ' · leídas ' + L.leidas + ' (esperado 2 y 2); el cálculo ingenuo da ' +
+              Math.round(ingLect * 100) + '%', L.base + '/' + L.leidas, '2/2');
+  });
+
+  prCorrer_(g, 'Lectura de Wix del mes (mesas cerradas)', function () {
+    var hoy = new Date(), L = crmLecturaReservas_(new Date(hoy.getFullYear(), hoy.getMonth(), 1), hoy);
+    var p = Math.round(L.lectura * 100);
+    prAnotar_(g, 'Lectura de Wix del mes (mesas cerradas)',
+              !L.base ? 'OK' : (L.lectura >= 0.5 ? 'OK' : 'AVISO'),
+              L.base ? p + '% · ' + L.leidas + ' de ' + L.base + ' reservas pasadas (sin canceladas) cerradas en Wix'
+                     : 'sin reservas pasadas este mes', L.base ? p : null, 50);
   });
 
   // El semaforo del Excel del cierre se retiro el 15-sep-2026 (auditoria A6): los precios

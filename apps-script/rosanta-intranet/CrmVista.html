@@ -14,6 +14,45 @@
     .fecha-nueva{font-weight:700}
     .badge-nuevo{display:inline-block;margin-left:.35rem;padding:0 .35rem;border-radius:.6rem;
                  font-size:.68rem;font-weight:700;background:var(--ok-tint);color:var(--rosanta-verde);vertical-align:middle}
+    /* Ficha de cliente (15-oct-2026): cajón lateral; en el celular ocupa toda la pantalla. */
+    .btn-ficha{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--rosanta-verde);
+               text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+    .fx-scrim{position:fixed;inset:0;background:rgba(20,24,15,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .18s}
+    .fx-scrim.on{opacity:1;pointer-events:auto}
+    .fx{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--fondo);z-index:51;
+        transform:translateX(100%);transition:transform .2s ease;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.18)}
+    .fx.on{transform:none}
+    .fx-head{position:sticky;top:0;z-index:2;background:var(--superficie);border-bottom:1px solid var(--linea);padding:18px 20px 14px}
+    .fx-head h2{font-family:var(--rosanta-font-title);font-size:1.5rem;margin:0 2.8rem 4px 0;color:var(--rosanta-verde)}
+    .fx-head .fx-sub{font-size:.88rem;color:var(--texto-suave)}
+    .fx-cerrar{position:absolute;top:12px;right:12px;min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--linea);
+               background:var(--superficie);color:var(--texto);font-size:1.1rem;cursor:pointer}
+    .fx-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .fx-chip{font-family:var(--rosanta-font-label);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+             padding:3px 10px;border-radius:999px;background:var(--rosanta-lila-tint);color:var(--lila-texto)}
+    .fx-chip.v{background:var(--ok-tint);color:var(--ok)}
+    .fx-body{padding:16px 20px 60px;display:flex;flex-direction:column;gap:22px}
+    .fx-body h3{font-family:var(--rosanta-font-label);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;
+                color:var(--texto-suave);margin:0 0 8px}
+    .fx-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .fx-num{background:var(--superficie);border-radius:12px;padding:10px}
+    .fx-num b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
+    .fx-num span{font-size:.75rem;color:var(--texto-suave)}
+    .fx-lista{background:var(--superficie);border-radius:12px;overflow:hidden}
+    .fx-fila{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--linea);font-size:.9rem}
+    .fx-fila:last-child{border-bottom:0}
+    .fx-fila small{color:var(--texto-suave)}
+    .fx-msg{padding:8px 12px;border-bottom:1px solid var(--linea);font-size:.88rem;line-height:1.4}
+    .fx-msg.sal{background:var(--rosanta-verde-tint)}
+    .fx-msg small{display:block;color:var(--texto-suave);font-size:.74rem}
+    .fx-vacio{font-size:.88rem;color:var(--texto-suave)}
+    .fx-acc{display:flex;flex-wrap:wrap;gap:8px}
+    .fx-acc button{min-height:44px;padding:0 16px;border-radius:22px;font:inherit;cursor:pointer;
+                   border:1px solid var(--rosanta-verde);background:var(--rosanta-verde);color:var(--superficie)}
+    .fx-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:.9rem;background:var(--superficie);border-radius:12px;padding:12px}
+    .fx-dl dt{color:var(--texto-suave)} .fx-dl dd{margin:0;word-break:break-word}
+    @media (max-width:600px){ .fx-nums{grid-template-columns:repeat(2,1fr)} .fx-head h2{font-size:1.3rem} }
+    @media (prefers-reduced-motion:reduce){ .fx,.fx-scrim{transition:none} }
   </style>
 </head>
 <body>
@@ -76,6 +115,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Ficha de cliente: se abre al tocar un nombre. -->
+  <div class="fx-scrim" id="fxScrim"></div>
+  <aside class="fx" id="fx" role="dialog" aria-modal="true" aria-labelledby="fxNombre" aria-hidden="true">
+    <div class="fx-head">
+      <button class="fx-cerrar" id="fxCerrar" aria-label="Cerrar la ficha">✕</button>
+      <h2 id="fxNombre"></h2>
+      <div class="fx-sub" id="fxSub"></div>
+      <div class="fx-chips" id="fxChips"></div>
+    </div>
+    <div class="fx-body" id="fxBody"></div>
+  </aside>
 
 <script>
 (function () {
@@ -208,7 +259,7 @@
           : '<button class="btn-chat vacia" data-i="' + i + '" title="Este contacto todavía no tiene chat">Abrir consola</button>';
         var nuevo = esNuevoHoy(c) ? '<span class="badge-nuevo">nuevo</span>' : '';
         return '<tr>' +
-          '<td><b>' + esc(c.nombre) + '</b>' + nuevo + '</td>' +
+          '<td><button class="btn-ficha" data-f="' + i + '" title="Ver la ficha">' + esc(c.nombre || '(sin nombre)') + '</button>' + nuevo + '</td>' +
           '<td>' + esc(c.telefono) + '</td>' +
           '<td>' + esc(c.email) + '</td>' +
           '<td>' + (c.segmento ? '<span class="seg-chip">' + esc(c.segmento) + '</span>' : '') + '</td>' +
@@ -224,6 +275,89 @@
     $('lista').querySelectorAll('.btn-chat').forEach(function (b) {
       b.addEventListener('click', function () { verConversacion(filtrados[+b.dataset.i]); });
     });
+    $('lista').querySelectorAll('.btn-ficha').forEach(function (b) {
+      b.addEventListener('click', function () { abrirFicha(filtrados[+b.dataset.f]); });
+    });
+  }
+
+  // ---- ficha de cliente (15-oct-2026)
+  var ESTADO = { SEATED: 'vino', FINISHED: 'vino', NO_SHOW: 'no vino', RESERVED: 'reservada',
+                 CANCELED: 'cancelada', DECLINED: 'rechazada' };
+  var fichaDe = null;
+  function cerrarFicha() {
+    $('fx').classList.remove('on'); $('fxScrim').classList.remove('on');
+    $('fx').setAttribute('aria-hidden', 'true'); fichaDe = null;
+  }
+  $('fxCerrar').addEventListener('click', cerrarFicha);
+  $('fxScrim').addEventListener('click', cerrarFicha);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && fichaDe) cerrarFicha(); });
+
+  function abrirFicha(c) {
+    fichaDe = c;
+    $('fxNombre').textContent = c.nombre || '(sin nombre)';
+    $('fxSub').textContent = [c.telefono, c.email].filter(Boolean).join(' · ');
+    $('fxChips').innerHTML = (c.segmento ? '<span class="fx-chip' + (/visit/i.test(c.segmento) ? ' v' : '') + '">' + esc(c.segmento) + '</span>' : '') +
+      (c.idioma ? '<span class="fx-chip">' + esc(c.idioma) + '</span>' : '') +
+      (c.fuente ? '<span class="fx-chip">' + esc(c.fuente) + '</span>' : '');
+    $('fxBody').innerHTML = '<p class="fx-vacio">Buscando sus reservas, chats y eventos…</p>';
+    $('fx').classList.add('on'); $('fxScrim').classList.add('on'); $('fx').setAttribute('aria-hidden', 'false');
+    $('fxCerrar').focus();
+    google.script.run
+      .withSuccessHandler(function (d) { if (fichaDe === c) pintarFicha(c, d || {}); })
+      .withFailureHandler(function (err) {
+        if (fichaDe === c) $('fxBody').innerHTML = '<p class="fx-vacio">No pude leer la ficha: ' + esc(err && err.message ? err.message : err) + '</p>';
+      })
+      .crmFicha(AUTH, c.clave || c.telefono || '', c.email || '');
+  }
+
+  function pintarFicha(c, d) {
+    var T = d.totales || {}, h = '';
+    h += '<section><h3>Reservas y visitas</h3><div class="fx-nums">' +
+      '<div class="fx-num"><b>' + (T.visitas || 0) + '</b><span>visitas</span></div>' +
+      '<div class="fx-num"><b>' + (T.ticket ? fmtQ(T.ticket) : '—') + '</b><span>consumo promedio por mesa</span></div>' +
+      '<div class="fx-num"><b>' + (T.noShows || 0) + '</b><span>no vino</span></div>' +
+      '<div class="fx-num"><b>' + (T.canceladas || 0) + '</b><span>canceladas</span></div></div>';
+    var R = d.reservas || [];
+    h += R.length ? '<div class="fx-lista" style="margin-top:8px">' + R.map(function (r) {
+      return '<div class="fx-fila"><span>' + esc(r.fecha) + ' · ' + esc(r.personas) + ' pers.</span><span>' +
+        esc(ESTADO[r.estado] || r.estado.toLowerCase()) + (r.gasto ? ' · <b>' + fmtQ(r.gasto) + '</b>' : '') + '</span></div>';
+    }).join('') + '</div>' : '<p class="fx-vacio">Sin reservas por la web o el bot.</p>';
+    h += '</section>';
+
+    var Q = d.cotizaciones, K = d.consultas || [];
+    h += '<section><h3>Eventos</h3>';
+    if (Q && Q.length) h += '<div class="fx-lista">' + Q.map(function (q) {
+      return '<div class="fx-fila"><span>' + esc(q.evento || 'Evento') + ' · ' + esc(q.fecha_evento) + (q.pax ? ' · ' + esc(q.pax) + ' pers.' : '') +
+        '</span><span>' + esc(q.etapa) + (q.monto_q ? ' · <b>' + fmtQ(q.monto_q) + '</b>' : '') + '</span></div>';
+    }).join('') + '</div>';
+    if (K.length) h += '<div class="fx-lista" style="margin-top:8px">' + K.map(function (k) {
+      return '<div class="fx-msg"><small>Consulta por ' + esc(k.canal) + ' · ' + esc(k.fecha) + '</small>' + esc(k.resumen) + '</div>';
+    }).join('') + '</div>';
+    if (!(Q && Q.length) && !K.length) h += '<p class="fx-vacio">' + (Q === null
+      ? 'Sin consultas de evento en el bot. Las cotizaciones aparecen aquí cuando el pipeline pase a Sheets.'
+      : 'Sin eventos cotizados ni consultas de evento.') + '</p>';
+    h += '</section>';
+
+    var B = d.bot, C = d.chats || [];
+    h += '<section><h3>Chats del bot' + (d.chats_total ? ' (' + d.chats_total + ' mensajes)' : '') + '</h3>';
+    if (B) {
+      var dl = [['Pidió', B.tipo_evento || B.tipo], ['Fecha', B.fecha], ['Personas', B.personas], ['Presupuesto', B.presupuesto],
+                ['Último botón', B.ultimo_boton], ['Resumen', B.resumen]].filter(function (x) { return x[1]; });
+      if (dl.length) h += '<dl class="fx-dl">' + dl.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl>';
+    }
+    h += C.length ? '<div class="fx-lista" style="margin-top:8px">' + C.map(function (m) {
+      var sal = /sal|out|bot|rosanta/i.test(m.dir + ' ' + m.autor);
+      return '<div class="fx-msg' + (sal ? ' sal' : '') + '"><small>' + esc(m.autor || m.dir) + ' · ' + esc(m.fecha) + '</small>' + esc(m.texto) + '</div>';
+    }).join('') + '</div>' : '<p class="fx-vacio">' + (c.clave ? 'Sin chats con el bot.' : 'Sin teléfono: los chats de Instagram no se cruzan por número.') + '</p>';
+    h += '<div class="fx-acc" style="margin-top:10px"><button type="button" id="fxChat">💬 Ver conversación completa</button></div></section>';
+
+    h += '<section><h3>Datos</h3><dl class="fx-dl">' +
+      [['Alta', c.fechaAlta], ['Última reserva', c.ultimaReserva], ['Último intento', c.ultimoIntento],
+       ['Gasto acumulado', c.gasto ? fmtQ(c.gasto) : ''], ['Fuente', c.fuente]].filter(function (x) { return x[1]; })
+        .map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></section>';
+    if (d.avisos && d.avisos.length) h += '<p class="fx-vacio">' + d.avisos.map(esc).join('<br>') + '</p>';
+    $('fxBody').innerHTML = h;
+    $('fxChat').addEventListener('click', function () { verConversacion(c); });
   }
 
   // ---- pedir al shell que abra la Consola filtrada a este contacto

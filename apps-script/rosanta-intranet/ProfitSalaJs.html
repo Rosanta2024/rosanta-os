@@ -5,12 +5,38 @@ window.PF_SALA = function (HOST, AUTH) {
   var COL = { verde: 'var(--ok)', amarillo: 'var(--alerta)', rojo: 'var(--mal)' };
   function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function filas(lista, wix, etiqueta, rojo) {
+  /* botones (15-oct-2026): las mesas que siguen en Reserved se cierran aquí, sin entrar a Wix.
+     "Llegó" = Seated · "No vino" = No-show. Finished nunca: dispara el correo de TripAdvisor. */
+  function filas(lista, wix, etiqueta, rojo, botones) {
     return lista.map(function (x) {
+      var bt = (botones && x.id)
+        ? '<span class="sl-bts"><button type="button" class="sl-bt si" data-mesa="' + esc(x.id) + '" data-est="SEATED">Llegó</button>' +
+          '<button type="button" class="sl-bt no" data-mesa="' + esc(x.id) + '" data-est="NO_SHOW">No vino</button></span>' : '';
       return '<tr><td>' + esc(x.fecha) + '</td><td>' + esc(x.nombre) + '</td><td>' + esc(x.personas) + '</td><td><span class="sl-p' + (rojo ? ' r' : '') + '">' + esc(etiqueta) + '</span></td>' +
-             '<td>' + (x.id ? '<a class="b" href="' + esc(wix + x.id) + '" target="_blank" rel="noopener">Abrir en Wix</a>' : '') + '</td></tr>';
+             '<td>' + bt + (x.id ? '<a class="b" href="' + esc(wix + x.id) + '" target="_blank" rel="noopener">Abrir en Wix</a>' : '') + '</td></tr>';
     }).join('');
   }
+  HOST.onclick = function (ev) {
+    var b = ev.target.closest ? ev.target.closest('button[data-mesa]') : null;
+    if (!b) return;
+    var fila = b.closest('tr'), id = b.getAttribute('data-mesa'), est = b.getAttribute('data-est');
+    var bts = fila.querySelectorAll('button[data-mesa]');
+    for (var i = 0; i < bts.length; i++) bts[i].disabled = true;
+    var G = window.PF_GUARDADO ? window.PF_GUARDADO.empezar('Cerrando la mesa en Wix…', 'cerrar mesa') : null;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (G) G.listo(r.texto);
+        var td = fila.cells[3];
+        if (td) td.innerHTML = '<span class="sl-p ok">' + esc(est === 'SEATED' ? 'llegó' : 'no vino') + ' ✓</span>';
+        var sp = fila.querySelector('.sl-bts'); if (sp) sp.parentNode.removeChild(sp);
+      })
+      .withFailureHandler(function (e) {
+        for (var i = 0; i < bts.length; i++) bts[i].disabled = false;
+        var m = window.PF_ERROR ? PF_ERROR(e) : String(e && e.message || e);
+        if (G) G.fallo(m, null, 'No se cambió la mesa.'); else alert(m);
+      })
+      .salaMarcarMesa(AUTH, id, est);
+  };
   google.script.run
     .withSuccessHandler(function (r) {
       var h = '';
@@ -21,8 +47,8 @@ window.PF_SALA = function (HOST, AUTH) {
       h += '<div class="sl-dos"><div class="sl-box"><h3>Mesas por cerrar en Wix (' + n + ')</h3>';
       if (!n) h += '<p>Todas las mesas de los últimos 7 días están cerradas. Así se puede medir cuánto cuesta traer a un cliente nuevo.</p>';
       else h += '<table><tr><th>Fecha</th><th>Nombre</th><th>Pers.</th><th>Falta</th><th></th></tr>' +
-        filas(M.falta_consumo, M.wix, 'poner consumo', false) + filas(M.sin_cerrar, M.wix, 'sigue en "Reserved" (reservada)', true) + '</table>';
-      h += '<p class="sl-nota">Del ' + esc(M.desde || '') + ' al ' + esc(M.hasta || '') + '. En Wix, al sentar la mesa: "Seated" (sentada). Al terminar: el total en "Consumo total de la mesa (Q)" y se deja en "Seated". "Finished" (terminada) solo para pedir la reseña. No-show solo si de verdad no llegó.</p></div>';
+        filas(M.falta_consumo, M.wix, 'poner consumo', false) + filas(M.sin_cerrar, M.wix, 'sigue en "Reserved" (reservada)', true, true) + '</table>';
+      h += '<p class="sl-nota">Del ' + esc(M.desde || '') + ' al ' + esc(M.hasta || '') + '. Las que siguen en "Reserved" se cierran aquí: "Llegó" o "No vino". En Wix, al sentar la mesa: "Seated" (sentada). Al terminar: el total en "Consumo total de la mesa (Q)" y se deja en "Seated". "Finished" (terminada) solo para pedir la reseña. No-show solo si de verdad no llegó.</p></div>';
       var R = r.resenas || {};
       h += '<div class="sl-box"><h3>Reseñas de Google</h3><div class="sl-big">' + esc(R.esta_semana === undefined ? '—' : R.esta_semana) +
         ' <span style="font-size:0.95rem;font-weight:400;color:var(--texto-2)">esta semana · meta ' + esc(r.meta_resenas) + '</span></div>' +

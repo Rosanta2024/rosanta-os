@@ -132,8 +132,8 @@ function latido() {
     }
     if (c.lectura < LATIDO.LECTURA_MINIMA) {
       return 'captura sana (' + latPct_(c.tasa) + ') pero solo ' + latPct_(c.lectura) +
-             ' de las ' + c.altasL + ' reservas con más de ' + LATIDO.GRACIA_LECTURA +
-             ' días tiene la visita confirmada (' + c.confirmadasL + '). Las mesas no ' +
+             ' de las ' + c.altasL + ' reservas ya pasadas (más de ' + LATIDO.GRACIA_LECTURA +
+             ' días, sin canceladas) tiene la mesa cerrada (' + c.confirmadasL + '). Las mesas no ' +
              'se están marcando en Wix: el CAC y la retención del período no se pueden leer.';
     }
     return null;
@@ -301,14 +301,7 @@ function latCaptura_(dias) {
   });
   if (iSeg < 0 || iAlta < 0) throw new Error('el CRM no tiene segmento o fecha_alta');
 
-  // La lectura se mide sobre una ventana más corta que la captura, y a propósito.
-  // El monto se teclea al terminar el servicio o al día siguiente, así que una
-  // reserva de anteayer sin confirmar no es un descuido: todavía no le toca.
-  // Contarla hundiría la tasa todos los días por diseño. Son los mismos 3 días
-  // de gracia que usa el Verificador para las mesas sin cerrar.
-  var corte = new Date(hasta.getTime() - LATIDO.GRACIA_LECTURA * 86400000);
-
-  var altas = 0, confirmadas = 0, altasL = 0, confirmadasL = 0;
+  var altas = 0, confirmadas = 0;
   for (var r = 1; r < D.length; r++) {
     var f = latFecha_(D[r][iAlta]);
     if (!f || f < desde || f >= hasta) continue;
@@ -317,7 +310,6 @@ function latCaptura_(dias) {
     altas++;
     var ok = (seg === 'Cliente que visitó');
     if (ok) confirmadas++;
-    if (f < corte) { altasL++; if (ok) confirmadasL++; }
   }
 
   // ---- tickets del POS ----
@@ -333,11 +325,16 @@ function latCaptura_(dias) {
     tickets++;
   }
 
+  // La lectura se mide por RESERVA desde el 15-oct-2026 (CrmDatos.js › crmLecturaCalc_):
+  // por fecha de la mesa, sin reservas futuras ni canceladas. Medirla sobre las altas de
+  // arriba daba 35% en octubre con 26 de 27 mesas cerradas. altasL/confirmadasL quedan
+  // con el nombre viejo para el mensaje y la calibración: ahora son reservas, no altas.
+  var L = crmLecturaReservas_(desde, hasta);
   return {
     desde: desde, hasta: hasta, altas: altas, confirmadas: confirmadas, tickets: tickets,
-    altasL: altasL, confirmadasL: confirmadasL,
+    altasL: L.base, confirmadasL: L.leidas,
     tasa:    tickets ? altas  / tickets : 0,
-    lectura: altasL  ? confirmadasL / altasL : 0
+    lectura: L.base ? L.lectura : 1
   };
 }
 
