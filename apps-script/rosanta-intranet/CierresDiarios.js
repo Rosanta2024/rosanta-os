@@ -50,7 +50,10 @@ function _cieNum_(txt, etiqueta) {
  * y el vigia se tragaba el error.
  */
 function cieParsear_(texto, asunto) {
-  var t = String(texto || '').replace(/ /g, ' ');
+  // SALTOS DE LINEA (15-oct-2026): Drive exporta el texto con "\r\n". Los renglones del cierre
+  // nuevo se buscan con [ \t]*(?=\n) y el "\r" los rompia: del 1 al 14-oct todos los cierres se
+  // guardaron con tarjeta 0 y efectivo 0 (el total salia bien porque esa busqueda usa \s).
+  var t = String(texto || '').replace(/\r\n?/g, '\n').replace(/ /g, ' ');
   if (/CIERRE DE CAJA\s+\d{12}\s*-/i.test(t) || /Caja\s*\(\s*efec/i.test(t)) return _cieParsearNuevo_(t, asunto);
   var r = {
     tarjeta: _cieNum_(t, 'T-Cr[eé]dito'), efectivo: _cieNum_(t, 'Efectivo'),
