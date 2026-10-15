@@ -292,12 +292,13 @@ function adLibrarySearch(params, auth) {
 // ----------------------------------------------------------------- Claude
 // Creador Kaprica. SIN VERIFICAR: falta ANTHROPIC_API_KEY para probarlo.
 
-// Tope por persona y por dia (decision de Juanma, 14-oct-2026: 30). Usa el modelo mas caro y
+// Tope por persona y por dia (decision de Juanma, 14-oct-2026: 30; el dueño sin tope). Usa el modelo mas caro y
 // lo puede llamar tambien el rol contenido: sin tope, un bucle o un descuido no tenia limite.
 var IA_TOPE_DIA_ = 30;
 
 /** Cuenta un uso del Creador de IA de esta persona hoy; tira si ya llego al tope. */
 function _iaContar_(u) {
+  if (String(u.rol || '').toLowerCase() === 'dueno') return 0;   // el dueño va sin tope (Juanma, 14-oct-2026)
   var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
   var k = 'ia_uso_' + hoy + '_' + String(u.email || u.nombre || '?').toLowerCase().slice(0, 80);
   var c = CacheService.getScriptCache(), n = Number(c.get(k) || 0);
