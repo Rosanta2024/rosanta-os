@@ -244,6 +244,19 @@ function prGuardasPropias_() {
 
 function prCimientos_(res) {
   var g = prGrupo_(res, '1. Cimientos');
+
+  prCorrer_(g, 'Los carriles cubren cada grupo una vez', function () {
+    var nombre = 'Los carriles cubren cada grupo una vez';
+    var vistos = {}, dobles = [];
+    PRUEBAS_CARRILES_.forEach(function (c) { c.forEach(function (k) { if (vistos[k]) dobles.push(k); vistos[k] = 1; }); });
+    var faltan = PRUEBAS_ORDEN_.filter(function (k) { return !vistos[k]; });
+    var sobran = Object.keys(vistos).filter(function (k) { return PRUEBAS_ORDEN_.indexOf(k) === -1; });
+    var malos = faltan.map(function (k) { return 'sin carril: ' + k; })
+      .concat(dobles.map(function (k) { return 'en dos carriles: ' + k; }), sobran.map(function (k) { return 'no existe: ' + k; }));
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') + ' (PRUEBAS_CARRILES_ en Pruebas.js)' : PRUEBAS_ORDEN_.length + ' grupos en ' + PRUEBAS_CARRILES_.length + ' carriles',
+      malos.length, 0);
+  });
   var props = PropertiesService.getScriptProperties();
 
   PRUEBAS_CFG.propsObligatorias.forEach(function (clave) {
@@ -1785,6 +1798,16 @@ var PRUEBAS_GRUPOS_ = {
 };
 var PRUEBAS_ORDEN_ = ['cimientos','recetario','pos','accesos','modulos','web','sync','inventario','finanzas','pauta'];
 
+/* CARRILES (14-oct-2026, pedido de Juanma). La bateria entera ya no cabia en los 6 minutos de
+   Apps Script (336 s un dia normal; con la cache fria se colgaba). La pantalla corre estos
+   carriles A LA VEZ, cada uno en su propia ejecucion con sus propios 6 minutos, y junta los
+   resultados: es la MISMA bateria completa, en menos tiempo. La prueba "Los carriles cubren
+   cada grupo una vez" falla si un grupo nuevo no se agrega aca. Para equilibrarlos, la
+   pantalla muestra los segundos de cada grupo. */
+var PRUEBAS_CARRILES_ = [['recetario', 'pos', 'pauta'],
+                         ['finanzas', 'cimientos', 'accesos'],
+                         ['modulos', 'web', 'sync', 'inventario']];
+
 /**
  * `claves` (opcional): lista de grupos a correr. Sin nada, la bateria entera — que es
  * lo que corre el activador y la pantalla, y lo que hay que mirar antes de publicar.
@@ -1803,7 +1826,12 @@ function correrPruebas_(claves) {
                                       '. Los que hay: ' + PRUEBAS_ORDEN_.join(', ') + '.');
     res.parcial = lista.join(', ');
   }
-  lista.forEach(function (k) { PRUEBAS_GRUPOS_[k](res); });
+  lista.forEach(function (k) {
+    var antes = res.grupos.length;
+    PRUEBAS_GRUPOS_[k](res);
+    for (var i = antes; i < res.grupos.length; i++) res.grupos[i].clave = k;   // para ordenar al juntar carriles
+  });
+  res.orden = PRUEBAS_ORDEN_;
 
   var n = 0, ok = 0, mal = 0, avisos = 0, saltadas = 0;
   res.grupos.forEach(function (g) {
@@ -1972,10 +2000,24 @@ function pruebasFinanzas() {
   return texto;
 }
 
-function correrPruebasWeb(auth) {
+/**
+ * pedido (opcional, 14-oct-2026): { carril: n } corre ese carril de PRUEBAS_CARRILES_ (la pantalla
+ * pide todos a la vez y los junta); { grupos: 'finanzas,web' } corre solo esos grupos y el
+ * resultado sale marcado PARCIAL. Sin pedido, la bateria entera en una sola ejecucion.
+ */
+function correrPruebasWeb(auth, pedido) {
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('Sin acceso');
   if (String(u.rol || '').toLowerCase() !== 'dueno') throw new Error('Solo direccion');
+  pedido = pedido || {};
+  if (pedido.carril !== undefined && pedido.carril !== null && pedido.carril !== '') {
+    var n = Number(pedido.carril), c = PRUEBAS_CARRILES_[n];
+    if (!c) throw new Error('No existe el carril ' + pedido.carril + ' (hay ' + PRUEBAS_CARRILES_.length + ').');
+    var r = correrPruebas_(c);
+    r.carril = n; delete r.parcial;   // un carril es parte de la bateria completa, no una parcial
+    return r;
+  }
+  if (pedido.grupos) return correrPruebas_(String(pedido.grupos).split(',').map(function (x) { return x.trim(); }).filter(String));
   return correrPruebas_();
 }
 

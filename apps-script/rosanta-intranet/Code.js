@@ -196,6 +196,10 @@ function doGet(e) {
     var tplPruebas = HtmlService.createTemplateFromFile('PruebasVista');
     tplPruebas.urlBase = urlBase;
     tplPruebas.authToken = authToken;
+    // 14-oct-2026: &grupos=finanzas,web corre solo esos grupos (PARCIAL); sin eso, la bateria
+    // completa en carriles paralelos. Solo letras y comas: va a un atributo de la pagina.
+    tplPruebas.grupos = String((e && e.parameter && e.parameter.grupos) || '').toLowerCase().replace(/[^a-z,]/g, '').slice(0, 120);
+    tplPruebas.carriles = PRUEBAS_CARRILES_.length;
     return tplPruebas.evaluate()
       .setTitle('Pruebas \u00b7 Rosanta Intranet')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');

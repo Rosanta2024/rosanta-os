@@ -57,7 +57,7 @@
           border-top:1px solid #E4DCC8;padding-top:.9rem}
   </style>
 </head>
-<body data-auth="<?= authToken ?>">
+<body data-auth="<?= authToken ?>" data-grupos="<?= grupos ?>" data-carriles="<?= carriles ?>">
   <div class="wrap">
     <header>
       <div>
@@ -67,7 +67,7 @@
       <button id="correr">Correr de nuevo</button>
     </header>
 
-    <div id="salida"><p class="vacio">Corriendo las pruebas… tarda unos 3 minutos. Es normal: recorre las 91 pestanas del recetario.</p></div>
+    <div id="salida"><p class="vacio">Corriendo las pruebas…</p></div>
 
     <p class="nota">Los numeros que se esperan viven en <code>PRUEBAS_CFG</code>, arriba de
     <code>Pruebas.gs</code>. Se cambian a proposito cuando hay una decision tomada,
@@ -76,6 +76,10 @@
 
 <script>
   var AUTH = document.body.dataset.auth || '';
+  // 14-oct-2026: &grupos=... corre solo esos grupos (PARCIAL). Sin eso, la bateria completa en
+  // carriles que corren a la vez (PRUEBAS_CARRILES_ en Pruebas.js), cada uno con sus 6 minutos.
+  var GRUPOS = (document.body.dataset.grupos || '').trim();
+  var CARRILES = Number(document.body.dataset.carriles || 0);
   var boton = document.getElementById('correr');
   var salida = document.getElementById('salida');
 
@@ -88,12 +92,17 @@
     boton.disabled = false;
     boton.textContent = 'Correr de nuevo';
 
-    var h = '<div class="resumen ' + (res.sana ? 'sana' : 'mal') + '">' +
-      '<h2>' + (res.sana ? 'Intranet sana' :
-        'Hay ' + res.fallas + (res.fallas === 1 ? ' falla' : ' fallas')) + '</h2>' +
+    // Una parcial NO dice "Intranet sana": no sirve para publicar (14-oct-2026).
+    var titulo = res.parcial
+      ? 'CORRIDA PARCIAL · ' + res.parcial + (res.fallas ? ' · ' + res.fallas + (res.fallas === 1 ? ' falla' : ' fallas') : ' · sin fallas')
+      : (res.sana ? 'Intranet sana' : 'Hay ' + res.fallas + (res.fallas === 1 ? ' falla' : ' fallas'));
+    var h = '<div class="resumen ' + (res.sana && !res.parcial ? 'sana' : 'mal') + '">' +
+      '<h2>' + esc(titulo) + '</h2>' +
       '<div class="conteo">' + res.ok + ' OK · ' + res.fallas + ' fallas · ' +
       res.avisos + ' avisos · ' + res.saltadas + ' saltadas · ' +
-      (res.ms/1000).toFixed(1) + ' s</div></div>';
+      (res.ms/1000).toFixed(1) + ' s' + (res.carriles ? ' · ' + res.carriles : '') + '</div>' +
+      (res.parcial ? '<div class="conteo">Sirve mientras se trabaja. Antes de publicar, la batería completa (sin &amp;grupos=).</div>' : '') +
+      '</div>';
 
     // LO QUE HAY QUE MIRAR, ARRIBA (11-oct-2026). Con 180 filas, las fallas quedaban
     // perdidas entre los OK y habia que bajar toda la pagina para encontrarlas.
@@ -116,7 +125,7 @@
     }
 
     grupos.forEach(function(g){
-      h += '<div class="grupo"><h3>' + esc(g.nombre) + '</h3>';
+      h += '<div class="grupo"><h3>' + esc(g.nombre) + (g.ms ? ' · ' + Math.round(g.ms / 1000) + ' s' : '') + '</h3>';
       g.pruebas.forEach(function(p){
         var cifra = '';
         // Ojo: google.script.run convierte los null en undefined al serializar,
@@ -146,11 +155,50 @@
       '<div class="conteo">' + esc(err && err.message ? err.message : err) + '</div></div>';
   }
 
+  /* Junta los carriles en un solo resultado, con los grupos en el orden de siempre. */
+  function unir(partes, ms){
+    var orden = (partes[0] && partes[0].orden) || [];
+    var res = { grupos: [], ok: 0, fallas: 0, avisos: 0, saltadas: 0, ms: ms,
+                carriles: partes.length + ' carriles a la vez (' + partes.map(function(p){ return Math.round(p.ms/1000) + ' s'; }).join(' · ') + ')' };
+    partes.forEach(function(p){
+      res.grupos = res.grupos.concat(p.grupos);
+      ['ok','fallas','avisos','saltadas'].forEach(function(k){ res[k] += p[k] || 0; });
+    });
+    res.grupos.sort(function(a, b){ return orden.indexOf(a.clave) - orden.indexOf(b.clave); });
+    res.sana = res.fallas === 0;
+    return res;
+  }
+
   function correr(){
     boton.disabled = true;
     boton.textContent = 'Corriendo…';
-    salida.innerHTML = '<p class="vacio">Corriendo las pruebas… tarda unos 3 minutos. Es normal: recorre las 91 pestanas del recetario.</p>';
-    google.script.run.withSuccessHandler(pintar).withFailureHandler(fallar).correrPruebasWeb(AUTH);
+    var inicio = Date.now();
+    if (GRUPOS || !CARRILES) {
+      salida.innerHTML = '<p class="vacio">Corriendo ' + (GRUPOS ? 'solo: ' + esc(GRUPOS) : 'la batería') + '…</p>';
+      google.script.run.withSuccessHandler(pintar).withFailureHandler(fallar)
+        .correrPruebasWeb(AUTH, GRUPOS ? { grupos: GRUPOS } : null);
+      return;
+    }
+    var partes = [], faltan = CARRILES, error = null;
+    salida.innerHTML = '<p class="vacio">Corriendo la batería completa en ' + CARRILES + ' carriles a la vez… 0 de ' + CARRILES + ' listos.</p>';
+    function listo(){
+      faltan--;
+      if (faltan > 0) {
+        salida.innerHTML = '<p class="vacio">Corriendo la batería completa en ' + CARRILES + ' carriles a la vez… ' + (CARRILES - faltan) + ' de ' + CARRILES + ' listos.</p>';
+        return;
+      }
+      // Si un carril no termino, la bateria NO esta completa: se dice, no se pinta a medias.
+      if (error) { fallar(error); return; }
+      pintar(unir(partes, Date.now() - inicio));
+    }
+    for (var i = 0; i < CARRILES; i++) {
+      (function(n){
+        google.script.run
+          .withSuccessHandler(function(r){ partes[n] = r; listo(); })
+          .withFailureHandler(function(e){ error = error || ('El carril ' + (n + 1) + ' no terminó: ' + (e && e.message ? e.message : e)); listo(); })
+          .correrPruebasWeb(AUTH, { carril: n });
+      })(i);
+    }
   }
 
   boton.addEventListener('click', correr);
