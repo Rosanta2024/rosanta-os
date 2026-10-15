@@ -266,7 +266,8 @@ function prCimientos_(res) {
     'EscenariosVista', 'Estilos', 'FinanzasGastoVista', 'FinanzasVista', 'Index', 'LecturaEstilo',
     'LecturaJs', 'Logo', 'Marketing', 'MetasVista', 'ProfitAreaEstilo', 'ProfitCajaJs',
     'ProfitComprasJs', 'ProfitHoyJs', 'ProfitPagosJs', 'ProfitSalaJs', 'PruebasVista', 'ReporteSemanalCuerpo',
-    'ReporteSemanalEstilo', 'ReporteSemanalJs', 'ReporteSemanalVista', 'SistemaFinanzas', 'SistemaMarketing', 'TableroVista'
+    'ReporteSemanalEstilo', 'ReporteSemanalJs', 'ReporteSemanalVista', 'SistemaFinanzas', 'SistemaMarketing', 'TableroVista',
+    'TiemposVista'
   ];
   var PR_HEX_RE_ = /(^|[^&\w#])#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-z_])/gi;
   function prContarHex_(txt) { return (String(txt).match(PR_HEX_RE_) || []).length; }

@@ -3,22 +3,23 @@
 <head>
 <base target="_top">
 <meta charset="utf-8">
+<?!= paletaCss_() ?>
 <style>
-  :root { --bosque:#4E6D5A; --medio:#57A77F; --lila:#AEAAE2; --crema:#F2EEEB; --negro:#000000; }
-  body { margin:0; background:#fff; color:var(--negro); font:15px/1.45 -apple-system, "Avenir Next", Avenir, Helvetica, sans-serif; }
+  :root { --bosque:var(--rosanta-verde); --medio:var(--rosanta-verde-medio); --lila:var(--rosanta-lila); --crema:var(--fondo); --negro:var(--rosanta-negro); }
+  body { margin:0; background:var(--superficie); color:var(--negro); font:15px/1.45 var(--rosanta-font-body); }
   main { max-width:960px; margin:0 auto; padding:16px; }
   h1 { color:var(--bosque); font-size:1.4rem; margin:0.4rem 0 0.2rem; }
   h2 { color:var(--bosque); font-size:1.05rem; margin:1.6rem 0 0.4rem; }
-  p.nota { color:#555; margin:0.2rem 0 0.8rem; }
-  button { background:var(--bosque); color:#fff; border:0; border-radius:6px; padding:0.5rem 0.9rem; font:inherit; cursor:pointer; }
+  p.nota { color:var(--texto-2); margin:0.2rem 0 0.8rem; }
+  button { background:var(--bosque); color:var(--rosanta-blanco); border:0; border-radius:6px; padding:0.5rem 0.9rem; font:inherit; cursor:pointer; }
   button[disabled] { opacity:0.55; cursor:wait; }
   .tabla { overflow-x:auto; }
   table { border-collapse:collapse; width:100%; font-size:0.9rem; }
   th { text-align:left; color:var(--bosque); border-bottom:2px solid var(--bosque); padding:0.35rem 0.5rem; white-space:nowrap; }
-  td { border-bottom:1px solid #e3ded9; padding:0.35rem 0.5rem; vertical-align:top; }
+  td { border-bottom:1px solid var(--linea); padding:0.35rem 0.5rem; vertical-align:top; }
   td.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .lento { color:#8a3b2e; font-weight:600; }
-  .estado { color:#555; margin:0.5rem 0; }
+  .lento { color:var(--mal); font-weight:600; }
+  .estado { color:var(--texto-2); margin:0.5rem 0; }
 </style>
 </head>
 <body>
