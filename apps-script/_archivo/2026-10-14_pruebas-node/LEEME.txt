@@ -1,0 +1,26 @@
+Pruebas de Node archivadas el 14-oct-2026 (decisión de Juanma)
+================================================================
+
+Estaban en pruebas-node/ y NO protegían nada: no arrancaban desde la limpieza de la
+auditoría (14-oct), porque leen scripts que ya se archivaron. Un archivo de pruebas que
+no corre parece protección y no lo es; por eso salen de pruebas-node/.
+
+| Archivo            | Probaba                                         | Por qué se archiva                                           |
+|--------------------|-------------------------------------------------|--------------------------------------------------------------|
+| prueba_barra.js    | APLICAR_BARRA.js (8 productos del 26-ago)       | Script de una sola corrida; ya no existe                     |
+| prueba_indice.js   | chequeo de INDICE_INSUMO_RECETA viejo           | Lee SemaforoPrecios.js, archivado el 14-oct (Fase 4)         |
+| prueba_semaforo.js | SemaforoPrecios.js contra simulador de hojas    | SemaforoPrecios.js archivado el 14-oct (no tenía activador)  |
+| verif_negativa.js  | control negativo de las pruebas de arriba       | Depende de SemaforoPrecios.js                                |
+| verif_pruebas.js   | corredor de las pruebas de arriba               | Depende de SemaforoPrecios.js                                |
+
+Qué quedó vivo en pruebas-node/ (corren con `node pruebas-node/<archivo>`):
+- prueba_ventas.js           reglas de limpieza del export de ventas + cuadre
+- prueba_areas.js            cada escritura cae en la hoja de SU área (AJO cocina/barra)
+- prueba_registrarprecio.js  un rol sin permiso no escribe precios; queda en BITACORA
+- prueba_revertir.js         aplicar y revertir la sincronización de precios
+- prueba_bitacora.js         lector de la bitácora
+
+La batería del navegador (?page=pruebas) solo LEE; esas cuatro prueban ESCRITURAS contra
+un simulador de hojas, que es lo que la batería no cubre.
+
+Si algún día vuelve SemaforoPrecios.js, estas pruebas se restauran con `git mv` de vuelta.
