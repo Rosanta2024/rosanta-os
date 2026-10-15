@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/candado-clasp.py pre"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/candado-clasp.py pre",
+            "timeout": 200
           }
         ]
       }

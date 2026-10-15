@@ -5,16 +5,27 @@
 #      Bajar a una carpeta APARTE (fuera de ~/Dev/Rosanta) para comparar sí se permite.
 #   2. Nada de `clasp create-version` / `update-deployment` / `deploy` de la intranet sin
 #      sello vigente de la batería (?page=pruebas): posterior al último push y con 0 fallas.
+#   3. (14-oct-2026, noche) Nada de `clasp push` de la intranet que PISE trabajo ajeno. Antes
+#      de subir se baja el HEAD del servidor a una carpeta temporal fuera del repo, y cada
+#      archivo del servidor tiene que ser conocido por la carpeta que sube: igual a lo que va
+#      a subir, igual a su último commit, o igual a lo que esa misma carpeta subió la vez
+#      anterior. Si no, otra sesión subió algo que esta no tiene y el push se frena con la
+#      lista de archivos. Salida explícita, solo con el sí de Juanma:
+#      ROSANTA_PUSH_PISAR="motivo" clasp push
 #
 # Uso (lo llama .claude/settings.json):
 #   candado-clasp.py pre   -> PreToolUse  Bash: bloquea (deny) o anota el push
 #   candado-clasp.py post  -> PostToolUse Bash: anota la hora en que terminó el push
 #
 # El sello lo escribe SOLO sellar-bateria.py, con el conteo que Juanma reporta.
+import hashlib
 import json
 import os
 import shlex
+import shutil
+import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 
 INTRANET_SCRIPT_ID = "1eVphVfUKVlwdoM7wRhN5rKo-FzksYSv3QNqjUSVDcFQTa22L4KToqh42"
@@ -147,7 +158,7 @@ def invocaciones(comando, cwd):
             j += 1
         if proyecto:
             proyecto = resolver(dir_actual, proyecto)
-        encontradas.append({"sub": sub, "dir": dir_actual, "proyecto": proyecto})
+        encontradas.append({"sub": sub, "dir": dir_actual, "proyecto": proyecto, "entorno": entorno})
     return encontradas
 
 
@@ -205,6 +216,105 @@ def anotar_push(inv, comando):
     os.replace(tmp, PUSH)
 
 
+# ---------------------------------------------------------------- 3. el push no pisa
+EXT_SUBEN = (".js", ".gs", ".html", ".json")
+
+
+def _sha(datos):
+    return hashlib.sha256(datos).hexdigest()
+
+
+def _foto_ruta(raiz):
+    clave = hashlib.sha256(os.path.realpath(raiz).encode()).hexdigest()[:16]
+    return os.path.join(SELLOS, "push-foto-" + clave + ".json")
+
+
+def _archivos(raiz):
+    """Los archivos de una carpeta que clasp subiria, relativos y sin _backups ni .clasp.json."""
+    out = {}
+    for d, subdirs, files in os.walk(raiz):
+        subdirs[:] = [x for x in subdirs if x not in ("_backups", "node_modules", ".git")]
+        for f in files:
+            if not f.endswith(EXT_SUBEN) or f == ".clasp.json":
+                continue
+            ruta = os.path.join(d, f)
+            rel = os.path.relpath(ruta, raiz)
+            with open(ruta, "rb") as h:
+                out[rel] = _sha(h.read())
+    return out
+
+
+def _sin_ext(rel):
+    # clasp baja los .gs como .js: se compara por nombre sin extension de codigo
+    base, ext = os.path.splitext(rel)
+    return base + (".js" if ext in (".gs", ".js") else ext)
+
+
+def _git_head(raiz, rels):
+    """sha del contenido de cada archivo en el ultimo commit de la carpeta (None si no esta)."""
+    out = {}
+    try:
+        pref = subprocess.run(["git", "-C", raiz, "rev-parse", "--show-prefix"], capture_output=True,
+                              text=True, timeout=20).stdout.strip()
+    except Exception:
+        return out
+    for rel in rels:
+        try:
+            r = subprocess.run(["git", "-C", raiz, "show", "HEAD:" + pref + rel], capture_output=True, timeout=20)
+            out[rel] = _sha(r.stdout) if r.returncode == 0 else None
+        except Exception:
+            out[rel] = None
+    return out
+
+
+def guardar_foto(inv):
+    """Despues de un push: lo que esta carpeta subio, para no frenarse a si misma la proxima vez."""
+    raiz, _ = destino_pull(inv)
+    if not raiz:
+        return
+    os.makedirs(SELLOS, exist_ok=True)
+    foto = {_sin_ext(k): v for k, v in _archivos(raiz).items()}
+    with open(_foto_ruta(raiz), "w") as f:
+        json.dump({"fecha": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
+                   "raiz": raiz, "archivos": foto}, f, indent=1)
+
+
+def verificar_push(inv):
+    """(ok, motivo). Baja el HEAD aparte y busca archivos que esta carpeta no conoce."""
+    raiz, _ = destino_pull(inv)
+    cfg = buscar_clasp_json(inv["proyecto"], inv["dir"])
+    if not raiz or not cfg:
+        return True, ""
+    tmp = tempfile.mkdtemp(prefix="candado-push-")
+    try:
+        datos = leer_json(cfg) or {}
+        datos["rootDir"] = ""
+        with open(os.path.join(tmp, ".clasp.json"), "w") as f:
+            json.dump(datos, f)
+        try:
+            r = subprocess.run(["clasp", "pull"], cwd=tmp, capture_output=True, text=True, timeout=150)
+        except Exception as e:
+            return False, "no pude bajar el HEAD del servidor para comparar (" + str(e)[:120] + ")"
+        servidor = {_sin_ext(k): v for k, v in _archivos(tmp).items()}
+        if not servidor:
+            return False, ("no pude bajar el HEAD del servidor para comparar (clasp pull no trajo archivos: " +
+                           (r.stderr or r.stdout or "")[-200:].strip() + ")")
+        local = {_sin_ext(k): v for k, v in _archivos(raiz).items()}
+        foto = (leer_json(_foto_ruta(raiz)) or {}).get("archivos", {})
+        dudosos = [rel for rel, h in servidor.items() if h != local.get(rel) and h != foto.get(rel)]
+        if not dudosos:
+            return True, ""
+        git = _git_head(raiz, dudosos)
+        ajenos = [rel for rel in dudosos if servidor[rel] != git.get(rel)]
+        if not ajenos:
+            return True, ""
+        return False, ("en el servidor hay %d archivo(s) que esta carpeta no tiene ni en disco, ni en su "
+                       "ultimo commit, ni en su ultimo push: %s. Otra sesion subio trabajo que aca no esta; "
+                       "este push lo borraria." % (len(ajenos), ", ".join(sorted(ajenos)[:12])))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def denegar(motivo):
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
@@ -232,6 +342,10 @@ def main():
         for inv in invs:
             if inv["sub"] == "push" and es_intranet(inv):
                 anotar_push(inv, comando)
+                try:
+                    guardar_foto(inv)
+                except Exception:
+                    pass
         return
 
     for inv in invs:
@@ -258,6 +372,15 @@ def main():
                     "--fallas N --avisos N --saltadas N --fuente \"...\"`. Nunca crear el sello "
                     "sin un resultado real. Con fallas no se publica.")
         elif sub == "push" and es_intranet(inv):
+            pisar = inv.get("entorno", {}).get("ROSANTA_PUSH_PISAR") or os.environ.get("ROSANTA_PUSH_PISAR")
+            if not pisar:
+                ok, porque = verificar_push(inv)
+                if not ok:
+                    denegar(
+                        "Bloqueado: `clasp push` de la intranet. " + porque + " Que hacer: (1) averiguar "
+                        "que sesion lo subio (ListAgents / preguntar) y traer su commit a esta carpeta "
+                        "(git merge), o pedirle que haga commit primero; (2) volver a hacer push. Solo si "
+                        "Juanma dice que se puede pisar: ROSANTA_PUSH_PISAR=\"motivo\" clasp push.")
             # Se anota ya en el Pre: un push cortado o fallido también invalida el sello.
             anotar_push(inv, comando)
 
