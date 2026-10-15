@@ -25,8 +25,3 @@ function instalarMetas() {
 /** Los doce meses de 2025. Se queda porque la estacionalidad de la Caja lo usa. */
 function _finAnio2025_() { return _finVentasAnio_(2025); }
 
-/** Venta y tickets del mismo mes del año anterior. null si no hay dato. */
-function _finBaseAnterior_(anio, m) {
-  var v = _finVentasAnio_(anio - 1);
-  return (v && v[m]) ? v[m] : null;
-}

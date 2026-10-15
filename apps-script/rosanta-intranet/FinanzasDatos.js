@@ -1527,6 +1527,12 @@ function _finVentasAnio_(anio) {
   return out;
 }
 
+/** Venta y tickets del mismo mes del año anterior. null si no hay dato. */
+function _finBaseAnterior_(anio, m) {
+  var v = _finVentasAnio_(anio - 1);
+  return (v && v[m]) ? v[m] : null;
+}
+
 /**
  * El ritmo del mes en curso. Se apoya en _finDatos_() para no volver a
  * leer el maestro entero.
