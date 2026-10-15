@@ -1205,6 +1205,30 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : '5-oct: efectivo Q1,688, tarjeta Q3,234.50, 4 documentos · caja: faltante Q511.50 con pista del documento 30', malos.length, 0);
   });
 
+  prCorrer_(g, 'El cierre de PosFile se lee con los saltos de linea que exporta Drive', function () {
+    var nombre = 'El cierre de PosFile se lee con los saltos de linea que exporta Drive';
+    // 15-oct-2026: el texto REAL del cierre del 11-oct, tal como lo exporta Drive ("\r\n"). La
+    // prueba de arriba usa un texto limpio con "\n" y paso en verde mientras los 14 cierres de
+    // octubre se guardaban con tarjeta 0 y efectivo 0.
+    var crudo = "RESUMEN \nCIERRE DE CAJA 111020260001-111020262016 Generado por: Admin \n\n\nDescripción \n\tTOTAL\n\tTarjetas \n\t1,771.00\n\tCaja (efecvo) POS \n\t209.00\n\t\n\n\n\nCORTESÍA - PROPINA \nDescripción \n\tTOTAL\n\tPropina \n\t180.0\n\tCortesía \n\t0\n\tTOTAL \n\tGTQ 180.00\n\t\n\n\n\nVENTAS POR VENDEDORESPROPINA POR VENDEDORES \n\n\nDescripción \n\tTOTAL\n\tAdmin \n\tGTQ 1,980.00\n\tTOTAL \n\tGTQ 1,980.00\n\t\n\n\n\nVENTAS POR DOCUMENTO \nDescripción \n\tTOTAL\n\tAdmin \n\tGTQ 180.00\n\tTOTAL \n\tGTQ 180.00\n\t\n\n\n\n\n\nVENTAS POR DOCUMENTO \n\tTipo Documento \n\tTOTAL\n\t64 \n\tFactura \n\tGTQ 209.00\n\t65 \n\tFactura \n\tGTQ 720.50\n\t66 \n\tFactura \n\tGTQ 484.00\n\t67 \n\tFactura \n\tGTQ 566.50\n\tTOTAL \n\tGTQ 1980.00\n\t\n\n\n\nVENTAS POR PRODUCTO \n\tTOTAL \n\t23 \n\tGTQ 0.00 \n\tGTQ 1980.00\n\t\n\n\n\nGASTOS \nDescripción \n\tTOTAL\n\tTOTAL \n\tGTQ 0.00\n\t\n\n\n\n© Soported by www.posfile.com • 10/11/2026 8:23:26 PM";
+    var c = cieParsear_(crudo.replace(/\n/g, '\r\n'), '');
+    var malos = [];
+    if (c.fecha !== '2026-10-11') malos.push('fecha ' + c.fecha);
+    if (c.tarjeta !== 1771 || c.efectivo !== 209) malos.push('tarjeta ' + c.tarjeta + ' / efectivo ' + c.efectivo);
+    if (c.gran_total !== 1980 || c.propina !== 180) malos.push('total ' + c.gran_total + ' / propina ' + c.propina);
+    if (!c.cuadra) malos.push('no cuadra');
+    // centinela de datos: los cierres guardados de los ultimos 10 dias que no cuadran
+    var malGuardados = [];
+    try {
+      var desde = medFechaIso_(new Date(new Date().getTime() - 10 * 86400000)), todos = cieTodos_();
+      Object.keys(todos).forEach(function (f) { if (f >= desde && !todos[f].cuadra) malGuardados.push(f); });
+    } catch (e) { malGuardados.push('no pude leer CIERRES_DIARIOS: ' + e.message); }
+    malGuardados.sort();
+    if (malos.length) prAnotar_(g, nombre, 'FALLA', malos.join(' · '), malos.length, 0);
+    else prAnotar_(g, nombre, malGuardados.length ? 'AVISO' : 'OK', '11-oct con "\\r\\n": tarjeta Q1,771, efectivo Q209, cuadra' +
+      (malGuardados.length ? ' · guardados sin cuadrar (Caja chica › Leer cierres): ' + malGuardados.join(', ') : ' · los cierres de los ultimos 10 dias cuadran'), malGuardados.length, 0);
+  });
+
   prCorrer_(g, 'Las fuentes nuevas se leen: reseñas, repeticion y retiros', function () {
     var nombre = 'Las fuentes nuevas se leen: reseñas, repeticion y retiros';
     var hoy = new Date(), malos = [], ok = [];
