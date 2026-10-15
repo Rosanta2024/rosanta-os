@@ -229,7 +229,9 @@ function btDecidir_(result, contactoId, esPrimero, respuestaModelo) {
     return (lead.tipo === 'evento' && ops.length >= 2) ? ops : null;
   }
   if (ops.length >= 2) return ops;
-  if (esPrimero || lead.mostrar_menu === true) return btOpcionesMenu_(idioma);
+  // En el primer mensaje el menú sale salvo que el bot esté juntando datos (mostrar_menu:false),
+  // como pasó en la prueba de Juanma del 15-oct 16:37 con una reserva.
+  if (lead.mostrar_menu === true || (esPrimero && lead.mostrar_menu !== false)) return btOpcionesMenu_(idioma);
   return null;
 }
 
