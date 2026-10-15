@@ -221,30 +221,29 @@ function siguienteEnCola(){
    cantidades: el numero de fila que se ve podria no ser el que queda en la hoja. */
 const ocupada = clave => COLA.some(it => it.clave === clave);
 
-let pildora = null, pildoraReloj = null;
+/* El aviso de guardado (15-oct-2026): el mismo de Pagos (GuardadoEstado.html). Mientras haya
+   algo en fila dice "Guardando en la hoja…" (y a los 4 s "Sigue guardando, no cierres esta
+   página"); al vaciarse confirma qué se guardó; un error se ve ahí mismo, sin ventana de alerta. */
+let gCola = null;
 function estadoCola(mensaje){
-  if(!pildora){
-    pildora = document.createElement('div');
-    pildora.className = 'guardando';
-    pildora.setAttribute('role', 'status');
-    pildora.setAttribute('aria-live', 'polite');
-    document.body.appendChild(pildora);
-  }
-  clearTimeout(pildoraReloj);
   const n = COLA.length;
   if(n){
-    pildora.className = 'guardando on';
-    pildora.textContent = n === 1 ? 'Guardando en la hoja…' : 'Guardando en la hoja… · ' + n + ' en fila';
+    const t = n === 1 ? 'Guardando en la hoja…' : 'Guardando en la hoja… · ' + n + ' en fila';
+    if(gCola) gCola.texto(t); else gCola = PF_GUARDADO.empezar(t, 'recetas');
     return;
   }
-  if(window.__RECARGANDO__){ pildora.className = 'guardando on'; pildora.textContent = 'Actualizando el recetario…'; return; }
-  if(mensaje){
-    pildora.className = 'guardando on ok'; pildora.textContent = mensaje;
-    pildoraReloj = setTimeout(() => { pildora.className = 'guardando'; }, 3200);
+  if(window.__RECARGANDO__){
+    if(gCola) gCola.texto('Actualizando el recetario…'); else gCola = PF_GUARDADO.empezar('Actualizando el recetario…');
     return;
   }
-  pildora.className = 'guardando';
+  if(gCola){ const g = gCola; gCola = null; if(mensaje) g.listo(mensaje); else PF_GUARDADO.ocultar(); return; }
+  if(mensaje) PF_GUARDADO.listo(mensaje);
 }
 function avisar(mensaje){ if(!COLA.length) estadoCola(mensaje); }
-function avisarError(mensaje){ alert(mensaje); }   // los errores ya llegan traducidos por PF_ERROR (14-oct-2026)
+function avisarError(mensaje){   // los errores ya llegan traducidos por PF_ERROR (14-oct-2026)
+  // Con mas cosas en fila, el aviso de abajo lo taparia el siguiente "Guardando…": ahi sigue la alerta.
+  if(COLA.length){ alert(mensaje); return; }
+  gCola = null;
+  PF_GUARDADO.empezar('').fallo(String(mensaje || '').replace(/\n+/g, ' · '), null);
+}
 window.addEventListener('beforeunload', e => { if(COLA.length){ e.preventDefault(); e.returnValue = ''; } });

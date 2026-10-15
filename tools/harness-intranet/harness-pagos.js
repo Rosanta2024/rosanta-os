@@ -171,6 +171,35 @@ t('Rapido · anular: igual a la pantalla completa', igualAPantalla(v, 'tokmaco')
   const r3 = ctx.registrarDevolucionEquipo('tok', 'Jeffry', 0.01, '2026-09-30', 'prueba');
   t('Rapido · devolucion al equipo: igual a la pantalla completa', igualAPantalla(r3, 'tok') === '', igualAPantalla(r3, 'tok') || r3.resumen);
 }
+// La pantalla (ProfitPagosJs.html) pega lo rapido sobre lo que tenia: tiene que quedar IDENTICA a
+// recargar todo, en el mismo orden. Se corre la funcion real, sacada del archivo.
+{ const html = fs.readFileSync(path.join(DIR, 'ProfitPagosJs.html'), 'utf8');
+  const ini = html.indexOf('  function aplicarCambios(c) {'), fin = html.indexOf('  /* El proveedor recien');
+  t('La pantalla tiene aplicarCambios', ini > 0 && fin > ini);
+  const pegarEn = (D0, c) => { const SEL = {}; const filtrar = x => x;
+    let D; eval(html.slice(ini, fin) + '; aplicarCambios(c);'); return D0; };
+  const comparaPantalla = (antes, c, despues) => {
+    const J = JSON.stringify, d = pegarEn(JSON.parse(J(antes)), c), malos = [];
+    ['facturas', 'cuadre', 'mercado', 'por_devolver'].forEach(k => { if (J(d[k]) !== J(despues[k])) malos.push(k); });
+    const fv = x => J((x.favores || []).slice().sort((a, b) => a.id < b.id ? -1 : 1));
+    if (fv(d) !== fv(despues)) malos.push('favores');
+    return malos.join(', ');
+  };
+  const A0 = ctx.getPagosProveedores('tokchef'), cnt = {};
+  A0.facturas.filter(f => f.estado === 'Pendiente').forEach(f => { cnt[f.nit] = (cnt[f.nit] || []).concat(f); });
+  const nn = Object.keys(cnt).filter(n => cnt[n].length >= 1);
+  const fa = cnt[nn[nn.length - 1]][0];
+  const ra = ctx.registrarPagoFacturas('tokchef', [fa.llave], 'Pagado de caja', '2026-10-01', _r(fa.total / 3), 0, 'abono pantalla');
+  t('Pantalla · abono pegado == recargar todo', comparaPantalla(A0, ra, ctx.getPagosProveedores('tokchef')) === '', comparaPantalla(A0, ra, ctx.getPagosProveedores('tokchef')));
+  const A1 = ctx.getPagosProveedores('tokchef');
+  const rm = ctx.registrarCompraMercado('tokchef', '2026-10-01', 'Mercado', 'cebolla', 12, 'COCINA', 'Pagado de caja');
+  t('Pantalla · mercado pegado == recargar todo', comparaPantalla(A1, rm, ctx.getPagosProveedores('tokchef')) === '', comparaPantalla(A1, rm, ctx.getPagosProveedores('tokchef')));
+  const A2 = ctx.getPagosProveedores('tokchef');
+  const rz = ctx.registrarSaldoFavor('tokchef', fa.nit, 5, 'nota de credito pantalla');
+  t('Pantalla · saldo a favor pegado == recargar todo', comparaPantalla(A2, rz, ctx.getPagosProveedores('tokchef')) === '', comparaPantalla(A2, rz, ctx.getPagosProveedores('tokchef')));
+  // control negativo: si la pantalla no pegara nada, la comparacion lo ve
+  t('Pantalla · control negativo: no pegar nada se detecta', comparaPantalla(A0, { rapido: true, nits: [] }, ctx.getPagosProveedores('tokchef')) !== '');
+}
 t('Anular lo saca de la lista sin borrar la fila', v.mercado.length === 0 && CONFIG.PAGOS_PROVEEDORES.some(r => /^ANULADO/.test(r[6])));
 // 4. facturas anteriores al arranque (pestaña #19 de COMPRAS_2026), con PAG_DESDE_ al 28-sep
 vm.runInContext("PAG_DESDE_ = '2026-09-28';", ctx);

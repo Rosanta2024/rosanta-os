@@ -791,7 +791,7 @@ function _pagCuadre_(facturas, favor) {
     var x = P[n];
     ['facturado', 'pagado', 'pendiente', 'de_mas', 'favor', 'por_confirmar'].forEach(function (k) { x[k] = _finR_(x[k]); });
     return x;
-  }).sort(function (a, b) { return b.pendiente - a.pendiente || (a.proveedor < b.proveedor ? -1 : 1); });
+  }).sort(function (a, b) { return b.pendiente - a.pendiente || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : a.nit < b.nit ? -1 : a.nit > b.nit ? 1 : 0); });
 }
 
 /** La pantalla: las facturas del area de quien entra, el mercado y el cuadre. */
@@ -808,7 +808,10 @@ function _pagVisibles_(Q, E) {
   var ve = function (a) { return Q.areas.indexOf(a) !== -1; };
   var facturas = E.facturas.filter(function (f) { return ve(f.area); });
   var og = function (g) { var i = PAG_GRUPOS_ORDEN_.indexOf(g); return i < 0 ? 99 : i; };
-  facturas.sort(function (a, b) { return og(a.grupo) - og(b.grupo) || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : (a.fecha < b.fecha ? -1 : 1)); });
+  // Orden total (15-oct-2026): con un empate (mismo proveedor y fecha) decide la llave. Asi la
+  // pantalla, al pegar lo que devuelve el camino rapido, ordena igual (ProfitPagosJs.html).
+  facturas.sort(function (a, b) { return og(a.grupo) - og(b.grupo) || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 :
+    a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.llave < b.llave ? -1 : a.llave > b.llave ? 1 : 0); });
   var favor = {};
   facturas.forEach(function (f) { if (E.favor[f.nit]) favor[f.nit] = E.favor[f.nit]; });
   return { facturas: facturas, favor: favor, ve: ve };
