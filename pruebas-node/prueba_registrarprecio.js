@@ -80,7 +80,7 @@ const ctx = {
 };
 vm.createContext(ctx);
 ['ConfigCosteo.js', 'Config.js', 'ConfigPOS.js', 'CosteoDatos.js', 'EdicionRecetario.js',
- 'EdicionWeb.js', 'Proveedores.js'].forEach(f =>
+ 'EdicionWeb.js', 'Proveedores.js', 'Tiempos.js'].forEach(f =>
   vm.runInContext(fs.readFileSync(DIR + f, 'utf8'), ctx, { filename: f }));
 
 ctx.LIBRO = libro;

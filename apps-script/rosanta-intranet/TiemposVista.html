@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root { --bosque:#4E6D5A; --medio:#57A77F; --lila:#AEAAE2; --crema:#F2EEEB; --negro:#000000; }
+  body { margin:0; background:#fff; color:var(--negro); font:15px/1.45 -apple-system, "Avenir Next", Avenir, Helvetica, sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:16px; }
+  h1 { color:var(--bosque); font-size:1.4rem; margin:0.4rem 0 0.2rem; }
+  h2 { color:var(--bosque); font-size:1.05rem; margin:1.6rem 0 0.4rem; }
+  p.nota { color:#555; margin:0.2rem 0 0.8rem; }
+  button { background:var(--bosque); color:#fff; border:0; border-radius:6px; padding:0.5rem 0.9rem; font:inherit; cursor:pointer; }
+  button[disabled] { opacity:0.55; cursor:wait; }
+  .tabla { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:0.9rem; }
+  th { text-align:left; color:var(--bosque); border-bottom:2px solid var(--bosque); padding:0.35rem 0.5rem; white-space:nowrap; }
+  td { border-bottom:1px solid #e3ded9; padding:0.35rem 0.5rem; vertical-align:top; }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .lento { color:#8a3b2e; font-weight:600; }
+  .estado { color:#555; margin:0.5rem 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tiempos de guardado</h1>
+  <p class="nota">Cuánto tarda cada guardado de Pagos y Recetas, separado en tramos. Se guardan los últimos 60 (6 horas).</p>
+  <button type="button" id="t-act">Actualizar</button>
+  <div class="estado" id="t-est">Leyendo…</div>
+  <div class="tabla" id="t-lista"></div>
+
+  <h2>Medir lectura</h2>
+  <p class="nota">Solo lee (no escribe nada). Separa cuánto cuesta cada pieza de la pantalla de Pagos y del recetario. Tarda entre 20 s y 1 min.</p>
+  <button type="button" id="t-medir">Medir lectura</button>
+  <div class="estado" id="t-mest"></div>
+  <div class="tabla" id="t-med"></div>
+</main>
+<script>
+  var AUTH = '<?= authToken ?>';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function seg(ms) { return (Number(ms) / 1000).toFixed(1) + ' s'; }
+  function celSeg(ms) { return '<td class="n' + (ms >= 8000 ? ' lento' : '') + '">' + (ms == null ? '' : seg(ms)) + '</td>'; }
+  function errorSimple(e) { return (window.PF_ERROR ? PF_ERROR(e) : String(e && e.message || e)); }
+
+  function pintarLista(l) {
+    document.getElementById('t-est').textContent = l.length ? l.length + ' guardados medidos' : 'Todavía no hay guardados medidos.';
+    if (!l.length) { document.getElementById('t-lista').innerHTML = ''; return; }
+    var h = '<table><tr><th>Cuándo</th><th>Qué</th><th>Quién</th><th>Total</th><th>Validar</th><th>Escribir</th><th>Recalcular</th><th>Recarga todo</th></tr>';
+    l.forEach(function (x) {
+      var t = x.tramos || {};
+      h += '<tr><td>' + esc(x.cuando) + '</td><td>' + esc(x.accion) + '</td><td>' + esc(x.quien) + '</td>' + celSeg(x.ms) +
+        celSeg(t.validar) + celSeg(t.escribir) + celSeg(t.recalcular) + '<td>' + esc(x.recargo || '') + '</td></tr>';
+    });
+    document.getElementById('t-lista').innerHTML = h + '</table>';
+  }
+  function cargar() {
+    document.getElementById('t-est').textContent = 'Leyendo…';
+    google.script.run.withSuccessHandler(pintarLista)
+      .withFailureHandler(function (e) { document.getElementById('t-est').textContent = 'No pude leer los tiempos: ' + errorSimple(e); })
+      .getTiemposGuardado(AUTH);
+  }
+  document.getElementById('t-act').addEventListener('click', cargar);
+  document.getElementById('t-medir').addEventListener('click', function () {
+    var b = this; b.disabled = true;
+    var est = document.getElementById('t-mest'), t0 = Date.now();
+    est.textContent = 'Midiendo…';
+    var reloj = setInterval(function () { est.textContent = 'Midiendo… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+    google.script.run.withSuccessHandler(function (r) {
+      clearInterval(reloj); b.disabled = false;
+      est.textContent = 'Listo: ' + seg(r.total_ms) + ' en el servidor, ' + seg(Date.now() - t0) + ' con la ida y vuelta.';
+      document.getElementById('t-med').innerHTML = '<table><tr><th>Pieza</th><th>Tiempo</th><th>Detalle</th></tr>' +
+        r.pasos.map(function (p) { return '<tr><td>' + esc(p.paso) + '</td>' + celSeg(p.ms) + '<td>' + esc(p.nota) + '</td></tr>'; }).join('') + '</table>';
+      cargar();
+    }).withFailureHandler(function (e) { clearInterval(reloj); b.disabled = false; est.textContent = 'No se pudo medir: ' + errorSimple(e); })
+      .medirLectura(AUTH);
+  });
+  cargar();
+</script>
+</body>
+</html>
