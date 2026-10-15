@@ -220,10 +220,10 @@ function rvTextoCancel(idioma, caso, d) {
   }
   if (caso === 'cancel_nada') {
     return en
-      ? 'I cannot find an active reservation with those details. Someone from the team checks it and writes to you 🙌'
-      : 'No encuentro una reserva activa con esos datos. Alguien del equipo lo revisa y te escribe 🙌';
+      ? btConPromesa_("I can't find an active booking with those details.", 'en')
+      : btConPromesa_('No encuentro una reserva activa con esos datos.', 'es');
   }
   return en
-    ? 'I could not cancel it in the system. Someone from the team writes to you to confirm 🙌'
-    : 'No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌';
+    ? btConPromesa_("I couldn't cancel it from here, so it's still active for now.", 'en')
+    : btConPromesa_('No logré cancelarla desde aquí, así que por ahora sigue activa.', 'es');
 }

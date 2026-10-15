@@ -274,17 +274,17 @@ function rvTexto(idioma, caso, d) {
   }
   if (caso === 'lejana') {
     return en
-      ? 'That date is beyond what the system opens. Someone from the team takes care of it 🙌'
-      : 'Esa fecha va más allá de lo que el sistema abre. Alguien del equipo lo ve 🙌';
+      ? btConPromesa_("That date isn't open for online booking yet.", 'en')
+      : btConPromesa_('Esa fecha todavía no está abierta para reservar en línea.', 'es');
   }
   if (caso === 'grupo') {
     return en
-      ? 'For ' + d.personas + ' people someone from the team takes care of it directly. They write to you shortly 🙌'
-      : 'Para ' + d.personas + ' personas lo ve alguien del equipo directamente. Te escriben en breve 🙌';
+      ? btConPromesa_('For a group of ' + d.personas + ", we'll plan it with you directly.", 'en')
+      : btConPromesa_('Para ' + d.personas + ' personas lo coordinamos directo contigo.', 'es');
   }
   return en
-    ? 'I could not complete the booking in the system. Someone from the team writes to you to confirm 🙌'
-    : 'No pude cerrar la reserva en el sistema. Alguien del equipo te escribe para confirmarte 🙌';
+    ? btConPromesa_("Your booking didn't go through yet.", 'en')
+    : btConPromesa_('Tu reserva todavía no quedó confirmada.', 'es');
 }
 
 function rvFechaBonita(iso, en) {

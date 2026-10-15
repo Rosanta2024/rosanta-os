@@ -20,7 +20,7 @@ const PROPS = PropertiesService.getScriptProperties();
 
 const CONFIG = {
   ANTHROPIC_API_KEY: PROPS.getProperty('ANTHROPIC_API_KEY'),
-  CLAUDE_MODEL:      PROPS.getProperty('CLAUDE_MODEL') || 'claude-sonnet-4-6',
+  CLAUDE_MODEL:      PROPS.getProperty('CLAUDE_MODEL') || 'claude-sonnet-5-5',
   WHATSAPP_TOKEN:    PROPS.getProperty('WHATSAPP_TOKEN'),   // token permanente de la app de Meta
   MESSENGER_TOKEN:   PROPS.getProperty('MESSENGER_TOKEN'),  // page access token (Messenger)
   IG_TOKEN:          PROPS.getProperty('IG_TOKEN'),         // page access token (Instagram)
@@ -90,28 +90,32 @@ function handleWhatsApp(body) {
       const name = contacts[0] && contacts[0].profile ? contacts[0].profile.name : '';
 
       messages.forEach(function (msg) {
-        if (msg.type !== 'text') return;                 // por ahora solo texto
+        const entrada = btEntradaWhatsApp_(msg);         // texto o botón tocado (Botones.js)
+        if (!entrada) return;
         if (alreadyProcessed(msg.id)) return;            // evita duplicados
 
         const from = msg.from;                           // número del cliente
-        const text = msg.text.body;
+        const text = entrada.texto;
         // Se registra SIEMPRE, aunque el bot esté en pausa o pase el límite:
         // si no, la consola se queda ciega mientras un humano atiende.
-        logMensaje('whatsapp', from, name, 'in', 'cliente', text);
+        logMensaje('whatsapp', from, name, 'in', 'cliente', entrada.log);
       if (botEnPausa(from)) return; // un humano está atendiendo este chat
         if (!dentroDeLimite(from)) {
           logLead({ canal: 'whatsapp', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, from);
           return;
         }
 
+        if (btClavePrueba_(from, text)) { sendWhatsApp(phoneNumberId, from, BT_TXT.es.pruebaOk); return; }
+
         const firstName = (name || '').split(' ')[0] || '';
 
-        const result = rvCerrar(askClaude('whatsapp', firstName, text, from), 'whatsapp', from);
-        sendWhatsApp(phoneNumberId, from, result.respuesta);
-        logMensaje('whatsapp', from, name, 'out', 'bot', result.respuesta);
+        const result = btAtender_('whatsapp', from, firstName, entrada);
+        btEnviar_('whatsapp', from, result.respuesta, result.botones, phoneNumberId);
+        logMensaje('whatsapp', from, name, 'out', 'bot', btTextoLog_(result));
         PROPS.setProperty('WA_PHONE_NUMBER_ID', phoneNumberId);
-        logLead(result.lead, text, from, result.respuesta);
-        if (result.lead && result.lead.requiere_humano) notificarHumano('whatsapp', result.lead, text, from);
+        logLead(result.lead, entrada.log, from, result.respuesta);
+        fichaActualizar_('whatsapp', from, name, result.lead);
+        if (result.lead && result.lead.requiere_humano) notificarHumano('whatsapp', result.lead, entrada.log, from);
       });
     });
   });
@@ -149,25 +153,29 @@ function handleInstagram(body) {
         }
         return;
       }
-      if (!event.message.text) return;
+      const entrada = btEntradaMeta_(event.message);     // texto o quick reply (Botones.js)
+      if (!entrada) return;
       if (alreadyProcessed(event.message.mid)) return;
 
       const senderId = event.sender.id;
-      const text = event.message.text;
+      const text = entrada.texto;
       var nombreIG = nombreInstagram(senderId);
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
-      logMensaje('instagram', senderId, nombreIG, 'in', 'cliente', text);
+      logMensaje('instagram', senderId, nombreIG, 'in', 'cliente', entrada.log);
       if (botEnPausa(senderId)) return;
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'instagram', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
         return;
       }
 
-      const result = rvCerrar(askClaude('instagram', (nombreIG || '').split(' ')[0] || '', text, senderId), 'instagram', senderId);
-      sendInstagram(senderId, result.respuesta);
-      logMensaje('instagram', senderId, nombreIG, 'out', 'bot', result.respuesta);
-      logLead(result.lead, text, senderId, result.respuesta);
-      if (result.lead && result.lead.requiere_humano) notificarHumano('instagram', result.lead, text, senderId);
+      if (btClavePrueba_(senderId, text)) { sendInstagram(senderId, BT_TXT.es.pruebaOk); return; }
+
+      const result = btAtender_('instagram', senderId, (nombreIG || '').split(' ')[0] || '', entrada);
+      btEnviar_('instagram', senderId, result.respuesta, result.botones);
+      logMensaje('instagram', senderId, nombreIG, 'out', 'bot', btTextoLog_(result));
+      logLead(result.lead, entrada.log, senderId, result.respuesta);
+      fichaActualizar_('instagram', senderId, nombreIG, result.lead);
+      if (result.lead && result.lead.requiere_humano) notificarHumano('instagram', result.lead, entrada.log, senderId);
     });
   });
 }
@@ -226,24 +234,28 @@ function handleMessenger(body) {
         }
         return;
       }
-      if (!event.message.text) return;
+      const entrada = btEntradaMeta_(event.message);     // texto o quick reply (Botones.js)
+      if (!entrada) return;
       if (alreadyProcessed(event.message.mid)) return;
 
       const senderId = event.sender.id;   // PSID del cliente
-      const text = event.message.text;
+      const text = entrada.texto;
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
-      logMensaje('messenger', senderId, '', 'in', 'cliente', text);
+      logMensaje('messenger', senderId, '', 'in', 'cliente', entrada.log);
       if (botEnPausa(senderId)) return;
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'messenger', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
         return;
       }
 
-      const result = rvCerrar(askClaude('messenger', '', text, senderId), 'messenger', senderId);
-      sendMessenger(senderId, result.respuesta);
-      logMensaje('messenger', senderId, '', 'out', 'bot', result.respuesta);
-      logLead(result.lead, text, senderId, result.respuesta);
-      if (result.lead && result.lead.requiere_humano) notificarHumano('messenger', result.lead, text, senderId);
+      if (btClavePrueba_(senderId, text)) { sendMessenger(senderId, BT_TXT.es.pruebaOk); return; }
+
+      const result = btAtender_('messenger', senderId, '', entrada);
+      btEnviar_('messenger', senderId, result.respuesta, result.botones);
+      logMensaje('messenger', senderId, '', 'out', 'bot', btTextoLog_(result));
+      logLead(result.lead, entrada.log, senderId, result.respuesta);
+      fichaActualizar_('messenger', senderId, '', result.lead);
+      if (result.lead && result.lead.requiere_humano) notificarHumano('messenger', result.lead, entrada.log, senderId);
     });
   });
 }
@@ -279,8 +291,9 @@ function askClaude(canal, nombre, mensaje, senderId) {
     Utilities.formatDate(_n, _tz, 'HH:mm') + ' hrs';
 
   var system = 'FECHA Y HORA ACTUAL (zona Guatemala): ' + fechaHoy +
-    '. Usa SIEMPRE esta fecha para saber el día de la semana y el horario; nunca la inventes.\n\n' +
-    MASTER_PROMPT
+    '. Usa SIEMPRE esta fecha para saber el día de la semana y el horario; nunca la inventes.\n' +
+    'FRASE DE PASO A PERSONA EN ESTE MOMENTO — español: "' + btPromesa_('es') + '" · inglés: "' + btPromesa_('en') + '"\n\n' +
+    masterPrompt_()
       .replace('{{canal}}', canal)
       .replace('{{nombre}}', nombre || '')
       .replace('{{base_conocimiento}}', getKnowledgeBase());
@@ -293,8 +306,8 @@ function askClaude(canal, nombre, mensaje, senderId) {
       var resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
         method: 'post',
         contentType: 'application/json',
-        headers: { 'x-api-key': CONFIG.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-        payload: JSON.stringify({ model: CONFIG.CLAUDE_MODEL, max_tokens: 2000, system: system, messages: messages }),
+        headers: claudeHeaders_(),
+        payload: JSON.stringify(claudeCuerpo_(system, messages)),
         muteHttpExceptions: true
       });
       var code = resp.getResponseCode();
@@ -305,11 +318,16 @@ function askClaude(canal, nombre, mensaje, senderId) {
         continue;
       }
       var data = JSON.parse(body);
-      var raw = (data.content && data.content[0] && data.content[0].text) || '';
+      if (data.stop_reason === 'refusal') {
+        Logger.log('askClaude: el modelo declinó (' + JSON.stringify(data.stop_details || {}) + '). Se escala.');
+        break;
+      }
+      var raw = claudeTexto_(data);
       rawUltimo = raw;
       var json = intentarParseJson(raw);
       if (json && json.respuesta) {
         json.lead = json.lead || {};
+        json._modelo = data.model || '';
         json.lead.canal = canal; // el canal real lo da el webhook; Claude no lo cambia
         guardaEscalarEvento_(json.lead);
         saveHistory(senderId, mensaje, JSON.stringify(json));
@@ -324,13 +342,42 @@ function askClaude(canal, nombre, mensaje, senderId) {
 
   Logger.log('askClaude: fallback tras 3 intentos. Último raw: ' + rawUltimo);
   var fb = {
-    respuesta: 'Gracias por tu mensaje 🌿 En un momento te responde una persona del equipo.',
+    respuesta: btConPromesa_(btIdioma_(btIdiomaHistoria_(senderId)) === 'en' ? 'Thanks for your message 🌿' : 'Gracias por tu mensaje 🌿',
+      btIdiomaHistoria_(senderId)),
     lead: { canal: canal, idioma: '', nombre: '', telefono: '', email: '',
       tipo: 'otro', urgencia: 'tibio', resumen: 'No se pudo clasificar automáticamente',
       accion: 'escalar_humano', requiere_humano: true }
   };
   saveHistory(senderId, mensaje, fb.respuesta);
   return fb;
+}
+
+// Sonnet 5.5 (15-oct-2026): esfuerzo bajo (chat), pensamiento adaptativo por
+// defecto (no se manda "thinking"), sin temperature. Si el modelo declina por
+// sus filtros, la API reintenta sola en otro modelo (fallbacks "default").
+function claudeHeaders_() {
+  var h = { 'x-api-key': CONFIG.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' };
+  if (claudeEsNuevo_()) h['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+  return h;
+}
+function claudeCuerpo_(system, messages) {
+  var b = { model: CONFIG.CLAUDE_MODEL, max_tokens: 4000, system: system, messages: messages };
+  if (claudeEsNuevo_()) {
+    b.output_config = { effort: 'low' };
+    b.fallbacks = 'default';
+  }
+  return b;
+}
+function claudeEsNuevo_() {
+  return /^claude-(sonnet-5-5|opus-5-5|opus-5|fable-5)/.test(String(CONFIG.CLAUDE_MODEL || ''));
+}
+// La respuesta puede empezar con un bloque "thinking" vacío: se toma el primer bloque de texto.
+function claudeTexto_(data) {
+  var c = (data && data.content) || [];
+  for (var i = 0; i < c.length; i++) {
+    if (c[i] && c[i].type === 'text' && c[i].text) return c[i].text;
+  }
+  return '';
 }
 
 // Red de seguridad del prompt (Nutrifert, 8-oct-2026): un evento privado con
@@ -449,9 +496,11 @@ function alreadyProcessed(id) {
 //  PROMPT MAESTRO (resumen operativo; la versión editable está en el doc aparte)
 //  Las claves {{canal}}, {{nombre}} y {{base_conocimiento}} se rellenan solas.
 // ============================================================
-const MASTER_PROMPT = [
+// Se arma al usarse (no al cargar): usa textos de Botones.js, y Apps Script no
+// garantiza en qué orden carga los archivos.
+function masterPrompt_() { return [
 'Eres el asistente conversacional de Rosanta, un restaurante de gastrococtelería en Antigua Guatemala.',
-'Atiendes clientes por WhatsApp e Instagram. Respondes con calidez y precisión, y clasificas cada conversación.',
+'Atiendes clientes por WhatsApp, Instagram y Messenger. Respondes con calidez y precisión, y clasificas cada conversación.',
 '',
 'PERSONALIDAD: amigable, humana, cercana, natural. Como un amigo que ama la buena comida, no un robot ni un folleto.',
 'El cliente es el protagonista; háblale de tú. Nunca empieces con "En Rosanta...". Sin lenguaje rebuscado ni guiones largos.',
@@ -469,14 +518,20 @@ const MASTER_PROMPT = [
 '',
 'EVENTOS PRIVADOS (cumpleaños, corporativos, grupos a cotizar): NO los cotizas ni cierras. Recoge la info en DOS pasos, para no abrumar con muchas preguntas juntas:',
   '  PASO 1 — BÁSICOS: si todavía no los tienes, pregunta tipo de evento, fecha tentativa, número de personas, NOMBRE del cliente y CORREO ELECTRÓNICO (imprescindible: la cotización se envía por correo). Presenta los datos que faltan como una lista corta, con cada uno en negrita usando asteriscos de WhatsApp (ej. "*Tu nombre:*", "*Fecha:*", "*Personas:*", "*Correo:*"), para que el cliente los responda uno por uno. En este paso NO menciones los menús todavía.',
-  '  PASO 2 — MENÚ: SOLO cuando ya tengas los básicos, presenta los 3 formatos de menú (ver "Formatos de evento" en la base) y pregunta cuál le interesa.',
-  'MIENTRAS te falte algún básico (nombre, correo, fecha, personas): sigue tú la conversación, requiere_humano:false, accion:“responder_info”. EN CUANTO tengas los cuatro básicos, marca requiere_humano:true, accion:“escalar_evento”, aunque todavía no haya elegido formato de menú (si no lo ha elegido, preséntale los formatos y dile que el equipo le enviará la cotización a su correo). Así el equipo se entera aunque el cliente deje de responder.',
-  'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que alguien del equipo de ventas se comunicará con él para hacerle una propuesta. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
+  '  PASO 2 — PRESUPUESTO: cuando ya tengas los básicos, pregunta el presupuesto por persona con esta frase (en su idioma) — español: "' + BT_EVENTO.es.presupuesto + '" · inglés: "' + BT_EVENTO.en.presupuesto + '" — y pon en "opciones" EXACTAMENTE estos cuatro textos — español: ' + JSON.stringify(BT_EVENTO.es.rangos) + ' · inglés: ' + JSON.stringify(BT_EVENTO.en.rangos) + '. Guarda lo que conteste en "presupuesto" (si escribe un monto, ese monto). Si ya lo dijo antes, no lo vuelvas a pedir.',
+  '  PASO 3 — MENÚ: después del presupuesto, presenta los 3 formatos de menú (ver "Formatos de evento" en la base), pregunta cuál le interesa y pon en "opciones" — español: ' + JSON.stringify(BT_EVENTO.es.formatos) + ' · inglés: ' + JSON.stringify(BT_EVENTO.en.formatos) + '.',
+  'MIENTRAS te falte algún básico (nombre, correo, fecha, personas): sigue tú la conversación, requiere_humano:false, accion:“responder_info”. EN CUANTO tengas los cuatro básicos, marca requiere_humano:true, accion:“escalar_evento”, aunque todavía no haya elegido formato de menú (sigue con el PASO 2 y dile que la cotización le llega a su correo; agrega la FRASE DE PASO A PERSONA). Así Juanma se entera aunque el cliente deje de responder.',
+  'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que Juanma le hará una propuesta, con la FRASE DE PASO A PERSONA. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
 'EVENTOS PÚBLICOS DEL MES (maridajes, catas, noches temáticas con precio y cupo que aparezcan en la base): SÍ das la info completa tomada de la base y compartes el link de reservas. NO los escalas salvo grupo grande o caso especial. tipo:"evento", requiere_humano:false.',
 '',
-'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
+'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo". Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
 '',
-'NO HAGAS: confirmar reservas como definitivas; prometer descuentos/cortesías sin autorización; compartir datos internos; mencionar al cliente el nombre de Juanma ni de ningún empleado (decí siempre "alguien del equipo se comunicará contigo"); salirte del tema del restaurante.',
+'NO HAGAS: confirmar reservas como definitivas; prometer descuentos/cortesías sin autorización; compartir datos internos; mencionar al cliente el nombre de ningún empleado (la única excepción es Juanma, solo dentro de la FRASE DE PASO A PERSONA); salirte del tema del restaurante.',
+'',
+'BOTONES: el cliente puede tocar botones en vez de escribir; te llega el texto del botón como si lo hubiera escrito. Tú puedes proponer botones:',
+'  - "opciones": lista de 2 a 4 respuestas cortas (máximo 20 caracteres cada una) cuando le haces al cliente una pregunta de elección cerrada (presupuesto, formato de menú, sí/no, elegir entre horarios que la base o el sistema ya dieron). Si la pregunta es abierta (nombre, correo, fecha), deja "opciones" vacía. Nunca pongas en "opciones" algo que no puedas cumplir.',
+'  - "mostrar_menu": true cuando es un saludo o una respuesta que cierra un tema y no hay un siguiente paso claro (se muestran: Reservar mesa · Ver menú · Evento privado · Hablar con alguien). false mientras estés juntando datos de una reserva o un evento.',
+'  No escribas los botones dentro de "respuesta": el sistema los agrega solo.',
 '',
 'FORMATO DE SALIDA: responde SIEMPRE y SOLO con un objeto JSON válido, sin texto antes ni después:',
 '{',
@@ -492,6 +547,9 @@ const MASTER_PROMPT = [
   '    "personas": "<número de personas si lo dio, si no vacío>",',
   '    "tipo_evento": "<si es evento: boda, cumplea\u00f1os, brindis, corporativo, baby shower, aniversario, etc.; si no, vac\u00edo>",',
   '    "formato_menu": "<formato elegido: servido individual / compartir / tapas y barra; si no aplica, vacío>",',
+  '    "presupuesto": "<presupuesto por persona del evento si lo dio (rango o monto), si no vacío>",',
+  '    "opciones": ["<2 a 4 botones cortos si haces una pregunta cerrada; si no, lista vacía>"],',
+  '    "mostrar_menu": true/false,',
 '    "tipo": "reserva | evento | consulta | queja | spam | otro",',
 '    "urgencia": "caliente | tibio | frio",',
 '    "resumen": "<una línea: qué quiere>",',
@@ -503,7 +561,7 @@ const MASTER_PROMPT = [
 '',
 'BASE DE CONOCIMIENTO:',
 '{{base_conocimiento}}'
-].join('\n');
+].join('\n'); }
 
 function testBot() {
   const r = askClaude('whatsapp', 'Juanma', '¿A qué hora abren el sábado?', 'test-123');
@@ -772,15 +830,23 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
     marcarCotizacionEnviada_(idDestino);
   }
 
+  // Lo que se le prometió al cliente (Botones.js): Juanma ve hasta cuándo tiene.
+  var prometido = 'Prometido al cliente: ' + btLimite_() + '\n';
+
   // Bloque listo para pegar en Presupuestos (solo para eventos)
   var bloqueCotizar = '';
+  var bloquePipeline = '';
   if (tipo === 'evento') {
+    bloquePipeline = btBloquePipeline_(canal, lead, idDestino);
+    fichaActualizar_(canal, idDestino, '', lead,
+      { evento_avisado: Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm') });
     bloqueCotizar =
       '\n--- PARA COTIZAR (pegar en Presupuestos) ---\n' +
       'Cliente: ' + ((lead && lead.nombre) || '') + '\n' +
       'Evento: ' + ((lead && lead.tipo_evento) || tipo) + '\n' +
       'Fecha: ' + ((lead && lead.fecha) || '') + '\n' +
       'Personas: ' + ((lead && lead.personas) || '') + '\n' +
+      'Presupuesto: ' + ((lead && lead.presupuesto) || '') + '\n' +
       'Menú: ' + ((lead && lead.formato_menu) || '') + '\n' +
       'Correo: ' + ((lead && lead.email) || '') + '\n' +
       '-------------------------------------------\n';
@@ -792,12 +858,13 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
       to: 'restaurante@rosanta.rest',
       subject: '🔔 Lead para atender (' + canal + ') — ' + tipo,
       body:
-        'El bot escaló un mensaje que necesita tu atención.\n\n' +
+        'El bot escaló un mensaje que necesita tu atención.\n' +
+        prometido + '\n' +
         'Canal: ' + canal + '\n' +
         'Tipo: ' + tipo + '   ·   Urgencia: ' + urgencia + '\n' +
         'Resumen: ' + resumen + '\n' +
         'Mensaje del cliente: ' + (mensajeOriginal || '') + '\n' +
-        bloqueCotizar + '\n' +
+        bloqueCotizar + bloquePipeline + '\n' +
         'Para responder, abrí la consola:\n' + (linkConsola || linkHoja)
     });
   } catch (e) { Logger.log('Error correo: ' + e); }
@@ -809,6 +876,7 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
     if (owner && pid) {
       sendWhatsApp(pid, owner,
         '🔔 Lead para atender (' + canal + ')\n' +
+        prometido +
         'Tipo: ' + tipo + ' · ' + urgencia + '\n' +
         resumen + '\n' +
         'Cliente: ' + (mensajeOriginal || '') +
