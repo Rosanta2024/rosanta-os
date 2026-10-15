@@ -279,7 +279,8 @@ function sendMessenger(recipientId, text) {
 // ============================================================
 //  CLAUDE — construye el prompt, llama a la API y parsea el JSON
 // ============================================================
-function askClaude(canal, nombre, mensaje, senderId) {
+function askClaude(canal, nombre, mensaje, senderId, opts) {
+  opts = opts || {};
   var _tz = 'America/Guatemala';
   var _dias = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
   var _meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -325,7 +326,7 @@ function askClaude(canal, nombre, mensaje, senderId) {
       var raw = claudeTexto_(data);
       rawUltimo = raw;
       var json = intentarParseJson(raw);
-      if (json && json.respuesta) {
+      if (json && (json.respuesta || (opts.permitirVacia && 'respuesta' in json))) {
         json.lead = json.lead || {};
         json._modelo = data.model || '';
         json.lead.canal = canal; // el canal real lo da el webhook; Claude no lo cambia
@@ -590,7 +591,7 @@ function enviarRespuestasPendientes() {
           enviarPorCanal(canal, idDestino, respuesta);
           sheet.getRange(i + 1, 14).setValue(new Date());
           logMensaje(canal, idDestino, '', 'out', 'humano', respuesta);
-          pausarBot(idDestino, 6);
+          humAtendiendo_(canal, idDestino);   // el bot retoma cuando Juanma termina (Humano.js)
         } catch (err) {
           sheet.getRange(i + 1, 14).setValue('ERROR: ' + err);
         }
@@ -610,8 +611,14 @@ function enviarRespuestasPendientes() {
       const tipo = String(d[i][4] || '');        // 'libre' o 'imagen:<ID de Drive>'
       const enviado = d[i][5];
       const esImagen = tipo.indexOf('imagen:') === 0;
-      if ((texto || esImagen) && contactoId && !enviado) {
+      const esDevolver = tipo === 'devolver';       // botón "Devolver al bot" de la consola
+      if ((texto || esImagen || esDevolver) && contactoId && !enviado) {
         try {
+          if (esDevolver) {
+            cola.getRange(i + 1, 6).setValue(new Date());
+            humRetomar_(canal, contactoId, 'boton');
+            continue;
+          }
           if (esImagen) {
             const fileId = tipo.substring(7);
             enviarImagenPorCanal(canal, contactoId, fileId, texto);
@@ -623,7 +630,7 @@ function enviarRespuestasPendientes() {
             cola.getRange(i + 1, 6).setValue(new Date());
             logMensaje(canal, contactoId, '', 'out', 'humano', texto);
           }
-          pausarBot(contactoId, 6);
+          humAtendiendo_(canal, contactoId);   // el bot retoma cuando Juanma termina (Humano.js)
         } catch (err) {
           cola.getRange(i + 1, 6).setValue('ERROR: ' + err);
         }
@@ -631,6 +638,9 @@ function enviarRespuestasPendientes() {
     }
     archivarSalientes_(ss);
   }
+
+  // 3) Chats en los que Juanma ya terminó: vuelven al bot
+  humRevisar_();
 }
 
 // ============================================================
@@ -792,7 +802,8 @@ function pausarBot(id, horas) {
 }
 function botEnPausa(id) {
   if (!id) return false;
-  return !!CacheService.getScriptCache().get('pausa_' + id);
+  if (CacheService.getScriptCache().get('pausa_' + id)) return true;
+  return humCallado_(id);   // el bot le pasó el chat a Juanma (Humano.js)
 }
 
 
@@ -825,13 +836,17 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
   var linkHoja = 'https://docs.google.com/spreadsheets/d/' + CONFIG.SHEET_ID + '/edit';
   var linkConsola = PROPS.getProperty('CONSOLE_URL') || '';
 
+  // Fuera de eventos, el bot se calla en este chat hasta que Juanma conteste (Humano.js)
+  var callado = humEscalar_(canal, idDestino, lead);
+
   if (tipo === 'evento') {
     if (cotizacionEnviada_(idDestino)) return;
     marcarCotizacionEnviada_(idDestino);
   }
 
   // Lo que se le prometió al cliente (Botones.js): Juanma ve hasta cuándo tiene.
-  var prometido = 'Prometido al cliente: ' + btLimite_() + '\n';
+  var prometido = 'Prometido al cliente: ' + btLimite_() + '\n' +
+    (callado ? 'El bot NO contesta en este chat hasta que respondas desde la consola.\n' : '');
 
   // Bloque listo para pegar en Presupuestos (solo para eventos)
   var bloqueCotizar = '';

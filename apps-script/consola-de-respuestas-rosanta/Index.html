@@ -62,6 +62,9 @@
   .ficha dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 16px;margin:0 0 10px;}
   .ficha dt{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#8a8478;}
   .ficha dd{margin:0;font-weight:700;word-break:break-word;}
+  .estado-bot{display:none;margin-left:auto;align-items:center;gap:8px;font-size:12px;color:#8a6d1f;}
+  .estado-bot.on{display:flex;}
+  .estado-bot button{border:1px solid var(--verde);background:#fff;color:var(--verde);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;min-height:36px;}
   .ficha .etapa{display:inline-block;background:var(--verde);color:#fff;border-radius:999px;padding:1px 9px;font-size:11px;margin-left:6px;vertical-align:middle;}
   .warn{background:#fff4e0;border:1px solid #f0d79a;color:#8a6d1f;font-size:11.5px;padding:7px 10px;border-radius:10px;margin-bottom:8px;}
   .crow{display:flex;gap:9px;align-items:flex-end;}
@@ -173,6 +176,7 @@
   }
   function loadMsgs(scroll){
     if(!CUR)return;
+    if(!scroll)loadFicha(true);   // en el sondeo solo se refresca el estado del bot
     google.script.run.withSuccessHandler(function(msgs){if(CUR)renderMsgs(msgs||[],scroll);})
       .withFailureHandler(function(e){toast('Error: '+e.message);}).getMensajes(CUR.canal,CUR.id);
   }
@@ -183,7 +187,8 @@
     document.getElementById('chat').innerHTML=
       '<div class="chat-head"><button class="back" onclick="closeThread()">&#8249;</button>'+
       '<div class="av" style="width:38px;height:38px;font-size:14px;">'+initials(t.nombre)+'</div>'+
-      '<div><div class="nm">'+esc(nameOf(t))+'</div><div class="sub">'+canalChip(t.canal)+esc(String(t.id))+'</div></div></div>'+
+      '<div><div class="nm">'+esc(nameOf(t))+'</div><div class="sub">'+canalChip(t.canal)+esc(String(t.id))+'</div></div>'+
+      '<div class="estado-bot" id="estadoBot"><span id="estadoTxt"></span><button onclick="devolverBot()">🤖 Devolver al bot</button></div></div>'+
       '<div class="ficha" id="ficha"></div>'+
       '<div class="msgs" id="msgs"></div><div class="compose">'+
       '<div class="warn" id="warn" style="display:none"></div>'+
@@ -216,10 +221,23 @@
   var FICHA_CAMPOS=[['fecha','Fecha'],['hora','Hora'],['personas','Personas'],['presupuesto','Presupuesto'],
     ['tipo_evento','Tipo de evento'],['formato_menu','Formato de menú'],['idioma','Idioma'],['email','Correo'],
     ['telefono','Teléfono'],['ultimo_boton','Último botón'],['resumen','Último pedido']];
-  function loadFicha(){
+  function loadFicha(soloEstado){
     if(!CUR)return;var cur=CUR;
-    google.script.run.withSuccessHandler(function(f){if(CUR===cur)renderFicha(f);})
+    google.script.run.withSuccessHandler(function(f){if(CUR!==cur)return;renderEstado(f);if(!soloEstado)renderFicha(f);})
       .withFailureHandler(function(){}).getFicha(CUR.canal,CUR.id);
+  }
+  /* El bot se calla mientras Juanma atiende; vuelve con el botón o a los 30 min sin escribir. */
+  function renderEstado(f){
+    var e=document.getElementById('estadoBot');if(!e)return;
+    var st=f&&f.estado_bot;
+    e.classList.toggle('on',!!st);
+    document.getElementById('estadoTxt').textContent=st?('Bot en pausa · '+st):'';
+  }
+  function devolverBot(){
+    if(!CUR)return;
+    google.script.run.withSuccessHandler(function(r){toast((r&&r.msg)||'Listo.');
+        var e=document.getElementById('estadoBot');if(e)e.classList.remove('on');})
+      .withFailureHandler(function(e){toast('Error: '+e.message);}).devolverAlBot(CUR.canal,CUR.id);
   }
   function renderFicha(f){
     var box=document.getElementById('ficha');if(!box)return;

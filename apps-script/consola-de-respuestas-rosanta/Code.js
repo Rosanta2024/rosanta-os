@@ -102,6 +102,18 @@ function enviarMensaje(canal, contactoId, texto) {
   return { ok: true, msg: 'En camino. El bot lo enviará en menos de un minuto.' };
 }
 
+/**
+ * "Devolver al bot": el bot retoma este chat ya (sin esperar los 30 min) y le
+ * escribe al cliente un mensaje de seguimiento. Lo procesa el bot en <1 min.
+ */
+function devolverAlBot(canal, contactoId) {
+  canal = String(canal || '').toLowerCase();
+  contactoId = String(contactoId || '').trim();
+  if (!contactoId) return { ok: false, msg: 'Falta el contacto.' };
+  hojaSalientes_().appendRow([new Date(), canal, contactoId, '', 'devolver', '']);
+  return { ok: true, msg: 'Listo. El bot retoma este chat en menos de un minuto.' };
+}
+
 function hojaSalientes_() {
   var ss = getSS_();
   var sh = ss.getSheetByName('Salientes');

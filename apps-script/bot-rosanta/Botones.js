@@ -432,7 +432,7 @@ function btTextoLog_(result) {
 var FICHA_COLS = ['clave', 'canal', 'contacto_id', 'nombre', 'telefono', 'email', 'idioma', 'tipo',
   'fecha', 'hora', 'personas', 'presupuesto', 'tipo_evento', 'formato_menu', 'es_evento',
   'fecha_consulta', 'evento_avisado', 'etapa_pipeline', 'ultimo_boton', 'resumen',
-  'primer_contacto', 'actualizado'];
+  'primer_contacto', 'actualizado', 'estado_bot'];
 
 function fichaHoja_() {
   var ss = CONFIG.SHEET_ID ? SpreadsheetApp.openById(CONFIG.SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
