@@ -373,7 +373,7 @@ function medCascadaResumen_(d, P, M, hoy) {
   try { var k = mktKpisMes_(d.anio, d); var km = k.meses[hoy.getMonth() + 1] || (mc.ultimo ? k.meses[mc.ultimo.m] : null); lect = km ? km.lectura : null; }
   catch (e2) { lect = null; }
   h('Lectura de Wix', tabZona_(lect, M.lectura.valor, 50, 'mayor'),
-    lect === null ? 'sin altas este mes' : lect + '% · ' + medMetaTxt_(M.lectura.valor, 'meta ', '%'), 'José');
+    lect === null ? 'sin reservas pasadas este mes' : lect + '% · ' + medMetaTxt_(M.lectura.valor, 'meta ', '%'), 'José');
   try {
     var inv = invEstadoCierre_(hoy, P.inventario_cierre_dia.valor);
     var zc = inv.areas.COCINA.zona, zb = inv.areas.BARRA.zona;
@@ -588,6 +588,78 @@ function medMesasPorCerrar_(hoy) {
   var ord = function (a, b) { return a.fecha < b.fecha ? -1 : 1; };
   return { desde: desde, hasta: hasta, falta_consumo: falta.sort(ord), sin_cerrar: sinCerrar.sort(ord),
            wix: 'https://manage.wix.com/dashboard/47968b83-c2c2-4b11-8f94-ef2c7488debc/wix-table-reservations/table-reservations?viewId=all&reservationId=' };
+}
+
+/* ============================================================================
+ * CERRAR LA MESA DESDE LA INTRANET (15-oct-2026, decisión de Juanma)
+ * ----------------------------------------------------------------------------
+ * En "Mesas por cerrar en Wix" cada reserva que sigue en RESERVED trae dos botones:
+ * "Llegó" (SEATED) y "No vino" (NO_SHOW). Así el salón no tiene que entrar a Wix.
+ *   · NUNCA FINISHED: en Wix dispara el correo de reseña de TripAdvisor (events.js).
+ *   · Solo reservas en RESERVED y con fecha de hoy o anterior: un doble toque o una
+ *     lista vieja no pueden cambiar una mesa ya cerrada ni una futura.
+ *   · Mismo PATCH que CerrarMesasNoShow.js (Marketing OS). El webhook de Wix actualiza
+ *     la pestaña reservas y el CRM solos.
+ * Credenciales: WIX_API_KEY y WIX_SITE_ID en las Propiedades del script de la intranet
+ * (copiadas a mano por el dueño desde las del Marketing OS).
+ * ============================================================================ */
+var SALA_ESTADOS_MESA_ = { SEATED: 'Llegó', NO_SHOW: 'No vino' };
+
+/** Guarda: rol sala o dueño, igual que getSala. */
+function exigirSala_(auth) {
+  var u = resolverUsuario_(auth);
+  if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
+  var rol = normalizar_(u.rol);
+  if (rol !== 'sala' && rol !== 'dueno') throw new Error('Sala es para el rol sala y el dueño.');
+  return u;
+}
+
+function salaWixFetch_(url, op) {
+  var p = PropertiesService.getScriptProperties();
+  var key = String(p.getProperty('WIX_API_KEY') || '').trim(), site = String(p.getProperty('WIX_SITE_ID') || '').trim();
+  if (!key || !site) throw new Error('Falta conectar Wix: cargá WIX_API_KEY y WIX_SITE_ID en Propiedades del script de la intranet.');
+  op = op || {};
+  op.headers = { 'Authorization': key, 'wix-site-id': site };
+  op.muteHttpExceptions = true;
+  var ultimo = '';
+  for (var i = 1; i <= 3; i++) {
+    var res = UrlFetchApp.fetch(url, op), code = res.getResponseCode();
+    if (code === 200) return JSON.parse(res.getContentText());
+    ultimo = 'HTTP ' + code;
+    if ([429, 500, 502, 503, 504].indexOf(code) < 0) break;
+    Utilities.sleep(1200 * i);
+  }
+  throw new Error('Wix no respondió bien (' + ultimo + '). La mesa no se cambió; probá de nuevo en un rato.');
+}
+
+function salaMarcarMesa(auth, id, estado) {
+  var u = exigirSala_(auth);
+  estado = String(estado || '').toUpperCase();
+  if (!SALA_ESTADOS_MESA_[estado]) throw new Error('Desde aquí solo se marca "Llegó" o "No vino".');
+  id = String(id || '').trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('Reserva inválida.');
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw new Error('Alguien más está cerrando una mesa. Probá de nuevo en unos segundos.');
+  try {
+    var url = 'https://www.wixapis.com/table-reservations/reservations/v1/reservations/' + id;
+    var r = (salaWixFetch_(url, { method: 'get' }) || {}).reservation || {};
+    var antes = String(r.status || '').toUpperCase();
+    var nombre = (((r.reservee && r.reservee.firstName) || '') + ' ' + ((r.reservee && r.reservee.lastName) || '')).trim();
+    if (antes === estado) return { ok: true, id: id, estado: estado, ya: true, texto: nombre + ': ya estaba como "' + SALA_ESTADOS_MESA_[estado] + '"' };
+    if (antes !== 'RESERVED') throw new Error('Esa mesa ya no está en "Reserved" (está en ' + (antes || '¿?') + '). Recargá la lista.');
+    var ini = r.details && r.details.startDate ? new Date(r.details.startDate) : null;
+    if (!ini || ini.getTime() > Date.now()) throw new Error('Esa reserva todavía no llega; solo se cierran mesas de hoy o anteriores.');
+    var out = salaWixFetch_(url, { method: 'patch', contentType: 'application/json',
+      payload: JSON.stringify({ reservation: { id: id, revision: String(r.revision), status: estado } }) });
+    var nuevo = String(((out || {}).reservation || {}).status || '').toUpperCase();
+    if (nuevo !== estado) throw new Error('Wix no confirmó el cambio. Revisá la mesa en Wix.');
+    // El rastro queda en Wix (historial de la reserva) y en el registro de ejecuciones; la
+    // BITACORA del recetario no es lugar para esto.
+    console.log('salaMarcarMesa · ' + (u.email || '') + ' · ' + id + ' · ' + antes + ' → ' + estado + ' · ' + nombre);
+    return { ok: true, id: id, estado: estado, texto: nombre + ': ' + SALA_ESTADOS_MESA_[estado] };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /** La pantalla de Sala: el numero de José, sus palancas y lo que tiene que hacer hoy. */
