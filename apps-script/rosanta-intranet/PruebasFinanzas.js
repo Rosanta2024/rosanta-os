@@ -906,10 +906,14 @@ function prFinanzas_(res) {
     var nombre = 'Un solo lector de numeros';
     var casos = [['_finNumero_("Q1,771.00")', _finNumero_('Q1,771.00'), 1771], ['_finNumero_("q 1,234")', _finNumero_('q 1,234'), 1234],
                  ['invNumero_("q1,000")', invNumero_('q1,000'), 1000], ['invNumero_("")', invNumero_(''), null],
-                 ['psNum_("1,234")', psNum_('1,234'), 1234], ['psNum_("")', psNum_(''), null], ['_finNum_("x")', _finNum_('x'), 0]];
+                 ['psNum_("1,234")', psNum_('1,234'), 1234], ['psNum_("")', psNum_(''), null], ['_finNum_("x")', _finNum_('x'), 0],
+                 // Coma decimal escrita a mano (14-oct-2026): "12,5" se leia 125.
+                 ['_finNumero_("12,5")', _finNumero_('12,5'), 12.5], ['invNumero_("12,5")', invNumero_('12,5'), 12.5],
+                 ['psNum_("0,75")', psNum_('0,75'), 0.75], ['_finNumero_("Q 12,50")', _finNumero_('Q 12,50'), 12.5],
+                 ['_finNumero_("1.234,50")', _finNumero_('1.234,50'), 1234.5], ['_finNumero_("12,500")', _finNumero_('12,500'), 12500]];
     var malos = casos.filter(function (c) { return c[1] !== c[2]; }).map(function (c) { return c[0] + ' = ' + c[1] + ' (esperado ' + c[2] + ')'; });
     ['invNumero_', 'psNum_'].forEach(function (fn) { if (String(globalThis[fn]).indexOf('_finNumero_') === -1) malos.push(fn + ' no usa _finNumero_'); });
-    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos · la coma es de miles', malos.length, 0);
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos · coma de miles (1,234) y decimal (12,5)', malos.length, 0);
   });
 
   prCorrer_(g, 'El Creador de IA tiene tope diario', function () {
