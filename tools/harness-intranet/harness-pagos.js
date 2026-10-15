@@ -49,6 +49,23 @@ let ok = 0, mal = 0;
 const t = (n, c, info) => { if (c) ok++; else mal++; console.log((c ? 'OK   ' : 'FALLA') + ' ' + n + (info !== undefined ? '  → ' + info : '')); };
 const tira = (fn) => { try { fn(); return ''; } catch (e) { return e.message; } };
 
+// Posibles pagos (14-oct-2026, Juanma): "S36 Industrias VGS 1156465795" y "MC Industrias 2253014585"
+// traen el numero de la factura que pagan. En la intranet esas facturas ya estaban pagadas (COMPRAS_2026)
+// y los cargos se ofrecian como abonos a Doorways o como pago de otra factura de Bodega Feliz.
+{
+  const origCompras = ctx._pagPagadasCompras_;
+  ctx._pagPagadasCompras_ = () => ({ '1156465795': { hoja: 'S34', estatus: 'Pagado', fecha: '2026-09-08' }, '2253014585': { hoja: 'S33', estatus: 'Pagado', fecha: '2026-09-16' } });
+  ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+  const EP = ctx.pagEstado_();
+  const glosas = EP.posibles.map(x => x.pago.glosa);
+  t('Un cargo con el numero de una factura ya pagada no se ofrece para otra', !glosas.some(g => /1156465795|2253014585/.test(g)), glosas.filter(g => /\d{9}/.test(g)).join(' | '));
+  t('No se ofrecen abonos por la sola categoria (Doorways)', !EP.posibles.some(x => x.opciones.some(o => o.abono && o.facturas.some(f => /DOORWAYS/i.test(f.proveedor)) && !/doorway/i.test(x.pago.glosa))));
+  const tav = EP.posibles.filter(x => /480330786/.test(x.pago.glosa))[0];
+  t('Con el numero de una factura abierta, solo se ofrece esa', !tav || tav.opciones.every(o => o.facturas.length === 1 && o.facturas[0].dte === '480330786'));
+  ctx._pagPagadasCompras_ = origCompras;
+  ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+}
+
 // 1. funcion pura del banco con datos de juguete
 const F = (llave, nit, dte, dia, saldo, pal, marca) => ({ llave, nit, dte, dia, saldo, palabras: pal, marcaBanco: marca });
 let r = ctx._pagCasarBanco_([F('a', '1', '111111', 100, 500, ['cofradia'], null), F('b', '1', '222222', 101, 300, ['cofradia'], null)],
@@ -188,6 +205,24 @@ const caido = ctx.getPagosProveedores('tok');
 t('Si Gmail falla, Pagos abre igual y avisa', caido.facturas.length > 0 && /Gmail caido/.test(caido.aviso_correo), caido.aviso_correo);
 console.log('\nPestaña PAGOS_PROVEEDORES (' + (CONFIG.PAGOS_PROVEEDORES.length - 1) + ' filas):');
 CONFIG.PAGOS_PROVEEDORES.forEach(r => console.log('  ' + r.slice(0, 9).map(x => x instanceof Date ? 'fecha' : String(x)).join(' | ')));
+
+// "No pertenece" en Posibles pagos (14-oct-2026)
+{
+  ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+  const antes = ctx.getPagosProveedores('tok'), P0 = antes.posibles[0];
+  if (P0) {
+    t('Jeffry no puede descartar un posible pago', /dueño/.test(tira(() => ctx.descartarPosiblePago('tokchef', P0.pago.llave))));
+    ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+    const bal0 = ctx._pagBalance_ ? JSON.stringify(ctx._pagBalance_(2026).filas.map(x => x.pagado)) : '';
+    const desp = ctx.descartarPosiblePago('tok', P0.pago.llave);
+    t('No pertenece: el cargo sale de Posibles pagos', !desp.posibles.some(x => x.pago.llave === P0.pago.llave), P0.pago.glosa);
+    t('…y queda en la lista de descartados', desp.descartados.length >= 1 && desp.descartados[0].detalle.indexOf(P0.pago.glosa.slice(0, 10)) !== -1, desp.descartados[0] && desp.descartados[0].detalle);
+    if (bal0) t('…y el Balance del año no cambia', JSON.stringify(ctx._pagBalance_(2026).filas.map(x => x.pagado)) === bal0);
+    ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+    const vuelve = ctx.anularMovimientoPago('tok', desp.descartados[0].id);
+    t('Volver a ofrecer: el cargo reaparece', vuelve.posibles.some(x => x.pago.llave === P0.pago.llave));
+  }
+}
 console.log('\n' + ok + ' OK · ' + mal + ' fallas');
 function _r(n) { return Math.round(n * 100) / 100; }
 process.exit(mal ? 1 : 0);

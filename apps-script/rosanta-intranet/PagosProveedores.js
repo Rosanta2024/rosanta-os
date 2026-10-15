@@ -61,6 +61,9 @@ var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
 // factura (o de varias del mismo proveedor) que el cruce automatico no se atrevio a casar. El
 // dueño lo confirma con un toque; la fila guarda la llave del pago para no ofrecerlo de nuevo.
 var PAG_CONF_BANCO_ = 'Confirmado con banco';
+// Un cargo del banco que el dueño marco "No pertenece" en Posibles pagos (14-oct-2026). Lleva "Banco"
+// en el nombre a proposito: el Balance del año ignora esos estatus. DETALLE termina en "pago: <llave>".
+var PAG_DESCARTADO_ = 'Banco: no pertenece';
 // Las cuentas y tarjetas (los nombres que usa pagPagosBanco_ para cada cargo)
 var PAG_MEDIOS_BANCO_ = ['Banco BI', 'Banco BAC'];
 var PAG_MEDIOS_TARJETA_ = ['Tarjeta débito BI', 'Tarjeta crédito BI', 'Tarjeta crédito BAC'];
@@ -449,28 +452,43 @@ function _pagEnVentanaPosible_(p, f) {
   return d >= -antes && d <= 60;
 }
 
-function _pagPosibles_(abiertas, pagos) {
+/*
+ * dtes (14-oct-2026, Juanma: "S36 Industrias VGS 1156465795 hace referencia a la factura que se
+ * pago"): { numero de DTE: true si sigue abierta, false si ya esta pagada } de TODAS las facturas.
+ * Un cargo cuya glosa trae el numero de una factura ES el pago de esa factura: si ya esta pagada
+ * (por COMPRAS_2026, a mano o por otro cargo) no se ofrece para otra; si esta abierta, se ofrece
+ * solo para esa. Sin dtes (el harness viejo) se comporta como antes.
+ */
+function _pagDteEnGlosa_(glosa, dtes) {
+  var nums = String(glosa || '').match(/\d{6,}/g) || [];
+  for (var i = 0; i < nums.length; i++) if (dtes && Object.prototype.hasOwnProperty.call(dtes, nums[i])) return nums[i];
+  return '';
+}
+function _pagPosibles_(abiertas, pagos, dtes) {
   var out = [];
   pagos.forEach(function (p) {
+    var dteG = _pagDteEnGlosa_(p.glosa, dtes);
+    if (dteG && !dtes[dteG]) return;   // el pago de una factura que ya esta pagada
     // no son pagos a proveedores: traspasos entre cuentas, pago y cobros de la tarjeta, nomina,
     // pauta, comisiones (S41 Corsaga BAC, PAGO TARJETA X616..., COBRO ADMTVO.)
     var cat = p.categoria || '';
     if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return;
     if (/^(NOMINA|IGSS|PROPINA|MARKETING|COMISION)/.test(cat)) return;
     if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return;
-    var cand = abiertas.filter(function (f) { return _pagEnVentanaPosible_(p, f) && _pagCatCompatible_(cat, f.categoria); });
+    var cand = dteG ? abiertas.filter(function (f) { return f.dte === dteG; })
+                    : abiertas.filter(function (f) { return _pagEnVentanaPosible_(p, f) && _pagCatCompatible_(cat, f.categoria); });
     var ops = cand.filter(function (f) { return Math.abs(f.saldo - p.q) < 0.011; }).map(function (f) { return [f]; });
     var porNit = {};
     cand.forEach(function (f) { (porNit[f.nit] = porNit[f.nit] || []).push(f); });
     Object.keys(porNit).forEach(function (n) { ops = ops.concat(_pagSumas_(porNit[n], p.q)); });
-    // Un ABONO (13-oct-2026): si nada da el monto exacto, una factura de la MISMA categoria (no
-    // generica) o con el nombre en la glosa cuyo saldo es mayor que el pago ("1a Septiembre Renta").
+    // Un ABONO (13-oct-2026, la renta en dos partes): si nada da el monto exacto. Desde el 14-oct-2026
+    // (Juanma: "los pagos siempre suelen ser exactos, no dejan abonos tan grandes") solo si la glosa
+    // NOMBRA al proveedor o trae el numero de la factura; ya no por la sola categoria (asi salian
+    // abonos a Doorways de cargos de MC Industrias y Bodega Feliz).
     var abono = false;
     if (!ops.length) {
       ops = cand.filter(function (f) {
-        // la mercaderia queda fuera por categoria: hay demasiadas compras chicas de ALIMENTOS
-        var catOk = PAG_CAT_GENERICAS_.indexOf(cat) === -1 && cat === f.categoria && !_finEn_(FIN_COGS_CATS, cat);
-        return f.saldo > p.q + 0.01 && (catOk || _pagNombreEnGlosa_(f.palabras, p.glosa));
+        return f.saldo > p.q + 0.01 && (dteG || _pagNombreEnGlosa_(f.palabras, p.glosa));
       }).map(function (f) { return [f]; });
       abono = ops.length > 0;
     }
@@ -499,6 +517,9 @@ function _pagPosibles_(abiertas, pagos) {
       if (p.dia < dMin - 45 || p.dia > dMax + 60 || usadosFr[p.llave]) return false;
       if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return false;
       if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return false;
+      // un cargo con el numero de OTRA factura en la glosa es el pago de esa (14-oct-2026)
+      var dg = _pagDteEnGlosa_(p.glosa, dtes);
+      if (dg && !FS.some(function (f) { return f.dte === dg; })) return false;
       return FS.some(function (f) {
         var catOk = PAG_CAT_GENERICAS_.indexOf(cat) === -1 && cat === f.categoria && !_finEn_(FIN_COGS_CATS, cat);
         return catOk || _pagNombreEnGlosa_(f.palabras, p.glosa);
@@ -545,6 +566,23 @@ function _pagPosibles_(abiertas, pagos) {
     return x.opciones.length > 0;
   });
   return out.sort(function (a, b) { return b.fuerza - a.fuerza || (a.pago.fecha < b.pago.fecha ? 1 : -1); });
+}
+
+/**
+ * "No pertenece" (14-oct-2026, Juanma): el cargo no es el pago de ninguna de esas facturas. Queda
+ * anotado (quien y cuando) y no vuelve a ofrecerse ni a casarse solo. Se deshace anulando la fila
+ * (la lista de descartados de Posibles pagos tiene "volver a ofrecer").
+ */
+function descartarPosiblePago(auth, pagoLlave) {
+  var Q = pagQuien_(auth);
+  if (Q.rol !== 'dueno') throw new Error('Descartar pagos del banco lo hace el dueño.');
+  var P = pagEstado_().posibles.filter(function (x) { return x.pago.llave === pagoLlave; })[0];
+  if (!P) throw new Error('Ese pago ya no está entre los posibles. Actualizá la pantalla.');
+  var llaves = P.pagos ? P.pagos.map(function (pg) { return pg.llave; }) : [P.pago.llave];
+  _pagEscribir_([{ AREA: 'ADMIN', PROVEEDOR: '(cargo del banco)', DTE: '', NIT: '', 'FECHA PAGADO': P.pago.fecha, 'CANTIDAD PAGADA': 0,
+                   'ESTATUS DE PAGO': PAG_DESCARTADO_,
+                   DETALLE: (P.pago.banco + ' · Q' + P.pago.q + ' · ' + P.pago.glosa).slice(0, 250) + ' · pago: ' + llaves.join(' ; '), 'ESCRITO POR': Q.nombre }]);
+  return getPagosProveedores(auth);
 }
 
 /** El dueño confirma que un pago del banco o de la tarjeta es el de esa(s) factura(s). */
@@ -619,7 +657,7 @@ function pagEstado_() {
   // los pagos que el dueño ya confirmo a mano no se vuelven a casar ni a ofrecer
   var yaConfirmados = {};
   movs.forEach(function (m) {
-    var k = m.estatus === PAG_CONF_BANCO_ && /pago: (.+)$/.exec(m.detalle);
+    var k = (m.estatus === PAG_CONF_BANCO_ || m.estatus === PAG_DESCARTADO_) && /pago: (.+)$/.exec(m.detalle);
     if (k) k[1].split(' ; ').forEach(function (x) { yaConfirmados[x] = 1; });   // un pago fraccionado guarda varias
   });
   var bancoUlt = banco.filter(function (p) { return !p.tarjeta; }).reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '');
@@ -728,7 +766,8 @@ function pagEstado_() {
   });
   return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
-           posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; })),
+           posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; }),
+                                   (function () { var d = {}; facturas.forEach(function (f) { d[f.dte] = d[f.dte] || f.saldo > 0.01; }); return d; })()),
            banco_ult: bancoUlt };
 }
 
@@ -790,6 +829,9 @@ function getPagosProveedores(auth) {
   out.mi_nombre = Q.nombre;
   if (Q.rol === 'dueno') {
     out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; out.posibles = E.posibles;
+    // los "No pertenece", para poder deshacerlos (los ultimos 20)
+    out.descartados = pagMovimientos_().filter(function (m) { return m.estatus === PAG_DESCARTADO_; }).slice(-20).reverse()
+      .map(function (m) { return { id: m.id, fecha: m.fecha_pagado, detalle: m.detalle.replace(/\s*·\s*pago: .*$/, ''), por: m.por }; });
     // La pestaña del maestro existe desde que el dueño abre Pagos, aunque no marque nada
     if (!_PAG_LEIDO_.escribio) try { _pagHojaIva_(_pagMaestro_()); } catch (e) { out.aviso_iva = 'No pude crear la pestaña ' + PAG_HOJA_IVA_ + ': ' + e.message; }
   }
