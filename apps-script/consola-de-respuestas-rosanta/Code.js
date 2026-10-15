@@ -149,3 +149,20 @@ function carpetaFotos_() {
 function autorizarDrive() {
   Logger.log('Carpeta de fotos: ' + carpetaFotos_().getUrl());
 }
+
+/**
+ * Lo que el bot ya averiguó de este contacto: pestaña "Fichas" de Rosanta Leads,
+ * que llena el bot (Botones.js, fichaActualizar_). Devuelve null si no hay ficha.
+ */
+function getFicha(canal, contactoId) {
+  var sh = getSS_().getSheetByName('Fichas');
+  if (!sh || sh.getLastRow() < 2) return null;
+  var clave = String(canal || '').toLowerCase() + '|' + String(contactoId || '').trim();
+  var celda = sh.getRange('A:A').createTextFinder(clave).matchEntireCell(true).findNext();
+  if (!celda) return null;
+  var cols = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var vals = sh.getRange(celda.getRow(), 1, 1, cols.length).getDisplayValues()[0];
+  var f = {};
+  cols.forEach(function (c, i) { if (c) f[String(c)] = vals[i]; });
+  return f;
+}

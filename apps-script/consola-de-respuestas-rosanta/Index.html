@@ -53,6 +53,16 @@
   .foto{position:relative;width:64px;height:64px;border-radius:10px;background:#ddd center/cover;}
   .foto button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:0;background:var(--negro);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
   .compose{border-top:1px solid var(--linea);padding:12px;background:var(--crema);}
+  .ficha{border-bottom:1px solid var(--linea);background:#fff;padding:0 18px;font-size:13px;}
+  .ficha:empty{display:none;}
+  .ficha summary{cursor:pointer;padding:9px 0;font-weight:700;color:var(--verde);list-style:none;}
+  .ficha summary::-webkit-details-marker{display:none;}
+  .ficha summary::before{content:'▸ ';}
+  .ficha details[open] summary::before{content:'▾ ';}
+  .ficha dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 16px;margin:0 0 10px;}
+  .ficha dt{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#8a8478;}
+  .ficha dd{margin:0;font-weight:700;word-break:break-word;}
+  .ficha .etapa{display:inline-block;background:var(--verde);color:#fff;border-radius:999px;padding:1px 9px;font-size:11px;margin-left:6px;vertical-align:middle;}
   .warn{background:#fff4e0;border:1px solid #f0d79a;color:#8a6d1f;font-size:11.5px;padding:7px 10px;border-radius:10px;margin-bottom:8px;}
   .crow{display:flex;gap:9px;align-items:flex-end;}
   .crow textarea{flex:1;resize:none;border:1px solid var(--linea);border-radius:18px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;max-height:120px;}
@@ -154,7 +164,7 @@
   }
   function openThread(canal,id){
     CUR={canal:canal,id:id};document.getElementById('app').classList.add('viewing');render();
-    renderShell();loadMsgs(true);
+    renderShell();loadMsgs(true);loadFicha();
     if(msgTimer)clearInterval(msgTimer);msgTimer=setInterval(function(){loadMsgs(false);},9000);
   }
   function closeThread(){
@@ -174,6 +184,7 @@
       '<div class="chat-head"><button class="back" onclick="closeThread()">&#8249;</button>'+
       '<div class="av" style="width:38px;height:38px;font-size:14px;">'+initials(t.nombre)+'</div>'+
       '<div><div class="nm">'+esc(nameOf(t))+'</div><div class="sub">'+canalChip(t.canal)+esc(String(t.id))+'</div></div></div>'+
+      '<div class="ficha" id="ficha"></div>'+
       '<div class="msgs" id="msgs"></div><div class="compose">'+
       '<div class="warn" id="warn" style="display:none"></div>'+
       '<div class="fotos" id="fotos"></div>'+
@@ -200,6 +211,31 @@
       return '<div class="row '+side+' '+who+'"><div><div class="bubble">'+tag+linkify(esc(m.texto))+'</div><div class="meta">'+fmtTime(m.fecha)+'</div></div></div>';
     }).join('');
     if(scroll)box.scrollTop=box.scrollHeight;
+  }
+  /* "Lo que ya sabe el bot": se carga una vez al abrir el chat (no en cada sondeo). */
+  var FICHA_CAMPOS=[['fecha','Fecha'],['hora','Hora'],['personas','Personas'],['presupuesto','Presupuesto'],
+    ['tipo_evento','Tipo de evento'],['formato_menu','Formato de menú'],['idioma','Idioma'],['email','Correo'],
+    ['telefono','Teléfono'],['ultimo_boton','Último botón'],['resumen','Último pedido']];
+  function loadFicha(){
+    if(!CUR)return;var cur=CUR;
+    google.script.run.withSuccessHandler(function(f){if(CUR===cur)renderFicha(f);})
+      .withFailureHandler(function(){}).getFicha(CUR.canal,CUR.id);
+  }
+  function renderFicha(f){
+    var box=document.getElementById('ficha');if(!box)return;
+    if(!f){box.innerHTML='';return;}
+    var items=FICHA_CAMPOS.filter(function(c){return f[c[0]];}).map(function(c){
+      var v=f[c[0]];
+      if(c[0]==='idioma')v=String(v).toLowerCase().indexOf('en')===0?'Inglés':'Español';
+      if(c[0]==='ultimo_boton'){var bn={RESERVAR:'Reservar mesa',MENU:'Ver menú',EVENTO:'Evento privado',HUMANO:'Hablar con alguien'};
+        var mb=String(v).match(/^BTN_([A-Z]+)_(es|en)$/);v=mb?(bn[mb[1]]||mb[1]):String(v).replace(/^OPT\|(es|en)\|/,'');}
+      return '<div><dt>'+c[1]+'</dt><dd>'+esc(String(v))+'</dd></div>';
+    }).join('');
+    if(!items){box.innerHTML='';return;}
+    var esEvento=f.es_evento==='Sí';
+    var titulo='Lo que ya sabe el bot'+(esEvento?' · evento':'')+
+      (esEvento?'<span class="etapa">'+esc(f.etapa_pipeline||'Consulta (aún sin revisar)')+'</span>':'');
+    box.innerHTML='<details'+(esEvento?' open':'')+'><summary>'+titulo+'</summary><dl>'+items+'</dl></details>';
   }
   function growTa(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
   function taKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}}
