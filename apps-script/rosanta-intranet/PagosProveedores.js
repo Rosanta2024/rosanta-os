@@ -762,7 +762,9 @@ function pagEstado_() {
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
   var abiertasYa = facturas.filter(function (f) { return f.saldo > 0.01 && !f.por_correo; }).map(function (f) {
     return { llave: f.llave, nit: f.nit, dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, dia: pagNumDia_(pagDia_(f.fecha)),
-             saldo: f.saldo, area: f.area, categoria: f.categoria, palabras: _pagPalabras_(f.proveedor + ' ' + f.razon) };
+             saldo: f.saldo, area: f.area, categoria: f.categoria,
+             // con los alias del banco (14-oct-2026: "TEF A : 902410067" es Doorways); solo para Posibles pagos
+             palabras: _pagPalabras_(f.proveedor + ' ' + f.razon).concat(PAG_ALIAS_BANCO_[f.nit] || []) };
   });
   return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),

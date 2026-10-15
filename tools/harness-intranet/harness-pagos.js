@@ -59,7 +59,7 @@ const tira = (fn) => { try { fn(); return ''; } catch (e) { return e.message; } 
   const EP = ctx.pagEstado_();
   const glosas = EP.posibles.map(x => x.pago.glosa);
   t('Un cargo con el numero de una factura ya pagada no se ofrece para otra', !glosas.some(g => /1156465795|2253014585/.test(g)), glosas.filter(g => /\d{9}/.test(g)).join(' | '));
-  t('No se ofrecen abonos por la sola categoria (Doorways)', !EP.posibles.some(x => x.opciones.some(o => o.abono && o.facturas.some(f => /DOORWAYS/i.test(f.proveedor)) && !/doorway/i.test(x.pago.glosa))));
+  t('No se ofrecen abonos por la sola categoria (Doorways)', !EP.posibles.some(x => x.opciones.some(o => o.abono && o.facturas.some(f => /DOORWAYS/i.test(f.proveedor)) && !/doorway|902410067/i.test(x.pago.glosa))));
   const tav = EP.posibles.filter(x => /480330786/.test(x.pago.glosa))[0];
   t('Con el numero de una factura abierta, solo se ofrece esa', !tav || tav.opciones.every(o => o.facturas.length === 1 && o.facturas[0].dte === '480330786'));
   ctx._pagPagadasCompras_ = origCompras;
@@ -223,6 +223,9 @@ CONFIG.PAGOS_PROVEEDORES.forEach(r => console.log('  ' + r.slice(0, 9).map(x => 
     t('Volver a ofrecer: el cargo reaparece', vuelve.posibles.some(x => x.pago.llave === P0.pago.llave));
   }
 }
+
+// alias del banco en Posibles pagos (14-oct-2026): "TEF A : 902410067" es Doorways
+t('El alias de la cuenta (902410067) cuenta como el nombre de Doorways', ctx._pagNombreEnGlosa_(['doorways'].concat(ctx.PAG_ALIAS_BANCO_['96569239']), 'TEF A : 902410067') && !ctx._pagNombreEnGlosa_(['doorways'], 'TEF A : 902410067'));
 console.log('\n' + ok + ' OK · ' + mal + ' fallas');
 function _r(n) { return Math.round(n * 100) / 100; }
 process.exit(mal ? 1 : 0);
