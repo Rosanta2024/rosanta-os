@@ -2,6 +2,7 @@
  * ROSANTA · BOT — PRUEBA DEL MODELO (15-oct-2026)
  * Archivo aparte a propósito: al abrirlo en el editor, probarModeloBot queda
  * elegida sola en el menú de funciones. No envía nada a ningún cliente.
+ * Corrida el 15-oct-2026 15:24: 6 de 6 con claude-sonnet-5-5.
  */
 
 // ============================================================

@@ -1,0 +1,1 @@
+Script de una sola vez (15-oct-2026): cambió en la base de conocimiento del bot (Doc 1a85WP...) el bloque "Formatos de evento" de la Lista 2026 a la Lista 2027. Corrido a las 15:32 desde el editor; verificado leyendo el Doc. Si se vuelve a correr y el bloque ya no está, se detiene sin cambiar nada.
