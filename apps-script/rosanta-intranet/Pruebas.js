@@ -1804,9 +1804,11 @@ var PRUEBAS_ORDEN_ = ['cimientos','recetario','pos','accesos','modulos','web','s
    resultados: es la MISMA bateria completa, en menos tiempo. La prueba "Los carriles cubren
    cada grupo una vez" falla si un grupo nuevo no se agrega aca. Para equilibrarlos, la
    pantalla muestra los segundos de cada grupo. */
-var PRUEBAS_CARRILES_ = [['recetario', 'pos', 'pauta'],
-                         ['finanzas', 'cimientos', 'accesos'],
-                         ['modulos', 'web', 'sync', 'inventario']];
+// Medido el 14-oct-2026 (primera corrida en carriles): recetario ~135 s solo, pos 37 s; el
+// primer reparto daba 178 · 92 · 60 s. El recetario va solo y el resto se reparte.
+var PRUEBAS_CARRILES_ = [['recetario'],
+                         ['finanzas', 'cimientos', 'accesos', 'pauta'],
+                         ['modulos', 'web', 'sync', 'inventario', 'pos']];
 
 /**
  * `claves` (opcional): lista de grupos a correr. Sin nada, la bateria entera — que es
