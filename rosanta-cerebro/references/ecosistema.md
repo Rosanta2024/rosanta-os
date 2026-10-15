@@ -112,6 +112,8 @@ Auxiliares recientes: `rosanta-honorarios-reclasificacion`, `rosanta-clasificaci
 
 ## Automatizaciones (tareas programadas, verificadas con `list_scheduled_tasks` el 16 sep 2026)
 
+> **14-oct-2026:** tabla vieja. Nueva: `rosanta-salud-intranet` (lunes ~9:15, revisión semanal de la intranet, solo avisa si algo está mal). La lista vigente está en el SKILL.md (v33 §6 y v37 §5); verificar siempre con `list_scheduled_tasks`.
+
 > **OBSOLETA esta tabla.** La vigente, leída el 9-oct-2026, está en el SKILL.md v33 §6: `rosanta-reporte-semanal` volvió (lunes 16:24), hay `revision-jueves-cotizaciones` (jueves 8:11), los dos latidos diarios y seguimientos de eventos de una vez. Horarios reales: brief 6:06, cierre semanal 18:20, mensual y auditoría Meta día 3.
 
 | Tarea | Cuándo | Qué hace |
