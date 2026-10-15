@@ -78,8 +78,8 @@ function rvCambiar(result, canal, contactoId) {
       r.ahora.hora + ', ' + r.ahora.personas + ' personas. La anterior (' + r.antes.fecha + ' ' + r.antes.hora +
       ') ya no existe. NO la vuelvas a cambiar ni a crear.');
     rvAvisarCambio(d, canal, r);
-    rvCorreoCliente({ email: d.email, idioma: d.idioma, nombre: d.nombre, fecha: r.ahora.fecha, hora: r.ahora.hora,
-      personas: r.ahora.personas }, 'creada');
+    rvCorreoCliente({ email: d.email, idioma: d.idioma, nombre: d.nombre, antes: r.antes, ahora: r.ahora,
+      reemplazada: r.modo === 'reemplazada' }, 'cambiada');
     return result;
   }
 

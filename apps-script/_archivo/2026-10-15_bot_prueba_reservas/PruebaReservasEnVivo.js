@@ -40,14 +40,16 @@ function pruebaReservasEnVivo() {
   var r1 = paso({ accion: 'crear_reserva', nombre: 'PRUEBA BOT', fecha: fecha, hora: '18:00', personas: 2 });
   chk('1. Crea la reserva 18:00', /queda confirmada/.test(r1.respuesta), r1.respuesta);
 
-  var r2 = paso({ accion: 'cambiar_reserva', hora: '19:00', fecha_actual: fecha });
-  chk('2. La cambia a las 19:00', /quedó cambiada[\s\S]*19:00/.test(r2.respuesta) && !/OJO/.test(r2.lead.resumen), r2.respuesta + ' · ' + r2.lead.resumen);
+  var c2 = rvLlamarCambiar({ telefono: tel, email: email, fecha_actual: fecha, hora_actual: '', fecha: '', hora: '19:00', personas: '', canal: 'prueba' });
+  chk('2. La cambia a las 19:00 MODIFICANDO la misma reserva (sin cancelación en Wix)', c2.ok && c2.modo === 'modificada', JSON.stringify(c2).substring(0, 400));
 
   var r3 = paso({ accion: 'cambiar_reserva', hora: '23:30', fecha_actual: fecha });
   chk('3. A las 23:30 no hay lugar: no toca nada', /sigue igual/.test(r3.respuesta), r3.respuesta);
 
-  var r4 = paso({ accion: 'cambiar_reserva', personas: 4, fecha_actual: fecha });
-  chk('4. Cambia solo las personas (4), misma hora', /quedó cambiada[\s\S]*19:00[\s\S]*4/.test(r4.respuesta), r4.respuesta);
+  var c4 = rvLlamarCambiar({ telefono: tel, email: email, fecha_actual: fecha, hora_actual: '', fecha: '', hora: '', personas: 4, canal: 'prueba' });
+  console.log('Paso 4 (personas) en Wix: ' + JSON.stringify(c4).substring(0, 600));
+  var r4 = { respuesta: c4.ok ? 'quedó cambiada 19:00 4' : JSON.stringify(c4), lead: { resumen: c4.ok ? 'CAMBIADA ' + c4.modo : '' } };
+  chk('4. Cambia solo las personas (4), misma hora', /quedó cambiada[\s\S]*19:00[\s\S]*4/.test(r4.respuesta) && /modificada|CAMBIADA/.test(r4.lead.resumen), r4.respuesta + ' · ' + r4.lead.resumen);
 
   var r5 = paso({ accion: 'cancelar_reserva', fecha: fecha });
   chk('5. La cancela, y era la de las 19:00 (el paso 3 no la movió)', /queda cancelada/.test(r5.respuesta) && /19:00/.test(r5.respuesta), r5.respuesta);

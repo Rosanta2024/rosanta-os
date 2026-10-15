@@ -167,7 +167,26 @@ function rvCorreoCliente(d, caso) {
   var nombre = String(d.nombre || '').split(/\s+/)[0] || '';
   var asunto, cuerpo;
 
-  if (caso === 'cancelada') {
+  if (caso === 'cambiada') {
+    // Revisado por revisor-marca (15-oct-2026). d.antes / d.ahora = {fecha, hora, personas}; d.reemplazada si Wix
+    // no dejó modificarla y tuvo que cancelar la vieja (al cliente le llega un aviso de cancelación de Wix).
+    var linea = function (x) {
+      var n = Number(x.personas);
+      return en
+        ? rvFechaEn_(x.fecha) + ' at ' + rvHora12_(x.hora) + ', ' + n + (n === 1 ? ' guest' : ' guests')
+        : rvFechaBonita(x.fecha, false) + ' a las ' + x.hora + ', ' + n + (n === 1 ? ' persona' : ' personas');
+    };
+    asunto = en ? 'Your booking has been updated' : 'Tu reserva cambió';
+    cuerpo = (en ? 'Hi ' : 'Hola ') + (nombre || (en ? 'there' : '')) + ',\n\n' +
+      (en ? 'Your booking is updated. Same table, new details:\n\nWas: ' + linea(d.antes) + '\nNow: ' + linea(d.ahora)
+          : 'Tu reserva queda actualizada. Es la misma mesa, solo cambian los datos:\n\nAntes: ' + linea(d.antes) + '\nAhora: ' + linea(d.ahora)) +
+      (d.reemplazada
+        ? (en ? '\n\nIf you got a cancellation notice, it comes from this same change. Your table is still confirmed with the details above.'
+              : '\n\nSi te llegó un aviso de cancelación, viene de este mismo cambio. Tu mesa sigue confirmada con los datos de arriba.')
+        : '') +
+      (en ? '\n\nSee you at Rosanta, Antigua Guatemala.\n\nTo change or cancel it, message us on WhatsApp and we\'ll sort it out.'
+          : '\n\nTe esperamos en Rosanta, Antigua Guatemala.\n\nPara cambiarla o cancelarla, respondes por WhatsApp y se resuelve.');
+  } else if (caso === 'cancelada') {
     asunto = en ? 'Your reservation is cancelled' : 'Tu reserva quedó cancelada';
     cuerpo = (nombre ? nombre + ',\n\n' : '') +
       (en
@@ -230,4 +249,19 @@ function rvTextoCancel(idioma, caso, d) {
   return en
     ? btConPromesa_("I couldn't cancel it from here, so it's still active for now.", 'en')
     : btConPromesa_('No logré cancelarla desde aquí, así que por ahora sigue activa.', 'es');
+}
+/** "Tuesday, October 20" (formato de las cotizaciones en inglés). */
+function rvFechaEn_(iso) {
+  var p = String(iso).split('-');
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()] + ', ' +
+    ['January','February','March','April','May','June','July','August','September','October','November','December'][d.getMonth()] + ' ' + d.getDate();
+}
+/** "19:30" -> "7:30 pm" */
+function rvHora12_(h) {
+  var m = String(h || '').match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return h;
+  var hh = Number(m[1]), ap = hh >= 12 ? 'pm' : 'am';
+  hh = hh % 12 || 12;
+  return hh + ':' + m[2] + ' ' + ap;
 }
