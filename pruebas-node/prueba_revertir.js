@@ -1,10 +1,15 @@
 /**
- * Simulador minimo de Sheets para probar aplicarSincronizacion + revertirSync_
+ * Simulador minimo de Sheets para probar aplicarSincronizacion_ + revertirSync_
  * fuera de Apps Script. No toca nada real.
+ *
+ * 14-oct-2026: aplicarSincronizacion paso a aplicarSincronizacion_ (privada: con guion al
+ * final no la ve google.script.run; la llama webInventarioResolverPrecios). Misma firma
+ * (area, cambios, quien). Ahora tambien llama a precioSaleDeLaFicha_ (candado 3, 11-oct)
+ * y a olvidarModeloCosteo_ (CosteoDatos.js), asi que se cargan los dos archivos reales.
  */
 const fs = require('fs');
 const vm = require('vm');
-const DIR = process.env.HOME + '/Dev/Rosanta/apps-script/rosanta-intranet/';
+const DIR = require('path').join(__dirname, '../apps-script/rosanta-intranet/');
 
 function celda(v) { return v === undefined ? '' : v; }
 
@@ -37,6 +42,7 @@ class Hoja {
         }
         return out;
       },
+      getFormula() { return ''; },   // candado 3 (precioSaleDeLaFicha_): aca nada es formula
       setValue(v) { self._asegurar(r, c); self.g[r - 1][c - 1] = v; },
       setValues(vals) {
         for (let i = 0; i < vals.length; i++)
@@ -104,6 +110,9 @@ const ctx = {
 };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(DIR + 'ConfigCosteo.js', 'utf8'), ctx);
+// olvidarModeloCosteo_ vive en CosteoDatos.js (y lee POS_CFG / COSTEO.cacheKey)
+vm.runInContext(fs.readFileSync(DIR + 'ConfigPOS.js', 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(DIR + 'CosteoDatos.js', 'utf8'), ctx);
 // EdicionRecetario trae bitacora_/bitacoraLote_, que SincronizarPrecios ahora usa
 vm.runInContext(fs.readFileSync(DIR + 'EdicionRecetario.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(DIR + 'SincronizarPrecios.js', 'utf8'), ctx);
@@ -116,20 +125,21 @@ ctx.LIBRO_COST = libroCosteo;
 const F = n => vm.runInContext(n, ctx);
 const fila = n => banco.getRange(n, 3, 1, 7).getValues()[0];
 
-let fallas = 0;
+let fallas = 0, total = 0;
 function chequear(que, real, esperado) {
+  total++;
   const ok = JSON.stringify(real) === JSON.stringify(esperado);
   if (!ok) fallas++;
   console.log((ok ? '  OK   ' : '  FALLA') + '  ' + que +
               (ok ? '' : '   esperado ' + JSON.stringify(esperado) + ', dio ' + JSON.stringify(real)));
 }
 
-console.log('\n=== 1. aplicarSincronizacion escribe y guarda D/proveedor viejos ===');
+console.log('\n=== 1. aplicarSincronizacion_ escribe y guarda D/proveedor viejos ===');
 ctx.CAMBIOS = [{
   fila: 4, producto: 'Lomito', precioViejo: 40, precioNuevo: 50, unidad: 'libra',
   dViejo: 2.5, dNuevo: 3.125, pct: 25, proveedor: 'Prov B'
 }];
-const ap = F("aplicarSincronizacion('COCINA', CAMBIOS, 'test@rosanta')");
+const ap = F("aplicarSincronizacion_('COCINA', CAMBIOS, 'test@rosanta')");
 chequear('escribe 1 fila', ap.escritos, 1);
 chequear('F (precio compra) queda en 50', fila(4)[3], 50);
 chequear('D (precio receta) queda en 3.125', fila(4)[1], 3.125);
@@ -161,7 +171,7 @@ chequear('F sigue en 40', fila(4)[3], 40);
 console.log('\n=== 5. candado C: si alguien edito despues, NO se pisa ===');
 ctx.C2 = [{ fila: 5, producto: 'Brisket', precioViejo: 24, precioNuevo: 30, unidad: 'libra',
             dViejo: 1.5, dNuevo: 1.875, pct: 25, proveedor: '' }];
-const ap2 = F("aplicarSincronizacion('COCINA', C2, 'test@rosanta')");
+const ap2 = F("aplicarSincronizacion_('COCINA', C2, 'test@rosanta')");
 banco.getRange(5, 6).setValue(33);   // alguien lo edito a mano despues del sync
 const rev3 = F("revertirSync_(" + JSON.stringify(ap2.corrida) + ", 'test@rosanta', { simular: false })");
 chequear('no revierte', rev3.revertidos, 0);
@@ -182,7 +192,7 @@ chequear('avisa que es fila vieja', /fila de log vieja/.test(rev4.plan[0].nota |
 console.log('\n=== 7. producto duplicado: no adivina ===');
 ctx.C3 = [{ fila: 7, producto: 'Duplicado', precioViejo: 10, precioNuevo: 12, unidad: 'libra',
             dViejo: 1, dNuevo: 1.2, pct: 20, proveedor: '' }];
-const ap3 = F("aplicarSincronizacion('COCINA', C3, 'test@rosanta')");
+const ap3 = F("aplicarSincronizacion_('COCINA', C3, 'test@rosanta')");
 const rev5 = F("revertirSync_(" + JSON.stringify(ap3.corrida) + ", 'test@rosanta', { simular: false })");
 chequear('no revierte', rev5.revertidos, 0);
 chequear('dice que hay 2 filas iguales', /hay 2 filas/.test(rev5.plan[0].accion || ''), true);
@@ -227,5 +237,6 @@ chequear('agrego exactamente 1 fila', bit.g.length - antesN, 1);
 const ult = bit.g[bit.g.length - 1];
 chequear('la fila quedo bien armada', [ult[1], ult[3], ult[7], ult[8]], ['juan', 'editarCantidad', 5, 7]);
 
-console.log('\n' + (fallas ? 'FALLAS: ' + fallas : 'TODO OK') + '\n');
+console.log('\n' + total + ' chequeos · ' + (total - fallas) + ' OK · ' + fallas + ' FALLA');
+console.log((fallas ? 'FALLAS: ' + fallas : 'TODO OK') + '\n');
 process.exit(fallas ? 1 : 0);

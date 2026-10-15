@@ -652,15 +652,27 @@ function _finEsFecha_(v) { return v instanceof Date && !isNaN(v.getTime()); }
  */
 /**
  * EL lector de numeros de la intranet (auditoria 14-oct-2026). Acepta 1234.5, "Q1,234.50",
- * "q 1,234" y "1 234": la coma es separador de MILES, nunca decimal (asi escribe Sheets en
- * es-GT y asi vienen los PDF). NaN si no es numero. invNumero_ y psNum_ se apoyan en esta, y
+ * "q 1,234" y "1 234". NaN si no es numero. invNumero_ y psNum_ se apoyan en esta, y
  * _finNum_ la usa con 0 por defecto. (CierresDiarios tiene la suya: extrae montos del texto.)
+ *
+ * La coma (14-oct-2026): un precio escrito A MANO en la hoja como "12,5" se leia 125.
+ * Ahora la coma es de MILES solo si va seguida de exactamente 3 digitos y lo de delante
+ * no es 0 ("1,234" · "12,500" · "1,234,567", asi escribe Sheets en es-GT y vienen los
+ * PDF); si no, es DECIMAL ("12,5" · "12,50" · "0,750"). Con punto y coma a la vez, el
+ * ULTIMO de los dos es el decimal ("1.234,50" = 1234.5 · "1,234.50" = 1234.5).
  */
 function _finNumero_(v) {
   if (typeof v === 'number') return v;
   if (typeof v !== 'string') return NaN;
-  var t = v.replace(/[Qq\s,]/g, '');
-  return t === '' ? NaN : Number(t);
+  var t = v.replace(/[Qq\s]/g, '');
+  if (t === '') return NaN;
+  var coma = t.lastIndexOf(','), punto = t.lastIndexOf('.');
+  if (coma >= 0 && punto >= 0) {
+    t = coma > punto ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  } else if (coma >= 0) {
+    t = /^-?[1-9]\d{0,2}(,\d{3})+$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.');
+  }
+  return Number(t);
 }
 function _finNum_(v) { var n = _finNumero_(v); return isNaN(n) ? 0 : n; }
 
@@ -771,7 +783,8 @@ function finCacheClave_() {
   // venta da null y no NaN, y integridad trae meses_sin_venta_dre. Una cache v14 mezclaba el
   // prime semanal viejo con el nuevo: la bateria lo cazo (K06 y la prueba del IGSS).
   // v16 (14-oct-2026, Fase 5): el año sale de _finAnioVigente_ (en enero sin ventas, el anterior).
-  return 'finanzas_v16_m' + m.global + '-' + m.BARRA;
+  // v17 (14-oct-2026): _finNumero_ lee la coma decimal ("12,5" = 12.5, antes 125).
+  return 'finanzas_v17_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {

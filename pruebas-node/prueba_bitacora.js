@@ -1,9 +1,14 @@
 /**
  * Prueba de LectorBitacora.gs contra el simulador de Sheets. No toca nada real.
+ *
+ * 14-oct-2026: historialDe y refrescarResumenBitacora empiezan con soloDueno_() (Config.js,
+ * cerradura de herramientas de editor del 15-sep-2026): solo corren si la sesion es la del
+ * dueno. Se carga Config.js real y la sesion se maneja con SESION; la seccion 8 comprueba
+ * que otra sesion no lee ni escribe.
  */
 const fs = require('fs');
 const vm = require('vm');
-const DIR = process.env.HOME + '/Dev/Rosanta/apps-script/rosanta-intranet/';
+const DIR = require('path').join(__dirname, '../apps-script/rosanta-intranet/');
 const celda = v => (v === undefined ? '' : v);
 
 class Hoja {
@@ -55,27 +60,29 @@ const bitacora = new Hoja('BITACORA', [
 ]);
 const libroCosteo = new Libro({ 'BITACORA': bitacora });
 
+const SESION = { correo: 'restaurante@rosanta.rest' };   // el dueno, desde el editor
 const ctx = {
   console, Logger: { log: () => {} },
   CacheService: { getScriptCache: () => ({ remove() {} }) },
   PropertiesService: { getScriptProperties: () => ({ getProperty: () => 'x', setProperty() {} }) },
   SpreadsheetApp: { openById: () => libroCosteo },
   MimeType: { GOOGLE_SHEETS: 'x' },
-  Session: { getActiveUser: () => ({ getEmail: () => 't@r' }) },
+  Session: { getActiveUser: () => ({ getEmail: () => SESION.correo }) },
   Utilities: { formatDate(d, tz, fmt) { const p = n => String(n).padStart(2, '0');
     return fmt.replace('yyyy', d.getFullYear()).replace('MM', p(d.getMonth() + 1))
               .replace('dd', p(d.getDate())).replace('HH', p(d.getHours()))
               .replace('mm', p(d.getMinutes())).replace('ss', p(d.getSeconds())); } }
 };
 vm.createContext(ctx);
-['ConfigCosteo.js','EdicionRecetario.js','SincronizarPrecios.js','LectorBitacora.js']
+['ConfigCosteo.js','Config.js','EdicionRecetario.js','SincronizarPrecios.js','LectorBitacora.js']
   .forEach(f => vm.runInContext(fs.readFileSync(DIR + f, 'utf8'), ctx));
 ctx.LC = libroCosteo;
 vm.runInContext('hojaCosteo_ = function(){ return LC; }; abrirPorClave_ = function(){ return LC; };', ctx);
 
 const F = n => vm.runInContext(n, ctx);
-let fallas = 0;
+let fallas = 0, total = 0;
 const chequear = (q, real, esp) => {
+  total++;
   const ok = JSON.stringify(real) === JSON.stringify(esp);
   if (!ok) fallas++;
   console.log((ok ? '  OK   ' : '  FALLA') + '  ' + q + (ok ? '' : `   esperado ${JSON.stringify(esp)}, dio ${JSON.stringify(real)}`));
@@ -130,5 +137,23 @@ const r2 = F('refrescarResumenBitacora()');
 chequear('el resumen igual se escribe', r2.total, 0);
 chequear('y lo dice', /\(nada\)/.test(JSON.stringify(libroCosteo.getSheetByName('BITACORA_RESUMEN').g)), true);
 
-console.log('\n' + (fallas ? 'FALLAS: ' + fallas : 'TODO OK') + '\n');
+console.log('\n=== 8. solo el dueno: otra sesion no lee ni escribe ===');
+// 14-oct-2026: regla nueva a proposito (soloDueno_, Config.js). Son herramientas de editor;
+// desde el navegador de otra persona tienen que tirar antes de tocar nada.
+bitacora.g.length = 2;   // vuelve a haber una BITACORA con una fila
+libroCosteo.h['BITACORA'] = bitacora;
+delete libroCosteo.h['BITACORA_RESUMEN'];
+const antes8 = JSON.stringify(libroCosteo.h);
+const tira = n => { try { F(n); return ''; } catch (e) { return e.message; } };
+SESION.correo = 'jose@gmail.com';
+chequear('historialDe tira con otra sesion', /herramienta de editor/.test(tira("historialDe('lomito')")), true);
+chequear('refrescarResumenBitacora tira con otra sesion', /herramienta de editor/.test(tira('refrescarResumenBitacora()')), true);
+SESION.correo = '';
+chequear('y sin sesion (enlace con token) tambien', /herramienta de editor/.test(tira('refrescarResumenBitacora()')), true);
+chequear('no creo BITACORA_RESUMEN ni toco nada', JSON.stringify(libroCosteo.h) === antes8, true);
+SESION.correo = 'restaurante@rosanta.rest';
+chequear('el dueno si puede', F("historialDe('lomito')").length, 1);
+
+console.log('\n' + total + ' chequeos · ' + (total - fallas) + ' OK · ' + fallas + ' FALLA');
+console.log((fallas ? 'FALLAS: ' + fallas : 'TODO OK') + '\n');
 process.exit(fallas ? 1 : 0);
