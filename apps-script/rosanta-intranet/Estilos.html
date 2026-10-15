@@ -88,6 +88,12 @@ header.app .quien { font-size: 0.85rem; opacity: 0.9; display: flex; align-items
     header.app { flex-direction: column; gap: 0.35rem; text-align: center; }
     main { padding: 1rem 0.75rem 2rem; }
   }
+  /* CELULAR (15-oct-2026): 16 px en los campos (con menos, el iPhone agranda la pagina al
+     tocarlos) y 44 px de alto en lo que se toca con el dedo. */
+  @media (max-width: 640px) {
+    input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea { font-size: 16px !important; }
+    .volver, button { min-height: 44px; }
+  }
 
   /* ===== Shell del Sistema de Marketing (panel lateral) ===== */
   .sm { display: flex; height: calc(100vh - 3.5rem); }

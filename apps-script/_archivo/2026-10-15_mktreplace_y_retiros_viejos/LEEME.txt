@@ -1,0 +1,14 @@
+ARCHIVO 15-oct-2026 · lo que la limpieza del 14-oct dejo "a proposito" (tarea 3, sesion "Solidez de la intranet, dia 3")
+
+MarketingDatos_mktReplace.js
+  mktReplace reemplazaba una pestana entera del Marketing OS. Nadie la llamaba: OS_MAP vacio desde el
+  27-sep y srv() de Marketing no la tiene en su lista blanca. TABS_SIN_REPLACE se quedo en el proyecto
+  porque la prueba "Ninguna pestaña del Marketing OS se reemplaza completa desde el navegador" lo vigila.
+
+MedicionDatos_retiros_viejos.js
+  getRetirosPendientes, registrarRetiro, leerComprobanteRetiros, medPuedeRetiros_ y el lector de
+  comprobantes (_medRet*, MED_RET_*). La pantalla vieja de retiros la reemplazo Compras en efectivo
+  (ComprasEfectivo.js, registrarRetiroYCompras) el 14-oct. medRetirosMes_ se quedo (vigia, tablero, Compras).
+
+La prueba "Solo cocina o el dueño anotan retiros; la Sala solo sala o dueño" ahora vigila que ninguna
+de estas vuelva al proyecto. Si algo hace falta, se copia de vuelta y se hace un push.

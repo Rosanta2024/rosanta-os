@@ -1142,13 +1142,15 @@ function prFinanzas_(res) {
   prCorrer_(g, 'Solo cocina o el dueño anotan retiros; la Sala solo sala o dueño', function () {
     var nombre = 'Solo cocina o el dueño anotan retiros; la Sala solo sala o dueño';
     var malos = [];
-    ['sala', 'pauta', 'equipo'].forEach(function (rol) {
-      try { medPuedeRetiros_({ rol: rol }); malos.push('retiros acepta rol ' + rol); } catch (e) {}
+    // 15-oct-2026: la pantalla vieja de retiros (y mktReplace) se archivo; los retiros se anotan en
+    // Compras en efectivo. Centinela: que no vuelvan como funciones publicas.
+    ['getRetirosPendientes', 'registrarRetiro', 'leerComprobanteRetiros', 'mktReplace'].forEach(function (f) {
+      if (typeof globalThis[f] === 'function') malos.push(f + ' volvio al proyecto (estaba archivada)');
     });
-    try { medPuedeRetiros_({ rol: 'chef' }); } catch (e) { malos.push('retiros rechaza al chef'); }
+    if (typeof registrarRetiroYCompras !== 'function') malos.push('no existe registrarRetiroYCompras (Compras en efectivo)');
     var src = String(getSala);
     if (src.indexOf("rol !== 'sala' && rol !== 'dueno'") === -1) malos.push('getSala no revisa el rol');
-    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'retiros: solo chef y dueño · Sala: solo sala y dueño', malos.length, 0);
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : 'retiros: solo por Compras en efectivo (las viejas archivadas) · Sala: solo sala y dueño', malos.length, 0);
   });
 
   prCorrer_(g, 'Las pestañas de area de Profit no llevan el resultado de la casa', function () {
