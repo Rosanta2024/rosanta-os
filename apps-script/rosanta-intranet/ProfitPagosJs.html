@@ -551,7 +551,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         if (/Lock timeout|could not obtain lock|otra lectura en curso|está guardando en este momento/i.test(crudo + m)) {
           g.fallo(m, function () { llamar(hacer, panel, texto); });   // no se escribio nada: repetir es seguro
         } else if (/NetworkError|Failed to fetch|network|timed? ?out|sin respuesta|no response|Exceeded maximum execution time|cortó el internet|No llegó respuesta/i.test(crudo + m)) {
-          g.fallo('Se cortó la conexión y no sé si quedó guardado. Tocá Actualizar y revisá antes de volver a guardar.', null);
+          g.fallo('Se cortó la conexión. Tocá Actualizar y revisá antes de volver a guardar.', null, 'No sé si se guardó.');
         } else {
           if (err) err.textContent = m;
           g.fallo(m, null);

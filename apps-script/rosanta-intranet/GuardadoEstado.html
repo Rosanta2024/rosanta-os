@@ -31,7 +31,7 @@
 <script>
 /* window.PF_GUARDADO.empezar(texto, accion) -> g
      g.listo(texto)               ✓ texto, se va solo a los 6 s
-     g.fallo(mensaje, reintentar) el mensaje (ya traducido por PF_ERROR) y, si hay funcion, Reintentar
+     g.fallo(mensaje, reintentar, titulo)  el mensaje (ya traducido por PF_ERROR), Reintentar si hay funcion, y el titulo ("No se guardó." por defecto)
    accion: nombre corto para Tiempos ("pago", "agregar insumo"); el tiempo que sintio la persona se
    anota en ?page=tiempos sin esperar respuesta. */
 window.PF_GUARDADO = (function () {
@@ -76,13 +76,13 @@ window.PF_GUARDADO = (function () {
           pintar('ok', '<b>' + esc(t || 'Guardado') + '</b>', [], '✓');
           fuera = setTimeout(function () { if (yo === vivo) ocultar(); }, 6000);
         },
-        fallo: function (mensaje, reintentar) {
+        fallo: function (mensaje, reintentar, titulo) {
           clearTimeout(reloj);
           if (yo !== vivo) return;
           var bs = [];
           if (reintentar) bs.push({ texto: 'Reintentar', pri: true, fn: function () { ocultar(); reintentar(); } });
           bs.push({ texto: 'Cerrar', fn: ocultar });
-          pintar('mal', '<b>No se guardó.</b><small>' + esc(mensaje || 'Revisá la conexión y probá de nuevo.') + '</small>', bs, '!');
+          pintar('mal', '<b>' + esc(titulo || 'No se guardó.') + '</b><small>' + esc(mensaje || 'Revisá la conexión y probá de nuevo.') + '</small>', bs, '!');
         }
       };
     },
