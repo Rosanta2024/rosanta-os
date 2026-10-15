@@ -13,6 +13,7 @@ var TIE_MAX_ = 60;
 function tiempoInicio_(accion, quien) {
   var t0 = Date.now(), ult = t0, tramos = {};
   return {
+    quien: function (n) { quien = n; },
     tramo: function (nombre) { var a = Date.now(); tramos[nombre] = (tramos[nombre] || 0) + (a - ult); ult = a; },
     fin: function (extra) {
       var a = Date.now();

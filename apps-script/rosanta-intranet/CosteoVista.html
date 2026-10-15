@@ -100,6 +100,28 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
   .pf-lat .nav button small{display:none}
   .pf-layout > main{padding:16px 16px 32px}
   header.top .wrap{padding:0 16px}
+  /* la cuadricula repartia el alto que sobra entre el menu y el contenido: hueco arriba */
+  .pf-layout{align-content:start}
+}
+/* CELULAR (15-oct-2026, Juanma va a usar la intranet desde el telefono). */
+@media (max-width:640px){
+  /* encabezado: logo y "Panel principal" en una fila, buscador debajo, y no se queda pegado arriba */
+  header.top{position:static}
+  .topbar{gap:10px;padding:10px 0}
+  .brand{gap:8px}
+  .brand .logo{height:20px}
+  .volver{padding:7px 12px;font-size:.8rem}
+  .search{order:3;flex:1 1 100%;max-width:none}
+  /* 16 px: con menos, el iPhone agranda la pantalla al tocar un campo */
+  .pf-layout input:not([type=checkbox]):not([type=radio]):not([type=file]), .pf-layout select, .pf-layout textarea, #q{font-size:16px !important}
+  /* botones que se tocan con el dedo: 44 px de alto como minimo */
+  .pg-tabs button, .pg-b, .rt-box button, .pf-filtro .areas button, .sl-box a.b{min-height:44px}
+  .sl-box a.b{display:inline-flex;align-items:center}
+  .pg-x{min-height:44px;display:inline-flex;align-items:center;font-size:.86rem}
+  footer.pie .pf-guia{font-size:14px;min-height:44px}
+  /* tablas: la regla general les pide 640 px; aca caben a lo ancho y el texto baja de linea */
+  .sl-box, .lx{overflow-x:auto}
+  .sl-box table, .lx-tabla{min-width:0}
 }
 </style>
 
@@ -211,6 +233,8 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" tabindex="-1"></aside>
+<!-- El aviso de guardado (15-oct-2026): Guardando… / ✓ Guardado / Reintentar, en Pagos y Recetas -->
+<?!= incluirCrudo_('GuardadoEstado') ?>
 
 <script>
 /* EL TOKEN DEL ENLACE PERSONAL (10-sep-2026)

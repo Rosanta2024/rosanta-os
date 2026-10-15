@@ -1,0 +1,99 @@
+<style>
+/* QUE SE VEA QUE PASA AL GUARDAR (15-oct-2026, Juanma: "tarda mucho y no sabes si está cargando
+   o no"). Un aviso fijo abajo, el mismo en Pagos y en Recetas: aparece al instante, a los 4 s
+   dice que siga esperando, al terminar confirma qué se guardó y, si falla, ofrece Reintentar.
+   Colores solo de la paleta (PaletaServidor.js). */
+.gd{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:9999; display:none;
+  align-items:center; gap:12px; max-width:calc(100% - 32px); width:max-content; box-sizing:border-box;
+  background:var(--superficie); color:var(--texto); border:1px solid var(--linea); border-left:6px solid var(--alerta);
+  border-radius:12px; padding:12px 16px; box-shadow:0 6px 24px rgba(0,0,0,.18); font-size:15px; line-height:1.4}
+.gd.on{display:flex}
+.gd.curso{background:var(--alerta-tint); border-left-color:var(--alerta)}
+.gd.ok{background:var(--ok-tint); border-left-color:var(--ok)}
+.gd.mal{background:var(--mal-tint); border-left-color:var(--mal)}
+.gd .gd-ic{flex:0 0 auto; width:20px; height:20px; border-radius:50%; box-sizing:border-box}
+.gd.curso .gd-ic{border:3px solid var(--alerta-linea); border-top-color:var(--alerta); animation:gd-gira .9s linear infinite}
+.gd.ok .gd-ic, .gd.mal .gd-ic{display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--superficie)}
+.gd.ok .gd-ic{background:var(--ok)}
+.gd.mal .gd-ic{background:var(--mal)}
+.gd .gd-tx b{font-weight:700}
+.gd .gd-tx small{display:block; color:var(--texto-suave); font-size:13px}
+.gd button{min-height:44px; padding:0 16px; border-radius:22px; font:inherit; cursor:pointer; border:1px solid var(--linea);
+  background:var(--superficie); color:var(--texto)}
+.gd button.gd-pri{background:var(--rosanta-verde); border-color:var(--rosanta-verde); color:var(--superficie)}
+/* el proveedor recien guardado en Pagos se marca un momento */
+.pg-recien{outline:3px solid var(--ok); outline-offset:2px; border-radius:12px; transition:outline-color .6s}
+@keyframes gd-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .gd.curso .gd-ic{animation:none} }
+@media (max-width:600px){ .gd{left:16px; right:16px; transform:none; width:auto; flex-wrap:wrap} }
+</style>
+<div class="gd" id="gd" role="status" aria-live="polite"><span class="gd-ic" aria-hidden="true"></span><span class="gd-tx"></span><span class="gd-bt"></span></div>
+<script>
+/* window.PF_GUARDADO.empezar(texto, accion) -> g
+     g.listo(texto)               ✓ texto, se va solo a los 6 s
+     g.fallo(mensaje, reintentar, titulo)  el mensaje (ya traducido por PF_ERROR), Reintentar si hay funcion, y el titulo ("No se guardó." por defecto)
+   accion: nombre corto para Tiempos ("pago", "agregar insumo"); el tiempo que sintio la persona se
+   anota en ?page=tiempos sin esperar respuesta. */
+window.PF_GUARDADO = (function () {
+  var el = null, reloj = null, fuera = null, vivo = 0;
+  function caja() { return el || (el = document.getElementById('gd')); }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pintar(clase, html, botones, icono) {
+    var c = caja(); if (!c) return;
+    c.className = 'gd on ' + clase;
+    c.querySelector('.gd-ic').textContent = icono || '';
+    c.querySelector('.gd-tx').innerHTML = html;
+    var bt = c.querySelector('.gd-bt'); bt.innerHTML = '';
+    (botones || []).forEach(function (b) {
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = b.texto;
+      if (b.pri) x.className = 'gd-pri';
+      x.addEventListener('click', b.fn); bt.appendChild(x);
+    });
+  }
+  function ocultar() { var c = caja(); if (c) c.className = 'gd'; }
+  function anotar(accion, ms) {
+    try { if (window.AUTH !== undefined && accion) google.script.run.withFailureHandler(function () {}).anotarTiempoPantalla(AUTH, accion, ms); } catch (e) { /* medir nunca molesta */ }
+  }
+  return {
+    empezar: function (texto, accion) {
+      var yo = ++vivo, t0 = Date.now();
+      clearTimeout(reloj); clearTimeout(fuera);
+      pintar('curso', '<b>' + esc(texto || 'Guardando…') + '</b>');
+      reloj = setTimeout(function () {
+        tarde = true;
+        if (yo === vivo) pintar('curso', '<b>Sigue guardando, no cierres esta página.</b><small>' + esc(base) + '</small>');
+      }, 4000);
+      var base = texto || 'Guardando…', tarde = false;
+      return {
+        ms: function () { return Date.now() - t0; },
+        texto: function (t) {
+          base = t || base;
+          if (yo === vivo) pintar('curso', tarde ? '<b>Sigue guardando, no cierres esta página.</b><small>' + esc(base) + '</small>' : '<b>' + esc(base) + '</b>');
+        },
+        listo: function (t) {
+          clearTimeout(reloj); anotar(accion, Date.now() - t0);
+          if (yo !== vivo) return;
+          pintar('ok', '<b>' + esc(t || 'Guardado') + '</b>', [], '✓');
+          fuera = setTimeout(function () { if (yo === vivo) ocultar(); }, 6000);
+        },
+        fallo: function (mensaje, reintentar, titulo) {
+          clearTimeout(reloj);
+          if (yo !== vivo) return;
+          var bs = [];
+          if (reintentar) bs.push({ texto: 'Reintentar', pri: true, fn: function () { ocultar(); reintentar(); } });
+          bs.push({ texto: 'Cerrar', fn: ocultar });
+          pintar('mal', '<b>' + esc(titulo || 'No se guardó.') + '</b><small>' + esc(mensaje || 'Revisá la conexión y probá de nuevo.') + '</small>', bs, '!');
+        }
+      };
+    },
+    /* un ✓ suelto, sin cronometro (Recetas: "Precio de carta de X: Q120") */
+    listo: function (t) {
+      ++vivo; clearTimeout(reloj); clearTimeout(fuera);
+      var yo = vivo;
+      pintar('ok', '<b>' + esc(t || 'Guardado') + '</b>', [], '✓');
+      fuera = setTimeout(function () { if (yo === vivo) ocultar(); }, 6000);
+    },
+    ocultar: ocultar
+  };
+})();
+</script>

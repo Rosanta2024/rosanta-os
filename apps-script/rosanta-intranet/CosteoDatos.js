@@ -520,10 +520,10 @@ function anotarCambioDeModelo_(toque) {
  *         | { proveedor }      la hoja PROVEEDORES, que no es parte del modelo
  *         | { todo: true }     no se sabe que cambio: se borra el cache
  */
-function conCambiosDeModelo_(fn, accion) {
+function conCambiosDeModelo_(fn, accion, quien) {
   if (CAMBIOS_MODELO_) return { resultado: fn(), cambios: null };   // anidado: junta el de afuera
   CAMBIOS_MODELO_ = [];
-  var resultado, toques, reloj = tiempoInicio_('Recetas · ' + (accion || 'guardar'));
+  var resultado, toques, reloj = tiempoInicio_('Recetas · ' + (accion || 'guardar'), quien);
   try {
     resultado = fn();
     reloj.tramo('escribir');
@@ -535,7 +535,7 @@ function conCambiosDeModelo_(fn, accion) {
   }
   toques = CAMBIOS_MODELO_;
   CAMBIOS_MODELO_ = null;
-  if (!toques.length) { reloj.fin({ recargo: 'no escribió' }); return { resultado: resultado, cambios: null }; }
+  if (!toques.length) return { resultado: resultado, cambios: null };   // no escribio: no se mide
 
   // La escritura ya ocurrio: nada de lo que siga puede hacerla parecer fallida.
   var cambios;

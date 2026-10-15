@@ -193,33 +193,8 @@ function mktUpsert(tab, row, auth) {
  */
 var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1, propuestas: 1, briefs: 1 };
 
-/** Lo que usa el auto-sync del sistema (osAutoPush -> action:'replace'). */
-function mktReplace(tab, rows, auth) {
-  requiereEdicionMarketing_(tab, auth);
-  var head = SCHEMA[tab];
-  if (!head) throw new Error('Pestaña desconocida: ' + tab);
-  if (TABS_SIN_REPLACE[tab]) {
-    throw new Error('La pestaña ' + tab + ' se sincroniza fila por fila; reemplazarla completa borraría filas escritas por fuera.');
-  }
-  rows = rows || [];
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var sh = mktSheet_(tab);
-    sh.clearContents();
-    sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
-    if (rows.length) {
-      var data = rows.map(function (row) {
-        return head.map(function (h) { return row[h] !== undefined && row[h] !== null ? row[h] : ''; });
-      });
-      sh.getRange(2, 1, data.length, head.length).setValues(data);
-    }
-    return { count: rows.length };
-  } finally {
-    lock.releaseLock();
-  }
-}
+/* mktReplace (reemplazar una pestana completa) se archivo el 15-oct-2026: ninguna pantalla la llamaba
+   (apps-script/_archivo/2026-10-15_mktreplace_y_retiros_viejos/). Las pestanas se escriben fila por fila. */
 
 function mktDelete(tab, id, auth) {
   requiereEdicionMarketing_(tab, auth);
