@@ -24,6 +24,16 @@
  *   Estado (solo "Confirmado") · Es Contable (descarta "no")
  * La última fila del export es un total sin TicketId: se descarta sola.
  *
+ * PosFile CAMBIÓ DE SISTEMA EL 1-OCT-2026 (14-oct-2026): el export semanal pasó a
+ * llamarse "ReporteFacturas-DD-MM-YYYY" y nadie se lo dijo a este lector, que siguió
+ * leyendo solo los ReporteVentas viejos. No falló: actualizaba las semanas viejas y
+ * dejaba la S40 y la S41 sin comensales. Lo cazó la señal "pauta · POS" del Latido
+ * del 13-oct. Columnas del formato nuevo (verificadas contra ReporteFacturas del
+ * 12-oct): No. (= ticket, "FT67") · Fecha (dd/mm/yyyy) · Estado ("finalizado") ·
+ * Contable (viene "no" en TODAS las filas: aquí NO se filtra) · Notas (comensales,
+ * a veces con texto: "1 persona", "2  Se realizo un anticipo…") · Total.
+ * También se aceptan las copias "Copy of …" / "Copia de …" que deja Drive.
+ *
  * Los .xlsx se convierten a Google Sheet temporal vía Drive API (con el token
  * de la sesión) y el temporal se manda a la papelera al terminar.
  *
@@ -117,7 +127,8 @@ function posBuscarArchivos_() {
     while (files.hasNext()) {
       var f = files.next();
       var n = f.getName();
-      if (/^(POS|ReporteVentas)[\s\-_]/i.test(n) || /^POS$/i.test(n.replace(/\.[^.]+$/, ''))) out.push(f);
+      n = n.replace(/^(Copy of|Copia de)\s+/i, '');
+      if (/^(POS|ReporteVentas|ReporteFacturas)[\s\-_]/i.test(n) || /^POS$/i.test(n.replace(/\.[^.]+$/, ''))) out.push(f);
     }
   }
   return out;
@@ -146,29 +157,45 @@ function posLeerTabla_(file) {
   }
 }
 
-/** Suma cada fila del POS al mapa de tickets (dedupe por TicketId, el último gana). */
+/** Suma cada fila del POS al mapa de tickets (dedupe por ticket, el último gana).
+ *  Entiende los dos formatos de PosFile: ReporteVentas (hasta el 30-sep-2026) y
+ *  ReporteFacturas (desde el 1-oct-2026). Ver la cabecera. */
 function posAcumularTickets_(vals, tickets) {
   if (!vals || vals.length < 2) return;
   var head = vals[0].map(function (h) { return String(h).trim(); });
   var col = {};
   head.forEach(function (h, i) { col[h] = i; });
-  if (col['TicketId'] === undefined || col['Fecha'] === undefined) {
-    throw new Error('Sin columnas TicketId/Fecha (¿es el export correcto del POS?)');
+
+  var nuevo = col['TicketId'] === undefined && col['No.'] !== undefined;
+  var cId    = nuevo ? col['No.'] : col['TicketId'];
+  var cTotal = nuevo ? col['Total'] : col['TotalFinal'];
+  if (cId === undefined || col['Fecha'] === undefined || cTotal === undefined) {
+    throw new Error('Sin columnas TicketId/No., Fecha y TotalFinal/Total (¿es el export correcto del POS?)');
   }
 
   for (var i = 1; i < vals.length; i++) {
     var r = vals[i];
-    var id = String(r[col['TicketId']] || '').trim();
+    var id = String(r[cId] || '').trim();
     if (!id) continue;
-    if (col['Estado'] !== undefined && String(r[col['Estado']]).trim() !== 'Confirmado') continue;
-    if (col['Es Contable'] !== undefined && String(r[col['Es Contable']]).trim().toLowerCase() === 'no') continue;
-    var com = Number(r[col['Notas']]);        // Notas = comensales de la mesa
-    tickets[id] = {
+    if (col['Estado'] !== undefined) {
+      var estado = String(r[col['Estado']]).trim().toLowerCase();
+      if (estado !== (nuevo ? 'finalizado' : 'confirmado')) continue;
+    }
+    if (!nuevo && col['Es Contable'] !== undefined && String(r[col['Es Contable']]).trim().toLowerCase() === 'no') continue;
+    tickets[(nuevo ? 'F:' : '') + id] = {
       fecha: posParseFecha_(r[col['Fecha']]),
-      total: Number(r[col['TotalFinal']]) || 0,
-      comensales: (isNaN(com) || com <= 0) ? 0 : com
+      total: Number(r[cTotal]) || 0,
+      comensales: posComensales_(r[col['Notas']])
     };
   }
+}
+
+/** Notas = comensales de la mesa. Toma el número del inicio ("2", "1 persona",
+ *  "2  Se realizo un anticipo…"); sin número al inicio, 0 (no aporta al ratio). */
+function posComensales_(v) {
+  if (typeof v === 'number') return v > 0 ? v : 0;
+  var m = String(v == null ? '' : v).match(/^\s*(\d{1,3})(?!\d|[.,]\d)/);
+  return m ? Number(m[1]) : 0;
 }
 
 /** Fecha del POS: Date de la conversión o texto d/m/yyyy. */
