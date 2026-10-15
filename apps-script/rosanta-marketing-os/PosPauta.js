@@ -17,7 +17,8 @@
  * Acepta el export semanal actual ("ReporteVentas_8_31_2026_162246.xlsx") y el
  * mensual antiguo ("POS 2026-07" / "POS-2026-07" / "POS-S27"), y deduplica por
  * TicketId por si conviven. NO toma "ReporteVentasProductos*": ese es el reporte
- * por producto y no trae comensales por ticket.
+ * por producto y no trae comensales por ticket. Desde el 14-oct-2026 acepta también
+ * "ReporteFacturas*" del PosFile nuevo (ver posAcumularFacturas_).
  *
  * Columnas que espera el export (verificadas contra ReporteVentas del 24-ago):
  *   TicketId · Fecha (d/m/yyyy) · TotalFinal · Notas (= comensales de la mesa)
@@ -52,7 +53,7 @@ function posActualizarPauta() {
     // El nombre de la carpeta se lee de Drive para que este mensaje no pueda
     // quedar desactualizado como el anterior, que seguía diciendo 00_CIERRE_MAESTRO.
     var nombreCarpeta = DriveApp.getFolderById(POSP_FOLDER_ID).getName();
-    throw new Error('POS: no hay ningún archivo POS*/ReporteVentas* en las subcarpetas de "' +
+    throw new Error('POS: no hay ningún archivo POS*/ReporteVentas*/ReporteFacturas* en las subcarpetas de "' +
       nombreCarpeta + '" (' + POSP_FOLDER_ID + '). pauta_semanal se queda sin comensales ' +
       'ni ticket hasta que se corrija. Revisa que el reporte de la semana esté en su carpeta S##.');
   }
@@ -107,8 +108,16 @@ function posActualizarPauta() {
   }
 }
 
-/** Exports del POS (POS* / ReporteVentas*, xlsx o Sheet) dentro de las subcarpetas
- *  de la carpeta de reportes: una por semana ISO (S19...) y las de mes que queden. */
+/** Exports del POS (POS* / ReporteVentas* / ReporteFacturas*, xlsx o Sheet) dentro de
+ *  las subcarpetas de la carpeta de reportes: una por semana ISO (S19...) y las de mes.
+ *
+ *  ReporteFacturas (14-oct-2026): PosFile cambió de sistema el 1-oct-2026 y desde la
+ *  S40 ya no saca ReporteVentas sino ReporteFacturas (una fila por factura, con Notas =
+ *  comensales y Total). Sin esto S40 y S41 se quedaron sin comensales ni ticket y el
+ *  Latido marcó fría la señal "pauta · POS".
+ *  Se acepta el prefijo "Copy of " / "Copia de ": así quedó en S40 el último
+ *  ReporteVentas del sistema viejo (28 al 30 de septiembre).
+ *  "ReporteVentasProductos*" y "VentasProductos*" siguen fuera: son por producto. */
 function posBuscarArchivos_() {
   var out = [];
   var subs = DriveApp.getFolderById(POSP_FOLDER_ID).getFolders();
@@ -116,8 +125,8 @@ function posBuscarArchivos_() {
     var files = subs.next().getFiles();
     while (files.hasNext()) {
       var f = files.next();
-      var n = f.getName();
-      if (/^(POS|ReporteVentas)[\s\-_]/i.test(n) || /^POS$/i.test(n.replace(/\.[^.]+$/, ''))) out.push(f);
+      var n = f.getName().replace(/^(copy of|copia de)\s+/i, '');
+      if (/^(POS|ReporteVentas|ReporteFacturas)[\s\-_]/i.test(n) || /^POS$/i.test(n.replace(/\.[^.]+$/, ''))) out.push(f);
     }
   }
   return out;
@@ -152,8 +161,14 @@ function posAcumularTickets_(vals, tickets) {
   var head = vals[0].map(function (h) { return String(h).trim(); });
   var col = {};
   head.forEach(function (h, i) { col[h] = i; });
+  if (col['TicketId'] === undefined && /^tipo documento$/i.test(head[0]) &&
+      col['No.'] !== undefined && col['Total'] !== undefined) {
+    posAcumularFacturas_(vals, col, tickets);
+    return;
+  }
   if (col['TicketId'] === undefined || col['Fecha'] === undefined) {
-    throw new Error('Sin columnas TicketId/Fecha (¿es el export correcto del POS?)');
+    throw new Error('Sin columnas TicketId/Fecha ni Tipo documento/No./Total ' +
+      '(¿es el export correcto del POS?)');
   }
 
   for (var i = 1; i < vals.length; i++) {
@@ -167,6 +182,36 @@ function posAcumularTickets_(vals, tickets) {
       fecha: posParseFecha_(r[col['Fecha']]),
       total: Number(r[col['TotalFinal']]) || 0,
       comensales: (isNaN(com) || com <= 0) ? 0 : com
+    };
+  }
+}
+
+/**
+ * ReporteFacturas del PosFile nuevo (desde el 1-oct-2026). Misma lectura que
+ * _cargarPOSFacturas del cargador del maestro (apps-script/rosanta-maestro/cargador.js),
+ * para que comensales y venta de la pauta sean los mismos que entran a 02_Ventas_Maestro:
+ *   - id = No. (FT1, FT2...): no choca con los TicketId numéricos del POS viejo
+ *   - se saltan la fila TOTAL y las anuladas; "finalizado" y "contingencia" valen
+ *   - comensales = Notas solo si es un número entero ("1 persona" queda sin comensales)
+ *   - total = Total, que ya trae el 10% de servicio, igual que el TotalFinal de antes
+ *   - NO se filtra por "Contable": mientras la SAT no reciba, todas dicen "no"
+ */
+function posAcumularFacturas_(vals, col, tickets) {
+  for (var i = 1; i < vals.length; i++) {
+    var r = vals[i];
+    var id = String(r[col['No.']] || '').trim();
+    if (!id || String(r[0]).trim().toUpperCase() === 'TOTAL') continue;
+    if (col['Estado'] !== undefined && /anul/i.test(String(r[col['Estado']]))) continue;
+    var notas = String(r[col['Notas']] === undefined ? '' : r[col['Notas']]).trim();
+    var fecha = posParseFecha_(r[col['Fecha']]);
+    // Igual que _fechaCarga del cargador: un Date con hora de 12:00 en adelante es del día siguiente.
+    if (fecha && (fecha.getHours() || fecha.getMinutes())) {
+      fecha = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + (fecha.getHours() >= 12 ? 1 : 0));
+    }
+    tickets[id] = {
+      fecha: fecha,
+      total: Number(String(r[col['Total']]).replace(/,/g, '')) || 0,
+      comensales: /^\d+$/.test(notas) ? Number(notas) : 0
     };
   }
 }
