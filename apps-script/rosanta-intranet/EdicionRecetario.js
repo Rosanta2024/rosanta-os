@@ -533,7 +533,9 @@ function editarCantidad_(ficha, fila, cantidadNueva, quien, rol, area, esperado)
   if (!(cantidadNueva > 0)) throw new Error('La cantidad tiene que ser mayor que cero.');
   var ss = recetarioDe_(area);
   var h = fichaDe_(ss, ficha);
+  tiempoTramo_('abrir ficha');
   var b = bloqueFicha_(h);
+  tiempoTramo_('ubicar lineas');
   if (fila <= b.filaHeader || fila >= b.filaSubtotal) throw new Error('La fila ' + fila + ' no es una linea de ingrediente.');
 
   var producto = h.getRange(fila, b.colBase).getValue();
@@ -541,8 +543,10 @@ function editarCantidad_(ficha, fila, cantidadNueva, quien, rol, area, esperado)
   exigirMismaLinea_(producto, esperado, fila);
   var antes = h.getRange(fila, b.colBase + 1).getValue();
   h.getRange(fila, b.colBase + 1).setValue(cantidadNueva);
+  tiempoTramo_('escribir celdas');
 
   bitacora_(quien, rol, 'editarCantidad', conArea_(ficha, area), String(producto), 'cantidad', antes, cantidadNueva, '');
+  tiempoTramo_('bitacora');
   invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, producto:String(producto), antes:antes, despues:cantidadNueva };
 }
@@ -569,9 +573,12 @@ function agregarLinea_(ficha, producto, cantidad, unidad, quien, rol, area) {
     throw new Error('"' + producto + '" no esta en el Banco de Datos. Primero hay que darlo de alta como producto.');
   }
 
+  tiempoTramo_('leer banco');
   var h = fichaDe_(ss, ficha);
   exigirSinCiclo_(area, h.getName(), encontrado.nombre);
+  tiempoTramo_('abrir ficha');
   var b = bloqueFicha_(h);
+  tiempoTramo_('ubicar lineas');
 
   // Primera fila libre DENTRO del rango que suma el total.
   // Antes se buscaba hasta el subtotal y, si no habia lugar, se insertaba justo antes
@@ -603,8 +610,10 @@ function agregarLinea_(ficha, producto, cantidad, unidad, quien, rol, area) {
     h.getRange(destino, b.colBase + 1).getA1Notation() + "*" +
     h.getRange(destino, b.colBase + 3).getA1Notation() + ")");
 
+  tiempoTramo_('escribir celdas');
   bitacora_(quien, rol, 'agregarLinea', conArea_(ficha, area), encontrado.nombre, 'linea', '',
             cantidad + ' ' + (unidad || encontrado.unidad), 'fila ' + destino);
+  tiempoTramo_('bitacora');
   invalidarCache_({ ficha: h.getName(), area: area });
   return { ok:true, fila:destino, producto:encontrado.nombre };
 }

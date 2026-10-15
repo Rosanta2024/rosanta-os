@@ -580,6 +580,8 @@ function pfAviso(texto, deshacerFn){
   if(!el){ el = document.createElement('div'); el.id = 'pf-toast'; el.className = 'pf-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
   el.innerHTML = '<span>' + esc(texto) + '</span>' + (deshacerFn ? '<button type="button">Deshacer</button>' : '');
   el.hidden = false;
+  // este aviso ya confirma lo guardado: el "✓ Guardado en la hoja" de abajo se iria encima (15-oct-2026)
+  if(window.PF_GUARDADO) PF_GUARDADO.ocultar();
   const b = el.querySelector('button');
   if(b) b.onclick = function(){ el.hidden = true; clearTimeout(pfAvisoT); deshacerFn(); };
   clearTimeout(pfAvisoT); pfAvisoT = setTimeout(function(){ el.hidden = true; }, 8000);
