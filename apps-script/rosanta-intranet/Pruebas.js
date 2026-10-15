@@ -225,7 +225,7 @@ function prIgual_(grupo, nombre, leido, esperado, detalle) {
    cuerpo resuelve la identidad en el servidor con el auth y lanza (throw). Pagos (p213,
    29-sep-2026) entra por pagQuien_: las dos pruebas de guardas no la conocian y el
    8-oct-2026 marcaron abiertas sus 8 funciones, que si estaban cerradas. */
-var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_', 'cpeQuien_'];   // cchQuien_: Caja chica (13-oct-2026); cpeQuien_: Compras (14-oct-2026)
+var PR_GUARDAS_PROPIAS_ = ['pagQuien_', 'cchQuien_', 'cpeQuien_', 'exigirDuenoTiempos_'];   // cchQuien_: Caja chica (13-oct-2026); cpeQuien_: Compras (14-oct-2026); exigirDuenoTiempos_: Tiempos (15-oct-2026)
 function prGuardasPropias_() {
   var G = (typeof globalThis !== 'undefined') ? globalThis : this, ok = [], malas = [];
   PR_GUARDAS_PROPIAS_.forEach(function (n) {
