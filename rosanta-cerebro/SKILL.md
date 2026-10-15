@@ -7,7 +7,19 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 15 oct 2026, tarde (v39).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 15 oct 2026, noche (v40).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 15 oct 2026, noche (v40): el candado ya no frena falso desde un worktree
+
+Sesión "candado: historia de la rama". Solo configuración de Claude Code: no tocó la intranet ni lo publicado. **En main y en GitHub (`d143ba9`).**
+
+1. **`verificar_push` (`.claude/hooks/candado-clasp.py`) acepta cualquier versión de la historia de la rama.** Antes comparaba el archivo del servidor solo contra el ÚLTIMO commit: un worktree nuevo (sin foto de push) cuyo último commit cambió un archivo veía la versión del servidor —la de main o de un merge ya traído— como "de otra sesión" (15-oct, gifted-dhawan: dos `ROSANTA_PUSH_PISAR` innecesarios). Ahora busca el blob del contenido bajado entre las versiones de esa ruta alcanzables desde HEAD (`git log --full-history`, hasta 200, `.js` o `.gs`). **Sigue frenando** lo que no está en la historia: otra rama sin traer, o algo nunca commiteado. De paso se corrigió que las rutas no partían de la raíz del repo.
+2. **Simulador guardado en el repo: `python3 .claude/hooks/prueba-candado.py`** (repo de juguete, `clasp` falso en el PATH, sellos en carpeta temporal: nunca toca `~/.rosanta-sellos`). **26/26**; el candado anterior da 22/26 (fallan justo los 4 casos nuevos: control negativo). El "20/20" del 14-oct nunca se había guardado. Correrlo después de tocar el candado.
+3. **Solo lo toman las sesiones nuevas** (el hook se lee de `$CLAUDE_PROJECT_DIR`; un worktree viejo sigue con el suyo hasta traer main).
+
+**Lección:** la ruta de la skill instalada que daba el CLAUDE.md (`…/skills-plugin/…/skills/rosanta-cerebro/`) ya no existe: **la instalada es `~/.claude/skills/rosanta-cerebro/`**. CLAUDE.md corregido.
 
 ---
 
@@ -45,7 +57,7 @@ Una primera batería (sobre 853299b) dio 1 falla: "Ninguna funcion publica queda
 
 **Lecciones:**
 1. **Una prueba con texto "limpio" no prueba el lector**: hay que usar el texto tal como llega de la fuente (aquí, la columna TEXTO_SI_NO_CUADRA de CIERRES_DIARIOS lo guarda).
-2. **El candado bloquea falso desde un worktree** cuando el servidor = un commit ANTERIOR al último propio (compara solo contra el último commit). Se resuelve verificando 92/92 contra ese commit y con el sí de Juanma (`ROSANTA_PUSH_PISAR`).
+2. ~~**El candado bloquea falso desde un worktree** cuando el servidor = un commit ANTERIOR al último propio.~~ **RESUELTO (v40):** ahora acepta cualquier versión de la historia de la rama.
 3. **`clasp logout` borra `~/.clasprc.json` para TODAS las sesiones.** Avisar antes.
 4. Tres sesiones subieron a la intranet en una hora: el aviso entre sesiones + un solo push funcionó.
 

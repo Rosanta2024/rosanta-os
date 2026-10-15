@@ -25,9 +25,10 @@ y va al cerebro de una vez.
 11-sep-2026: no volver a preguntar ni a entregar un `.skill` para instalar a mano. La skill
 instalada vive acá, y es escribible:
 
-    ~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/
-      1e088bbc-654f-4db8-91f8-2e62c236184c/fba4d609-33bf-4d4b-8a92-8595438b7d98/
-      skills/rosanta-cerebro/
+    ~/.claude/skills/rosanta-cerebro/
+
+(Hasta septiembre vivía en `~/Library/Application Support/Claude/local-agent-mode-sessions/
+skills-plugin/…`; esa ruta ya no existe. Verificado el 15-oct-2026.)
 
 Procedimiento: (1) respaldar la versión instalada en `~/Dev/Rosanta/tools/`; (2) regenerar el
 contenido **partiendo de la instalada**, subiendo versión y fecha; (3) copiar `SKILL.md` y
