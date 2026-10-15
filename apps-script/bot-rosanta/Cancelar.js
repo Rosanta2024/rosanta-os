@@ -156,7 +156,6 @@ function rvAvisarCancel(d, canal) {
  */
 function rvCorreoCliente(d, caso) {
   if (RV_SILENCIO) return;   // prueba
-  if (CORREO_SIN_CORREO_CLIENTE) return;   // por correo, la confirmación va en el borrador de Juanma
   var email = String(d.email || '').trim();
   if (!email || email.indexOf('@') < 0) {
     Logger.log('rvCorreoCliente: sin correo del cliente, no se manda nada.');
@@ -204,6 +203,13 @@ function rvCorreoCliente(d, caso) {
         : 'Tu mesa queda confirmada.\n\nFecha: ' + fecha + '\nHora: ' + d.hora + '\nPersonas: ' + d.personas +
           '\n\nTe esperamos en Rosanta, Antigua Guatemala.\n\n' +
           'Para cambiarla o cancelarla, respondes por WhatsApp y se resuelve.');
+  }
+
+  // Canal de correo: no se manda aparte. Cambio y cancelación hechos se contestan en el mismo hilo sin
+  // pasar por Juanma (decisión de Juanma, 15-oct-2026); lo demás queda como borrador.
+  if (CORREO_SIN_CORREO_CLIENTE) {
+    if (caso === 'cambiada' || caso === 'cancelada') CORREO_AUTO = { caso: caso, asunto: asunto, cuerpo: cuerpo + '\n\nRosanta\nAntigua Guatemala' };
+    return;
   }
 
   try {

@@ -7,6 +7,8 @@
  * Wix que llega de noreply@openwidget.com), pero la respuesta queda como BORRADOR
  * en Gmail: Juanma la revisa y la envía. Reservas: el bot sí crea, cambia o cancela
  * en Wix lo que el cliente pide (igual que en WhatsApp); el borrador lo confirma.
+ * Excepción (Juanma, 15-oct-2026): si el cliente pidió CAMBIAR o CANCELAR y quedó hecho en Wix, se le
+ * contesta solo en el mismo hilo con el correo revisado por marca, sin borrador.
  *
  * Cada 5 minutos (activador que crea correoEncender):
  *   - solo mensajes posteriores al encendido (CORREO_DESDE), nunca el histórico
@@ -17,6 +19,7 @@
 var CORREO_BUSQUEDA = 'label:01-clientes--reservas- -label:01-clientes--reservas--cotizaciones ' +
   '-from:rosanta.rest -from:wixsiteautomations.com newer_than:2d';
 var CORREO_SIN_CORREO_CLIENTE = false;   // mientras se atiende un correo, el bot no manda su propio correo de confirmación
+var CORREO_AUTO = null;                  // cambio o cancelación hechos en Wix: se contestan solos (Juanma, 15-oct-2026)
 
 /** EDITOR: enciende el canal (activador cada 5 min) desde este momento. */
 function correoEncender() {
@@ -65,20 +68,26 @@ function correoHilo_(hilo, desde, vistos) {
 
   logMensaje('correo', c.email, c.nombre, 'in', 'cliente', c.texto);
   CORREO_SIN_CORREO_CLIENTE = true;
+  CORREO_AUTO = null;
   var result;
   try {
     result = btAtender_('correo', c.email, (c.nombre || '').split(' ')[0] || '', { texto: c.texto, log: c.texto, boton: null });
   } finally {
     CORREO_SIN_CORREO_CLIENTE = false;
   }
-  var cuerpo = correoCuerpo_(result.respuesta);
+  var auto = CORREO_AUTO; CORREO_AUTO = null;
+  var cuerpo = auto ? auto.cuerpo : correoCuerpo_(result.respuesta);
   if (!cuerpo) return;
-  if (c.openwidget) {
+  if (auto) {
+    // Cambio o cancelación ya hechos en Wix: se contestan sin borrador, con el correo revisado por marca.
+    if (c.openwidget) GmailApp.sendEmail(c.email, auto.asunto, cuerpo, { name: 'Rosanta' });
+    else ultimo.reply(cuerpo, { name: 'Rosanta' });
+  } else if (c.openwidget) {
     GmailApp.createDraft(c.email, 'Re: tu mensaje a Rosanta', cuerpo, { name: 'Rosanta' });
   } else {
     ultimo.createDraftReply(cuerpo);
   }
-  logMensaje('correo', c.email, c.nombre, 'out', 'bot', '[Borrador en Gmail] ' + cuerpo);
+  logMensaje('correo', c.email, c.nombre, 'out', 'bot', (auto ? '[Enviado solo: ' + auto.caso + '] ' : '[Borrador en Gmail] ') + cuerpo);
   logLead(result.lead, c.texto, c.email, cuerpo);
   fichaActualizar_('correo', c.email, c.nombre, result.lead);
   // Eventos: el aviso con DATOS_PIPELINE sigue saliendo (lo lee la revisión diaria).
