@@ -7,7 +7,53 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 14 oct 2026 (v34).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 14 oct 2026, noche (v35).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 14 oct 2026, noche (v35): auditoría de la intranet, 5 fases publicadas (@188 → @194)
+
+Sesión "Auditar scripts de la intranet" (empezó el 9-oct, se ejecutó el 14-oct). Auditoría con 4
+sub-agentes (acceso, dinero, código muerto, procesos), re-verificada sobre la @187 y ejecutada en 5
+fases + la batería. **Producción: @194** (verificada bajándola aparte, 89/89 = commit `60300c2`).
+Todo en GitHub (`6f5fbaf`). Las publicaciones se coordinaron con la sesión "Mejoras a Profit OS" y
+la de "Cuadro de caja proposal" (sus @188, @190 y Pagos van mezclados en esta cuenta).
+
+| Versión | Qué trajo |
+|---|---|
+| @188 | **Seguridad:** Marketing escapa el texto de afuera (`escH/escJ/escUrl`: carritos de Wix, Espía, aprendizajes, campañas, botones por fila); `?page=diag` solo dueño; `generarTokensUsuarios` ya no escribe todos los enlaces en el Log; recibos solo `https://(drive|docs).google.com`. + Profit OS de la otra sesión (auditado: `asignarFacturaACompra` pagaba doble → candado `_pagConCandado_` reentrante, anular primero y pagar después). |
+| @189 | **Procesos que avisan** (`Procesos.js`): cada proceso deja marca `PROC_<nombre>` (vigía, calentador, puente, correo del martes, ventas, cierres, FEL); `procAvisar_` manda UN correo al día al dueño si uno no corre o falla seguido; vigía y calentador se cuidan entre ellos y el Latido lo repite como 7ª señal. Vigía reintenta el resumen hasta 3 h; "Sin dato (error al leer)" en vez de omitir; el log del reporte del martes ya no le quita el resumen a los supervisores. Calentador: si algo no queda en caché 2 veces seguidas, espera 30 min. **La carga de ventas ya NO usa el ScriptLock** (marca `ventas_cargando` en caché). |
+| @190 | **Números consistentes:** prime cost SEMANAL con el IGSS del mes (igual que el mensual); el DRE suma los meses con gasto y sin venta (`meses_sin_venta_dre`) → lucro del año igual en DRE y Finanzas; CMV del DRE rotulado "sobre la venta total" con la meta de PARAMETROS (se fue el "28–32%" escrito); `_finParamCelda_` lee celdas con formato % y vacías (la usan `_finParametro_` y `tabParametros_`); colchón de caja de PARAMETROS (`_cajaColchonDias_`) y **el tablero pinta rojo bajo el colchón (7), no bajo 3**. Caché Finanzas v15. + arranque Caja chica Q2,676 al 13-oct (otra sesión). |
+| @192 | **Limpieza** (la 191 es un duplicado sin usar): archivados `RaaDatos.js`, `SemaforoPrecios.js` (sin activador), `REGENERAR_INDICE.js`, PROMPT_*.txt y ~20 funciones sin llamadas → `apps-script/_archivo/2026-10-14_limpieza_auditoria/` con LEEME. Quedaron a propósito `mktReplace` y los retiros viejos de MedicionDatos. + Posibles pagos "No pertenece" y alias Doorways (otra sesión). |
+| @193 | **Año nuevo:** `_finAnioVigente_` — en enero, hasta la primera venta cargada, Finanzas y el DRE siguen en el año anterior (antes quedaban vacíos). **Lector único de números:** `_finNumero_` (acepta q minúscula); `invNumero_` y `psNum_` delegan (idénticos en 16 casos); CierresDiarios conserva el suyo. **Creador de IA: tope 30 usos/persona/día, el dueño sin tope** (`_iaContar_`). Caché Finanzas v16. |
+| @194 | **Batería en carriles:** `PRUEBAS_CARRILES_` = [recetario] · [finanzas, cimientos, accesos, pauta] · [modulos, web, sync, inventario, pos], corren a la vez → **~2 min** (antes 5,5–6,6 y se colgaba). `?page=pruebas&grupos=finanzas,web` = CORRIDA PARCIAL (no sella). Prueba "Los carriles cubren cada grupo una vez". |
+
+**Batería al cierre: 185 OK · 0 fallas · 3 avisos · 2 saltadas = 190 pruebas, 129 s.** Avisos de
+siempre: equilibrio 7/10 y caja contra bancos (datos), y el calentador lento con los carriles en
+paralelo. "Modelo de la pantalla = hojas" a veces sale SALTADA: el recetario sin caché al arrancar.
+
+**Candado, regla nueva (main `ce82c4b`/`6f5fbaf`):** antes de cada `clasp push` de la intranet baja el
+HEAD a una carpeta temporal y FRENA si el servidor tiene archivos que la carpeta que sube no conoce
+(ni en disco, ni en su último commit, ni en su último push, foto en `~/.rosanta-sellos/push-foto-*.json`).
+Pisar solo con el sí de Juanma: `ROSANTA_PUSH_PISAR="motivo" clasp push`. Hook con timeout 200 s.
+Nació de que hoy una sesión borró del /dev la Fase 1 de otra. **El sello compara contra el MÁXIMO
+histórico (190)**: si una batería revisa menos, pide `--acepto-conteo-menor` con el motivo de Juanma.
+
+**Decisiones de Juanma del día:** tokens `?u=` sin vencimiento (riesgo aceptado); tope IA 30, él sin
+tope; publicar fase por fase; la mejora de la batería al final; el CMV del DRE sigue sobre venta
+total (decisión del 15-sep), solo se rotula.
+
+**Lecciones:**
+1. **Cambiar el cálculo = subir la versión de la caché** (`finCacheClave_`). La v14 vieja mezcló prime nuevo y viejo y la batería lo cazó (K06).
+2. **Un cortador de funciones por "primer `}` en la columna 0" se come la función siguiente si la anterior es de UNA línea** (`_finAnio2025_` se llevó `_finBaseAnterior_`; la batería lo cazó en Metas). Verificar lo archivado contra el código vivo.
+3. **Una corrida que se queda en "Corriendo…" más de 7 min es el límite de 6 min**, típico con la caché recién invalidada: recargar. Con carriles ya no debería pasar.
+4. Los clics del navegador de la app SÍ funcionan en la página de Activadores del editor (no dentro de las web apps).
+
+**Pendientes que deja:**
+- **Latido del lunes 13-oct con 100% de error** = encontró una señal fría y avisó por correo: mirar cuál.
+- Pruebas a mano de Profit OS en producción: pagar 2 juntas y anular; Compras retiro + 3 filas + asignar factura; Caja › Leer cierres (11 y 12-oct: Q209 y Q297); Barra y Sala.
+- Precio escrito A MANO en la hoja con coma decimal ("12,5") se lee 125 (siempre fue así; la pantalla de Inventario ya convierte).
+- Opcional: `mktReplace` y el bloque viejo de retiros de MedicionDatos (ver LEEME del archivo).
 
 ---
 
@@ -1929,7 +1975,7 @@ Recetario y costeo pasan a tablero propio; se cerró un bloque de 33 pendientes 
 | **Web Rosanta** | Sitio multilingüe ES/EN vivo, carta 2027 en POS. Abierto: hreflang (Wix no responde) | `references/marketing.md` |
 | **Reservas / Ticketing (WIX)** | Migración COMPLETA (10 ago). Abierto: webhooks mudos 25 días + falta monitor de caídas | `references/marketing.md` |
 | Bot WhatsApp/IG | COMPLETO desde 17 jul. Sin pendientes | `references/proyectos.md` §1 |
-| Intranet/ERP | **Al 8-oct-2026: @168 (ver v33 §1).** Antes: **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
+| Intranet/ERP | **Al 14-oct-2026: @194, auditoría en 5 fases cerrada (ver v35).** Antes: **Al 8-oct-2026: @168 (ver v33 §1).** Antes: **El equipo está en la @124 (25 sep): tablero global de los 6 pilares, solo dueño (`?page=tablero`), más EBITDA, compra sin factura, comensales L–X, medios, CAC y cierre de inventario en sus motores. Batería 126 OK · 0 fallas · 4 avisos · 3 saltadas. Entre la @101 (22 sep, pilar 3 rediseñado) y la @123 hubo 22 versiones de otras sesiones.** Antes, al 16 sep, noche: @100: Diagnóstico IA de pauta con Lente Loomer + AI CMO, arriba junto a Actualizar. @99 (16 sep): Creador de pauta con la Lente Savannah Sanchez para Vanessa. Batería sobre la @99: 118 OK · 0 fallas · 1 aviso (calentador) · 3 saltadas conocidas; la @100 no se volvió a probar (cambios de vista).** Antes, al 15 sep: @98: pestaña Caja, food cost sin servicio, tarjeta real contra teórico, MARKETING_HONORARIOS. Batería 119 OK · 0 fallas · 0 avisos · 3 saltadas, las 3 identificadas. Abiertos 6 críticos de la auditoría del 14-sep (ver v15 §1).** Antes, al 14 sep: v88. Antes, al 12 sep: v81. Token verificado con Jeffry; el CRM con token queda **cerrado por decisión de Juanma**, con la batería de la v80 como evidencia. Abierto: Jose no probó su acceso, marcadores con la URL vieja `/a/macros/`, y 13 scripts de un solo uso viviendo en el proyecto vivo. | `references/proyectos.md` |
 | Mejoras impacto real v2 | Activo: 8 palancas, Q280–390K/año | `references/negocio.md` |
 | Eventos y grupos | Pilar continuo mes a mes (mejora #1) | `references/marketing.md` |
 | Sistema Operativo / SIC | Mandala V4 + Ruta 2×3×5. Social = Niños de Guatemala + plato solidario | proyecto SIC (aparte) |
