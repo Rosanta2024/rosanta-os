@@ -3,7 +3,7 @@
    Uso: node harness-compras.js */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const DIR = path.join(process.env.HOME, 'Dev/Rosanta/apps-script/rosanta-intranet');
+const DIR = path.join(__dirname, '../../apps-script/rosanta-intranet');   // relativo: corre en cualquier worktree
 function revive(v) {
   if (v && typeof v === 'object' && '$d' in v) { const [d, t] = v.$d.split('T'); const [y, m, dd] = d.split('-').map(Number); const [hh, mm, ss] = t.split(':').map(Number); return new Date(y, m - 1, dd, hh, mm, ss); }
   return v === null || v === undefined ? '' : v;
@@ -46,7 +46,7 @@ let archivos = 0;
 ctx.DriveApp = { getFileById: () => ({ getParents: () => ({ next: () => ({ getFoldersByName: () => ({ hasNext: () => false }),
   createFolder: () => ({ createFile: () => ({ getUrl: () => 'https://drive.google.com/file/d/foto' + (++archivos) }) }) }) }) }) };
 ctx.Utilities.newBlob = () => ({}); ctx.Utilities.base64Decode = () => [];
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'ComprasEfectivo.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // el espejo llega hasta el 11-oct: el cuadre se prueba desde septiembre
 vm.runInContext("PAG_DESDE_ = '2026-08-01'; CPE_ARRANQUE_ = '2026-09-01'; fecLeerSiToca_ = function () { return null; }; fecFacturas_ = function () { return []; };", ctx);

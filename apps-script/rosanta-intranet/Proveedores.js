@@ -194,7 +194,7 @@ function registrarPrecio(auth, datos) {
       ahora: nuevo,
       variacion: antesCompra ? (nuevo - antesCompra) / antesCompra * 100 : null
     };
-  }); }, 'registrarPrecio');
+  }); }, 'registrarPrecio', usuario.nombre || usuario.email);
 
   var res = hecho.resultado;
   res.cambios = hecho.cambios;

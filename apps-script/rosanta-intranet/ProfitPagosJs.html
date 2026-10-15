@@ -201,7 +201,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         // boton vive en la tarjeta del proveedor. Antes salia en una barra al pie de toda la lista.
         var pagables = g.filter(function (f) { return f.saldo > 0.01; }), elegidas = pagables.filter(function (f) { return SEL[f.llave]; });
         var todas = pagables.length > 1 && elegidas.length === pagables.length, abiertaSel = ABIERTA === 'sel:' + f0.nit && elegidas.length > 1;
-        return '<section class="pg-prov"><header><div><span class="pg-area">' + esc(f0.grupo) + '</span><h3>' + esc(f0.proveedor) + '</h3>' +
+        return '<section class="pg-prov" data-nit="' + esc(f0.nit) + '"><header><div><span class="pg-area">' + esc(f0.grupo) + '</span><h3>' + esc(f0.proveedor) + '</h3>' +
           '<button type="button" class="pg-x" style="color:var(--vb)" data-hist="' + esc(f0.nit) + '">ver historial de facturas y pagos</button></div>' +
           '<div class="n"><b>' + q(tot) + '</b>' + (fav > 0.01 ? ' · <span class="pg-est ok">' + q(fav) + ' a favor</span>' : '') + '</div></header>' +
           '<div class="pg-l cab"><span>' + (pagables.length > 1 ? '<input type="checkbox" data-selprov="' + esc(f0.nit) + '"' + (todas ? ' checked' : '') + ' aria-label="Elegir todas" title="Elegir todas">' : '') + '</span><span>DTE</span><span>Fecha</span><span>Fecha de pagar</span><span class="n">Cantidad a pagar</span><span>Estatus de pago</span><span></span></div>' +
@@ -513,21 +513,85 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   function repintarCuerpo() { var c = HOST.querySelector('#pg-cuerpo'); if (c) c.innerHTML = cuerpo([]); }
 
   /* hacer(r) recibe el google.script.run ya armado y llama a la funcion por su nombre
-     literal, con AUTH primero: la bateria revisa cada llamada y su guarda. */
-  function llamar(hacer, panel) {
+     literal, con AUTH primero: la bateria revisa cada llamada y su guarda.
+     QUE SE VEA QUE PASA (15-oct-2026, Juanma: "no sabes si esta cargando o no"):
+       · al tocar, el aviso de abajo dice "Guardando…" al instante (GuardadoEstado.html) y a los
+         4 s "Sigue guardando, no cierres esta página";
+       · el servidor devuelve solo lo que cambio (d.rapido, _pagCambios_ en PagosProveedores.js):
+         se pega sobre lo que ya hay, la pantalla queda en la misma pestaña y a la misma altura,
+         y el proveedor tocado se marca un momento; el aviso confirma "✓ Pago guardado: Q… a …";
+       · si falla: si alguien mas estaba guardando, Reintentar (no se escribio nada); si se corto
+         el internet, NO se ofrece repetir —el pago pudo haber quedado— sino revisar la pantalla;
+         si el servidor dijo que no (un dato), el mensaje queda en el panel para corregirlo.
+     OCUPADO impide un doble envio mientras uno esta en curso. */
+  function llamar(hacer, panel, texto) {
     if (OCUPADO) return;
     OCUPADO = true;
     var err = panel && panel.querySelector('[data-err]');
     if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
-    if (err) err.textContent = 'Guardando…';
-    var gb = panel && panel.querySelector('[data-guardar]'); if (gb) gb.textContent = 'Guardando…';
-    hacer(google.script.run.withSuccessHandler(function (d) { OCUPADO = false; D0 = d; D = filtrar(d); ABIERTA = null; SEL = {}; AGR = null; IVAAGR = null; pintar(); })
+    if (err) err.textContent = '';
+    var gb = panel && panel.querySelector('[data-guardar]'), gbTxt = gb ? gb.textContent : '';
+    if (gb) gb.textContent = 'Guardando…';
+    var g = PF_GUARDADO.empezar(texto || 'Guardando…', 'pagos');
+    hacer(google.script.run.withSuccessHandler(function (d) {
+        OCUPADO = false;
+        var y = window.scrollY;
+        if (d && d.rapido) aplicarCambios(d); else { D0 = d; D = filtrar(d); SEL = {}; }
+        ABIERTA = null; AGR = null; IVAAGR = null;
+        pintar();
+        window.scrollTo(0, y);
+        marcarRecien(d && d.nits);
+        g.listo((d && d.resumen) || 'Guardado');
+      })
       .withFailureHandler(function (e) {
         OCUPADO = false;
         if (panel) panel.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-        if (gb) gb.textContent = gb.closest('[data-panel="mercado"]') ? 'Guardar compra' : 'Guardar pago';
-        if (err) err.textContent = PF_ERROR(e); else alert(PF_ERROR(e));
+        if (gb) gb.textContent = gbTxt;
+        var m = PF_ERROR(e), crudo = String(e && e.message || e);
+        if (/Lock timeout|could not obtain lock|otra lectura en curso|está guardando en este momento/i.test(crudo + m)) {
+          g.fallo(m, function () { llamar(hacer, panel, texto); });   // no se escribio nada: repetir es seguro
+        } else if (/NetworkError|Failed to fetch|network|timed? ?out|sin respuesta|no response|Exceeded maximum execution time|cortó el internet|No llegó respuesta/i.test(crudo + m)) {
+          g.fallo('Se cortó la conexión. Tocá Actualizar y revisá antes de volver a guardar.', null, 'No sé si se guardó.');
+        } else {
+          if (err) err.textContent = m;
+          g.fallo(m, null);
+        }
       }));
+  }
+  /* Lo que devolvio el guardado, pegado sobre D0: las facturas y la fila del cuadre de los
+     proveedores tocados (en el mismo lugar de la lista), su saldo a favor, y las listas chicas. */
+  function aplicarCambios(c) {
+    var toca = {}; (c.nits || []).forEach(function (n) { toca[n] = 1; });
+    var pegar = function (vieja, nueva) {
+      var out = [], puesto = {};
+      (vieja || []).forEach(function (x) {
+        if (!toca[x.nit]) { out.push(x); return; }
+        if (puesto[x.nit]) return;
+        puesto[x.nit] = 1;
+        (nueva || []).forEach(function (y) { if (y.nit === x.nit) out.push(y); });
+      });
+      (nueva || []).forEach(function (y) { if (!puesto[y.nit]) out.push(y); });
+      return out;
+    };
+    if (c.facturas) {
+      // el mismo orden que el servidor (_pagVisibles_ y _pagCuadre_ en PagosProveedores.js)
+      var og = function (g) { var i = (D0.grupos || []).indexOf(g); return i < 0 ? 99 : i; };
+      D0.facturas = pegar(D0.facturas, c.facturas).sort(function (a, b) { return og(a.grupo) - og(b.grupo) || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 :
+        a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.llave < b.llave ? -1 : a.llave > b.llave ? 1 : 0); });
+      D0.cuadre = pegar(D0.cuadre, c.cuadre).sort(function (a, b) { return b.pendiente - a.pendiente || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : a.nit < b.nit ? -1 : a.nit > b.nit ? 1 : 0); });
+      D0.favores = (D0.favores || []).filter(function (m) { return !toca[m.nit]; }).concat(c.favores || []);
+      D0.facturas.forEach(function (f) { if (toca[f.nit]) delete SEL[f.llave]; });
+    }
+    ['mercado', 'proveedores_mercado', 'por_devolver', 'gen'].forEach(function (k) { if (c[k] !== undefined) D0[k] = c[k]; });
+    D = filtrar(D0);
+  }
+  /* El proveedor recien tocado se marca un momento, para que se vea donde quedo. */
+  function marcarRecien(nits) {
+    (nits || []).forEach(function (n) {
+      HOST.querySelectorAll('[data-nit="' + n + '"]').forEach(function (el) {
+        el.classList.add('pg-recien'); setTimeout(function () { el.classList.remove('pg-recien'); }, 3500);
+      });
+    });
   }
   function valor(panel, k) { var el = panel.querySelector('[data-f="' + k + '"]'); return el ? el.value : ''; }
 
@@ -588,7 +652,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       if (!OX) return;
       if (!confirm('¿El cargo de ' + q(PX.pago.q) + ' del ' + ddmm(PX.pago.fecha) + ' (' + nom(PX.pago.banco) + ') es ' + (OX.abono ? 'un abono a ' : OX.fraccionado ? 'el pago (en ' + PX.pagos.length + ' cargos) de ' : 'el pago de ') + OX.facturas.map(function (f) { return f.proveedor + ' ' + f.dte; }).join(', ') + '?')) return;
       var pl = PX.pago.llave, ks2 = OX.llaves;
-      llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel);
+      llamar(function (r) { r.confirmarPosiblePago(AUTH, pl, ks2); }, panel, 'Confirmando el pago con el banco…');
       return;
     }
     if (b.dataset.descpos) {
@@ -596,7 +660,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       if (!PD2) return;
       if (!confirm('¿El cargo de ' + q(PD2.pago.q) + ' del ' + ddmm(PD2.pago.fecha) + ' (' + PD2.pago.glosa + ') NO es el pago de ninguna de estas facturas?\n\nSale de Posibles pagos y no vuelve a ofrecerse. Se puede deshacer abajo, en "Marcados No pertenece".')) return;
       var plD = PD2.pago.llave;
-      llamar(function (r) { r.descartarPosiblePago(AUTH, plD); }, panel);
+      llamar(function (r) { r.descartarPosiblePago(AUTH, plD); }, panel, 'Guardando…');
       return;
     }
     if (b.dataset.ivaagr) { IVAAGR = {}; repintarCuerpo(); return; }
@@ -606,19 +670,19 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       if (!rI) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
       var kI = rI.dataset.ivallave, nI = valor(panel, 'inota');
       if (!confirm('¿Esta factura es ajena a la operación y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE. Se puede devolver desde esta misma lista.')) return;
-      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kI, nI); }, panel);
+      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kI, nI); }, panel, 'Marcando la factura…');
       return;
     }
     if (b.dataset.agrfact && panel) {
       var aks = []; panel.querySelectorAll('[data-allave]').forEach(function (c) { if (c.checked) aks.push(c.dataset.allave); });
       if (!aks.length) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
       var an = b.dataset.agrfact, am = valor(panel, 'amonto'), af = valor(panel, 'afecha') || hoy(), ano = valor(panel, 'anota');
-      llamar(function (r) { r.agregarFacturaDeSuBolsa(AUTH, an, aks, af, am === '' ? null : Number(am), ano); }, panel);
+      llamar(function (r) { r.agregarFacturaDeSuBolsa(AUTH, an, aks, af, am === '' ? null : Number(am), ano); }, panel, 'Guardando en Por devolver…');
       return;
     }
     if (b.dataset.agrmerc && panel) {
       var mn = b.dataset.agrmerc, mf2 = valor(panel, 'mfecha') || hoy(), mp2 = valor(panel, 'mprov'), md2 = valor(panel, 'mdet'), mq2 = Number(valor(panel, 'mmonto'));
-      llamar(function (r) { r.agregarCompraDeSuBolsa(AUTH, mn, mf2, mp2, md2, mq2); }, panel);
+      llamar(function (r) { r.agregarCompraDeSuBolsa(AUTH, mn, mf2, mp2, md2, mq2); }, panel, 'Guardando en Por devolver…');
       return;
     }
     if (b.dataset.acc === 'recargar') { BAL = null; cargar(); return; }
@@ -633,7 +697,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.acc === 'anterior') { formAnterior(); return; }
     if (b.dataset.traer && panel) {
       var dte = valor(panel, 'dte'), sal = valor(panel, 'saldo'), nitA = valor(panel, 'nit'), detA = valor(panel, 'det');
-      llamar(function (r) { r.traerFacturaAnterior(AUTH, dte, sal === '' ? null : Number(sal), nitA, detA); }, panel); return;
+      llamar(function (r) { r.traerFacturaAnterior(AUTH, dte, sal === '' ? null : Number(sal), nitA, detA); }, panel, 'Trayendo la factura…'); return;
     }
     if (b.dataset.todasprov) { D.facturas.forEach(function (f) { if (f.nit === b.dataset.todasprov && f.saldo > 0.01) SEL[f.llave] = true; }); pintar(); return; }
     if (b.dataset.quitarsel) { D.facturas.forEach(function (f) { if (f.nit === b.dataset.quitarsel) delete SEL[f.llave]; }); if (ABIERTA === 'sel:' + b.dataset.quitarsel) ABIERTA = null; pintar(); return; }
@@ -651,41 +715,41 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         var mf = valor(panel, 'fecha'), mp = valor(panel, 'prov'), md = valor(panel, 'det'), mq = Number(valor(panel, 'monto')),
             ma = valor(panel, 'area') || D.areas[0];
         if (!(mq > 0)) { errG.textContent = 'Escribí la cantidad.'; return; }
-        llamar(function (r) { r.registrarCompraMercado(AUTH, mf, mp, md, mq, ma, L.forma, L.medio); }, panel);
+        llamar(function (r) { r.registrarCompraMercado(AUTH, mf, mp, md, mq, ma, L.forma, L.medio); }, panel, 'Guardando la compra…');
         return;
       }
       var ks = panel.dataset.panel.split(','), m = valor(panel, 'monto');
       var fecha = valor(panel, 'fecha') || hoy(), favor = Number(valor(panel, 'favor')) || 0, nota = valor(panel, 'nota');
-      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, L.forma, fecha, m === '' ? null : Number(m), favor, nota, L.medio); }, panel);
+      llamar(function (r) { r.registrarPagoFacturas(AUTH, ks, L.forma, fecha, m === '' ? null : Number(m), favor, nota, L.medio); }, panel, 'Guardando el pago…');
       return;
     }
     if (b.dataset.programar && panel) {
       if (!valor(panel, 'fpagar')) { panel.querySelector('[data-err]').textContent = 'Elegí la fecha de pagar.'; return; }
       var llave = b.dataset.programar, fp = valor(panel, 'fpagar');
-      llamar(function (r) { r.programarPagoFactura(AUTH, llave, fp); }, panel); return;
+      llamar(function (r) { r.programarPagoFactura(AUTH, llave, fp); }, panel, 'Guardando la fecha de pago…'); return;
     }
     if (b.dataset.iva && panel) {
       if (!confirm('¿La factura ' + b.dataset.iva.split('|')[1] + ' es ajena al giro y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE, y en el maestro pasa a FACTURA_AJENA. Se puede devolver desde la pestaña Para reducir IVA.')) return;
       var kIva = b.dataset.iva, nIva = valor(panel, 'nota');
-      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kIva, nIva); }, panel); return;
+      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kIva, nIva); }, panel, 'Marcando la factura…'); return;
     }
     if (b.dataset.devolver && panel) {
       var quien = b.dataset.devolver, dq = Number(valor(panel, 'monto')), dfe = valor(panel, 'fecha') || hoy(), dno = valor(panel, 'nota');
       if (!(dq > 0)) { panel.querySelector('[data-err]').textContent = 'Escribí cuánto le devolviste.'; return; }
       if (!confirm('¿Registrar que le devolviste ' + q(dq) + ' a ' + quien + '?')) return;
-      llamar(function (r) { r.registrarDevolucionEquipo(AUTH, quien, dq, dfe, dno); }, panel); return;
+      llamar(function (r) { r.registrarDevolucionEquipo(AUTH, quien, dq, dfe, dno); }, panel, 'Guardando la devolución…'); return;
     }
     if (b.dataset.ivadev) {
       if (!confirm('¿Devolver esta factura a su categoría de siempre? Vuelve a Pagos y al DRE.')) return;
       var kDev = b.dataset.ivadev;
-      llamar(function (r) { r.devolverFacturaParaIva(AUTH, kDev); }); return;
+      llamar(function (r) { r.devolverFacturaParaIva(AUTH, kDev); }, null, 'Devolviendo la factura…'); return;
     }
-    if (b.dataset.anular) { if (confirm('¿Anular este movimiento? Queda en la hoja marcado ANULADO.')) { var id = b.dataset.anular; llamar(function (r) { r.anularMovimientoPago(AUTH, id); }); } return; }
+    if (b.dataset.anular) { if (confirm('¿Anular este movimiento? Queda en la hoja marcado ANULADO.')) { var id = b.dataset.anular; llamar(function (r) { r.anularMovimientoPago(AUTH, id); }, null, 'Anulando…'); } return; }
     if (b.dataset.favor) {
       var monto = prompt('¿Cuánto tiene Rosanta a favor con este proveedor? (Q)'); if (!monto) return;
       var det = prompt('¿De dónde sale? (ej. nota de crédito, pagamos de más la semana 38)'); if (!det) return;
       var nit = b.dataset.favor;
-      llamar(function (r) { r.registrarSaldoFavor(AUTH, nit, Number(monto), det); });
+      llamar(function (r) { r.registrarSaldoFavor(AUTH, nit, Number(monto), det); }, null, 'Guardando el saldo a favor…');
     }
   });
   // el resumen de lo que se va a guardar se pone al dia con cada cambio del panel

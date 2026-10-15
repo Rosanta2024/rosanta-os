@@ -59,6 +59,15 @@
     .rp-form input, .rp-form textarea, .rp-form select { width: 100%; font-family: var(--rosanta-font-body); font-size: 0.9rem; padding: 0.45rem 0.55rem; border: 1px solid rgba(26,26,26,0.18); border-radius: 8px; background: var(--superficie); }
     .rp-form textarea { min-height: 4rem; }
     .rp-form .fila { display: grid; gap: 0.8rem; grid-template-columns: 2fr 1fr; }
+    @media (max-width: 640px) {
+      /* celular (15-oct-2026): las cuatro columnas se apretaban y las cifras se montaban */
+      .rp-area, .rp-labs { gap: 0.35rem; }
+      .rp-col { font-size: 0.7rem; }
+      .rp-col b { padding: 0 0.15rem; }
+      .rp-form .fila { grid-template-columns: 1fr; }
+      .rp-form input, .rp-form textarea, .rp-form select { font-size: 16px; }
+      .rp-dos { grid-template-columns: 1fr; }
+    }
     .rp-aviso { background: var(--alerta-tint); border-radius: 12px; padding: 0.7rem 1rem; font-size: 0.84rem; line-height: 1.5; margin: 0.6rem 0; }
     .rp-error { background: var(--mal-tint); border-radius: 14px; padding: 0.9rem 1.1rem; font-size: 0.88rem; line-height: 1.5; margin-top: 0.8rem; }
     .rp-cargando { padding: 3rem 0; text-align: center; opacity: 0.6; }
