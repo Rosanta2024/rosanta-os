@@ -366,10 +366,34 @@ function claudeHeaders_() {
 function claudeCuerpo_(system, messages) {
   var b = { model: CONFIG.CLAUDE_MODEL, max_tokens: 4000, system: system, messages: messages };
   if (claudeEsNuevo_()) {
-    b.output_config = { effort: 'low' };
+    // Salida estructurada: la API garantiza JSON válido (en la prueba del 15-oct un intento
+    // salió como texto suelto y había que reintentar).
+    b.output_config = { effort: 'low', format: { type: 'json_schema', schema: CLAUDE_ESQUEMA_() } };
     b.fallbacks = 'default';
   }
   return b;
+}
+function CLAUDE_ESQUEMA_() {
+  var txt = { type: 'string' };
+  var campos = ['canal', 'idioma', 'nombre', 'telefono', 'email', 'fecha', 'hora', 'personas', 'tipo_evento',
+    'formato_menu', 'presupuesto', 'tipo', 'urgencia', 'resumen', 'accion'];
+  var props = {};
+  campos.forEach(function (c) { props[c] = txt; });
+  props.idioma = { type: 'string', enum: ['es', 'en'] };
+  props.tipo = { type: 'string', enum: ['reserva', 'evento', 'consulta', 'queja', 'spam', 'otro'] };
+  props.urgencia = { type: 'string', enum: ['caliente', 'tibio', 'frio'] };
+  props.accion = { type: 'string', enum: ['crear_reserva', 'cancelar_reserva', 'redirigir_reservas',
+    'escalar_evento', 'responder_info', 'escalar_humano'] };
+  props.opciones = { type: 'array', items: txt };
+  props.mostrar_menu = { type: 'boolean' };
+  props.requiere_humano = { type: 'boolean' };
+  return {
+    type: 'object', additionalProperties: false, required: ['respuesta', 'lead'],
+    properties: {
+      respuesta: txt,
+      lead: { type: 'object', additionalProperties: false, required: Object.keys(props), properties: props }
+    }
+  };
 }
 function claudeEsNuevo_() {
   return /^claude-(sonnet-5-5|opus-5-5|opus-5|fable-5)/.test(String(CONFIG.CLAUDE_MODEL || ''));
@@ -528,7 +552,7 @@ function masterPrompt_() { return [
   'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que Juanma le hará una propuesta, con la FRASE DE PASO A PERSONA. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
 'EVENTOS PÚBLICOS DEL MES (maridajes, catas, noches temáticas con precio y cupo que aparezcan en la base): SÍ das la info completa tomada de la base y compartes el link de reservas. NO los escalas salvo grupo grande o caso especial. tipo:"evento", requiere_humano:false.',
 '',
-'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo". Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
+'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo" (aunque la base de conocimiento lo diga, usa solo la FRASE DE PASO A PERSONA, una sola vez). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
 '',
 'NO HAGAS: confirmar reservas como definitivas; prometer descuentos/cortesías sin autorización; compartir datos internos; mencionar al cliente el nombre de ningún empleado (la única excepción es Juanma, solo dentro de la FRASE DE PASO A PERSONA); salirte del tema del restaurante.',
 '',
