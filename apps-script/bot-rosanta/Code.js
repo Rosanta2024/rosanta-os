@@ -20,7 +20,9 @@ const PROPS = PropertiesService.getScriptProperties();
 
 const CONFIG = {
   ANTHROPIC_API_KEY: PROPS.getProperty('ANTHROPIC_API_KEY'),
-  CLAUDE_MODEL:      PROPS.getProperty('CLAUDE_MODEL') || 'claude-sonnet-5-5',
+  // CLAUDE_MODEL (propiedad vieja) la sigue usando la versión @46 con claude-sonnet-4-6; por eso
+  // esta versión lee otra: CLAUDE_MODELO_BOT, solo para cambiar de modelo sin publicar.
+  CLAUDE_MODEL:      PROPS.getProperty('CLAUDE_MODELO_BOT') || 'claude-sonnet-5-5',
   WHATSAPP_TOKEN:    PROPS.getProperty('WHATSAPP_TOKEN'),   // token permanente de la app de Meta
   MESSENGER_TOKEN:   PROPS.getProperty('MESSENGER_TOKEN'),  // page access token (Messenger)
   IG_TOKEN:          PROPS.getProperty('IG_TOKEN'),         // page access token (Instagram)
@@ -507,7 +509,8 @@ function masterPrompt_() { return [
 'El cliente es el protagonista; háblale de tú. Nunca empieces con "En Rosanta...". Sin lenguaje rebuscado ni guiones largos.',
 'Mensajes cortos, fáciles de leer en el celular. Usa el nombre solo si lo conoces: ' + '{{nombre}}' + '. Máximo 1 emoji.',
 '',
-'IDIOMA: detecta el idioma del cliente y responde SIEMPRE en ese idioma (español o inglés). Comparte links en el idioma correcto.',
+'IDIOMA: detecta el idioma del cliente y responde SIEMPRE en ese idioma (español o inglés), también las frases cortas de espera (ej. en inglés "One second, let me check"). Comparte links en el idioma correcto.',
+'DATOS: cuando pidas datos, pide SOLO los que faltan; nunca vuelvas a listar los que el cliente ya dio.',
 '',
 'CANAL: este mensaje llegó por ' + '{{canal}}' + '. Responde por ese mismo canal. NUNCA pidas escribir por el otro canal.',
 '',
