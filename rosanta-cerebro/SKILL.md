@@ -7,7 +7,33 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 14 oct 2026, noche (v35).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 14 oct 2026, noche (v36).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 14 oct 2026, noche (v36): la pauta lee el PosFile nuevo (S40 y S41)
+
+**Qué se rompió:** el Latido del lunes 13-oct salió con 100% de error. La señal fría era
+**"pauta · POS"**: S40 y S41 no tenían comensales ni ticket en `pauta_semanal` (Sheet Rosanta
+Marketing OS). `posActualizarPauta()` (`apps-script/rosanta-marketing-os/PosPauta.js`) solo
+buscaba archivos `POS*`/`ReporteVentas*`, y desde el 1-oct-2026 PosFile deja **`ReporteFacturas-DD-MM-YYYY`**.
+No falló: actualizaba las semanas viejas y dejaba las nuevas en blanco.
+
+**El arreglo (commit `d9487f7`, en main; Marketing OS en HEAD, verificado bajándolo aparte):**
+- Acepta también `ReporteFacturas*`. **Decisión de Juanma: Marketing OS lee el archivo, la intranet NO escribe `pauta_semanal`.** La sesión "Auditar scripts" había propuesto tomar `com`/`tp` de `_finDatos_`, y se descartó.
+- Lee igual que `_cargarPOSFacturas` del cargador del maestro, para que los comensales cuadren con `02_Ventas_Maestro`. Solo descarta las facturas **anuladas** ("finalizado" y **"contingencia"** cuentan: S40 trae contingencia en todas). Comensales = `Notas` solo si es un entero (`/^\d+$/`: "1 persona" queda sin comensales). **No filtra `Contable`**: mientras la SAT no reciba, todas dicen "no".
+- **El ticket de pauta NO cambió (decisión de Juanma): venta CON IVA y con el 10% de servicio ÷ comensales.** No es el `tp` de Finanzas, que va sin IVA.
+- Acepta el prefijo **"Copy of " / "Copia de "**: así quedó en S40 el último ReporteVentas viejo (28–30 sep).
+- Los reportes viejos (S1–S39) se leen igual que antes.
+
+**Corrida de Juanma desde el editor (19:36, 18 archivos):** **S40 = 60 comensales, ticket Q353.10** (49 del 1 al 4 de octubre + 11 del 28 al 30 de septiembre) · **S41 = 74 comensales, ticket Q279.70**. El ticket de S40 es alto frente a Q250–300: sale tal cual de las facturas.
+
+**Lecciones:**
+1. **`clasp run` tampoco sirve en Marketing OS** ("Unable to run script function"). Lo que el cerebro v33 decía ("`clasp run` funciona en Marketing OS") queda OBSOLETO: Juanma corre la función desde el editor.
+2. **Dos sesiones arreglaron lo mismo a la vez.** "Solidez de la intranet, día 2" subió a HEAD su versión de PosPauta, sin commit en main, y filtraba Estado = "finalizado": S40 perdía todo octubre. Se detectó bajando HEAD aparte antes del push, y se coordinó con un mensaje entre sesiones. **El candado solo protege la intranet: en Marketing OS la comparación de HEAD hay que hacerla a mano.**
+3. **Si cambia el proveedor de un archivo, hay que revisar a TODOS sus lectores, no solo al cargador.** Esta vez el cargador del maestro se adaptó el 1-oct y el lector de la pauta se quedó atrás dos semanas.
+
+**Pendiente que deja:** el mismo Latido marcó la **lectura del CRM en 36%** (mínimo 50%). Las mesas no se marcan Seated/Finished en Wix. Es un recordatorio para el equipo de sala; mientras tanto, el CAC de octubre no se publica.
 
 ---
 
@@ -50,7 +76,7 @@ total (decisión del 15-sep), solo se rotula.
 4. Los clics del navegador de la app SÍ funcionan en la página de Activadores del editor (no dentro de las web apps).
 
 **Pendientes que deja:**
-- **Latido del lunes 13-oct con 100% de error** = encontró una señal fría y avisó por correo: mirar cuál.
+- ~~**Latido del lunes 13-oct con 100% de error**~~ **HECHO (v36):** la señal fría era "pauta · POS" (S40/S41 sin comensales) y está arreglada. Sigue abierta la lectura del CRM en 36%.
 - ~~Pruebas a mano de Profit OS en producción~~ **HECHO (Juanma, 14-oct noche): "todo funciona correctamente"** — pagar 2 juntas y anular; Compras retiro + 3 filas + asignar factura; Caja › Leer cierres; Barra y Sala.
 - Precio escrito A MANO en la hoja con coma decimal ("12,5") se lee 125 (siempre fue así; la pantalla de Inventario ya convierte).
 - Opcional: `mktReplace` y el bloque viejo de retiros de MedicionDatos (ver LEEME del archivo).
@@ -86,7 +112,7 @@ Corrida manual (la programada del 1-oct no quedó registrada). Fuente: memorias 
 - **@143–@156 reporte semanal para supervisores**: el PDF oficial VOLVIÓ al estilo S38 (Python, routine `rosanta-reporte-semanal` recreada el 28-sep, lunes 16:24, formato v1.1 en `Maestro/Rosanta_Formato_Reporte_Semanal.md`). Del costo solo va **prime cost**. Página 6 = acciones amarradas a METAS. Se manda por correo a Jeffry y José el **martes 12:00** (`ReporteCorreo.js`). Puente por Drive `PuenteReporte.js`. Las acciones de Vanessa (Reservas) y del dueño (Administración) se aprueban en la sección 8, aparte, sin imprimirse (@155). Lo que en la v28–v32 diga que el reporte vive solo en la intranet o que la tarea del lunes se eliminó queda **OBSOLETO**.
 - **@157–@160 Pagos a proveedores (p213)**: reemplaza a COMPRAS_2026 desde el 5-oct (queda como historial). Módulo `pagos`; Jeffry confirma cocina y Maco barra. Herramienta "Pagos" en Profit OS, con "Balance del año" por proveedor.
 - **@154** comprobantes en Compras en efectivo leídos con Claude. **@161** tarjeta de crédito BI en el cálculo. **@162–@167** Inventarios: por rubro y consolidado del cierre para Contabilidad. **@164** las comisiones de tarjeta salen de Pagos.
-- **`clasp run` funciona** (28-sep) en la intranet, el maestro (desde el 5-oct) y Marketing OS: proyecto GCP 512086396641, `--use-project-scopes`. Corre HEAD. Trampa: si solo borraste archivos, `clasp push` no los saca del remoto.
+- **`clasp run` funciona** (28-sep) en la intranet, el maestro (desde el 5-oct) y Marketing OS *(OBSOLETO: el 14-oct contesta "Unable to run script function" en Marketing OS y en la intranet; ver v36)*: proyecto GCP 512086396641, `--use-project-scopes`. Corre HEAD. Trampa: si solo borraste archivos, `clasp push` no los saca del remoto.
 
 ### 2. Finanzas & Data OS: reglas nuevas
 - **Todo nativo de Google** (5-oct): nada de `.xlsx`. El espejo sigue generándose porque lo leen el reporte y el harness; no proponer soluciones sobre él.

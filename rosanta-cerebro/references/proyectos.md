@@ -195,7 +195,7 @@ Ver `references/marketing.md` para el detalle de campaña, audiencias y reputaci
 - Hoja **Rosanta Marketing OS** `1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc`.
 - **N1 — CREDENCIALES EN TEXTO PLANO:** la pestaña `config` guarda en celdas normales un token de larga duración de Meta (EAA…), una API key/JWT de Wix (IST.ey…) y el site id. Con ese token se puede publicar y gastar en nombre de Rosanta. Las lee `WixReservasPauta.js` línea 54. Moverlas a Propiedades del script y revisar con quién está compartida la hoja.
 - **N1 — CUATRO deployments vivos**, dos de ellos (v2 `AKfycbwUM-icAFh4…`, v3 `AKfycbzCjzI_xpGw…`) sirven código viejo que solo conoce `hook=sontickets`. Buenas: @HEAD `AKfycbyuXVzGU-…` y v18 `AKfycbzEv9C1gZ6-…`. Borrar v2 y v3 **después** de confirmar a dónde apunta Wix. Referencia: sección 5.6 de `INFORME_APPS_SCRIPT.md`.
-- **`posActualizarPauta()`** debe correrse a mano una vez para recuperar S32–S35 de comensales y ticket: el fix del 24 ago nunca se había subido y producción leía una carpeta vacía en silencio.
+- **`posActualizarPauta()`** debe correrse a mano una vez para recuperar S32–S35 de comensales y ticket: el fix del 24 ago nunca se había subido y producción leía una carpeta vacía en silencio. **14-oct-2026 (v36):** desde la S40 también lee `ReporteFacturas*` del PosFile nuevo (misma regla que `_cargarPOSFacturas`); `clasp run` no sirve, se corre desde el editor.
 - **Auditoría de los 7 proyectos de Apps Script** entregada el 31 ago: mapa de quién escribe qué Sheet, dos duplicaciones reales y dos falsas alarmas. Destapó cinco fallos que nadie veía.
 
 ---
