@@ -1,0 +1,1 @@
+Prueba completa EN VIVO contra Wix (crea, cambia, cambio sin lugar, cambia personas, cancela, modelo). Corrida 15-oct-2026 17:13: 8 de 8. Crea reservas reales "PRUEBA BOT" (tel +502 2999 1515, prueba-bot@rosanta.rest) y las cancela al final. Para volver a correrla, copiarla a bot-rosanta, push y ejecutarla desde el editor; después archivarla.

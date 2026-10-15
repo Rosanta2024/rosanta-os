@@ -35,6 +35,7 @@ var RV_MIN_ENTRE_INTENTOS = 3;   // minutos: evita crear dos veces la misma rese
 function rvCerrar(result, canal, contactoId) {
   try {
     if (!result || !result.lead) return result; if (String(result.lead.accion || '') === 'cancelar_reserva') return rvCancelar(result, canal, contactoId);   // vive en Cancelar.gs
+    if (String(result.lead.accion || '') === 'cambiar_reserva') return rvCambiar(result, canal, contactoId);    // vive en Cambiar.js
 
     // La fecha se revisa en cuanto aparece, sin esperar a tener los cinco datos.
     // Solo cuando el hilo va de reservar: si alguien menciona una fecha vieja
@@ -343,6 +344,7 @@ function rvHistoria(contactoId, result, nota) {
 
 /** Aviso al equipo cuando el bot cierra una reserva. No es escalamiento: es para enterarse. */
 function rvAvisar(d) {
+  if (RV_SILENCIO) return;   // prueba
   var texto = '✅ Reserva nueva (bot ' + (d.canal || '') + ')\n' +
     d.nombre + ' · ' + d.personas + ' personas\n' +
     rvFechaBonita(d.fecha, false) + ' · ' + d.hora + '\n' +

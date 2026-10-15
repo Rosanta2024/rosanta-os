@@ -31,7 +31,7 @@ function rvLlamarCancelar(d) {
   try {
     var res = UrlFetchApp.fetch(url, {
       method: 'post', contentType: 'application/json',
-      payload: JSON.stringify({ secreto: sec, telefono: d.telefono, email: d.email, fecha: d.fecha }),
+      payload: JSON.stringify({ secreto: sec, telefono: d.telefono, email: d.email, fecha: d.fecha, hora: d.hora || '', todas: d.todas === true }),
       muteHttpExceptions: true
     });
     var body = JSON.parse(res.getContentText() || '{}');
@@ -47,6 +47,7 @@ function rvCancelar(result, canal, contactoId) {
   var d = {
     email:    String(result.lead.email || '').trim().toLowerCase(),
     fecha:    rvFecha(result.lead.fecha),
+    hora:     rvHora(result.lead.hora),
     telefono: String(result.lead.telefono || '').replace(/\D/g, ''),
     idioma:   String(result.lead.idioma || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es'
   };
@@ -89,7 +90,7 @@ function rvCancelar(result, canal, contactoId) {
     result.lead.requiere_humano = false;
     rvHistoria(contactoId, result,
       'El cliente tiene ' + (r.cuantas || 0) + ' reservas activas y se le pregunto cual cancelar. ' +
-      'NO se cancelo ninguna todavia.');
+      'NO se cancelo ninguna todavia. Cuando conteste, marca cancelar_reserva con esa fecha y esa hora.');
     return result;
   }
 
@@ -124,6 +125,7 @@ function rvCancelar(result, canal, contactoId) {
 
 /** El equipo se entera de toda cancelacion hecha por el bot. */
 function rvAvisarCancel(d, canal) {
+  if (RV_SILENCIO) return;   // prueba
   var texto = '❌ Reserva CANCELADA (bot ' + (canal || '') + ')\n' +
     (d.nombre || '') + ' · ' + d.personas + ' personas\n' +
     rvFechaBonita(d.fecha, false) + ' · ' + d.hora + '\n' +
@@ -153,6 +155,7 @@ function rvAvisarCancel(d, canal) {
  * caso: 'creada' | 'cancelada'
  */
 function rvCorreoCliente(d, caso) {
+  if (RV_SILENCIO) return;   // prueba
   var email = String(d.email || '').trim();
   if (!email || email.indexOf('@') < 0) {
     Logger.log('rvCorreoCliente: sin correo del cliente, no se manda nada.');

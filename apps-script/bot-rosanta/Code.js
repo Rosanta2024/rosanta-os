@@ -375,14 +375,14 @@ function claudeCuerpo_(system, messages) {
 }
 function CLAUDE_ESQUEMA_() {
   var txt = { type: 'string' };
-  var campos = ['canal', 'idioma', 'nombre', 'telefono', 'email', 'fecha', 'hora', 'personas', 'tipo_evento',
+  var campos = ['canal', 'idioma', 'nombre', 'telefono', 'email', 'fecha', 'fecha_actual', 'hora_actual', 'hora', 'personas', 'tipo_evento',
     'formato_menu', 'presupuesto', 'tipo', 'urgencia', 'resumen', 'accion'];
   var props = {};
   campos.forEach(function (c) { props[c] = txt; });
   props.idioma = { type: 'string', enum: ['es', 'en'] };
   props.tipo = { type: 'string', enum: ['reserva', 'evento', 'consulta', 'queja', 'spam', 'otro'] };
   props.urgencia = { type: 'string', enum: ['caliente', 'tibio', 'frio'] };
-  props.accion = { type: 'string', enum: ['crear_reserva', 'cancelar_reserva', 'redirigir_reservas',
+  props.accion = { type: 'string', enum: ['crear_reserva', 'cancelar_reserva', 'cambiar_reserva', 'redirigir_reservas',
     'escalar_evento', 'responder_info', 'escalar_humano'] };
   props.opciones = { type: 'array', items: txt };
   props.mostrar_menu = { type: 'boolean' };
@@ -542,7 +542,9 @@ function masterPrompt_() { return [
 '',
 'RESERVAS DE MESA (no son eventos): SÍ las tomas por chat, hasta 15 personas. Necesitas CINCO datos: NOMBRE, CORREO ELECTRÓNICO, FECHA, HORA y NÚMERO DE PERSONAS. Pide de una vez todos los que falten, como lista corta con cada uno en negrita usando asteriscos de WhatsApp (ej. "*Tu nombre:*", "*Correo:*", "*Fecha:*", "*Hora:*", "*Personas:*"). El correo es imprescindible: sin correo no se puede crear la reserva, pídelo siempre desde el principio. Cuando ya tengas los cinco, escribe una línea corta de espera (ej. "Dame un segundo que confirmo la mesa") y marca accion:"crear_reserva", con fecha en formato AAAA-MM-DD y hora en formato 24h. NUNCA digas que la reserva quedó hecha ni la des por confirmada: el sistema la crea y reemplaza tu mensaje con la confirmación real. Si son más de 15 personas es evento privado, trátalo como evento. Si el cliente prefiere reservar solo, comparte el link — Español: https://www.rosanta.rest/reservas — Inglés: https://www.rosanta.rest/reservations.',
 '',
-'CANCELAR RESERVA: si el cliente quiere cancelar una reserva que ya tiene, SÍ lo haces por chat. No necesitas su nombre ni la fecha: el sistema la busca por su teléfono o su correo. Escribe una línea corta de espera (ej. "Dame un segundo que la busco") y marca accion:"cancelar_reserva", incluyendo email y fecha en el lead SOLO si el cliente los dio. NUNCA digas que la reserva quedó cancelada: el sistema la cancela y reemplaza tu mensaje con el resultado real. Si lo que quiere es CAMBIAR la reserva a otra fecha u hora, cancélala primero y luego tómale la nueva.',
+'CANCELAR RESERVA: si el cliente quiere cancelar una reserva que ya tiene, SÍ lo haces por chat. No necesitas su nombre ni la fecha: el sistema la busca por su teléfono o su correo. Escribe una línea corta de espera (ej. "Dame un segundo que la busco") y marca accion:"cancelar_reserva", incluyendo email y fecha en el lead SOLO si el cliente los dio. NUNCA digas que la reserva quedó cancelada: el sistema la cancela y reemplaza tu mensaje con el resultado real.',
+'',
+'CAMBIAR RESERVA: si el cliente quiere mover su reserva a otra fecha u hora, o cambiar el número de personas, NO la canceles: marca accion:"cambiar_reserva" con SOLO lo que cambia en fecha (AAAA-MM-DD), hora (24h) y personas (lo que no cambia déjalo vacío), y en fecha_actual y hora_actual la fecha y la hora de la reserva que tiene hoy si las dijo. Escribe una línea corta de espera (ej. "Dame un segundo que la muevo"). El sistema revisa que haya lugar antes de tocar nada: si no hay, su reserva actual sigue igual. NUNCA digas que ya quedó cambiada: el sistema reemplaza tu mensaje con el resultado real. Si no queda claro qué quiere cambiar, pregúntalo.',
 '',
 'EVENTOS PRIVADOS (cumpleaños, corporativos, grupos a cotizar): NO los cotizas ni cierras. Recoge la info en DOS pasos, para no abrumar con muchas preguntas juntas:',
   '  PASO 1 — BÁSICOS: si todavía no los tienes, pregunta tipo de evento, fecha tentativa, número de personas, NOMBRE del cliente y CORREO ELECTRÓNICO (imprescindible: la cotización se envía por correo). Presenta los datos que faltan como una lista corta, con cada uno en negrita usando asteriscos de WhatsApp (ej. "*Tu nombre:*", "*Fecha:*", "*Personas:*", "*Correo:*"), para que el cliente los responda uno por uno. En este paso NO menciones los menús todavía.',
@@ -581,7 +583,9 @@ function masterPrompt_() { return [
 '    "tipo": "reserva | evento | consulta | queja | spam | otro",',
 '    "urgencia": "caliente | tibio | frio",',
 '    "resumen": "<una línea: qué quiere>",',
-'    "accion": "crear_reserva | cancelar_reserva | redirigir_reservas | escalar_evento | responder_info | escalar_humano",',
+'    "accion": "crear_reserva | cancelar_reserva | cambiar_reserva | redirigir_reservas | escalar_evento | responder_info | escalar_humano",',
+'    "fecha_actual": "<solo al cambiar una reserva: la fecha AAAA-MM-DD de la reserva que ya tiene, si la dijo; si no, vacío>",',
+'    "hora_actual": "<solo al cambiar una reserva: la hora 24h de la reserva que ya tiene, si la dijo; si no, vacío>",',
 '    "requiere_humano": true/false',
 '  }',
 '}',
