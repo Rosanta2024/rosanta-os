@@ -1390,6 +1390,18 @@ function prParametros_(f) {
 function prAccesos_(res) {
   var g = prGrupo_(res, '4. Accesos');
 
+  // 14-oct-2026: registrarPrecio sin area dejaba a sala escribir el precio de COCINA.
+  // La prueba de verdad (con escritura) es pruebas-node/prueba_areas.js; esta solo vigila
+  // que la guarda siga en el codigo, porque pruebas-node no corre sola.
+  prCorrer_(g, 'Registrar precio exige el area del producto', function () {
+    var nombre = 'Registrar precio exige el area del producto';
+    var src = String(registrarPrecio);
+    var ok = src.indexOf('if (!area) exigirArea_(') !== -1 && src.indexOf('conArea_(EDIT.hojaBanco, ubic.area)') !== -1;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'sin area se exige permiso sobre el area donde cae el producto · la bitacora nombra el area'
+         : 'registrarPrecio perdio la guarda de area (Proveedores.js)', ok ? 1 : 0, 1);
+  });
+
   prCorrer_(g, 'La hoja USUARIOS', function () {
     var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
     var hoja = ss.getSheetByName('USUARIOS');

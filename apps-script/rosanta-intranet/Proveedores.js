@@ -137,6 +137,11 @@ function registrarPrecio(auth, datos) {
   var hecho = conCambiosDeModelo_(function () { return conCandadoRecetario_(function () {
     var ubic = ubicarEnBanco_(datos.producto, area);
     if (!ubic) throw new Error('El producto "' + datos.producto + '" no esta en el Banco de Datos');
+    // Sin area (14-oct-2026): el producto se sigue ubicando como antes (gana la primera
+    // area donde aparece), pero el rol tiene que poder escribir en ESA area. Antes no se
+    // revisaba y sala escribia el AJO de cocina con solo omitir el area. Lo cazo
+    // pruebas-node/prueba_areas.js.
+    if (!area) exigirArea_(usuario && usuario.rol, ubic.area);
     // Un pre-elaborado tiene el precio por formula contra su ficha: ver precioSaleDeLaFicha_
     // en EdicionRecetario.gs. Escribirle un numero lo desconecta de la ficha en silencio.
     if (precioSaleDeLaFicha_(ubic.hoja, ubic.fila, ubic.col + 3)) {
@@ -168,12 +173,13 @@ function registrarPrecio(auth, datos) {
       nuevoUnidad, datos.factura || '', quien, datos.nota || ''
     ]);
 
-    // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo_() y que el sync.
+    // Y ademas BITACORA, con el mismo formato que cambiarPrecioInsumo_() y que el sync
+    // (con el area en la hoja desde el 14-oct-2026: "BANCO DE DATOS · BARRA").
     // Sin esto, "quien tocó el precio del lomito" habia que buscarlo en tres pestanas
     // distintas y ninguna tenia la historia completa. La regla del proyecto es que
     // BITACORA es el registro: un cambio que no aparece ahi es un cambio invisible.
     var pctBit = antesCompra ? Math.round((nuevo - antesCompra) / antesCompra * 1000) / 10 : 0;
-    bitacora_(quien, (usuario && usuario.rol) || '', 'registrarPrecio', EDIT.hojaBanco,
+    bitacora_(quien, (usuario && usuario.rol) || '', 'registrarPrecio', conArea_(EDIT.hojaBanco, ubic.area),
               String(ubic.producto), 'precio compra', antesCompra, nuevo,
               (pctBit >= 0 ? '+' : '') + pctBit + '%' +
               (datos.factura ? ' · factura ' + datos.factura : '') +
