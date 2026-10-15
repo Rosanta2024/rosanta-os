@@ -1289,6 +1289,51 @@ function prFinanzas_(res) {
       malos, 0);
   });
 
+  // El camino rapido (15-oct-2026): despues de guardar, Pagos devuelve solo los proveedores
+  // tocados (_pagCambios_) en vez de la pantalla entera. Tiene que dar EXACTAMENTE lo mismo que la
+  // pantalla completa para esos proveedores: saldo, estado (abonada, por confirmar), cuadre, saldo
+  // a favor, mercado y por devolver. Se prueban los proveedores mas dificiles (abonos, saldo a
+  // favor, banco por confirmar) y siempre con un control negativo: si la comparacion no ve una
+  // factura cambiada a proposito, la prueba no esta comparando nada.
+  prCorrer_(g, 'El camino rapido de Pagos da lo mismo que la pantalla completa', function () {
+    var nombre = 'El camino rapido de Pagos da lo mismo que la pantalla completa';
+    // rol que no es dueño: la pantalla de dueño crea la pestaña de IVA si no existe, y esto solo lee
+    var Q = { rol: 'prueba', nombre: 'Pruebas', areas: ['COCINA', 'BARRA', 'ADMIN'] };
+    var E = pagEstado_();
+    if (!E.facturas.length) { prAnotar_(g, nombre, 'SALTADA', 'no hay facturas desde el ' + PAG_DESDE_); return; }
+    var P = _pagPantalla_(Q, E, null), J = JSON.stringify;
+    var puntaje = {};
+    P.facturas.forEach(function (f) {
+      puntaje[f.nit] = (puntaje[f.nit] || 0) + (f.estado === 'Abonada' ? 3 : 0) + (f.estado === 'Banco por confirmar' ? 3 : 0) + (f.favor_usado ? 2 : 0) + (f.saldo > 0.01 ? 1 : 0);
+    });
+    Object.keys(E.favor).forEach(function (n) { if (puntaje[n] !== undefined) puntaje[n] += 4; });
+    var nits = Object.keys(puntaje).sort(function (a, b) { return puntaje[b] - puntaje[a]; }).slice(0, 8);
+    var compara = function (C, Pant) {
+      var malos = [];
+      nits.forEach(function (n) {
+        var a = J(C.facturas.filter(function (f) { return f.nit === n; })), b = J(Pant.facturas.filter(function (f) { return f.nit === n; }));
+        if (a !== b) malos.push('facturas de ' + n);
+        if (J(C.cuadre.filter(function (x) { return x.nit === n; })) !== J(Pant.cuadre.filter(function (x) { return x.nit === n; }))) malos.push('cuadre de ' + n);
+        if (J(C.favores.filter(function (x) { return x.nit === n; })) !== J(Pant.favores.filter(function (x) { return x.nit === n; }))) malos.push('saldo a favor de ' + n);
+      });
+      if (J(C.mercado) !== J(Pant.mercado)) malos.push('mercado');
+      if (J(C.por_devolver) !== J(Pant.por_devolver)) malos.push('por devolver');
+      return malos;
+    };
+    var C = _pagCambios_(Q, E, nits, 'prueba'), malos = compara(C, P);
+    // control negativo: una factura del primer proveedor con otro saldo tiene que verse distinta
+    var C2 = JSON.parse(J(C)), f0 = C2.facturas[0];
+    if (f0) f0.saldo = f0.saldo + 1;
+    var ciego = f0 ? !compara(C2, P).length : true;
+    var sinE = _pagCambios_(Q, null, [], 'prueba');
+    if (J(sinE.mercado) !== J(P.mercado)) malos.push('mercado sin leer el maestro');
+    if (ciego) malos.push('el control negativo no se detecto: la comparacion no esta mirando');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.slice(0, 6).join(' · ') : nits.length + ' proveedores (con abonos, saldo a favor y por confirmar) · ' + C.facturas.length +
+        ' facturas iguales · ' + Math.round(J(C).length / 1024) + ' KB contra ' + Math.round(J(P).length / 1024) + ' KB de la pantalla',
+      malos.length, 0);
+  });
+
   // FEL por correo (13-oct-2026): el aviso de SAT se lee bien y Pagos no duplica la factura
   // cuando el lunes entra al maestro. El HTML es el del aviso de ECONTRISA del 13-oct.
   prCorrer_(g, 'Facturas del FEL por correo: se leen y no se duplican', function () {

@@ -85,6 +85,7 @@ function pagQuien_(auth) {
   if (rol !== 'dueno' && !usuarioTieneModulo(u, 'pagos')) throw new Error('Tu cuenta no tiene pagos.');
   var areas = PAG_AREAS_ROL_[rol];
   if (!areas) throw new Error('Pagos es para cocina, barra y el dueño.');
+  if (_PAG_RELOJ_) _PAG_RELOJ_.quien(u.nombre || u.email || '');
   return { u: u, rol: rol, areas: areas, nombre: u.nombre || u.email || '' };
 }
 
@@ -799,12 +800,23 @@ function getPagosProveedores(auth) {
   // las facturas que SAT aviso por correo (FelCorreo.js). Despues de guardar no se lee Gmail:
   // es lo mas lento y la pantalla se refresca al abrirla o con Actualizar (14-oct-2026)
   var fec = _PAG_LEIDO_.escribio ? null : fecLeerSiToca_();
-  var E = pagEstado_(), ve = function (a) { return Q.areas.indexOf(a) !== -1; };
+  return _pagPantalla_(Q, pagEstado_(), fec);
+}
+
+/** Las facturas que ve Q, en el orden de la pantalla, y el saldo a favor de sus proveedores. */
+function _pagVisibles_(Q, E) {
+  var ve = function (a) { return Q.areas.indexOf(a) !== -1; };
   var facturas = E.facturas.filter(function (f) { return ve(f.area); });
   var og = function (g) { var i = PAG_GRUPOS_ORDEN_.indexOf(g); return i < 0 ? 99 : i; };
   facturas.sort(function (a, b) { return og(a.grupo) - og(b.grupo) || (a.proveedor < b.proveedor ? -1 : a.proveedor > b.proveedor ? 1 : (a.fecha < b.fecha ? -1 : 1)); });
   var favor = {};
   facturas.forEach(function (f) { if (E.favor[f.nit]) favor[f.nit] = E.favor[f.nit]; });
+  return { facturas: facturas, favor: favor, ve: ve };
+}
+
+/** La pantalla entera, armada de un estado ya calculado (getPagosProveedores y la prueba). */
+function _pagPantalla_(Q, E, fec) {
+  var V = _pagVisibles_(Q, E), ve = V.ve, facturas = V.facturas, favor = V.favor;
   var out = {
     gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm'), desde: PAG_DESDE_,
     rol: Q.rol, areas: Q.areas, formas: PAG_FORMAS_, formas_mercado: PAG_FORMAS_MERCADO_,
@@ -839,6 +851,43 @@ function getPagosProveedores(auth) {
   }
   return out;
 }
+
+/*
+ * EL CAMINO RAPIDO (15-oct-2026, Juanma: "tarda mucho y no sabes si esta cargando"). Medido en
+ * /dev: el guardado escribe en ~1 s y despues armaba la pantalla ENTERA (~3 s y 134 KB de vuelta)
+ * para repintar todo y cerrar lo que la persona estaba viendo. Ahora el guardado devuelve solo lo
+ * que cambio, con el patron `cambios` de recetas: las facturas de los proveedores tocados, su fila
+ * del cuadre, su saldo a favor, y las listas chicas (mercado, por devolver). La pantalla lo pega
+ * sobre lo que ya tiene; "Actualizar" y abrir Pagos siguen trayendo todo.
+ *
+ * Sale del MISMO estado que la pantalla completa (_pagVisibles_ y _pagCuadre_ son los mismos):
+ * la bateria compara las dos ("El camino rapido de Pagos da lo mismo que la pantalla completa").
+ *
+ * nits: los proveedores tocados. E: el estado ya recalculado, o null cuando el guardado no toca
+ * facturas (mercado, devolucion al equipo): ahi no se lee el maestro.
+ */
+function _pagCambios_(Q, E, nits, resumen) {
+  var ve = function (a) { return Q.areas.indexOf(a) !== -1; };
+  var movs = pagMovimientos_();
+  var mercado = movs.filter(function (m) { return m.dte === PAG_SIN_FACTURA_; });
+  var out = { rapido: true, resumen: resumen || '', nits: [],
+              gen: Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm'),
+              mercado: mercado.filter(function (m) { return ve(m.area); }),
+              proveedores_mercado: _pagProvMercado_(mercado),
+              por_devolver: _pagPorDevolver_(Q) };
+  if (!E) return out;
+  var V = _pagVisibles_(Q, E), toca = {};
+  (nits || []).forEach(function (n) { toca[pagNit_(n)] = 1; });
+  out.nits = Object.keys(toca);
+  out.facturas = V.facturas.filter(function (f) { return toca[f.nit]; });
+  out.cuadre = _pagCuadre_(out.facturas, V.favor);
+  out.favor = {}; out.nits.forEach(function (n) { out.favor[n] = V.favor[n] || 0; });
+  out.favores = E.favores.filter(function (m) { return toca[m.nit] && V.favor[m.nit] !== undefined; });
+  return out;
+}
+
+/** "Q1,250.00" para la confirmacion. */
+function _pagQ_(n) { return 'Q' + _finR_(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
 /** Los proveedores de mercado: primero los que mas se anotaron aca, despues la lista base. */
 function _pagProvMercado_(mercado) {
@@ -915,8 +964,11 @@ function _pagFechaValida_(s, nombre) {
  */
 function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
   return _pagMedir_('pago de ' + [].concat(llaves || []).length + ' factura(s)', auth, function () {
-    _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
-    return getPagosProveedores(auth);
+    var Q = pagQuien_(auth);
+    _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
+    var u = _PAG_ULTIMO_;
+    return _pagCambios_(Q, pagEstado_(), [u.nit], (u.abono ? 'Abono guardado: ' : 'Pago guardado: ') + _pagQ_(u.q) + ' a ' + u.proveedor +
+      (u.n > 1 ? ' (' + u.n + ' facturas)' : '') + (u.favor > 0.01 ? ' + ' + _pagQ_(u.favor) + ' de saldo a favor' : ''));
   });
 }
 
@@ -963,8 +1015,12 @@ function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, 
   });
   if (soloFilas) return filas;   // registrarRetiroYCompras junta todo y escribe una sola vez
   _pagEscribir_(filas);
+  // para la confirmacion de la pantalla ("Pago guardado: Q1,250.00 a Doorways")
+  _PAG_ULTIMO_ = { nit: fs[0].nit, proveedor: fs[0].proveedor, n: fs.length, q: _finR_(monto),
+                   favor: favorUsado, abono: fs.length === 1 && monto + favorUsado < fs[0].saldo - 0.01 };
   return filas.length;
 }
+var _PAG_ULTIMO_ = null;
 
 /** Fecha en que se piensa pagar una factura (la columna FECHA DE PAGAR del Excel). */
 function programarPagoFactura(auth, llave, fechaPagar) {
@@ -975,7 +1031,7 @@ function programarPagoFactura(auth, llave, fechaPagar) {
   if (Q.areas.indexOf(f.area) === -1) throw new Error('La factura es de ' + f.area + '.');
   _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'FECHA DE PAGAR': fechaPagar,
                    'ESTATUS DE PAGO': 'Programado', 'ESCRITO POR': Q.nombre }]);
-  return getPagosProveedores(auth);
+  return _pagCambios_(Q, pagEstado_(), [f.nit], 'Fecha de pago guardada: ' + f.proveedor + ', factura ' + f.dte + ', el ' + fechaPagar.slice(8, 10) + '/' + fechaPagar.slice(5, 7));
 }
 
 /**
@@ -1154,7 +1210,8 @@ function agregarFacturaDeSuBolsa(auth, nombre, llaves, fecha, monto, nota) {
   // cualquier area: Maco a veces paga una factura de cocina y Jeffry una de barra
   _pagRegistrarPago_({ nombre: Q.nombre, rol: Q.rol, areas: ['COCINA', 'BARRA', 'ADMIN'] }, llaves, e.forma, fecha,
                      monto === '' || monto == null ? null : monto, 0, nota);
-  return getPagosProveedores(auth);
+  var u = _PAG_ULTIMO_;
+  return _pagCambios_(Q, pagEstado_(), [u.nit], 'Anotado en Por devolver: ' + _pagQ_(u.q) + ' a ' + u.proveedor);
 }
 
 /** Por devolver: una compra sin factura que uno pago de su bolsa. */
@@ -1168,7 +1225,7 @@ function agregarCompraDeSuBolsa(auth, nombre, fecha, proveedor, detalle, monto) 
   _pagEscribir_([{ AREA: e.rol === 'sala' ? 'BARRA' : 'COCINA', PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado',
                    DTE: PAG_SIN_FACTURA_, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': e.forma,
                    DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
-  return getPagosProveedores(auth);
+  return _pagCambios_(Q, null, [], 'Anotado en Por devolver: ' + _pagQ_(monto) + ' de ' + (String(proveedor || 'Mercado').trim() || 'Mercado'));
 }
 
 /** Para la pantalla de inicio: cuanto se le debe a José y a Jeffry. */
@@ -1192,7 +1249,7 @@ function registrarDevolucionEquipo(auth, nombre, monto, fecha, detalle) {
     if (monto > x.pendiente + 0.01) throw new Error('A ' + nombre + ' se le deben Q' + x.pendiente.toFixed(2) + '; no se puede devolver Q' + monto.toFixed(2) + '.');
     _pagEscribir_([{ AREA: 'ADMIN', PROVEEDOR: 'Devolución a ' + nombre, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto,
                      'ESTATUS DE PAGO': e.devuelto, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
-    return getPagosProveedores(auth);
+    return _pagCambios_(Q, null, [], 'Devolución anotada: ' + _pagQ_(monto) + ' a ' + nombre);
   });
 }
 
@@ -1207,7 +1264,7 @@ function registrarSaldoFavor(auth, nit, monto, detalle) {
     if (!f) throw new Error('Ese proveedor no tiene facturas de tu area desde el ' + PAG_DESDE_ + '.');
     _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: nit, 'FECHA PAGADO': medFechaIso_(new Date()),
                      'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': 'Saldo a favor', DETALLE: String(detalle).slice(0, 300), 'ESCRITO POR': Q.nombre }]);
-    return getPagosProveedores(auth);
+    return _pagCambios_(Q, pagEstado_(), [nit], 'Saldo a favor anotado: ' + _pagQ_(monto) + ' de ' + f.proveedor);
   });
 }
 
@@ -1234,19 +1291,32 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
     }
     area = String(area || '').toUpperCase();
     if (Q.areas.indexOf(area) === -1 || area === 'ADMIN') area = Q.areas[0];
-    _pagEscribir_([{ AREA: area, PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado', DTE: PAG_SIN_FACTURA_,
+    var prov = String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado';
+    _pagEscribir_([{ AREA: area, PROVEEDOR: prov, DTE: PAG_SIN_FACTURA_,
                      'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': estatus,
                      DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
-    return getPagosProveedores(auth);
+    // sin factura no cambia ninguna factura: no se lee el maestro
+    return _pagCambios_(Q, null, [], 'Compra guardada: ' + _pagQ_(monto) + ' en ' + prov);
   });
 }
 
 /** Anula un movimiento anotado por error. No se borra: el estatus pasa a "ANULADO: ...". */
 function anularMovimientoPago(auth, id) {
   return _pagMedir_('anular', auth, function () {
-    _pagAnular_(pagQuien_(auth), id);
+    var Q = pagQuien_(auth);
+    var m = pagMovimientos_().filter(function (x) { return x.id === String(id || '').trim(); })[0];
+    _pagAnular_(Q, id);
     _pagTramo_('escribir');
-    return getPagosProveedores(auth);
+    var que = m ? _pagQ_(m.q) + ' · ' + m.proveedor : '';
+    // Solo los pagos comunes van por el camino rapido. Anular un "No pertenece", un "Confirmado con
+    // banco", una marca de IVA o una factura traida mueve Posibles pagos y la lista de IVA: pantalla entera.
+    var comun = m && (PAG_FORMAS_.indexOf(m.estatus) !== -1 || PAG_FORMAS_MERCADO_.indexOf(m.estatus) !== -1 ||
+      ['Saldo a favor', 'Saldo a favor usado', 'Programado'].indexOf(m.estatus) !== -1 ||
+      PAG_EQUIPO_.some(function (e) { return e.forma === m.estatus || e.devuelto === m.estatus; }));
+    if (!comun) return getPagosProveedores(auth);
+    // sin factura o devolucion al equipo: no toca facturas, no se lee el maestro
+    if (!m.nit || m.dte === PAG_SIN_FACTURA_) return _pagCambios_(Q, null, [], 'Anulado: ' + que);
+    return _pagCambios_(Q, pagEstado_(), [m.nit], 'Anulado: ' + que);
   });
 }
 /**
