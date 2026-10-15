@@ -70,9 +70,9 @@ function _puenteTeoricoMeses_(desde, hasta) {
     var m = fecha.slice(0, 7);
     var M = meses[m] || (meses[m] = { lineas: [], tickets: {}, dias: {}, venta: 0,
                                       desde: fecha, hasta: fecha });
-    var total = Number(f[cTotal]) || 0;
+    var total = _finNum_(f[cTotal]);   // "Q1,234" ya no vale 0 (lector unico, 14-oct-2026)
     M.lineas.push({ producto: String(f[cProd] || '').trim(), categoria: String(f[cCat] || '').trim(),
-                    cantidad: Number(f[cCant]) || 0, total: total });
+                    cantidad: _finNum_(f[cCant]), total: total });
     M.tickets[String(f[cDoc])] = true; M.dias[fecha] = true; M.venta += total;
     if (fecha < M.desde) M.desde = fecha;
     if (fecha > M.hasta) M.hasta = fecha;

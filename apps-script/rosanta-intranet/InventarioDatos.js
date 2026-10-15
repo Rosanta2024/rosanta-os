@@ -186,11 +186,8 @@ function invTexto_(v) {
   return String(v).trim();
 }
 
-function invNumero_(v) {
-  if (typeof v === 'number') return isNaN(v) ? null : v;
-  var s = String(v == null ? '' : v).replace(/q/gi, '').replace(/[\s,]/g, '');
-  if (!s || !/\d/.test(s)) return null;
-  var n = Number(s);
+function invNumero_(v) {   // el lector unico (_finNumero_), con null en vez de NaN (14-oct-2026)
+  var n = _finNumero_(typeof v === 'number' ? v : String(v == null ? '' : v));
   return isNaN(n) ? null : n;
 }
 

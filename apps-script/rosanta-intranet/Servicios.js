@@ -292,8 +292,25 @@ function adLibrarySearch(params, auth) {
 // ----------------------------------------------------------------- Claude
 // Creador Kaprica. SIN VERIFICAR: falta ANTHROPIC_API_KEY para probarlo.
 
+// Tope por persona y por dia (decision de Juanma, 14-oct-2026: 30). Usa el modelo mas caro y
+// lo puede llamar tambien el rol contenido: sin tope, un bucle o un descuido no tenia limite.
+var IA_TOPE_DIA_ = 30;
+
+/** Cuenta un uso del Creador de IA de esta persona hoy; tira si ya llego al tope. */
+function _iaContar_(u) {
+  var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  var k = 'ia_uso_' + hoy + '_' + String(u.email || u.nombre || '?').toLowerCase().slice(0, 80);
+  var c = CacheService.getScriptCache(), n = Number(c.get(k) || 0);
+  if (n >= IA_TOPE_DIA_) {
+    throw new Error('Llegaste al tope de ' + IA_TOPE_DIA_ + ' usos del Creador de IA por hoy. Mañana se renueva; si de verdad hace falta más, avisale a Juanma.');
+  }
+  c.put(k, String(n + 1), 26 * 60 * 60);
+  return n + 1;
+}
+
 function askClaudeSrv(prompt, auth) {
-  requiereMarketing_(null, auth);
+  var u = requiereMarketing_(null, auth);
+  _iaContar_(u);
   var key = prop_('ANTHROPIC_API_KEY');
   if (!key) throw new Error('Falta ANTHROPIC_API_KEY en Propiedades del script. El Creador Kaprica queda sin generación hasta cargarla.');
 

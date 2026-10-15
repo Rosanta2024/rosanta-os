@@ -888,6 +888,37 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos · 2 lectores', malos.length, 0);
   });
 
+  /* Fase 5 de la auditoria (14-oct-2026). */
+  prCorrer_(g, 'En enero sin ventas Finanzas sigue mostrando el año anterior', function () {
+    var nombre = 'En enero sin ventas Finanzas sigue mostrando el año anterior';
+    if (typeof _finAnioVigente_ !== 'function') { prAnotar_(g, nombre, 'FALLA', 'No existe _finAnioVigente_'); return; }
+    var cab = [[], [], [], []];   // las cuatro filas de encabezado del maestro
+    var v26 = cab.concat([[0, new Date(2026, 11, 30)], [0, new Date(2026, 9, 1)]]);
+    var v27 = v26.concat([[0, new Date(2027, 0, 2)]]);
+    var r = [_finAnioVigente_(v26, new Date(2026, 9, 14)), _finAnioVigente_(v26, new Date(2027, 0, 3)),
+             _finAnioVigente_(v27, new Date(2027, 0, 3))];
+    prAnotar_(g, nombre, r.join(',') === '2026,2026,2027' ? 'OK' : 'FALLA',
+      'oct-2026 → ' + r[0] + ' · 3-ene-2027 sin ventas → ' + r[1] + ' · con una venta de 2027 → ' + r[2] + ' (año de hoy: ' + d.anio + ')',
+      r.join(','), '2026,2026,2027');
+  });
+
+  prCorrer_(g, 'Un solo lector de numeros', function () {
+    var nombre = 'Un solo lector de numeros';
+    var casos = [['_finNumero_("Q1,771.00")', _finNumero_('Q1,771.00'), 1771], ['_finNumero_("q 1,234")', _finNumero_('q 1,234'), 1234],
+                 ['invNumero_("q1,000")', invNumero_('q1,000'), 1000], ['invNumero_("")', invNumero_(''), null],
+                 ['psNum_("1,234")', psNum_('1,234'), 1234], ['psNum_("")', psNum_(''), null], ['_finNum_("x")', _finNum_('x'), 0]];
+    var malos = casos.filter(function (c) { return c[1] !== c[2]; }).map(function (c) { return c[0] + ' = ' + c[1] + ' (esperado ' + c[2] + ')'; });
+    ['invNumero_', 'psNum_'].forEach(function (fn) { if (String(globalThis[fn]).indexOf('_finNumero_') === -1) malos.push(fn + ' no usa _finNumero_'); });
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK', malos.length ? malos.join(' · ') : casos.length + ' casos · la coma es de miles', malos.length, 0);
+  });
+
+  prCorrer_(g, 'El Creador de IA tiene tope diario', function () {
+    var nombre = 'El Creador de IA tiene tope diario';
+    var ok = typeof askClaudeSrv === 'function' && String(askClaudeSrv).indexOf('_iaContar_(') !== -1 &&
+             typeof IA_TOPE_DIA_ === 'number' && IA_TOPE_DIA_ > 0;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA', ok ? IA_TOPE_DIA_ + ' usos por persona por dia' : 'askClaudeSrv no cuenta los usos', ok ? 1 : 0, 1);
+  });
+
   prCorrer_(g, 'EBITDA = neto + Impuestos, en cada mes', function () {
     var nombre = 'EBITDA = neto + Impuestos, en cada mes';
     // Desde el 28-sep-2026 el neto ya lleva la venta de eventos y los impuestos (DRE).

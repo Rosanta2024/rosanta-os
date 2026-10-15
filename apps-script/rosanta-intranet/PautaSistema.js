@@ -358,9 +358,9 @@ function psSumaAcciones_(lista, tipos) {
   return total;
 }
 
-function psNum_(v) {
+function psNum_(v) {   // el lector unico (_finNumero_): ahora tambien lee "1,234" (14-oct-2026)
   if (v === null || v === undefined || v === '') return null;
-  var n = Number(v);
+  var n = _finNumero_(typeof v === 'number' ? v : String(v));
   return isNaN(n) ? null : n;
 }
 

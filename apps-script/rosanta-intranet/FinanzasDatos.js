@@ -302,7 +302,7 @@ function _finMetaFood_() { return metasFoodCost_().global; }
  * pantalla muestra de donde salio: un numero de respaldo en octubre es un
  * numero viejo, y eso tiene que verse.
  */
-function _finPlanilla_() {
+function _finPlanilla_(anioPedido) {   // sin año: el del calendario (asi la usa la Caja)
   var out = { valores: {}, origen: {}, detalle: {}, error: '' };
   var ss = null;
   try {
@@ -311,7 +311,7 @@ function _finPlanilla_() {
     out.error = 'No pude abrir el Sheet de planilla: ' + String(e && e.message || e);
   }
   if (ss) {
-    var anio = new Date().getFullYear();
+    var anio = anioPedido || new Date().getFullYear();
     var hojas = ss.getSheets();
     for (var h = 0; h < hojas.length; h++) {
       var mes = _finMesDePestana_(hojas[h].getName(), anio);
@@ -650,10 +650,16 @@ function _finEsFecha_(v) { return v instanceof Date && !isNaN(v.getTime()); }
  * NaN si no es numero. M17 (15-sep-2026): Number('1,234.50') es NaN y _finNum_
  * lo volvia 0 sin avisar; una caja escrita como texto daba 0 dias de caja.
  */
+/**
+ * EL lector de numeros de la intranet (auditoria 14-oct-2026). Acepta 1234.5, "Q1,234.50",
+ * "q 1,234" y "1 234": la coma es separador de MILES, nunca decimal (asi escribe Sheets en
+ * es-GT y asi vienen los PDF). NaN si no es numero. invNumero_ y psNum_ se apoyan en esta, y
+ * _finNum_ la usa con 0 por defecto. (CierresDiarios tiene la suya: extrae montos del texto.)
+ */
 function _finNumero_(v) {
   if (typeof v === 'number') return v;
   if (typeof v !== 'string') return NaN;
-  var t = v.replace(/[Q\s,]/g, '');
+  var t = v.replace(/[Qq\s,]/g, '');
   return t === '' ? NaN : Number(t);
 }
 function _finNum_(v) { var n = _finNumero_(v); return isNaN(n) ? 0 : n; }
@@ -764,7 +770,8 @@ function finCacheClave_() {
   // v15 (14-oct-2026, Fase 3 de la auditoria): la labor semanal lleva el IGSS, el año sin
   // venta da null y no NaN, y integridad trae meses_sin_venta_dre. Una cache v14 mezclaba el
   // prime semanal viejo con el nuevo: la bateria lo cazo (K06 y la prueba del IGSS).
-  return 'finanzas_v15_m' + m.global + '-' + m.BARRA;
+  // v16 (14-oct-2026, Fase 5): el año sale de _finAnioVigente_ (en enero sin ventas, el anterior).
+  return 'finanzas_v16_m' + m.global + '-' + m.BARRA;
 }
 
 function _finDatos_(forzar) {
@@ -803,14 +810,31 @@ function refrescarFinanzas(auth) {
 }
 
 
+/**
+ * El año que muestra Finanzas (auditoria 14-oct-2026). El del calendario, SALVO que todavia
+ * no tenga ni una venta cargada: los primeros dias de enero, hasta la carga del POS, Finanzas
+ * y el DRE quedaban vacios (y el DRE tiraba error al leer el primer mes). En ese hueco se
+ * sigue mostrando el año que termino. Pura: recibe las filas de 02_Ventas_Maestro.
+ */
+function _finAnioVigente_(V, hoy) {
+  var a = (hoy || new Date()).getFullYear();
+  for (var r = FIN_PRIMERA_FILA - 1; r < V.length; r++) {
+    var f = _finDia_(V[r][1]);
+    if (_finEsFecha_(f) && f.getFullYear() === a) return a;
+  }
+  return a - 1;
+}
+
 function _finCalcular_() {
   var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID);
-  var anio = new Date().getFullYear();
+  // Las ventas se leen primero: deciden el año (ver _finAnioVigente_). Una sola lectura.
+  var V = ss.getSheetByName('02_Ventas_Maestro').getDataRange().getValues();
+  var anio = _finAnioVigente_(V);
   // Los dos parametros y la planilla se leen UNA vez, antes de las pasadas.
   // Regla 3 de Apps Script: nada de llamadas a servicio dentro de un bucle.
   var usd = _finParametro_('tipo_cambio_usd', FIN_USD_DEF);
   var metaFood = _finMetaFood_();
-  var planilla = _finPlanilla_();
+  var planilla = _finPlanilla_(anio);
 
   var mes = {}, sem = {};
   function _mes(m) {
@@ -845,7 +869,7 @@ function _finCalcular_() {
   }
 
   // ---- ventas ----------------------------------------------------------
-  var V = ss.getSheetByName('02_Ventas_Maestro').getDataRange().getValues();
+  // (V ya se leyo arriba, para decidir el año)
   var ultVenta = null;
   for (var r = FIN_PRIMERA_FILA - 1; r < V.length; r++) {
     var f = _finDia_(V[r][1]);                          // col 2: Fecha (regla 10)
