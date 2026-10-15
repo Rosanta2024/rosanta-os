@@ -46,7 +46,7 @@
         <div class="ts-l">Tu semana<span id="ts-mes"></span></div>
         <div class="ts-items" id="ts-items"><span class="ts-c">Leyendo tus números…</span></div>
         <? if (rolTs === 'dueno') { ?><a class="ts-b" href="<?= urlBase ?>?page=tablero<?!= qs ?>">Ver la cascada</a><? } ?>
-        <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=cocina<?!= qs ?>">Anotar compras en efectivo</a><? } ?>
+        <? if (rolTs === 'chef') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=compras<?!= qs ?>">Anotar compras en efectivo</a><? } ?>
         <? if (rolTs === 'sala') { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=barrasala<?!= qs ?>">Abrir Barra y Sala</a><? } ?>
         <? if ((rolTs === 'chef' || rolTs === 'sala') && usuarioTieneModulo(usuario, 'pagos')) { ?><a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=pagos<?!= qs ?>">Pagar facturas</a><? } ?>
       </section>
@@ -56,7 +56,7 @@
       <section class="ts pd" id="pd" aria-live="polite">
         <div class="ts-l"><?= rolTs === 'dueno' ? 'Por devolver al equipo' : 'Rosanta te debe' ?></div>
         <div class="ts-items" id="pd-items"><span class="ts-c">Sumando lo pagado de su bolsa…</span></div>
-        <a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=pagos<?!= qs ?>">Ver en Pagos → Por devolver</a>
+        <a class="ts-b" href="<?= urlBase ?>?page=costeo&vista=adm-equipo<?!= qs ?>">Ver Por devolver</a>
       </section>
     <? } ?>
     <div class="tarjetas">
