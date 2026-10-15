@@ -49,6 +49,13 @@ tr:hover td{background:var(--alerta-tint)}
 .btn.danger{background:none;color:var(--rojo);border:none;font-size:16px;padding:2px 6px}
 select,input,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--superficie);color:var(--marron);font-family:inherit}
 select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
+/* CELULAR (15-oct-2026): 16 px en los campos (el iPhone no agranda la pagina), botones de 44 px
+   y los titulos de tarjeta con boton al lado pasan a dos lineas en vez de apretarse. */
+@media(max-width:640px){
+  select,input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea{font-size:16px}
+  .btn{min-height:44px}
+  h2[style*="flex:1"]{flex-basis:100% !important}
+}
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .muted{color:var(--tierra);font-size:12px}
 .bench{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
