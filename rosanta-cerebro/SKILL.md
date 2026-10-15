@@ -7,7 +7,24 @@ description: 'Cerebro maestro unificado de Rosanta (CORSAGA, S.A., restaurante "
 
 Este es el contexto maestro de Juanma y sus proyectos. Su propósito: que ninguna conversación arranque de cero, sin importar el proyecto o chat.
 
-**Última actualización: 15 oct 2026 (v38).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+**Última actualización: 15 oct 2026, tarde (v39).** Todo lo que Juanma diga en la conversación actual, o lo que exista en la memoria automática de la sesión, es MÁS RECIENTE que este archivo y manda sobre él. Este cerebro es la foto de partida, no la verdad eterna. El estado semana a semana vive en el artefacto `rosanta-seguimiento-semanal`, no aquí.
+
+---
+
+## Cierre del 15 oct 2026, tarde (v39): una sola paleta y la intranet en el celular
+
+Sesión "Intranet: una sola paleta y vista en celular". **Publicado en la @197 (paleta) y la @198 (celular, tandas a y b)**; las baterías y versiones las sacó "Solidez día 3" (ver v38). Encima, **sin publicar: `cbf2d49`** (tanda c, solo CSS de Marketing en el celular; sale con la próxima publicación de cualquiera).
+
+1. **Paleta única (decisión de Juanma, 15-oct).** `PaletaServidor.js`: `PALETA_` (31 tokens), `PALETA_ALIAS_` (--superficie, --fondo, --encabezado, letras, radios), `PALETA_OSCURO_` (solo Profit OS). Cada página pega `<?!= paletaCss_() ?>` (CosteoVista además `paletaCssOscuro_()`); correos, PDF e Inventario consolidado leen `paletaHex_('--token')` **dentro de getters**, porque `PALETA_` puede cargarse después del archivo que la usa. De 143 colores sueltos y **cuatro semáforos** a uno: `--ok #1E6A50`, `--alerta #8A6420` (texto) / `--alerta-relleno #C89A3C`, `--mal #B23A1E` / `--mal-relleno #C4553B`, cada uno con `-tint`. Verde y rojo se movieron para que se distingan con daltonismo; todo texto ≥4.5:1 sobre crema. Tabla aprobada: https://claude.ai/artifact/Svx9stSZN5vgqwFxotyAHd
+2. **Letras: el sistema de diseño tal cual** (decisión de Juanma): títulos Playfair (`--rosanta-font-title`), etiquetas en mayúsculas Poppins (`--rosanta-font-label`), cuerpo Avenir→Lato (`--rosanta-font-body`). Las fuentes ahora cargan en TODAS las páginas (antes solo Profit OS).
+3. **Marketing se unificó** (Juanma, 15-oct): **OBSOLETA la decisión del 22-sep** de conservar sus cafés y dorados. El brief impreso ya no cita colores viejos.
+4. **Regla nueva: ningún .html escribe un color hexadecimal.** Lo vigilan dos pruebas de 1. Cimientos: "Ningun color suelto fuera de la paleta" (lista `PR_HTML_PALETA_` en Pruebas.js: **un .html nuevo va ahí**) y "Toda variable de color existe en la paleta". Para SVG y Chart.js se usa `RC('--token')` (lo define `paletaCss_`).
+5. **Celular (375 px)**, solo CSS: Barra y Sala (tablas que heredaban `table{min-width:640px}`), Tablero (el `margin:0 auto` de `main` cancelaba el estirado en la columna flex — mismo error que Finanzas el 22-sep), campos a 16 px (el iPhone ya no agranda la página), botones de 44 px, encabezado compacto en Profit OS, grillas del reporte en una columna, Marketing. Recetas, Inventarios, Finanzas, Caja y Reporte ya estaban bien (sus tablas se deslizan dentro de la tarjeta). Arreglos de paso: `LecturaEstilo` iba anidado en otro `<style>` y se comía la regla `.lx`; "Anotar compras en efectivo" del panel abría Cocina (ahora Compras) y "Por devolver" abría Pagos (ahora `adm-equipo`). Antes/después: https://claude.ai/artifact/LLwqMRhonrS4Drkz7KbqRQ
+
+**Lecciones:**
+1. **Una variable local con el mismo nombre que un token** (`--panel:var(--panel)`, `--ok:var(--ok)`) se anula sola. La prueba nueva no lo ve; se cazó con un barrido aparte.
+2. **Capturas del celular:** el navegador de la app no entra al iframe de Apps Script; se ve la página entera poniendo el viewport en 375×2600. Una pantalla alta inventa huecos (la grilla reparte el alto sobrante): confirmar en un alto real. El primer screenshot tras cargar a veces sale en blanco: tomar dos.
+3. Tres sesiones publicando a la vez funcionó con una regla: **antes de publicar, bajar HEAD aparte**; esta vez reveló trabajo de otra sesión subido después del "visto bueno" y se publicó solo con su aprobación.
 
 ---
 
@@ -779,7 +796,7 @@ la computadora**. El lateral viejo no lo sufría porque `.sm` era un flex de FIL
 **Paleta vigente aplicada** (#4E6D5A / #57A77F / #AEAAE2 / #F2EEEB / #000000), variables y los
 19 tintes que estaban escritos a mano. **Verificado: Estilos.html NO es compartido.** Profit
 OS (`CosteoEstilos.html`) define las suyas y ya estaba en la vigente; Marketing (`Marketing.html`)
-tiene su propia familia de cafés y dorados, y **Juanma decidió dejarla así**.
+tiene su propia familia de cafés y dorados, y **Juanma decidió dejarla así**. *(OBSOLETO desde el 15-oct-2026: Marketing se unificó a la paleta única, ver v39.)*
 
 ### 2. El punto de equilibrio estaba mal calculado desde siempre
 
