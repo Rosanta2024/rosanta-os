@@ -179,8 +179,8 @@ function doGet(e) {
     }
     return HtmlService.createHtmlOutput(
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-      '<body style="font-family:ui-monospace,Menlo,monospace;background:#1A1A1A;color:#e8e4da;padding:1.5rem">' +
-      '<p style="font-family:Georgia,serif;color:#57A77F;font-size:1.1rem;margin:0 0 1rem">' +
+      '<body style="font-family:ui-monospace,Menlo,monospace;background:' + paletaHex_('--texto') + ';color:' + paletaHex_('--linea') + ';padding:1.5rem">' +
+      '<p style="font-family:Georgia,serif;color:' + paletaHex_('--rosanta-verde-medio') + ';font-size:1.1rem;margin:0 0 1rem">' +
       'Diagnóstico Meta · ' + new Date().toLocaleString('es-GT') + '</p>' +
       '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.5">' +
       JSON.stringify(diag, null, 2)
@@ -327,7 +327,7 @@ function doGet(e) {
       cuerpo = '<h1>No se pudo generar el PDF</h1><p>' + _htmlEsc_(String(errPdf && errPdf.message || errPdf)) + '</p>';
     }
     return HtmlService.createHtmlOutput('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
-        '<style>body{font-family:Arial,Helvetica,sans-serif;background:#F4EFE6;color:#1a1a1a;padding:2rem;max-width:40rem;margin:auto}h1{font-family:Georgia,serif;color:#4E6D5A}a{color:#4E6D5A}</style></head><body>' +
+        '<style>body{font-family:Arial,Helvetica,sans-serif;background:' + paletaHex_('--rosanta-crema') + ';color:' + paletaHex_('--texto') + ';padding:2rem;max-width:40rem;margin:auto}h1{font-family:Georgia,serif;color:' + paletaHex_('--rosanta-verde') + '}a{color:' + paletaHex_('--rosanta-verde') + '}</style></head><body>' +
         cuerpo + '<p><a href="' + _htmlEsc_(volverA) + '">Volver al reporte</a></p></body></html>')
       .setTitle('Rosanta Intranet');
   }

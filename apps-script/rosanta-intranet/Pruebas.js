@@ -257,6 +257,70 @@ function prCimientos_(res) {
       malos.length ? malos.join(' · ') + ' (PRUEBAS_CARRILES_ en Pruebas.js)' : PRUEBAS_ORDEN_.length + ' grupos en ' + PRUEBAS_CARRILES_.length + ' carriles',
       malos.length, 0);
   });
+  // ---- Paleta unica (15-oct-2026): ningun .html escribe un color en hexadecimal;
+  // todos usan var(--token) de PaletaServidor.js. Al agregar un .html, sumalo aca.
+  var PR_HTML_PALETA_ = [
+    'CajaVista', 'ComparativoVista', 'CosteoEstilos', 'CosteoJs_Acciones', 'CosteoJs_Base', 'CosteoJs_HigieneGuia',
+    'CosteoJs_Inicio', 'CosteoJs_Insumos', 'CosteoJs_Inventario', 'CosteoJs_Menu', 'CosteoJs_Paneles', 'CosteoJs_Pintar',
+    'CosteoJs_Proveedores', 'CosteoJs_Recetas', 'CosteoVista', 'CrmVista', 'Denied', 'DreVista',
+    'EscenariosVista', 'Estilos', 'FinanzasGastoVista', 'FinanzasVista', 'Index', 'LecturaEstilo',
+    'LecturaJs', 'Logo', 'Marketing', 'MetasVista', 'ProfitAreaEstilo', 'ProfitCajaJs',
+    'ProfitComprasJs', 'ProfitHoyJs', 'ProfitPagosJs', 'ProfitSalaJs', 'PruebasVista', 'ReporteSemanalCuerpo',
+    'ReporteSemanalEstilo', 'ReporteSemanalJs', 'ReporteSemanalVista', 'SistemaFinanzas', 'SistemaMarketing', 'TableroVista'
+  ];
+  var PR_HEX_RE_ = /(^|[^&\w#])#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-z_])/gi;
+  function prContarHex_(txt) { return (String(txt).match(PR_HEX_RE_) || []).length; }
+
+  prCorrer_(g, 'Ningun color suelto fuera de la paleta', function () {
+    var nombre = 'Ningun color suelto fuera de la paleta';
+    // control negativo: el detector tiene que ver un hex y no confundir una entidad
+    var ctl = prContarHex_('<b style="color:#A33A2A">x</b> <i style="color:#fff"></i>') === 2 &&
+              prContarHex_('&#039; &#x27; href="#seccion"') === 0;
+    if (!ctl) { prAnotar_(g, nombre, 'FALLA', 'El detector de colores no ve un hex de prueba: no se puede confiar en el conteo.'); return; }
+    var culpables = [], ilegibles = [], leidos = 0;
+    PR_HTML_PALETA_.forEach(function (v) {
+      var txt;
+      try { txt = HtmlService.createTemplateFromFile(v).getRawContent(); } catch (e) { ilegibles.push(v); return; }
+      leidos++;
+      var n = prContarHex_(txt);
+      if (n) culpables.push(v + ' (' + n + ')');
+    });
+    var malo = culpables.length || ilegibles.length;
+    prAnotar_(g, nombre, malo ? 'FALLA' : 'OK',
+      malo ? (culpables.length ? 'Colores sueltos en: ' + culpables.join(', ') + '. Usar var(--token) de PaletaServidor.js. ' : '') +
+             (ilegibles.length ? 'No existen: ' + ilegibles.join(', ') + ' (quitarlos de PR_HTML_PALETA_).' : '')
+           : leidos + ' archivos sin un solo hex', leidos, PR_HTML_PALETA_.length);
+  });
+
+  prCorrer_(g, 'Toda variable de color existe en la paleta', function () {
+    var nombre = 'Toda variable de color existe en la paleta';
+    var css = paletaCss_(), malos = [];
+    Object.keys(PALETA_).forEach(function (k) {
+      if (!/^#[0-9A-F]{6}$/.test(PALETA_[k])) malos.push(k + ' no es un hex de 6 digitos');
+      if (css.indexOf(k + ':' + PALETA_[k] + ';') === -1) malos.push(k + ' no sale en paletaCss_()');
+    });
+    Object.keys(PALETA_OSCURO_).forEach(function (k) {
+      if (!PALETA_[k] && !PALETA_ALIAS_[k]) malos.push('el modo oscuro redefine ' + k + ', que no existe en claro');
+    });
+    // cada var(--x) que usan las vistas tiene que estar definida en la paleta o en algun .html
+    var definidas = {}, usadas = {};
+    Object.keys(PALETA_).concat(Object.keys(PALETA_ALIAS_)).forEach(function (k) { definidas[k] = 1; });
+    PR_HTML_PALETA_.forEach(function (v) {
+      var txt = '';
+      try { txt = HtmlService.createTemplateFromFile(v).getRawContent(); } catch (e) { return; }
+      (txt.match(/--[\w-]+(?=\s*:)/g) || []).forEach(function (k) { definidas[k] = 1; });
+      // sin valor de respaldo: var(--x, 64px) se define desde JS y trae su propio respaldo
+      (txt.match(/var\(\s*--[\w-]+\s*\)/g) || []).forEach(function (k) { usadas[k.replace(/var\(\s*|\s*\)/g, '')] = v; });
+      (txt.match(/RC\('--[\w-]+'\)/g) || []).forEach(function (k) { usadas[k.slice(4, -2)] = v; });
+    });
+    var nUsadas = Object.keys(usadas).length;
+    Object.keys(usadas).forEach(function (k) { if (!definidas[k]) malos.push(k + ' (usada en ' + usadas[k] + ') no esta definida'); });
+    if (nUsadas < 30) malos.push('solo se encontraron ' + nUsadas + ' variables usadas: el barrido no leyo las vistas');
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : Object.keys(PALETA_).length + ' tokens; ' + nUsadas + ' variables usadas, todas definidas',
+      nUsadas, null);
+  });
+
   var props = PropertiesService.getScriptProperties();
 
   PRUEBAS_CFG.propsObligatorias.forEach(function (clave) {

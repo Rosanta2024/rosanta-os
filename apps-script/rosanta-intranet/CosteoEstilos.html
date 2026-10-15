@@ -1,36 +1,20 @@
 :root{
-  /* Crema + Verde Bosque + Lila, la combinacion de marca. El --bg era #FBFAF7,
-     un blanco roto que no esta en la paleta. */
-  --bg:#F2EEEB; --surface:#FFFFFF; --panel:#EAE5DE; --panel-2:#E0DAD1;
-  --nav-txt:#DCE7DF;   /* texto de las pestanas sobre el header verde */
-  --ink:#14180F; --ink-2:#3E4438; --muted:#6E7268; --line:#E3DED6; --line-2:#D3CCC1;
-  --bosque:#4E6D5A; --verde:#57A77F; --lila:#AEAAE2;
-  --alto:#B4532F; --meta:#3F7F5E; --bajo:#40708F; --vacia:#9A968D; --pre:#7C7A93;
+  /* Crema + Verde Bosque + Lila, la combinacion de marca. Todos son alias de la paleta
+     unica (PaletaServidor.js). */
+  --bg:var(--fondo); --surface:var(--superficie);   /* --panel y --panel-2 vienen de la paleta */
+  --nav-txt:var(--sobre-verde-texto);   /* texto de las pestanas sobre el header verde */
+  --ink:var(--texto); --ink-2:var(--texto-2); --muted:var(--texto-suave); --line:var(--linea); --line-2:var(--linea-2);
+  --bosque:var(--rosanta-verde); --verde:var(--rosanta-verde-medio); --lila:var(--rosanta-lila);
+  --alto:var(--mal); --meta:var(--ok); --bajo:var(--info); --vacia:var(--texto-suave); --pre:var(--lila-texto);
   --shadow:0 1px 2px rgba(20,24,15,.05), 0 8px 24px -12px rgba(20,24,15,.18);
   --r:10px;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
-    --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
-    --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
-    --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
-    --nav-txt:#A8C7B2;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#12160F; --surface:#1B211A; --panel:#222A20; --panel-2:#2B342A;
-  --ink:#EDEAE3; --ink-2:#CBC8C0; --muted:#979E90; --line:#2F382D; --line-2:#3C4739;
-  --bosque:#8FB8A0; --verde:#6FC095; --lila:#BEBAEE;
-  --alto:#E08A62; --meta:#6FC095; --bajo:#7FAECB; --vacia:#7C8177; --pre:#A9A6C4;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
-  --nav-txt:#A8C7B2;
-}
+/* El modo oscuro de Profit OS vive en PaletaServidor.js (PALETA_OSCURO_), pegado por
+   CosteoVista con paletaCssOscuro_(): los alias de arriba lo siguen solos. */
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--bg); color:var(--ink);
-  font-family:"Lato","Avenir Next",Avenir,system-ui,sans-serif;
+  font-family:var(--rosanta-font-body);
   font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
   font-variant-numeric:tabular-nums;
 }
@@ -57,7 +41,7 @@ header.top{border-bottom:1px solid var(--line); background:var(--surface); posit
 .brand{display:flex; align-items:baseline; gap:10px; margin-right:auto}
 .brand .mark{width:11px;height:11px;border-radius:50%;background:var(--bosque);display:inline-block;transform:translateY(-1px)}
 .brand h1{font-size:20px; letter-spacing:.01em}
-.coord{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.coord{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-family:var(--rosanta-font-label)}
 .search{position:relative; flex:1 1 260px; max-width:380px}
 .search input{
   width:100%; padding:9px 12px 9px 34px; border-radius:var(--r);
@@ -73,11 +57,11 @@ header.top{border-bottom:1px solid var(--line); background:var(--surface); posit
 .areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:var(--muted)}
 .areas button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
 
-.simbar{display:none; align-items:center; gap:14px; flex-wrap:wrap; background:var(--lila); color:#14180F; padding:9px 20px; font-size:13px}
+.simbar{display:none; align-items:center; gap:14px; flex-wrap:wrap; background:var(--lila); color:var(--texto); padding:9px 20px; font-size:13px}
 .simbar.on{display:flex}
 .simbar strong{font-weight:900}
 .simbar .sp{margin-left:auto; display:flex; gap:8px}
-.simbar button{border:1px solid rgba(20,24,15,.35); background:rgba(255,255,255,.4); color:#14180F; border-radius:99px; padding:4px 12px; font-size:12px}
+.simbar button{border:1px solid rgba(20,24,15,.35); background:rgba(255,255,255,.4); color:var(--texto); border-radius:99px; padding:4px 12px; font-size:12px}
 
 main{padding:24px 0 80px}
 .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px}
@@ -95,27 +79,27 @@ main{padding:24px 0 80px}
 .card:focus-visible{outline:2px solid var(--verde); outline-offset:2px}
 @media (prefers-reduced-motion:no-preference){ .card{transition:transform .12s ease, border-color .12s ease} }
 .card .stripe{position:absolute; left:0; top:0; bottom:0; width:4px}
-.card .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.card .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-family:var(--rosanta-font-label)}
 /* El NOMBRE de una cosa dentro de una tarjeta va en Lato, no en Playfair.
    Pedido de Juanma el 30-ago-2026 viendo los cocteles de barra en produccion.
    La familia va EXPLICITA porque estos h3 heredan la serif de la regla global
    h1,h2,h3 de mas arriba, que NO se toca: los titulos de seccion siguen en
    Playfair, y tambien el numero grande de CMV (.fig .val.big), los KPI y el
    conteo de higiene, que son numeros de exhibicion y no nombres. */
-.card h3{font-size:17.5px; line-height:1.25; font-family:Lato,"Avenir Next",system-ui,sans-serif; font-weight:700}
+.card h3{font-size:17.5px; line-height:1.25; font-family:var(--rosanta-font-body); font-weight:700}
 .card .figs{display:flex; gap:16px; align-items:flex-end; margin-top:auto; padding-top:6px}
 .fig{display:flex; flex-direction:column; gap:1px}
-.fig .lbl{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.fig .lbl{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-family:var(--rosanta-font-label)}
 .fig .val{font-size:16px; font-weight:700}
 .fig .val.big{font-size:21px; font-family:"Playfair Display",Georgia,serif}
 .delta{font-size:12px; font-weight:700; padding-left:5px}
 .badge{align-self:flex-start; display:inline-flex; align-items:center; gap:5px; font-size:11px; letter-spacing:.06em;
-  text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid currentColor}
+  text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid currentColor; font-family:var(--rosanta-font-label)}
 .s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
 .s-vacia{color:var(--vacia)} .s-sin_precio{color:var(--vacia)} .s-pre{color:var(--pre)}
 .b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
 .b-vacia{background:var(--vacia)} .b-sin_precio{background:var(--vacia)} .b-pre{background:var(--pre)}
-.tagarea{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:1px 7px}
+.tagarea{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:1px 7px; font-family:var(--rosanta-font-label)}
 
 .tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--surface)}
 table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
@@ -133,7 +117,7 @@ table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
   .inv-fijo .chip{font-size:15px; padding:10px 16px}
 }
 th{text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
-  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel)}
+  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel); font-family:var(--rosanta-font-label)}
 td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top}
 tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--panel)}
@@ -159,7 +143,7 @@ td.r,th.r{text-align:right}
 .kv dd{margin:0; text-align:right; font-weight:700}
 .kv .rule{grid-column:1/-1; border-top:1px solid var(--line); margin:4px 0}
 .note{border-left:3px solid var(--lila); padding:9px 0 9px 13px; font-size:13.5px; color:var(--ink-2); font-style:italic}
-.sec-t{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:9px}
+.sec-t{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:9px; font-family:var(--rosanta-font-label)}
 /* edicion en linea de la cantidad. Solo aparece si el servidor dijo que la persona puede. */
 .card.nueva{display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:6px; min-height:150px; border:1.5px dashed var(--line-2); background:transparent;
@@ -184,7 +168,7 @@ td.r,th.r{text-align:right}
 .pf-toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:60; display:flex; gap:12px; align-items:center;
   background:var(--ink); color:var(--surface); border-radius:12px; padding:10px 14px; font-size:14px; box-shadow:0 8px 24px rgba(0,0,0,.25); max-width:calc(100vw - 32px)}
 .pf-toast[hidden]{display:none}
-.pf-toast button{font:inherit; font-weight:700; background:none; border:0; color:var(--lila, #AEAAE2); cursor:pointer; padding:4px 6px; text-decoration:underline}
+.pf-toast button{font:inherit; font-weight:700; background:none; border:0; color:var(--lila, var(--rosanta-lila)); cursor:pointer; padding:4px 6px; text-decoration:underline}
 .qsave[disabled]{opacity:.55; cursor:default}
 .simrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel); border-radius:var(--r); padding:13px 15px}
 .simrow input{width:110px; padding:7px 10px; border-radius:8px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink); font:inherit}
@@ -196,7 +180,7 @@ td.r,th.r{text-align:right}
 .provgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px}
 .provcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 15px; text-align:left; display:flex; flex-direction:column; gap:3px}
 .provcard:hover{border-color:var(--verde)}
-.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif; font-size:17px; font-weight:700}
+.provcard .n{font-family:var(--rosanta-font-body); font-size:17px; font-weight:700}
 .provcard .m{font-size:12.5px; color:var(--muted)}
 .hig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
 .hig h3{font-size:16px;margin-bottom:4px}
@@ -225,10 +209,8 @@ footer{border-top:1px solid var(--line); padding:22px 0 40px; color:var(--muted)
    cada regla de [data-theme="dark"] va DUPLICADA ahi. Si se escribe una sola, en
    oscuro el header queda verde palido (--bosque se aclara) con texto blanco encima
    y no se lee nada. ===== */
-header.top{background:var(--bosque);color:#fff;position:sticky;top:0;z-index:40;
+header.top{background:var(--encabezado);color:var(--rosanta-blanco);position:sticky;top:0;z-index:40;
   box-shadow:0 1px 0 rgba(0,0,0,.12)}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) header.top{background:#16201B} }
-:root[data-theme="dark"] header.top{background:#16201B}
 .topbar{display:flex;align-items:center;gap:18px;padding:14px 0;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
 /* El fondo del wordmark lo pone Logo.html, incluido arriba: el data URL vive en un
@@ -238,33 +220,33 @@ header.top{background:var(--bosque);color:#fff;position:sticky;top:0;z-index:40;
 /* El <h1> se queda por accesibilidad y por el buscador; el texto va oculto. */
 .oculto{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
   clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-.brand .sec{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#fff;opacity:.72;white-space:nowrap}
+.brand .sec{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rosanta-blanco);opacity:.72;white-space:nowrap; font-family:var(--rosanta-font-label)}
 .search{position:relative;flex:1 1 240px;max-width:360px}
 .search input{width:100%;padding:9px 12px 9px 34px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font:inherit}
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:var(--rosanta-blanco);font:inherit}
 .search input::placeholder{color:rgba(255,255,255,.7)}
 .search input:focus{outline:2px solid var(--verde);outline-offset:1px;border-color:transparent}
 .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.8}
 .volver{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.14);
-  color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:.35rem .85rem;
+  color:var(--rosanta-blanco);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:.35rem .85rem;
   font-size:.82rem;text-decoration:none;white-space:nowrap}
-.volver:hover{background:rgba(255,255,255,.24);color:#fff}
+.volver:hover{background:rgba(255,255,255,.24);color:var(--rosanta-blanco)}
 /* background:none NO es de adorno: la regla vieja de mas arriba pinta la pestana
    activa con una pildora var(--bosque) y la del hover con una var(--panel). Sobre
    el header verde eso deja una pildora verde-sobre-verde y, en oscuro, una crema. */
 .nav{display:flex;gap:2px;padding:0;flex-wrap:wrap;align-items:stretch}
 .nav button{border:none;background:none;padding:11px 13px;font-size:13px;letter-spacing:.02em;
   color:var(--nav-txt);border-radius:0;border-bottom:2px solid transparent}
-.nav button[aria-selected="true"]{background:none;color:#fff;font-weight:700;border-bottom-color:var(--verde)}
-.nav button:hover:not([aria-selected="true"]){background:none;color:#fff}
+.nav button[aria-selected="true"]{background:none;color:var(--rosanta-blanco);font-weight:700;border-bottom-color:var(--verde)}
+.nav button:hover:not([aria-selected="true"]){background:none;color:var(--rosanta-blanco)}
 .areas{display:flex;gap:2px;margin-left:auto;background:rgba(255,255,255,.12);border-radius:99px;padding:3px;align-self:center}
 .areas button{border:none;background:none;padding:5px 15px;border-radius:99px;font-size:12.5px;color:rgba(255,255,255,.78)}
-.areas button[aria-pressed="true"]{background:#fff;color:var(--bosque);font-weight:700;box-shadow:none}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F} }
-:root[data-theme="dark"] .areas button[aria-pressed="true"]{background:var(--bosque);color:#12160F}
+.areas button[aria-pressed="true"]{background:var(--superficie);color:var(--bosque);font-weight:700;box-shadow:none}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .areas button[aria-pressed="true"]{background:var(--bosque);color:var(--fondo)} }
+:root[data-theme="dark"] .areas button[aria-pressed="true"]{background:var(--bosque);color:var(--fondo)}
 main{padding:24px 0 40px}
 .lead{color:var(--ink-2);margin:0 0 18px;max-width:60ch}
-.sec-t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.sec-t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px; font-family:var(--rosanta-font-label)}
 
 /* ===== LA BARRA DE AGREGAR VA ARRIBA. Al pie de 61 proveedores o de 400
    productos, nadie la encuentra: hay que scrollear una pantalla y media para
@@ -279,13 +261,13 @@ main{padding:24px 0 40px}
 .simrow input{width:110px;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);
   background:var(--bg);color:var(--ink);font:inherit}
 .simrow input:focus{outline:2px solid var(--verde);outline-offset:1px}
-.btn-crear{border:1px solid var(--bosque);background:var(--bosque);color:#fff;
+.btn-crear{border:1px solid var(--bosque);background:var(--bosque);color:var(--rosanta-blanco);
   border-radius:999px;padding:6px 16px;font-size:13px}
 .btn-crear:hover{filter:brightness(1.08)}
 .nota{font-size:12.5px;color:var(--muted);margin:9px 0 0;line-height:1.5;max-width:78ch}
 .chip{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
   border-radius:99px;padding:5px 13px;font-size:12.5px}
-.chip[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:#fff}
+.chip[aria-pressed="true"]{background:var(--bosque);border-color:var(--bosque);color:var(--rosanta-blanco)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
 .count{color:var(--muted);font-size:13px;margin-left:auto}
 
@@ -298,7 +280,7 @@ main{padding:24px 0 40px}
   border-radius:var(--r);padding:12px 14px 11px;text-align:left;width:100%;
   display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow);overflow:hidden}
 .provcard:hover{border-color:var(--line-2);transform:translateY(-1px)}
-.provcard .n{font-family:Lato,"Avenir Next",system-ui,sans-serif;font-size:15.5px;line-height:1.2;font-weight:700}
+.provcard .n{font-family:var(--rosanta-font-body);font-size:15.5px;line-height:1.2;font-weight:700}
 .provcard .m{font-size:12px;color:var(--muted)}
 .provcard .peso{height:3px;border-radius:99px;background:var(--panel);overflow:hidden;margin-top:2px}
 .provcard .peso i{display:block;height:100%;background:var(--verde);border-radius:99px}
@@ -306,15 +288,15 @@ main{padding:24px 0 40px}
   padding:15px 16px 14px 19px;text-align:left;width:100%;display:flex;flex-direction:column;gap:9px;
   box-shadow:var(--shadow);overflow:hidden}
 .card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
-.card .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.card h3{font-size:17.5px;line-height:1.25;font-family:Lato,"Avenir Next",system-ui,sans-serif;font-weight:700}
+.card .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted); font-family:var(--rosanta-font-label)}
+.card h3{font-size:17.5px;line-height:1.25;font-family:var(--rosanta-font-body);font-weight:700}
 .card .figs{display:flex;gap:16px;align-items:flex-end;margin-top:auto;padding-top:6px}
 .fig{display:flex;flex-direction:column;gap:1px}
-.fig .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fig .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted); font-family:var(--rosanta-font-label)}
 .fig .val{font-size:16px;font-weight:700}
 .fig .val.big{font-size:21px;font-family:"Playfair Display",Georgia,serif}
 .badge{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:11px;
-  letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor; font-family:var(--rosanta-font-label)}
 .s-ok{color:var(--meta)} .s-alto{color:var(--alto)} .s-bajo{color:var(--bajo)}
 .b-ok{background:var(--meta)} .b-alto{background:var(--alto)} .b-bajo{background:var(--bajo)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
@@ -349,15 +331,15 @@ footer.pie .flor{color:var(--lila)}
 }
 /* En oscuro, --bosque se aclara tanto que caballo y estrella quedan del mismo
    verde y la matriz deja de leerse. Caballo baja de valor a proposito. */
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #im{ --im-bosque:#4E8A6A } }
-:root[data-theme="dark"] #im{ --im-bosque:#4E8A6A }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #im{ --im-bosque:color-mix(in srgb, var(--rosanta-verde) 70%, var(--fondo)) } }
+:root[data-theme="dark"] #im{ --im-bosque:color-mix(in srgb, var(--rosanta-verde) 70%, var(--fondo)) }
 
 /* La barra: dos segmentados y el sello del periodo empujado a la derecha.
    El periodo tiene que estar arriba y visible: sin el, en tres meses nadie
    sabe si esta viendo ocho meses o tres semanas. */
 #im .im-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
 #im .im-grp{display:flex;flex-direction:column;gap:6px}
-#im .im-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);font-weight:700}
+#im .im-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--im-tinta-3);font-weight:700; font-family:var(--rosanta-font-label)}
 #im .im-seg{display:inline-flex;background:var(--im-chip);border:1px solid var(--im-linea);border-radius:99px;overflow:hidden;padding:0}
 #im .im-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;color:var(--im-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
 #im .im-seg button[aria-pressed="true"]{background:var(--bosque);color:var(--im-sup);font-weight:700}
@@ -374,7 +356,7 @@ footer.pie .flor{color:var(--lila)}
 #im .im-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
 #im .im-k{background:var(--im-sup);border:1px solid var(--im-linea);border-top:3px solid var(--im-kc,var(--im-linea));border-radius:var(--r);padding:14px 15px 13px}
 #im .im-k b{display:block;font-size:30px;line-height:1;font-family:"Playfair Display",Georgia,serif;font-weight:500;color:var(--im-kc,var(--im-tinta))}
-#im .im-k span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--im-tinta-3);margin-top:8px;font-weight:700}
+#im .im-k span{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--im-tinta-3);margin-top:8px;font-weight:700; font-family:var(--rosanta-font-label)}
 #im .im-k em{display:block;font-style:normal;font-size:12px;color:var(--im-tinta-2);margin-top:5px;line-height:1.35}
 
 /* La matriz y las dos listas de accion, lado a lado. Colapsa a una columna en
@@ -388,13 +370,13 @@ footer.pie .flor{color:var(--lila)}
 
 #im svg{width:100%;height:auto;display:block;overflow:visible}
 #im .im-axl{font-size:8.5px;fill:var(--im-tinta-3);letter-spacing:.06em}
-#im .im-axt{font-size:8px;fill:var(--im-tinta-3);letter-spacing:.11em;text-transform:uppercase}
+#im .im-axt{font-size:8px;fill:var(--im-tinta-3);letter-spacing:.11em;text-transform:uppercase; font-family:var(--rosanta-font-label)}
 #im .im-cross{stroke:var(--im-linea);stroke-width:1;stroke-dasharray:3 3}
 /* El halo del color del panel: aunque una etiqueta quede rozando un punto,
    el nombre se sigue leyendo. paint-order dibuja el contorno debajo del texto. */
 #im .im-lab{font-size:9px;fill:var(--im-tinta-2);paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
 #im .im-qz{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.6;
-  paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
+  paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round; font-family:var(--rosanta-font-label)}
 /* Mismo halo para los rotulos de los ejes: se dibujan al final, encima de los
    circulos, y sin el contorno un punto pegado al borde los volveria ilegibles. */
 #im .im-axl,#im .im-axt{paint-order:stroke;stroke:var(--im-sup);stroke-width:2.6px;stroke-linejoin:round}
@@ -429,7 +411,7 @@ footer.pie .flor{color:var(--lila)}
     --db-tinta-3:var(--muted); --db-linea:var(--line); --db-chip:var(--panel)}
 #db .db-bar{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;margin:0 0 20px}
 #db .db-grp{display:flex;flex-direction:column;gap:6px}
-#db .db-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-grp>b{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700; font-family:var(--rosanta-font-label)}
 #db .db-seg{display:inline-flex;background:var(--db-chip);border:1px solid var(--db-linea);border-radius:99px;overflow:hidden}
 #db .db-seg button{appearance:none;border:0;background:none;font:inherit;font-size:12.5px;
   color:var(--db-tinta-3);padding:6px 15px;cursor:pointer;border-radius:99px}
@@ -445,7 +427,7 @@ footer.pie .flor{color:var(--lila)}
 #db .db-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
 #db .db-t{background:var(--db-sup);border:1px solid var(--db-linea);border-top:3px solid var(--db-c);
   border-radius:var(--r);padding:16px 17px 15px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
-#db .db-lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700}
+#db .db-lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--db-tinta-3);font-weight:700; font-family:var(--rosanta-font-label)}
 #db .db-n{font-family:"Playfair Display",Georgia,serif;font-weight:500;font-size:36px;line-height:1.05;
   margin-top:9px;color:var(--db-c)}
 #db .db-n small{font-family:"Lato",sans-serif;font-size:14px;font-weight:400;color:var(--db-tinta-3)}

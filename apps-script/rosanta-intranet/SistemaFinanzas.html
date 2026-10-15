@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -14,7 +15,7 @@
        CADA SEMANA y lleva a una accion; arriba va el analisis del AÑO. Los nombres
        "Modulos" y "Herramientas" no decian eso. */
     .sf-rotulo { align-self: center; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
-      color: #8a8377; padding: 0 0.8rem 0 0.4rem; white-space: nowrap; }
+      color: var(--texto-suave); padding: 0 0.8rem 0 0.4rem; white-space: nowrap; font-family:var(--rosanta-font-label)}
     .sf-cuerpo { flex: 1; min-height: 0; display: flex; }
     .sf-cuerpo .sf-main { flex: 1; min-width: 0; height: 100%; }
     @media (max-width: 700px) {

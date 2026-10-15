@@ -30,8 +30,15 @@
 var REP_PDF = {
   carpeta: '1PlWKHpl40qPIGkyF3Ej9rrDjHZFQ4SYP',   // Reportes 2026 (la misma de TAB_DOCS.reportes)
   archivo: '_Archive',
-  colores: { verde: '#4E6D5A', medio: '#57A77F', lila: '#AEAAE2', rojo: '#a23b3b', ambar: '#C89A3C',
-             gris: '#52514e', linea: '#e3e1dc' }
+  // Los colores salen de la paleta unica (PaletaServidor.js). Getter: PALETA_ puede
+  // cargarse despues que este archivo, asi que se lee al usarse y no al definirse.
+  get colores() {
+    return { verde: paletaHex_('--rosanta-verde'), medio: paletaHex_('--rosanta-verde-medio'),
+             lila: paletaHex_('--rosanta-lila'), rojo: paletaHex_('--mal'), ambar: paletaHex_('--alerta-relleno'),
+             gris: paletaHex_('--texto-2'), linea: paletaHex_('--linea'), ok: paletaHex_('--ok'),
+             linea2: paletaHex_('--linea-2'), texto: paletaHex_('--texto'), suave: paletaHex_('--texto-suave'),
+             blanco: paletaHex_('--rosanta-blanco') };
+  }
 };
 
 function generarPdfReporteSemanal(auth, clave) {
@@ -102,7 +109,7 @@ function _repHtmlPdf_(d) {
   function num(n) { return (n === null || n === undefined) ? '—' : Number(n).toLocaleString('en-US'); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function signo(n) { return n > 0 ? '+' : ''; }
-  function color(z) { return { verde: '#2E6B3F', amarillo: C.ambar, rojo: C.rojo }[z] || '#c9c6c0'; }
+  function color(z) { return { verde: C.ok, amarillo: C.ambar, rojo: C.rojo }[z] || C.linea2; }
   function kpis(lista) {
     // tarjetas en una tabla de N columnas: [zona, etiqueta, valor, detalle]
     var w = Math.floor(100 / lista.length);
@@ -278,7 +285,7 @@ function _repHtmlPdf_(d) {
 
   h += '<p class="pie">Rosanta · CORSAGA, S.A. · Fuentes: ' + esc(d.fuentes) + ' · Los responsables son departamentos: el documento no lleva nombres de personas.</p>';
 
-  var css = 'body{font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:#1a1a1a;margin:0;padding:18px 22px}' +
+  var css = 'body{font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:' + C.texto + ';margin:0;padding:18px 22px}' +
     '.cab{border-bottom:3px solid ' + C.verde + ';padding-bottom:8px;margin-bottom:10px}' +
     '.marca{font-family:Georgia,serif;font-size:22px;letter-spacing:0.18em;color:' + C.verde + '}' +
     '.tit{font-family:Georgia,serif;font-size:19px;color:' + C.verde + ';margin-top:4px}' +
@@ -292,12 +299,12 @@ function _repHtmlPdf_(d) {
     'table.k{margin:4px 0 8px;table-layout:fixed}' +
     'table.k td{vertical-align:top;padding:6px 8px;border:1px solid ' + C.linea + ';border-left-width:5px}' +
     '.et{font-size:9px;color:' + C.gris + '}.val{font-size:17px;font-weight:bold;margin:2px 0 1px}.det{font-size:8.5px;color:' + C.gris + ';line-height:1.4}' +
-    'table.t{margin:4px 0 8px}table.t th{background:' + C.verde + ';color:#fff;font-weight:bold;text-align:right;padding:4px 6px;font-size:9.5px}' +
+    'table.t{margin:4px 0 8px}table.t th{background:' + C.verde + ';color:' + C.blanco + ';font-weight:bold;text-align:right;padding:4px 6px;font-size:9.5px}' +
     'table.t td{text-align:right;padding:3px 6px;border-bottom:1px solid ' + C.linea + ';font-size:9.5px}' +
     'table.t th.l,table.t td.l{text-align:left}table.t tr.total td{font-weight:bold;border-top:2px solid #bbb}' +
     'table.dos{table-layout:fixed}table.dos td{vertical-align:top;padding:0 6px 0 0;border:0}' +
-    '.pos{color:#2E6B3F}.neg{color:' + C.rojo + '}' +
-    '.pie{color:#8a8780;font-size:8.5px;margin-top:14px;border-top:1px solid ' + C.linea + ';padding-top:5px}';
+    '.pos{color:' + C.ok + '}.neg{color:' + C.rojo + '}' +
+    '.pie{color:' + C.suave + ';font-size:8.5px;margin-top:14px;border-top:1px solid ' + C.linea + ';padding-top:5px}';
 
   return '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Rosanta · Reporte semanal S' + d.semana.w + '</title><style>' + css + '</style></head><body>' + h + '</body></html>';
 }

@@ -4,27 +4,27 @@
   <base target="_top">
   <meta charset="utf-8">
   <title>Pruebas · Rosanta Intranet</title>
+  <?!= paletaCss_() ?>
   <style>
     :root{
-      --verde:#4A6741; --tierra:#A0785A; --crema:#F5EFE0;
-      --cobre:#C9923F; --marron:#3D2B1F;
-      --ok:#3F7D58; --falla:#B3402F; --aviso:#C9923F; --saltada:#8A8378;
+      --verde:var(--rosanta-verde); --tierra:var(--texto-suave); --crema:var(--fondo);
+      --cobre:var(--rosanta-verde-medio); --marron:var(--texto);
+ --falla:var(--mal); --aviso:var(--alerta-relleno); --saltada:var(--texto-suave);
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--crema);color:var(--marron);
-         font:15px/1.55 Georgia,"Times New Roman",serif}
-    .wrap{max-width:880px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+         font:15px/1.55 var(--rosanta-font-body);margin:0 auto;padding:1.5rem 1.25rem 4rem}
     header{display:flex;align-items:baseline;justify-content:space-between;
            gap:1rem;flex-wrap:wrap;border-bottom:2px solid var(--verde);padding-bottom:.75rem}
     h1{font-size:1.4rem;margin:0;color:var(--verde);font-weight:normal;letter-spacing:.01em}
     .sub{font-size:.82rem;color:var(--tierra)}
     button{font:inherit;font-size:.9rem;background:var(--verde);color:var(--crema);
            border:0;border-radius:3px;padding:.5rem 1.1rem;cursor:pointer}
-    button:hover{background:#3d5636}
+    button:hover{background:var(--rosanta-verde)}
     button[disabled]{background:var(--saltada);cursor:default}
 
     .resumen{margin:1.25rem 0;padding:1rem 1.15rem;border-radius:4px;
-             border-left:5px solid var(--saltada);background:#fff}
+             border-left:5px solid var(--saltada);background:var(--superficie)}
     .resumen.sana{border-left-color:var(--ok)}
     .resumen.mal{border-left-color:var(--falla)}
     .resumen h2{margin:0 0 .3rem;font-size:1.15rem;font-weight:normal}
@@ -34,13 +34,13 @@
 
     .grupo{margin-top:1.6rem}
     .grupo h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;
-              color:var(--tierra);margin:0 0 .5rem;font-weight:normal}
+              color:var(--tierra);margin:0 0 .5rem;font-weight:normal; font-family:var(--rosanta-font-label)}
     .fila{display:flex;gap:.75rem;align-items:baseline;padding:.5rem .75rem;
-          border-bottom:1px solid #E4DCC8;background:#fff}
+          border-bottom:1px solid var(--linea);background:var(--superficie)}
     .fila:first-of-type{border-radius:4px 4px 0 0}
     .fila:last-of-type{border-bottom:0;border-radius:0 0 4px 4px}
     .marca{flex:0 0 4.6rem;font:600 .7rem/1.5 ui-monospace,Menlo,monospace;
-           letter-spacing:.06em;text-align:center;border-radius:2px;padding:.1rem 0;color:#fff}
+           letter-spacing:.06em;text-align:center;border-radius:2px;padding:.1rem 0;color:var(--rosanta-blanco)}
     .OK .marca{background:var(--ok)}
     .FALLA .marca{background:var(--falla)}
     .AVISO .marca{background:var(--aviso)}
@@ -54,7 +54,7 @@
              word-break:break-word;overflow-wrap:anywhere}
     .vacio{padding:2.5rem 0;text-align:center;color:var(--tierra)}
     .nota{margin-top:2.5rem;font-size:.8rem;color:var(--saltada);
-          border-top:1px solid #E4DCC8;padding-top:.9rem}
+          border-top:1px solid var(--linea);padding-top:.9rem}
   </style>
 </head>
 <body data-auth="<?= authToken ?>" data-grupos="<?= grupos ?>" data-carriles="<?= carriles ?>">

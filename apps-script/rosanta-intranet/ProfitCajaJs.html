@@ -1,18 +1,18 @@
 <style>
   /* Caja chica (13-oct-2026). Pestaña de Pagos para Maco y el dueño. Usa los estilos .pg de Pagos. */
-  .cj-dia { background: #fff; border-radius: 18px; padding: 0.8rem 1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.8rem; }
-  .cj-dia.mal { border: 2px solid #E3A99B; }
+  .cj-dia { background: var(--superficie); border-radius: 18px; padding: 0.8rem 1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.8rem; }
+  .cj-dia.mal { border: 2px solid var(--mal-linea); }
   .cj-dia summary { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; align-items: baseline; justify-content: space-between; cursor: pointer; list-style: none; }
   .cj-dia summary::-webkit-details-marker { display: none; }
   .cj-dia summary h3 { margin: 0; font-size: 1rem; }
   .cj-cta { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 1rem; font-size: 0.88rem; margin-top: 0.6rem; max-width: 30rem; }
   .cj-cta span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
   .cj-cta .tot { font-weight: 700; border-top: 1px solid rgba(26,26,26,0.15); padding-top: 0.2rem; }
-  .cj-cta .sub { color: #8a8780; font-size: 0.78rem; }
-  .cj-pista { background: #FBF3E2; border-radius: 10px; padding: 0.45rem 0.7rem; font-size: 0.84rem; margin-top: 0.4rem; }
+  .cj-cta .sub { color: var(--texto-suave); font-size: 0.78rem; }
+  .cj-pista { background: var(--alerta-tint); border-radius: 10px; padding: 0.45rem 0.7rem; font-size: 0.84rem; margin-top: 0.4rem; }
   .cj-movs { font-size: 0.82rem; margin-top: 0.6rem; }
   .cj-movs div { display: flex; gap: 0.6rem; justify-content: space-between; padding: 0.25rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
-  .cj-aviso { background: #F6E4DF; color: #7a2a1e; border-radius: 12px; padding: 0.6rem 0.9rem; font-size: 0.86rem; margin-top: 0.8rem; }
+  .cj-aviso { background: var(--mal-tint); color: var(--mal); border-radius: 12px; padding: 0.6rem 0.9rem; font-size: 0.86rem; margin-top: 0.8rem; }
   .cj-acc { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
 </style>
 <script>
@@ -129,7 +129,7 @@ window.PF_CAJA = function (HOST, AUTH) {
     if (FORM === 'arranque') h += '<p class="pg-nota" style="width:100%">El saldo contado de un día, desde el que se calcula todo lo que sigue. Hoy: ' + esc(ddmm(D.arranque.fecha)) + ' con ' + q(D.arranque.saldo) + '.</p>' +
       campoFecha() + '<label>Saldo contado <input type="number" step="0.01" min="0" data-v="monto"></label><label>Nota <input type="text" data-v="concepto" placeholder="ej. conteo con Maco"></label>';
     if (FORM === 'factura') h += factura();
-    h += '</div><div class="pg-formas" style="margin-top:0.6rem"><button type="button" data-guardar="' + FORM + '">Guardar</button><button type="button" data-acc="cerrar" style="background:#8a8780">Cancelar</button></div><div class="pg-err" data-err></div></section>';
+    h += '</div><div class="pg-formas" style="margin-top:0.6rem"><button type="button" data-guardar="' + FORM + '">Guardar</button><button type="button" data-acc="cerrar" style="background:var(--texto-suave)">Cancelar</button></div><div class="pg-err" data-err></div></section>';
     return h;
   }
   function factura() {

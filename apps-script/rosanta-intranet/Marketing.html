@@ -5,19 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Marketing · Rosanta</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<?!= paletaCss_() ?>
 <?!= incluirCrudo_('LecturaEstilo') ?>
 <style>
 :root{
   color-scheme: light;
-  --verde:#4A6741; --tierra:#A0785A; --crema:#F5EFE0; --cobre:#C9923F; --marron:#3D2B1F;
-  --blanco:#FFFDF8; --borde:#E4DCC8; --rojo:#B54A35; --ok:#4A6741;
+  --verde:var(--rosanta-verde); --tierra:var(--texto-suave); --crema:var(--fondo); --cobre:var(--rosanta-verde-medio); --marron:var(--texto);
+  --blanco:var(--superficie); --borde:var(--linea); --rojo:var(--mal);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--crema);color:var(--marron);font-size:14px;}
-header{background:var(--verde);color:#fff;padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+body{font-family:var(--rosanta-font-body);background:var(--crema);color:var(--marron);font-size:14px;}
+header{background:var(--verde);color:var(--rosanta-blanco);padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 header h1{font-size:18px;font-weight:700;letter-spacing:.3px}
 header .sub{font-size:12px;opacity:.85}
-header .volver-panel{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;text-decoration:none;white-space:nowrap}
+header .volver-panel{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:var(--rosanta-blanco);border-radius:999px;padding:6px 14px;font-size:12.5px;text-decoration:none;white-space:nowrap}
 header .volver-panel:hover{background:rgba(255,255,255,.24)}
 nav{display:flex;gap:4px;background:var(--blanco);border-bottom:1px solid var(--borde);padding:0 16px;overflow-x:auto}
 nav button{border:none;background:none;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--tierra);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
@@ -27,7 +28,7 @@ main{padding:18px;max-width:1200px;margin:0 auto}
 .grid{display:grid;gap:12px}
 .kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .card{background:var(--blanco);border:1px solid var(--borde);border-radius:12px;padding:16px}
-.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--tierra);margin-bottom:6px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--tierra);margin-bottom:6px; font-family:var(--rosanta-font-label)}
 .kpi .val{font-size:26px;font-weight:800;color:var(--verde)}
 .kpi .det{font-size:11px;color:var(--tierra);margin-top:4px}
 h2{font-size:15px;margin-bottom:10px;color:var(--verde)}
@@ -35,18 +36,18 @@ h3{font-size:13px;margin-bottom:8px;color:var(--marron)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:800px){.row{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{text-align:left;padding:8px 10px;background:var(--crema);color:var(--tierra);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+th{text-align:left;padding:8px 10px;background:var(--crema);color:var(--tierra);font-size:11px;text-transform:uppercase;letter-spacing:.4px; font-family:var(--rosanta-font-label)}
 td{padding:8px 10px;border-top:1px solid var(--borde)}
-tr:hover td{background:#faf6ea}
+tr:hover td{background:var(--alerta-tint)}
 .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
-.chip.on{background:#E4EDE0;color:var(--verde)}
-.chip.off{background:#F0E6DA;color:var(--tierra)}
-.chip.warn{background:#F6E3DE;color:var(--rojo)}
-.btn{background:var(--verde);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--ok-tint);color:var(--verde)}
+.chip.off{background:var(--panel);color:var(--tierra)}
+.chip.warn{background:var(--mal-tint);color:var(--rojo)}
+.btn{background:var(--verde);color:var(--rosanta-blanco);border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
 .btn.sec{background:var(--blanco);color:var(--verde);border:1.5px solid var(--verde)}
 .btn.sm{padding:5px 10px;font-size:12px}
 .btn.danger{background:none;color:var(--rojo);border:none;font-size:16px;padding:2px 6px}
-select,input,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;color:var(--marron);font-family:inherit}
+select,input,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--superficie);color:var(--marron);font-family:inherit}
 select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .muted{color:var(--tierra);font-size:12px}
@@ -60,18 +61,18 @@ select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
 /* Calendario */
 .calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .calhead .mes{font-size:16px;font-weight:800;color:var(--verde);text-transform:capitalize}
-.brief-mes{border:1px solid #e3ddd6;border-radius:8px;padding:10px;margin-bottom:12px}
+.brief-mes{border:1px solid var(--linea);border-radius:8px;padding:10px;margin-bottom:12px}
 .brief-mes textarea{width:100%;box-sizing:border-box;margin-top:6px;font:inherit;resize:vertical}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.dow{text-align:center;font-size:11px;color:var(--tierra);font-weight:700;padding:4px 0;text-transform:uppercase}
+.dow{text-align:center;font-size:11px;color:var(--tierra);font-weight:700;padding:4px 0;text-transform:uppercase; font-family:var(--rosanta-font-label)}
 .day{background:var(--blanco);border:1px solid var(--borde);border-radius:8px;min-height:86px;padding:5px;cursor:pointer;position:relative;font-size:11px}
 .day:hover{border-color:var(--cobre)}
 .day.out{opacity:.35}
-.day.hoy{border:2px solid var(--cobre);background:#FDF8EC}
-.day.ancla{background:#F1F4EE}
+.day.hoy{border:2px solid var(--cobre);background:var(--alerta-tint)}
+.day.ancla{background:var(--rosanta-verde-tint)}
 .day .num{font-weight:700;font-size:12px}
 .day .anctag{position:absolute;top:5px;right:6px;font-size:9px;color:var(--verde);font-weight:700}
-.post{border-radius:5px;padding:2px 5px;margin-top:3px;font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.post{border-radius:5px;padding:2px 5px;margin-top:3px;font-size:10px;color:var(--rosanta-blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .leyenda{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11.5px}
 .leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
 /* Panel modal */
@@ -80,27 +81,27 @@ select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
 .panel{background:var(--blanco);border-radius:14px;padding:20px;width:min(430px,92vw);max-height:88vh;overflow:auto}
 .panel h3{font-size:15px;color:var(--verde);margin-bottom:12px}
 .fld{margin-bottom:10px}
-.fld label{display:block;font-size:11.5px;font-weight:700;color:var(--tierra);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.fld label{display:block;font-size:11.5px;font-weight:700;color:var(--tierra);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px; font-family:var(--rosanta-font-label)}
 .fld input,.fld select,.fld textarea{width:100%}
 /* Checklist */
 .lint li{padding:7px 10px;border-radius:8px;margin-bottom:5px;list-style:none;font-size:12.5px}
-.lint li.ok{background:#E9EFE5}
-.lint li.bad{background:#F6E3DE}
+.lint li.ok{background:var(--ok-tint)}
+.lint li.bad{background:var(--mal-tint)}
 .ckitem{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px dashed var(--borde);font-size:13px}
 .ckitem input{width:16px;height:16px;accent-color:var(--verde)}
 .score{font-size:22px;font-weight:800}
 .progress{height:8px;background:var(--crema);border-radius:6px;overflow:hidden;margin:8px 0}
 .progress i{display:block;height:100%;background:var(--cobre);transition:width .3s}
-.pill-note{background:#FDF6E8;border:1px solid #EAD9B0;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:12px}
+.pill-note{background:var(--alerta-tint);border:1px solid var(--alerta-linea);border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:12px}
 a{color:var(--verde)}
 #printArea{display:none}
 @media print{
   body>*{display:none !important}
   #printArea{display:block !important}
-  #printArea .pieza{page-break-inside:avoid;border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px}
+  #printArea .pieza{page-break-inside:avoid;border:1px solid var(--linea-2);border-radius:8px;padding:12px;margin-bottom:12px}
 }
-  .mipal{background:#fff;border:2px solid #AEAAE2;border-radius:14px;padding:12px 16px;margin:10px 0 14px;display:flex;flex-wrap:wrap;gap:8px 26px;align-items:center}
-  .mipal .l{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5b56a6;width:100%}
+  .mipal{background:var(--superficie);border:2px solid var(--rosanta-lila);border-radius:14px;padding:12px 16px;margin:10px 0 14px;display:flex;flex-wrap:wrap;gap:8px 26px;align-items:center}
+  .mipal .l{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lila-texto);width:100%; font-family:var(--rosanta-font-label)}
   .mipal .i{display:flex;flex-direction:column;min-width:130px}
   .mipal .i b{font-size:20px;font-variant-numeric:tabular-nums}
   .mipal .i span{font-size:12px;opacity:.75;line-height:1.35}
@@ -941,21 +942,21 @@ function renderCharts(live){
   const top=live.slice(0,8);
   const labels=top.map(x=>x.name.length>28?x.name.slice(0,28)+'…':x.name);
   if(chSpend)chSpend.destroy();
-  chSpend=new Chart($('chSpend'),{type:'bar',data:{labels,datasets:[{label:'Gasto (Q)',data:top.map(x=>x.spend),backgroundColor:'#4A6741',borderRadius:6}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#EDE6D4'}},y:{grid:{display:false}}}}});
+  chSpend=new Chart($('chSpend'),{type:'bar',data:{labels,datasets:[{label:'Gasto (Q)',data:top.map(x=>x.spend),backgroundColor:RC('--rosanta-verde'),borderRadius:6}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:RC('--linea')}},y:{grid:{display:false}}}}});
 }
 
 /* ================= CALENDARIO ================= */
 const EJES=[
-  ['Gastrococtelería','#4A6741'],['Cocina con corazón','#A0785A'],
-  ['Ambientes','#C9923F'],['Comunidad','#7A8B6F'],['Eventos','#B54A35'],
-  ['Educativo','#6B7FA8']
+  ['Gastrococtelería','var(--rosanta-verde)'],['Cocina con corazón','var(--texto-suave)'],
+  ['Ambientes','var(--rosanta-verde-medio)'],['Comunidad','var(--lila-texto)'],['Eventos','var(--mal)'],
+  ['Educativo','var(--info)']
 ];
 let calRef=new Date();let editId=null;
 $('pEje').innerHTML=EJES.map(e=>'<option>'+e[0]+'</option>').join('');
 $('leyenda').innerHTML=EJES.map(e=>'<span><i style="background:'+e[1]+'"></i>'+e[0]+'</span>').join('');
 $('calDow').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d=>'<div class="dow">'+d+'</div>').join('');
-function ejeColor(n){const f=EJES.find(e=>e[0]===n);return f?f[1]:'#888'}
+function ejeColor(n){const f=EJES.find(e=>e[0]===n);return f?f[1]:'var(--texto-suave)'}
 async function mvMes(d){await briefGuardar();calRef.setDate(1);calRef.setMonth(calRef.getMonth()+d);renderCal()}
 function renderCal(){
   const y=calRef.getFullYear(),m=calRef.getMonth();
@@ -1032,26 +1033,26 @@ function briefMes(){
   const mesNombre=calRef.toLocaleDateString('es-GT',{month:'long',year:'numeric'});
   let pa=$('printArea');
   if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
-  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
-    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Brief de producción</h1><div style="font-size:13px;opacity:.9;text-transform:capitalize">'+mesNombre+' · '+piezas.length+' piezas · Equipo de contenido y pauta</div></div>'+
-    '<h2 style="color:#4A6741;font-size:15px;margin:16px 0 6px">Instrucciones generales (obligatorias en toda pieza)</h2>'+
+  pa.innerHTML='<div style="font-family:var(--rosanta-font-body);color:var(--texto);max-width:720px">'+
+    '<div style="background:var(--rosanta-verde);color:var(--rosanta-blanco);padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Brief de producción</h1><div style="font-size:13px;opacity:.9;text-transform:capitalize">'+mesNombre+' · '+piezas.length+' piezas · Equipo de contenido y pauta</div></div>'+
+    '<h2 style="color:var(--rosanta-verde);font-size:15px;margin:16px 0 6px">Instrucciones generales (obligatorias en toda pieza)</h2>'+
     '<ul style="font-size:12px;line-height:1.6;margin-left:18px">'+
     '<li><b>Formato Kaprica:</b> la pieza cuenta una micro-historia con personas; los platos y espacios aparecen dentro de la historia, jamás como anuncio. Giro final que aterriza en reserva (rosanta.rest/reservas).</li>'+
     '<li><b>Video:</b> branding visible en los primeros 3 segundos · subtítulos siempre · CTA en los últimos 2-3 segundos. Sin esto, la pieza queda fuera del calendario.</li>'+
     '<li><b>Voz:</b> afirmativa (sin la palabra "no"), segunda persona (tu mesa, tu experiencia), prohibido "nuestro", abrir con "En Rosanta" u "Hola", "elevar", "de autor" y em dashes. Emojis estratégicos. Hashtags al final sin puntos separadores.</li>'+
-    '<li><b>Visual:</b> personas y momento por encima de producto solo. Colores de marca: Verde Jardín #4A6741, Tierra Cálida #A0785A, Crema Natural #F5EFE0, Cobre Dorado #C9923F, Marrón Profundo #3D2B1F.</li>'+
+    '<li><b>Visual:</b> personas y momento por encima de producto solo. Colores de marca: Verde Bosque, Verde Medio, Crema y Lila (solo como chispa pequeña).</li>'+
     '<li><b>Validación:</b> toda pieza pasa el checklist de 8 puntos antes de publicarse. Publicación anclada martes y viernes.</li>'+
     '<li><b>Prohibido:</b> promos genéricas, capturas de reseñas, anuncios de horario, mencionar delivery.</li></ul>'+
-    '<h2 style="color:#4A6741;font-size:15px;margin:16px 0 8px">Piezas del mes</h2>'+
+    '<h2 style="color:var(--rosanta-verde);font-size:15px;margin:16px 0 8px">Piezas del mes</h2>'+
     piezas.map(p=>{
       const f=new Date(p.date+'T12:00:00').toLocaleDateString('es-GT',{weekday:'long',day:'numeric',month:'long'});
       return '<div class="pieza"><div style="font-size:13px"><b>'+fmtIcon(p.formato||fmtParse(p.notas).formato)+' '+p.title+'</b> · <span style="text-transform:capitalize">'+f+'</span></div>'+
-      '<div style="font-size:11.5px;color:#A0785A;margin:3px 0">Tipo: '+(p.tipo||'Post')+' · Eje: '+p.eje+' · Canal: '+p.canal+' · Estado: '+p.estado+'</div>'+
+      '<div style="font-size:11.5px;color:var(--texto-suave);margin:3px 0">Tipo: '+(p.tipo||'Post')+' · Eje: '+p.eje+' · Canal: '+p.canal+' · Estado: '+p.estado+'</div>'+
       (p.notas?'<div style="font-size:12px;margin:4px 0"><b>Concepto:</b> '+p.notas+'</div>':'')+
-      (p.contenido?'<div style="font-size:11.5px;background:#F5EFE0;border-radius:6px;padding:8px;margin-top:6px">'+md2html(p.contenido)+'</div>':'<div style="font-size:11.5px;color:#B54A35;margin-top:4px">⚠ Contenido pendiente de desarrollo en el Creador.</div>')+
+      (p.contenido?'<div style="font-size:11.5px;background:var(--fondo);border-radius:6px;padding:8px;margin-top:6px">'+md2html(p.contenido)+'</div>':'<div style="font-size:11.5px;color:var(--mal);margin-top:4px">⚠ Contenido pendiente de desarrollo en el Creador.</div>')+
       '</div>';
     }).join('')+
-    '<div style="font-size:10.5px;color:#A0785A;text-align:center;margin-top:14px">Generado desde el Sistema de Marketing Rosanta · '+new Date().toLocaleDateString('es-GT')+'</div></div>';
+    '<div style="font-size:10.5px;color:var(--texto-suave);text-align:center;margin-top:14px">Generado desde el Sistema de Marketing Rosanta · '+new Date().toLocaleDateString('es-GT')+'</div></div>';
   window.print();
 }
 function valPieza(){
@@ -1785,8 +1786,8 @@ async function genPost(){
 function estPDF(){
   let pa=$('printArea');
   if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
-  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
-    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Estrategia Anual de Marketing</h1><div style="font-size:13px;opacity:.9">Agosto 2026 – Julio 2027 · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
+  pa.innerHTML='<div style="font-family:var(--rosanta-font-body);color:var(--texto);max-width:720px">'+
+    '<div style="background:var(--rosanta-verde);color:var(--rosanta-blanco);padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Estrategia Anual de Marketing</h1><div style="font-size:13px;opacity:.9">Agosto 2026 – Julio 2027 · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
     '<div style="font-size:12px;line-height:1.6">'+$('estBody').innerHTML+'</div>'+
     '</div>';
   window.print();
@@ -1794,8 +1795,8 @@ function estPDF(){
 function printManual(){
   let pa=$('printArea');
   if(!pa){pa=document.createElement('div');pa.id='printArea';document.body.appendChild(pa)}
-  pa.innerHTML='<div style="font-family:Georgia,serif;color:#3D2B1F;max-width:720px">'+
-    '<div style="background:#4A6741;color:#fff;padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Manual del Sistema de Marketing</h1><div style="font-size:13px;opacity:.9">Equipo de contenido y pauta · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
+  pa.innerHTML='<div style="font-family:var(--rosanta-font-body);color:var(--texto);max-width:720px">'+
+    '<div style="background:var(--rosanta-verde);color:var(--rosanta-blanco);padding:18px 22px;border-radius:10px"><h1 style="margin:0;font-size:22px">🌿 ROSANTA · Manual del Sistema de Marketing</h1><div style="font-size:13px;opacity:.9">Equipo de contenido y pauta · '+new Date().toLocaleDateString('es-GT')+'</div></div>'+
     '<div style="font-size:12px;line-height:1.6">'+$('manualBody').innerHTML+'</div></div>';
   window.print();
 }

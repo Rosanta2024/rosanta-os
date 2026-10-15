@@ -62,8 +62,8 @@ function _repCorreoAcciones_(clave) {
    meta, el porque y el compromiso debajo. PuenteReporte pega el compromiso al PORQUE con
    REP_CORREO_SEP_COMPROMISO_; aqui se vuelve a separar. */
 var REP_CORREO_BLOQUES_ = [
-  { titulo: 'COCINA · Jeffry', deptos: ['Cocina'], color: '#4E6D5A' },
-  { titulo: 'BARRA Y SALA · José', deptos: ['Barra', 'Sala'], color: '#7A74C9' }
+  { titulo: 'COCINA · Jeffry', deptos: ['Cocina'], get color() { return paletaHex_('--rosanta-verde'); } },
+  { titulo: 'BARRA Y SALA · José', deptos: ['Barra', 'Sala'], get color() { return paletaHex_('--lila-texto'); } }
 ];
 var REP_CORREO_SEP_COMPROMISO_ = ' · Compromiso de la semana: ';
 
@@ -86,14 +86,14 @@ function _repCorreoMensaje_(clave, ac) {
 
   function lista(titulo, acciones, dosDeptos) {
     L.push(titulo);
-    H.push('<p style="margin:10px 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#555">' + esc(titulo) + '</p><ol style="margin:0 0 8px;padding-left:22px">');
+    H.push('<p style="margin:10px 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:' + paletaHex_('--texto-2') + '">' + esc(titulo) + '</p><ol style="margin:0 0 8px;padding-left:22px">');
     acciones.forEach(function (a, i) {
       var etiqueta = dosDeptos ? '[' + a.depto + '] ' : '';
       L.push((i + 1) + '. ' + etiqueta + a.accion);
       var partes = _repCorreoPartes_(a);
       partes.forEach(function (p) { L.push('   ' + p[0] + ': ' + p[1]); });
       H.push('<li style="margin:0 0 10px"><b>' + (etiqueta ? esc(etiqueta) : '') + esc(a.accion) + '</b>' +
-             partes.map(function (p) { return '<br><span style="color:#555">' + esc(p[0]) + ':</span> ' + esc(p[1]); }).join('') + '</li>');
+             partes.map(function (p) { return '<br><span style="color:' + paletaHex_('--texto-2') + '">' + esc(p[0]) + ':</span> ' + esc(p[1]); }).join('') + '</li>');
     });
     L.push('');
     H.push('</ol>');
@@ -117,9 +117,9 @@ function _repCorreoMensaje_(clave, ac) {
   }
   var cierre = 'La página 6 del PDF trae las acciones propuestas y cómo nos fue con las de la semana pasada.';
   L.push(cierre);
-  H.push('<p style="margin:22px 0 0;color:#555">' + esc(cierre) + '</p>');
+  H.push('<p style="margin:22px 0 0;color:' + paletaHex_('--texto-2') + '">' + esc(cierre) + '</p>');
   return { asunto: 'Rosanta · Reporte semanal S' + w, texto: L.join('\n'),
-           html: '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#1a1a1a;max-width:680px">' + H.join('') + '</div>' };
+           html: '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:' + paletaHex_('--texto') + ';max-width:680px">' + H.join('') + '</div>' };
 }
 
 /** Manda el PDF de la semana `clave`. quien: 'martes' | 'boton'. */

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -15,33 +16,33 @@
     .met-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .met-boton:hover { background: rgba(78,109,90,0.07); }
 
     /* --- el numero que manda --- */
     .met-hero { background: var(--verde-bosque); color: var(--blanco);
       border-radius: 22px; padding: 1.8rem 1.9rem; margin-top: 1.5rem; }
     .met-hero .rot { font-size: 0.78rem; text-transform: uppercase;
-      letter-spacing: 0.11em; opacity: 0.75; }
-    .met-hero .big { font-family: 'Playfair Display', Georgia, serif;
+      letter-spacing: 0.11em; opacity: 0.75; font-family:var(--rosanta-font-label)}
+    .met-hero .big { font-family: var(--rosanta-font-title);
       font-size: 3.3rem; line-height: 1.05; margin: 0.35rem 0 0.5rem; }
     .met-hero .exp { font-size: 0.94rem; line-height: 1.55; opacity: 0.9; max-width: 62ch; }
-    .met-hero .exp strong { color: #C6E8D3; }
+    .met-hero .exp strong { color: var(--sobre-verde-ok); }
 
     /* --- progreso del mes --- */
     .met-prog { background: var(--blanco); border-radius: 20px; padding: 1.5rem 1.7rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 1.1rem; }
     .met-prog .fila1 { display: flex; justify-content: space-between; align-items: baseline;
       flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.9rem; }
-    .met-prog .acum { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem;
+    .met-prog .acum { font-family: var(--rosanta-font-title); font-size: 2rem;
       color: var(--verde-bosque); }
     .met-prog .obj { font-size: 0.88rem; opacity: 0.72; text-align: right; }
     .pista { position: relative; height: 26px; background: rgba(26,26,26,0.07);
       border-radius: 999px; overflow: visible; margin-top: 1.6rem; }
     .pista .real { position: absolute; inset: 0 auto 0 0; border-radius: 999px;
       background: var(--verde-medio); }
-    .pista.atras .real { background: #E0A93B; }
-    .pista.mal .real { background: #C4553B; }
+    .pista.atras .real { background: var(--alerta-relleno); }
+    .pista.mal .real { background: var(--mal-relleno); }
     .pista .ritmo { position: absolute; top: -6px; bottom: -6px; width: 2px;
       background: var(--negro); opacity: 0.55; }
     .pista .ritmo span { position: absolute; top: -1.25rem; left: 50%;
@@ -49,7 +50,7 @@
     .met-prog .pie { display: flex; justify-content: space-between; flex-wrap: wrap;
       gap: 0.5rem; margin-top: 1.1rem; font-size: 0.86rem; }
     .met-prog .pie b { font-size: 1.05rem; }
-    .verde { color: #2E7D52; } .ambar { color: #A97514; } .rojo { color: #C4553B; }
+    .verde { color: var(--ok); } .ambar { color: var(--alerta); } .rojo { color: var(--mal-relleno); }
 
     /* --- tarjetas derivadas --- */
     .met-cards { display: grid; gap: 1rem; margin-top: 1.1rem;
@@ -57,7 +58,7 @@
     .met-card { background: var(--blanco); border-radius: 18px; padding: 1.2rem 1.35rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-top: 5px solid var(--lila); }
     .met-card h3 { font-size: 0.92rem; }
-    .met-card .n { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem;
+    .met-card .n { font-family: var(--rosanta-font-title); font-size: 2rem;
       margin: 0.4rem 0 0.2rem; }
     .met-card .t { font-size: 0.81rem; opacity: 0.72; line-height: 1.5; }
 
@@ -72,24 +73,24 @@
     table.met th, table.met td { padding: 0.6rem 0.75rem; text-align: right;
       border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
     table.met th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
-      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-family:var(--rosanta-font-label)}
     table.met th:first-child, table.met td:first-child { text-align: left; }
     table.met tr:last-child td { border-bottom: 0; }
     .tabla-scroll { overflow-x: auto; }
 
-    .aviso { background: #FBF0D9; border-radius: 16px; padding: 1.1rem 1.3rem;
+    .aviso { background: var(--alerta-tint); border-radius: 16px; padding: 1.1rem 1.3rem;
       font-size: 0.9rem; line-height: 1.6; margin-top: 1.5rem; }
     .aviso b { display: block; margin-bottom: 0.25rem; }
     .met-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
-    .met-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+    .met-error { background: var(--mal-tint); border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
     @media (max-width: 620px) { .met-hero .big { font-size: 2.4rem; } }
     .met-hero.chico { padding: 18px 22px; margin: 14px 0 18px; }
   .met-hero.chico .big { font-size: 2.1rem; }
-  table.met tr.hoy { background: #FFF8E6; }
+  table.met tr.hoy { background: var(--alerta-tint); }
   table.met tr.hoy td { font-weight: 600; }
   table.met tr.fut td { opacity: .62; }
-  .tag { font-size: .7rem; background: #E5A50A; color: #fff; border-radius: 3px;
+  .tag { font-size: .7rem; background: var(--alerta-relleno); color: var(--rosanta-blanco); border-radius: 3px;
          padding: 1px 6px; vertical-align: middle; margin-left: 4px; }
   .met-areas { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
     gap: 1rem; }
@@ -97,13 +98,13 @@
     box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
   .met-area .cab { border-bottom: 1px solid rgba(26,26,26,0.1); padding-bottom: 0.6rem;
     margin-bottom: 0.9rem; }
-  .met-area h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; margin: 0; }
+  .met-area h3 { font-family: var(--rosanta-font-title); font-size: 1.2rem; margin: 0; }
   .met-area .quien2 { font-size: 0.78rem; opacity: 0.65; }
   .met-area .sem { background: rgba(78,109,90,0.07); border-radius: 12px;
     padding: 0.75rem 0.9rem; margin-bottom: 0.9rem; }
   .met-area .sem .et { font-size: 0.72rem; text-transform: uppercase;
-    letter-spacing: 0.08em; opacity: 0.6; }
-  .met-area .sem .nn { font-family: 'Playfair Display', Georgia, serif; font-size: 1.9rem;
+    letter-spacing: 0.08em; opacity: 0.6; font-family:var(--rosanta-font-label)}
+  .met-area .sem .nn { font-family: var(--rosanta-font-title); font-size: 1.9rem;
     color: var(--verde-bosque); line-height: 1.1; }
   .met-area .sem .tt { font-size: 0.78rem; opacity: 0.7; }
   .met-area .fila { display: flex; justify-content: space-between; font-size: 0.85rem;
@@ -111,13 +112,13 @@
   .pista2 { height: 8px; background: rgba(26,26,26,0.09); border-radius: 999px;
     margin: 0.5rem 0; overflow: hidden; }
   .real2 { height: 100%; background: var(--verde-bosque); border-radius: 999px; }
-  .real2.sobre { background: #B3261E; }
+  .real2.sobre { background: var(--mal); }
   table.fam { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-top: 0.9rem; }
   table.fam th, table.fam td { padding: 0.32rem 0.3rem; text-align: right;
     border-bottom: 1px solid rgba(26,26,26,0.06); }
   table.fam th:first-child, table.fam td:first-child { text-align: left; }
   table.fam thead th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
-    opacity: 0.55; }
+    opacity: 0.55; font-family:var(--rosanta-font-label)}
   table.fam tr.raro td { opacity: 0.6; font-style: italic; }
   .ojo { font-size: 0.78rem; opacity: 0.75; margin: 0.7rem 0 0; line-height: 1.45; }
 </style>
@@ -307,7 +308,7 @@ var AUTH = '<?= authToken ?>';
       '</div>';
 
     if (m.automatica) {
-      html += '<div class="aviso" style="background:#E8F2EA"><b>La meta la calcula el sistema.</b>' +
+      html += '<div class="aviso" style="background:var(--ok-tint)"><b>La meta la calcula el sistema.</b>' +
         esc(m.origen) + ' Son dos candidatos y gana el mayor: el +20% sobre el mismo mes ' +
         'del año pasado, y un piso igual al promedio de los últimos meses cerrados. ' +
         'El piso existe porque el negocio creció mucho contra el año pasado: sin él, en varios meses ' +

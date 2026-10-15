@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
 </head>
@@ -99,24 +100,24 @@
     </div>
   </main>
   <style>
-    .vi { background: var(--verde-bosque); color: #fff; border-radius: 20px; padding: 1.2rem 1.4rem; margin-bottom: 1.4rem; }
-    .vi-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; }
-    .vi-t { color: #fff; font-size: 1.6rem; margin: 0.2rem 0 0.9rem; }
+    .vi { background: var(--verde-bosque); color: var(--rosanta-blanco); border-radius: 20px; padding: 1.2rem 1.4rem; margin-bottom: 1.4rem; }
+    .vi-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; font-family:var(--rosanta-font-label)}
+    .vi-t { color: var(--rosanta-blanco); font-size: 1.6rem; margin: 0.2rem 0 0.9rem; }
     .vi-p { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.6rem; }
     .vi-i { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 0.6rem 0.8rem; display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.78rem; }
     .vi-i b { font-size: 0.86rem; } .vi-i .h { font-size: 0.95rem; font-weight: 700; } .vi-i .m { opacity: 0.8; }
     .vi-i i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.35rem; }
     .vi-c { font-size: 0.85rem; opacity: 0.8; }
-    .ts { background: #fff; border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; margin-top: 1rem;
+    .ts { background: var(--superficie); border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; margin-top: 1rem;
           display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem 1.4rem; align-items: center; }
-    .ts-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #5b56a6; }
-    .ts-l span { margin-left: 0.4rem; letter-spacing: 0.04em; text-transform: none; font-weight: 400; color: #52514e; }
+    .ts-l { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lila-texto); font-family:var(--rosanta-font-label)}
+    .ts-l span { margin-left: 0.4rem; letter-spacing: 0.04em; text-transform: none; font-weight: 400; color: var(--texto-2); }
     .ts-items { display: flex; flex-wrap: wrap; gap: 0.5rem 1.6rem; }
     .ts-i { display: flex; flex-direction: column; min-width: 7.5rem; }
     .ts-i b { font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-    .ts-i span { font-size: 0.74rem; color: #52514e; line-height: 1.35; }
-    .ts-c { font-size: 0.85rem; color: #8a8780; }
-    .ts-b { background: var(--verde-bosque); color: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
+    .ts-i span { font-size: 0.74rem; color: var(--texto-2); line-height: 1.35; }
+    .ts-c { font-size: 0.85rem; color: var(--texto-suave); }
+    .ts-b { background: var(--verde-bosque); color: var(--rosanta-blanco); border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
     @media (max-width: 700px) { .ts { grid-template-columns: 1fr; } }
   </style>
   <script>
@@ -124,7 +125,7 @@
       var el = document.getElementById('vi-p');
       if (!el) return;
       var AUTH = '<?= authToken ?>';
-      var COL = { verde: '#9be3b5', amarillo: '#f1cf7a', rojo: '#f3a195', gris: 'rgba(255,255,255,0.5)' };
+      var COL = { verde: 'var(--sobre-verde-ok)', amarillo: 'var(--sobre-verde-alerta)', rojo: 'var(--sobre-verde-mal)', gris: 'rgba(255,255,255,0.5)' };
       function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
       google.script.run
@@ -144,7 +145,7 @@
       var el = document.getElementById('ts-items');
       if (!el) return;
       var AUTH = '<?= authToken ?>';
-      var COL = { verde: '#2E6B3F', amarillo: '#C89A3C', rojo: '#A33A2A' };
+      var COL = { verde: 'var(--ok)', amarillo: 'var(--alerta)', rojo: 'var(--mal)' };
       function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"]/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
       google.script.run
@@ -152,7 +153,7 @@
           if (!r) { document.getElementById('ts').style.display = 'none'; return; }
           document.getElementById('ts-mes').textContent = '· ' + (r.mes || '');
           el.innerHTML = (r.items || []).map(function (x) {
-            return '<div class="ts-i"><b style="color:' + (COL[x.zona] || '#1a1a1a') + '">' + esc(x.valor) + '</b><span>' +
+            return '<div class="ts-i"><b style="color:' + (COL[x.zona] || 'var(--texto)') + '">' + esc(x.valor) + '</b><span>' +
                    esc(x.nombre) + '<br>' + esc(x.texto) + '</span></div>';
           }).join('');
         })
@@ -173,7 +174,7 @@
           var P = (r && r.personas) || [];
           if (!P.length) { document.getElementById('pd').style.display = 'none'; return; }
           el.innerHTML = P.map(function (x) {
-            return '<div class="ts-i"><b style="color:' + (x.pendiente > 0.01 ? '#A33A2A' : '#2E6B3F') + '">' + q(x.pendiente) + '</b><span>' +
+            return '<div class="ts-i"><b style="color:' + (x.pendiente > 0.01 ? 'var(--mal)' : 'var(--ok)') + '">' + q(x.pendiente) + '</b><span>' +
                    esc(r.rol === 'dueno' ? x.nombre : 'por ' + x.n + ' pagos de tu bolsa') + '<br>pagó ' + q(x.pagado) + ' · devuelto ' + q(x.devuelto) + '</span></div>';
           }).join('') + (r.rol === 'dueno' && P.length > 1 ? '<div class="ts-i"><b>' + q(P.reduce(function (a, x) { return a + x.pendiente; }, 0)) + '</b><span>total<br>por devolver</span></div>' : '');
         })

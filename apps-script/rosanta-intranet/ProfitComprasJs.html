@@ -1,22 +1,22 @@
 <style>
   /* Compras en efectivo (14-oct-2026). Usa los estilos .pg de Pagos. */
   .ce-scroll { overflow-x: auto; }
-  .ce-ok { color: #2E6B3F; }
-  .ce-mal { color: #A33A2A; }
+  .ce-ok { color: var(--ok); }
+  .ce-mal { color: var(--mal); }
   .ce-prop { border-top: 1px solid rgba(26,26,26,0.08); padding-top: 0.6rem; margin-top: 0.6rem; }
-  .ce-paso { font-family: 'Playfair Display', Georgia, serif; font-size: 1rem; margin: 0.9rem 0 0.4rem; }
+  .ce-paso { font-family: var(--rosanta-font-title); font-size: 1rem; margin: 0.9rem 0 0.4rem; }
   .ce-paso:first-of-type { margin-top: 0.2rem; }
   .ce-modo { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
-  .ce-modo button[aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
+  .ce-modo button[aria-pressed="true"] { background: var(--vb); color: var(--rosanta-blanco); border-color: var(--vb); }
   .ce-foto { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.5rem; }
   /* Las compras: una fila cada una, cinco de entrada (Juanma, 14-oct-2026) */
   .ce-fila { display: grid; grid-template-columns: 1.4rem minmax(9rem,1.2fr) minmax(11rem,1.4fr) minmax(10rem,1.6fr) 6.5rem auto 1.6rem;
     gap: 0.35rem; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid rgba(26,26,26,0.06); }
-  .ce-fila.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; font-weight: 600; border-bottom: 0; }
+  .ce-fila.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); font-weight: 600; border-bottom: 0; font-family:var(--rosanta-font-label)}
   .ce-fila input, .ce-fila select { width: 100%; box-sizing: border-box; }
-  .ce-fila .ce-n { font-size: 0.78rem; color: #8a8780; text-align: right; }
-  .ce-fila .ce-x { font: inherit; background: none; border: 0; color: #A33A2A; cursor: pointer; font-size: 1rem; }
-  .ce-suma { margin-top: 0.6rem; font-size: 0.88rem; background: #F7F5F2; border-radius: 10px; padding: 0.5rem 0.7rem; }
+  .ce-fila .ce-n { font-size: 0.78rem; color: var(--texto-suave); text-align: right; }
+  .ce-fila .ce-x { font: inherit; background: none; border: 0; color: var(--mal); cursor: pointer; font-size: 1rem; }
+  .ce-suma { margin-top: 0.6rem; font-size: 0.88rem; background: var(--fondo); border-radius: 10px; padding: 0.5rem 0.7rem; }
   @media (max-width: 760px) {
     .ce-fila { grid-template-columns: 1.4rem 1fr 6.5rem 1.6rem; grid-template-areas: "n prov monto x" ". fac fac fac" ". det det det" ". area area area"; }
     .ce-fila.cab { display: none; }

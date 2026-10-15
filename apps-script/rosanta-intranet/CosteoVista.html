@@ -14,9 +14,9 @@
      la intranet ya lo traian; esta era la unica que no. -->
 <base target="_top">
 <title>Recetario 14·91</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap">
+<!-- La paleta y las letras (PaletaServidor.js): una sola fuente para toda la intranet. -->
+<?!= paletaCss_() ?>
+<?!= paletaCssOscuro_() ?>
 <?!= include('Logo') ?>
 <!-- PARTIDO EN PARCIALES EL 12-SEP-2026.
      Este archivo pasaba de 121 KB y 2.000 lineas: el estilo, las siete pestanas,
@@ -52,8 +52,9 @@
      Lo que no se lee, no se protege. -->
 <style>
 <?!= incluirCrudo_('CosteoEstilos') ?>
-<?!= incluirCrudo_('LecturaEstilo') ?>
 </style>
+<!-- LecturaEstilo trae su propio <style>: dentro del de arriba se comia la regla .lx. -->
+<?!= incluirCrudo_('LecturaEstilo') ?>
 <?!= incluirCrudo_('ReporteSemanalEstilo') ?>
 <?!= incluirCrudo_('ProfitAreaEstilo') ?>
 <style>
@@ -69,7 +70,7 @@ header.top .wrap{max-width:none;padding:0 28px}
 .pf-lat{background:var(--surface);border-right:1px solid var(--line);padding:1rem .7rem 2rem;
   position:sticky;top:var(--pf-hdr,64px);height:calc(100vh - var(--pf-hdr,64px));overflow-y:auto}
 .pf-lat .nav{display:flex;flex-direction:column;gap:.25rem;padding:0}
-.pf-lat .pf-grupo{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.2rem .6rem .5rem;margin-top:.9rem}
+.pf-lat .pf-grupo{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.2rem .6rem .5rem;margin-top:.9rem; font-family:var(--rosanta-font-label)}
 .pf-lat .pf-grupo:first-child{margin-top:0}
 .pf-lat .nav button{display:block;width:100%;text-align:left;cursor:pointer;border:0;border-bottom:0;background:none;
   padding:.55rem .7rem;border-radius:9px;color:var(--ink);font-size:.9rem;font-weight:400;letter-spacing:0}
@@ -163,7 +164,7 @@ footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color
   <!-- Dentro de main (14-oct-2026): se ve solo en las pestañas que usan el recetario. Hoy, Pagos,
        Compras, Caja y las areas abren sin esperarlo (ver "EL MENU SIN ESPERAR", al final). -->
   <div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
-    <p style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+    <p style="font-family:var(--rosanta-font-title);font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
     <p style="margin:0;font-size:13.5px">Tarda unos segundos. Mientras tanto podés usar Hoy, Pagos, Compras o la Caja.</p>
   </div>
   <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la mercaderia?" arriba del

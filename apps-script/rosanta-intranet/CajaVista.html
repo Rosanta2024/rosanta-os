@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -14,7 +15,7 @@
     .cj-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .cj-boton:hover { background: rgba(78,109,90,0.07); }
 
     /* --- los controles, una sola fila arriba de todo lo que mueven --- */
@@ -22,24 +23,24 @@
       margin-top: 1.2rem; background: var(--blanco); border-radius: 16px; padding: 0.9rem 1.1rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
     .cj-controles label { display: flex; flex-direction: column; gap: 0.25rem;
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #52514e; }
-    .cj-controles input, .cj-controles select { font-family: 'Lato', Arial, sans-serif;
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--texto-2); font-family:var(--rosanta-font-label)}
+    .cj-controles input, .cj-controles select { font-family: var(--rosanta-font-body);
       font-size: 0.9rem; padding: 0.35rem 0.5rem; border: 1px solid rgba(26,26,26,0.18);
-      border-radius: 8px; background: #fff; width: 9rem; color: var(--negro); }
+      border-radius: 8px; background: var(--superficie); width: 9rem; color: var(--negro); }
 
     /* --- las cifras que mandan --- */
     .cj-tiles { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       margin-top: 1.3rem; }
     .cj-tile { background: var(--blanco); border-radius: 18px; padding: 1.1rem 1.25rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-    .cj-tile .et { font-size: 0.8rem; color: #52514e; }
-    .cj-tile .val { font-family: 'Lato', Arial, sans-serif; font-weight: 700; font-size: 1.85rem;
+    .cj-tile .et { font-size: 0.8rem; color: var(--texto-2); }
+    .cj-tile .val { font-family: var(--rosanta-font-body); font-weight: 700; font-size: 1.85rem;
       line-height: 1.15; margin: 0.35rem 0 0.25rem; color: var(--negro); }
-    .cj-tile .det { font-size: 0.8rem; color: #52514e; line-height: 1.45; }
+    .cj-tile .det { font-size: 0.8rem; color: var(--texto-2); line-height: 1.45; }
     .cj-estado { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem;
       font-weight: 700; margin-top: 0.45rem; }
-    .cj-estado.mal { color: #A33A2A; }
-    .cj-estado.bien { color: #2E6B3F; }
+    .cj-estado.mal { color: var(--mal); }
+    .cj-estado.bien { color: var(--ok); }
 
     .cj-seccion { margin-top: 2.2rem; }
     .cj-seccion > h2 { font-size: 1.2rem; margin-bottom: 0.2rem; }
@@ -49,22 +50,22 @@
     .cj-grafico { background: var(--blanco); border-radius: 18px; padding: 0.9rem 1rem 0.4rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); position: relative; }
     .cj-leyenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.8rem;
-      color: #52514e; margin: 0 0 0.4rem 0.3rem; }
+      color: var(--texto-2); margin: 0 0 0.4rem 0.3rem; }
     .cj-key { display: inline-flex; align-items: center; gap: 0.4rem; }
-    .cj-key i { display: inline-block; width: 18px; height: 0; border-top: 2px solid #2E7D52; }
+    .cj-key i { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--ok); }
     .cj-key i.banda { height: 10px; border: 0; background: rgba(46,125,82,0.16); border-radius: 2px; }
     .cj-key i.borde { border-top: 1px solid rgba(46,125,82,0.6); }
-    .cj-key i.ref { border-top: 1px solid #898781; }
+    .cj-key i.ref { border-top: 1px solid var(--texto-suave); }
     svg.cj-svg { display: block; width: 100%; height: auto; outline: none; }
     svg.cj-svg:focus-visible { box-shadow: 0 0 0 2px rgba(78,109,90,0.45); border-radius: 8px; }
-    .cj-tip { position: absolute; z-index: 2; pointer-events: none; background: #fff;
+    .cj-tip { position: absolute; z-index: 2; pointer-events: none; background: var(--superficie);
       border: 1px solid rgba(11,11,11,0.10); border-radius: 10px; padding: 0.55rem 0.7rem;
       font-size: 0.78rem; box-shadow: 0 4px 16px rgba(26,26,26,0.12); min-width: 200px; }
-    .cj-tip .f { color: #52514e; margin-bottom: 0.3rem; }
+    .cj-tip .f { color: var(--texto-2); margin-bottom: 0.3rem; }
     .cj-tip .r { display: flex; justify-content: space-between; gap: 1rem; align-items: center;
-      line-height: 1.6; color: #52514e; }
+      line-height: 1.6; color: var(--texto-2); }
     .cj-tip .r b { color: var(--negro); font-variant-numeric: tabular-nums; }
-    .cj-tip .k { display: inline-block; width: 12px; height: 0; border-top: 2px solid #2E7D52;
+    .cj-tip .k { display: inline-block; width: 12px; height: 0; border-top: 2px solid var(--ok);
       margin-right: 0.35rem; vertical-align: middle; }
     .cj-tip .k.borde { border-top: 1px solid rgba(46,125,82,0.6); }
     .cj-tip hr { border: 0; border-top: 1px solid rgba(11,11,11,0.08); margin: 0.3rem 0; }
@@ -79,13 +80,13 @@
       font-variant-numeric: tabular-nums; white-space: nowrap; }
     table.cj th:first-child, table.cj td:first-child { text-align: left; }
     table.cj td.texto { text-align: left; white-space: normal; }
-    table.cj td.neg { color: #A33A2A; }
+    table.cj td.neg { color: var(--mal); }
     .cj-lista { font-size: 0.86rem; line-height: 1.65; padding-left: 1.1rem; }
     .cj-lista li { margin-bottom: 0.2rem; }
-    .cj-aviso { background: #FBF3E2; border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.86rem;
+    .cj-aviso { background: var(--alerta-tint); border-radius: 12px; padding: 0.8rem 1rem; font-size: 0.86rem;
       line-height: 1.5; margin-bottom: 0.9rem; }
     .cj-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
-    .cj-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem; font-size: 0.9rem;
+    .cj-error { background: var(--mal-tint); border-radius: 14px; padding: 1rem 1.2rem; font-size: 0.9rem;
       line-height: 1.5; margin-top: 1rem; }
   </style>
 </head>
@@ -183,7 +184,7 @@ var AUTH = '<?= authToken ?>';
 (function () {
   var D = null, idx = null;
   var MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  var VERDE = '#2E7D52';
+  var VERDE = RC('--ok');
 
   function el(id) { return document.getElementById(id); }
   function q(n) {
@@ -301,29 +302,29 @@ var AUTH = '<?= authToken ?>';
     var s = [];
     for (var v = lo; v <= hi + paso / 1000; v += paso) {
       s.push('<line x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) +
-             '" stroke="' + (Math.abs(v) < 0.5 ? '#898781' : '#e1e0d9') + '" stroke-width="1"/>');
-      s.push('<text x="' + (M.l - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="#898781" ' +
+             '" stroke="' + (Math.abs(v) < 0.5 ? RC('--texto-suave') : RC('--linea')) + '" stroke-width="1"/>');
+      s.push('<text x="' + (M.l - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="' + RC('--texto-suave') + '" ' +
              'style="font-variant-numeric:tabular-nums">' + esc(q(v)) + '</text>');
     }
     d.fechas.forEach(function (fch, i) {
       if (fch.slice(0, 2) !== '01') return;
       s.push('<line x1="' + X(i).toFixed(1) + '" x2="' + X(i).toFixed(1) + '" y1="' + (H - M.b) + '" y2="' + (H - M.b + 5) +
-             '" stroke="#c3c2b7" stroke-width="1"/>');
-      s.push('<text x="' + X(i).toFixed(1) + '" y="' + (H - M.b + 18) + '" text-anchor="middle" font-size="11" fill="#898781">' +
+             '" stroke="' + RC('--linea-2') + '" stroke-width="1"/>');
+      s.push('<text x="' + X(i).toFixed(1) + '" y="' + (H - M.b + 18) + '" text-anchor="middle" font-size="11" fill="' + RC('--texto-suave') + '">' +
              MESES[Number(fch.slice(3, 5)) - 1] + '</text>');
     });
     [['d30', '30 días'], ['d60', '60 días'], ['d90', '90 días']].forEach(function (mk) {
       var i = d.marcas[mk[0]];
       if (i === null || i === undefined) return;
       s.push('<line x1="' + X(i).toFixed(1) + '" x2="' + X(i).toFixed(1) + '" y1="' + M.t + '" y2="' + (H - M.b) +
-             '" stroke="#e1e0d9" stroke-width="1"/>');
-      s.push('<text x="' + X(i).toFixed(1) + '" y="' + (M.t - 7) + '" text-anchor="middle" font-size="11" fill="#52514e">' + mk[1] + '</text>');
+             '" stroke="' + RC('--linea') + '" stroke-width="1"/>');
+      s.push('<text x="' + X(i).toFixed(1) + '" y="' + (M.t - 7) + '" text-anchor="middle" font-size="11" fill="' + RC('--texto-2') + '">' + mk[1] + '</text>');
     });
     s.push('<line x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + Y(d.colchon).toFixed(1) + '" y2="' + Y(d.colchon).toFixed(1) +
-           '" stroke="#898781" stroke-width="1"/>');
+           '" stroke="' + RC('--texto-suave') + '" stroke-width="1"/>');
     // halo blanco para que la linea que la cruza no la tape
-    s.push('<text x="' + (M.l + 6) + '" y="' + (Y(d.colchon) - 5).toFixed(1) + '" font-size="11" fill="#52514e" ' +
-           'stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Colchón ' +
+    s.push('<text x="' + (M.l + 6) + '" y="' + (Y(d.colchon) - 5).toFixed(1) + '" font-size="11" fill="' + RC('--texto-2') + '" ' +
+           'stroke="' + RC('--rosanta-blanco') + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Colchón ' +
            esc(q(d.colchon)) + '</text>');
     var arriba = [], abajo = [];
     for (var i = 0; i < n; i++) {
@@ -335,9 +336,9 @@ var AUTH = '<?= authToken ?>';
     s.push('<path d="' + camino(E.pesimista.serie) + '" fill="none" stroke="' + VERDE + '" stroke-opacity="0.55" stroke-width="1" stroke-linejoin="round"/>');
     s.push('<path d="' + camino(E.optimista.serie) + '" fill="none" stroke="' + VERDE + '" stroke-opacity="0.55" stroke-width="1" stroke-linejoin="round"/>');
     s.push('<path d="' + camino(E.base.serie) + '" fill="none" stroke="' + VERDE + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
-    s.push('<circle cx="' + X(n - 1).toFixed(1) + '" cy="' + Y(E.base.serie[n - 1]).toFixed(1) + '" r="4" fill="' + VERDE + '" stroke="#fff" stroke-width="2"/>');
-    s.push('<line id="cj-cruz" x1="0" x2="0" y1="' + M.t + '" y2="' + (H - M.b) + '" stroke="#52514e" stroke-width="1" visibility="hidden"/>');
-    s.push('<circle id="cj-punto" r="4" fill="' + VERDE + '" stroke="#fff" stroke-width="2" visibility="hidden"/>');
+    s.push('<circle cx="' + X(n - 1).toFixed(1) + '" cy="' + Y(E.base.serie[n - 1]).toFixed(1) + '" r="4" fill="' + VERDE + '" stroke="' + RC('--rosanta-blanco') + '" stroke-width="2"/>');
+    s.push('<line id="cj-cruz" x1="0" x2="0" y1="' + M.t + '" y2="' + (H - M.b) + '" stroke="' + RC('--texto-2') + '" stroke-width="1" visibility="hidden"/>');
+    s.push('<circle id="cj-punto" r="4" fill="' + VERDE + '" stroke="' + RC('--rosanta-blanco') + '" stroke-width="2" visibility="hidden"/>');
     s.push('<rect id="cj-hit" x="' + M.l + '" y="' + M.t + '" width="' + (W - M.l - M.r) + '" height="' + (H - M.t - M.b) + '" fill="transparent"/>');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.innerHTML = s.join('');

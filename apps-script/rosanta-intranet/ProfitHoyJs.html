@@ -1,19 +1,19 @@
 <style>
   /* Hoy (13-oct-2026): la primera pantalla de Profit OS. Lo que le toca a cada uno, con su boton. */
-  .hy { color: #1a1a1a; max-width: 46rem; }
-  .hy h2 { font-family: 'Playfair Display', Georgia, serif; margin: 0 0 0.2rem; }
-  .hy-sub { color: #52514e; font-size: 0.9rem; margin: 0 0 1rem; }
-  .hy-it { display: flex; gap: 0.9rem; align-items: center; background: #fff; border-radius: 16px; padding: 0.8rem 1rem; margin-top: 0.6rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-  .hy-it.urg { border-left: 4px solid #C0563F; }
+  .hy { color: var(--texto); max-width: 46rem; }
+  .hy h2 { font-family: var(--rosanta-font-title); margin: 0 0 0.2rem; }
+  .hy-sub { color: var(--texto-2); font-size: 0.9rem; margin: 0 0 1rem; }
+  .hy-it { display: flex; gap: 0.9rem; align-items: center; background: var(--superficie); border-radius: 16px; padding: 0.8rem 1rem; margin-top: 0.6rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
+  .hy-it.urg { border-left: 4px solid var(--mal-relleno); }
   .hy-it .tx { flex: 1; min-width: 0; }
   .hy-it b { display: block; font-size: 0.98rem; }
-  .hy-it span { display: block; font-size: 0.84rem; color: #52514e; margin-top: 0.15rem; }
-  .hy-it button[data-hylisto] { background: #fff; color: #4E6D5A; border: 1px solid #4E6D5A; }
-  .hy-it button { font: inherit; font-size: 0.86rem; background: #4E6D5A; color: #fff; border: 0; border-radius: 10px; padding: 0.5rem 0.9rem; cursor: pointer; white-space: nowrap; }
-  .hy-ok { background: #fff; border-radius: 16px; padding: 1.4rem; text-align: center; color: #2E6B3F; font-size: 1rem; }
-  .hy-pie { font-size: 0.78rem; color: #8a8780; margin-top: 1rem; display: flex; gap: 1rem; align-items: center; }
-  .hy-pie button { font: inherit; font-size: 0.78rem; background: none; border: 0; color: #4E6D5A; text-decoration: underline; cursor: pointer; padding: 0; }
-  .hy-falla { font-size: 0.8rem; color: #A33A2A; margin-top: 0.6rem; }
+  .hy-it span { display: block; font-size: 0.84rem; color: var(--texto-2); margin-top: 0.15rem; }
+  .hy-it button[data-hylisto] { background: var(--superficie); color: var(--rosanta-verde); border: 1px solid var(--rosanta-verde); }
+  .hy-it button { font: inherit; font-size: 0.86rem; background: var(--rosanta-verde); color: var(--rosanta-blanco); border: 0; border-radius: 10px; padding: 0.5rem 0.9rem; cursor: pointer; white-space: nowrap; }
+  .hy-ok { background: var(--superficie); border-radius: 16px; padding: 1.4rem; text-align: center; color: var(--ok); font-size: 1rem; }
+  .hy-pie { font-size: 0.78rem; color: var(--texto-suave); margin-top: 1rem; display: flex; gap: 1rem; align-items: center; }
+  .hy-pie button { font: inherit; font-size: 0.78rem; background: none; border: 0; color: var(--rosanta-verde); text-decoration: underline; cursor: pointer; padding: 0; }
+  .hy-falla { font-size: 0.8rem; color: var(--mal); margin-top: 0.6rem; }
   @media (max-width: 640px) { .hy-it { flex-wrap: wrap; } .hy-it button { width: 100%; } }
 </style>
 <script>
@@ -24,7 +24,7 @@ window.PF_DONDE = function (aqui) {
   var L = [['pagos', 'Pagos', 'facturas pagadas por transferencia o con tarjeta (crédito o débito)'],
            ['compras', 'Compras', 'lo pagado con efectivo del cajero, con su retiro'],
            ['caja', 'Caja chica', 'lo pagado con la caja del restaurante']];
-  return '<p class="pg-nota pf-donde" style="background:#F7F5F2;border-radius:10px;padding:0.45rem 0.7rem;margin:0.4rem 0 0.8rem">¿Dónde se anota? ' +
+  return '<p class="pg-nota pf-donde" style="background:var(--fondo);border-radius:10px;padding:0.45rem 0.7rem;margin:0.4rem 0 0.8rem">¿Dónde se anota? ' +
     L.map(function (x) { return x[0] === aqui ? '<b>' + x[1] + ' (acá): ' + x[2] + '</b>' : x[1] + ': ' + x[2]; }).join(' · ') + '. Lo que pagaste de tu bolsa va en <b>Por devolver</b>.</p>';
 };
 /* IR AL PUNTO EXACTO (14-oct-2026): un boton de Hoy deja {vista, sub} en PF_IR y la pantalla de

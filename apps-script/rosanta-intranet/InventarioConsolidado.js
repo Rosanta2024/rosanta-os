@@ -24,8 +24,12 @@ var INV_CONS = {
   // bloques de barra en el orden del informe de junio
   bloques: [['DESTILADOS', 'Licores y destilados'], ['VINOS', 'Vinos'], ['CERVEZA', 'Cerveza y bebidas'],
             ['INSUMOS', 'Insumos de barra']],
-  c: { verde: '#4E6D5A', medio: '#57A77F', lila: '#AEAAE2', crema: '#F2EEEB', negro: '#000000',
-       gris: '#555555', sub: '#EAF3EC', blanco: '#FFFFFF' },
+  // Paleta unica (PaletaServidor.js); getter porque PALETA_ puede cargarse despues.
+  get c() {
+    return { verde: paletaHex_('--rosanta-verde'), medio: paletaHex_('--rosanta-verde-medio'),
+             lila: paletaHex_('--rosanta-lila'), crema: paletaHex_('--rosanta-crema'), negro: paletaHex_('--rosanta-negro'),
+             gris: paletaHex_('--texto-2'), sub: paletaHex_('--ok-tint'), blanco: paletaHex_('--rosanta-blanco') };
+  },
   q: '"Q"#,##0.00',
   // Como las nombraba el informe de junio. Solo la etiqueta del Excel: la hoja no se toca.
   // Llave = categoria de la hoja en mayusculas y sin tildes.
@@ -289,7 +293,7 @@ function invConsVolcar_(h, H, ancho, anchos) {
   if (ancho === 4) h.getRange(1, 4, n, 1).setNumberFormat(INV_CONS.q);       // precio en cocina
   if (ancho >= 3) h.getRange(1, 3, n, 1).setHorizontalAlignment('center');   // unidades / existencias
   var bordes = (g.colres || []).concat(g.area || [], g.linea || [], g.subres || [], g.totres || []);
-  if (bordes.length) h.getRangeList(todo(bordes)).setBorder(true, null, true, null, null, null, '#c9c6c0', SpreadsheetApp.BorderStyle.SOLID);
+  if (bordes.length) h.getRangeList(todo(bordes)).setBorder(true, null, true, null, null, null, paletaHex_('--linea-2'), SpreadsheetApp.BorderStyle.SOLID);
 }
 
 /* ----------------------------------------------------------- la carpeta ---- */

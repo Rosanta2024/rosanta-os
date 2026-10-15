@@ -359,7 +359,7 @@ function _vigWhatsApp_(dest, msg) {
 function _vigCorreo_(dest, msg) {
   if (!dest.correo) return { ok: false, detalle: 'sin correo' };
   try {
-    var html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#1a1a1a">' +
+    var html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:' + paletaHex_('--texto') + '">' +
       msg.texto.split('\n').map(function (l) { return l ? String(l).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }) : '&nbsp;'; }).join('<br>') + '</div>';
     MailApp.sendEmail({ to: dest.correo, subject: msg.asunto, body: msg.texto, htmlBody: html, name: 'Rosanta · Vigía' });
     return { ok: true, detalle: 'correo' };

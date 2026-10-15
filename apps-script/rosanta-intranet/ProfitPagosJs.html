@@ -1,71 +1,71 @@
 <style>
   /* Pagos a proveedores (p213, 29-sep-2026). Herramienta de Profit OS. Parcial crudo. */
-  .pg { color: #1a1a1a; --vb: #4E6D5A; --lila: #AEAAE2; }
-  .pg h2, .pg h3 { font-family: 'Playfair Display', Georgia, serif; }
-  .pg-intro { font-size: 0.9rem; color: #52514e; line-height: 1.5; max-width: 52rem; }
+  .pg { color: var(--texto); --vb: var(--rosanta-verde); --lila: var(--rosanta-lila); }
+  .pg h2, .pg h3 { font-family: var(--rosanta-font-title); }
+  .pg-intro { font-size: 0.9rem; color: var(--texto-2); line-height: 1.5; max-width: 52rem; }
   .pg-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0; align-items: center; }
-  .pg-tabs button, .pg-b { font: inherit; font-size: 0.82rem; border: 1px solid rgba(78,109,90,0.35); background: #fff; color: var(--vb);
+  .pg-tabs button, .pg-b { font: inherit; font-size: 0.82rem; border: 1px solid rgba(78,109,90,0.35); background: var(--superficie); color: var(--vb);
     border-radius: 999px; padding: 0.35rem 0.9rem; cursor: pointer; }
-  .pg-tabs button[aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
-  .pg-b.pri { background: var(--vb); color: #fff; border-color: var(--vb); }
+  .pg-tabs button[aria-pressed="true"] { background: var(--vb); color: var(--rosanta-blanco); border-color: var(--vb); }
+  .pg-b.pri { background: var(--vb); color: var(--rosanta-blanco); border-color: var(--vb); }
   .pg-b:disabled { opacity: 0.5; cursor: default; }
   .pg-tabs .pg-sp { flex: 1; }
-  .pg-res { display: flex; flex-wrap: wrap; gap: 0.6rem 1.8rem; background: #fff; border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; }
+  .pg-res { display: flex; flex-wrap: wrap; gap: 0.6rem 1.8rem; background: var(--superficie); border: 2px solid var(--lila); border-radius: 18px; padding: 0.9rem 1.2rem; }
   .pg-res div { display: flex; flex-direction: column; }
   .pg-res b { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
-  .pg-res span { font-size: 0.74rem; color: #52514e; }
-  .pg-prov { background: #fff; border-radius: 18px; padding: 0.9rem 1.1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.9rem; }
+  .pg-res span { font-size: 0.74rem; color: var(--texto-2); }
+  .pg-prov { background: var(--superficie); border-radius: 18px; padding: 0.9rem 1.1rem; box-shadow: 0 2px 10px rgba(26,26,26,0.06); margin-top: 0.9rem; }
   .pg-prov header { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; align-items: baseline; justify-content: space-between; }
   .pg-prov header h3 { margin: 0; font-size: 1.05rem; }
-  .pg-area { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; }
+  .pg-area { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); font-family:var(--rosanta-font-label)}
   .pg-prov table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-top: 0.4rem; }
   .pg-prov td, .pg-prov th { padding: 0.45rem 0.3rem; border-bottom: 1px solid rgba(26,26,26,0.08); text-align: left; vertical-align: middle; }
-  .pg-prov th, .pg-t th { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; font-weight: 600; }
+  .pg-prov th, .pg-t th { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); font-weight: 600; font-family:var(--rosanta-font-label)}
   .pg .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pg-est { display: inline-block; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px; background: #F2EEEB; color: #52514e; white-space: nowrap; }
-  .pg-est.pend { background: #FBF3E2; color: #8a6420; }
-  .pg-est.abon { background: #ECEBFA; color: #4b4790; }
-  .pg-est.banco { background: #E7EFEA; color: #3d5a48; }
-  .pg-est.ok { background: #E3F0E7; color: #2E6B3F; }
-  .pg-est.mas { background: #F6E4DF; color: #A33A2A; }
-  .pg-panel { background: #F7F5F2; border-radius: 12px; padding: 0.7rem 0.8rem; margin: 0.3rem 0 0.4rem; }
+  .pg-est { display: inline-block; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--fondo); color: var(--texto-2); white-space: nowrap; font-family:var(--rosanta-font-label)}
+  .pg-est.pend { background: var(--alerta-tint); color: var(--alerta); }
+  .pg-est.abon { background: var(--rosanta-lila-tint); color: var(--lila-texto); }
+  .pg-est.banco { background: var(--ok-tint); color: var(--rosanta-verde); }
+  .pg-est.ok { background: var(--ok-tint); color: var(--ok); }
+  .pg-est.mas { background: var(--mal-tint); color: var(--mal); }
+  .pg-panel { background: var(--fondo); border-radius: 12px; padding: 0.7rem 0.8rem; margin: 0.3rem 0 0.4rem; }
   .pg-formas { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.3rem 0; }
-  .pg-formas button { font: inherit; font-size: 0.86rem; background: var(--vb); color: #fff; border: 0; border-radius: 10px; padding: 0.55rem 0.9rem; cursor: pointer; }
+  .pg-formas button { font: inherit; font-size: 0.86rem; background: var(--vb); color: var(--rosanta-blanco); border: 0; border-radius: 10px; padding: 0.55rem 0.9rem; cursor: pointer; }
   .pg-formas button:disabled { opacity: 0.5; }
   /* Elegir y despues Guardar (14-oct-2026, Juanma: "se pueden cometer errores de selección"):
      la forma elegida queda marcada; las otras, en blanco. */
-  .pg-formas button[data-elegir] { background: #fff; color: var(--vb); border: 1px solid rgba(78,109,90,0.45); }
-  .pg-formas button[data-elegir][aria-pressed="true"] { background: var(--vb); color: #fff; border-color: var(--vb); }
+  .pg-formas button[data-elegir] { background: var(--superficie); color: var(--vb); border: 1px solid rgba(78,109,90,0.45); }
+  .pg-formas button[data-elegir][aria-pressed="true"] { background: var(--vb); color: var(--rosanta-blanco); border-color: var(--vb); }
   .pg-formas button[data-elegir][aria-pressed="true"]::before { content: '✓ '; }
   .pg-medio { margin: 0.4rem 0; }
   .pg-medio select { font-size: 0.95rem !important; padding: 0.45rem 0.6rem !important; border: 2px solid var(--lila) !important; }
-  .pg-medio select.falta { border-color: #A33A2A !important; }
-  .pg-resumen { margin-top: 0.6rem; font-size: 0.86rem; background: #fff; border-radius: 10px; padding: 0.5rem 0.7rem; border: 1px dashed rgba(78,109,90,0.45); }
+  .pg-medio select.falta { border-color: var(--mal) !important; }
+  .pg-resumen { margin-top: 0.6rem; font-size: 0.86rem; background: var(--superficie); border-radius: 10px; padding: 0.5rem 0.7rem; border: 1px dashed rgba(78,109,90,0.45); }
   .pg-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
   .pg-acciones .pg-b { font-size: 0.9rem; padding: 0.5rem 1.2rem; }
-  .pg-hist td { background: #FAF8F5; }
-  .pg-varias { margin-top: 0.6rem; background: #ECEBFA; border-radius: 12px; padding: 0.6rem 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center; }
+  .pg-hist td { background: var(--superficie); }
+  .pg-varias { margin-top: 0.6rem; background: var(--rosanta-lila-tint); border-radius: 12px; padding: 0.6rem 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: space-between; align-items: center; }
   .pg-varias > .pg-panel { width: 100%; margin: 0; }
   .pg-hist table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
   .pg-hist th, .pg-hist td td { padding: 0.35rem 0.4rem; }
   .pg-mas { font-size: 0.8rem; margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; align-items: center; }
-  .pg input[type=text], .pg input[type=number], .pg input[type=date], .pg select { font: inherit; font-size: 0.85rem; padding: 0.3rem 0.45rem; border: 1px solid rgba(26,26,26,0.2); border-radius: 8px; background: #fff; }
+  .pg input[type=text], .pg input[type=number], .pg input[type=date], .pg select { font: inherit; font-size: 0.85rem; padding: 0.3rem 0.45rem; border: 1px solid rgba(26,26,26,0.2); border-radius: 8px; background: var(--superficie); }
   .pg input[type=number] { width: 7rem; }
-  .pg-err { color: #A33A2A; font-size: 0.82rem; margin-top: 0.3rem; }
-  .pg-nota { font-size: 0.8rem; color: #52514e; line-height: 1.5; }
-  .pg-t { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: #fff; border-radius: 18px; overflow: hidden; }
+  .pg-err { color: var(--mal); font-size: 0.82rem; margin-top: 0.3rem; }
+  .pg-nota { font-size: 0.8rem; color: var(--texto-2); line-height: 1.5; }
+  .pg-t { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: var(--superficie); border-radius: 18px; overflow: hidden; }
   .pg-t td, .pg-t th { padding: 0.5rem 0.45rem; border-bottom: 1px solid rgba(26,26,26,0.08); text-align: left; }
   .pg-scroll { overflow-x: auto; margin-top: 0.9rem; border-radius: 18px; box-shadow: 0 2px 10px rgba(26,26,26,0.06); }
-  .pg-x { font: inherit; font-size: 0.72rem; background: none; border: 0; color: #A33A2A; cursor: pointer; text-decoration: underline; padding: 0; }
-  .pg-grupo { font-family: 'Playfair Display', Georgia, serif; font-size: 1.1rem; margin: 1.4rem 0 0; padding-bottom: 0.3rem; border-bottom: 2px solid var(--vb); display: flex; justify-content: space-between; }
+  .pg-x { font: inherit; font-size: 0.72rem; background: none; border: 0; color: var(--mal); cursor: pointer; text-decoration: underline; padding: 0; }
+  .pg-grupo { font-family: var(--rosanta-font-title); font-size: 1.1rem; margin: 1.4rem 0 0; padding-bottom: 0.3rem; border-bottom: 2px solid var(--vb); display: flex; justify-content: space-between; }
   .pg-grupo span { font-family: inherit; font-size: 0.9rem; }
-  .pg-vacio { padding: 2rem 0; text-align: center; color: #52514e; }
+  .pg-vacio { padding: 2rem 0; text-align: center; color: var(--texto-2); }
   /* Una factura por linea, con las columnas del Excel. En el telefono se acomoda en dos
      renglones: DTE y cantidad arriba, estatus y el boton abajo. */
   .pg-l { display: grid; grid-template-columns: 1.6rem 1fr 5.5rem 6.5rem 8.5rem 8.5rem 4.8rem; gap: 0.2rem 0.5rem; align-items: center;
     padding: 0.45rem 0.1rem; border-bottom: 1px solid rgba(26,26,26,0.08); font-size: 0.86rem; }
-  .pg-l.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8a8780; font-weight: 600; padding-top: 0.2rem; }
-  .pg-l .m { display: none; font-size: 0.74rem; color: #8a8780; }
+  .pg-l.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); font-weight: 600; padding-top: 0.2rem; font-family:var(--rosanta-font-label)}
+  .pg-l .m { display: none; font-size: 0.74rem; color: var(--texto-suave); }
   .pg-lp { grid-column: 1 / -1; }
   @media (max-width: 640px) {
     .pg-hide-m, .pg-l .d { display: none; }
@@ -112,8 +112,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     return f;
   }
   function chipFiltro() {
-    return D.filtro ? '<p class="pg-nota" style="background:#ECEBFA;border-radius:10px;padding:0.4rem 0.7rem">Mostrando solo lo que coincide con «<b>' + esc(D.filtro) + '</b>». ' +
-      '<button type="button" class="pg-x" data-quitarfiltro="1" style="color:#4b4790">quitar filtro</button></p>' : '';
+    return D.filtro ? '<p class="pg-nota" style="background:var(--rosanta-lila-tint);border-radius:10px;padding:0.4rem 0.7rem">Mostrando solo lo que coincide con «<b>' + esc(D.filtro) + '</b>». ' +
+      '<button type="button" class="pg-x" data-quitarfiltro="1" style="color:var(--lila-texto)">quitar filtro</button></p>' : '';
   }
   window.addEventListener('pf-buscar', function () { if (D0) { D = filtrar(D0); pintar(); } });
   window.addEventListener('pf-ir', function () { if (D && !ADMIN && window.PF_IR && window.PF_IR.vista === 'pagos') pintar(); });
@@ -293,7 +293,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Área</th><th class="n">Facturas</th><th class="n">Facturado</th><th class="n">Pagado banco</th><th class="n">Caja / tarjeta</th>' +
         '<th class="n">Pagado</th><th class="n">Diferencia</th><th class="n">Ya por pagar</th><th class="n">Sin explicar</th><th>Último pago</th></tr>' +
         filasB.map(function (x) {
-          var alerta = x.sin_explicar > 500 ? ' style="color:#A33A2A;font-weight:700"' : '';
+          var alerta = x.sin_explicar > 500 ? ' style="color:var(--mal);font-weight:700"' : '';
           return '<tr><td>' + esc(x.proveedor) + (x.efectivo_hasta ? '<div class="pg-nota">efectivo hasta el ' + esc(ddmm(x.efectivo_hasta)) + '</div>' : '') + '</td><td>' + esc(x.grupo) + '</td><td class="n">' + x.n + '</td><td class="n">' + q(x.facturado) + '</td><td class="n">' + q(x.banco) + '</td>' +
             '<td class="n">' + q(x.caja + x.registro) + '</td><td class="n">' + q(x.pagado) + '</td><td class="n">' + q(x.diferencia) + '</td><td class="n">' + (x.pendiente ? q(x.pendiente) : '') + '</td>' +
             '<td class="n"' + alerta + '>' + q(x.sin_explicar) + '</td><td>' + esc(ddmm(x.ult_pago)) + '</td></tr>';

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <?!= incluirCrudo_('LecturaEstilo') ?>
@@ -22,7 +23,7 @@
     .fin-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .fin-boton:hover { background: rgba(78,109,90,0.07); }
     .fin-boton:disabled { opacity: 0.55; cursor: progress; }
 
@@ -35,16 +36,16 @@
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
     .fin-kpis .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
     .fin-kpis .u:first-child { border-left: 0; padding-left: 0; }
-    /* 0.85 y no 0.68: con el verde bosque vigente (#4E6D5A) el blanco al 68%
+    /* 0.85 y no 0.68: con el verde bosque vigente (--rosanta-verde) el blanco al 68%
        daba 3.6:1 de contraste sobre 11px, y al 78% daba 4.2:1 sobre 12px. El
        minimo legible para texto chico es 4.5:1, que se alcanza desde 0.83. */
     .fin-kpis .t { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
-      opacity: 0.85; }
-    .fin-kpis .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.8rem;
+      opacity: 0.85; font-family:var(--rosanta-font-label)}
+    .fin-kpis .n { font-family: var(--rosanta-font-title); font-size: 1.8rem;
       line-height: 1.15; margin-top: 0.15rem; }
     .fin-kpis .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
-    .fin-kpis .mal { color: #FFB4A2; }
-    .fin-kpis .bien { color: #BFE8CE; }
+    .fin-kpis .mal { color: var(--sobre-verde-mal); }
+    .fin-kpis .bien { color: var(--sobre-verde-ok); }
     @media (max-width: 560px) {
       /* Dos columnas fijas, con la venta de la semana ocupando la fila entera:
          es el titular. auto-fit con minmax(150px) caia en UNA columna —por 4px—
@@ -74,16 +75,16 @@
       grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); }
     .fin-card { background: var(--blanco); border-radius: 20px; padding: 1.2rem 1.35rem;
       box-shadow: 0 2px 10px rgba(26,26,26,0.06); border-top: 6px solid var(--verde-medio); }
-    .fin-card.amarillo { border-top-color: #E0A93B; }
-    .fin-card.rojo { border-top-color: #C4553B; }
-    .fin-card.gris { border-top-color: #BDBDBD; }
+    .fin-card.amarillo { border-top-color: var(--alerta-relleno); }
+    .fin-card.rojo { border-top-color: var(--mal-relleno); }
+    .fin-card.gris { border-top-color: var(--linea-2); }
     .fin-card h3 { font-size: 0.95rem; display: flex; align-items: center; gap: 0.45rem; }
     .punto { width: 9px; height: 9px; border-radius: 50%; background: var(--verde-medio);
       display: inline-block; flex: none; }
-    .amarillo .punto { background: #E0A93B; }
-    .rojo .punto { background: #C4553B; }
-    .gris .punto { background: #BDBDBD; }
-    .fin-valor { font-family: 'Playfair Display', Georgia, serif; font-size: 2.3rem;
+    .amarillo .punto { background: var(--alerta-relleno); }
+    .rojo .punto { background: var(--mal-relleno); }
+    .gris .punto { background: var(--linea-2); }
+    .fin-valor { font-family: var(--rosanta-font-title); font-size: 2.3rem;
       line-height: 1.1; margin: 0.5rem 0 0.15rem; }
     .fin-meta { font-size: 0.82rem; opacity: 0.7; }
     .fin-cruda { font-size: 0.76rem; opacity: 0.6; margin-top: 0.55rem;
@@ -96,13 +97,13 @@
     table.fin th, table.fin td { padding: 0.55rem 0.7rem; text-align: right;
       border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
     table.fin th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
-      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-family:var(--rosanta-font-label)}
     table.fin th:first-child, table.fin td:first-child { text-align: left; }
     table.fin tr:last-child td { border-bottom: 0; }
     table.fin tr.actual td { background: rgba(87,167,127,0.09); font-weight: 700; }
     table.fin tr.total td { background: rgba(78,109,90,0.07); font-weight: 700; }
     .tabla-scroll { overflow-x: auto; }
-    td.v { color: #2E7D52; } td.a { color: #A97514; } td.r { color: #C4553B; }
+    td.v { color: var(--ok); } td.a { color: var(--alerta); } td.r { color: var(--mal-relleno); }
     /* Columnas de detalle: se esconden en el telefono, donde 9 columnas con
        nowrap obligaban a arrastrar la tabla a ciegas. El boton las devuelve. */
     .th-corta { display: none; }
@@ -121,7 +122,7 @@
     @media (min-width: 721px) { .tabla-pie { display: none; } }
 
     .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
-    .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+    .fin-error { background: var(--mal-tint); border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
   </style>
 </head>

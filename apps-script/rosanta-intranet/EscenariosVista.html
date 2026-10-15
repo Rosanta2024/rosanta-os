@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -14,7 +15,7 @@
     .esc-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .esc-boton:hover { background: rgba(78,109,90,0.07); }
     .esc-boton.on { background: var(--verde-bosque); color: var(--blanco); }
     .esc-barra-sup { display: flex; align-items: baseline; justify-content: space-between;
@@ -25,15 +26,15 @@
       display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
     .esc-anio .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
     .esc-anio .u:first-child { border-left: 0; padding-left: 0; }
-    .esc-anio .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.75rem;
+    .esc-anio .n { font-family: var(--rosanta-font-title); font-size: 1.75rem;
       line-height: 1.15; margin-top: 0.15rem; }
-    /* 0.85 y no 0.72 por contraste: blanco sobre #4E6D5A en 11-12px necesita
+    /* 0.85 y no 0.72 por contraste: blanco sobre --rosanta-verde en 11-12px necesita
        0.83 para llegar a 4.5:1. Ver la nota de .fin-kpis .t en FinanzasVista. */
     .esc-anio .t { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
-      opacity: 0.85; }
+      opacity: 0.85; font-family:var(--rosanta-font-label)}
     .esc-anio .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
-    .esc-anio .mal { color: #FFB4A2; }
-    .esc-anio .bien { color: #BFE8CE; }
+    .esc-anio .mal { color: var(--sobre-verde-mal); }
+    .esc-anio .bien { color: var(--sobre-verde-ok); }
     @media (max-width: 560px) {
       /* Dos columnas, con el resultado del año ocupando la fila entera: es el
          numero que el simulador de abajo mueve. */
@@ -58,16 +59,16 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
     .pal .cab { display: flex; justify-content: space-between; align-items: baseline;
       font-size: 0.86rem; }
-    .pal .cab b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem;
+    .pal .cab b { font-family: var(--rosanta-font-title); font-size: 1.05rem;
       color: var(--verde-bosque); }
-    .pal input[type=range] { width: 100%; margin: 0.35rem 0 0.15rem; accent-color: #57A77F; }
+    .pal input[type=range] { width: 100%; margin: 0.35rem 0 0.15rem; accent-color: var(--rosanta-verde-medio); }
     .pal .hint { font-size: 0.75rem; opacity: 0.62; line-height: 1.45; }
 
     .esc-res { margin-top: 1.4rem; padding-top: 1.2rem;
       border-top: 1px solid rgba(26,26,26,0.08); }
     .esc-res .lbl { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
-      opacity: 0.6; }
-    .esc-res .big { font-family: 'Playfair Display', Georgia, serif; font-size: 2.6rem;
+      opacity: 0.6; font-family:var(--rosanta-font-label)}
+    .esc-res .big { font-family: var(--rosanta-font-title); font-size: 2.6rem;
       line-height: 1.15; margin: 0.15rem 0 0.4rem; }
     .esc-res .det { font-size: 0.86rem; line-height: 1.6; }
 
@@ -80,7 +81,7 @@
     .esc-fila .b span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px;
       background: rgba(26,26,26,0.22); }
     .esc-fila .b.e span { background: var(--verde-medio); }
-    .esc-fila .b.neg span { background: #C4553B; }
+    .esc-fila .b.neg span { background: var(--mal-relleno); }
     .esc-fila .b i { position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
       font-style: normal; font-size: 0.76rem; }
     .esc-leyenda { font-size: 0.76rem; opacity: 0.6; display: flex; gap: 1.2rem;
@@ -88,20 +89,20 @@
 
     .esc-be { display: grid; gap: 1.4rem; grid-template-columns: 1fr 1fr; }
     @media (max-width: 860px) { .esc-be { grid-template-columns: 1fr; } }
-    .esc-be select { font-family: 'Lato', Arial, sans-serif; font-size: 0.88rem;
+    .esc-be select { font-family: var(--rosanta-font-body); font-size: 0.88rem;
       padding: 0.45rem 0.6rem; border: 1px solid rgba(26,26,26,0.16); border-radius: 10px;
-      background: #FCFBFA; }
-    .be-n { font-family: 'Playfair Display', Georgia, serif; font-size: 2.1rem;
+      background: var(--superficie); }
+    .be-n { font-family: var(--rosanta-font-title); font-size: 2.1rem;
       color: var(--verde-bosque); line-height: 1.15; margin-top: 0.6rem; }
-    .be-n.mal { color: #C4553B; }
+    .be-n.mal { color: var(--mal-relleno); }
     .be-txt { font-size: 0.86rem; line-height: 1.6; margin-top: 0.5rem; }
     .be-pista { height: 26px; border-radius: 8px; background: rgba(26,26,26,0.06);
       position: relative; margin-top: 1rem; }
     .be-pista .venta { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px;
       background: rgba(87,167,127,0.35); }
     .be-pista .marca { position: absolute; top: -5px; bottom: -5px; width: 3px;
-      background: #C4553B; }
-    .be-pista .et { position: absolute; top: 32px; font-size: 0.74rem; color: #C4553B;
+      background: var(--mal-relleno); }
+    .be-pista .et { position: absolute; top: 32px; font-size: 0.74rem; color: var(--mal-relleno);
       transform: translateX(-50%); white-space: nowrap; }
 
     table.esc { width: 100%; border-collapse: collapse; background: var(--blanco);
@@ -110,14 +111,14 @@
     table.esc th, table.esc td { padding: 0.55rem 0.7rem; text-align: right;
       border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
     table.esc th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
-      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-family:var(--rosanta-font-label)}
     table.esc th:first-child, table.esc td:first-child { text-align: left; }
     table.esc tr:last-child td { border-bottom: 0; }
-    td.r { color: #C4553B; } td.v { color: #2E7D52; }
+    td.r { color: var(--mal-relleno); } td.v { color: var(--ok); }
     .tabla-scroll { overflow-x: auto; }
 
     .esc-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
-    .esc-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+    .esc-error { background: var(--mal-tint); border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
   </style>
 </head>
@@ -304,10 +305,10 @@
     var e = calc(), base = T.neto, d = e.res - base;
     var v = document.getElementById('resVal');
     v.textContent = q(e.res);
-    v.style.color = e.res < 0 ? '#C4553B' : '#2E7D52';
+    v.style.color = e.res < 0 ? 'var(--mal-relleno)' : 'var(--ok)';
     document.getElementById('resDet').innerHTML =
       'Hoy: <b>' + q(base) + '</b> · en este escenario: <b>' + q(e.res) + '</b> · diferencia: ' +
-      '<b style="color:' + (d >= 0 ? '#2E7D52' : '#C4553B') + '">' + (d >= 0 ? '+' : '') + q(d) +
+      '<b style="color:' + (d >= 0 ? 'var(--ok)' : 'var(--mal-relleno)') + '">' + (d >= 0 ? '+' : '') + q(d) +
       '</b><br>Ventas ' + q(e.ventas) + ' · mercadería ' + pct(e.cogs / e.ventas * 100) +
       ' · gasto operativo ' + pct(e.gop / e.ventas * 100) +
       ' · por mes ' + q(e.res / D.meses.length);
@@ -400,8 +401,8 @@
       '</b> de venta para no perder. Vendió ' + q(m.ventas) + ' con ' + m.com + ' comensales' +
       (tk ? ' (ticket ' + q(tk) + '), o sea <b>' + Math.round(m.bev / tk).toLocaleString('es-GT') +
             '</b> comensales para llegar al equilibrio.' : '.') +
-      (falta > 0 ? ' Faltaron <b style="color:#C4553B">' + q(falta) + '</b>.'
-                 : ' Sobraron <b style="color:#2E7D52">' + q(-falta) + '</b>.');
+      (falta > 0 ? ' Faltaron <b style="color:var(--mal-relleno)">' + q(falta) + '</b>.'
+                 : ' Sobraron <b style="color:var(--ok)">' + q(-falta) + '</b>.');
 
     var tope = Math.max(m.ventas, m.bev) * 1.12 || 1;
     document.getElementById('bePista').innerHTML =

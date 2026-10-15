@@ -2,17 +2,18 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
     /* Controles de fecha y orden. Discretos, del mismo tamaño que los filtros
        que ya existían, para que la barra siga leyéndose de un vistazo. */
-    .crm-barra .fchgrupo{display:flex;align-items:center;gap:.3rem;font-size:.82rem;color:#6f6a61}
+    .crm-barra .fchgrupo{display:flex;align-items:center;gap:.3rem;font-size:.82rem;color:var(--texto-suave)}
     .crm-barra input[type="date"]{width:9.2rem}
     .col-fecha{white-space:nowrap}
     .fecha-nueva{font-weight:700}
     .badge-nuevo{display:inline-block;margin-left:.35rem;padding:0 .35rem;border-radius:.6rem;
-                 font-size:.68rem;font-weight:700;background:#e7efe4;color:#4E6D5A;vertical-align:middle}
+                 font-size:.68rem;font-weight:700;background:var(--ok-tint);color:var(--rosanta-verde);vertical-align:middle}
   </style>
 </head>
 <body>
@@ -46,7 +47,7 @@
           <input type="date" id="fHasta" title="Hasta esta fecha">
           <button class="btn-exportar sec" id="btnLimpiar" title="Quitar el rango de fechas">✕</button>
         </span>
-        <label style="font-size:.82rem;color:#6f6a61;display:flex;align-items:center;gap:.35rem">
+        <label style="font-size:.82rem;color:var(--texto-suave);display:flex;align-items:center;gap:.35rem">
           <input type="checkbox" id="fChat" style="width:auto"> Solo con conversación
         </label>
         <input id="fBusca" placeholder="Buscar nombre, teléfono o email" style="min-width:15rem">

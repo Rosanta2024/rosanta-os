@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -15,17 +16,17 @@
     .cmp-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .cmp-boton:hover { background: rgba(78,109,90,0.07); }
 
     .cmp-hero { background: var(--verde-bosque); color: var(--blanco);
       border-radius: 22px; padding: 1.8rem 1.9rem; margin-top: 1.5rem; }
     .cmp-hero .rot { font-size: 0.78rem; text-transform: uppercase;
-      letter-spacing: 0.11em; opacity: 0.75; }
-    .cmp-hero .big { font-family: 'Playfair Display', Georgia, serif;
+      letter-spacing: 0.11em; opacity: 0.75; font-family:var(--rosanta-font-label)}
+    .cmp-hero .big { font-family: var(--rosanta-font-title);
       font-size: 3.1rem; line-height: 1.05; margin: 0.35rem 0 0.5rem; }
     .cmp-hero .exp { font-size: 0.94rem; line-height: 1.55; opacity: 0.9; max-width: 66ch; }
-    .cmp-hero .exp strong { color: #C6E8D3; }
+    .cmp-hero .exp strong { color: var(--sobre-verde-ok); }
 
     /* --- el gráfico: dos barras por mes, misma escala --- */
     .cmp-graf { background: var(--blanco); border-radius: 20px; padding: 1.5rem 1.7rem 1.2rem;
@@ -44,7 +45,7 @@
     .cmp-b.a25 { background: rgba(26,26,26,0.18); }
     .cmp-b.a26 { background: var(--verde-bosque); }
     .cmp-b.a26.parcial { background: repeating-linear-gradient(45deg,
-      var(--verde-bosque), var(--verde-bosque) 5px, #7FA98C 5px, #7FA98C 10px); }
+      var(--verde-bosque), var(--verde-bosque) 5px, var(--rosanta-verde) 5px, var(--rosanta-verde) 10px); }
     .cmp-eje { display: flex; gap: 0.55rem; min-width: 640px; margin-top: 0.4rem; }
     .cmp-eje div { flex: 1; text-align: center; font-size: 0.72rem; opacity: 0.7; }
 
@@ -53,24 +54,24 @@
       border-bottom: 1px solid rgba(26,26,26,0.07); white-space: nowrap; }
     table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
     table.cmp thead th { font-size: 0.74rem; text-transform: uppercase;
-      letter-spacing: 0.06em; opacity: 0.6; border-bottom: 1px solid rgba(26,26,26,0.18); }
+      letter-spacing: 0.06em; opacity: 0.6; border-bottom: 1px solid rgba(26,26,26,0.18); font-family:var(--rosanta-font-label)}
     table.cmp tr.tot td { border-top: 2px solid rgba(26,26,26,0.25); font-weight: 700;
       border-bottom: none; padding-top: 0.7rem; }
-    table.cmp tr.curso { background: #FFF8E6; }
+    table.cmp tr.curso { background: var(--alerta-tint); }
     table.cmp tr.vacio td { opacity: 0.45; }
-    .verde { color: #2E7D4F; } .rojo { color: #B3261E; }
+    .verde { color: var(--ok); } .rojo { color: var(--mal); }
     .cmp-seccion { margin-top: 2rem; }
-    .cmp-seccion h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.35rem;
+    .cmp-seccion h2 { font-family: var(--rosanta-font-title); font-size: 1.35rem;
       margin: 0 0 0.3rem; }
     .cmp-nota { font-size: 0.86rem; opacity: 0.75; margin: 0 0 0.9rem; max-width: 78ch;
       line-height: 1.5; }
-    .aviso { background: #FDF6E3; border-radius: 14px; padding: 1rem 1.2rem;
+    .aviso { background: var(--alerta-tint); border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.88rem; line-height: 1.55; margin-top: 1.1rem; }
     .aviso b { display: block; margin-bottom: 0.25rem; }
-    .tag { font-size: 0.7rem; background: #E5A50A; color: #fff; border-radius: 3px;
+    .tag { font-size: 0.7rem; background: var(--alerta-relleno); color: var(--rosanta-blanco); border-radius: 3px;
       padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
     .cmp-cargando { padding: 2.5rem 0; opacity: 0.65; }
-    .cmp-error { background: #FBEAE9; color: #8C1D18; border-radius: 14px;
+    .cmp-error { background: var(--mal-tint); color: var(--mal); border-radius: 14px;
       padding: 1rem 1.2rem; font-size: 0.9rem; }
     .tabla-scroll { overflow-x: auto; }
     /* El P&L de cada mes. Vivia en "La semana" y se mudo aca el 22-sep-2026:
@@ -82,12 +83,12 @@
     table.pnl th, table.pnl td { padding: 0.55rem 0.7rem; text-align: right;
       border-bottom: 1px solid rgba(26,26,26,0.06); white-space: nowrap; }
     table.pnl th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
-      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-family:var(--rosanta-font-label)}
     table.pnl th:first-child, table.pnl td:first-child { text-align: left; }
     table.pnl tr:last-child td { border-bottom: 0; }
     table.pnl tr.total td { background: rgba(78,109,90,0.07); font-weight: 700; }
-    table.pnl td.v { color: #2E7D52; } table.pnl td.a { color: #A97514; }
-    table.pnl td.r { color: #C4553B; }
+    table.pnl td.v { color: var(--ok); } table.pnl td.a { color: var(--alerta); }
+    table.pnl td.r { color: var(--mal-relleno); }
     @media (max-width: 720px) {
       table.pnl { font-size: 0.78rem; }
       table.pnl th, table.pnl td { padding: 0.45rem 0.35rem; }
@@ -373,7 +374,7 @@ var AUTH = '<?= authToken ?>';
         'de obra de la operación.');
     }
     if (sinArea.length) {
-      notas.push('<span style="color:#A97514">En ' + esc(sinArea.join(' · ')) + ' hay extras ' +
+      notas.push('<span style="color:var(--alerta)">En ' + esc(sinArea.join(' · ')) + ' hay extras ' +
         'cuyo puesto dice «Extra» sin área: suman en el total pero no en cocina ni en barra. ' +
         'Se etiquetan poniendo «Extra cocina» o «Extra barra» en su puesto.</span>');
     }
@@ -386,7 +387,7 @@ var AUTH = '<?= authToken ?>';
         'planilla es del mes completo, así que el mes todavía no cierra.');
     }
     if (descuadra.length) {
-      notas.push('<span style="color:#C4553B">En ' + esc(descuadra.join(' · ')) +
+      notas.push('<span style="color:var(--mal-relleno)">En ' + esc(descuadra.join(' · ')) +
         ' la suma de las filas no coincide con el «Sub total» de la hoja: el reparto y el ' +
         'total del DRE salen de bases distintas. Hay que revisar esa pestaña.</span>');
     }

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <base target="_top">
+  <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>
   <?!= include('Logo') ?>
   <style>
@@ -26,7 +27,7 @@
     .fin-boton { background: transparent; color: var(--verde-bosque);
       border: 1px solid rgba(78,109,90,0.35); border-radius: 999px;
       padding: 0.45rem 1rem; font-size: 0.82rem; cursor: pointer;
-      font-family: 'Lato', Arial, sans-serif; }
+      font-family: var(--rosanta-font-body); }
     .fin-boton:hover { background: rgba(78,109,90,0.07); }
 
     /* --- la cinta: el gasto de la semana --- */
@@ -37,12 +38,12 @@
     .fin-kpis .u { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 1.1rem; }
     .fin-kpis .u:first-child { border-left: 0; padding-left: 0; }
     .fin-kpis .t { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
-      opacity: 0.85; }
-    .fin-kpis .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.8rem;
+      opacity: 0.85; font-family:var(--rosanta-font-label)}
+    .fin-kpis .n { font-family: var(--rosanta-font-title); font-size: 1.8rem;
       line-height: 1.15; margin-top: 0.15rem; }
     .fin-kpis .c { font-size: 0.76rem; opacity: 0.85; line-height: 1.4; margin-top: 0.25rem; }
-    .fin-kpis .mal { color: #FFB4A2; }
-    .fin-kpis .bien { color: #BFE8CE; }
+    .fin-kpis .mal { color: var(--sobre-verde-mal); }
+    .fin-kpis .bien { color: var(--sobre-verde-ok); }
     @media (max-width: 560px) {
       .fin-kpis { padding: 1.1rem 1.15rem; gap: 1rem 1.1rem; grid-template-columns: 1fr 1fr; }
       .fin-kpis .u { border-left: 0; padding-left: 0; }
@@ -65,33 +66,33 @@
     .areas { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
     .area { background: var(--blanco); border-radius: 20px; padding: 1.25rem 1.35rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-top: 6px solid var(--verde-medio); }
-    .area.amarillo { border-top-color: #E0A93B; }
-    .area.rojo { border-top-color: #C4553B; }
-    .area.gris { border-top-color: #BDBDBD; }
+    .area.amarillo { border-top-color: var(--alerta-relleno); }
+    .area.rojo { border-top-color: var(--mal-relleno); }
+    .area.gris { border-top-color: var(--linea-2); }
     .area h3 { font-size: 1.05rem; display: flex; align-items: center;
       justify-content: space-between; gap: 0.5rem; }
-    .area h3 .meta { font-size: 0.74rem; font-family: 'Lato', Arial, sans-serif;
+    .area h3 .meta { font-size: 0.74rem; font-family: var(--rosanta-font-body);
       text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; }
     /* El numero grande es el ACUMULADO DEL MES: es el que controla. La compra va
        a saltos y el consumo es parejo —una caja de vino se paga una semana y se
        toma en tres—, asi que una semana suelta da falsas alarmas. La semana va
        abajo, como guia de que llevar al mercado. */
-    .area .saldo { font-family: 'Playfair Display', Georgia, serif; font-size: 2.2rem;
+    .area .saldo { font-family: var(--rosanta-font-title); font-size: 2.2rem;
       line-height: 1.1; margin: 0.55rem 0 0.1rem; color: var(--verde-bosque); }
-    .area.rojo .saldo { color: #C4553B; }
-    .area.amarillo .saldo { color: #A97514; }
+    .area.rojo .saldo { color: var(--mal-relleno); }
+    .area.amarillo .saldo { color: var(--alerta); }
     .area .saldo-t { font-size: 0.82rem; opacity: 0.75; }
     .area .pista { position: relative; height: 10px; border-radius: 999px;
       background: rgba(0,0,0,0.07); margin: 0.9rem 0 0.35rem; overflow: hidden; }
     .area .pista span { position: absolute; top: 0; bottom: 0; left: 0;
       background: var(--verde-medio); border-radius: 999px; }
-    .area.amarillo .pista span { background: #E0A93B; }
-    .area.rojo .pista span { background: #C4553B; }
+    .area.amarillo .pista span { background: var(--alerta-relleno); }
+    .area.rojo .pista span { background: var(--mal-relleno); }
     .area .pista-t { font-size: 0.76rem; opacity: 0.7; display: flex;
       justify-content: space-between; gap: 0.5rem; }
     .area .sem { margin-top: 0.9rem; padding-top: 0.8rem;
       border-top: 1px solid rgba(0,0,0,0.08); font-size: 0.84rem; line-height: 1.55; }
-    .area .sem b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; }
+    .area .sem b { font-family: var(--rosanta-font-title); font-size: 1.05rem; }
 
     /* --- tablas --- */
     table.fin { width: 100%; border-collapse: collapse; background: var(--blanco);
@@ -100,13 +101,13 @@
     table.fin th, table.fin td { padding: 0.55rem 0.7rem; text-align: right;
       border-bottom: 1px solid rgba(0,0,0,0.06); white-space: nowrap; }
     table.fin th { background: var(--verde-bosque); color: var(--blanco); font-weight: 600;
-      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; font-family:var(--rosanta-font-label)}
     table.fin th:first-child, table.fin td:first-child { text-align: left; }
     table.fin tr:last-child td { border-bottom: 0; }
     table.fin tr.actual td { background: rgba(87,167,127,0.10); font-weight: 700; }
     table.fin tr.alza td { background: rgba(196,85,59,0.07); }
     .tabla-scroll { overflow-x: auto; }
-    td.v { color: #2E7D52; } td.a { color: #A97514; } td.r { color: #C4553B; }
+    td.v { color: var(--ok); } td.a { color: var(--alerta); } td.r { color: var(--mal-relleno); }
     .th-corta { display: none; }
     @media (max-width: 720px) {
       table.fin.compacta th.det, table.fin.compacta td.det { display: none; }
@@ -127,7 +128,7 @@
     .anio-caja { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
     .anio-caja > summary { cursor: pointer; padding: 0.9rem 0; font-size: 0.95rem;
-      font-family: 'Playfair Display', Georgia, serif; color: var(--verde-bosque); }
+      font-family: var(--rosanta-font-title); color: var(--verde-bosque); }
     .anio-cuerpo { padding-bottom: 1.1rem; }
     .bq { display: grid; grid-template-columns: 190px 1fr 96px 108px; gap: 1rem;
       align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
@@ -140,14 +141,14 @@
       border-radius: 2px; }
     .bq .val { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px;
       background: var(--verde-medio); }
-    .bq.rojo .val { background: #C4553B; }
+    .bq.rojo .val { background: var(--mal-relleno); }
     .bq.bajo .val { background: var(--lila); }
-    .bq.gris .val { background: #BDBDBD; }
-    .bq .pct { text-align: right; font-family: 'Playfair Display', Georgia, serif;
+    .bq.gris .val { background: var(--linea-2); }
+    .bq .pct { text-align: right; font-family: var(--rosanta-font-title);
       font-size: 1.1rem; }
-    .bq.rojo .pct { color: #C4553B; }
+    .bq.rojo .pct { color: var(--mal-relleno); }
     .bq .exc { text-align: right; font-size: 0.78rem; opacity: 0.8; line-height: 1.35; }
-    .bq.rojo .exc { color: #C4553B; opacity: 1; }
+    .bq.rojo .exc { color: var(--mal-relleno); opacity: 1; }
     .bq-leyenda { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; font-size: 0.76rem;
       opacity: 0.75; margin-top: 0.7rem; }
     .bq-leyenda span { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -162,23 +163,23 @@
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     .fin-int { background: var(--blanco); border-radius: 14px; padding: 0.95rem 1.05rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-    .fin-int .n { font-family: 'Playfair Display', Georgia, serif; font-size: 1.45rem;
+    .fin-int .n { font-family: var(--rosanta-font-title); font-size: 1.45rem;
       color: var(--verde-bosque); }
     .fin-int .t { font-size: 0.78rem; opacity: 0.75; line-height: 1.45; }
-    .fin-int.mal .n { color: #C4553B; }
+    .fin-int.mal .n { color: var(--mal-relleno); }
     .cob { background: var(--blanco); border-radius: 16px; padding: 0.3rem 1.2rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-top: 1rem; }
     .cob details { border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.65rem 0; }
     .cob details:last-child { border-bottom: 0; }
     .cob summary { cursor: pointer; font-size: 0.88rem; display: flex;
       justify-content: space-between; gap: 1rem; }
-    .cob summary .fuga { color: #C4553B; font-weight: 700; }
+    .cob summary .fuga { color: var(--mal-relleno); font-weight: 700; }
     .cob .linea { display: flex; justify-content: space-between; gap: 1rem;
       font-size: 0.82rem; padding: 0.25rem 0 0.25rem 1rem; opacity: 0.85; }
-    .cob .linea.mal { color: #C4553B; opacity: 1; }
+    .cob .linea.mal { color: var(--mal-relleno); opacity: 1; }
 
     .fin-cargando { padding: 3.5rem 0; text-align: center; opacity: 0.6; }
-    .fin-error { background: #F6E4DF; border-radius: 14px; padding: 1rem 1.2rem;
+    .fin-error { background: var(--mal-tint); border-radius: 14px; padding: 1rem 1.2rem;
       font-size: 0.9rem; line-height: 1.5; }
   </style>
 </head>
@@ -293,10 +294,10 @@
           <div class="anio-cuerpo">
             <div id="bloques"></div>
             <div class="bq-leyenda">
-              <span><i style="background:#C4553B"></i> sobre la banda</span>
+              <span><i style="background:var(--mal-relleno)"></i> sobre la banda</span>
               <span><i style="background:var(--verde-medio)"></i> dentro de la banda</span>
               <span><i style="background:var(--lila)"></i> bajo la banda</span>
-              <span><i style="background:#BDBDBD"></i> sin banda del sector con que comparar</span>
+              <span><i style="background:var(--linea-2)"></i> sin banda del sector con que comparar</span>
             </div>
             <div id="tipos-txt" class="fin-nota" style="margin:1.1rem 0 0"></div>
           </div>
@@ -660,17 +661,17 @@
            '<strong>anual</strong> (presupuesto del año, comparado contra el acumulado ' +
            '—marcado «(año)»—, porque uniformes o mantención no se compran todos los meses).')) +
       (P0.sin_tipo && P0.sin_tipo.length
-        ? '<br><span style="color:#A97514">' + P0.sin_tipo.length + ' fila(s) sin tipo válido ' +
+        ? '<br><span style="color:var(--alerta)">' + P0.sin_tipo.length + ' fila(s) sin tipo válido ' +
           '(' + esc(P0.sin_tipo.join(', ')) + '): se están tratando como <strong>fijo</strong>. ' +
           'Elegí su tipo en la columna «Tipo» de la hoja.</span>'
         : '') +
       (P0.desconocidas && P0.desconocidas.length
-        ? '<br><span style="color:#C4553B">La pestaña PRESUPUESTO tiene ' +
+        ? '<br><span style="color:var(--mal-relleno)">La pestaña PRESUPUESTO tiene ' +
           P0.desconocidas.length + ' fila(s) con un nombre de sección que el cálculo no ' +
           'reconoce (' + esc(P0.desconocidas.join(', ')) + '): ese presupuesto no se está ' +
           'aplicando a nada.</span>'
         : '') +
-      (P0.error ? '<br><span style="color:#C4553B">' + esc(P0.error) + '</span>' : '');
+      (P0.error ? '<br><span style="color:var(--mal-relleno)">' + esc(P0.error) + '</span>' : '');
 
     document.getElementById('cuerpo-dre').innerHTML = dre.length
       ? dre.map(function (f) {
@@ -824,10 +825,10 @@
     });
     var avisoPlanilla = '';
     if (it.planilla_error) {
-      avisoPlanilla = '<br><span style="color:#C4553B">No se pudo leer el Sheet de planilla (' +
+      avisoPlanilla = '<br><span style="color:var(--mal-relleno)">No se pudo leer el Sheet de planilla (' +
         esc(it.planilla_error) + '): la nómina de todos los meses salió del respaldo del código.</span>';
     } else if (resp.length) {
-      avisoPlanilla = '<br><span style="color:#A97514">Nómina devengada del respaldo del código en ' +
+      avisoPlanilla = '<br><span style="color:var(--alerta)">Nómina devengada del respaldo del código en ' +
         resp.length + ' mes(es): ' + resp.map(function (m) { return 'mes ' + m; }).join(', ') +
         '. El Sheet de planilla no trae esos meses todavía.</span>';
     }
