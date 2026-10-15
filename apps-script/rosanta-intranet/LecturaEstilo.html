@@ -41,4 +41,9 @@
   .lx-como { font-size: 0.82rem; color: var(--texto-2); }
   .lx-como summary { cursor: pointer; color: var(--verde-bosque, var(--rosanta-verde)); font-weight: 700; }
   @media (max-width: 700px) { .lx-form { grid-template-columns: 1fr 1fr; } .lx-form input { grid-column: 1 / -1; } .lx-q { font-size: 1.2rem; } }
+  @media (max-width: 640px) {
+    /* celular (15-oct-2026): botones de las acciones al tamano del dedo y campos de 16 px */
+    .lx-acc button, .lx-form button { min-height: 44px; font-size: 0.86rem; }
+    .lx-form input, .lx-form select { font-size: 16px; }
+  }
 </style>
