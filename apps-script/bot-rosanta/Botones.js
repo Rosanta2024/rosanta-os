@@ -483,7 +483,7 @@ function fichaActualizar_(canal, contactoId, nombre, lead, extra) {
     }
     pon('ultimo_boton', lead.ultimo_boton);
     pon('resumen', lead.resumen);
-    if (!v[FICHA_COLS.indexOf('primer_contacto')]) pon('primer_contacto', hoy);
+    if (!v[FICHA_COLS.indexOf('primer_contacto')]) pon('primer_contacto', ahora);   // con hora: el pipeline mide respuesta_horas
     if (extra) Object.keys(extra).forEach(function (k) { pon(k, extra[k]); });
     pon('actualizado', ahora);
     if (fila) sh.getRange(fila, 1, 1, FICHA_COLS.length).setValues([v]);
@@ -495,12 +495,25 @@ function fichaActualizar_(canal, contactoId, nombre, lead, extra) {
   }
 }
 
+/** Un valor de la ficha del contacto, o '' si no hay. */
+function fichaValor_(canal, contactoId, col) {
+  try {
+    var sh = fichaHoja_();
+    var celda = sh.getRange('A:A').createTextFinder(canal + '|' + contactoId).matchEntireCell(true).findNext();
+    if (!celda) return '';
+    return String(sh.getRange(celda.getRow(), FICHA_COLS.indexOf(col) + 1).getDisplayValue() || '');
+  } catch (e) { return ''; }
+}
+
 // ============================================================
 //  BLOQUE PARA EL PIPELINE DE EVENTOS (va en el correo "🔔 Lead para atender")
 //  La revisión diaria lo lee y crea la fila con etapa "consulta" y canal "bot".
 // ============================================================
 function btBloquePipeline_(canal, lead, idDestino) {
   lead = lead || {};
+  // fecha_consulta = el día del PRIMER mensaje del cliente, no el del aviso (pedido del Pipeline, 15-oct).
+  var primero = fichaValor_(canal, idDestino, 'primer_contacto') ||
+    Utilities.formatDate(new Date(), BT_TZ, 'yyyy-MM-dd HH:mm');
   var contacto = [lead.telefono || (canal === 'whatsapp' ? idDestino : ''), lead.email]
     .filter(String).join(' · ') || (canal + ' ' + idDestino);
   return '\n---DATOS_PIPELINE---\n' +
@@ -508,8 +521,9 @@ function btBloquePipeline_(canal, lead, idDestino) {
     'contacto: ' + contacto + '\n' +
     'email: ' + (lead.email || '') + '\n' +
     'canal: bot\n' +
-    'canal_origen: ' + canal + '\n' +
-    'fecha_consulta: ' + Utilities.formatDate(new Date(), BT_TZ, 'yyyy-MM-dd') + '\n' +
+    'canal_detalle: ' + canal + '\n' +
+    'primer_contacto: ' + primero + '\n' +
+    'fecha_consulta: ' + String(primero).substring(0, 10) + '\n' +
     'fecha_evento: ' + (rvFecha(lead.fecha) || '') + '\n' +
     'pax: ' + (parseInt(lead.personas, 10) || '') + '\n' +
     'presupuesto: ' + (lead.presupuesto || '') + '\n' +
