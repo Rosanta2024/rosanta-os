@@ -74,7 +74,9 @@ sincroniza la carpeta**, nunca al revés. El respaldo de la v8 quedó en
   `update-deployment` SIN push: `create-version` congela lo que está en el servidor.
   **Desde el 14-oct-2026 el candado lo hace cumplir:** antes de cada `clasp push` de la
   intranet baja el HEAD aparte y frena el push si el servidor tiene archivos que esta carpeta
-  no tiene (ni en disco, ni en su último commit, ni en su último push): son de otra sesión.
+  no tiene (ni en disco, ni en ninguna versión de la historia de su rama, ni en su último push): son de
+  otra sesión. Desde el 15-oct-2026 una versión de un commit anterior de la misma rama (main, un merge
+  ya traído) ya no frena. Simulador: `python3 .claude/hooks/prueba-candado.py` (26/26).
   Se resuelve trayendo su commit (`git merge`) o pidiéndole que haga commit. Pisar a
   propósito solo con el sí de Juanma: `ROSANTA_PUSH_PISAR="motivo" clasp push`.
 - **Batería por partes:** `?page=pruebas` corre la batería completa en 3 carriles a la vez

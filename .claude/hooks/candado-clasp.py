@@ -8,7 +8,8 @@
 #   3. (14-oct-2026, noche) Nada de `clasp push` de la intranet que PISE trabajo ajeno. Antes
 #      de subir se baja el HEAD del servidor a una carpeta temporal fuera del repo, y cada
 #      archivo del servidor tiene que ser conocido por la carpeta que sube: igual a lo que va
-#      a subir, igual a su último commit, o igual a lo que esa misma carpeta subió la vez
+#      a subir, igual a alguna versión de la historia de su rama (cualquier commit alcanzable
+#      desde HEAD, 15-oct-2026), o igual a lo que esa misma carpeta subió la vez
 #      anterior. Si no, otra sesión subió algo que esta no tiene y el push se frena con la
 #      lista de archivos. Salida explícita, solo con el sí de Juanma:
 #      ROSANTA_PUSH_PISAR="motivo" clasp push
@@ -250,21 +251,47 @@ def _sin_ext(rel):
     return base + (".js" if ext in (".gs", ".js") else ext)
 
 
-def _git_head(raiz, rels):
-    """sha del contenido de cada archivo en el ultimo commit de la carpeta (None si no esta)."""
-    out = {}
+HISTORIA_MAX = 200  # versiones por archivo que se buscan hacia atras
+
+
+def _en_historia(raiz, archivos):
+    """Los rels cuyo contenido del servidor aparece en algun commit alcanzable desde HEAD.
+
+    archivos = {rel: ruta del archivo bajado}. Un worktree nuevo no tiene foto de push y, si
+    su ultimo commit cambio un archivo, el servidor trae la version de un commit ANTERIOR de la
+    misma rama (main o un merge ya traido): eso no es trabajo ajeno. Se compara el blob de git
+    del contenido bajado contra cada version de esa ruta en la historia de HEAD; lo que no esta
+    en la historia (otra rama sin traer, o nunca commiteado) sigue siendo ajeno."""
+    ok = set()
     try:
-        pref = subprocess.run(["git", "-C", raiz, "rev-parse", "--show-prefix"], capture_output=True,
-                              text=True, timeout=20).stdout.strip()
+        r = subprocess.run(["git", "-C", raiz, "rev-parse", "--show-toplevel", "--show-prefix"],
+                           capture_output=True, text=True, timeout=20, check=True).stdout.split("\n")
+        top, pref = r[0], r[1].strip()
     except Exception:
-        return out
-    for rel in rels:
+        return ok
+    for rel, ruta in archivos.items():
+        # clasp baja los .gs como .js: en git puede estar con cualquiera de las dos
+        candidatas = [pref + rel]
+        if rel.endswith(".js"):
+            candidatas.append(pref + rel[:-3] + ".gs")
         try:
-            r = subprocess.run(["git", "-C", raiz, "show", "HEAD:" + pref + rel], capture_output=True, timeout=20)
-            out[rel] = _sha(r.stdout) if r.returncode == 0 else None
+            with open(ruta, "rb") as h:
+                blob = subprocess.run(["git", "-C", top, "hash-object", "--path=" + candidatas[0], "--stdin"],
+                                      input=h.read(), capture_output=True, timeout=20,
+                                      check=True).stdout.decode().strip()
+            commits = subprocess.run(["git", "-C", top, "log", "--full-history", "--format=%H",
+                                      "-n", str(HISTORIA_MAX), "HEAD", "--"] + candidatas,
+                                     capture_output=True, text=True, timeout=30).stdout.split()
+            if not commits:
+                continue
+            pedido = "".join("%s:%s\n" % (c, p) for c in commits for p in candidatas)
+            r = subprocess.run(["git", "-C", top, "cat-file", "--batch-check=%(objectname)"],
+                               input=pedido, capture_output=True, text=True, timeout=30)
+            if blob in r.stdout.split():
+                ok.add(rel)
         except Exception:
-            out[rel] = None
-    return out
+            continue
+    return ok
 
 
 def guardar_foto(inv):
@@ -304,13 +331,14 @@ def verificar_push(inv):
         dudosos = [rel for rel, h in servidor.items() if h != local.get(rel) and h != foto.get(rel)]
         if not dudosos:
             return True, ""
-        git = _git_head(raiz, dudosos)
-        ajenos = [rel for rel in dudosos if servidor[rel] != git.get(rel)]
+        rutas = {_sin_ext(k): os.path.join(tmp, k) for k in _archivos(tmp)}
+        conocidos = _en_historia(raiz, {rel: rutas[rel] for rel in dudosos})
+        ajenos = [rel for rel in dudosos if rel not in conocidos]
         if not ajenos:
             return True, ""
-        return False, ("en el servidor hay %d archivo(s) que esta carpeta no tiene ni en disco, ni en su "
-                       "ultimo commit, ni en su ultimo push: %s. Otra sesion subio trabajo que aca no esta; "
-                       "este push lo borraria." % (len(ajenos), ", ".join(sorted(ajenos)[:12])))
+        return False, ("en el servidor hay %d archivo(s) que esta carpeta no tiene ni en disco, ni en la "
+                       "historia de su rama, ni en su ultimo push: %s. Otra sesion subio trabajo que aca no "
+                       "esta; este push lo borraria." % (len(ajenos), ", ".join(sorted(ajenos)[:12])))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
