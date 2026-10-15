@@ -205,6 +205,12 @@ function doGet(e) {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
 
+  // Tiempos de guardado (15-oct-2026, Tiempos.js): cuanto tarda cada guardado de Pagos y
+  // Recetas, y "Medir lectura", que solo lee. Solo dueño, misma regla que 'pruebas'.
+  if (pagina === 'tiempos' && String(usuario.rol || '').toLowerCase() === 'dueno') {
+    return render_('TiemposVista', { urlBase: urlBase, authToken: authToken });
+  }
+
   // Tablero global (25-sep-2026): la foto grande de los 6 pilares, SOLO para el rol
   // due\u00f1o, misma regla que 'pruebas'. No calcula nada: cada numero viene del motor de
   // su pilar (TableroDatos.js) y cada tarjeta lleva a la pesta\u00f1a de ese pilar.

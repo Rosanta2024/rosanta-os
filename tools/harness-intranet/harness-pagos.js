@@ -3,7 +3,7 @@
    Uso: node harness-pagos.js [desde AAAA-MM-DD]  (por defecto 2026-08-01, para tener datos) */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const DIR = path.join(process.env.HOME, 'Dev/Rosanta/apps-script/rosanta-intranet');
+const DIR = path.join(__dirname, '../../apps-script/rosanta-intranet');   // relativo: corre en cualquier worktree
 function revive(v) {
   if (v && typeof v === 'object' && '$d' in v) { const [d, t] = v.$d.split('T'); const [y, m, dd] = d.split('-').map(Number); const [hh, mm, ss] = t.split(':').map(Number); return new Date(y, m - 1, dd, hh, mm, ss); }
   return v === null || v === undefined ? '' : v;
@@ -42,7 +42,7 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'Tiempos.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 const desde = process.argv[2] || '2026-08-01';
 vm.runInContext("PAG_DESDE_ = '" + desde + "';", ctx);
 let ok = 0, mal = 0;

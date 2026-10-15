@@ -51,7 +51,7 @@ function edicionCorrer_(auth, fn, accion) {
   var u = null;
   try {
     u = edicionQuien_(auth);
-    var hecho = conCambiosDeModelo_(function () { return fn(u); });
+    var hecho = conCambiosDeModelo_(function () { return fn(u); }, String(accion || '').split(' ')[0]);
     var out = { ok: true, resultado: hecho.resultado === undefined ? null : hecho.resultado };
     if (hecho.cambios) out.cambios = hecho.cambios;
     return out;

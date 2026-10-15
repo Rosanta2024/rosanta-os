@@ -865,6 +865,23 @@ function _pagConCandado_(fn, ms) {
   try { return fn(); } finally { _PAG_CANDADO_--; lock.releaseLock(); }
 }
 
+/*
+ * Cronometro de los guardados (15-oct-2026, Tiempos.js). _pagMedir_ corre el guardado y la
+ * pantalla que devuelve, y anota cuanto tardo cada tramo: validar (leer el maestro y calcular
+ * el estado antes de escribir), escribir, y recalcular (armar la pantalla de vuelta).
+ */
+var _PAG_RELOJ_ = null;
+function _pagTramo_(nombre) { if (_PAG_RELOJ_) _PAG_RELOJ_.tramo(nombre); }
+function _pagMedir_(accion, auth, fn) {
+  _PAG_RELOJ_ = tiempoInicio_('Pagos · ' + accion);
+  try {
+    var out = fn();
+    _pagTramo_('recalcular');
+    _PAG_RELOJ_.fin();
+    return out;
+  } finally { _PAG_RELOJ_ = null; }
+}
+
 function _pagEscribir_(filas) {
   return _pagConCandado_(function () {
     var sh = pagHoja_(true);
@@ -880,6 +897,7 @@ function _pagEscribir_(filas) {
     sh.getRange(desde, 1, datos.length, H.length).setValues(datos);
     SpreadsheetApp.flush();
     _pagOlvidar_(false);
+    _pagTramo_('escribir');
     return datos.length;
   });
 }
@@ -896,8 +914,10 @@ function _pagFechaValida_(s, nombre) {
  * proveedor que se aplica (el Excel: "pagar Q340, saldo a favor de 85").
  */
 function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
-  _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
-  return getPagosProveedores(auth);
+  return _pagMedir_('pago de ' + [].concat(llaves || []).length + ' factura(s)', auth, function () {
+    _pagRegistrarPago_(pagQuien_(auth), llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
+    return getPagosProveedores(auth);
+  });
 }
 
 /** El pago en si. Q: { nombre, areas }. La Caja chica lo llama con todas las areas (Maco paga
@@ -915,6 +935,7 @@ function _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, 
   llaves = [].concat(llaves || []);
   if (!llaves.length) throw new Error('Elegí al menos una factura.');
   var E = pagEstado_(), porLlave = {};
+  _pagTramo_('validar');
   E.facturas.forEach(function (f) { porLlave[f.llave] = f; });
   var fs = llaves.map(function (k) {
     var f = porLlave[k];
@@ -1159,31 +1180,35 @@ function getPorDevolverEquipo(auth) {
 
 /** El dueño anota que le devolvio a José o a Jeffry lo que pagaron de su bolsa. */
 function registrarDevolucionEquipo(auth, nombre, monto, fecha, detalle) {
-  var Q = pagQuien_(auth);
-  if (Q.rol !== 'dueno') throw new Error('Registrar una devolución lo hace el dueño.');
-  var e = PAG_EQUIPO_.filter(function (x) { return x.nombre === nombre; })[0];
-  if (!e) throw new Error('No conozco a ' + nombre + '.');
-  fecha = _pagFechaValida_(fecha, 'Fecha');
-  monto = _finR_(Number(monto));
-  if (!(monto > 0)) throw new Error('Monto invalido.');
-  var x = _pagPorDevolver_(Q).filter(function (p) { return p.nombre === nombre; })[0];
-  if (monto > x.pendiente + 0.01) throw new Error('A ' + nombre + ' se le deben Q' + x.pendiente.toFixed(2) + '; no se puede devolver Q' + monto.toFixed(2) + '.');
-  _pagEscribir_([{ AREA: 'ADMIN', PROVEEDOR: 'Devolución a ' + nombre, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto,
-                   'ESTATUS DE PAGO': e.devuelto, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
-  return getPagosProveedores(auth);
+  return _pagMedir_('devolución al equipo', auth, function () {
+    var Q = pagQuien_(auth);
+    if (Q.rol !== 'dueno') throw new Error('Registrar una devolución lo hace el dueño.');
+    var e = PAG_EQUIPO_.filter(function (x) { return x.nombre === nombre; })[0];
+    if (!e) throw new Error('No conozco a ' + nombre + '.');
+    fecha = _pagFechaValida_(fecha, 'Fecha');
+    monto = _finR_(Number(monto));
+    if (!(monto > 0)) throw new Error('Monto invalido.');
+    var x = _pagPorDevolver_(Q).filter(function (p) { return p.nombre === nombre; })[0];
+    if (monto > x.pendiente + 0.01) throw new Error('A ' + nombre + ' se le deben Q' + x.pendiente.toFixed(2) + '; no se puede devolver Q' + monto.toFixed(2) + '.');
+    _pagEscribir_([{ AREA: 'ADMIN', PROVEEDOR: 'Devolución a ' + nombre, 'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto,
+                     'ESTATUS DE PAGO': e.devuelto, DETALLE: String(detalle || '').slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+    return getPagosProveedores(auth);
+  });
 }
 
 /** Un saldo a favor que el proveedor le reconoce a Rosanta (credito, devolucion, pago de mas). */
 function registrarSaldoFavor(auth, nit, monto, detalle) {
-  var Q = pagQuien_(auth);
-  nit = pagNit_(nit); monto = _finR_(Number(monto));
-  if (!(monto > 0)) throw new Error('Monto invalido.');
-  if (String(detalle || '').trim().length < 3) throw new Error('Escribí de dónde sale el saldo a favor.');
-  var f = pagEstado_().facturas.filter(function (x) { return x.nit === nit && Q.areas.indexOf(x.area) !== -1; })[0];
-  if (!f) throw new Error('Ese proveedor no tiene facturas de tu area desde el ' + PAG_DESDE_ + '.');
-  _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: nit, 'FECHA PAGADO': medFechaIso_(new Date()),
-                   'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': 'Saldo a favor', DETALLE: String(detalle).slice(0, 300), 'ESCRITO POR': Q.nombre }]);
-  return getPagosProveedores(auth);
+  return _pagMedir_('saldo a favor', auth, function () {
+    var Q = pagQuien_(auth);
+    nit = pagNit_(nit); monto = _finR_(Number(monto));
+    if (!(monto > 0)) throw new Error('Monto invalido.');
+    if (String(detalle || '').trim().length < 3) throw new Error('Escribí de dónde sale el saldo a favor.');
+    var f = pagEstado_().facturas.filter(function (x) { return x.nit === nit && Q.areas.indexOf(x.area) !== -1; })[0];
+    if (!f) throw new Error('Ese proveedor no tiene facturas de tu area desde el ' + PAG_DESDE_ + '.');
+    _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: nit, 'FECHA PAGADO': medFechaIso_(new Date()),
+                     'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': 'Saldo a favor', DETALLE: String(detalle).slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+    return getPagosProveedores(auth);
+  });
 }
 
 /**
@@ -1192,32 +1217,37 @@ function registrarSaldoFavor(auth, nit, monto, detalle) {
  * la ofrece como detalle de ese retiro cuando el banco lo traiga (medMercadoDeRetiros_).
  */
 function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, estatus, medio) {
-  var Q = pagQuien_(auth);
-  fecha = _pagFechaValida_(fecha, 'Fecha');
-  monto = _finR_(Number(monto));
-  if (!(monto > 0)) throw new Error('Monto invalido.');
-  detalle = String(detalle || '').trim();
-  if (detalle.length < 3) throw new Error('Escribí qué se compró.');
-  if (PAG_FORMAS_MERCADO_.indexOf(estatus) === -1) throw new Error('Forma de pago desconocida: ' + estatus);
-  // con Tarjeta, cual (14-oct-2026): igual que en las facturas, entre corchetes al inicio del
-  // DETALLE. "[Tarjeta débito BI]" es lo que lee el cuadre de Compras (ComprasEfectivo.js).
-  medio = String(medio || '').trim();
-  if (estatus === 'Tarjeta') {
-    if (PAG_MEDIOS_TARJETA_.indexOf(medio) === -1) throw new Error('Elegí con qué tarjeta: ' + PAG_MEDIOS_TARJETA_.join(', ') + '.');
-    detalle = '[' + medio + '] ' + detalle;
-  }
-  area = String(area || '').toUpperCase();
-  if (Q.areas.indexOf(area) === -1 || area === 'ADMIN') area = Q.areas[0];
-  _pagEscribir_([{ AREA: area, PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado', DTE: PAG_SIN_FACTURA_,
-                   'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': estatus,
-                   DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
-  return getPagosProveedores(auth);
+  return _pagMedir_('compra de mercado', auth, function () {
+    var Q = pagQuien_(auth);
+    fecha = _pagFechaValida_(fecha, 'Fecha');
+    monto = _finR_(Number(monto));
+    if (!(monto > 0)) throw new Error('Monto invalido.');
+    detalle = String(detalle || '').trim();
+    if (detalle.length < 3) throw new Error('Escribí qué se compró.');
+    if (PAG_FORMAS_MERCADO_.indexOf(estatus) === -1) throw new Error('Forma de pago desconocida: ' + estatus);
+    // con Tarjeta, cual (14-oct-2026): igual que en las facturas, entre corchetes al inicio del
+    // DETALLE. "[Tarjeta débito BI]" es lo que lee el cuadre de Compras (ComprasEfectivo.js).
+    medio = String(medio || '').trim();
+    if (estatus === 'Tarjeta') {
+      if (PAG_MEDIOS_TARJETA_.indexOf(medio) === -1) throw new Error('Elegí con qué tarjeta: ' + PAG_MEDIOS_TARJETA_.join(', ') + '.');
+      detalle = '[' + medio + '] ' + detalle;
+    }
+    area = String(area || '').toUpperCase();
+    if (Q.areas.indexOf(area) === -1 || area === 'ADMIN') area = Q.areas[0];
+    _pagEscribir_([{ AREA: area, PROVEEDOR: String(proveedor || 'Mercado').trim().slice(0, 80) || 'Mercado', DTE: PAG_SIN_FACTURA_,
+                     'FECHA PAGADO': fecha, 'CANTIDAD PAGADA': monto, 'ESTATUS DE PAGO': estatus,
+                     DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
+    return getPagosProveedores(auth);
+  });
 }
 
 /** Anula un movimiento anotado por error. No se borra: el estatus pasa a "ANULADO: ...". */
 function anularMovimientoPago(auth, id) {
-  _pagAnular_(pagQuien_(auth), id);
-  return getPagosProveedores(auth);
+  return _pagMedir_('anular', auth, function () {
+    _pagAnular_(pagQuien_(auth), id);
+    _pagTramo_('escribir');
+    return getPagosProveedores(auth);
+  });
 }
 /**
  * El anular en si. Q: { nombre, rol, areas }. Tambien lo usa Compras al asignar la factura.

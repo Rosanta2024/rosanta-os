@@ -58,7 +58,7 @@ function montar(){
    LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},
    Session:{getActiveUser:()=>({getEmail:()=>''})},Utilities:{formatDate:d=>String(d)}};
   vm.createContext(ctx);
-  ['ConfigCosteo.js','Config.js','ConfigPOS.js','CosteoDatos.js','EdicionRecetario.js','CrearFicha.js','Proveedores.js','EdicionWeb.js']
+  ['ConfigCosteo.js','Config.js','ConfigPOS.js','CosteoDatos.js','EdicionRecetario.js','CrearFicha.js','Proveedores.js','EdicionWeb.js','Tiempos.js']
    .forEach(f=>vm.runInContext(fs.readFileSync(DIR+f,'utf8'),ctx,{filename:f}));
   vm.runInContext(`
     // conCambiosDeModelo_ (real) relee las fichas tocadas para el cache: fuera de alcance.
