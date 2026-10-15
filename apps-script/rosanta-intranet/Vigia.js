@@ -464,6 +464,8 @@ function vigiaCadaHora() {
   // A las 10:00, los correos del dia (Juanma, 13-oct-2026): el cierre de PosFile de anoche y
   // las facturas del FEL que avisa SAT. Va colgado de este disparador, que ya corre cada hora.
   if (hora === 10) { try { Logger.log(JSON.stringify(leerCorreosDelDia_())); } catch (eD) { Logger.log('Correos del dia: ' + eD); } }
+  // Latido de reservas web (15-oct-2026): antes era una tarea de la Mac que dejo de correr 18 dias
+  if (hora === 8 || hora === 14) { try { Logger.log(rlatRevisar_()); } catch (eL) { Logger.log('Latido reservas: ' + eL); procMarcar_('reservasWeb', eL); } }
   if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }
   if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
   var ctx = _vigContexto_(hoy), reglas = vigiaReglas_(ctx);

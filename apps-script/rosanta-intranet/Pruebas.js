@@ -1385,7 +1385,7 @@ function prPuentePOS_(res) {
       return;
     }
     var faltan = [];
-    var conectados = { vigiaCadaHora: ["procMarcar_('vigia')", 'procAvisar_('], calentarCaches: ["procMarcar_('calentar'", 'procAvisar_(', "procMarcar_('ventas'", "procMarcar_('fel'"],
+    var conectados = { vigiaCadaHora: ["procMarcar_('vigia')", 'procAvisar_(', 'rlatRevisar_('], calentarCaches: ["procMarcar_('calentar'", 'procAvisar_(', "procMarcar_('ventas'", "procMarcar_('fel'"],
                        leerCorreosDelDia_: ["procMarcar_('cierres'"], latido: ['procProblemas_('] };
     Object.keys(conectados).forEach(function (fn) {
       var src = typeof globalThis[fn] === 'function' ? String(globalThis[fn]) : '';
@@ -1401,6 +1401,21 @@ function prPuentePOS_(res) {
     var hoy = procProblemas_();
     prAnotar_(g, nombre, hoy.length ? 'AVISO' : 'OK', hoy.length ? 'Hoy: ' + hoy.join(' · ')
       : Object.keys(PROCESOS).length + ' procesos con marca · vigia y calentador se cuidan · sin problemas hoy', hoy.length, 0);
+  });
+  /* 15-oct-2026: el latido de reservas web paso de la Mac a Apps Script (ReservasLatido.js).
+     Pura: respuestas inventadas, no llama a rosanta.rest. */
+  prCorrer_(g, 'El latido de reservas web distingue sano de caido', function () {
+    var nombre = 'El latido de reservas web distingue sano de caido';
+    if (typeof rlatEvaluar_ !== 'function') { prAnotar_(g, nombre, 'FALLA', 'No existe ReservasLatido.js (rlatEvaluar_).'); return; }
+    var bien = [{ codigo: 200, cuerpo: '{"slots":["19:00","19:30"]}' }, { codigo: 200, cuerpo: '{"slots":[]}' },
+                { codigo: 200, cuerpo: '{"ok":true}' }, { codigo: 400, cuerpo: '{"error":"Missing required fields"}' }];
+    var caido = [{ codigo: 500, cuerpo: '{"error":"x is not a function"}' }, { codigo: 200, cuerpo: '{"slots":[]}' },
+                 { codigo: 200, cuerpo: '{"ok":true}' }, { codigo: 500, cuerpo: 'Internal' }];
+    var vacio = [{ codigo: 200, cuerpo: '{"slots":[]}' }, { codigo: 200, cuerpo: '{"slots":[]}' },
+                 { codigo: 404, cuerpo: '' }, { codigo: 400, cuerpo: '{"error":"Missing required fields"}' }];
+    var r = [rlatEvaluar_(bien).fallas.length, rlatEvaluar_(caido).fallas.length, rlatEvaluar_(vacio).fallas.length];
+    prAnotar_(g, nombre, r.join(',') === '0,2,2' ? 'OK' : 'FALLA',
+      'sano/caido/sin franjas y sin bot = ' + r.join('/') + ' fallas (esperado 0/2/2) · corre a las 8:00 y 14:00 colgado del vigia', r.join(','), '0,2,2');
   });
 }
 
