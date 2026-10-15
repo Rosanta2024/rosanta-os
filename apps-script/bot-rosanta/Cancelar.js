@@ -156,6 +156,7 @@ function rvAvisarCancel(d, canal) {
  */
 function rvCorreoCliente(d, caso) {
   if (RV_SILENCIO) return;   // prueba
+  if (CORREO_SIN_CORREO_CLIENTE) return;   // por correo, la confirmación va en el borrador de Juanma
   var email = String(d.email || '').trim();
   if (!email || email.indexOf('@') < 0) {
     Logger.log('rvCorreoCliente: sin correo del cliente, no se manda nada.');

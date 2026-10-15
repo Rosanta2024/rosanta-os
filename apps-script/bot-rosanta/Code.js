@@ -295,7 +295,10 @@ function askClaude(canal, nombre, mensaje, senderId, opts) {
 
   var system = 'FECHA Y HORA ACTUAL (zona Guatemala): ' + fechaHoy +
     '. Usa SIEMPRE esta fecha para saber el día de la semana y el horario; nunca la inventes.\n' +
-    'FRASE DE PASO A PERSONA EN ESTE MOMENTO — español: "' + btPromesa_('es') + '" · inglés: "' + btPromesa_('en') + '"\n\n' +
+    'FRASE DE PASO A PERSONA EN ESTE MOMENTO — español: "' + btPromesa_('es') + '" · inglés: "' + btPromesa_('en') + '"\n' +
+    (canal === 'correo'
+      ? 'ESTE MENSAJE LLEGÓ POR CORREO (o por el chat del sitio web) y tu respuesta queda como borrador que Juanma revisa y envía: escribe un correo breve, "Hola [nombre]," si lo sabes, sin asteriscos ni emojis, y cierra con "Rosanta". NO uses la FRASE DE PASO A PERSONA: si algo lo debe ver Juanma, di que lo revisas y le confirmas. Deja "opciones" vacía y mostrar_menu en false.\n\n'
+      : '\n') +
     masterPrompt_()
       .replace('{{canal}}', canal)
       .replace('{{nombre}}', nombre || '')
@@ -733,6 +736,8 @@ function enviarPorCanal(canal, idDestino, texto) {
     sendInstagram(idDestino, texto);
   } else if (canal === 'messenger') {
     sendMessenger(idDestino, texto);
+  } else if (canal === 'correo') {      // desde la consola: queda como borrador en Gmail
+    GmailApp.createDraft(idDestino, 'Re: tu mensaje a Rosanta', texto, { name: 'Rosanta' });
   } else { // whatsapp por defecto
     sendWhatsApp(PROPS.getProperty('WA_PHONE_NUMBER_ID'), idDestino, texto);
   }

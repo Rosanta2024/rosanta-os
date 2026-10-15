@@ -54,6 +54,7 @@ function humCallado_(contactoId) {
 /** El bot le pasó el chat a Juanma. En eventos no se calla. Devuelve true si se calló. */
 function humEscalar_(canal, contactoId, lead) {
   if (!contactoId || !lead || !lead.requiere_humano) return false;
+  if (canal === 'correo') return false;                 // en correo Juanma ya revisa cada borrador
   if (lead.tipo === 'evento' || lead.accion === 'escalar_evento') return false;
   if (humLeer_(contactoId)) return true;           // ya estaba en manos de Juanma
   humGuardar_(contactoId, { estado: 'esperando', canal: canal, desde: Date.now(), ultimoHumano: 0 });
