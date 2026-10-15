@@ -10,13 +10,16 @@ var TIE_CLAVE_ = 'tiempos_guardado_v1';
 var TIE_MAX_ = 60;
 
 /** Un cronometro: t.tramo('validar') cierra el tramo que venia corriendo; t.fin() lo guarda. */
+var TIE_RELOJ_ = null;   // el cronometro en curso: las funciones de adentro marcan sus tramos con tiempoTramo_
+function tiempoTramo_(nombre) { if (TIE_RELOJ_) TIE_RELOJ_.tramo(nombre); }
 function tiempoInicio_(accion, quien) {
   var t0 = Date.now(), ult = t0, tramos = {};
-  return {
+  return TIE_RELOJ_ = {
     quien: function (n) { quien = n; },
     tramo: function (nombre) { var a = Date.now(); tramos[nombre] = (tramos[nombre] || 0) + (a - ult); ult = a; },
     fin: function (extra) {
       var a = Date.now();
+      TIE_RELOJ_ = null;
       tiempoAnotar_(Object.assign({ accion: String(accion || '').slice(0, 80), quien: String(quien || '').slice(0, 40),
         ms: a - t0, tramos: tramos }, extra || {}));
       return a - t0;

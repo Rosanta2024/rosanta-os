@@ -604,6 +604,7 @@ function aplicarToques_(toques) {
   // 1. RELEER SOLO LO TOCADO. Sin flush, las formulas de la linea recien escrita
   //    todavia no calcularon y su total llega vacio.
   SpreadsheetApp.flush();
+  tiempoTramo_('flush (formulas)');
 
   // UN PRE-ELABORADO TOCADO MUEVE SU PRECIO EN EL BANCO (11-oct-2026). Su fila del Banco
   // es una formula a la celda de costo de la ficha (regla del 22-sep), asi que cambiar
@@ -630,6 +631,7 @@ function aplicarToques_(toques) {
     }
   });
 
+  tiempoTramo_('releer ficha');
   Object.keys(bancos).forEach(function (a) {
     // Mismo criterio que construirModelo_: toda pestana que empiece con "banco de
     // datos", en orden, y el primer registro de un nombre gana.
@@ -648,6 +650,7 @@ function aplicarToques_(toques) {
     });
   });
 
+  if (Object.keys(bancos).length) tiempoTramo_('releer banco');
   // 2. CORREGIR EL MODELO CACHEADO.
   var sinFactor = false, factores = {}, cascada = [];
   var escaladas = parchearCacheCosteo_(function (modelo) {
@@ -714,6 +717,7 @@ function aplicarToques_(toques) {
     return tocadas;
   });
 
+  tiempoTramo_('parchear cache');
   if (escaladas === null || sinFactor) {
     // Sin modelo cacheado, la ficha y el producto igual le sirven a la pantalla. Lo que
     // no puede saber es el efecto de un precio sobre las recetas que lo usan.

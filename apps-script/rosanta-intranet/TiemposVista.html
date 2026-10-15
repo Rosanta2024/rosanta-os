@@ -46,11 +46,13 @@
   function pintarLista(l) {
     document.getElementById('t-est').textContent = l.length ? l.length + ' guardados medidos' : 'Todavía no hay guardados medidos.';
     if (!l.length) { document.getElementById('t-lista').innerHTML = ''; return; }
-    var h = '<table><tr><th>Cuándo</th><th>Qué</th><th>Quién</th><th>Total</th><th>Validar</th><th>Escribir</th><th>Recalcular</th><th>Recarga todo</th></tr>';
+    var h = '<table><tr><th>Cuándo</th><th>Qué</th><th>Quién</th><th>Total</th><th>Validar</th><th>Escribir</th><th>Recalcular</th><th>Recarga todo</th><th>Detalle</th></tr>';
     l.forEach(function (x) {
       var t = x.tramos || {};
       h += '<tr><td>' + esc(x.cuando) + '</td><td>' + esc(x.accion) + '</td><td>' + esc(x.quien) + '</td>' + celSeg(x.ms) +
-        celSeg(t.validar) + celSeg(t.escribir) + celSeg(t.recalcular) + '<td>' + esc(x.recargo || '') + '</td></tr>';
+        celSeg(t.validar) + celSeg(t.escribir) + celSeg(t.recalcular) + '<td>' + esc(x.recargo || '') + '</td>' +
+        // cada tramo en orden: los finos (abrir ficha, bitacora, flush…) y los gruesos (lo que sobra de cada fase)
+        '<td>' + esc(Object.keys(t).map(function (k) { return k + ' ' + seg(t[k]); }).join(' · ')) + '</td></tr>';
     });
     document.getElementById('t-lista').innerHTML = h + '</table>';
   }
