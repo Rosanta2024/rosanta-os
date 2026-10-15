@@ -72,6 +72,15 @@ sincroniza la carpeta**, nunca al revés. El respaldo de la v8 quedó en
   hacer un solo push. `clasp push` sube el directorio ENTERO, con lo que cada una tenga a
   medias. Si hay trabajo ajeno en disco sin probar, publicar con `create-version` +
   `update-deployment` SIN push: `create-version` congela lo que está en el servidor.
+  **Desde el 14-oct-2026 el candado lo hace cumplir:** antes de cada `clasp push` de la
+  intranet baja el HEAD aparte y frena el push si el servidor tiene archivos que esta carpeta
+  no tiene (ni en disco, ni en su último commit, ni en su último push): son de otra sesión.
+  Se resuelve trayendo su commit (`git merge`) o pidiéndole que haga commit. Pisar a
+  propósito solo con el sí de Juanma: `ROSANTA_PUSH_PISAR="motivo" clasp push`.
+- **Batería por partes:** `?page=pruebas` corre la batería completa en 3 carriles a la vez
+  (~2 min). `&grupos=finanzas,web` corre solo esos grupos y sale como CORRIDA PARCIAL: sirve
+  mientras se trabaja, nunca para sellar ni publicar. Un grupo nuevo va en
+  `PRUEBAS_CARRILES_` (Pruebas.js) o falla "Los carriles cubren cada grupo una vez".
 - **Parciales con JavaScript:** `include()` sanitiza (usa `createHtmlOutputFromFile`) y se
   come código sin avisar; se pegan con `incluirCrudo_()`. Cada parcial nuevo va en las listas
   `VISTAS` de `Pruebas.js`, o sus llamadas al servidor quedan sin revisar y la prueba sigue
