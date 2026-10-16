@@ -485,11 +485,13 @@ function _pagPosibles_(abiertas, pagos, dtes) {
     // Un ABONO (13-oct-2026, la renta en dos partes): si nada da el monto exacto. Desde el 14-oct-2026
     // (Juanma: "los pagos siempre suelen ser exactos, no dejan abonos tan grandes") solo si la glosa
     // NOMBRA al proveedor o trae el numero de la factura; ya no por la sola categoria (asi salian
-    // abonos a Doorways de cargos de MC Industrias y Bodega Feliz).
+    // abonos a Doorways de cargos de MC Industrias y Bodega Feliz). Desde el 16-oct-2026, nunca de un
+    // cargo anterior a la factura: el BAC del 18-ago por Q414 ("TEF A : 902410067") pago la de julio
+    // y salio como abono a la 2629453712 del 2-sep.
     var abono = false;
     if (!ops.length) {
       ops = cand.filter(function (f) {
-        return f.saldo > p.q + 0.01 && (dteG || _pagNombreEnGlosa_(f.palabras, p.glosa));
+        return f.saldo > p.q + 0.01 && p.dia >= f.dia && (dteG || _pagNombreEnGlosa_(f.palabras, p.glosa));
       }).map(function (f) { return [f]; });
       abono = ops.length > 0;
     }

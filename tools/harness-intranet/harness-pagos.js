@@ -60,6 +60,8 @@ const tira = (fn) => { try { fn(); return ''; } catch (e) { return e.message; } 
   const glosas = EP.posibles.map(x => x.pago.glosa);
   t('Un cargo con el numero de una factura ya pagada no se ofrece para otra', !glosas.some(g => /1156465795|2253014585/.test(g)), glosas.filter(g => /\d{9}/.test(g)).join(' | '));
   t('No se ofrecen abonos por la sola categoria (Doorways)', !EP.posibles.some(x => x.opciones.some(o => o.abono && o.facturas.some(f => /DOORWAYS/i.test(f.proveedor)) && !/doorway|902410067/i.test(x.pago.glosa))));
+  // 16-oct-2026: el BAC del 18-ago por Q414 pago la factura de julio, no es abono de la del 2-sep
+  t('Un cargo anterior a la factura no se ofrece como abono (Doorways 18-ago)', !EP.posibles.some(x => x.pago.fecha === '2026-08-18' && Math.abs(x.pago.q - 414) < 0.01 && x.opciones.some(o => o.abono && o.facturas.some(f => f.dte === '2629453712'))));
   const tav = EP.posibles.filter(x => /480330786/.test(x.pago.glosa))[0];
   t('Con el numero de una factura abierta, solo se ofrece esa', !tav || tav.opciones.every(o => o.facturas.length === 1 && o.facturas[0].dte === '480330786'));
   ctx._pagPagadasCompras_ = origCompras;
