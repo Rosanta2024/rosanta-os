@@ -69,6 +69,10 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .card .c-next{font-size:12px}
 .card.late{border-left:3px solid var(--crit)}
 .card.sel{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.card[draggable="true"]{cursor:grab}
+.card.dragging{opacity:.45}
+[data-drop].drop-over{outline:2px dashed var(--accent);outline-offset:2px}
+.side [data-drop]{min-height:44px;border-radius:8px}
 .side{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:16px}
 /* Números */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:12px}
@@ -129,12 +133,12 @@ table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
 
   <section>
     <h2>El embudo</h2>
-    <p class="meta">Cantidad y monto por etapa. Entre etapas, qué porcentaje de las que llegaron a una pasó a la siguiente. Toca una tarjeta para ver el detalle y las acciones.</p>
+    <p class="meta">Cantidad y monto por etapa. Entre etapas, qué porcentaje de las que llegaron a una pasó a la siguiente. Arrastra una tarjeta a otra columna para cambiarla de etapa; en el celular, tócala y usa "Mover a…". Ganada, Perdida y En pausa piden su dato antes de guardar.</p>
     <div class="board-scroll"><div class="board" id="board"></div></div>
     <div id="detail"></div>
     <div class="side">
-      <div><h3>En pausa</h3><div id="paused" class="list"></div></div>
-      <div><h3>Perdidas</h3><div id="lost" class="list"></div></div>
+      <div><h3>En pausa</h3><div id="paused" class="list" data-drop="pausa"></div></div>
+      <div><h3>Perdidas</h3><div id="lost" class="list" data-drop="perdida"></div></div>
     </div>
   </section>
 
@@ -319,10 +323,10 @@ function detailHTML(r, d){
   if (abierta(e) && e !== "porenviar") {
     if (d.next && !d.waiting && ["cotizada","conversacion","reservada"].includes(e) || (e === "visita" && parse(r.fecha_visita) && parse(r.fecha_visita) <= today() && !Number(r.toques||0)))
       acts = `<button data-act="toque" data-id="${id}" class="primary">Toque enviado</button>` + acts;
-    acts += `<button data-act="escribio" data-id="${id}">Cliente escribió</button><button data-act="form-etapa" data-id="${id}">Mover de etapa</button>`;
+    acts += `<button data-act="escribio" data-id="${id}">Cliente escribió</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
   }
   if (abierta(e)) acts += `<button data-act="form-ganada" data-id="${id}">Ganada</button><button data-act="form-perdida" data-id="${id}">Perdida</button><button data-act="form-pausa" data-id="${id}">Pausa</button>`;
-  else acts += `<button data-act="reabrir" data-id="${id}">Reabrir</button>`;
+  else acts += `<button data-act="reabrir" data-id="${id}">Reabrir</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
   let form = "";
   if (openForm && openForm.id === r.id) {
     const k = openForm.kind;
@@ -330,7 +334,7 @@ function detailHTML(r, d){
     if (k === "ganada") form = `<div class="inline"><label for="f-dep">Depósito del 50% recibido el</label><input type="date" id="f-dep" value="${iso(today())}"><label for="f-mon">monto Q</label><input type="number" step="0.01" id="f-mon" style="width:120px"><button class="primary" data-act="ganada" data-id="${id}">Marcar ganada</button><button data-act="cancel">Cancelar</button></div>`;
     if (k === "enviada") form = `<div class="inline"><label for="f-env">Enviada el</label><input type="date" id="f-env" value="${iso(today())}"><button class="primary" data-act="enviada" data-id="${id}">Arrancar recordatorios</button><button data-act="cancel">Cancelar</button></div>`;
     if (k === "pausa") form = `<div class="inline"><label for="f-pausa">Retomar el</label><input type="date" id="f-pausa" value="${iso(add(today(),14))}"><button class="primary" data-act="pausa" data-id="${id}">Poner en pausa</button><button data-act="cancel">Cancelar</button></div>`;
-    if (k === "etapa") form = `<div class="inline"><label for="f-etapa">Pasar a</label><select id="f-etapa">${["consulta","porenviar","cotizada","conversacion","visita","reservada"].map(x=>`<option value="${x}" ${x===e?"selected":""}>${NOMBRE[x]}</option>`).join("")}</select><label for="f-visita">fecha de visita (si aplica)</label><input type="date" id="f-visita" value="${esc(r.fecha_visita||"")}"><button class="primary" data-act="etapa" data-id="${id}">Mover</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "etapa") form = `<div class="inline"><label for="f-etapa">Pasar a</label><select id="f-etapa">${["consulta","porenviar","cotizada","conversacion","visita","reservada","ganada","perdida","pausa"].map(x=>`<option value="${x}" ${x===(openForm.pre||e)?"selected":""}>${NOMBRE[x]}</option>`).join("")}</select><label for="f-visita">fecha de visita (si aplica)</label><input type="date" id="f-visita" value="${esc(r.fecha_visita||"")}"><button class="primary" data-act="etapa" data-id="${id}">Mover</button><button data-act="cancel">Cancelar</button></div>`;
     if (k === "editar") form = `<form class="form" id="form-editar" style="grid-column:1/-1">${formFields(r)}<div class="full"><button type="submit" class="primary">Guardar</button><button type="button" data-act="cancel">Cancelar</button><span class="hint" id="e-hint"></span></div></form>`;
   }
   return `<div class="row">${who}${ev}${nx}<div class="actions">${acts}</div>${form}</div>`;
@@ -388,7 +392,7 @@ function leerForm(r){
 
 function cardHTML(x){
   const r = x.r, d = x.d;
-  return `<button class="card ${d.late?"late":""} ${selId===r.id?"sel":""}" data-act="sel" data-id="${esc(r.id)}">
+  return `<button class="card ${d.late?"late":""} ${selId===r.id?"sel":""}" data-act="sel" data-id="${esc(r.id)}" draggable="true">
     <span class="c-name">${esc(r.cliente)}${r.clave ? " ·  clave" : ""}</span>
     <span class="c-sub num">${d.ev ? fmtShort(d.ev) + " " + d.ev.getFullYear() : "sin fecha"} · ${moneyK(Number(r.monto_q)||0)}${d.e==="porenviar"?" · por enviar":""}</span>
     ${d.next ? `<span class="c-next ${d.late?"p-crit":""}">${esc((d.label||"").split(" · ")[0])} ${fmtShort(d.next)}</span>` : `<span class="c-next p-mute">${esc(d.flag)}</span>`}
@@ -410,7 +414,7 @@ function render(){
     const items = all.filter(x => (x.d.e === et.id || (et.id === "cotizada" && x.d.e === "porenviar"))).sort((a,b) => (a.d.next||Infinity) - (b.d.next||Infinity));
     const q = items.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0);
     const conv = i > 0 && reached(i-1) ? Math.round(reached(i) / reached(i-1) * 100) + "% desde " + ETAPAS[i-1].n.toLowerCase() : "";
-    return `<div class="col"><div class="col-head"><b>${et.n}</b><span>${items.length} · ${moneyK(q)}</span>${conv ? `<span class="conv">${conv}</span>` : ""}</div>${items.map(cardHTML).join("") || '<span class="meta">Vacía</span>'}</div>`;
+    return `<div class="col" data-drop="${et.id}"><div class="col-head"><b>${et.n}</b><span>${items.length} · ${moneyK(q)}</span>${conv ? `<span class="conv">${conv}</span>` : ""}</div>${items.map(cardHTML).join("") || '<span class="meta">Vacía</span>'}</div>`;
   }).join("");
   const sel = all.find(x => x.r.id === selId);
   document.getElementById("detail").innerHTML = sel && !due.includes(sel) ? detailHTML(sel.r, sel.d) : "";
@@ -487,6 +491,8 @@ document.addEventListener("click", e => {
   }
   if (act === "etapa") {
     const et = document.getElementById("f-etapa").value, fv = document.getElementById("f-visita").value;
+    if (["ganada","perdida","pausa"].includes(et)) { openForm = {id, kind: et}; return render(); }
+    if (et === "visita" && !fv) { document.getElementById("status").textContent = "Pon la fecha de la visita para moverla a Visita o degustación."; return; }
     const patch = {etapa: et, toques: 0}; if (fv) patch.fecha_visita = fv;
     if (et === "conversacion" && !r.ultimo_cliente) patch.ultimo_cliente = iso(today());
     save(id, patch, "Pasa a " + NOMBRE[et] + (fv && et === "visita" ? " · visita el " + fmt(parse(fv)) : ""));
@@ -495,6 +501,46 @@ document.addEventListener("click", e => {
   if (act === "ganada") { const f = document.getElementById("f-dep").value, m = Number(document.getElementById("f-mon").value) || null; save(id, {etapa:"ganada", deposito_fecha:f, deposito_q:m}, "Ganada · depósito " + f + (m ? " · " + money(m) : "")); }
   if (act === "pausa") { const f = document.getElementById("f-pausa").value; save(id, {etapa:"pausa", pausa_hasta:f}, "En pausa hasta " + f); }
   if (act === "reabrir") save(id, {etapa:"conversacion", ultimo_cliente: iso(today()), toques: 0}, "Reabierta · pasa a En conversación");
+});
+
+// Mover tarjetas: arrastrar entre columnas (computadora) o "Mover a…" (celular).
+// Ganada, Perdida y En pausa abren su formulario; Visita pide la fecha. Lo demás se guarda directo.
+function moverA(id, et){
+  const r = ROWS.find(x => x.id === id); if (!r) return;
+  const actual = etapaDe(r);
+  if (et === actual || (et === "cotizada" && actual === "porenviar")) return;
+  selId = id;
+  if (["ganada","perdida","pausa"].includes(et)) { openForm = {id, kind: et}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
+  if (et === "visita") { openForm = {id, kind: "etapa", pre: "visita"}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
+  const patch = {etapa: et, toques: 0};
+  if (et === "conversacion" && !r.ultimo_cliente) patch.ultimo_cliente = iso(today());
+  save(id, patch, "Movida a " + NOMBRE[et] + " a mano (desde " + (NOMBRE[actual] || actual) + ")");
+}
+let arrastrando = null;
+document.addEventListener("dragstart", e => {
+  const c = e.target.closest && e.target.closest(".card[draggable]"); if (!c) return;
+  arrastrando = c.dataset.id; c.classList.add("dragging");
+  try { e.dataTransfer.setData("text/plain", arrastrando); e.dataTransfer.effectAllowed = "move"; } catch(_) {}
+});
+document.addEventListener("dragend", e => {
+  arrastrando = null;
+  document.querySelectorAll(".dragging,.drop-over").forEach(n => n.classList.remove("dragging","drop-over"));
+});
+document.addEventListener("dragover", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !arrastrando) return;
+  e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch(_) {}
+  document.querySelectorAll(".drop-over").forEach(n => { if (n !== z) n.classList.remove("drop-over"); });
+  z.classList.add("drop-over");
+});
+document.addEventListener("dragleave", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drop-over");
+});
+document.addEventListener("drop", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return;
+  e.preventDefault();
+  let id = arrastrando; try { id = e.dataTransfer.getData("text/plain") || id; } catch(_) {}
+  z.classList.remove("drop-over");
+  if (id) moverA(id, z.dataset.drop);
 });
 
 document.addEventListener("submit", e => {
