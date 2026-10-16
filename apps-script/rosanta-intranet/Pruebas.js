@@ -1385,8 +1385,8 @@ function prPuentePOS_(res) {
       return;
     }
     var faltan = [];
-    var conectados = { vigiaCadaHora: ["procMarcar_('vigia')", 'procAvisar_(', 'rlatRevisar_('], calentarCaches: ["procMarcar_('calentar'", 'procAvisar_(', "procMarcar_('ventas'", "procMarcar_('fel'"],
-                       leerCorreosDelDia_: ["procMarcar_('cierres'"], latido: ['procProblemas_('] };
+    var conectados = { vigiaCadaHora: ["procMarcar_('vigia')", 'procAvisar_(', 'rlatRevisar_(', 'clatRevisar_('], calentarCaches: ["procMarcar_('calentar'", 'procAvisar_(', "procMarcar_('ventas'", "procMarcar_('fel'"],
+                       leerCorreosDelDia_: ["procMarcar_('cierres'"], latido: ['procProblemas_(', 'clatEvaluar_('] };
     Object.keys(conectados).forEach(function (fn) {
       var src = typeof globalThis[fn] === 'function' ? String(globalThis[fn]) : '';
       if (!src) { faltan.push(fn + ' no existe'); return; }
@@ -1416,6 +1416,25 @@ function prPuentePOS_(res) {
     var r = [rlatEvaluar_(bien).fallas.length, rlatEvaluar_(caido).fallas.length, rlatEvaluar_(vacio).fallas.length];
     prAnotar_(g, nombre, r.join(',') === '0,2,2' ? 'OK' : 'FALLA',
       'sano/caido/sin franjas y sin bot = ' + r.join('/') + ' fallas (esperado 0/2/2) · corre a las 8:00 y 14:00 colgado del vigia', r.join(','), '0,2,2');
+  });
+  /* 16-oct-2026: Instagram callo 11 dias (26-sep -> 7-oct) y nadie se entero. CanalesLatido.js
+     avisa por canal callado. Pura: horas inventadas, no lee Rosanta Leads ni Gmail. */
+  prCorrer_(g, 'El latido de canales distingue sano de callado', function () {
+    var nombre = 'El latido de canales distingue sano de callado';
+    if (typeof clatEvaluar_ !== 'function') { prAnotar_(g, nombre, 'FALLA', 'No existe CanalesLatido.js (clatEvaluar_).'); return; }
+    var H = 36e5, t = Date.UTC(2026, 9, 16, 15);
+    var u = { whatsapp: 72, instagram: 96, messenger: 0, correo: 72 };
+    var sano = { whatsapp: t - 2 * H, instagram: t - 30 * H, messenger: t - 40 * 24 * H, correo: t - 5 * H };
+    var igCallado = { whatsapp: t - 2 * H, instagram: t - 5 * 24 * H, messenger: t - 3 * H, correo: t - 5 * H };
+    var msgCallado = { whatsapp: t - 2 * H, instagram: t - 3 * H, messenger: t - 30 * 24 * H, correo: t - 5 * H };
+    var lector = { whatsapp: t - 2 * H, instagram: t - 3 * H, messenger: null, correo: t - 3 * 24 * H };
+    var r = [clatEvaluar_(sano, t, u).fallas.length, clatEvaluar_(igCallado, t, u).fallas.length,
+             clatEvaluar_(msgCallado, t, u).fallas.length, clatEvaluar_(lector, t, { whatsapp: 72 }, { pendientes: 2 }).fallas.length,
+             clatEvaluar_(sano, t, u, { pendientes: 3 }).fallas.length];
+    // control: IG 5 dias y el lector de correo parado TIENEN que avisar; Messenger callado no (sin umbral)
+    prAnotar_(g, nombre, r.join(',') === '0,1,0,1,0' ? 'OK' : 'FALLA',
+      'sano/IG 5 días/Messenger 30 días/lector de correo parado/correo al día = ' + r.join('/') +
+      ' fallas (esperado 0/1/0/1/0) · corre a las 9:00 colgado del vigia', r.join(','), '0,1,0,1,0');
   });
 }
 

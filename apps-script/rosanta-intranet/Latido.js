@@ -151,6 +151,13 @@ function latido() {
     return prob.length ? prob.join(' · ') : null;
   });
 
+  // Octava señal (16-oct-2026): los canales del bot. El aviso diario es clatRevisar_ (9:00,
+  // colgado del vigia); esto es el respaldo de los lunes con los mismos umbrales.
+  revisar_(frios, vivos, 'canales del bot', function () {
+    var ev = clatEvaluar_(clatUltimos_(), new Date().getTime(), clatUmbrales_(), null);
+    return ev.fallas.length ? ev.fallas.join(' · ') : null;
+  });
+
   Logger.log('Latido · al día: ' + (vivos.join(', ') || 'ninguno'));
 
   if (frios.length) {
