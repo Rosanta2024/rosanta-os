@@ -567,6 +567,7 @@ function _cargarFEL(ss, datos, emitidas) {
 
   var inicio = ultima + 1, ancho = emitidas ? 9 : 11;
   sh.getRange(inicio, colSerie, filas.length, 2).setNumberFormat('@');   // Serie y Numero como texto
+  // (Las 21 series viejas que habian quedado como numero se corrigieron el 16-oct-2026, p243.)
   sh.getRange(inicio, 1, filas.length, ancho).setValues(filas);
 
   var form = [];

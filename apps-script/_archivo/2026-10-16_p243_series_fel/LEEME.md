@@ -1,0 +1,1 @@
+Script de una vez (p243). Corrido el 16-oct-2026 a las 12:13 desde el editor: 21 series reescritas como texto en 01b_FEL_Emitidas, 0 mal al releer. Julio-agosto verificadas contra el CSV de la SAT; septiembre leidas de "Emitidos 2026-09".
