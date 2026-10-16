@@ -54,9 +54,10 @@ function clatEvaluar_(ultimos, ahora, umbrales, gmail) {
     var t = ultimos[c.clave], u = Number(umbrales[c.clave] || 0);
     var h = t ? Math.floor((ahora - t) / 36e5) : null;
     partes.push(c.nombre + ' ' + (h === null ? 'sin datos' : 'hace ' + h + ' h'));
-    if (!u) return;
-    if (h === null) fallas.push(c.nombre + ': no hay ningún mensaje entrante registrado.');
-    else if (h >= u) fallas.push(c.nombre + ': ' + Math.floor(h / 24) + ' días sin mensajes de clientes (último ' +
+    // Sin ningun mensaje registrado no se opina (el correo arranco el 15-oct sin historia):
+    // el lector parado lo cubre la regla de Gmail de abajo.
+    if (!u || h === null) return;
+    if (h >= u) fallas.push(c.nombre + ': ' + Math.floor(h / 24) + ' días sin mensajes de clientes (último ' +
                                  clatTxt_(t) + '; avisa desde ' + u + ' h).');
   });
   if (gmail && gmail.pendientes > 0) {
@@ -93,13 +94,21 @@ function clatUltimos_() {
   return out;
 }
 
-/** Correos de clientes en Gmail de las ultimas 48 h con mas de 2 h (el bot los lee cada 5 min). */
+/** Hilos de clientes de las ultimas 48 h que el bot ya deberia haber leido (lo hace cada 5 min):
+ *  el ultimo mensaje es del cliente, tiene mas de 2 h y el hilo no tiene borrador. Un hilo que
+ *  ya contesto Rosanta o con borrador del bot no cuenta (16-oct: el de Elise, contestado a mano
+ *  antes de encender el canal, daba falsa alarma). */
 function clatGmail_(ahora) {
-  var lista = Gmail.Users.Messages.list('me', { q: CLAT_GMAIL_ + ' newer_than:2d', maxResults: 20 });
+  var lista = Gmail.Users.Threads.list('me', { q: CLAT_GMAIL_ + ' newer_than:2d', maxResults: 20 });
   var pend = 0;
-  ((lista && lista.messages) || []).forEach(function (m) {
-    var msg = Gmail.Users.Messages.get('me', m.id, { format: 'minimal' });
-    var t = Number(msg.internalDate || 0);
+  ((lista && lista.threads) || []).forEach(function (th) {
+    var h = Gmail.Users.Threads.get('me', th.id, { format: 'metadata', metadataHeaders: ['From'] });
+    var ms = (h && h.messages) || [];
+    if (!ms.length || ms.some(function (m) { return (m.labelIds || []).indexOf('DRAFT') >= 0; })) return;
+    var ult = ms[ms.length - 1];
+    var de = ((ult.payload && ult.payload.headers) || []).filter(function (x) { return /^from$/i.test(x.name); })[0];
+    if (de && /rosanta\.rest/i.test(de.value)) return;
+    var t = Number(ult.internalDate || 0);
     if (t && ahora - t >= 2 * 36e5) pend++;
   });
   return { pendientes: pend };
