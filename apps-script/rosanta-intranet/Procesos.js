@@ -31,7 +31,8 @@ var PROCESOS = {
   cierres:   { nombre: 'Lectura de cierres de PosFile (10:00)',  max_h: 30, racha_h: 24 },
   fel:       { nombre: 'Avisos de factura de SAT por correo',    max_h: 0,  racha_h: 6 },
   reservasWeb: { nombre: 'Latido de reservas web (8:00 y 14:00)', max_h: 30, racha_h: 6 },
-  canales:   { nombre: 'Latido de canales del bot (9:00)',       max_h: 30, racha_h: 24 }
+  canales:   { nombre: 'Latido de canales del bot (9:00)',       max_h: 30, racha_h: 24 },
+  eventosMes: { nombre: 'Informe mensual de eventos (día 3, 9:00)', max_h: 0, racha_h: 3 }
 };
 
 /** Deja la marca de un proceso. Sin error = corrida buena (y corta la racha de errores). */

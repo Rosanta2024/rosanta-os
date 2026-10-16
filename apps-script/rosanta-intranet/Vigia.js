@@ -468,6 +468,8 @@ function vigiaCadaHora() {
   if (hora === 8 || hora === 14) { try { Logger.log(rlatRevisar_()); } catch (eL) { Logger.log('Latido reservas: ' + eL); procMarcar_('reservasWeb', eL); } }
   // Latido de canales del bot (16-oct-2026): Instagram calló 11 días (26-sep → 7-oct) sin que nadie lo notara
   if (hora === 9) { try { Logger.log(clatRevisar_()); } catch (eK) { Logger.log('Latido canales: ' + eK); procMarcar_('canales', eK); } }
+  // Informe mensual del embudo de eventos (16-oct-2026): el dia 3, de 9:00 a 12:00, una vez por mes
+  if (hora >= 9 && hora <= 12) { try { Logger.log(evmCadaHora_(hoy)); } catch (eE) { Logger.log('Informe de eventos: ' + eE); procMarcar_('eventosMes', eE); } }
   if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }
   if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
   var ctx = _vigContexto_(hoy), reglas = vigiaReglas_(ctx);
