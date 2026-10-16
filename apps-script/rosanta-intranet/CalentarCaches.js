@@ -104,6 +104,17 @@ function calentarCaches() {
     procMarcar_('fel', e);
   }
 
+  // Las transferencias que el BI avisa por correo (BancoCorreo.js, 16-oct-2026): Pagos las une a
+  // su factura sin esperar el estado de cuenta del lunes. Lo leido se salta: casi siempre no-op.
+  try {
+    var bco = bcoLeer_();
+    if (bco.nuevos) correo = (correo ? correo + ' · ' : '') + 'transferencias BI por correo: ' + bco.nuevos + ' nuevas';
+    var errBco = bco.errores.filter(function (x) { return !/en curso/.test(x); });
+    if (errBco.length) fallo.push('BI por correo: ' + errBco.slice(0, 2).join(' · '));
+  } catch (e) {
+    fallo.push('BI por correo: ' + String(e && e.message || e));
+  }
+
   // El caro: ~40 s. Es el que justifica todo este archivo.
   calentar('recetario', function () { return !c.get(COSTEO.cacheKey); },
            function () { getCosteoData(); });

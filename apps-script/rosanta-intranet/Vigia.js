@@ -427,6 +427,7 @@ function leerCorreosDelDia_() {
   var r = { cuando: new Date().toISOString() };
   try { r.cierres = cieLeer_(20); } catch (e1) { r.cierres = { errores: [String(e1 && e1.message || e1)] }; }
   try { r.fel = fecLeer_(); } catch (e2) { r.fel = { errores: [String(e2 && e2.message || e2)] }; }
+  try { r.bco = bcoLeer_(); } catch (e4) { r.bco = { errores: [String(e4 && e4.message || e4)] }; }
   // Marca para Procesos.js. "Otra lectura en curso" no es una falla: la hizo otro.
   var errC = ((r.cierres && r.cierres.errores) || []).filter(function (x) { return !/en curso/.test(x); });
   procMarcar_('cierres', errC.length ? errC.slice(0, 2).join(' · ') : null);

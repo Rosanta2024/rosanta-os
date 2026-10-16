@@ -49,7 +49,7 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'FelCorreo.js', 'ComprasEfectivo.js', 'ProfitHoy.js', 'Tiempos.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'ProfitHoy.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
 vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; _pagHojaIva_ = function () {}; finCacheClave_ = function () { return 'x'; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);

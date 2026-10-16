@@ -156,7 +156,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       '<h2>Pagos a proveedores</h2><p class="pg-intro">Cuando pagues una factura, tocá <b>Pagar</b>, elegí cómo y tocá <b>Guardar pago</b>.</p>' + window.PF_DONDE('pagos') +
       '<details class="pg-nota" style="margin:0.3rem 0 0.8rem"><summary style="cursor:pointer">¿Cómo funciona?</summary>Las facturas llegan solas: SAT avisa cada factura al correo el mismo día, y el lunes entra la carga completa. ' +
       'Entran desde el ' + esc(ddmm(D.desde)) + '; las de antes del 28/09 que ya estaban pagadas cuentan como pagadas. ' +
-      'Las pagadas por <b>Transferencia</b> o <b>Tarjeta</b> se confirman solas cuando se carga el estado de cuenta del banco' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '.</details>' +
+      'Las pagadas por <b>Transferencia</b> o <b>Tarjeta</b> se confirman solas cuando se carga el estado de cuenta del banco' + (D.banco_ult ? ' (hoy llega hasta el ' + esc(ddmm(D.banco_ult)) + ')' : '') + '. ' +
+      'Las transferencias del BI se adelantan: el banco avisa cada una al correo y el pago se une a su factura en minutos (<b>aviso del banco</b>); el lunes el estado de cuenta las confirma.</details>' +
       '<div class="pg-res"><div><b>' + abiertas.length + '</b><span>facturas por pagar</span></div><div><b>' + q(pendQ) + '</b><span>cantidad a pagar</span></div>' +
       '<div><b>' + vence + '</b><span>con fecha de pagar hasta hoy</span></div><div><b>' + esc(D.areas.filter(function (a) { return a !== 'ADMIN'; }).join(' y ').toLowerCase()) + (D.rol === 'dueno' ? ' y admin' : '') + '</b><span>áreas</span></div></div>' +
       '<div class="pg-tabs">' +
@@ -239,7 +240,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         pag.map(function (f) {
           return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
-              '<td class="n">' + q(p.q) + '</td><td>' + esc(nom(p.estatus)) + (/confirmad/i.test(p.estatus) && p.por ? ' · <b>' + esc(nom(p.por)) + '</b>' : '') +
+              '<td class="n">' + q(p.q) + '</td><td>' + esc(nom(p.estatus)) + (/confirmad|por correo/i.test(p.estatus) && p.por ? ' · <b>' + esc(nom(p.por)) + '</b>' : '') +
+                (p.estatus === 'Banco por correo' ? '<div class="pg-nota">el BI avisó la transferencia; se confirma con el estado de cuenta del lunes</div>' : '') +
                 (p.fecha_marca && p.fecha_marca !== p.fecha ? '<div class="pg-nota">pagado el ' + esc(ddmm(p.fecha_marca)) + ' · el banco lo registró el ' + esc(ddmm(p.fecha)) + '</div>' : '') +
                 (p.estatus === 'Banco' ? ' ' + estado(f.estado) : '') + (p.detalle ? '<div class="pg-nota">' + esc(p.detalle) + '</div>' : '') + '</td>' +
               '<td>' + (p.id ? '<button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') + '</td></tr>';
@@ -375,7 +377,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       return '<p class="pg-nota">Para cerrar uno, buscá su factura en <b>Por pagar</b> y pagala por <b>Transferencia</b>: el pago se une solo. ' +
         '<b>Dudosos</b>: podrían ser de más de una factura. <b>Sueltos</b>: pagos de mercadería sin factura que coincida.</p>' +
         '<h3 style="margin-top:1rem">Dudosos (' + D.banco_dudosos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_dudosos.map(fila).join('') + '</table></div>' +
-        '<h3 style="margin-top:1rem">Sueltos (' + D.banco_sueltos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_sueltos.map(fila).join('') + '</table></div>';
+        '<h3 style="margin-top:1rem">Sueltos (' + D.banco_sueltos.length + ')</h3><div class="pg-scroll"><table class="pg-t">' + cab + D.banco_sueltos.map(fila).join('') + '</table></div>' +
+        bancoCorreo();
     }
     return '';
   }
@@ -384,10 +387,25 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
      deberíamos ver por lo menos los últimos 2 meses de facturas y las fechas de los pagos").
      Todas sus facturas desde PAG_DESDE_ (01/08), la más nueva arriba, con cada pago: fecha,
      forma (y cuenta o tarjeta) y cantidad. Abajo, los saldos a favor anotados. */
+  /* Las transferencias que el BI avisó por correo (16-oct-2026, BancoCorreo.js): las que el estado de cuenta
+     todavía no trae y, sobre todo, las de días que el estado de cuenta ya cubre y no aparecen. */
+  function bancoCorreo() {
+    var B = D.banco_correo;
+    if (!B) return '';
+    var fila = function (p) { return '<tr><td>' + esc(ddmm(p.fecha)) + (p.hora ? ' ' + esc(p.hora) : '') + '</td><td class="n">' + q(p.q) + '</td><td>' + esc(p.glosa) + (p.nombre ? ' · ' + esc(p.nombre) : '') + '</td><td>' + esc(p.categoria) + '</td></tr>'; };
+    var cab = '<tr><th>Aviso</th><th class="n">Monto</th><th>Descripción · beneficiario</th><th>Categoría</th></tr>';
+    return (B.error ? '<p class="pg-err">No pude leer las transferencias del correo: ' + esc(B.error) + '</p>' : '') +
+      (B.faltantes.length ? '<h3 style="margin-top:1rem">Avisadas por el BI y que no están en el estado de cuenta (' + B.faltantes.length + ')</h3>' +
+        '<p class="pg-nota">El banco mandó el aviso pero el estado de cuenta cargado, que ya cubre ese día, no trae el cargo. Revisá si la transferencia se rechazó o si falta un movimiento en el maestro.</p>' +
+        '<div class="pg-scroll"><table class="pg-t">' + cab + B.faltantes.map(fila).join('') + '</table></div>' : '') +
+      '<h3 style="margin-top:1rem">Avisadas por el BI, por llegar al estado de cuenta (' + B.pendientes.length + ')</h3>' +
+      (B.pendientes.length ? '<div class="pg-scroll"><table class="pg-t">' + cab + B.pendientes.map(fila).join('') + '</table></div>'
+                           : '<div class="pg-vacio">Ninguna: todo lo que avisó el BI ya está en el estado de cuenta. ✓</div>');
+  }
   function pagoTxt(p) {
-    var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = /confirmad/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
+    var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = /confirmad|por correo/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
     return esc(p.fecha ? ddmm(p.fecha) : 's/f') + ' · ' + esc(nom(forma)) + ' · ' + q(p.q) +
-      (/confirmad/i.test(p.estatus) ? ' <span class="pg-est ok">banco</span>' : p.estatus === 'Banco' ? ' <span class="pg-est banco">por confirmar</span>' : '') +
+      (/confirmad/i.test(p.estatus) ? ' <span class="pg-est ok">banco</span>' : p.estatus === 'Banco por correo' ? ' <span class="pg-est abon" title="El BI avisó la transferencia por correo. Se confirma con el estado de cuenta del lunes.">aviso del banco</span>' : p.estatus === 'Banco' ? ' <span class="pg-est banco">por confirmar</span>' : '') +
       (p.fecha_marca && p.fecha_marca !== p.fecha ? ' <span class="pg-nota">(marcado el ' + esc(ddmm(p.fecha_marca)) + ')</span>' : '');
   }
   function historial(nit) {

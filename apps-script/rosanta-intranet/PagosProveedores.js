@@ -64,6 +64,9 @@ var PAG_CONF_BANCO_ = 'Confirmado con banco';
 // Un cargo del banco que el dueño marco "No pertenece" en Posibles pagos (14-oct-2026). Lleva "Banco"
 // en el nombre a proposito: el Balance del año ignora esos estatus. DETALLE termina en "pago: <llave>".
 var PAG_DESCARTADO_ = 'Banco: no pertenece';
+// Un pago casado con una transferencia que el BI aviso por correo y que el estado de cuenta todavia
+// no trae (16-oct-2026, BancoCorreo.js). Pasa solo a "Banco confirmado" cuando entra el del lunes.
+var PAG_BANCO_CORREO_ = 'Banco por correo';
 // Las cuentas y tarjetas (los nombres que usa pagPagosBanco_ para cada cargo)
 var PAG_MEDIOS_BANCO_ = ['Banco BI', 'Banco BAC'];
 var PAG_MEDIOS_TARJETA_ = ['Tarjeta débito BI', 'Tarjeta crédito BI', 'Tarjeta crédito BAC'];
@@ -269,7 +272,7 @@ function _pagCatPorNit_(filas, iNit, iCat, iPers) {
 
 /** Los debitos del BI y del BAC desde unos dias antes de PAG_DESDE_, sin retiros de cajero. */
 function pagPagosBanco_(ss) {
-  var desde = pagNumDia_(pagDia_(PAG_DESDE_)) - 10, out = [];
+  var desde = pagNumDia_(pagDia_(PAG_DESDE_)) - 10, out = [], crudoBI = [];
   [['03_Banco_Industrial', 'Banco BI', 'Débito'], ['04_Banco_BAC', 'Banco BAC', 'Débito']].forEach(function (b) {
     var v = _pagValores_(ss, b[0]), hi = -1;
     if (!v) return;
@@ -282,9 +285,12 @@ function pagPagosBanco_(ss) {
       if (!d || pagNumDia_(d) < desde) continue;
       var q = _finR_(_finNum_(v[r][iDe]));
       if (!(q > 0)) continue;
-      var cat = String(v[r][iC] || '').trim();
+      var cat = String(v[r][iC] || '').trim(), desc = String(v[r][iD] || '').trim();
+      // Las transferencias de la cuenta BI, planilla incluida, para cruzarlas con los avisos del
+      // correo (BancoCorreo.js): sin retiros de cajero ni compras con la tarjeta de debito
+      if (b[1] === 'Banco BI' && !/^(ATM|RETIRO|A-|F-)/i.test(desc) && _pagMedioBI_(desc) === 'Banco BI')
+        crudoBI.push({ llave: b[0] + '|' + r, fecha: pagIso_(d), dia: pagNumDia_(d), q: q, glosa: desc, categoria: cat });
       if (String(v[r][iP] || '').trim() === 'Sí' || cat === 'PERSONAL' || /^NOMINA|^IGSS|^DEVOLUCION|^PROPINA/.test(cat)) continue;
-      var desc = String(v[r][iD] || '').trim();
       if (/^(ATM|RETIRO|A-|F-)/i.test(desc)) continue;   // retiros de cajero: van por Compras en efectivo
       out.push({ llave: b[0] + '|' + r, banco: b[1] === 'Banco BI' ? _pagMedioBI_(desc) : b[1], fecha: pagIso_(d), dia: pagNumDia_(d), q: q, glosa: desc, categoria: cat });
     }
@@ -307,6 +313,7 @@ function pagPagosBanco_(ss) {
                  glosa: String(v[r][L.desc - 1] || '').trim(), categoria: cat, tarjeta: true });
     }
   });
+  out.crudoBI = crudoBI;
   return out;
 }
 
@@ -323,7 +330,8 @@ function _pagMedioBI_(glosa) {
 }
 
 /** La llave de un pago del banco que no depende de la fila (las hojas se reordenan). */
-function _pagLlavePago_(p) { return p.banco + '|' + p.fecha + '|' + p.q + '|' + String(p.glosa || '').slice(0, 40); }
+// Un aviso del correo (BancoCorreo.js) trae la suya: la de su descripcion, sin el nombre del beneficiario.
+function _pagLlavePago_(p) { return p.llave_pago || p.banco + '|' + p.fecha + '|' + p.q + '|' + String(p.glosa || '').slice(0, 40); }
 
 var PAG_PALABRAS_VACIAS_ = ['sociedad', 'anonima', 'distribuidora', 'distribuidor', 'comercial', 'comercializadora',
   'guatemala', 'industrias', 'industria', 'grupo', 'empresa', 'servicios', 'varios', 'pago', 'pagos', 'transferencia',
@@ -657,13 +665,20 @@ function pagEstado_() {
   var movs = pagMovimientos_(), anteriores = {};
   movs.forEach(function (m) { if (m.estatus === PAG_ANTERIOR_) anteriores[m.nit + '|' + m.dte] = m.q; });
   var ajenas = [], facturas = pagFacturas_(ss, anteriores, ajenas, fecFacturas_()), banco = pagPagosBanco_(ss);
+  // Las transferencias que el BI aviso por correo y el estado de cuenta todavia no trae (16-oct-2026,
+  // BancoCorreo.js): entran como cargos del banco provisorios hasta la carga del lunes
+  var BC = { pagos: [], alias: {}, faltantes: [], ult: 0 };
+  try { BC = _bcoCruzar_(bcoTransferencias_(), banco.crudoBI || []); } catch (e) { BC.error = String(e && e.message || e); }
+  var bancoUlt = banco.filter(function (p) { return !p.tarjeta; }).reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '');
+  banco = banco.concat(BC.pagos);
   // los pagos que el dueño ya confirmo a mano no se vuelven a casar ni a ofrecer
   var yaConfirmados = {};
   movs.forEach(function (m) {
     var k = (m.estatus === PAG_CONF_BANCO_ || m.estatus === PAG_DESCARTADO_) && /pago: (.+)$/.exec(m.detalle);
     if (k) k[1].split(' ; ').forEach(function (x) { yaConfirmados[x] = 1; });   // un pago fraccionado guarda varias
   });
-  var bancoUlt = banco.filter(function (p) { return !p.tarjeta; }).reduce(function (a, p) { return p.fecha > a ? p.fecha : a; }, '');
+  // lo confirmado sobre el aviso del correo vale para su cargo cuando entra el estado de cuenta
+  Object.keys(BC.alias).forEach(function (k) { if (yaConfirmados[k]) yaConfirmados[BC.alias[k]] = 1; });
   banco = banco.filter(function (p) { return !yaConfirmados[_pagLlavePago_(p)]; });
   var porLlave = {};
   facturas.forEach(function (f) {
@@ -734,7 +749,7 @@ function pagEstado_() {
     f.marcas.forEach(function (mk) {
       var x = f.pagos.filter(function (y) { return y.id === mk.id; })[0];
       // la fecha que se anoto (el dia del pago) y la que trae el banco (el dia que lo registro)
-      if (mk.pago && x) { x.estatus = /^Tarjeta/.test(mk.pago.banco) ? 'Tarjeta confirmada' : 'Banco confirmado'; x.por = mk.pago.banco; x.detalle = mk.pago.glosa; x.fecha_marca = x.fecha; x.fecha = mk.pago.fecha; }
+      if (mk.pago && x) { x.estatus = /^Tarjeta/.test(mk.pago.banco) ? 'Tarjeta confirmada' : mk.pago.correo ? PAG_BANCO_CORREO_ : 'Banco confirmado'; x.por = mk.pago.banco; x.detalle = mk.pago.glosa; x.fecha_marca = x.fecha; x.fecha = mk.pago.fecha; }
       else f.por_confirmar += mk.q;
     });
     f.por_confirmar = _finR_(f.por_confirmar);
@@ -753,7 +768,7 @@ function pagEstado_() {
       var p = pagoPorLlave[pl], s = _finR_(f.total - f.pagado - f.favor_usado);
       f.pagado += s;
       // por: el medio (Banco BI, Tarjeta débito BI, Tarjeta crédito BI / BAC, Banco BAC)
-      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: /^Tarjeta/.test(p.banco) ? 'Tarjeta confirmada' : 'Banco confirmado', por: p.banco, detalle: p.glosa });
+      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: /^Tarjeta/.test(p.banco) ? 'Tarjeta confirmada' : p.correo ? PAG_BANCO_CORREO_ : 'Banco confirmado', por: p.banco, detalle: p.glosa });
     }
     f.saldo = _finR_(f.total - f.pagado - f.favor_usado);
     f.pagado = _finR_(f.pagado);
@@ -773,7 +788,9 @@ function pagEstado_() {
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
            posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; }),
                                    (function () { var d = {}; facturas.forEach(function (f) { d[f.dte] = d[f.dte] || f.saldo > 0.01; }); return d; })()),
-           banco_ult: bancoUlt };
+           banco_ult: bancoUlt,
+           banco_correo: { pendientes: BC.pagos.map(function (p) { return { fecha: p.fecha, hora: p.hora, q: p.q, glosa: p.glosa, categoria: p.categoria }; }),
+                           faltantes: BC.faltantes, error: BC.error || '' } };
 }
 
 /** El cuadre por proveedor: facturado, pagado, pendiente, abonos, saldo a favor y pagos de mas. */
@@ -802,6 +819,8 @@ function getPagosProveedores(auth) {
   // las facturas que SAT aviso por correo (FelCorreo.js). Despues de guardar no se lee Gmail:
   // es lo mas lento y la pantalla se refresca al abrirla o con Actualizar (14-oct-2026)
   var fec = _PAG_LEIDO_.escribio ? null : fecLeerSiToca_();
+  // y las transferencias que avisa el BI (BancoCorreo.js, 16-oct-2026), con el mismo respiro
+  if (!_PAG_LEIDO_.escribio) bcoLeerSiToca_();
   return _pagPantalla_(Q, pagEstado_(), fec);
 }
 
@@ -848,6 +867,7 @@ function _pagPantalla_(Q, E, fec) {
   out.mi_nombre = Q.nombre;
   if (Q.rol === 'dueno') {
     out.banco_dudosos = E.banco_dudosos; out.banco_sueltos = E.banco_sueltos; out.posibles = E.posibles;
+    out.banco_correo = E.banco_correo;
     // los "No pertenece", para poder deshacerlos (los ultimos 20)
     out.descartados = pagMovimientos_().filter(function (m) { return m.estatus === PAG_DESCARTADO_; }).slice(-20).reverse()
       .map(function (m) { return { id: m.id, fecha: m.fecha_pagado, detalle: m.detalle.replace(/\s*·\s*pago: .*$/, ''), por: m.por }; });
