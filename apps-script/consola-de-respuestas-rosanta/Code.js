@@ -168,13 +168,64 @@ function autorizarDrive() {
  */
 function getFicha(canal, contactoId) {
   var sh = getSS_().getSheetByName('Fichas');
-  if (!sh || sh.getLastRow() < 2) return null;
   var clave = String(canal || '').toLowerCase() + '|' + String(contactoId || '').trim();
-  var celda = sh.getRange('A:A').createTextFinder(clave).matchEntireCell(true).findNext();
-  if (!celda) return null;
+  var celda = (sh && sh.getLastRow() >= 2) ? sh.getRange('A:A').createTextFinder(clave).matchEntireCell(true).findNext() : null;
+  if (!celda) {
+    // Sin ficha del bot (cliente de antes): igual se busca en el pipeline por el id del chat.
+    var id = String(contactoId || '').trim();
+    try {
+      var et = etapaPipeline_(clave, id.indexOf('@') > 0 ? id : '', /^\d{8,}$/.test(id) ? id : '');
+      return et ? { clave: clave, etapa_pipeline: et } : null;
+    } catch (e) { return null; }
+  }
   var cols = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   var vals = sh.getRange(celda.getRow(), 1, 1, cols.length).getDisplayValues()[0];
   var f = {};
   cols.forEach(function (c, i) { if (c) f[String(c)] = vals[i]; });
+  try {
+    var etapa = etapaPipeline_(f.clave || clave, f.email, f.telefono);
+    if (etapa) f.etapa_pipeline = etapa;
+  } catch (e) { /* sin pipeline: el panel dice "aún sin revisar" */ }
   return f;
+}
+
+/**
+ * Etapa del contacto en el Pipeline de Eventos (probado 15-oct 22:13: 30 filas) (pestaña `cotizaciones` de Rosanta Marketing OS,
+ * desde el 15-oct-2026). Solo lectura. Busca por id_chat y, si no, por correo o teléfono.
+ * Caché de 5 min para no leer la hoja en cada chat.
+ */
+var PIPE_SHEET_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
+var PIPE_ETAPAS = { consulta: 'Consulta', porenviar: 'Por enviar', cotizada: 'Cotizada', conversacion: 'En conversación',
+  visita: 'Visita o degustación', reservada: 'Reservada', ganada: 'Ganada', perdida: 'Perdida', pausa: 'En pausa' };
+
+function etapaPipeline_(idChat, email, telefono) {
+  var filas = pipelineFilas_();
+  var tel8 = String(telefono || '').replace(/\D/g, '').slice(-8);
+  var mail = String(email || '').trim().toLowerCase();
+  var hit = null;
+  for (var i = 0; i < filas.length && !hit; i++) if (idChat && filas[i].id_chat === idChat) hit = filas[i];
+  for (var j = 0; j < filas.length && !hit; j++) {
+    var r = filas[j];
+    if (mail && (r.email === mail || r.contacto.indexOf(mail) >= 0)) hit = r;
+    else if (tel8.length === 8 && (r.telefono.slice(-8) === tel8 || r.contacto.replace(/\D/g, '').indexOf(tel8) >= 0)) hit = r;
+  }
+  return hit ? (PIPE_ETAPAS[hit.etapa] || hit.etapa) + (hit.fecha_evento ? ' · evento ' + hit.fecha_evento : '') : '';
+}
+
+function pipelineFilas_() {
+  var cache = CacheService.getScriptCache();
+  var c = cache.get('pipe_filas_v1');
+  if (c) return JSON.parse(c);
+  var sh = SpreadsheetApp.openById(PIPE_SHEET_ID).getSheetByName('cotizaciones');
+  if (!sh || sh.getLastRow() < 2) return [];
+  var v = sh.getDataRange().getDisplayValues();
+  var h = v[0].map(function (x) { return String(x).trim(); });
+  var col = function (n) { return h.indexOf(n); };
+  var out = v.slice(1).map(function (r) {
+    var g = function (n) { var k = col(n); return k < 0 ? '' : String(r[k] || '').trim(); };
+    return { id_chat: g('id_chat'), email: g('email').toLowerCase(), telefono: g('telefono').replace(/\D/g, ''),
+      contacto: g('contacto').toLowerCase(), etapa: g('etapa'), fecha_evento: g('fecha_evento') };
+  }).filter(function (r) { return r.etapa; });
+  try { cache.put('pipe_filas_v1', JSON.stringify(out), 300); } catch (e) {}
+  return out;
 }

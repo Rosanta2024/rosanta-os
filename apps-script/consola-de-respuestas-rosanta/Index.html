@@ -249,8 +249,8 @@
         var mb=String(v).match(/^BTN_([A-Z]+)_(es|en)$/);v=mb?(bn[mb[1]]||mb[1]):String(v).replace(/^OPT\|(es|en)\|/,'');}
       return '<div><dt>'+c[1]+'</dt><dd>'+esc(String(v))+'</dd></div>';
     }).join('');
-    if(!items){box.innerHTML='';return;}
-    var esEvento=f.es_evento==='Sí';
+    var esEvento=f.es_evento==='Sí'||!!f.etapa_pipeline;
+    if(!items&&!esEvento){box.innerHTML='';return;}
     var titulo='Lo que ya sabe el bot'+(esEvento?' · evento':'')+
       (esEvento?'<span class="etapa">'+esc(f.etapa_pipeline||'Consulta (aún sin revisar)')+'</span>':'');
     box.innerHTML='<details'+(esEvento?' open':'')+'><summary>'+titulo+'</summary><dl>'+items+'</dl></details>';
