@@ -14,6 +14,8 @@
  *   · entra: fecha_consulta (si falta, fecha_envio, y se cuenta como dato faltante)
  *   · se cierra: Ganada = deposito_fecha (o etapa_desde); Perdida = etapa_desde.
  *     La pantalla y la revision diaria ponen etapa_desde al cambiar de etapa.
+ *     Realizado (16-oct-2026) = una ganada cuyo evento ya pasó: cuenta como ganada, en el mes del
+ *     deposito (o de ganada_fecha, que la pantalla guarda al marcarla; etapa_desde ya es otra).
  *   · una cerrada sin esa fecha no cae en ningun mes y sale en el aviso de datos.
  *
  * AMBITO GLOBAL: todo empieza con evm; lo privado termina en guion bajo.
@@ -21,7 +23,7 @@
 
 var EVM_ABIERTAS_ = ['consulta', 'porenviar', 'cotizada', 'conversacion', 'visita', 'reservada'];
 var EVM_ETAPA_N_ = { consulta: 'Consulta', porenviar: 'Cotizada', cotizada: 'Cotizada', conversacion: 'En conversación',
-  visita: 'Visita o degustación', reservada: 'Reservada', ganada: 'Ganada', perdida: 'Perdida', pausa: 'En pausa' };
+  visita: 'Visita o degustación', reservada: 'Reservada', ganada: 'Ganada', realizada: 'Realizado', perdida: 'Perdida', pausa: 'En pausa' };
 var EVM_CANAL_N_ = { instagram: 'Instagram', web: 'Web', bot: 'Bot WhatsApp/IG', whatsapp: 'WhatsApp directo',
   correo: 'Correo', planner: 'Planner', referido: 'Referido', tripadvisor: 'TripAdvisor', otro: 'Otro' };
 var EVM_MESES_ = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -32,11 +34,13 @@ function evmMesNombre_(anio, mes) { return EVM_MESES_[mes - 1] + ' ' + anio; }
 function evmQ_(r) { var n = Number(r.monto_q != null ? r.monto_q : r.q); return isFinite(n) ? n : 0; }  // fila o evmMini_
 function evmSuma_(lista) { return lista.reduce(function (a, r) { return a + evmQ_(r); }, 0); }
 function evmEtapa_(r) { return String(r.etapa || r.estado || '').toLowerCase(); }
+function evmGanada_(r) { var e = evmEtapa_(r); return e === 'ganada' || e === 'realizada'; }
 
 /** Fecha (AAAA-MM-DD) en que la fila se ganó o se perdió, o null. */
 function evmFechaCierre_(r) {
   var e = evmEtapa_(r);
   if (e === 'ganada') return String(r.deposito_fecha || r.etapa_desde || '').slice(0, 10) || null;
+  if (e === 'realizada') return String(r.deposito_fecha || r.ganada_fecha || '').slice(0, 10) || null;
   if (e === 'perdida') return String(r.etapa_desde || '').slice(0, 10) || null;
   return null;
 }
@@ -46,7 +50,7 @@ function evmCorte_(filas, anio, mes) {
   var k = evmMesClave_(anio, mes);
   var enMes = function (f) { return f && String(f).slice(0, 7) === k; };
   var nuevas = filas.filter(function (r) { return enMes(r.fecha_consulta || r.fecha_envio); });
-  var ganadas = filas.filter(function (r) { return evmEtapa_(r) === 'ganada' && enMes(evmFechaCierre_(r)); });
+  var ganadas = filas.filter(function (r) { return evmGanada_(r) && enMes(evmFechaCierre_(r)); });
   var perdidas = filas.filter(function (r) { return evmEtapa_(r) === 'perdida' && enMes(evmFechaCierre_(r)); });
   var cerradas = ganadas.concat(perdidas);
   var qG = evmSuma_(ganadas), qC = evmSuma_(cerradas);
@@ -58,7 +62,7 @@ function evmCorte_(filas, anio, mes) {
   var canal = {};
   cerradas.forEach(function (r) {
     var c = EVM_CANAL_N_[r.canal] || 'Sin dato'; canal[c] = canal[c] || { g: 0, t: 0, q: 0 };
-    canal[c].t++; if (evmEtapa_(r) === 'ganada') { canal[c].g++; canal[c].q += evmQ_(r); }
+    canal[c].t++; if (evmGanada_(r)) { canal[c].g++; canal[c].q += evmQ_(r); }
   });
   var conConsulta = nuevas.filter(function (r) { return enMes(r.fecha_consulta); });
   var horas = conConsulta.map(function (r) { return Number(r.respuesta_horas); })
@@ -110,7 +114,7 @@ function evmCalc_(filas, anio, mes, hoy) {
   var falta = {
     consulta: filas.filter(function (r) { return !r.fecha_consulta; }).map(function (r) { return r.cliente || r.id; }),
     canal: filas.filter(function (r) { return !r.canal; }).map(function (r) { return r.cliente || r.id; }),
-    cierre: filas.filter(function (r) { var e = evmEtapa_(r); return (e === 'ganada' || e === 'perdida') && !evmFechaCierre_(r); })
+    cierre: filas.filter(function (r) { var e = evmEtapa_(r); return (e === 'ganada' || e === 'realizada' || e === 'perdida') && !evmFechaCierre_(r); })
       .map(function (r) { return r.cliente || r.id; }),
     respuesta: filas.filter(function (r) { return r.fecha_consulta && !(typeof r.respuesta_horas === 'number' && isFinite(r.respuesta_horas)); })
       .map(function (r) { return r.cliente || r.id; })

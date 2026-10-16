@@ -56,7 +56,8 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .chip.crit{background:var(--crit-tint);color:var(--crit)}
 /* Embudo */
 .board-scroll{overflow-x:auto;margin-top:12px;padding-bottom:6px}
-.board{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:10px;min-width:1060px}
+.board{display:grid;grid-template-columns:repeat(7,minmax(160px,1fr));gap:10px;min-width:1180px}
+.col-mas{font-size:12px;color:var(--muted)}
 .col{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .col-head{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .col-head b{font-family:var(--display);font-size:16px;color:var(--brand);font-weight:600}
@@ -138,7 +139,7 @@ table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
 
   <section>
     <h2>El embudo</h2>
-    <p class="meta">Cantidad y monto por etapa. Entre etapas, qué porcentaje de las que llegaron a una pasó a la siguiente. Arrastra una tarjeta a otra columna para cambiarla de etapa; en el celular, tócala y usa "Mover a…". Ganada, Perdida y En pausa piden su dato antes de guardar.</p>
+    <p class="meta">Cantidad y monto por etapa. Entre etapas, qué porcentaje de las que llegaron a una pasó a la siguiente. Arrastra una tarjeta a otra columna para cambiarla de etapa; en el celular, tócala y usa "Mover a…". Ganada, Perdida y En pausa piden su dato antes de guardar. Cuando el evento ya pasó, la ganada sale en Hoy para marcarla Realizado: así Ganada solo guarda los eventos por venir.</p>
     <div class="board-scroll"><div class="board" id="board"></div></div>
     <div id="detail"></div>
     <div class="side">
@@ -194,8 +195,13 @@ table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
 const DAY = 864e5;
 const ETAPAS = [
   {id:"consulta", n:"Consulta"}, {id:"cotizada", n:"Cotizada"}, {id:"conversacion", n:"En conversación"},
-  {id:"visita", n:"Visita o degustación"}, {id:"reservada", n:"Reservada"}, {id:"ganada", n:"Ganada"}
+  {id:"visita", n:"Visita o degustación"}, {id:"reservada", n:"Reservada"}, {id:"ganada", n:"Ganada"},
+  {id:"realizada", n:"Realizado"}
 ];
+// Realizado (16-oct-2026): el evento ya se hizo. Cierra la ganada para que no se acumulen tarjetas.
+// Cuenta como ganada en todos los números; la columna muestra solo las últimas.
+const REALIZADAS_VISIBLES = 6;
+const ganadaOk = e => e === "ganada" || e === "realizada";
 const ORDEN = ETAPAS.map(e => e.id);
 const NOMBRE = Object.fromEntries([...ETAPAS.map(e => [e.id, e.n]), ["perdida","Perdida"], ["pausa","En pausa"], ["porenviar","Por enviar"]]);
 const CANALES = [["instagram","Instagram"],["web","Web"],["bot","Bot WhatsApp/IG"],["whatsapp","WhatsApp directo"],["correo","Correo"],["planner","Planner"],["referido","Referido"],["tripadvisor","TripAdvisor"],["otro","Otro"]];
@@ -223,9 +229,9 @@ const dedupe = arr => [...new Set(arr.map(iso))].map(parse).sort((a,b) => a-b);
 // Etapa de una fila. Las filas viejas solo traen "estado".
 function etapaDe(r){
   if (r.etapa) return r.etapa;
-  return {porenviar:"porenviar", ganada:"ganada", perdida:"perdida", pausa:"pausa"}[r.estado] || "cotizada";
+  return {porenviar:"porenviar", ganada:"ganada", realizada:"realizada", perdida:"perdida", pausa:"pausa"}[r.estado] || "cotizada";
 }
-const abierta = e => !["ganada","perdida","pausa"].includes(e);
+const abierta = e => !["ganada","realizada","perdida","pausa"].includes(e);
 const idx = e => ORDEN.indexOf(e === "porenviar" ? "cotizada" : e);
 function alcanzada(r){ // la etapa más avanzada a la que llegó
   return Math.max(idx(etapaDe(r)), idx(r.etapa_max || "consulta"));
@@ -279,7 +285,11 @@ function derive(r){
   const ev = parse(r.fecha_evento), vence = parse(r.vence);
   const out = {e, ev, vence};
   const pp = r.proximo_paso && parse(r.proximo_paso.fecha) ? {fecha: parse(r.proximo_paso.fecha), texto: r.proximo_paso.texto} : null;
-  if (e === "ganada") return {...out, flag:"Ganada" + (r.deposito_fecha ? " · depósito " + fmt(parse(r.deposito_fecha)) : ""), cls:"p-ok"};
+  if (e === "realizada") return {...out, flag:"Realizado" + (ev ? " · " + fmt(ev) : ""), cls:"p-mute"};
+  if (e === "ganada") {
+    if (ev && ev < hoy) return {...out, flag:"Evento pasado · marcar realizado", cls:"p-warn", next: add(ev,1), label:"Marcar realizado", late: add(ev,1) < hoy};
+    return {...out, flag:"Ganada" + (r.deposito_fecha ? " · depósito " + fmt(parse(r.deposito_fecha)) : ""), cls:"p-ok"};
+  }
   if (e === "perdida") return {...out, flag:"Perdida · " + (r.motivo || "sin motivo"), cls:"p-mute"};
   if (e === "pausa") { const h = parse(r.pausa_hasta); return {...out, flag: h ? "En pausa hasta " + fmt(h) : "En pausa sin fecha", cls:"p-mute", next: h, label:"Retomar", late: h && h < hoy}; }
   if (ev && ev < hoy) return {...out, flag:"Evento pasado · cerrar", cls:"p-crit", next: hoy, label:"Cerrar la fila", late:true};
@@ -341,6 +351,8 @@ function detailHTML(r, d){
     acts += `<button data-act="escribio" data-id="${id}">Cliente escribió</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
   }
   if (abierta(e)) acts += `<button data-act="form-ganada" data-id="${id}">Ganada</button><button data-act="form-perdida" data-id="${id}">Perdida</button><button data-act="form-pausa" data-id="${id}">Pausa</button>`;
+  else if (e === "ganada") acts += `<button data-act="realizada" data-id="${id}" class="primary">Realizado</button><button data-act="reabrir" data-id="${id}">Reabrir</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
+  else if (e === "realizada") acts += `<button data-act="volver-ganada" data-id="${id}">Volver a Ganada</button>`;
   else acts += `<button data-act="reabrir" data-id="${id}">Reabrir</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
   let form = "";
   if (openForm && openForm.id === r.id) {
@@ -418,7 +430,7 @@ function render(){
   const hoy = today(), all = ROWS.map(r => ({r, d: derive(r)}));
   const open = all.filter(x => abierta(x.d.e));
   // Hoy: todo lo abierto (y pausas que se retoman) con acción hasta hoy.
-  const due = all.filter(x => (abierta(x.d.e) || x.d.e === "pausa") && x.d.next && !x.d.waiting && x.d.next <= hoy).sort((a,b) => a.d.next - b.d.next);
+  const due = all.filter(x => (abierta(x.d.e) || x.d.e === "pausa" || x.d.e === "ganada") && x.d.next && !x.d.waiting && x.d.next <= hoy).sort((a,b) => a.d.next - b.d.next);
   document.getElementById("due").innerHTML = due.length ? due.map(x => detailHTML(x.r, x.d)).join("") : `<div class="empty">Nada pendiente para hoy.</div>`;
   // Vence esta semana
   const wk = open.filter(x => x.d.vence && x.d.vence >= hoy && x.d.vence <= add(hoy,7)).sort((a,b) => a.d.vence - b.d.vence);
@@ -426,10 +438,15 @@ function render(){
   // Embudo
   const reached = i => all.filter(x => alcanzada(x.r) >= i && x.d.e !== "pausa").length;
   document.getElementById("board").innerHTML = ETAPAS.map((et, i) => {
-    const items = all.filter(x => (x.d.e === et.id || (et.id === "cotizada" && x.d.e === "porenviar"))).sort((a,b) => (a.d.next||Infinity) - (b.d.next||Infinity));
+    let items = all.filter(x => (x.d.e === et.id || (et.id === "cotizada" && x.d.e === "porenviar")));
+    if (et.id === "realizada") items.sort((a,b) => (b.d.ev||0) - (a.d.ev||0));       // la más reciente arriba
+    else if (et.id === "ganada") items.sort((a,b) => (a.d.ev||Infinity) - (b.d.ev||Infinity));
+    else items.sort((a,b) => (a.d.next||Infinity) - (b.d.next||Infinity));
     const q = items.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0);
-    const conv = i > 0 && reached(i-1) ? Math.round(reached(i) / reached(i-1) * 100) + "% desde " + ETAPAS[i-1].n.toLowerCase() : "";
-    return `<div class="col" data-drop="${et.id}"><div class="col-head"><b>${et.n}</b><span>${items.length} · ${moneyK(q)}</span>${conv ? `<span class="conv">${conv}</span>` : ""}</div>${items.map(cardHTML).join("") || '<span class="meta">Vacía</span>'}</div>`;
+    const conv = i > 0 && et.id !== "realizada" && reached(i-1) ? Math.round(reached(i) / reached(i-1) * 100) + "% desde " + ETAPAS[i-1].n.toLowerCase() : "";
+    const vis = et.id === "realizada" ? items.slice(0, REALIZADAS_VISIBLES) : items;
+    const mas = items.length > vis.length ? `<span class="col-mas">y ${items.length - vis.length} más · cuentan en ganadas y en El mes</span>` : "";
+    return `<div class="col" data-drop="${et.id}"><div class="col-head"><b>${et.n}</b><span>${items.length} · ${moneyK(q)}</span>${conv ? `<span class="conv">${conv}</span>` : ""}</div>${vis.map(cardHTML).join("") || '<span class="meta">Vacía</span>'}${mas}</div>`;
   }).join("");
   const sel = all.find(x => x.r.id === selId);
   document.getElementById("detail").innerHTML = sel && !due.includes(sel) ? detailHTML(sel.r, sel.d) : "";
@@ -437,7 +454,7 @@ function render(){
   document.getElementById("paused").innerHTML = paused.length ? paused.map(cardHTML).join("") : `<div class="meta">Nada en pausa.</div>`;
   document.getElementById("lost").innerHTML = lost.length ? lost.sort((a,b)=>String(b.r.actualizado||"").localeCompare(String(a.r.actualizado||""))).map(cardHTML).join("") : `<div class="meta">Ninguna.</div>`;
   // Números
-  const won = all.filter(x => x.d.e === "ganada");
+  const won = all.filter(x => ganadaOk(x.d.e));
   document.getElementById("s-open").textContent = open.length;
   document.getElementById("s-amount").textContent = moneyK(open.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0));
   document.getElementById("s-today").textContent = due.length;
@@ -447,7 +464,7 @@ function render(){
   const bars = (pairs, cls) => { const max = Math.max(1, ...pairs.map(p => p[1])); return pairs.map(([n,v,t]) => `<div class="bar"><span>${esc(n)}</span><span class="t"><i class="${cls||""}" style="width:${Math.round(v/max*100)}%"></i></span><span class="num">${esc(t ?? v)}</span></div>`).join(""); };
   const mot = {}; lost.forEach(x => { const m = x.r.motivo || "sin motivo"; mot[m] = (mot[m]||0) + 1; });
   document.getElementById("m-motivos").innerHTML = lost.length ? bars(Object.entries(mot).sort((a,b)=>b[1]-a[1]), "lost") : `<div class="meta">Sin pérdidas.</div>`;
-  const cn = {}; all.forEach(x => { if (!["ganada","perdida"].includes(x.d.e)) return; const c = CANAL[x.r.canal] || "Sin dato"; cn[c] = cn[c] || {g:0,t:0}; cn[c].t++; if (x.d.e === "ganada") cn[c].g++; });
+  const cn = {}; all.forEach(x => { if (!ganadaOk(x.d.e) && x.d.e !== "perdida") return; const c = CANAL[x.r.canal] || "Sin dato"; cn[c] = cn[c] || {g:0,t:0}; cn[c].t++; if (ganadaOk(x.d.e)) cn[c].g++; });
   const cpairs = Object.entries(cn).sort((a,b)=>b[1].t-a[1].t).map(([c,o]) => [c, Math.round(o.g/o.t*100), `${o.g} de ${o.t}`]);
   document.getElementById("m-canal").innerHTML = cpairs.length ? bars(cpairs) : `<div class="meta">Sin cerradas todavía.</div>`;
   document.getElementById("m-canal-note").textContent = "Ganadas entre las cerradas (ganadas más perdidas) de cada canal.";
@@ -477,7 +494,7 @@ async function save(id, patch, texto){
   if (patch.etapa) {
     patch.etapa_desde = patch.etapa_desde || iso(today());
     if (idx(patch.etapa) > idx(r.etapa_max || "consulta")) patch.etapa_max = patch.etapa;
-    patch.estado = {porenviar:"porenviar", ganada:"ganada", perdida:"perdida", pausa:"pausa"}[patch.etapa] || "abierta";
+    patch.estado = {porenviar:"porenviar", ganada:"ganada", realizada:"realizada", perdida:"perdida", pausa:"pausa"}[patch.etapa] || "abierta";
   }
   try { await escribir([{op:"update", id, data:{...patch, historial: hist}, if_version: r.version}]); openForm = null; }
   catch(e){ document.getElementById("status").textContent = "No se pudo guardar: " + (e && e.message || e); }
@@ -515,9 +532,18 @@ document.addEventListener("click", e => {
   if (act === "perdida") { const m = document.getElementById("f-motivo").value; save(id, {etapa:"perdida", motivo:m}, "Perdida · " + m); }
   if (act === "ganada") { const f = document.getElementById("f-dep").value, m = Number(document.getElementById("f-mon").value) || null; save(id, {etapa:"ganada", deposito_fecha:f, deposito_q:m}, "Ganada · depósito " + f + (m ? " · " + money(m) : "")); }
   if (act === "pausa") { const f = document.getElementById("f-pausa").value; save(id, {etapa:"pausa", pausa_hasta:f}, "En pausa hasta " + f); }
+  if (act === "realizada") marcarRealizada(r);
+  if (act === "volver-ganada") save(id, {etapa:"ganada", etapa_desde: r.ganada_fecha || r.deposito_fecha || iso(today())}, "Vuelve a Ganada");
   if (act === "reabrir") save(id, {etapa:"conversacion", ultimo_cliente: iso(today()), toques: 0}, "Reabierta · pasa a En conversación");
 });
 
+// Realizado: solo desde Ganada. Guarda el día en que se ganó (ganada_fecha) porque etapa_desde
+// pasa a ser el día en que se marcó realizado, y El mes cuenta la ganada en el mes del depósito.
+function marcarRealizada(r){
+  if (etapaDe(r) !== "ganada") { document.getElementById("status").textContent = "Solo una ganada pasa a Realizado: primero márcala Ganada con su depósito."; return; }
+  const ev = parse(r.fecha_evento);
+  save(r.id, {etapa:"realizada", ganada_fecha: r.deposito_fecha || r.etapa_desde || null}, "Evento realizado" + (ev ? " el " + fmt(ev) : ""));
+}
 // Mover tarjetas: arrastrar entre columnas (computadora) o "Mover a…" (celular).
 // Ganada, Perdida y En pausa abren su formulario; Visita pide la fecha. Lo demás se guarda directo.
 function moverA(id, et){
@@ -525,6 +551,8 @@ function moverA(id, et){
   const actual = etapaDe(r);
   if (et === actual || (et === "cotizada" && actual === "porenviar")) return;
   selId = id;
+  if (et === "realizada") return marcarRealizada(r);
+  if (actual === "realizada") { render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }  // se saca con "Volver a Ganada"
   if (["ganada","perdida","pausa"].includes(et)) { openForm = {id, kind: et}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
   if (et === "visita") { openForm = {id, kind: "etapa", pre: "visita"}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
   const patch = {etapa: et, toques: 0};

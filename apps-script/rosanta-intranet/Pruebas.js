@@ -1707,7 +1707,7 @@ function prModulos_(res) {
               filas.length);
   });
 
-  /* Informe mensual del embudo (16-oct-2026): 6 filas inventadas, cada una en su mes.
+  /* Informe mensual del embudo (16-oct-2026): 7 filas inventadas, cada una en su mes.
      Control negativo: si el corte mirara la fecha de envío para cerrar (o ignorara el
      depósito), las cuentas no dan y la prueba FALLA. */
   prCorrer_(g, 'El informe del mes cuenta cada fila cerrada en su mes', function () {
@@ -1718,18 +1718,20 @@ function prModulos_(res) {
       { id: 'c', etapa: 'perdida', etapa_desde: '2026-09-30', motivo: 'precio', fecha_consulta: '2026-09-01', monto_q: 5000, canal: 'correo' },
       { id: 'd', etapa: 'cotizada', fecha_consulta: '2026-10-03', vence: '2026-11-20', monto_q: 7000, canal: 'whatsapp', respuesta_horas: 4 },
       { id: 'e', etapa: 'perdida', fecha_envio: '2026-10-08', monto_q: 999 },            // sin fecha de cierre ni de consulta
-      { id: 'f', etapa: 'conversacion', fecha_envio: '2026-10-09', vence: '2026-12-01', monto_q: 1 }
+      { id: 'f', etapa: 'conversacion', fecha_envio: '2026-10-09', vence: '2026-12-01', monto_q: 1 },
+      // Realizado: ganada en septiembre, marcada realizada en octubre. Cuenta en septiembre, no en octubre.
+      { id: 'g', etapa: 'realizada', ganada_fecha: '2026-09-10', etapa_desde: '2026-10-14', fecha_consulta: '2026-08-01', monto_q: 4000, canal: 'web' }
     ];
     var r = evmCalc_(F, 2026, 10, '2026-10-16'), a = r.actual;
     var obtenido = [a.nuevas.n, a.nuevas.sin_consulta, a.ganadas.n, a.ganadas.q, a.perdidas.n, a.perdidas.q, Math.round(a.tasa.n * 100),
                     r.previo.perdidas.n, r.vencen.n, r.vencen.q, a.respuesta.mediana_h, a.respuesta.en_24h, a.claves.perdidas,
-                    r.falta.cierre.join(','), r.recomendacion.regla].join('|');
-    var esperado = [4, 2, 1, 10000, 1, 30000, 50, 1, 1, 7000, 17, 1, 1, 'e', 'datos'].join('|');
+                    r.falta.cierre.join(','), r.recomendacion.regla, r.previo.ganadas.n, r.previo.ganadas.q].join('|');
+    var esperado = [4, 2, 1, 10000, 1, 30000, 50, 1, 1, 7000, 17, 1, 1, 'e', 'datos', 1, 4000].join('|');
     // Sin la fila sin cierre, la recomendación es la de mayor monto: 'callados' (Q30,000) contra 'vencen' (Q7,000).
     var sinE = evmCalc_(F.filter(function (x) { return x.id !== 'e'; }), 2026, 10, '2026-10-16').recomendacion.regla;
     var ok = obtenido === esperado && sinE === 'callados';
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
-              ok ? '6 filas, cada una en su mes; recomendación por monto' : 'esperado ' + esperado + ' · callados, obtenido ' + obtenido + ' · ' + sinE, 6);
+              ok ? '7 filas, cada una en su mes (realizado cuenta como ganada); recomendación por monto' : 'esperado ' + esperado + ' · callados, obtenido ' + obtenido + ' · ' + sinE, 7);
   });
 
   /* Ficha de cliente (15-oct-2026): con el contacto más reciente que tenga teléfono. */
