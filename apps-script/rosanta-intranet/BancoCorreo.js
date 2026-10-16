@@ -36,8 +36,13 @@ var BCO_RESPIRO_S_ = 120;    // entre dos lecturas seguidas al abrir Pagos
 var BCO_DIAS_CRUCE_ = 4;     // el cargo del estado de cuenta, del dia del aviso a 4 dias despues
 // Lo que no se paga a proveedores (las mismas que salta pagPagosBanco_)
 var BCO_FUERA_ = /^(PERSONAL|NOMINA|IGSS|DEVOLUCION|PROPINA)/;
-// Una cuenta nueva con estas glosas es planilla ("S37 Eddy" no: eso lo aprende de la historia)
-var BCO_NOMINA_ = /n[oó]mina|planilla|quincena|aguinaldo|bono ?14/i;
+// Una cuenta nueva con estas glosas es planilla. Juanma (16-oct-2026): las transferencias a empleados
+// llevan el nombre del empleado ("S37 Eddy", "1aAgosto2026Efrain") o "cocina extras"; los nombres los
+// aprende _bcoNombresPlanilla_ de la historia.
+var BCO_NOMINA_ = /n[oó]mina|planilla|quincena|aguinaldo|bono ?14|extras|empleados|finiquito|cocina y limpieza/i;
+var BCO_NO_NOMBRES_ = ['enero', 'febrero', 'marzo', 'marzon', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre',
+  'noviembre', 'diciembre', 'cocina', 'sala', 'barra', 'limpieza', 'limpeza', 'personal', 'varios', 'bono', 'complemento', 'transporte',
+  'individuales', 'nomina', 'extras', 'empleados', 'finiquito', 'aguinaldo'];
 
 var BCO_CAMPOS_ = { banco: 'banco', generadopor: 'origen', cuenta: 'cuenta', nombre: 'nombre',
                     descripciondepago: 'desc', creditode: 'monto' };
@@ -175,10 +180,12 @@ function _bcoCruzar_(correos, crudo) {
     alias[_bcoLlave_(c)] = _pagLlavePago_({ banco: 'Banco BI', fecha: p.fecha, q: p.q, glosa: p.glosa });
     if (c.cuenta && p.categoria) { var k = catCuenta[c.cuenta] = catCuenta[c.cuenta] || {}; k[p.categoria] = (k[p.categoria] || 0) + 1; }
   });
+  var nombres = _bcoNombresPlanilla_(crudo);
   var catDe = function (c) {
     var k = catCuenta[c.cuenta];
     if (k) return Object.keys(k).sort(function (a, b) { return k[b] - k[a] || (a < b ? -1 : 1); })[0];
-    return BCO_NOMINA_.test(c.desc) ? 'NOMINA' : 'POR_CLASIFICAR';
+    var d = _bcoNorm_(c.desc);
+    return BCO_NOMINA_.test(c.desc) || nombres.some(function (n) { return d.indexOf(n) !== -1; }) ? 'NOMINA' : 'POR_CLASIFICAR';
   };
   var pagos = [], faltantes = [];
   sueltos.forEach(function (c) {
@@ -191,6 +198,26 @@ function _bcoCruzar_(correos, crudo) {
                    glosa: c.desc + (c.nombre ? ' · ' + c.nombre : ''), llave_pago: _bcoLlave_(c), categoria: cat, correo: true, hora: c.hora });
   });
   return { pagos: pagos, alias: alias, faltantes: faltantes, ult: ult };
+}
+
+/**
+ * Los nombres de los empleados, sacados de las glosas de planilla del estado de cuenta ("S26Eddy",
+ * "1aAgosto2026Efrain", "S39 fernandad Cocina"). Un nombre cuenta si sale en 2 o mas glosas de NOMINA
+ * y en mas del doble que en las de otras categorias: asi "tavito" (una sola vez mal categorizado como NOMINA, y muchas
+ * como COCTELERIA) no convierte en planilla los pagos a Tavito. Pura.
+ */
+function _bcoNombresPlanilla_(crudo) {
+  var pal = function (g) {
+    return String(g || '').replace(/([a-z])([A-Z])/g, '$1 $2').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .split(/[^a-z]+/).map(function (w) { return w.replace(/^a(?=enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/, ''); })   // "1ajulio"
+      .filter(function (w) { return w.length >= 4 && BCO_NO_NOMBRES_.indexOf(w) === -1; });
+  };
+  var enNomina = {}, fuera = {};
+  crudo.forEach(function (p) {
+    var dic = /^NOMINA/.test(p.categoria || '') ? enNomina : fuera, vistos = {};
+    pal(p.glosa).forEach(function (w) { if (!vistos[w]) { vistos[w] = 1; dic[w] = (dic[w] || 0) + 1; } });
+  });
+  return Object.keys(enNomina).filter(function (w) { return enNomina[w] >= 2 && enNomina[w] > 2 * (fuera[w] || 0); });
 }
 
 /** La llave de Pagos de un aviso: la misma que tendra su cargo el lunes si la glosa es igual. */

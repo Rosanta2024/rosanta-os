@@ -78,6 +78,18 @@ t('La que no aparece en un dia ya cubierto queda como faltante', X.faltantes.len
 t('El alias lleva al cargo del estado de cuenta', X.alias['Banco BI|2026-09-29|1250|Grupo Eco Septiembre'] === 'Banco BI|2026-09-29|1250|Grupo Eco Septiembre');
 t('Una glosa cortada o sin espacios cuenta como la misma', ctx._bcoMismaGlosa_('LAVANDERIAOCT2026', 'Lavanderia oct2026') && ctx._bcoMismaGlosa_('Pago Distribuidora La', 'Pago Distribuidora La Florida 123') && !ctx._bcoMismaGlosa_('S38', 'S38 Cofradia'));
 
+// 2b. Los nombres de planilla (Juanma, 16-oct-2026: "llevan el nombre del empleado o cocina extras")
+{
+  const hist = [['S26Eddy', 'NOMINA'], ['S37 Eddy', 'NOMINA'], ['1aAgosto2026Efrain', 'NOMINA'], ['2a Septiembre Efrain', 'NOMINA'],
+    ['S14tavito1314931753', 'NOMINA'], ['Tavito 480330786', 'COCTELERIA'], ['S38 Cofradia VARIOS', 'BEBIDAS'], ['1a Septiembre Renta', 'ALQUILERES']]
+    .map(([g, c], i) => ({ llave: 'h' + i, fecha: '2026-09-01', dia: D('2026-09-01'), q: 1 + i, glosa: g, categoria: c }));
+  const nom = ctx._bcoNombresPlanilla_(hist);
+  t('Aprende los nombres de la planilla, no a Tavito', nom.includes('eddy') && nom.includes('efrain') && !nom.includes('tavito') && !nom.includes('septiembre'), nom.join(','));
+  const Y = ctx._bcoCruzar_([C('n1', '2026-10-16', 900, 'S42 Eddy', '111', ''), C('n2', '2026-10-16', 450, 'Cocina extras', '112', ''),
+    C('n3', '2026-10-16', 713.56, 'S42 Tavito Varias', '113', '')], hist);
+  t('Cuenta nueva con nombre de empleado o "extras" no entra a Pagos; Tavito si', Y.pagos.length === 1 && /Tavito/.test(Y.pagos[0].glosa), Y.pagos.map(p => p.glosa).join(' | '));
+}
+
 // 3. De punta a punta sobre el espejo: un aviso de hoy con el nombre del proveedor y el monto de una factura abierta
 ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
 const E0 = ctx.pagEstado_();
