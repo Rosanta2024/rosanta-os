@@ -385,17 +385,25 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
      Todas sus facturas desde PAG_DESDE_ (01/08), la más nueva arriba, con cada pago: fecha,
      forma (y cuenta o tarjeta) y cantidad. Abajo, los saldos a favor anotados. */
   function pagoTxt(p) {
-    var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = /confirmad/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
+    // un "Confirmado con banco" de Posibles pagos guarda en por a quien lo confirmo; la cuenta va en el detalle
+    var manual = p.estatus === 'Confirmado con banco', cta = manual && /^(Banco \S+|Tarjeta \S+ \S+)/.exec(p.detalle || '');
+    var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = manual ? (cta ? cta[1] : 'Banco') : /confirmad/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
     return esc(p.fecha ? ddmm(p.fecha) : 's/f') + ' · ' + esc(nom(forma)) + ' · ' + q(p.q) +
       (/confirmad/i.test(p.estatus) ? ' <span class="pg-est ok">banco</span>' : p.estatus === 'Banco' ? ' <span class="pg-est banco">por confirmar</span>' : '') +
-      (p.fecha_marca && p.fecha_marca !== p.fecha ? ' <span class="pg-nota">(marcado el ' + esc(ddmm(p.fecha_marca)) + ')</span>' : '');
+      (p.fecha_marca && p.fecha_marca !== p.fecha ? ' <span class="pg-nota">(marcado el ' + esc(ddmm(p.fecha_marca)) + ')</span>' : '') +
+      (manual && p.por ? ' <span class="pg-nota">(confirmó ' + esc(p.por) + ')</span>' : '') +
+      // anular desde el historial (16-oct-2026, Juanma: el abono de Q414 a Doorways no se podia corregir desde aca).
+      // Lo que entro de COMPRAS_2026 no es un pago; un pago confirmado con el banco lo anula el dueño.
+      (p.id && !/antes/i.test(p.estatus) && (!manual || D.rol === 'dueno') ? ' <button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '');
   }
   function historial(nit) {
     var fs = D.facturas.filter(function (f) { return f.nit === nit; }).slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; });
     var fav = (D.favores || []).filter(function (m) { return m.nit === nit; });
     var sum = function (k) { return fs.reduce(function (a, f) { return a + (f[k] || 0); }, 0); };
-    if (!fs.length) return '<div class="pg-nota">Sin facturas desde el ' + esc(ddmm(D.desde)) + '.</div>';
-    return '<table><tr><th>Fecha factura</th><th>Factura</th><th class="n">Total</th><th>Pagos (fecha · forma · cantidad)</th><th class="n">Saldo</th><th>Estatus</th></tr>' +
+    // volver a la tarjeta del proveedor en Por pagar sin subir con el scroll (16-oct-2026, Juanma)
+    var volver = '<button type="button" class="pg-b" style="margin-bottom:0.5rem" data-volver="' + esc(nit) + '">← Volver a Pagos</button>';
+    if (!fs.length) return volver + '<div class="pg-nota">Sin facturas desde el ' + esc(ddmm(D.desde)) + '.</div>';
+    return volver + '<table><tr><th>Fecha factura</th><th>Factura</th><th class="n">Total</th><th>Pagos (fecha · forma · cantidad)</th><th class="n">Saldo</th><th>Estatus</th></tr>' +
       fs.map(function (f) {
         var ps = (f.pagos || []).filter(function (p) { return p.q > 0.001; });
         return '<tr><td>' + esc(ddmm(f.fecha)) + '</td><td>' + esc(f.dte) + (f.por_correo ? ' <span class="pg-est abon">por correo</span>' : '') + '</td><td class="n">' + q(f.total) + '</td>' +
@@ -632,6 +640,12 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var panel = b.closest('[data-panel]');
     if (b.dataset.quitarfiltro) { var qi = document.getElementById('q'); if (qi) { qi.value = ''; qi.dispatchEvent(new Event('input')); } else { window.PF_BUSCA = ''; D = filtrar(D0); pintar(); } return; }
     if (b.dataset.tab) { TAB = b.dataset.tab; ABIERTA = null; pintar(); return; }
+    if (b.dataset.volver) {
+      var nitV = b.dataset.volver; TAB = 'pagar'; ABIERTA = null; pintar();
+      var tarjeta = HOST.querySelector('.pg-prov[data-nit="' + (window.CSS && CSS.escape ? CSS.escape(nitV) : nitV) + '"]');
+      (tarjeta || HOST).scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
     if (b.dataset.hist) {
       var irA = TAB !== 'cuadre';
       HIST = HIST === b.dataset.hist && !irA ? null : b.dataset.hist; TAB = 'cuadre'; ABIERTA = null; pintar();
