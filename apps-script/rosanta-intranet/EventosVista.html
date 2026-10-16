@@ -36,11 +36,16 @@ section{margin-top:36px}
 .p-ok{color:var(--ok)} .p-warn{color:var(--warn)} .p-crit{color:var(--crit)} .p-mute{color:var(--muted)} .p-key{color:var(--sub)}
 /* Lista de trabajo del día */
 .list{display:flex;flex-direction:column;margin-top:10px}
-.row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.6fr) auto;gap:8px 18px;align-items:start;padding-block:14px;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 28px;align-items:start;padding-block:16px;border-bottom:1px solid var(--line)}
+.row > div{min-width:0;overflow-wrap:anywhere}
+.row .meta{line-height:1.45;margin-top:2px}
+.row .lbl{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);font-weight:700;margin-bottom:4px}
+.row .pp{margin-top:8px;padding:6px 10px;border-left:3px solid var(--accent);background:var(--bg);border-radius:4px;font-size:14px}
+.row .pdf{font-size:12px;color:var(--muted);margin-top:4px}
 .row:first-child{border-top:1px solid var(--line)}
 .who{font-weight:700}
 .empty{color:var(--muted);padding-block:14px;border-block:1px solid var(--line)}
-.actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.actions{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;padding-top:10px;border-top:1px dashed var(--line)}
 button,select,input,textarea{font:inherit;font-size:13px}
 button{background:transparent;color:var(--brand);border:1px solid var(--brand);border-radius:6px;padding:4px 10px;cursor:pointer}
 button:hover{background:var(--brand);color:var(--bg)}
@@ -103,7 +108,7 @@ table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
 #detail:empty{display:none}
 #detail{margin-top:14px;padding:4px 16px 12px;border:1px solid var(--brand);border-radius:10px;background:var(--surface)}
 @media (max-width:640px){input,select,textarea{font-size:16px!important} button{min-height:44px}}
-@media (max-width:720px){.row{grid-template-columns:1fr}.actions{justify-content:flex-start}}
+@media (max-width:720px){.row{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -331,18 +336,18 @@ function derive(r){
 function detailHTML(r, d){
   const usd = r.monto_usd ? ` · US$${Number(r.monto_usd).toLocaleString("en-US",{maximumFractionDigits:0})}` : "";
   const id = esc(r.id), e = d.e;
-  const who = `<div><div class="who">${esc(r.cliente)} ${r.clave ? '<span class="pill p-key">cuenta clave</span>' : ""}</div>
+  const who = `<div><span class="lbl">Cliente</span><div class="who">${esc(r.cliente)} ${r.clave ? '<span class="pill p-key">cuenta clave</span>' : ""}</div>
     <div class="meta">${esc(r.evento || "")}${r.pax ? " · " + esc(r.pax) + " pax" : ""} · ${(r.idioma||"es").toUpperCase()}${r.contacto ? " · " + esc(r.contacto) : ""}</div>
     <div class="meta">Canal: ${esc(CANAL[r.canal] || "sin dato")}${r.fecha_consulta ? " · consulta " + fmt(parse(r.fecha_consulta)) : ""}${r.ultimo_cliente ? " · último mensaje del cliente " + fmt(parse(r.ultimo_cliente)) : ""}</div>
     ${r.notas ? `<div class="meta">${esc(r.notas)}</div>` : ""}
     ${(r.historial||[]).length ? `<details><summary>Historial (${r.historial.length})</summary><ul class="hist">${r.historial.map(h=>`<li>${esc(h.fecha)} · ${esc(h.texto)}</li>`).join("")}</ul></details>` : ""}</div>`;
-  const ev = `<div class="meta"><div>Evento <strong class="num">${d.ev ? fmt(d.ev) : "sin fecha"}</strong></div>
+  const ev = `<div class="meta"><span class="lbl">Evento y monto</span><div>Evento <strong class="num">${d.ev ? fmt(d.ev) : "sin fecha"}</strong></div>
     <div class="num">${money(Number(r.monto_q))}${usd}</div>${r.opciones ? `<div>${esc(r.opciones)}</div>` : ""}
-    <div>Vence <strong class="num">${d.vence ? fmt(d.vence) : "sin fecha"}</strong></div>${r.pdf ? `<div>${esc(r.pdf)}</div>` : ""}</div>`;
-  const nx = `<div><span class="pill ${d.cls}">${esc(d.flag)}</span>
+    <div>Vence <strong class="num">${d.vence ? fmt(d.vence) : "sin fecha"}</strong></div>${r.pdf ? `<div class="pdf">${esc(r.pdf)}</div>` : ""}</div>`;
+  const nx = `<div><span class="lbl">Qué sigue</span><span class="pill ${d.cls}">${esc(d.flag)}</span>
     ${d.next && !d.waiting ? `<div style="margin-top:6px">${esc(d.label || "")}: <strong>${fmtShort(d.next)}</strong>${d.late ? " · atrasado" : ""}</div>` : ""}
     ${d.s ? `<div class="meta">${esc(d.s.t.name)} · ${Number(r.toques||0)} de ${d.s.dates.length} toques</div>` : ""}
-    ${r.proximo_paso && r.proximo_paso.texto ? `<div class="meta">Próximo paso: ${esc(r.proximo_paso.texto)}${r.proximo_paso.fecha ? " · " + fmt(parse(r.proximo_paso.fecha)) : ""}</div>` : ""}</div>`;
+    ${r.proximo_paso && r.proximo_paso.texto ? `<div class="pp"><b>Próximo paso:</b> ${esc(r.proximo_paso.texto)} · ${r.proximo_paso.fecha ? fmt(parse(r.proximo_paso.fecha)) : '<span class="p-crit">sin fecha: no lo toma nadie</span>'}</div>` : ""}</div>`;
   let acts = `<button data-act="form-editar" data-id="${id}">Editar</button>`;
   if (e === "porenviar") acts = `<button data-act="form-enviada" data-id="${id}" class="primary">Enviada</button>` + acts;
   if (abierta(e) && e !== "porenviar") {
@@ -386,7 +391,7 @@ function formFields(r){
     <label for="x-idioma">Idioma<select id="x-idioma"><option value="es" ${r.idioma!=="en"?"selected":""}>Español</option><option value="en" ${r.idioma==="en"?"selected":""}>Inglés</option></select></label>
     ${r.id ? "" : `<label for="x-etapa">Etapa<select id="x-etapa"><option value="consulta">Consulta (aún sin cotizar)</option><option value="porenviar">Por enviar (PDF en borrador)</option><option value="cotizada">Cotizada (enviada hoy)</option></select></label>`}
     <label for="x-pp">Próximo paso<input id="x-pp" value="${esc(r.proximo_paso?.texto || "")}" placeholder="Ej.: llamada para ver la degustación"></label>
-    <label for="x-ppf">Fecha del próximo paso<input type="date" id="x-ppf" value="${esc(r.proximo_paso?.fecha || "")}"></label>
+    <label for="x-ppf">Fecha del próximo paso (si la dejas vacía, es hoy)<input type="date" id="x-ppf" value="${esc(r.proximo_paso?.fecha || "")}"></label>
     <label class="check" for="x-clave"><input type="checkbox" id="x-clave" ${r.clave?"checked":""}> Cuenta clave (planner o canal que trae más eventos)</label>
     ${enviada ? `<label class="check" for="x-nuevopdf"><input type="checkbox" id="x-nuevopdf"> Hay una versión nueva del PDF (necesario para cambiar el vencimiento)</label>` : ""}
     <div class="full"><span class="hint" id="x-sug"></span><button type="button" data-act="usar-sug">Usar la vigencia sugerida</button></div>`;
@@ -413,7 +418,7 @@ function leerForm(r){
   const data = {cliente:v("x-cliente"), contacto:v("x-contacto")||null, evento:v("x-evento"), canal:v("x-canal")||null,
     fecha_consulta:v("x-consulta")||null, fecha_evento:v("x-fecha")||null, pax:num("x-pax"), monto_q:num("x-monto"), monto_usd:num("x-usd"),
     vence:v("x-vence")||null, pdf:v("x-pdf")||null, idioma:v("x-idioma")||"es", clave:document.getElementById("x-clave").checked,
-    proximo_paso: v("x-pp") ? {texto:v("x-pp"), fecha:v("x-ppf")||null} : null};
+    proximo_paso: v("x-pp") ? {texto:v("x-pp"), fecha:v("x-ppf")||iso(today())} : null};
   return {err, data, etapa};
 }
 
