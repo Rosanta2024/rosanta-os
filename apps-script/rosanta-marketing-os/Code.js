@@ -213,6 +213,13 @@ function doPost(e) {
       if (qToken !== TOKEN) return json({error:'unauthorized'});
       return json(intakeReserva(body));
     }
+    // --- Pipeline de Eventos (15-oct-2026) ---
+    // Lo llama la revisión diaria de cotizaciones de la Mac. Token propio (COTIZ_TOKEN),
+    // dentro del cuerpo, no en la URL. Ver Cotizaciones.gs.
+    if (e.parameter.hook === 'cotizaciones') {
+      return json(cotHook_(body));
+    }
+
 // --- Hook desconocido: no morir en silencio ---
     if (e.parameter.hook) {
       Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook +
