@@ -20,8 +20,8 @@ function probarEscaladas() {
     ['whatsapp', 'transferencia realizada', '', true],
     ['whatsapp', "Hi, I'm not able to pay, the info isn't working. I'd like a real person to help me, not AI", '', true],
     ['whatsapp', 'Quiero hablar con una persona', '', true],
-    // El nombre del perfil (aquí "Prueba") se usa sin volver a pedirlo (Juanma, 16-oct)
-    ['whatsapp', 'Quiero reservar el sábado 17 de octubre a las 7pm para 2 personas, mi correo es prueba@rosanta.rest', 'crear_reserva', false]
+    // Con el nombre del perfil (aquí "Prueba") pregunta si la reserva va a ese nombre, no crea todavía (Juanma, 16-oct)
+    ['whatsapp', 'Quiero reservar el sábado 17 de octubre a las 7pm para 2 personas, mi correo es prueba@rosanta.rest', 'responder_info', false]
   ];
   var ok = 0;
   casos.forEach(function (c, i) {
@@ -38,5 +38,15 @@ function probarEscaladas() {
       ' (esperado: ' + c[3] + ')' +
       '\n' + (bien ? 'OK' : 'FALLA'));
   });
-  console.log('RESULTADO: ' + ok + ' de ' + casos.length + '. Modelo: ' + CONFIG.CLAUDE_MODEL);
+  // Dos turnos en el mismo chat: confirma el nombre del perfil y recién ahí marca crear_reserva (solo el modelo: no crea nada en Wix).
+  var id2 = 'prueba-escaladas-nombre-' + Date.now();
+  var t1 = askClaude('whatsapp', 'Prueba', 'Quiero reservar el sábado 17 de octubre a las 7pm para 2 personas, mi correo es prueba@rosanta.rest', id2);
+  var t2 = askClaude('whatsapp', 'Prueba', 'Sí, a mi nombre', id2);
+  var pregunta = /Prueba/.test(t1.respuesta || '') && (t1.lead || {}).accion !== 'crear_reserva';
+  var crea = (t2.lead || {}).accion === 'crear_reserva' && /prueba/i.test((t2.lead || {}).nombre || '');
+  console.log('— Nombre del perfil, 2 turnos\nturno 1: ' + t1.respuesta + '\nbotones: ' + JSON.stringify((t1.lead || {}).opciones) +
+    '\nturno 2: ' + t2.respuesta + ' · accion: ' + (t2.lead || {}).accion + ' · nombre: ' + (t2.lead || {}).nombre +
+    '\n' + (pregunta && crea ? 'OK' : 'FALLA'));
+  if (pregunta && crea) ok++;
+  console.log('RESULTADO: ' + ok + ' de ' + (casos.length + 1) + '. Modelo: ' + CONFIG.CLAUDE_MODEL);
 }
