@@ -33,6 +33,9 @@
       <? if (usuarioTieneModulo(usuario, 'resenas')) { ?>
         <button type="button" class="sm-item" data-sub="resenas">Reseñas</button>
       <? } ?>
+      <? if (usuarioTieneModulo(usuario, 'marketing')) { ?>
+        <button type="button" class="sm-item" data-sub="eventos">Eventos</button>
+      <? } ?>
       <? if (usuarioTieneModulo(usuario, 'crm')) { ?>
         <button type="button" class="sm-item" data-sub="crm">CRM</button>
       <? } ?>
@@ -61,6 +64,7 @@
   var URLS = {
     os:      <?!= JSON.stringify(urlBase + '?page=marketing-os' + (authToken ? '&u=' + authToken : '')) ?>,
     crm:     <?!= JSON.stringify(urlBase + '?page=crm' + (authToken ? '&u=' + authToken : '')) ?>,
+    eventos: <?!= JSON.stringify(urlBase + '?page=eventos' + (authToken ? '&u=' + authToken : '')) ?>,
     resenas: <?!= JSON.stringify(resenasUrl || '') ?>,
     consola: <?!= JSON.stringify(consolaUrl || '') ?>
   };

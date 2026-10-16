@@ -267,7 +267,7 @@ function prCimientos_(res) {
     'LecturaJs', 'Logo', 'Marketing', 'MetasVista', 'ProfitAreaEstilo', 'ProfitCajaJs',
     'ProfitComprasJs', 'ProfitHoyJs', 'ProfitPagosJs', 'ProfitSalaJs', 'PruebasVista', 'ReporteSemanalCuerpo',
     'ReporteSemanalEstilo', 'ReporteSemanalJs', 'ReporteSemanalVista', 'SistemaFinanzas', 'SistemaMarketing', 'TableroVista',
-    'TiemposVista', 'GuardadoEstado'
+    'TiemposVista', 'GuardadoEstado', 'EventosVista'
   ];
   var PR_HEX_RE_ = /(^|[^&\w#])#([0-9a-f]{6}|[0-9a-f]{3})(?![0-9a-z_])/gi;
   function prContarHex_(txt) { return (String(txt).match(PR_HEX_RE_) || []).length; }
@@ -462,7 +462,7 @@ function prCimientos_(res) {
      del servidor y barre las diez vistas: lo que se agregue despues entra solo. */
   prCorrer_(g, 'Las llamadas de las vistas pasan el token', function () {
     var nombre = 'Las llamadas de las vistas pasan el token';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
+    var VISTAS = ['Index', 'EventosVista', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   // Los parciales de CosteoVista (partido el 12-sep-2026). Sus llamadas
                   // se fueron con ellos: si no se leen aca, dejan de estar protegidas.
@@ -1159,7 +1159,7 @@ function prPuentePOS_(res) {
 
   prCorrer_(g, 'Toda llamada de las vistas verifica identidad', function () {
     var nombre = 'Toda llamada de las vistas verifica identidad';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
+    var VISTAS = ['Index', 'EventosVista', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   // Los parciales de CosteoVista (partido el 12-sep-2026). Sus llamadas
                   // se fueron con ellos: si no se leen aca, dejan de estar protegidas.
@@ -1265,7 +1265,7 @@ function prPuentePOS_(res) {
      cubierta y esta prueba FALLA. */
   prCorrer_(g, 'Ninguna vista llama al servidor con el nombre en una variable', function () {
     var nombre = 'Ninguna vista llama al servidor con el nombre en una variable';
-    var VISTAS = ['Index', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
+    var VISTAS = ['Index', 'EventosVista', 'CosteoVista', 'MetasVista', 'ComparativoVista', 'FinanzasVista', 'DreVista',
                   'SistemaMarketing', 'Marketing', 'CrmVista', 'PruebasVista', 'Denied',
                   'CosteoJs_Base', 'CosteoJs_Recetas', 'CosteoJs_Insumos', 'CosteoJs_Proveedores',
                   'CosteoJs_Menu', 'CosteoJs_Inicio', 'CosteoJs_HigieneGuia', 'CosteoJs_Pintar',
@@ -1665,6 +1665,27 @@ function prModulos_(res) {
     var c = crmContactos();
     var n = c && c.length ? c.length : 0;
     prAnotar_(g, 'CRM (crmContactos)', n >= 0 ? 'OK' : 'FALLA', n + ' contactos', n);
+  });
+
+  /* Pipeline de Eventos (15-oct-2026): vive en Marketing OS › cotizaciones. La conversión
+     fila <-> documento tiene que devolver lo mismo (si no, cada guardado degrada la fila), y
+     una escritura con una versión vieja no se aplica. Las dos sin escribir en la hoja. */
+  prCorrer_(g, 'Eventos: la pestaña cotizaciones se lee y la conversión no pierde datos', function () {
+    var filas = evLeer_(), malas = [];
+    filas.forEach(function (d) {
+      var back = evFilaADoc_(EV_COLS, evDocAFila_(EV_COLS, d));
+      ['cliente', 'etapa', 'fecha_evento', 'vence', 'monto_q', 'toques'].forEach(function (k) {
+        if (String(d[k] == null ? '' : d[k]) !== String(back[k] == null ? '' : back[k])) malas.push(d.id + '.' + k);
+      });
+      if ((d.historial || []).length !== (back.historial || []).length) malas.push(d.id + '.historial');
+    });
+    var ctl = evFilaADoc_(EV_COLS, evDocAFila_(EV_COLS, { id: 'x', monto_q: 5, historial: [{ fecha: '2026-10-15', texto: 't' }], proximo_paso: { texto: 'p', fecha: '2026-10-20' } }));
+    var ctlOk = ctl.monto_q === 5 && ctl.historial.length === 1 && ctl.proximo_paso && ctl.proximo_paso.fecha === '2026-10-20';
+    prAnotar_(g, 'Eventos: la pestaña cotizaciones se lee y la conversión no pierde datos',
+              !ctlOk ? 'FALLA' : (malas.length ? 'FALLA' : (filas.length ? 'OK' : 'AVISO')),
+              !ctlOk ? 'la conversión de prueba no devuelve lo mismo' :
+              (malas.length ? 'cambian al convertir: ' + malas.slice(0, 6).join(', ') : filas.length + ' cotizaciones; ida y vuelta sin cambios'),
+              filas.length);
   });
 
   /* Ficha de cliente (15-oct-2026): con el contacto más reciente que tenga teléfono. */

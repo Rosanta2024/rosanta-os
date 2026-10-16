@@ -129,11 +129,12 @@ function doGet(e) {
   // muestra Marketing OS, y adentro Marketing.html recorta los tabs (esFull).
   if (pagina === 'marketing' && (usuarioTieneModulo(usuario, 'marketing') || usuarioTieneModulo(usuario, 'contenido'))) {
     var sub = (e && e.parameter && e.parameter.sub) || 'os';
-    if (['os', 'resenas', 'crm', 'consola'].indexOf(sub) === -1) sub = 'os'; // ?sub= viene del usuario
+    if (['os', 'resenas', 'crm', 'consola', 'eventos'].indexOf(sub) === -1) sub = 'os'; // ?sub= viene del usuario
     // Sin el módulo, el sub no se abre aunque lo escriban a mano en la URL.
     if (sub === 'resenas' && !usuarioTieneModulo(usuario, 'resenas')) sub = 'os';
     if (sub === 'crm' && !usuarioTieneModulo(usuario, 'crm')) sub = 'os';
     if (sub === 'consola' && !usuarioTieneModulo(usuario, 'consola')) sub = 'os';
+    if (sub === 'eventos' && !usuarioTieneModulo(usuario, 'marketing')) sub = 'os';
     return render_('SistemaMarketing', {
       usuario: usuario, urlBase: urlBase, sub: sub, authToken: authToken,
       resenasUrl: CONFIG.RESENAS_URL, consolaUrl: CONFIG.CONSOLA_URL
@@ -219,6 +220,13 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
+
+  // Pipeline de Eventos (15-oct-2026): antes un artifact de claude.ai, ahora la pestaña
+  // cotizaciones del Marketing OS. Se abre dentro del Sistema de Marketing (sub=eventos).
+  if (pagina === 'eventos' && usuarioTieneModulo(usuario, 'marketing')) {
+    return render_('EventosVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
 
   // Vista CRM: contactos de la maestra arriba, conversación del bot abajo.
   if (pagina === 'crm' && usuarioTieneModulo(usuario, 'crm')) {
