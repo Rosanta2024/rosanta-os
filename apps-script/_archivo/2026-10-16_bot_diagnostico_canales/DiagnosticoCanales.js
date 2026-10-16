@@ -35,7 +35,7 @@ function diagnosticoCanales() {
   // 3) Lo que Meta tiene en la bandeja (mensajes de clientes, no los nuestros)
   function bandeja(nombre, base, token, propio, extra) {
     var porDia = {}, total = 0, enHueco = [], url = base + '/me/conversations?' + extra +
-      'fields=updated_time,messages.limit(100){created_time,from}&limit=50';
+      'fields=' + encodeURIComponent('updated_time,messages.limit(100){created_time,from}') + '&limit=50';
     var paginas = 0;
     try {
       while (url && paginas < 15) {
