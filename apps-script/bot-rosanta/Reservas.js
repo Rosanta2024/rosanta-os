@@ -36,6 +36,7 @@ function rvCerrar(result, canal, contactoId) {
   try {
     if (!result || !result.lead) return result; if (String(result.lead.accion || '') === 'cancelar_reserva') return rvCancelar(result, canal, contactoId);   // vive en Cancelar.gs
     if (String(result.lead.accion || '') === 'cambiar_reserva') return rvCambiar(result, canal, contactoId);    // vive en Cambiar.js
+    if (String(result.lead.accion || '') === 'consultar_reserva') return rvConsultar(result, canal, contactoId);  // vive en Consultar.js
 
     // La fecha se revisa en cuanto aparece, sin esperar a tener los cinco datos.
     // Solo cuando el hilo va de reservar: si alguien menciona una fecha vieja

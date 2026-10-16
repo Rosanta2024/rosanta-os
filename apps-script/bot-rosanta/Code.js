@@ -385,7 +385,7 @@ function CLAUDE_ESQUEMA_() {
   props.idioma = { type: 'string', enum: ['es', 'en'] };
   props.tipo = { type: 'string', enum: ['reserva', 'evento', 'consulta', 'queja', 'spam', 'otro'] };
   props.urgencia = { type: 'string', enum: ['caliente', 'tibio', 'frio'] };
-  props.accion = { type: 'string', enum: ['crear_reserva', 'cancelar_reserva', 'cambiar_reserva', 'redirigir_reservas',
+  props.accion = { type: 'string', enum: ['crear_reserva', 'cancelar_reserva', 'cambiar_reserva', 'consultar_reserva', 'redirigir_reservas',
     'escalar_evento', 'responder_info', 'escalar_humano'] };
   props.opciones = { type: 'array', items: txt };
   props.mostrar_menu = { type: 'boolean' };
@@ -416,7 +416,7 @@ function claudeTexto_(data) {
 function guardaEscalarEvento_(lead) {
   if (!lead || lead.requiere_humano) return;
   if (lead.tipo !== 'evento') return;
-  if (lead.accion === 'crear_reserva' || lead.accion === 'cancelar_reserva' || lead.accion === 'redirigir_reservas') return;
+  if (lead.accion === 'crear_reserva' || lead.accion === 'cancelar_reserva' || lead.accion === 'cambiar_reserva' || lead.accion === 'consultar_reserva' || lead.accion === 'redirigir_reservas') return;
   if (!lead.email || !(lead.fecha || lead.personas)) return;
   lead.requiere_humano = true;
   lead.accion = 'escalar_evento';
@@ -549,6 +549,8 @@ function masterPrompt_() { return [
 '',
 'CAMBIAR RESERVA: si el cliente quiere mover su reserva a otra fecha u hora, o cambiar el número de personas, NO la canceles: marca accion:"cambiar_reserva" con SOLO lo que cambia en fecha (AAAA-MM-DD), hora (24h) y personas (lo que no cambia déjalo vacío), y en fecha_actual y hora_actual la fecha y la hora de la reserva que tiene hoy si las dijo. Escribe una línea corta de espera (ej. "Dame un segundo que la muevo"). El sistema revisa que haya lugar antes de tocar nada: si no hay, su reserva actual sigue igual. NUNCA digas que ya quedó cambiada: el sistema reemplaza tu mensaje con el resultado real. Si no queda claro qué quiere cambiar, pregúntalo.',
 '',
+'CONSULTAR RESERVA: si el cliente solo pregunta por la reserva que ya tiene (a qué hora era, para qué día, para cuántos, si está confirmada), SÍ la buscas por chat: marca accion:"consultar_reserva", con email y fecha en el lead SOLO si los dio, y escribe una línea corta de espera (ej. "Dame un segundo que la busco"). El sistema solo LEE la reserva y reemplaza tu mensaje con lo que encontró. Preguntar por una reserva NUNCA es cancelar_reserva ni cambiar_reserva: esas acciones son solo cuando el cliente pide cancelar o cambiar con esas palabras o con una intención clara.',
+'',
 'EVENTOS PRIVADOS (cumpleaños, corporativos, grupos a cotizar): NO los cotizas ni cierras. Recoge la info en DOS pasos, para no abrumar con muchas preguntas juntas:',
   '  PASO 1 — BÁSICOS: si todavía no los tienes, pregunta tipo de evento, fecha tentativa, número de personas, NOMBRE del cliente y CORREO ELECTRÓNICO (imprescindible: la cotización se envía por correo). Presenta los datos que faltan como una lista corta, con cada uno en negrita usando asteriscos de WhatsApp (ej. "*Tu nombre:*", "*Fecha:*", "*Personas:*", "*Correo:*"), para que el cliente los responda uno por uno. En este paso NO menciones los menús todavía.',
   '  PASO 2 — PRESUPUESTO: cuando ya tengas los básicos, pregunta el presupuesto por persona con esta frase (en su idioma) — español: "' + BT_EVENTO.es.presupuesto + '" · inglés: "' + BT_EVENTO.en.presupuesto + '" — y pon en "opciones" EXACTAMENTE estos cuatro textos — español: ' + JSON.stringify(BT_EVENTO.es.rangos) + ' · inglés: ' + JSON.stringify(BT_EVENTO.en.rangos) + '. Guarda lo que conteste en "presupuesto" (si escribe un monto, ese monto). Si ya lo dijo antes, no lo vuelvas a pedir.',
@@ -557,7 +559,9 @@ function masterPrompt_() { return [
   'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que Juanma le hará una propuesta, con la FRASE DE PASO A PERSONA. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
 'EVENTOS PÚBLICOS DEL MES (maridajes, catas, noches temáticas con precio y cupo que aparezcan en la base): SÍ das la info completa tomada de la base y compartes el link de reservas. NO los escalas salvo grupo grande o caso especial. tipo:"evento", requiere_humano:false.',
 '',
-'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (prensa, proveedores, facturación especial, pagos). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo" (aunque la base de conocimiento lo diga, usa solo la FRASE DE PASO A PERSONA, una sola vez). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
+'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (facturación especial, problemas con un pago, reenviar una cotización o propuesta ya enviada). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo" (aunque la base de conocimiento lo diga, usa solo la FRASE DE PASO A PERSONA, una sola vez). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
+'PROPUESTAS DE NEGOCIO (colaboraciones, influencers, creadores de contenido, prensa, proveedores, músicos, artistas): NO escalas. Agradece con calidez y pide que envíen su propuesta al correo restaurante@rosanta.rest. requiere_humano:false, accion:"responder_info", tipo:"otro". Si además quieren reservar una mesa, ayúdalos con la reserva.',
+'ANTICIPOS Y TRANSFERENCIAS (Cena Romántica, eventos, gift cards): pide la foto del comprobante UNA sola vez. Cuando el cliente diga que ya transfirió o mande el comprobante, NO lo vuelvas a pedir: dile que Juanma revisa la transferencia y le confirma, con la FRASE DE PASO A PERSONA, y marca requiere_humano:true. Tú nunca das un pago por recibido.',
 '',
 'NO HAGAS: confirmar reservas como definitivas; prometer descuentos/cortesías sin autorización; compartir datos internos; mencionar al cliente el nombre de ningún empleado (la única excepción es Juanma, solo dentro de la FRASE DE PASO A PERSONA); salirte del tema del restaurante.',
 '',
@@ -586,7 +590,7 @@ function masterPrompt_() { return [
 '    "tipo": "reserva | evento | consulta | queja | spam | otro",',
 '    "urgencia": "caliente | tibio | frio",',
 '    "resumen": "<una línea: qué quiere>",',
-'    "accion": "crear_reserva | cancelar_reserva | cambiar_reserva | redirigir_reservas | escalar_evento | responder_info | escalar_humano",',
+'    "accion": "crear_reserva | cancelar_reserva | cambiar_reserva | consultar_reserva | redirigir_reservas | escalar_evento | responder_info | escalar_humano",',
 '    "fecha_actual": "<solo al cambiar una reserva: la fecha AAAA-MM-DD de la reserva que ya tiene, si la dijo; si no, vacío>",',
 '    "hora_actual": "<solo al cambiar una reserva: la hora 24h de la reserva que ya tiene, si la dijo; si no, vacío>",',
 '    "requiere_humano": true/false',
