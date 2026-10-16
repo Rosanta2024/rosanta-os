@@ -1367,6 +1367,31 @@ function prFinanzas_(res) {
     prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
       malos.length ? malos.join(' · ') : 'aviso leido · ' + base.length + ' del FEL + 2 por correo (la repetida y la nota de credito no entran)', malos.length, 0);
   });
+
+  // Las transferencias del BI por correo (BancoCorreo.js, 16-oct-2026): el aviso se lee, lo que ya
+  // trae el estado de cuenta no se repite, la planilla no entra a Pagos y lo que falta se avisa.
+  prCorrer_(g, 'Transferencias del BI por correo: se leen y se cruzan con el estado de cuenta', function () {
+    var nombre = 'Transferencias del BI por correo: se leen y se cruzan con el estado de cuenta';
+    var td = function (a, b) { return '<tr><td><p><strong>' + a + '</strong></p></td><td><p>' + b + '</p></td></tr>'; };
+    var html = '<table>' + td('Banco:', 'Banco Industrial S.A.') + td('Generado por:', 'CORSAGA SOCIEDAD ANONIMA   ') + td('Banco:', 'BAC') +
+      td('Cuenta:', '903941979') + td('Nombre:', 'FELIX MENELIK DONIS YUMAN') + td('Descripci&oacute;n de pago:', 'S42 Tavito Varias') + td('Cr&eacute;dito de:', 'Q.713.56') + '</table>';
+    var b = bcoParsear_(html), malos = [];
+    if (!b || b.banco_destino !== 'BAC' || b.cuenta !== '903941979' || b.desc !== 'S42 Tavito Varias' || b.q !== 713.56) malos.push('el aviso se leyo mal: ' + JSON.stringify(b));
+    if (bcoParsear_(html.replace('CORSAGA', 'OTRA')) !== null) malos.push('entro una transferencia que no es de CORSAGA');
+    var D = function (s) { return pagNumDia_(pagDia_(s)); };
+    var crudo = [{ llave: 'a', fecha: '2026-09-29', dia: D('2026-09-29'), q: 2500, glosa: '2a Septiembre jeffry', categoria: 'NOMINA' },
+                 { llave: 'b', fecha: '2026-10-12', dia: D('2026-10-12'), q: 10, glosa: 'x', categoria: '' }];
+    var C = function (id, f, q, desc, cta) { return { id: id, fecha: f, dia: D(f), hora: '12:00', medio: 'Banco BI', q: q, desc: desc, cuenta: cta, nombre: '' }; };
+    var X = _bcoCruzar_([C('1', '2026-09-29', 2500, '2a Septiembre jeffry', '9'), C('2', '2026-10-05', 777, 'No llego', '1'),
+                         C('3', '2026-10-16', 2500, 'Octubre jeffry', '9'), C('4', '2026-10-16', 713.56, 'S42 Tavito Varias', '7')], crudo);
+    if (X.pagos.length !== 1 || X.pagos[0].q !== 713.56 || !X.pagos[0].correo) malos.push('a Pagos debia entrar solo la de Tavito: ' + JSON.stringify(X.pagos.map(function (p) { return p.glosa; })));
+    if (X.faltantes.length !== 1 || X.faltantes[0].q !== 777) malos.push('la que no aparece en un dia ya cubierto no quedo como faltante');
+    // y la de verdad: lo que hay en la hoja cruzado con el maestro
+    var reales = bcoTransferencias_(), R = _bcoCruzar_(reales, pagPagosBanco_(SpreadsheetApp.openById(FIN_MAESTRO_ID)).crudoBI || []);
+    prAnotar_(g, nombre, malos.length ? 'FALLA' : 'OK',
+      malos.length ? malos.join(' · ') : 'aviso leido · cruce correcto · en la hoja: ' + reales.length + ' avisos, ' + R.pagos.length + ' por llegar al estado de cuenta, ' + R.faltantes.length + ' que no aparecen',
+      malos.length, 0);
+  });
 }
 
 

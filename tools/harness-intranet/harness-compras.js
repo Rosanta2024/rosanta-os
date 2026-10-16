@@ -46,7 +46,7 @@ let archivos = 0;
 ctx.DriveApp = { getFileById: () => ({ getParents: () => ({ next: () => ({ getFoldersByName: () => ({ hasNext: () => false }),
   createFolder: () => ({ createFile: () => ({ getUrl: () => 'https://drive.google.com/file/d/foto' + (++archivos) }) }) }) }) }) };
 ctx.Utilities.newBlob = () => ({}); ctx.Utilities.base64Decode = () => [];
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // el espejo llega hasta el 11-oct: el cuadre se prueba desde septiembre
 vm.runInContext("PAG_DESDE_ = '2026-08-01'; CPE_ARRANQUE_ = '2026-09-01'; fecLeerSiToca_ = function () { return null; }; fecFacturas_ = function () { return []; };", ctx);
