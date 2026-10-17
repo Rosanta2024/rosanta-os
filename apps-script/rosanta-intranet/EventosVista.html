@@ -123,6 +123,7 @@ table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
 </head>
 <body>
 <div class="wrap">
+  <? if (rolSinAcento_(usuario.rol) === 'sala') { ?><a class="eyebrow" style="display:inline-block;margin-bottom:.4rem" href="<?= urlBase ?><?!= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a><? } ?>
   <div class="eyebrow">Rosanta · Eventos y cotizaciones</div>
   <h1>Pipeline de Eventos</h1>
   <p class="lede">Cada cotización vive en una etapa del embudo, de la consulta a la reserva. Los toques son un dato dentro de cada etapa. La revisión del correo es diaria, de lunes a sábado.</p>
