@@ -66,6 +66,9 @@
     padding: 0.45rem 0.1rem; border-bottom: 1px solid rgba(26,26,26,0.08); font-size: 0.86rem; }
   .pg-l.cab { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); font-weight: 600; padding-top: 0.2rem; font-family:var(--rosanta-font-label)}
   .pg-l .m { display: none; font-size: 0.74rem; color: var(--texto-suave); }
+  /* el estatus de la fila nunca se sale de su columna: si no cabe, parte en dos lineas */
+  .pg-l .est { min-width: 0; }
+  .pg-l .est .pg-est { white-space: normal; max-width: 100%; line-height: 1.25; text-align: center; border-radius: 0.6rem; }
   .pg-lp { grid-column: 1 / -1; }
   @media (max-width: 640px) {
     .pg-hide-m, .pg-l .d { display: none; }
@@ -118,7 +121,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
   window.addEventListener('pf-buscar', function () { if (D0) { D = filtrar(D0); pintar(); } });
   window.addEventListener('pf-ir', function () { if (D && !ADMIN && window.PF_IR && window.PF_IR.vista === 'pagos') pintar(); });
   var CLASE = { 'Pendiente': 'pend', 'Abonada': 'abon', 'Banco por confirmar': 'banco', 'Pagada': 'ok', 'Pagada de más': 'mas' };
-  function estado(e) { return '<span class="pg-est ' + (CLASE[e] || '') + '">' + esc(e === 'Banco por confirmar' ? 'Pagada · falta que el banco la registre' : e) + '</span>'; }
+  // 'Banco por confirmar' va corto (cabe en su columna); el texto completo queda en el title
+  function estado(e) { var banco = e === 'Banco por confirmar'; return '<span class="pg-est ' + (CLASE[e] || '') + '"' + (banco ? ' title="Pagada · falta que el banco la registre"' : '') + '>' + esc(banco ? 'Pagada · falta el banco' : e) + '</span>'; }
 
   function cargar() {
     HOST.innerHTML = '<div class="pg-vacio">Leyendo las facturas y los pagos…</div>';
