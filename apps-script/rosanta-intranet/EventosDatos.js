@@ -176,25 +176,3 @@ function evRevisiones_() {
   });
 }
 
-/** Una línea por día (la fecha es la llave: se reemplaza si ya existe). */
-function evGuardarRevision_(r) {
-  var lock = LockService.getScriptLock();
-  if (!lock.tryLock(20000)) return { ok: false, error: 'La hoja está ocupada.' };
-  try {
-    var H = evHoja_(EV_REV_TAB, EV_REV_COLS);
-    var fecha = String(r.fecha || '').slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { ok: false, error: 'fecha inválida' };
-    var fila = H.head.map(function (h) {
-      var v = h === 'fecha' ? fecha : r[h];
-      return v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
-    });
-    var n = H.sh.getLastRow() - 1, i = -1;
-    if (n > 0) H.sh.getRange(2, 1, n, 1).getValues().forEach(function (f, k) { if (evTxt_(f[0]) === fecha) i = k; });
-    if (i >= 0) H.sh.getRange(i + 2, 1, 1, H.head.length).setValues([fila]);
-    else H.sh.getRange(H.sh.getLastRow() + 1, 1, 1, H.head.length).setValues([fila]);
-    return { ok: true };
-  } finally {
-    lock.releaseLock();
-  }
-}
-

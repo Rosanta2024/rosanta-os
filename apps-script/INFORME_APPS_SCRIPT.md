@@ -367,7 +367,7 @@ No queda un solo `return null` en el archivo. `backfillReservas` escribe las sem
 
 ### 5.11 ✅ El Google Ads Script y el `BACKFILL` congelado (31-ago)
 
-`gCosto`/`gClics`/`gImp` llevaban vacías desde la **S32**. El escritor no está en Apps Script: es un **Google Ads Script** (`Rosanta_GoogleAds_Script_pauta.js`) que corre dentro de Google Ads y llena Google **y** Meta. Por eso no aparecía en ninguna búsqueda del repo. Copia de referencia en `apps-script/_externos/`.
+`gCosto`/`gClics`/`gImp` llevaban vacías desde la **S32**. El escritor no está en Apps Script: es un **Google Ads Script** (`Rosanta_GoogleAds_Script_pauta.js`) que corre dentro de Google Ads y llena Google **y** Meta. Por eso no aparecía en ninguna búsqueda del repo. Copia de referencia vigente (v4) en `apps-script/_google-ads-scripts/`; la v3 que estaba en `_externos/` se archivó el 17-oct-2026 en `_archivo/2026-10-17_carpetas_viejas/`.
 
 **Causa 1:** `var BACKFILL = [27,28,29,30,31]` quedó puesto desde un backfill del 5-ago. La cabecera del propio script decía que había que vaciarlo al terminar; no se hizo. Cada semana reprocesaba julio y **nunca escribía la semana en curso**. `gCosto` congelado exactamente en la S31, el último número del array.
 

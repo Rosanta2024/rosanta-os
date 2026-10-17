@@ -113,7 +113,7 @@ t('El debito no cuenta como efectivo', Math.abs(D.resumen.registrado - 900 - f.s
 
 // 7. anular
 const idC = D.registradas.filter(x => x.proveedor === 'Carnicería Santa Rosa')[0].id;
-t('Maco no anula una compra de cocina', /COCINA/.test(tira(() => ctx.anularCompraEfectivo('tokmaco', idC))));
+t('Maco no anula una compra de cocina (la anotó Jeffry)', /solo el dueño/.test(tira(() => ctx.anularCompraEfectivo('tokmaco', idC))));
 D = ctx.anularCompraEfectivo('tokchef', idC);
 t('Jeffry anula la suya y vuelve a estar por justificar', !D.registradas.some(x => x.id === idC) && Math.abs(D.resumen.registrado - f.saldo) < 0.01);
 

@@ -55,9 +55,11 @@ var EDIT = {
    * puede_() devuelve lista vacia y esa persona no puede hacer NADA, sin un solo
    * mensaje de error. Le paso a "dueno" y por eso existe esa prueba.
    */
+  // El precio de carta (precio de venta) es solo del dueño: matriz de accesos de Juanma, 17-oct-2026.
+  // El resto del recetario queda con acceso total en su area (Juanma, 17-oct-2026).
   permisos: {
-    chef:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
-    sala:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
+    chef:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
+    sala:          ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarRinde','crearFicha','archivarFicha','archivarInsumo'],
     dueno:         ['editarCantidad','agregarLinea','quitarLinea','crearInsumo','crearProveedor','cambiarPrecio','cambiarPrecioMenu','cambiarRinde','crearFicha','archivarFicha','archivarInsumo']
   },
   /**
