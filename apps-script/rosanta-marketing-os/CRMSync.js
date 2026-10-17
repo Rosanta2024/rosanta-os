@@ -528,3 +528,7 @@ function ensayoCRM() {
   Logger.log(msg);
   return msg;
 }
+
+// 17-oct-2026: las funciones de un solo uso y de prueba de este archivo (crearPestanaReservas,
+// instalarTriggersCRM, probarReserva, limpiarPruebaReserva, normalizarOptInCRM) se archivaron en
+// apps-script/_archivo/2026-10-17_mkt_limpieza/, junto con la limpieza del CRM de ese dia.
