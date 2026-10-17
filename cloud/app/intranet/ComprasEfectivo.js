@@ -371,7 +371,7 @@ function registrarCompraEfectivo_(auth, c) {
   return getComprasEfectivo(auth);
 }
 
-/** Anula una compra registrada (misma regla que Pagos: su area, lo suyo o el dueño). */
+/** Anula una compra registrada (misma regla que Pagos: lo que anoto uno mismo, o el dueño). */
 function anularCompraEfectivo(auth, id) {
   cpeQuien_(auth);
   anularMovimientoPago(auth, id);
