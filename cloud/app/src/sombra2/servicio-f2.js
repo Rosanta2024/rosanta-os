@@ -100,8 +100,15 @@ function crearServicioF2(pool) {
     resumen.push(...await C.refrescarCopia(sheets, pool, { libros: await soloExistentes(sheets, LIBROS_CAJA), tabla: TABLA }));
     let errEventos = null;
     try { resumen.push(...await C.refrescarCopia(sheets, pool, { libros: await soloExistentes(sheets, LIBROS_EVENTOS), tabla: TABLA })); } catch (e) { errEventos = e; }
+    const habiaEventos = !!(libros && libros[MKT_ID]);
     await cargar();
-    if (errEventos) { const e = new Error('Caja copiada; Eventos no: ' + (errEventos.message || errEventos)); e.resumen = resumen; throw e; }
+    if (errEventos) {
+      const msg = 'Caja copiada; Eventos no: ' + (errEventos.message || errEventos);
+      // Si Marketing OS nunca se pudo leer (todavia no esta compartida con el servidor), es un
+      // aviso y no una falla: no manda la alerta cada 15 min. Si ya se habia leido, si es falla.
+      if (!habiaEventos) { resumen.aviso = msg; return resumen; }
+      const e = new Error(msg); e.resumen = resumen; throw e;
+    }
     return resumen;
   }
 

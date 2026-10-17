@@ -191,3 +191,23 @@ test('La copia se salta las pestañas que la intranet todavia no creo (como las 
   const r = S.crearMotores(sinRetiros).caja.correr(DUENO, 'getComprasEfectivo', []).resultado;
   assert.strictEqual(r.solicitudes.length, 0, 'Compras sin la pestaña = sin solicitudes, no un error');
 });
+
+test('Copia: Marketing OS sin compartir es aviso; si ya se habia leido y deja de leerse, es falla', async () => {
+  const filasDe = (L) => { const r = []; Object.keys(L).forEach((id) => Object.keys(L[id]).forEach((p) => r.push({ libro: id, pestana: p, filas: C.codificar(L[id][p]), leida: new Date() }))); return r; };
+  let guardado = libros(); delete guardado[S.MKT_ID];
+  const pool = { query: async (sql) => { if (/^SELECT libro/.test(sql)) return { rows: filasDe(guardado) }; return { rows: [] }; },
+    connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }) };
+  const negar = new Set([S.MKT_ID]);
+  const sheets = { spreadsheets: { get: async (q) => {
+    if (negar.has(q.spreadsheetId)) throw new Error('The caller does not have permission');
+    if (q.fields === 'sheets.properties.title') return { data: { sheets: [] } };
+    return { data: { sheets: [] } };
+  } } };
+  const f2 = S.crearServicioF2(pool);
+  await f2.cargar();
+  const r = await f2.refrescar(sheets);
+  assert.match(r.aviso, /Eventos no: The caller does not have permission/);
+  guardado = libros();            // ahora la copia SI tenia Marketing OS
+  await f2.cargar();
+  await assert.rejects(() => f2.refrescar(sheets), /Eventos no/);
+});

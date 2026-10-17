@@ -73,7 +73,7 @@ function crearAppF2(deps) {
     try {
       const t0 = Date.now();
       const resumen = await deps.f2.refrescar();
-      res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen });
+      res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen, aviso: resumen.aviso || undefined });
     } catch (e) {
       if (e.resumen) return res.status(500).json({ ok: false, error: String(e.message), pestanas: e.resumen });
       next(e);
