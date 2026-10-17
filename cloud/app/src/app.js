@@ -100,8 +100,10 @@ function crearApp(deps) {
   app.post('/tareas/refrescar-copia', exigirTarea, async (req, res, next) => {
     try {
       const t0 = Date.now();
-      const resumen = await deps.pagos.refrescar();
-      res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen });
+      const r = await deps.pagos.refrescar();
+      // si la importacion encontro problemas (conflicto, fila sin ID, una que falta en la hoja), 409: el reloj avisa
+      const mal = r.importacion && r.importacion.problemas.length > 0;
+      res.status(mal ? 409 : 200).json({ ok: !mal, ms: Date.now() - t0, pestanas: r.pestanas, importacion: r.importacion });
     } catch (e) { next(e); }
   });
 

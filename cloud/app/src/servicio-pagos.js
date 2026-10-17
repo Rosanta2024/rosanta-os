@@ -8,6 +8,7 @@
  */
 const C = require('./copia-hojas');
 const { crearMotor } = require('./motor-pagos');
+const IMP = require('./importar-pagos');
 
 // Lo que la pantalla de Pagos llama y solo lee.
 const LECTURA = ['getPagosProveedores', 'getBalanceProveedores', 'getFacturasParaDevolver'];
@@ -28,10 +29,13 @@ function crearServicioPagos(pool, opciones) {
     libros = copia.libros; leida = copia.leida; error = null;
   }
 
+  /** Copia las hojas y, enseguida, importa a la base las filas de PAGOS_PROVEEDORES (opcion a, 17-oct). */
   async function refrescar(sheets) {
     const resumen = await C.refrescarCopia(sheets, pool);
     await cargar();
-    return resumen;
+    const hoja = libros && libros[C.LIBROS.config.id] && libros[C.LIBROS.config.id].PAGOS_PROVEEDORES;
+    const importacion = hoja ? await IMP.importar(pool, hoja) : null;
+    return { pestanas: resumen, importacion };
   }
 
   /** Corre una funcion de Pagos como `usuario`. Devuelve { resultado, ms }. */

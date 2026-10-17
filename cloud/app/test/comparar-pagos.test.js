@@ -27,12 +27,21 @@ function sheetsDe(L) {
     return { data: { sheets: nombres.filter((n) => src[n]).map((n) => ({ properties: { title: n }, data: [{ rowData: src[n].map((r) => ({ values: r.map(celda) })) }] })) } };
   } } };
 }
-const poolFotos = () => { const fotos = []; return { fotos, query: async (sql, p) => { if (/INSERT INTO pagos_fotos/.test(sql)) fotos.push(p); return { rows: [] }; } }; };
+/** Base de mentira: las fotos que se guardan y la tabla pagos_proveedores con las filas de PAGOS_PROVEEDORES de L. */
+const poolFotos = (L) => {
+  const fotos = [];
+  const filas = L ? L[C.LIBROS.config.id].PAGOS_PROVEEDORES.slice(1) : [];
+  return { fotos, query: async (sql, p) => {
+    if (/INSERT INTO pagos_fotos/.test(sql)) fotos.push(p);
+    if (/SELECT celdas FROM pagos_proveedores/.test(sql)) return { rows: filas.map((f) => ({ celdas: JSON.parse(JSON.stringify(C.codificar([f])[0])) })) };
+    return { rows: [] };
+  } };
+};
 const AHORA = new Date(2026, 9, 17, 23, 50);
 
 test('Con la copia igual a las hojas: al dia, y los totales son los del recuadro de Pagos', async () => {
   const L = librosReales();
-  const pool = poolFotos();
+  const pool = poolFotos(L);
   const f = await comparar({ pool, sheets: sheetsDe(L), librosCopia: librosReales(), ahora: AHORA });
   assert.strictEqual(f.copia_al_dia, true, f.diferencias.join(' | '));
   assert.strictEqual(f.por_pagar_n, 3, 'las tres facturas vigentes (la anulada no)');
@@ -43,15 +52,25 @@ test('Con la copia igual a las hojas: al dia, y los totales son los del recuadro
 test('Control negativo: una copia vieja (sin un pago nuevo) NO pasa como al dia', async () => {
   const L = librosReales((x) => x[C.LIBROS.config.id].PAGOS_PROVEEDORES.push(
     ['COCINA', 'VERDURAS DOÑA MINA', '1001', '', '2026-10-17', 500, 'Pagado de caja', '111', '', 'Jeffry', new Date(2026, 9, 17, 12), 'abc12345']));
-  const f = await comparar({ pool: poolFotos(), sheets: sheetsDe(L), librosCopia: librosReales(), ahora: AHORA });
+  const f = await comparar({ pool: poolFotos(L), sheets: sheetsDe(L), librosCopia: librosReales(), ahora: AHORA });
   assert.strictEqual(f.copia_al_dia, false);
   assert.ok(f.diferencias.some((d) => /por_pagar_q: copia 1600 · hojas 1100/.test(d)), f.diferencias.join(' | '));
   assert.ok(f.diferencias.some((d) => /VERDURAS DOÑA MINA \(111\) pendiente/.test(d)));
 });
 
+test('Control negativo: si a la base le falta un pago de la hoja, NO esta al dia', async () => {
+  const L = librosReales((x) => x[C.LIBROS.config.id].PAGOS_PROVEEDORES.push(
+    ['COCINA', 'VERDURAS DOÑA MINA', '1001', '', '2026-10-17', 500, 'Pagado de caja', '111', '', 'Jeffry', new Date(2026, 9, 17, 12), 'abc12345']));
+  const pool = poolFotos(librosReales());   // la base sin el pago nuevo
+  const f = await comparar({ pool, sheets: sheetsDe(L), librosCopia: L, ahora: AHORA });
+  assert.strictEqual(f.copia_al_dia, false);
+  assert.ok(f.diferencias.some((d) => /Base: falta el pago abc12345/.test(d)), f.diferencias.join(' | '));
+  assert.ok(f.diferencias.some((d) => /Pagos desde la base: por_pagar_q/.test(d)));
+});
+
 test('Las celdas con error del maestro se cuentan', async () => {
   const L = librosReales((x) => { x[C.LIBROS.maestro.id]['01_FEL_Maestro'][5][13] = '#REF!'; });
-  const f = await comparar({ pool: poolFotos(), sheets: sheetsDe(L), librosCopia: librosReales(), ahora: AHORA });
+  const f = await comparar({ pool: poolFotos(L), sheets: sheetsDe(L), librosCopia: librosReales(), ahora: AHORA });
   assert.deepStrictEqual(f.celdas_error, { '01_FEL_Maestro': 1 });
   assert.deepStrictEqual(celdasConError({ x: { p: [['#N/A', 'ok', 3]] } }), { p: 1 });
 });
