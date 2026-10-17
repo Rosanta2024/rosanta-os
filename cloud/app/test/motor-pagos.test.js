@@ -88,3 +88,13 @@ test('La copia de hojas solo acepta nombres de tabla simples', async () => {
   await assert.rejects(() => C.cargarCopia(pool, { tabla: 'hojas_copia; DROP TABLE usuarios' }), /Nombre de tabla invalido/);
   assert.deepStrictEqual((await C.cargarCopia(pool, { tabla: 'hojas_copia_f2' })).libros, {});
 });
+
+test('El servidor no intenta leer Gmail al abrir Pagos (eso queda en la intranet)', () => {
+  const M = motor();
+  assert.strictEqual(M.ctx.fecLeerSiToca_(), null);
+  assert.strictEqual(M.ctx.bcoLeerSiToca_(), null);
+  let gmail = 0;
+  M.ctx.Gmail = { Users: new Proxy({}, { get: () => { gmail++; throw new Error('Gmail'); } }) };
+  M.correr(CHEF, 'getPagosProveedores', []);
+  assert.strictEqual(gmail, 0, 'ninguna llamada a Gmail');
+});

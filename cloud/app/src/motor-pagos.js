@@ -110,6 +110,9 @@ function crearMotor(opciones) {
   const lista = Array.from(new Set((opciones.listas || ['LISTA.txt'])
     .map((l) => fs.readFileSync(path.join(DIR, l), 'utf8')).join('\n').split('\n').map((s) => s.trim()).filter(Boolean)));
   lista.forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'intranet/' + f }));
+  // Los correos de SAT y del banco los sigue leyendo la intranet (vigia y pantallas de Apps Script):
+  // el servidor no tiene Gmail. Sin esto, getPagosProveedores intentaba leerlos y fallaba en silencio.
+  ['fecLeerSiToca_', 'bcoLeerSiToca_'].forEach((n) => { if (typeof ctx[n] === 'function') ctx[n] = () => null; });
 
   /**
    * Corre una funcion de la intranet como `usuario` (de la tabla usuarios). Devuelve
