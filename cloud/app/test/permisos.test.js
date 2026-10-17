@@ -85,3 +85,11 @@ test('Control negativo: una matriz con un permiso de mas no pasa la primera prue
   const M2 = P.armar([...M.permisos.values()].concat({ rol: 'pauta', parte: 'finanzas', nivel: 'ver', area: '*' }), []);
   assert.ok(ok(P.puede(M2, vanessa, 'finanzas', 'ver')), 'con la fila de mas, Vanessa veria Finanzas');
 });
+
+test('La migracion 021 (bitacora) no deja a la app editar ni borrar la bitacora', () => {
+  const fs = require('fs'), path = require('path');
+  const sql = fs.readFileSync(path.join(__dirname, '../../db/migraciones/021_bitacora.sql'), 'utf8');
+  assert.match(sql, /GRANT SELECT, INSERT ON bitacora TO app;/);
+  assert.doesNotMatch(sql, /GRANT[^;]*DELETE[^;]*bitacora/);
+  assert.doesNotMatch(sql, /GRANT UPDATE ON bitacora/, 'solo puede marcar "avisado"');
+});
