@@ -39,6 +39,9 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 
 ## Pagos (Fase 1, en sombra desde el 17-oct-2026)
 
+**Calendario (Juanma, 17-oct-2026):** sombra hasta el **31-oct inclusive** (para que entre el cierre de mes). En vivo desde el 1-nov **hasta cumplir los criterios**, no un plazo fijo: al menos 50 guardados reales con el ✓ en <1 s en 95 de cada 100, 0 diferencias de dinero en la comparación de cada noche y la copia a Sheets correcta 5 días seguidos. Meta ~1 semana; si a las 2 semanas no se cumple, se evalúa con Juanma. Parar si: >1.5 s en 95 de cada 100, una diferencia de dinero sin explicar, o la copia a Sheets falla 2 veces en una semana.
+
+
 - Pantalla: `/pagos?u=<enlace>` (la misma de la intranet; solo muestra). Fotos de la comparación: `/pagos/fotos?u=<enlace del dueño>`.
 - El motor corre los archivos de la intranet copiados en `app/intranet/` (listas `LISTA.txt` y `LISTA-VISTAS.txt`). **Si cambia uno en `apps-script/rosanta-intranet`, esperar a que la intranet lo publique y entonces:** `cloud/herramientas/traer-intranet.sh`, sellar y republicar. La prueba "El motor usa los mismos archivos que la intranet" falla si se separan.
 - Relojes (Scheduler, us-central1): `refrescar-copia-pagos` (cada 15 min, 6 a 23 GT), `comparar-pagos-noche` (23:52 GT; responde 409 si la copia no coincide), `respaldo-semanal-base` (domingo 3:00).
