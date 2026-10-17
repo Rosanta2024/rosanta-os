@@ -51,7 +51,18 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.
 
+## Restaurar (probado el 17-oct-2026)
+
+Nunca se restaura encima de `rosanta-db` sin el sí de Juanma: primero en una instancia aparte, se compara y recién ahí se decide. Antes y después, sacar la foto de cada tabla con `node cloud/herramientas/contar-base.js [instancia] [base]` (filas + huella del contenido; solo lee).
+
+| Qué | Cómo | Tardó en el ensayo |
+|---|---|---|
+| **Volver a un minuto exacto** (últimos 7 días) | `gcloud sql instances clone rosanta-db rosanta-db-pitr --point-in-time=AAAA-MM-DDTHH:MM:SSZ` (crea una instancia nueva) | ~11.5 min |
+| **Respaldo diario** (o uno bajo demanda: `gcloud sql backups create --instance=rosanta-db`) | crear una instancia vacía `rosanta-db-ensayo` (micro, Querétaro) y `gcloud sql backups restore <ID> --restore-instance=rosanta-db-ensayo --backup-instance=rosanta-db` (la instancia destino se pisa entera) | ~5 min crear + 8 min restaurar |
+| **Respaldo semanal** (`gs://rosanta-respaldos-nube/rosanta.sql.gz`, con versiones) | en una instancia aparte: `gcloud sql databases create rosanta_semanal`, dar `roles/storage.objectViewer` en el depósito a la cuenta de esa instancia (tarda ~1 min en aplicar: si da HTTP 412, esperar y reintentar), `gcloud sql import sql <instancia> gs://rosanta-respaldos-nube/rosanta.sql.gz --database=rosanta_semanal`, y quitar el permiso | menos de 1 min (la base es chica) |
+
+Resultado del ensayo: las tres copias idénticas a la de verdad, tabla por tabla (filas y contenido). Para borrar las temporales hace falta `ROSANTA_NUBE_BORRAR="motivo"` (candado) y, en la copia de "minuto exacto", quitarle antes la protección contra borrado **a esa copia** (la hereda de `rosanta-db`). Volver a revisar con `gcloud sql instances list` que solo quede `rosanta-db`, con protección `True`.
+
 ## Pendiente
 
 - Copia del respaldo fuera de Google Cloud (Drive): una cuenta de servicio no puede guardar archivos en un Drive personal; va con el servicio de procesos.
-- Ensayo de restauración completo (importar el respaldo en una base de prueba).
