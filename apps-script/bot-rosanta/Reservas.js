@@ -368,17 +368,3 @@ function rvAvisar(d) {
   } catch (e) { Logger.log('rvAvisar correo: ' + e); }
   rvCorreoCliente(d, 'creada');   // vive en Cancelar.gs
 }
-
-/** Prueba de punta a punta SIN pasar por Claude. Cambia los datos y corre. */
-function rvProbar() {
-  var falso = {
-    respuesta: 'Dame un segundo.',
-    lead: { accion: 'crear_reserva', idioma: 'es', nombre: 'Prueba Bot',
-            email: 'restaurante@rosanta.rest', fecha: '', hora: '20:00', personas: 2 }
-  };
-  var hoy = new Date();
-  falso.lead.fecha = Utilities.formatDate(hoy, 'America/Guatemala', 'yyyy-MM-dd');
-  var r = rvCerrar(falso, 'whatsapp', '50230795252');
-  Logger.log('RESPUESTA AL CLIENTE:\n' + r.respuesta + '\n\nLEAD: ' + JSON.stringify(r.lead));
-  return r.respuesta;
-}
