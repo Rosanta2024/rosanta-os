@@ -1,1 +1,1 @@
-059cc72 2026-10-16 BancoCorreo: la planilla se reconoce por el nombre del empleado aunque la cuenta sea nueva
+2b52777 2026-10-17 Pagos: el estatus 'Banco por confirmar' ya no se monta sobre el botón Ver (texto corto + parte en dos líneas)
