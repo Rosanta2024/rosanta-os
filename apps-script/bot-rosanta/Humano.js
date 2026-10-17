@@ -11,6 +11,10 @@
  *   3. Al retomar, el bot escribe PRIMERO un mensaje de seguimiento, sabiendo lo
  *      que Juanma habló (lo lee de Conversaciones). Solo dentro de las 24 h desde
  *      el último mensaje del cliente (regla de WhatsApp e Instagram).
+ *   4. (17-oct-2026, Abdiel) Si Juanma ya contestó y el cliente todavía no responde,
+ *      el bot NO escribe: espera la respuesta del cliente y la contesta sabiendo lo
+ *      que Juanma le preguntó. Solo escribe primero si lo último es del cliente
+ *      (Juanma lo devolvió sin contestar).
  *
  * Estado por contacto en Propiedades del script (sobrevive más de 6 h, a
  * diferencia de la caché): hum_<contactoId> = {estado, canal, desde, ultimoHumano}
@@ -105,6 +109,12 @@ function humRetomar_(canal, contactoId, motivo) {
 
   var conv = humConversacion_(canal, contactoId);
   if (!conv.length) { Logger.log('humRetomar_: sin conversación para ' + contactoId); return null; }
+  if (conv[conv.length - 1].direccion !== 'in') {
+    // Lo último lo escribió Juanma (o el bot): el cliente todavía no contesta.
+    humHistoriaPendiente_(canal, contactoId);
+    Logger.log('humRetomar_: lo último no es del cliente; el bot espera su respuesta sin escribir.');
+    return null;
+  }
   var ultimoIn = 0;
   conv.forEach(function (m) { if (m.direccion === 'in') ultimoIn = Math.max(ultimoIn, m.fecha); });
   if (!ultimoIn || Date.now() - ultimoIn > HUM_HORAS_VENTANA * 3600000) {
@@ -141,6 +151,33 @@ function humRetomar_(canal, contactoId, motivo) {
     notificarHumano(canal, result.lead, '(seguimiento del bot tras Juanma)', contactoId);   // vuelve a callarse
   }
   return result;
+}
+
+/**
+ * El bot retomó sin escribir. Cuando el cliente conteste (aunque pasen horas y la
+ * caché de 30 min ya no exista), getHistory arma el historial desde Conversaciones
+ * para que el bot sepa lo que Juanma le preguntó y no lo vuelva a pedir.
+ */
+function humHistoriaPendiente_(canal, contactoId) {
+  try { CacheService.getScriptCache().remove('hist_' + contactoId); } catch (e) {}
+  PROPS.setProperty('humhist_' + contactoId, JSON.stringify({ canal: canal, t: Date.now() }));
+}
+
+/** Lo llama getHistory cuando no hay caché. Devuelve [] si no hay historial pendiente. */
+function humHistoriaGuardada_(contactoId) {
+  var raw = PROPS.getProperty('humhist_' + contactoId);
+  if (!raw) return [];
+  PROPS.deleteProperty('humhist_' + contactoId);
+  try {
+    var p = JSON.parse(raw);
+    if (Date.now() - Number(p.t || 0) > HUM_HORAS_VENTANA * 3600000) return [];
+    var conv = humConversacion_(p.canal, contactoId);
+    // el mensaje nuevo del cliente ya está en Conversaciones; askClaude lo agrega aparte
+    while (conv.length && conv[conv.length - 1].direccion === 'in') conv.pop();
+    var hist = humHistoria_(conv).slice(-8);
+    if (hist.length) CacheService.getScriptCache().put('hist_' + contactoId, JSON.stringify(hist), 1800);
+    return hist;
+  } catch (e) { Logger.log('humHistoriaGuardada_: ' + e); return []; }
 }
 
 /** Últimos mensajes del chat desde la pestaña Conversaciones, del más viejo al más nuevo. */
@@ -204,4 +241,32 @@ function fichaEstadoBot_(canal, contactoId, valor) {
     if (celda) sh.getRange(celda.getRow(), col).setValue(valor || '');
     else if (valor) fichaActualizar_(canal, contactoId, '', { tipo: '' }, { estado_bot: valor });
   } catch (e) { Logger.log('fichaEstadoBot_: ' + e); }
+}
+
+/* =====================================================================
+ * RESERVAS CON EL BOT CALLADO (decisión de Juanma, 17-oct-2026)
+ * Si el bot pasó el chat a Juanma y el cliente pide reservar, cambiar, cancelar
+ * o consultar su reserva, el bot lo atiende igual (Abdiel, 16-oct: tocó
+ * "Sí, quiero reservar" y nadie contestó). Solo mientras espera a Juanma: si
+ * Juanma ya está escribiendo en ese chat, el bot no se mete.
+ * ===================================================================== */
+var HUM_ACCIONES_RESERVA = ['crear_reserva', 'cambiar_reserva', 'cancelar_reserva', 'consultar_reserva'];
+
+function humPuedeReservar_(contactoId) {
+  if (CacheService.getScriptCache().get('pausa_' + contactoId)) return false;   // Juanma escribe desde su teléfono
+  var st = humLeer_(contactoId);
+  return !!st && st.estado === 'esperando';
+}
+
+function humEsReserva_(result) {
+  var m = (result && result._modelo) || {};
+  return HUM_ACCIONES_RESERVA.indexOf(m.accion) >= 0 || m.tipo === 'reserva';
+}
+
+/** La reserva ya se movió en Wix: el chat vuelve al bot (Juanma recibe el aviso de la reserva igual). */
+function humTrasReserva_(canal, contactoId, result) {
+  var r = String((result && result.lead && result.lead.resumen) || '');
+  if (!/^Reserva (creada|CAMBIADA|CANCELADA)/.test(r)) return;
+  humBorrar_(contactoId);
+  fichaEstadoBot_(canal, contactoId, '');
 }

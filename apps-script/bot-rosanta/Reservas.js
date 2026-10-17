@@ -29,6 +29,7 @@
  */
 
 var RV_MAX_PERSONAS = 15;
+var RV_TEL_CORREO = '50230826935';   // por correo el cliente no da teléfono y Wix lo exige: va el del restaurante (17-oct-2026)
 var RV_MIN_ENTRE_INTENTOS = 3;   // minutos: evita crear dos veces la misma reserva
 
 /** Envuelve el resultado de askClaude. Si no toca reservar, lo devuelve igual. */
@@ -165,6 +166,7 @@ function rvDatos(lead, canal, contactoId) {
   };
   // En WhatsApp el numero del remitente ES el telefono. En IG/Messenger no.
   if (canal === 'whatsapp' && !d.telefono) d.telefono = String(contactoId || '').replace(/\D/g, '');
+  if (canal === 'correo' && !d.telefono) d.telefono = RV_TEL_CORREO;
 
   d.faltan = [];
   if (!d.nombre)              d.faltan.push('nombre');
@@ -365,18 +367,4 @@ function rvAvisar(d) {
     });
   } catch (e) { Logger.log('rvAvisar correo: ' + e); }
   rvCorreoCliente(d, 'creada');   // vive en Cancelar.gs
-}
-
-/** Prueba de punta a punta SIN pasar por Claude. Cambia los datos y corre. */
-function rvProbar() {
-  var falso = {
-    respuesta: 'Dame un segundo.',
-    lead: { accion: 'crear_reserva', idioma: 'es', nombre: 'Prueba Bot',
-            email: 'restaurante@rosanta.rest', fecha: '', hora: '20:00', personas: 2 }
-  };
-  var hoy = new Date();
-  falso.lead.fecha = Utilities.formatDate(hoy, 'America/Guatemala', 'yyyy-MM-dd');
-  var r = rvCerrar(falso, 'whatsapp', '50230795252');
-  Logger.log('RESPUESTA AL CLIENTE:\n' + r.respuesta + '\n\nLEAD: ' + JSON.stringify(r.lead));
-  return r.respuesta;
 }
