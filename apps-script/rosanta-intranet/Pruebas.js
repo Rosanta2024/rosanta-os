@@ -1501,6 +1501,27 @@ function prAccesos_(res) {
          : 'registrarPrecio perdio la guarda de area (Proveedores.js)', ok ? 1 : 0, 1);
   });
 
+  // 17-oct-2026, matriz de accesos de Juanma: el precio de carta es solo del dueño, y el
+  // equipo anula en Pagos y Compras solo lo que anoto el mismo. La prueba con escritura es
+  // tools/harness-intranet/harness-pagos.js; estas vigilan que las guardas sigan en el codigo.
+  prCorrer_(g, 'El precio de carta es solo del dueño', function () {
+    var nombre = 'El precio de carta es solo del dueño';
+    var mal = ['chef', 'sala'].filter(function (r) { return puede_(r, 'cambiarPrecioMenu'); });
+    var ok = !mal.length && puede_('dueno', 'cambiarPrecioMenu');
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'chef y sala no cambian el precio de venta; el dueño si'
+         : (mal.length ? 'pueden cambiarlo: ' + mal.join(', ') : 'el dueño perdio el permiso') + ' (EdicionRecetario.js › EDIT.permisos)', ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'En Pagos el equipo anula solo lo que anoto', function () {
+    var nombre = 'En Pagos el equipo anula solo lo que anoto';
+    var src = String(_pagAnular_);
+    var ok = src.indexOf("Q.rol !== 'dueno' && String(v[r][iP]) !== Q.nombre") !== -1 && src.indexOf('Q.areas.indexOf') === -1;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'lo ajeno (otra persona, "Confirmado con banco", "No pertenece") solo lo anula el dueño'
+         : '_pagAnular_ volvio a dejar anular por area (PagosProveedores.js)', ok ? 1 : 0, 1);
+  });
+
   prCorrer_(g, 'La hoja USUARIOS', function () {
     var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
     var hoja = ss.getSheetByName('USUARIOS');

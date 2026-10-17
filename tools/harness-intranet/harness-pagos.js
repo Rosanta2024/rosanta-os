@@ -160,7 +160,15 @@ t('Rapido · mercado: igual a la pantalla completa sin leer facturas', igualAPan
 t('Mercado de Maco queda en BARRA aunque pida cocina', v.mercado.length === 1 && v.mercado[0].area === 'BARRA');
 t('Compras en efectivo ve el mercado pagado con retiro', ctx.medMercadoDeRetiros_().length === 1);
 const idm = v.mercado[0].id;
-t('El chef no puede anular un movimiento de barra', /es de BARRA/.test(tira(() => ctx.anularMovimientoPago('tokchef', idm))));
+t('El chef no puede anular un movimiento de barra (lo anotó Maco)', /solo el dueño/.test(tira(() => ctx.anularMovimientoPago('tokchef', idm))));
+// Matriz de accesos (17-oct-2026): lo ajeno solo lo anula el dueño, aunque sea del area propia
+{ const vd = ctx.registrarCompraMercado('tok', '2026-09-29', 'Mercado central', 'tomate', 40, 'COCINA', 'Retiro de cajero');
+  const idd = vd.mercado.find(x => x.area === 'COCINA' && x.q === 40).id;
+  t('El chef no anula lo que anotó el dueño en cocina', /solo el dueño/.test(tira(() => ctx.anularMovimientoPago('tokchef', idd))));
+  const vc = ctx.registrarCompraMercado('tokchef', '2026-09-29', 'Mercado central', 'cebolla', 41, 'COCINA', 'Retiro de cajero');
+  const idc = vc.mercado.find(x => x.q === 41).id;
+  t('El dueño anula lo que anotó el chef', !ctx.anularMovimientoPago('tok', idc).mercado.some(x => x.id === idc));
+  t('Y el dueño anula lo suyo', !ctx.anularMovimientoPago('tok', idd).mercado.some(x => x.id === idd)); }
 v = ctx.anularMovimientoPago('tokmaco', idm);
 t('Rapido · anular: igual a la pantalla completa', igualAPantalla(v, 'tokmaco') === '', igualAPantalla(v, 'tokmaco') || v.resumen);
 { const P0 = ctx.getPagosProveedores('tokchef'), cnt = {};
