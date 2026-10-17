@@ -59,7 +59,7 @@ def main():
     t0 = time.time()
     p = subprocess.run(['node', '--test', '--test-reporter=tap'] + sorted(
         os.path.join('test', f) for f in os.listdir(os.path.join(app, 'test')) if f.endswith('.test.js')),
-        cwd=app, capture_output=True, text=True)
+        cwd=app, capture_output=True, text=True, env=dict(os.environ, TZ='America/Guatemala'))
     salida = p.stdout + p.stderr
     def n(clave):
         m = re.search(r'^# ' + clave + r' (\d+)$', salida, re.M)

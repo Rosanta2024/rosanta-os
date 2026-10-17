@@ -45,7 +45,7 @@ function crearApp(deps) {
     const t0 = Date.now();
     try {
       const r = await deps.pool.query('SELECT count(*)::int AS n FROM usuarios');
-      res.json({ ok: true, base: 'ok', usuarios: r.rows[0].n, ms: Date.now() - t0, version: deps.version || '' });
+      res.json({ ok: true, base: 'ok', usuarios: r.rows[0].n, ms: Date.now() - t0, version: deps.version || '', pagos: deps.pagos ? deps.pagos.estado() : null });
     } catch (e) {
       res.status(503).json({ ok: false, base: 'sin conexion', ms: Date.now() - t0, version: deps.version || '' });
     }
@@ -64,6 +64,39 @@ function crearApp(deps) {
       if (!usuarios.length) return res.status(422).json({ error: 'La hoja USUARIOS vino vacia: no se toco la base.' });
       const n = await U.guardarUsuarios(deps.pool, usuarios);
       res.json({ ok: true, usuarios: n, con_enlace: usuarios.filter((u) => u.token_huella).length });
+    } catch (e) { next(e); }
+  });
+
+  // ---- Pagos (Fase 1) -----------------------------------------------------------------------
+  /** La misma pantalla de Pagos de la intranet. Se entra con el enlace de siempre: /pagos?u=... */
+  app.get('/pagos', (req, res) => {
+    if (!deps.pantallaPagos) return res.status(404).send('No disponible.');
+    res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaPagos());
+  });
+
+  /** google.script.run.<nombre>(AUTH, ...args) de la pantalla llega aca. */
+  app.post('/api/llamar/:nombre', exigirUsuario, async (req, res, next) => {
+    const nombre = req.params.nombre;
+    const args = Array.isArray(req.body) ? req.body : [];
+    try {
+      if (nombre === 'anotarTiempoPantalla') {   // GuardadoEstado.html: cuanto tardo el ✓ en la pantalla
+        if (deps.anotarTiempo) await deps.anotarTiempo({ accion: String(args[0] || '').slice(0, 80), donde: 'pantalla', ms: Math.round(Number(args[1]) || 0), quien: req.usuario.email });
+        return res.json({ resultado: null });
+      }
+      if (!deps.pagos) return res.status(404).json({ error: 'No disponible.' });
+      let r;
+      try { r = deps.pagos.llamar(req.usuario, nombre, args); } catch (e) { return res.status(e.status || 400).json({ error: String(e.message || e) }); }
+      if (deps.anotarTiempo) deps.anotarTiempo({ accion: 'Pagos · ' + nombre, donde: 'servidor', ms: r.ms, quien: req.usuario.email }).catch(() => {});
+      res.json({ resultado: r.resultado });
+    } catch (e) { next(e); }
+  });
+
+  /** Vuelve a copiar las hojas que lee Pagos. La llama el reloj cada 15 min (o Claude a mano). */
+  app.post('/tareas/refrescar-copia', exigirTarea, async (req, res, next) => {
+    try {
+      const t0 = Date.now();
+      const resumen = await deps.pagos.refrescar();
+      res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen });
     } catch (e) { next(e); }
   });
 

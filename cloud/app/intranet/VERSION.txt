@@ -1,0 +1,1 @@
+059cc72 2026-10-16 BancoCorreo: la planilla se reconoce por el nombre del empleado aunque la cuenta sea nueva

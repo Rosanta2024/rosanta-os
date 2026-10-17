@@ -1,0 +1,501 @@
+<!-- CosteoVista.html — Recetario + Proveedores para la intranet.
+     Revision 21 ago 2026:
+       · meta de CMV por area (antes toda la barra se medía contra 30%)
+       · filtro Cocina / Barra
+       · salto directo del ingrediente a la ficha de su sub-receta
+       · historial de precios visible en el panel del producto
+       · pestaña de higiene del recetario
+     Servida desde Code.gs con HtmlService.createTemplateFromFile('CosteoVista').
+     Depende de: ConfigCosteo.gs, CosteoDatos.gs, Proveedores.gs -->
+<!-- Google sirve toda web app dentro de un iframe suyo. Sin esto, el boton
+     "Panel principal" navega DENTRO de ese iframe en vez de en la ventana: en
+     /exec queda un marco anidado y en /dev Google directamente se niega a
+     servirse enmarcado y contesta "You need access". Todas las demas vistas de
+     la intranet ya lo traian; esta era la unica que no. -->
+<base target="_top">
+<title>Recetario 14·91</title>
+<!-- La paleta y las letras (PaletaServidor.js): una sola fuente para toda la intranet. -->
+<?!= paletaCss_() ?>
+<?!= paletaCssOscuro_() ?>
+<?!= include('Logo') ?>
+<!-- PARTIDO EN PARCIALES EL 12-SEP-2026.
+     Este archivo pasaba de 121 KB y 2.000 lineas: el estilo, las siete pestanas,
+     los paneles y el arranque, todo junto. Aca quedo el esqueleto —cabecera,
+     pestanas, secciones vacias y el orden de carga— y cada pieza vive en su
+     parcial:
+
+     · CosteoEstilos         — CSS de todo el modulo
+     · CosteoJs_Base         — datos, estado, helpers, calculo de costo y CMV, filtros
+     · CosteoJs_Recetas      — pestana Recetas: tarjeta() y vistaRecetas()
+     · CosteoJs_Insumos      — pestana Productos: vistaInsumos()
+     · CosteoJs_Proveedores  — pestana Proveedores: vistaProveedores()
+     · CosteoJs_Inventario   — pestana Inventarios: vistaInventario() (14-sep-2026, solo lectura)
+     · CosteoJs_Menu         — pestana Ingenieria de menu: IM_*, imMatriz(), vistaMenu()
+     · CosteoJs_Inicio       — pestana Inicio: tablero operativo de Profit OS
+     · CosteoJs_HigieneGuia  — pestanas Higiene y Como funciona
+     · CosteoJs_Pintar       — llamadas al servidor, pintar() y el cajon lateral
+     · CosteoJs_Paneles      — paneles del cajon: fichaHTML(), insumoHTML(), abrirInsumo()
+     · CosteoJs_Acciones     — linea(), los listeners de click y el arranque de la vista
+
+     Los CosteoJs_* NO son islas: son el cuerpo de iniciarApp(), pegado como
+     texto en el orden de abajo. Comparten un solo ambito (D, R, I, P, view,
+     area, los helpers), asi que el ORDEN IMPORTA y ninguno se puede llamar por
+     separado ni mover de lugar sin mirar que usa.
+
+     Se pegan con incluirCrudo_() y NO con include(): include() lee con
+     createHtmlOutputFromFile, que SANITIZA —sobre este mismo archivo devolvia
+     108.722 de 121.691 caracteres— y se comeria pedazos de JavaScript sin
+     avisar. incluirCrudo_() usa getRawContent(), que devuelve el texto tal cual.
+
+     Al agregar un parcial nuevo: sumalo tambien a la lista VISTAS de las dos
+     pruebas de Pruebas.js que barren las vistas buscando llamadas sin token.
+     Lo que no se lee, no se protege. -->
+<style>
+<?!= incluirCrudo_('CosteoEstilos') ?>
+</style>
+<!-- LecturaEstilo trae su propio <style>: dentro del de arriba se comia la regla .lx. -->
+<?!= incluirCrudo_('LecturaEstilo') ?>
+<?!= incluirCrudo_('ReporteSemanalEstilo') ?>
+<?!= incluirCrudo_('ProfitAreaEstilo') ?>
+<style>
+/* MODULOS EN EL LATERAL, HERRAMIENTAS ARRIBA (Juanma, 27-sep-2026, regla para toda la
+   intranet). Lateral: Profit OS (cocina y barra juntas) y el area de quien entra (Jeffry
+   Cocina, José Barra y Sala, el dueño las dos). Arriba: las herramientas del recetario.
+   Los dos son .nav button[data-view]: el ruteo de pintar() no cambia. */
+/* Mismo molde que el Sistema de Marketing (Juanma, 27-sep-2026: "se tiene que ver como
+   los modulos de marketing"): lateral blanco pegado a la izquierda, rotulos en versalitas,
+   el item activo en verde bosque. Medidas de .sm-side (Estilos.html). */
+header.top .wrap{max-width:none;padding:0 28px}
+.pf-layout{display:grid;grid-template-columns:208px minmax(0,1fr);align-items:start;min-height:calc(100vh - var(--pf-hdr,64px))}
+.pf-lat{background:var(--surface);border-right:1px solid var(--line);padding:1rem .7rem 2rem;
+  position:sticky;top:var(--pf-hdr,64px);height:calc(100vh - var(--pf-hdr,64px));overflow-y:auto}
+.pf-lat .nav{display:flex;flex-direction:column;gap:.25rem;padding:0}
+.pf-lat .pf-grupo{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.2rem .6rem .5rem;margin-top:.9rem; font-family:var(--rosanta-font-label)}
+.pf-lat .pf-grupo:first-child{margin-top:0}
+.pf-lat .nav button{display:block;width:100%;text-align:left;cursor:pointer;border:0;border-bottom:0;background:none;
+  padding:.55rem .7rem;border-radius:9px;color:var(--ink);font-size:.9rem;font-weight:400;letter-spacing:0}
+.pf-lat .nav button:hover:not([aria-selected="true"]){background:var(--panel);color:var(--ink)}
+.pf-lat .nav button[aria-selected="true"]{background:var(--bosque);color:var(--surface);font-weight:700}
+.pf-lat .nav button small{display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:1px}
+.pf-lat .nav button[aria-selected="true"] small{color:var(--surface);opacity:.8}
+.pf-layout > main{padding:24px 28px 40px;min-width:0;width:100%;max-width:1236px;justify-self:center}
+.pf-filtro{display:flex;justify-content:flex-end;margin:-6px 0 14px}
+.pf-filtro[hidden]{display:none !important}   /* el equipo no lo ve: el display:flex le ganaba a hidden (14-oct-2026) */
+.pf-filtro .areas{display:inline-flex;gap:.3rem}
+.pf-filtro .areas button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:.25rem .8rem;cursor:pointer}
+.pf-filtro .areas button[aria-pressed="true"]{background:var(--bosque);color:var(--surface);border-color:var(--bosque)}
+footer.pie .pf-guia{font:inherit;font-size:12.5px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+/* EL MENU EN EL TELEFONO (14-oct-2026): antes era una tira que se movia de lado y no se veia
+   todo. Ahora un boton "☰ Secciones · <la pestaña de ahora>" que despliega el menu entero, con
+   sus grupos, y se cierra al elegir. En la computadora el boton no existe. */
+.pf-menu-btn{display:none}
+@media (max-width:860px){
+  .pf-layout{grid-template-columns:1fr}
+  .pf-lat{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:.6rem .7rem}
+  .pf-menu-btn{display:flex;width:100%;align-items:center;justify-content:space-between;gap:.6rem;font:inherit;font-size:.95rem;
+    background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;cursor:pointer}
+  .pf-menu-btn b{color:var(--bosque)}
+  .pf-lat .nav{display:none}
+  .pf-lat.abierto .nav{display:flex;margin-top:.5rem}
+  .pf-lat .nav button small{display:none}
+  .pf-layout > main{padding:16px 16px 32px}
+  header.top .wrap{padding:0 16px}
+  /* la cuadricula repartia el alto que sobra entre el menu y el contenido: hueco arriba */
+  .pf-layout{align-content:start}
+}
+/* CELULAR (15-oct-2026, Juanma va a usar la intranet desde el telefono). */
+@media (max-width:640px){
+  /* encabezado: logo y "Panel principal" en una fila, buscador debajo, y no se queda pegado arriba */
+  header.top{position:static}
+  .topbar{gap:10px;padding:10px 0}
+  .brand{gap:8px}
+  .brand .logo{height:20px}
+  .volver{padding:7px 12px;font-size:.8rem}
+  .search{order:3;flex:1 1 100%;max-width:none}
+  /* 16 px: con menos, el iPhone agranda la pantalla al tocar un campo */
+  .pf-layout input:not([type=checkbox]):not([type=radio]):not([type=file]), .pf-layout select, .pf-layout textarea, #q{font-size:16px !important}
+  /* botones que se tocan con el dedo: 44 px de alto como minimo */
+  .pg-tabs button, .pg-b, .rt-box button, .pf-filtro .areas button, .sl-box a.b{min-height:44px}
+  .sl-box a.b{display:inline-flex;align-items:center}
+  .pg-x{min-height:44px;display:inline-flex;align-items:center;font-size:.86rem}
+  footer.pie .pf-guia{font-size:14px;min-height:44px}
+  /* tablas: la regla general les pide 640 px; aca caben a lo ancho y el texto baja de linea */
+  .sl-box, .lx{overflow-x:auto}
+  .sl-box table, .lx-tabla{min-width:0}
+}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1 class="logo"><span class="oculto">Rosanta · Recetario</span></h1>
+        <span class="sec">Profit OS</span>
+      </div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar plato, ingrediente o proveedor…" autocomplete="off" aria-label="Buscar">
+      </div>
+      <a class="volver" href="<?= urlBase ?><?= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a>
+    </div>
+    <!-- 13-oct-2026 (Juanma): UN SOLO MENU, el lateral. Arriba queda solo el buscador. La regla
+         del 27-sep (herramientas arriba, modulos al lado) se retiro en Profit OS porque eran dos
+         menus y el equipo no los entendia. -->
+  </div>
+  <div class="simbar" id="simbar" role="status">
+    <span id="simtext"></span>
+    <span class="sp"><button id="simreset">Volver a los precios reales</button></span>
+  </div>
+</header>
+
+<div class="pf-layout">
+  <aside class="pf-lat">
+    <? var esEquipo = rol === 'chef' || rol === 'sala', esDueno = rol === 'dueno';
+       var veCaja = esDueno || (rol === 'sala' && puedePagos), veDevolver = puedePagos && (esDueno || esEquipo); ?>
+    <!-- UN SOLO MENU, por para que sirve (Juanma, 13-oct-2026). Cada uno ve lo suyo: Jeffry
+         Cocina, Pagos, Inventarios y Recetas; Maco lo mismo de barra mas la Caja chica; el dueño
+         todo. Lo que no se ve tampoco se abre por enlace (Code.js, lista de vistas). -->
+    <button type="button" class="pf-menu-btn" aria-expanded="false" aria-controls="pf-nav"><span>☰ Secciones</span><b id="pf-menu-act">Hoy</b></button>
+    <nav class="nav" id="pf-nav" role="tablist" aria-orientation="vertical" aria-label="Módulos">
+      <!-- Hoy (13-oct-2026): lo que le toca a cada uno. Es donde abre Profit OS. -->
+      <button role="tab" data-view="hoy" aria-selected="true">Hoy</button>
+      <div class="pf-grupo">Día a día</div>
+      <? if (puedePagos) { ?><button role="tab" data-view="pagos" aria-selected="false">Pagos</button><? } ?>
+      <!-- Compras en efectivo y con debito (14-oct-2026): reemplaza a la seccion de Cocina -->
+      <? if (esDueno || (esEquipo && puedePagos)) { ?><button role="tab" data-view="compras" aria-selected="false">Compras</button><? } ?>
+      <? if (veCaja) { ?><button role="tab" data-view="caja" aria-selected="false">Caja chica</button><? } ?>
+      <button role="tab" data-view="inventario" aria-selected="false">Inventarios</button>
+      <? if (rol === 'chef' || rol === 'sala' || esDueno) { ?><div class="pf-grupo"><?= esDueno ? 'Áreas' : 'Mi área' ?></div><? } ?>
+      <? if (rol === 'chef' || esDueno) { ?><button role="tab" data-view="cocina" aria-selected="false">Cocina</button><? } ?>
+      <? if (rol === 'sala' || esDueno) { ?><button role="tab" data-view="barrasala" aria-selected="false">Barra y Sala</button><? } ?>
+      <div class="pf-grupo">Costeo</div>
+      <? if (!esEquipo) { ?><button role="tab" data-view="inicio" aria-selected="false">Resumen</button><? } ?>
+      <button role="tab" data-view="recetas" aria-selected="false">Recetas</button>
+      <? if (!esEquipo) { ?><button role="tab" data-view="insumos" aria-selected="false">Productos</button>
+      <button role="tab" data-view="proveedores" aria-selected="false">Proveedores</button>
+      <button role="tab" data-view="menu" aria-selected="false">Ingeniería de menú</button><? } ?>
+      <? if (veDevolver || esDueno) { ?><div class="pf-grupo">Administración</div><? } ?>
+      <? if (veDevolver) { ?><button role="tab" data-view="adm-equipo" aria-selected="false">Por devolver</button>
+      <button role="tab" data-view="adm-iva" aria-selected="false">Para reducir IVA</button><? } ?>
+      <? if (esDueno) { ?><button role="tab" data-view="adm-banco" aria-selected="false">Banco por revisar</button>
+      <button role="tab" data-view="adm-balance" aria-selected="false">Balance del año</button>
+      <button role="tab" data-view="higiene" aria-selected="false">Higiene</button><? } ?>
+    </nav>
+  </aside>
+<main>
+  <!-- Dentro de main (14-oct-2026): se ve solo en las pestañas que usan el recetario. Hoy, Pagos,
+       Compras, Caja y las areas abren sin esperarlo (ver "EL MENU SIN ESPERAR", al final). -->
+  <div id="cargando" style="padding:80px 20px;text-align:center;color:var(--muted)">
+    <p style="font-family:var(--rosanta-font-title);font-size:20px;color:var(--ink);margin:0 0 6px">Cargando el recetario…</p>
+    <p style="margin:0;font-size:13.5px">Tarda unos segundos. Mientras tanto podés usar Hoy, Pagos, Compras o la Caja.</p>
+  </div>
+  <!-- Sistema de Medicion (27-sep-2026): "Se nos va la plata en la mercaderia?" arriba del
+       inicio, solo para quien le toca (chef y dueño; sin quetzales para el chef). Se
+       esconde junto con el inicio cuando se abre otra vista. -->
+  <!-- El filtro Cocina / Barra / Todo de recetas, productos e inventarios. Antes iba en el menu
+       de arriba. El equipo no lo ve: cada uno trabaja en su area (PROFIT_AREA_INI). -->
+  <div class="pf-filtro"<?= (rol === 'chef' || rol === 'sala') ? ' hidden' : '' ?>><span class="areas" role="group" aria-label="Área de recetas y productos">
+    <button data-area="COCINA" aria-pressed="true">Cocina</button>
+    <button data-area="BARRA" aria-pressed="false">Barra</button>
+    <button data-area="" aria-pressed="false">Todo</button>
+  </span></div>
+  <section id="lx-modulo" style="margin-bottom:1.4rem"></section>
+  <section id="v-inicio"></section>
+  <section id="v-menu" hidden></section>
+  <section id="v-recetas" hidden></section>
+  <section id="v-insumos" hidden></section>
+  <section id="v-proveedores" hidden></section>
+  <section id="v-pagos" hidden></section>
+  <section id="v-inventario" hidden></section>
+  <section id="v-higiene" hidden></section>
+  <section id="v-guia" hidden></section>
+  <!-- Pestañas de area (27-sep-2026): el reporte semanal de cada area y Sala (barra y sala). Se pintan aca adentro la primera vez que se abren
+       (montarArea, abajo). Sin iframe: en /dev Google no deja enmarcar la app. -->
+  <section id="v-cocina" hidden></section>
+  <section id="v-barrasala" hidden></section>
+  <section id="v-hoy" hidden></section>
+  <section id="v-caja" hidden></section>
+  <section id="v-compras" hidden></section>
+  <section id="v-adm-equipo" hidden></section>
+  <section id="v-adm-banco" hidden></section>
+  <section id="v-adm-balance" hidden></section>
+  <section id="v-adm-iva" hidden></section>
+</main>
+</div>
+<!-- el cuerpo del reporte, para copiarlo en cada area (cada id se busca dentro de su area) -->
+<template id="rp-molde"><?!= incluirCrudo_('ReporteSemanalCuerpo') ?></template>
+
+<footer class="wrap pie">
+  <span id="foot"></span>
+  <button type="button" class="pf-guia" data-view="guia">Cómo funciona</button>
+  <span class="marca-pie">Rosanta · Cocina con Carisma &nbsp;<span class="flor">❀</span>&nbsp; 14° N · 91° W</span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" tabindex="-1"></aside>
+<!-- El aviso de guardado (15-oct-2026): Guardando… / ✓ Guardado / Reintentar, en Pagos y Recetas -->
+<?!= incluirCrudo_('GuardadoEstado') ?>
+
+<script>
+/* EL TOKEN DEL ENLACE PERSONAL (10-sep-2026)
+   Toda llamada a google.script.run tiene que mandarlo como primer argumento. La
+   pagina se abre porque doGet ya resolvio la identidad, pero cada llamada al
+   servidor es una peticion nueva y llega sin nada: sin el token cae en la sesion
+   de dominio y a quien entra con Gmail personal le contesta "Sin acceso al
+   recetario". Asi le paso a Jeffry, que fue el primero en entrar de verdad al
+   modulo. Si agregas una llamada nueva, pasale AUTH. */
+var AUTH = '<?= authToken ?>';
+/* LOS ERRORES EN CRISTIANO (14-oct-2026, Juanma: "que todo el sistema sea user friendly").
+   Toda pantalla de Profit OS pasa el error por aca antes de mostrarlo. Los errores tecnicos de
+   Google o del navegador (en ingles, con "Exception", "TypeError", tiempos agotados) se cambian
+   por una frase que dice que hacer; los mensajes propios del sistema ya vienen en español y
+   pasan tal cual. El original queda en la consola para quien tenga que revisarlo.
+   x: el error (Error, {message}) o un texto. defecto: si no vino nada. */
+window.PF_ERROR = function (x, defecto) {
+  var m = x && x.message ? String(x.message) : (x == null || x === '' ? String(defecto || '') : String(x));
+  try { if (m) console.warn('[intranet] error:', m); } catch (e0) { /* sin consola */ }
+  m = m.replace(/^\s*(Error|Exception|Excepción)\s*:\s*/i, '');
+  var T = [
+    [/sin respuesta|no response|empty response/i, 'No llegó respuesta del servidor. Probá de nuevo en un momento.'],
+    [/Lock timeout|could not obtain lock|otra lectura en curso/i, 'Alguien más está guardando en este momento. Esperá unos segundos y probá de nuevo.'],
+    [/NetworkError|Failed to fetch|network|timed? ?out|tiempo de espera|Exceeded maximum execution time|tiempo m[aá]ximo de ejecuci/i, 'Se tardó demasiado o se cortó el internet. Probá de nuevo en un momento.'],
+    [/too many times|Service invoked|quota|Rate Limit|Limit Exceeded|demasiadas veces/i, 'Google está saturado un momento. Probá de nuevo en un minuto.'],
+    [/Authorization is required|authorization.*expired|sesi[oó]n venci/i, 'Tu sesión venció. Recargá la página.'],
+    [/permission|Access denied|not have access|You need access|Sin acceso/i, 'No tenés permiso para esto. Si debería poder, avisale a Juanma.'],
+    [/^(TypeError|ReferenceError|SyntaxError|RangeError|InternalError)\b|Cannot read propert|is not defined|is not a function|Unexpected token|ScriptError/i, 'Algo falló en la intranet. Probá de nuevo; si sigue, avisale a Juanma.']
+  ];
+  for (var i = 0; i < T.length; i++) if (T[i][0].test(m)) return T[i][1];
+  return m ? m.charAt(0).toUpperCase() + m.slice(1) : 'No se pudo completar. Probá de nuevo.';
+};
+/* la pestaña con la que abre (?vista=, lista cerrada en Code.js) */
+(function(){ function alto(){ var h=document.querySelector('header.top'); if(h) document.documentElement.style.setProperty('--pf-hdr', h.offsetHeight + 'px'); }
+  window.addEventListener('resize', alto); document.addEventListener('DOMContentLoaded', alto); setTimeout(alto, 0); })();
+window.PROFIT_VISTA_INI = <?!= JSON.stringify(vistaIni || 'inicio') ?>;
+/* el area con la que abren recetas, productos e inventarios: Maco barra, el resto cocina */
+window.PROFIT_AREA_INI = <?!= JSON.stringify(rol === 'sala' ? 'BARRA' : 'COCINA') ?>;
+/* el rol, solo para simplificar la INTERFAZ (Inventarios del equipo, 14-oct-2026). Los permisos
+   de verdad los revisa el servidor en cada llamada. */
+window.PROFIT_ROL = <?!= JSON.stringify(rol || '') ?>;
+window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
+window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
+/* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
+   estaba escribiendo). Sin iframe: el cuerpo del reporte se copia del <template> y cada
+   area lo pinta con RP_INICIAR dentro de su propia raiz. */
+function montarArea(v){
+  var sec = document.getElementById('v-' + v);
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.classList.add('pf-area');
+  var rep = '<section class="pa-sec pf-rep" style="margin-top:0"></section>';
+  if(v === 'cocina'){
+    // Compras en efectivo salio de aca el 14-oct-2026: ahora es la pestaña Compras (Día a día)
+    sec.innerHTML = rep;
+  } else {
+    sec.innerHTML = '<section class="pa-sec" style="margin-top:0"><h2>Sala</h2><p class="pa-intro">El número de sala es el ticket por comensal. Lo mueven la ocupación de lunes a miércoles, las reseñas y las mesas bien cerradas en Wix.</p>' +
+      '<div class="pf-lx" style="margin:1rem 0 1.2rem"></div><div class="pf-sl"><div class="sl-cargando">Leyendo las reservas y las reseñas…</div></div></section>' +
+      rep.replace(' style="margin-top:0"', '');
+    window.PF_SALA(sec.querySelector('.pf-sl'), AUTH);
+    var lx = sec.querySelector('.pf-lx');
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura && window.LECTURA) window.LECTURA.pintar(lx, r.lectura, {}); else lx.style.display = 'none'; })
+      .withFailureHandler(function () { lx.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'management');
+  }
+  var host = sec.querySelector('.pf-rep');
+  host.innerHTML = document.getElementById('rp-molde').innerHTML;
+  window.RP_INICIAR({ auth: AUTH, base: <?!= JSON.stringify(urlBase) ?>, t: <?!= JSON.stringify(authToken ? '&u=' + authToken : '') ?>,
+    embebido: true, area: v, secciones: v === 'cocina' ? [5, 6] : [5, 6, 4],
+    titulo: v === 'cocina' ? 'Cocina: la semana' : 'Barra: la semana' }, host);
+}
+
+/* Pagos a proveedores (p213, 29-sep-2026): se pinta la primera vez que se abre. */
+function montarPagos(){
+  var sec = document.getElementById('v-pagos');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_PAGOS(sec, AUTH);
+}
+/* Caja chica y Administración (13-oct-2026): pestañas de la barra lateral, se pintan una vez. */
+function montarCaja(){
+  var sec = document.getElementById('v-caja');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
+  window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+}
+/* Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js) */
+function montarCompras(){
+  var sec = document.getElementById('v-compras');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  sec.innerHTML = '<div class="pg"><h2>Compras en efectivo</h2></div><div class="ce-host"></div>';
+  window.PF_COMPRAS(sec.querySelector('.ce-host'), AUTH);
+}
+function montarHoy(){
+  var sec = document.getElementById('v-hoy');
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_HOY(sec, AUTH);
+}
+function montarAdm(v){
+  var sec = document.getElementById('v-' + v);
+  if(!sec || sec.dataset.listo) return;
+  sec.dataset.listo = '1';
+  window.PF_PAGOS(sec, AUTH, 'admin:' + v.slice(4));   // adm-banco -> admin:banco
+}
+
+function iniciarApp(){
+<?!= incluirCrudo_('CosteoJs_Base') ?>
+<?!= incluirCrudo_('CosteoJs_Recetas') ?>
+<?!= incluirCrudo_('CosteoJs_Insumos') ?>
+<?!= incluirCrudo_('CosteoJs_Proveedores') ?>
+<?!= incluirCrudo_('CosteoJs_Inventario') ?>
+<?!= incluirCrudo_('CosteoJs_Menu') ?>
+<?!= incluirCrudo_('CosteoJs_Inicio') ?>
+<?!= incluirCrudo_('CosteoJs_HigieneGuia') ?>
+<?!= incluirCrudo_('CosteoJs_Pintar') ?>
+<?!= incluirCrudo_('CosteoJs_Paneles') ?>
+<?!= incluirCrudo_('CosteoJs_Acciones') ?>
+}
+</script>
+
+<script>
+/* Adapta el modelo de CosteoDatos.gs a la forma compacta que usa la vista.
+   Lo importante: area y cmvObjetivo viajan por receta, y cada linea lleva su sub-receta.
+
+   Partido en piezas el 14-sep-2026: la pantalla ya no recarga despues de guardar, y
+   lo que devuelve el servidor (una ficha, un producto) entra a la copia del modelo con
+   estas mismas funciones. Ver aplicarCambios en CosteoJs_Base. */
+function adaptarInsumo(i){
+  return {id:i.id, p:i.producto, c:i.categoria, pr:i.precio, u:i.unidad, pc:i.precioCompra,
+          uc:i.unidadCompra, cv:i.conversion, prov:i.proveedor, area:i.area, sub:i.sub, usos:i.usos || []};
+}
+function adaptarReceta(r){
+  return {id:r.id, n:r.nombre, t:r.tipo, cat:r.categoria, area:r.area, obj:r.cmvObjetivo,
+          precio:r.precio, costo:r.costo, costoUnit:r.costoUnit, unidadCosto:r.unidadCosto,
+          cmv:r.cmv==null?null:Math.round(r.cmv*10)/10, merma:r.merma,
+          rinde:r.rinde, rindeTexto:r.rindeTexto, nota:r.nota, sug:r.sugerido, est:r.estado, base:r.base,
+          ing:(r.ingredientes || []).map(function(g){
+            return {i:g.insumo, r:g.receta, n:g.nombre, q:g.cantidad, u:g.unidad, t:g.total, f:g.fila};
+          })};
+}
+function adaptar(m){
+  return {
+    meta:{fuente:'hojas nativas del recetario', fecha:m.meta.generado.slice(0,10), areas:m.meta.areas,
+          aliasSub:m.meta.aliasSub || {}, iva:m.meta.iva || 1.12, metaGlobal:m.meta.metaGlobal},
+    proveedores:m.proveedores,
+    insumos:m.insumos.map(adaptarInsumo),
+    recetas:m.recetas.map(adaptarReceta)
+  };
+}
+function arrancar(m){
+  window.__DATA__ = adaptar(m);
+  document.getElementById('cargando').remove();
+  iniciarApp();
+  window.__APP_LISTA__ = true;   // desde aca manda la navegacion de la app (CosteoJs_Acciones)
+}
+function fallar(e){
+  window.__RECETARIO_FALLO__ = true;
+  document.getElementById('cargando').innerHTML =
+    '<p style="color:var(--alto)">No se pudo leer el recetario.</p><p style="font-size:13px">Revisá el internet y recargá la página. Hoy, Pagos, Compras y la Caja siguen funcionando.</p>' +
+    '<p style="font-size:12px;color:var(--muted)">' + String(PF_ERROR(e)).replace(/</g, '&lt;') + '</p>';
+}
+/* LAS DOS LLAMADAS SALEN JUNTAS, no una despues de la otra.
+   getCosteoData tarda lo suyo (es el recetario entero) y getProfitOS tambien, y
+   hasta ahora la segunda no arrancaba hasta que la primera volvia: el usuario
+   esperaba la SUMA. El tablero no necesita nada del recetario, asi que se pide en
+   paralelo y lo que se espera es la mas lenta de las dos.
+
+   El resultado se guarda y no se pinta: pintar() necesita __DATA__, que todavia
+   puede no haber llegado. Cuando iniciarApp arranca, pedirProfitOS lo encuentra ya
+   servido en el cache y no vuelve a pedirlo. */
+window.__POS_CACHE__ = {};
+window.__POSCARGANDO__ = 13;
+google.script.run
+  .withSuccessHandler(function(r){
+    window.__POSCARGANDO__ = null;
+    window.__POS_CACHE__[13] = r;
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .withFailureHandler(function(e){
+    window.__POSCARGANDO__ = null;
+    var err = {ok:false, error:PF_ERROR(e, 'No se pudo leer')};
+    window.__POS_CACHE__[13] = {tablero:err, menu:err};
+    if(window.__profitListo) window.__profitListo(13);
+  })
+  .getProfitOS(AUTH, 13);
+
+google.script.run.withSuccessHandler(arrancar).withFailureHandler(fallar).getCosteoData(AUTH);
+</script>
+<?!= incluirCrudo_('LecturaJs') ?>
+<?!= incluirCrudo_('ReporteSemanalJs') ?>
+<?!= incluirCrudo_('ProfitSalaJs') ?>
+<?!= incluirCrudo_('ProfitComprasJs') ?>
+<?!= incluirCrudo_('ProfitPagosJs') ?>
+<?!= incluirCrudo_('ProfitCajaJs') ?>
+<?!= incluirCrudo_('ProfitHoyJs') ?>
+<script>
+/* EL MENU SIN ESPERAR EL RECETARIO (14-oct-2026, Juanma: "que todo el sistema sea user friendly").
+   La navegacion vive en iniciarApp, que corre cuando llega getCosteoData (el recetario entero, lo
+   mas lento de la intranet): Maco no podia abrir la Caja hasta que cargaba un recetario que no
+   usa. Esto navega YA entre las pestañas que no lo necesitan; las que si lo necesitan muestran
+   "Cargando el recetario…". Cuando llega, iniciarApp arranca en la pestaña donde esta la persona
+   (PROFIT_VISTA_INI) y esto se apaga (__APP_LISTA__). */
+(function () {
+  var SIN_RECETARIO = ['hoy', 'pagos', 'compras', 'caja', 'cocina', 'barrasala', 'adm-equipo', 'adm-banco', 'adm-balance', 'adm-iva'];
+  var MONTAR = { hoy: montarHoy, pagos: montarPagos, compras: montarCompras, caja: montarCaja,
+                 cocina: function () { montarArea('cocina'); }, barrasala: function () { montarArea('barrasala'); } };
+  function lista() { return !!window.__APP_LISTA__; }
+  function mostrar(v) {
+    window.PROFIT_VISTA_INI = v;   // iniciarApp abre aca
+    var sin = SIN_RECETARIO.indexOf(v) !== -1, carg = document.getElementById('cargando');
+    if (carg) carg.style.display = sin ? 'none' : '';
+    document.querySelectorAll('main > section[id^="v-"]').forEach(function (s) { s.hidden = s.id !== 'v-' + v; });
+    var f = document.querySelector('.pf-filtro'); if (f) f.style.display = 'none';
+    document.querySelectorAll('.nav button[data-view]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.view === v)); });
+    if (MONTAR[v]) MONTAR[v](); else if (v.indexOf('adm-') === 0) montarAdm(v);
+  }
+  document.addEventListener('click', function (e) {
+    if (lista()) return;
+    var t = e.target.closest && e.target.closest('button[data-view]');
+    if (t) mostrar(t.dataset.view);
+  });
+  // el buscador filtra Pagos y Administracion desde ya (la app hace lo mismo cuando arranca)
+  var qi = document.getElementById('q');
+  if (qi) qi.addEventListener('input', function (e) {
+    if (lista()) return;
+    window.PF_BUSCA = e.target.value.trim(); window.dispatchEvent(new CustomEvent('pf-buscar', { detail: window.PF_BUSCA }));
+  });
+  if (!lista()) mostrar(window.PROFIT_VISTA_INI || 'hoy');
+})();
+/* El boton del menu en el telefono: abre y cierra, se cierra al elegir y muestra la pestaña de
+   ahora (la lee de aria-selected, que ponen tanto el navegador liviano como la app). */
+(function () {
+  var lat = document.querySelector('.pf-lat'), btn = lat && lat.querySelector('.pf-menu-btn'), nav = document.getElementById('pf-nav');
+  if (!btn || !nav) return;
+  function abrir(si) { lat.classList.toggle('abierto', si); btn.setAttribute('aria-expanded', String(si)); }
+  function rotulo() { var b = nav.querySelector('button[aria-selected="true"]'); document.getElementById('pf-menu-act').textContent = b ? b.textContent.trim() : ''; }
+  btn.addEventListener('click', function () { abrir(!lat.classList.contains('abierto')); });
+  nav.addEventListener('click', function (e) { if (e.target.closest('button[data-view]')) abrir(false); });
+  new MutationObserver(rotulo).observe(nav, { subtree: true, attributes: true, attributeFilter: ['aria-selected'] });
+  rotulo();
+})();
+</script>
+<script>
+  (function () {
+    var host = document.getElementById('lx-modulo');
+    if (!host || !window.LECTURA) return;
+    google.script.run
+      .withSuccessHandler(function (r) { if (r && r.lectura) window.LECTURA.pintar(host, r.lectura, {}); else host.style.display = 'none'; })
+      .withFailureHandler(function () { host.style.display = 'none'; })
+      .getLecturaPilar(AUTH, 'profit');
+  })();
+  /* el bloque vive con el inicio: si se abre otra vista, se esconde con el */
+  (function () {
+    var ini = document.getElementById('v-inicio'), host = document.getElementById('lx-modulo');
+    if (!ini || !host) return;
+    function sync() { host.hidden = ini.hidden; }
+    new MutationObserver(sync).observe(ini, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
+  })();
+</script>
