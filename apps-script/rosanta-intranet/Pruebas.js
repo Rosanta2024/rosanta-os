@@ -1698,8 +1698,12 @@ function prModulos_(res) {
       });
       if ((d.historial || []).length !== (back.historial || []).length) malas.push(d.id + '.historial');
     });
-    var ctl = evFilaADoc_(EV_COLS, evDocAFila_(EV_COLS, { id: 'x', monto_q: 5, historial: [{ fecha: '2026-10-15', texto: 't' }], proximo_paso: { texto: 'p', fecha: '2026-10-20' } }));
-    var ctlOk = ctl.monto_q === 5 && ctl.historial.length === 1 && ctl.proximo_paso && ctl.proximo_paso.fecha === '2026-10-20';
+    // lista_cotizar y faltan (17-oct-2026, botón Cotizar) no tienen columna: viajan en extra_json
+    // y tienen que volver iguales, con lista_cotizar como booleano (la tarjeta compara con true).
+    var ctl = evFilaADoc_(EV_COLS, evDocAFila_(EV_COLS, { id: 'x', monto_q: 5, historial: [{ fecha: '2026-10-15', texto: 't' }], proximo_paso: { texto: 'p', fecha: '2026-10-20' },
+      lista_cotizar: true, faltan: 'fecha exacta, hora' }));
+    var ctlOk = ctl.monto_q === 5 && ctl.historial.length === 1 && ctl.proximo_paso && ctl.proximo_paso.fecha === '2026-10-20' &&
+      ctl.lista_cotizar === true && ctl.faltan === 'fecha exacta, hora';
     prAnotar_(g, 'Eventos: la pestaña cotizaciones se lee y la conversión no pierde datos',
               !ctlOk ? 'FALLA' : (malas.length ? 'FALLA' : (filas.length ? 'OK' : 'AVISO')),
               !ctlOk ? 'la conversión de prueba no devuelve lo mismo' :
