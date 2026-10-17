@@ -500,7 +500,8 @@ function getKnowledgeBase() {
 // ============================================================
 function getHistory(senderId) {
   const raw = CacheService.getScriptCache().get('hist_' + senderId);
-  return raw ? JSON.parse(raw) : [];
+  if (raw) return JSON.parse(raw);
+  return humHistoriaGuardada_(senderId);   // el chat volvió de Juanma sin que el bot escribiera (Humano.js)
 }
 function saveHistory(senderId, userMsg, botMsg) {
   let hist = getHistory(senderId);
