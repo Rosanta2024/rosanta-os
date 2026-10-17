@@ -175,3 +175,15 @@ test('La app de la sombra 2: enlace, 409 al escribir, tareas con clave y fotos s
     for (const p of ['/caja', '/compras', '/clientes/eventos', '/sombra2/fotos']) assert.strictEqual((await fetch(b + p)).status, 200, p);
   });
 });
+
+test('La copia se salta las pestañas que la intranet todavia no creo (como las trata la intranet: vacias)', async () => {
+  const sheets = { spreadsheets: { get: async ({ spreadsheetId }) => ({ data: { sheets: (spreadsheetId === CFG
+    ? ['PAGOS_PROVEEDORES', 'FEL_CORREO', 'BANCO_CORREO', 'CAJA_CHICA', 'CIERRES_DIARIOS'] : ['01_FEL_Maestro']).map((t) => ({ properties: { title: t } })) } }) } };
+  const L = await S.soloExistentes(sheets, S.LIBROS_CAJA);
+  assert.ok(!L.config.pestanas.includes('RETIROS_SOLICITUDES'), 'la que no existe no se pide');
+  assert.ok(L.config.pestanas.includes('CAJA_CHICA') && L.config.pestanas.includes('PAGOS_PROVEEDORES'));
+  assert.strictEqual(L.compras.pestanas, '*', 'COMPRAS_2026 sigue entera');
+  const sinRetiros = libros(); delete sinRetiros[CFG].RETIROS_SOLICITUDES;
+  const r = S.crearMotores(sinRetiros).caja.correr(DUENO, 'getComprasEfectivo', []).resultado;
+  assert.strictEqual(r.solicitudes.length, 0, 'Compras sin la pestaña = sin solicitudes, no un error');
+});

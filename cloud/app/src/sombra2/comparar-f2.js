@@ -11,7 +11,7 @@
  */
 const C = require('../copia-hojas');
 const { formatDate } = require('../motor-pagos');
-const { crearMotores, LIBROS_CAJA, LIBROS_EVENTOS, MKT_ID } = require('./servicio-f2');
+const { crearMotores, soloExistentes, LIBROS_CAJA, LIBROS_EVENTOS, MKT_ID } = require('./servicio-f2');
 const { celdasConError } = require('../comparar-pagos');
 
 const DUENO = { email: 'comparacion@servidor', rol: 'dueno', modulos: ['pagos', 'marketing'], nombre: 'Comparación automática' };
@@ -87,8 +87,12 @@ function compararResumenes(copia, hojas) {
 /** Lee las hojas de nuevo, directo de Google. Si Marketing OS no se puede leer, sigue sin el. */
 async function leerFresco(sheets) {
   const fresco = {};
-  for (const k of Object.keys(LIBROS_CAJA)) fresco[LIBROS_CAJA[k].id] = await C.leerLibro(sheets, LIBROS_CAJA[k].id, LIBROS_CAJA[k].pestanas);
-  try { fresco[MKT_ID] = await C.leerLibro(sheets, MKT_ID, LIBROS_EVENTOS.marketing.pestanas); } catch (e) { /* queda sin eventos: armar() lo dice */ }
+  const caja = await soloExistentes(sheets, LIBROS_CAJA);
+  for (const k of Object.keys(caja)) fresco[caja[k].id] = await C.leerLibro(sheets, caja[k].id, caja[k].pestanas);
+  try {
+    const ev = await soloExistentes(sheets, LIBROS_EVENTOS);
+    fresco[MKT_ID] = await C.leerLibro(sheets, MKT_ID, ev.marketing.pestanas);
+  } catch (e) { /* queda sin eventos: armar() lo dice */ }
   return fresco;
 }
 

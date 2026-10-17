@@ -59,6 +59,23 @@ function crearMotores(libros) {
   return { caja, eventos };
 }
 
+/**
+ * Deja en cada libro solo las pestañas que existen hoy. La intranet crea algunas recien con el
+ * primer movimiento (RETIROS_SOLICITUDES, CAJA_CHICA...) y, mientras no existen, las trata como
+ * vacias; la API de Sheets en cambio rechaza todo el pedido si una no existe.
+ */
+async function soloExistentes(sheets, libros) {
+  const out = {};
+  for (const k of Object.keys(libros)) {
+    const L = libros[k];
+    if (L.pestanas === '*') { out[k] = L; continue; }
+    const m = await sheets.spreadsheets.get({ spreadsheetId: L.id, fields: 'sheets.properties.title' });
+    const hay = new Set(m.data.sheets.map((x) => x.properties.title));
+    out[k] = { id: L.id, pestanas: L.pestanas.filter((n) => hay.has(n)) };
+  }
+  return out;
+}
+
 function moduloDe(nombre) {
   return Object.keys(MODULOS).find((m) => MODULOS[m].lectura.includes(nombre) || MODULOS[m].escritura.includes(nombre)) || null;
 }
@@ -80,9 +97,9 @@ function crearServicioF2(pool) {
    */
   async function refrescar(sheets) {
     const resumen = [];
-    resumen.push(...await C.refrescarCopia(sheets, pool, { libros: LIBROS_CAJA, tabla: TABLA }));
+    resumen.push(...await C.refrescarCopia(sheets, pool, { libros: await soloExistentes(sheets, LIBROS_CAJA), tabla: TABLA }));
     let errEventos = null;
-    try { resumen.push(...await C.refrescarCopia(sheets, pool, { libros: LIBROS_EVENTOS, tabla: TABLA })); } catch (e) { errEventos = e; }
+    try { resumen.push(...await C.refrescarCopia(sheets, pool, { libros: await soloExistentes(sheets, LIBROS_EVENTOS), tabla: TABLA })); } catch (e) { errEventos = e; }
     await cargar();
     if (errEventos) { const e = new Error('Caja copiada; Eventos no: ' + (errEventos.message || errEventos)); e.resumen = resumen; throw e; }
     return resumen;
@@ -107,4 +124,4 @@ function crearServicioF2(pool) {
   };
 }
 
-module.exports = { crearServicioF2, crearMotores, anularEscriturasAlLeer, moduloDe, MODULOS, LIBROS_CAJA, LIBROS_EVENTOS, TABLA, MKT_ID };
+module.exports = { crearServicioF2, soloExistentes, crearMotores, anularEscriturasAlLeer, moduloDe, MODULOS, LIBROS_CAJA, LIBROS_EVENTOS, TABLA, MKT_ID };
