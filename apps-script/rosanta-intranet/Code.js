@@ -134,7 +134,7 @@ function doGet(e) {
     if (sub === 'resenas' && !usuarioTieneModulo(usuario, 'resenas')) sub = 'os';
     if (sub === 'crm' && !usuarioTieneModulo(usuario, 'crm')) sub = 'os';
     if (sub === 'consola' && !usuarioTieneModulo(usuario, 'consola')) sub = 'os';
-    if (sub === 'eventos' && !usuarioTieneModulo(usuario, 'marketing')) sub = 'os';
+    if (sub === 'eventos' && !puedeEventos_(usuario)) sub = 'os';
     return render_('SistemaMarketing', {
       usuario: usuario, urlBase: urlBase, sub: sub, authToken: authToken,
       resenasUrl: CONFIG.RESENAS_URL, consolaUrl: CONFIG.CONSOLA_URL
@@ -223,7 +223,7 @@ function doGet(e) {
 
   // Pipeline de Eventos (15-oct-2026): antes un artifact de claude.ai, ahora la pestaña
   // cotizaciones del Marketing OS. Se abre dentro del Sistema de Marketing (sub=eventos).
-  if (pagina === 'eventos' && usuarioTieneModulo(usuario, 'marketing')) {
+  if (pagina === 'eventos' && puedeEventos_(usuario)) {
     return render_('EventosVista', { usuario: usuario, urlBase: urlBase, authToken: authToken })
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
