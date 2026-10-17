@@ -1357,16 +1357,16 @@ function _pagAnular_(Q, id, texto) {
     var sh = pagHoja_(false);
     if (!sh) throw new Error('No hay movimientos.');
     var v = sh.getDataRange().getValues(), H = v[0].map(function (h) { return String(h || '').trim(); });
-    var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iA = H.indexOf('AREA'), iP = H.indexOf('ESCRITO POR');
-    var miForma = (PAG_EQUIPO_.filter(function (e) { return e.rol === Q.rol; })[0] || {}).forma;
+    var iId = H.indexOf('ID'), iE = H.indexOf('ESTATUS DE PAGO'), iP = H.indexOf('ESCRITO POR');
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][iId]) !== id) continue;
       var est = String(v[r][iE] || '');
       if (/^ANULADO/i.test(est)) throw new Error('Ese movimiento ya estaba anulado. Tocá Actualizar.');
       if (est === PAG_ANTERIOR_ && Q.rol !== 'dueno') throw new Error('Esa fila es la que trajo la factura desde COMPRAS_2026, no un pago. Si la factura no se debe, avisá al dueño.');
-      // lo que uno agrego en Por devolver lo anula el mismo, aunque la factura sea de la otra area
-      var suyo = miForma && est === miForma && String(v[r][iP]) === Q.nombre;
-      if (Q.rol !== 'dueno' && !suyo && Q.areas.indexOf(String(v[r][iA]).toUpperCase()) === -1) throw new Error('Ese movimiento es de ' + v[r][iA] + '.');
+      // Matriz de accesos (Juanma, 17-oct-2026): el equipo anula SOLO lo que anoto el mismo, en
+      // cualquier momento y aunque la factura sea de la otra area. Lo ajeno —incluido un
+      // "Confirmado con banco" o un "No pertenece", que anota el dueño— solo lo anula el dueño.
+      if (Q.rol !== 'dueno' && String(v[r][iP]) !== Q.nombre) throw new Error('Ese movimiento lo anotó ' + (String(v[r][iP] || '').trim() || 'otra persona') + ': solo el dueño lo puede anular.');
       sh.getRange(r + 1, iE + 1).setValue(texto || ('ANULADO: ' + est + ' (' + Q.nombre + ', ' + medFechaIso_(new Date()) + ')'));
       SpreadsheetApp.flush();
       _pagOlvidar_(false);
