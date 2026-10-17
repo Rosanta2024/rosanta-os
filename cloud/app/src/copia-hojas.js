@@ -35,8 +35,11 @@ function valorCelda(c) {
   }
   if ('stringValue' in v) return v.stringValue;
   if ('boolValue' in v) return v.boolValue;
-  return '';   // errorValue: getValues() devuelve el texto del error; aca no lo usamos
+  if ('errorValue' in v) return ERRORES[v.errorValue.type] || '#ERROR!';   // getValues() devuelve el texto del error
+  return '';
 }
+// Como los muestra Google Sheets (y los devuelve getValues en Apps Script).
+const ERRORES = { ERROR: '#ERROR!', NULL_VALUE: '#NULL!', DIVIDE_BY_ZERO: '#DIV/0!', VALUE: '#VALUE!', REF: '#REF!', NAME: '#NAME?', NUM: '#NUM!', N_A: '#N/A', LOADING: '#LOADING' };
 
 /** rowData de la API → matriz rectangular como getDataRange().getValues(). */
 function matrizDeFilas(rowData) {

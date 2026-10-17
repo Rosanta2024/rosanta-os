@@ -8,6 +8,7 @@ const { crearApp } = require('./app');
 const { crearPool } = require('./db');
 const { crearServicioPagos } = require('./servicio-pagos');
 const pantalla = require('./pantalla-pagos');
+const { comparar } = require('./comparar-pagos');
 
 async function leerUsuariosHoja() {
   const id = process.env.CONFIG_SHEET_ID;
@@ -28,10 +29,13 @@ async function main() {
   const pagos = crearServicioPagos(pool, { modo: process.env.MODO_PAGOS || 'sombra' });
   await pagos.cargar().catch((e) => console.error('Pagos no cargo:', e.message));
   const htmlPagos = pantalla.armar({ sombra: (process.env.MODO_PAGOS || 'sombra') === 'sombra' });
+  const htmlFotos = pantalla.armarFotos();
   const app = crearApp({
     pool,
     pagos: { llamar: pagos.llamar, estado: pagos.estado, refrescar: () => pagos.refrescar(clienteSheets()) },
     pantallaPagos: () => htmlPagos,
+    pantallaFotos: () => htmlFotos,
+    compararPagos: () => { const c = pagos.copia(); return comparar({ pool, sheets: clienteSheets(), librosCopia: c.libros, copiaLeida: c.leida }); },
     anotarTiempo: (t) => pool.query('INSERT INTO tiempos (accion, donde, ms, quien) VALUES ($1,$2,$3,$4)', [t.accion, t.donde, t.ms, t.quien]),
     leerUsuariosHoja,
     claveTareas: process.env.CLAVE_TAREAS,

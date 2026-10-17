@@ -76,4 +76,28 @@ function armar(opciones) {
     '</body></html>';
 }
 
-module.exports = { armar, paleta, pfError, TRADUCTOR };
+/** /pagos/fotos: las fotos de cada noche, para que Juanma las compare con la intranet. */
+function armarFotos() {
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>Comparación de Pagos · Rosanta</title>' + paleta() +
+    '<style>body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--rosanta-font-body)}main{max-width:1000px;margin:0 auto;padding:16px}' +
+    'h1{font-family:var(--rosanta-font-title);font-size:1.4rem}p{line-height:1.5}table{width:100%;border-collapse:collapse;background:var(--superficie);border-radius:12px;overflow:hidden}' +
+    'th,td{padding:10px 8px;border-bottom:1px solid var(--linea);text-align:left;font-size:.92rem;vertical-align:top}th{font-family:var(--rosanta-font-label);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--texto-suave)}' +
+    '.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ok{color:var(--ok);font-weight:700}.mal{color:var(--mal);font-weight:700}small{color:var(--texto-suave)}' +
+    '.envolver{overflow-x:auto}</style></head><body><main><h1>Pagos · comparación de cada noche</h1>' +
+    '<p>Cada noche el servidor nuevo vuelve a leer las hojas de Google y revisa que su copia dé lo mismo. Estos son los números del recuadro de arriba de Pagos ' +
+    '(viendo todas las áreas). Para comparar: abrí Pagos en la intranet y mirá que coincidan con la última fila.</p>' +
+    '<div class="envolver"><table><thead><tr><th>Cuándo</th><th class="n">Facturas por pagar</th><th class="n">Cantidad a pagar</th><th class="n">Con fecha hasta hoy</th><th>Copia</th><th>Detalle</th></tr></thead>' +
+    '<tbody id="f"><tr><td colspan="6">Leyendo…</td></tr></tbody></table></div></main><script>' +
+    'function esc(x){return String(x==null?"":x).replace(/[&<>"\\x27]/g,function(c){return "&#"+c.charCodeAt(0)+";"})}' +
+    'function q(n){return "Q"+Number(n||0).toLocaleString("es-GT",{minimumFractionDigits:2,maximumFractionDigits:2})}' +
+    'var u=new URLSearchParams(location.search).get("u")||"";fetch("/api/fotos-pagos",{headers:{"x-rosanta-u":u}}).then(function(r){return r.json()}).then(function(j){' +
+    'var t=document.getElementById("f");if(j.error){t.innerHTML="<tr><td colspan=6>"+esc(j.error)+"</td></tr>";return}' +
+    'if(!j.fotos.length){t.innerHTML="<tr><td colspan=6>Todavía no hay fotos: la primera sale esta noche.</td></tr>";return}' +
+    't.innerHTML=j.fotos.map(function(x){var e=Object.keys(x.celdas_error||{}).map(function(k){return k+": "+x.celdas_error[k]+" celdas con error"});' +
+    'var d=(x.diferencias||[]).concat(e);return "<tr><td>"+esc(x.cuando)+"</td><td class=n>"+x.por_pagar_n+"</td><td class=n>"+q(x.por_pagar_q)+"</td><td class=n>"+x.vence_hoy+"</td><td>"+' +
+    '(x.copia_al_dia?"<span class=ok>✓ al día</span>":"<span class=mal>✗ no coincide</span>")+"</td><td><small>"+(d.length?d.map(esc).join("<br>"):"—")+"</small></td></tr>"}).join("")' +
+    '}).catch(function(){document.getElementById("f").innerHTML="<tr><td colspan=6>No se pudo leer. Probá de nuevo.</td></tr>"})</script></body></html>';
+}
+
+module.exports = { armar, armarFotos, paleta, pfError, TRADUCTOR };

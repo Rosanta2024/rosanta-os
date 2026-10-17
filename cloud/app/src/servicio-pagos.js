@@ -19,13 +19,13 @@ const ESCRITURA = ['registrarPagoFacturas', 'programarPagoFactura', 'registrarSa
 function crearServicioPagos(pool, opciones) {
   const o = opciones || {};
   const modo = o.modo || 'sombra';
-  let motor = null, leida = null, error = null;
+  let motor = null, leida = null, error = null, libros = null;
 
   async function cargar() {
     const copia = await C.cargarCopia(pool);
     if (!copia.libros[C.LIBROS.maestro.id]) { motor = null; error = 'Todavia no hay copia de las hojas.'; return; }
     motor = crearMotor({ libros: copia.libros, configId: C.LIBROS.config.id, editables: {} });
-    leida = copia.leida; error = null;
+    libros = copia.libros; leida = copia.leida; error = null;
   }
 
   async function refrescar(sheets) {
@@ -47,7 +47,8 @@ function crearServicioPagos(pool, opciones) {
     return { resultado: r.resultado, ms: Date.now() - t0 };
   }
 
-  return { cargar, refrescar, llamar, estado: () => ({ modo, copia_leida: leida, listo: !!motor, error }) };
+  return { cargar, refrescar, llamar, copia: () => ({ libros, leida }),
+    estado: () => ({ modo, copia_leida: leida, listo: !!motor, error }) };
 }
 
 module.exports = { crearServicioPagos, LECTURA, ESCRITURA };

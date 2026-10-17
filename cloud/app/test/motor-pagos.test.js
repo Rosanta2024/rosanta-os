@@ -66,6 +66,8 @@ test('Fechas: formatDate en hora de Guatemala y serie de Sheets → fecha local'
   assert.strictEqual(C.valorCelda({ effectiveValue: { numberValue: 46312 } }), 46312, 'un numero sin formato de fecha sigue siendo numero');
   assert.strictEqual(C.valorCelda({ effectiveValue: { stringValue: '2026-10-17' } }), '2026-10-17', 'una fecha escrita como texto sigue siendo texto');
   assert.strictEqual(C.valorCelda({}), '');
+  assert.strictEqual(C.valorCelda({ effectiveValue: { errorValue: { type: 'REF' } } }), '#REF!', 'un error se ve como en Google, no como vacio');
+  assert.strictEqual(C.valorCelda({ effectiveValue: { errorValue: { type: 'N_A' } } }), '#N/A');
 });
 
 test('La copia ida y vuelta por la base no cambia nada', () => {

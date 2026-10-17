@@ -74,6 +74,11 @@ function crearApp(deps) {
     res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaPagos());
   });
 
+  app.get('/pagos/fotos', (req, res) => {
+    if (!deps.pantallaFotos) return res.status(404).send('No disponible.');
+    res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaFotos());
+  });
+
   /** google.script.run.<nombre>(AUTH, ...args) de la pantalla llega aca. */
   app.post('/api/llamar/:nombre', exigirUsuario, async (req, res, next) => {
     const nombre = req.params.nombre;
@@ -97,6 +102,25 @@ function crearApp(deps) {
       const t0 = Date.now();
       const resumen = await deps.pagos.refrescar();
       res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen });
+    } catch (e) { next(e); }
+  });
+
+  /** La comparacion de cada noche. 409 si la copia no coincide con las hojas (el reloj lo marca y avisa). */
+  app.post('/tareas/comparar-pagos', exigirTarea, async (req, res, next) => {
+    try {
+      const foto = await deps.compararPagos();
+      res.status(foto.copia_al_dia ? 200 : 409).json({ ok: foto.copia_al_dia, por_pagar_n: foto.por_pagar_n, por_pagar_q: foto.por_pagar_q,
+        vence_hoy: foto.vence_hoy, diferencias: foto.diferencias, celdas_error: foto.celdas_error });
+    } catch (e) { next(e); }
+  });
+
+  /** Las fotos de las ultimas noches, para comparar con la intranet. Solo el dueño. */
+  app.get('/api/fotos-pagos', exigirUsuario, async (req, res, next) => {
+    try {
+      if (U.normalizarRol(req.usuario.rol) !== 'dueno') return res.status(403).json({ error: 'Solo el dueño ve las fotos de la comparación.' });
+      const r = await deps.pool.query(`SELECT to_char(cuando AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, por_pagar_n, por_pagar_q::float AS por_pagar_q,
+        vence_hoy, copia_al_dia, diferencias, celdas_error FROM pagos_fotos ORDER BY id DESC LIMIT 30`);
+      res.json({ fotos: r.rows });
     } catch (e) { next(e); }
   });
 
