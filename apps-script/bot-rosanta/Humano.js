@@ -205,3 +205,31 @@ function fichaEstadoBot_(canal, contactoId, valor) {
     else if (valor) fichaActualizar_(canal, contactoId, '', { tipo: '' }, { estado_bot: valor });
   } catch (e) { Logger.log('fichaEstadoBot_: ' + e); }
 }
+
+/* =====================================================================
+ * RESERVAS CON EL BOT CALLADO (decisión de Juanma, 17-oct-2026)
+ * Si el bot pasó el chat a Juanma y el cliente pide reservar, cambiar, cancelar
+ * o consultar su reserva, el bot lo atiende igual (Abdiel, 16-oct: tocó
+ * "Sí, quiero reservar" y nadie contestó). Solo mientras espera a Juanma: si
+ * Juanma ya está escribiendo en ese chat, el bot no se mete.
+ * ===================================================================== */
+var HUM_ACCIONES_RESERVA = ['crear_reserva', 'cambiar_reserva', 'cancelar_reserva', 'consultar_reserva'];
+
+function humPuedeReservar_(contactoId) {
+  if (CacheService.getScriptCache().get('pausa_' + contactoId)) return false;   // Juanma escribe desde su teléfono
+  var st = humLeer_(contactoId);
+  return !!st && st.estado === 'esperando';
+}
+
+function humEsReserva_(result) {
+  var m = (result && result._modelo) || {};
+  return HUM_ACCIONES_RESERVA.indexOf(m.accion) >= 0 || m.tipo === 'reserva';
+}
+
+/** La reserva ya se movió en Wix: el chat vuelve al bot (Juanma recibe el aviso de la reserva igual). */
+function humTrasReserva_(canal, contactoId, result) {
+  var r = String((result && result.lead && result.lead.resumen) || '');
+  if (!/^Reserva (creada|CAMBIADA|CANCELADA)/.test(r)) return;
+  humBorrar_(contactoId);
+  fichaEstadoBot_(canal, contactoId, '');
+}

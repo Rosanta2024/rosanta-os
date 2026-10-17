@@ -10,7 +10,8 @@ Criterio (el mismo que reprodujo la línea base del cerebro v44: 3.7 ≈ 3.8):
   a persona = alguna fila con ¿Humano? = Sí
   reserva   = alguna fila con resumen "Reserva creada en Wix"
   evento    = alguna fila con tipo = evento
-Se excluyen las filas de prueba (mensaje con "PRUEBA").
+Se excluyen las filas de prueba (mensaje con "PRUEBA") y el canal correo (la linea base es de chats;
+--con-correo lo incluye).
 --detalle lista los chats que pasaron a persona, para leer el motivo en Conversaciones.
 """
 import sys, datetime as dt, collections
@@ -36,6 +37,7 @@ def main():
     for r in filas:
         f = fecha(r[0])
         if not f or not (desde <= f < hasta) or 'PRUEBA' in str(r[10] or ''): continue
+        if r[1] == 'correo' and '--con-correo' not in sys.argv: continue   # la linea base es de chats (WhatsApp, IG, Messenger)
         chats[(r[1], ident(r[11]) or ident(r[4]) or 'sin-id-' + str(f))].append(r)
     n = len(chats)
     if not n: sys.exit('Sin chats en ese rango.')

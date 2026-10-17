@@ -20,6 +20,8 @@ function probarEscaladas() {
     ['whatsapp', 'transferencia realizada', '', true],
     ['whatsapp', "Hi, I'm not able to pay, the info isn't working. I'd like a real person to help me, not AI", '', true],
     ['whatsapp', 'Quiero hablar con una persona', '', true],
+    // Algo que no está en la base pero hay algo parecido: ofrece la Cena Romántica y no escala (Abdiel, 16-oct)
+    ['whatsapp', 'Queremos un picnic romántico para 2 un domingo a las 3 pm para nuestro aniversario, ¿qué paquetes tienen?', '', false],
     // Con el nombre del perfil (aquí "Prueba") pregunta si la reserva va a ese nombre, no crea todavía (Juanma, 16-oct)
     ['whatsapp', 'Quiero reservar el sábado 17 de octubre a las 7pm para 2 personas, mi correo es prueba@rosanta.rest', 'responder_info', false]
   ];

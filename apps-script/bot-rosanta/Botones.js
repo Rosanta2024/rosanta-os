@@ -290,7 +290,9 @@ function btAtender_(canal, contactoId, nombre, entrada) {
   } else {
     var r0 = askClaude(canal, nombre, entrada.texto, contactoId);
     var respuestaModelo = r0 && r0.respuesta;
+    var modelo = { accion: String((r0 && r0.lead && r0.lead.accion) || ''), tipo: String((r0 && r0.lead && r0.lead.tipo) || '') };
     result = rvCerrar(r0, canal, contactoId);
+    result._modelo = modelo;   // lo usa Humano.js: con el bot callado, solo sale si es de reservas
     result.botones = btDecidir_(result, contactoId, esPrimero, respuestaModelo);
   }
   result.lead = result.lead || {};
