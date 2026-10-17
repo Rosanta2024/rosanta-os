@@ -100,12 +100,3 @@ function enviarListaConsumoPendiente() {
   return 'enviado: ' + L.total;
 }
 
-/** Correr UNA vez desde el editor: deja el activador de los lunes a las 8. */
-function instalarTriggerConsumoPendiente() {
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'enviarListaConsumoPendiente') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('enviarListaConsumoPendiente').timeBased()
-    .onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).inTimezone(TZ).create();
-  return 'Listo: enviarListaConsumoPendiente corre los lunes a las 8 (hora de Guatemala).';
-}
