@@ -21,10 +21,6 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include(name) {
-  return HtmlService.createHtmlOutputFromFile(name).getContent();
-}
-
 function getSS_() {
   var ss = SpreadsheetApp.getActive();
   if (!ss) {
@@ -155,11 +151,6 @@ function carpetaFotos_() {
   var f = DriveApp.createFolder('Contenido para clientes');
   props.setProperty('FOTOS_FOLDER_ID', f.getId());
   return f;
-}
-
-/** Correr UNA vez desde el editor para autorizar el permiso de Drive. */
-function autorizarDrive() {
-  Logger.log('Carpeta de fotos: ' + carpetaFotos_().getUrl());
 }
 
 /**
