@@ -117,7 +117,11 @@ test('La comparacion da 0 diferencias con los mismos datos y avisa una diferenci
   assert.ok(d.some((x) => /caja día 2026-10-14 contado: copia 2600 · hojas 2700/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /eventos por_etapa cotizada q: copia 5100 · hojas 5000/.test(x)), d.join('\n'));
   const sinMkt = libros(); delete sinMkt[S.MKT_ID];
-  assert.ok(K.compararResumenes(K.armar(sinMkt), K.armar(libros())).some((x) => /eventos: no se pudo armar con la copia/.test(x)));
+  assert.ok(K.compararResumenes(K.armar(sinMkt), K.armar(libros())).some((x) => /eventos: no se pudo armar con la copia/.test(x)),
+    'las hojas tienen Marketing OS y la copia no: eso SI es diferencia');
+  const avisos = [];
+  assert.deepStrictEqual(K.compararResumenes(K.armar(sinMkt), K.armar(sinMkt), avisos), [], 'sin Marketing OS de los dos lados no es diferencia');
+  assert.deepStrictEqual(avisos, ['eventos: Sin copia de Marketing OS']);
 });
 
 test('Las pantallas se arman con el codigo real y sin scriptlets', () => {

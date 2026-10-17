@@ -85,7 +85,7 @@ function crearAppF2(deps) {
     try {
       const foto = await deps.comparar();
       res.status(foto.copia_al_dia ? 200 : 409).json({ ok: foto.copia_al_dia, caja: foto.caja, compras: foto.compras,
-        eventos: foto.eventos, diferencias: foto.diferencias, celdas_error: foto.celdas_error });
+        eventos: foto.eventos, diferencias: foto.diferencias, avisos: foto.avisos, celdas_error: foto.celdas_error });
     } catch (e) { next(e); }
   });
 

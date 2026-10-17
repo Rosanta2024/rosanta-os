@@ -73,10 +73,15 @@ function armar(libros) {
   };
 }
 
-/** Compara lo armado con la copia contra lo armado con las hojas. */
-function compararResumenes(copia, hojas) {
+/**
+ * Compara lo armado con la copia contra lo armado con las hojas. Si un modulo no se puede armar
+ * de NINGUN lado por la misma razon (p. ej. Marketing OS todavia no compartido), no es una
+ * diferencia de datos: va a `avisos` y no dispara la alerta.
+ */
+function compararResumenes(copia, hojas, avisos) {
   const difs = [];
   ['caja', 'compras', 'eventos'].forEach((m) => {
+    if (hojas[m].error && copia[m].error && hojas[m].error === copia[m].error) { if (avisos) avisos.push(m + ': ' + hojas[m].error); return; }
     if (hojas[m].error) { difs.push(m + ': no se pudo armar con las hojas (' + hojas[m].error + ')'); return; }
     if (copia[m].error) { difs.push(m + ': no se pudo armar con la copia (' + copia[m].error + ')'); return; }
     difs.push(...(m === 'caja' ? difCaja(copia[m], hojas[m]) : diferencias(copia[m], hojas[m], m)));
@@ -101,18 +106,19 @@ async function comparar(o) {
   const fresco = await leerFresco(o.sheets);
   const copia = armar(o.librosCopia || {});
   const hojas = armar(fresco);
-  const difs = compararResumenes(copia, hojas);
+  const avisos = [];
+  const difs = compararResumenes(copia, hojas, avisos);
   const foto = {
     cuando_gt: formatDate(o.ahora || new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm'),
     caja: hojas.caja.error ? null : (({ dias, ...r }) => r)(hojas.caja), compras: hojas.compras.error ? null : hojas.compras,
     eventos: hojas.eventos.error ? null : { filas: hojas.eventos.filas, por_etapa: hojas.eventos.por_etapa },
-    copia_leida: o.copiaLeida || null, copia_al_dia: difs.length === 0, diferencias: difs, celdas_error: celdasConError(fresco)
+    copia_leida: o.copiaLeida || null, copia_al_dia: difs.length === 0, diferencias: difs, avisos, celdas_error: celdasConError(fresco)
   };
   await o.pool.query(
     `INSERT INTO caja_fotos (caja, compras, eventos, copia_leida, copia_al_dia, diferencias, celdas_error)
      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
     [JSON.stringify(foto.caja), JSON.stringify(foto.compras), JSON.stringify(foto.eventos), foto.copia_leida, foto.copia_al_dia,
-      JSON.stringify(foto.diferencias), JSON.stringify(foto.celdas_error)]);
+      JSON.stringify(foto.diferencias.concat(avisos.map((a) => 'Aviso · ' + a))), JSON.stringify(foto.celdas_error)]);
   return foto;
 }
 
