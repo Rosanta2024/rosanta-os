@@ -61,8 +61,10 @@ function hoja(nombre, R, anotar) {
 }
 
 /**
- * crearMotor({ libros, configId, editables }) — libros: { libroId: { pestana: matriz } } (la copia).
+ * crearMotor({ libros, configId, editables, listas }) — libros: { libroId: { pestana: matriz } } (la copia).
  * editables: { libroId: [pestanas que se pueden escribir] }.
+ * listas: los archivos LISTA*.txt de cloud/app/intranet/ con el codigo a cargar (por defecto
+ * ['LISTA.txt'], Pagos). Otro modulo (Caja, Eventos) pasa la suya sin tocar este archivo.
  */
 function crearMotor(opciones) {
   const libros = opciones.libros;
@@ -105,7 +107,8 @@ function crearMotor(opciones) {
     console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN, parseFloat, parseInt, Intl
   };
   vm.createContext(ctx);
-  const lista = fs.readFileSync(path.join(DIR, 'LISTA.txt'), 'utf8').split('\n').map((s) => s.trim()).filter(Boolean);
+  const lista = Array.from(new Set((opciones.listas || ['LISTA.txt'])
+    .map((l) => fs.readFileSync(path.join(DIR, l), 'utf8')).join('\n').split('\n').map((s) => s.trim()).filter(Boolean)));
   lista.forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'intranet/' + f }));
 
   /**

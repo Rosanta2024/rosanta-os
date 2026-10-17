@@ -20,11 +20,11 @@ def correr(cmd, home):
     return 'deny' if '"deny"' in p.stdout else 'pasa'
 
 
-def sellar(home, **k):
+def sellar(home, archivo='bateria-nube.json', **k):
     os.makedirs(os.path.join(home, '.rosanta-sellos'), exist_ok=True)
     s = {'total': 9, 'ok': 9, 'fallas': 0, 'huella': S.huella()}
     s.update(k)
-    json.dump(s, open(os.path.join(home, '.rosanta-sellos', 'bateria-nube.json'), 'w'))
+    json.dump(s, open(os.path.join(home, '.rosanta-sellos', archivo), 'w'))
 
 
 DEPLOY = 'gcloud run deploy rosanta-nube --source cloud/app --region northamerica-south1'
@@ -44,6 +44,17 @@ try:
     casos.append(('Borrar una base de datos: bloqueado', correr('gcloud sql databases delete rosanta --instance rosanta-db', home), 'deny'))
     casos.append(('Quitar la proteccion: bloqueado', correr('gcloud sql instances patch rosanta-db --no-deletion-protection', home), 'deny'))
     casos.append(('Borrar con el si de Juanma: pasa', correr('ROSANTA_NUBE_BORRAR="prueba archivada" gcloud sql instances delete x', home), 'pasa'))
+    # Un sello por servicio (17-oct-2026): el de rosanta-nube no sirve para otro servicio, y al reves
+    home2 = tempfile.mkdtemp()
+    try:
+        sellar(home2)
+        casos.append(('El sello de rosanta-nube no publica otro servicio', correr('gcloud run deploy rosanta-nube-sombra2 --source cloud/app', home2), 'deny'))
+        sellar(home2, 'bateria-nube-rosanta-nube-sombra2.json')
+        casos.append(('Con su propio sello, el otro servicio publica', correr('gcloud run deploy rosanta-nube-sombra2 --source cloud/app', home2), 'pasa'))
+        sellar(home2, 'bateria-nube.json', huella='vieja')
+        casos.append(('Un sello viejo de rosanta-nube no se salva con el sello del otro', correr(DEPLOY, home2), 'deny'))
+    finally:
+        shutil.rmtree(home2, ignore_errors=True)
     casos.append(('Leer la base no se toca', correr('gcloud sql instances describe rosanta-db', home), 'pasa'))
     casos.append(('Un comando sin gcloud no se toca', correr('npm test', home), 'pasa'))
 finally:

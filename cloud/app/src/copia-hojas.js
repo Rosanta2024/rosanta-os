@@ -89,10 +89,16 @@ async function leerLibro(sheets, id, pestanas) {
   return out;
 }
 
-/** Lee todos los libros y los guarda en la base en una transaccion. Devuelve el resumen. */
-async function refrescarCopia(sheets, pool) {
+/**
+ * Lee todos los libros y los guarda en la base en una transaccion. Devuelve el resumen.
+ * libros: { clave: { id, pestanas } } (por defecto LIBROS, los de Pagos); tabla: donde guardar
+ * (por defecto hojas_copia). Otro modulo pasa los suyos y su tabla sin tocar este archivo.
+ */
+async function refrescarCopia(sheets, pool, opciones) {
+  const L = (opciones && opciones.libros) || LIBROS;
+  const tabla = tablaValida((opciones && opciones.tabla) || 'hojas_copia');
   const leido = {};
-  for (const k of Object.keys(LIBROS)) leido[LIBROS[k].id] = await leerLibro(sheets, LIBROS[k].id, LIBROS[k].pestanas);
+  for (const k of Object.keys(L)) leido[L[k].id] = await leerLibro(sheets, L[k].id, L[k].pestanas);
   const c = await pool.connect();
   const resumen = [];
   try {
@@ -101,7 +107,7 @@ async function refrescarCopia(sheets, pool) {
       for (const pestana of Object.keys(leido[libro])) {
         const filas = leido[libro][pestana];
         await c.query(
-          `INSERT INTO hojas_copia (libro, pestana, filas, n_filas, leida) VALUES ($1,$2,$3,$4, now())
+          `INSERT INTO ${tabla} (libro, pestana, filas, n_filas, leida) VALUES ($1,$2,$3,$4, now())
            ON CONFLICT (libro, pestana) DO UPDATE SET filas = EXCLUDED.filas, n_filas = EXCLUDED.n_filas, leida = now()`,
           [libro, pestana, JSON.stringify(codificar(filas)), filas.length]);
         resumen.push({ libro, pestana, filas: filas.length });
@@ -112,9 +118,16 @@ async function refrescarCopia(sheets, pool) {
   return resumen;
 }
 
+/** Solo nombres de tabla simples: el nombre va dentro del SQL. */
+function tablaValida(t) {
+  if (!/^[a-z_][a-z0-9_]{0,40}$/.test(t)) throw new Error('Nombre de tabla invalido: ' + t);
+  return t;
+}
+
 /** La copia completa desde la base: { libroId: { pestana: matriz } } y la hora de la lectura mas vieja. */
-async function cargarCopia(pool) {
-  const r = await pool.query('SELECT libro, pestana, filas, leida FROM hojas_copia');
+async function cargarCopia(pool, opciones) {
+  const tabla = tablaValida((opciones && opciones.tabla) || 'hojas_copia');
+  const r = await pool.query('SELECT libro, pestana, filas, leida FROM ' + tabla);
   const out = {}; let masVieja = null;
   r.rows.forEach((x) => {
     (out[x.libro] = out[x.libro] || {})[x.pestana] = decodificar(x.filas);

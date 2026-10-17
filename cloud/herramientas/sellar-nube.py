@@ -2,8 +2,9 @@
 """
 Sello de la bateria de la nube (17-oct-2026). Hermano de .claude/hooks/sellar-bateria.py.
 
-    python3 cloud/herramientas/sellar-nube.py            corre la bateria y, si da 0 fallas, sella
-    python3 cloud/herramientas/sellar-nube.py --huella   solo imprime la huella del codigo actual
+    python3 cloud/herramientas/sellar-nube.py                       corre la bateria y, si da 0 fallas, sella rosanta-nube
+    python3 cloud/herramientas/sellar-nube.py --servicio <nombre>   lo mismo para otro servicio de Cloud Run
+    python3 cloud/herramientas/sellar-nube.py --huella              solo imprime la huella del codigo actual
 
 A diferencia de la intranet (cuya bateria corre en el navegador y la lee Juanma), esta bateria
 corre aca mismo con Node: el conteo lo mide este script, nadie lo escribe a mano.
@@ -15,8 +16,18 @@ node_modules) y cloud/db. Si cambia un archivo, la huella cambia y el candado
 import hashlib, json, os, re, subprocess, sys, time
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../cloud
-SELLO = os.path.expanduser('~/.rosanta-sellos/bateria-nube.json')
-HISTORIAL = os.path.expanduser('~/.rosanta-sellos/bateria-nube-historial.jsonl')
+
+def rutas(servicio='rosanta-nube'):
+    """Un sello por servicio de Cloud Run (17-oct-2026): sellar uno no pisa el de otro.
+    rosanta-nube conserva el nombre de siempre (bateria-nube.json)."""
+    if not re.match(r'^[a-z][a-z0-9-]{0,62}$', servicio):
+        raise SystemExit('Nombre de servicio invalido: ' + servicio)
+    base = 'bateria-nube' if servicio == 'rosanta-nube' else 'bateria-nube-' + servicio
+    d = os.path.expanduser('~/.rosanta-sellos')
+    return os.path.join(d, base + '.json'), os.path.join(d, base + '-historial.jsonl')
+
+
+SELLO, HISTORIAL = rutas()
 CARPETAS = ['app', 'db']
 FUERA = {'node_modules', '.DS_Store', '__pycache__'}
 
@@ -51,6 +62,9 @@ def maximo_historico():
 
 
 def main():
+    global SELLO, HISTORIAL
+    if '--servicio' in sys.argv:
+        SELLO, HISTORIAL = rutas(sys.argv[sys.argv.index('--servicio') + 1])
     if '--huella' in sys.argv:
         print(huella())
         return 0
@@ -83,7 +97,7 @@ def main():
         json.dump(sello, f, indent=2)
     with open(HISTORIAL, 'a') as f:
         f.write(json.dumps(sello) + '\n')
-    print('Sellado: ' + antes[:12])
+    print('Sellado: ' + antes[:12] + ' · ' + os.path.basename(SELLO))
     return 0
 
 

@@ -26,13 +26,13 @@ El Python 3.9 del sistema no sirve. Cuenta: restaurante@rosanta.rest (`gcloud au
 
 ## Cambiar las tablas
 
-1. Archivo nuevo en `db/migraciones/` (`002_...sql`). **Una migración aplicada no se edita.**
+1. Archivo nuevo en `db/migraciones/` (`004_...sql`). **Una migración aplicada no se edita.** Números reservados: **001–009 Pagos y base** (esta rama); **010–019 Fase 2 (Caja) y Marketing OS** (rama `claude/nube-fase2-mkt`). Ninguna migración de un rango altera tablas del otro.
 2. `node cloud/herramientas/migrar.js` (muestra lo pendiente) y `--aplicar`.
 
 ## Publicar el servidor
 
 1. `cd cloud/app && npm install` (si cambió `package.json`).
-2. `python3 cloud/herramientas/sellar-nube.py` — corre la batería; si da 0 fallas, sella esa versión del código.
+2. `python3 cloud/herramientas/sellar-nube.py` — corre la batería; si da 0 fallas, sella esa versión del código. **Un sello por servicio:** para otro servicio de Cloud Run, `--servicio <nombre>` (el candado lee el nombre del `gcloud run deploy <nombre>`).
 3. `gcloud run deploy rosanta-nube --source cloud/app --region northamerica-south1` (las variables y claves ya quedaron puestas en el servicio).
 
 El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente para el mismo código, y bloquea borrar la base o sus respaldos sin `ROSANTA_NUBE_BORRAR="motivo"` (solo con el sí de Juanma). Después de tocar el candado: `python3 .claude/hooks/prueba-candado-nube.py`.

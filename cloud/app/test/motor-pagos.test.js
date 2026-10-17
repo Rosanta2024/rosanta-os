@@ -75,3 +75,16 @@ test('La copia ida y vuelta por la base no cambia nada', () => {
   assert.deepStrictEqual(C.decodificar(JSON.parse(JSON.stringify(C.codificar(m)))), m);
   assert.deepStrictEqual(C.matrizDeFilas([{ values: [{ effectiveValue: { stringValue: 'a' } }] }, { values: [] }, {}]), [['a']], 'filas vacias al final se recortan como getDataRange');
 });
+
+test('Otro modulo puede pasar su lista de archivos sin cambiar Pagos', () => {
+  const porDefecto = motor().archivos;
+  const explicito = crearMotor({ libros: libros(), configId: 'CFG', listas: ['LISTA.txt'] }).archivos;
+  assert.deepStrictEqual(explicito, porDefecto);
+  assert.ok(porDefecto.includes('PagosProveedores.js'));
+});
+
+test('La copia de hojas solo acepta nombres de tabla simples', async () => {
+  const pool = { query: async () => ({ rows: [] }) };
+  await assert.rejects(() => C.cargarCopia(pool, { tabla: 'hojas_copia; DROP TABLE usuarios' }), /Nombre de tabla invalido/);
+  assert.deepStrictEqual((await C.cargarCopia(pool, { tabla: 'hojas_copia_f2' })).libros, {});
+});

@@ -15,7 +15,18 @@ a mano para destrabar.
 """
 import importlib.util, json, os, re, sys
 
-SELLO = os.path.expanduser('~/.rosanta-sellos/bateria-nube.json')
+SERVICIO_POR_DEFECTO = 'rosanta-nube'
+
+
+def ruta_sello(servicio):
+    # Un sello por servicio (17-oct-2026), igual que sellar-nube.py › rutas()
+    base = 'bateria-nube' if servicio == SERVICIO_POR_DEFECTO else 'bateria-nube-' + servicio
+    return os.path.expanduser('~/.rosanta-sellos/' + base + '.json')
+
+
+def servicio_del_comando(cmd):
+    m = re.search(r'\brun\s+(?:deploy|services\s+update)\s+([a-z][a-z0-9-]*)', cmd)
+    return m.group(1) if m else SERVICIO_POR_DEFECTO
 
 
 def bloquear(msg):
@@ -68,8 +79,10 @@ def main():
     publicar = re.search(r'gcloud\s.*\brun\s+(deploy|services\s+(replace|update))\b', cmd)
     if not publicar:
         return 0
+    servicio = servicio_del_comando(cmd)
+    SELLO = ruta_sello(servicio)
     if not os.path.exists(SELLO):
-        bloquear('Bloqueado: no hay sello de la bateria de la nube. Correr: python3 cloud/herramientas/sellar-nube.py')
+        bloquear('Bloqueado: no hay sello de la bateria de la nube para ' + servicio + '. Correr: python3 cloud/herramientas/sellar-nube.py' + ('' if servicio == SERVICIO_POR_DEFECTO else ' --servicio ' + servicio))
     try:
         sello = json.load(open(SELLO))
     except ValueError:
