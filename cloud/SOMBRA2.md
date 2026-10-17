@@ -30,5 +30,8 @@ Si los archivos se separan de la intranet, la prueba "Sombra 2: los archivos son
 
 ## Pendiente
 
+- **Migraciones:** 010–019 son de esta rama; 020–029 son de la sesión "C: accesos, roles y limpieza". No reusar esos números.
+- **PagosProveedores.js:** la sesión C lo cambió (`_pagAnular_`) y falta publicarlo. Caja y Compras también lo cargan (`LISTA.txt`). **Cuando la intranet lo publique:** `traer-intranet.sh`, sellar los dos servicios (lo de Pagos lo hace el Estudio) y volver a publicar `rosanta-nube-sombra2`. Hasta entonces la prueba de copias exactas falla, que es lo que tiene que pasar.
+
 - **Eventos:** compartir Rosanta Marketing OS con `rosanta-nube@rosanta-apps-script.iam.gserviceaccount.com` como **Lector**. Mientras no se comparta, la copia y la comparación lo reportan como aviso y no disparan la alerta. Una vez que se haya leído alguna vez, si deja de poder leerse, sí es una falla y avisa.
 - Pantalla propia de "Clientes" (con el módulo `clientes`) y sus permisos: los define la sesión C con la matriz de Juanma. Mientras tanto se usan las guardas de hoy.
