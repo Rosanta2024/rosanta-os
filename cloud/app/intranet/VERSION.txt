@@ -1,1 +1,1 @@
-2b52777 2026-10-17 Pagos: el estatus 'Banco por confirmar' ya no se monta sobre el botón Ver (texto corto + parte en dos líneas)
+fa2f20d 2026-10-17 Accesos: el equipo anula en Pagos solo lo que anotó; el precio de carta, solo el dueño
