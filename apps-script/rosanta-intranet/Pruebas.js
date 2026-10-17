@@ -1522,6 +1522,25 @@ function prAccesos_(res) {
          : '_pagAnular_ volvio a dejar anular por area (PagosProveedores.js)', ok ? 1 : 0, 1);
   });
 
+  // 17-oct-2026, las 4 brechas medias de la matriz (aprobadas por Juanma desde la Central).
+  prCorrer_(g, 'Finanzas es solo del dueño, por rol', function () {
+    var nombre = 'Finanzas es solo del dueño, por rol';
+    var mal = ['chef', 'sala', 'pauta'].filter(function (r) { return usuarioTieneModulo({ rol: r, modulos: ['finanzas'] }, 'finanzas'); });
+    var ok = !mal.length && usuarioTieneModulo({ rol: 'Dueño', modulos: ['finanzas'] }, 'finanzas') &&
+             usuarioTieneModulo({ rol: 'chef', modulos: ['recetario'] }, 'recetario');
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'aunque la hoja USUARIOS le ponga "finanzas", solo el dueño entra' : 'abren Finanzas: ' + (mal.join(', ') || 'el dueño no entra') + ' (Config.js › MODULOS_SOLO_DUENO_)', ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'Exportar el CRM es solo del dueño', function () {
+    var nombre = 'Exportar el CRM es solo del dueño';
+    var html = HtmlService.createTemplateFromFile('CrmVista').getRawContent();
+    var i = html.indexOf('id="btnExportar"'), antes = i > 0 ? html.slice(Math.max(0, i - 160), i) : '';
+    var ok = i > 0 && /rolSinAcento_\(usuario\.rol\) === 'dueno'/.test(antes);
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? 'el botón solo se dibuja para el dueño' : 'el botón Exportar CSV quedó para cualquiera con crm (CrmVista.html)', ok ? 1 : 0, 1);
+  });
+
   prCorrer_(g, 'La hoja USUARIOS', function () {
     var ss = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID'));
     var hoja = ss.getSheetByName('USUARIOS');

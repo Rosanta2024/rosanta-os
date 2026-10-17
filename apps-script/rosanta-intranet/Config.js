@@ -87,8 +87,31 @@ function getUsuarioActual() {
   return null;
 }
 
+/**
+ * Matriz de accesos (Juanma, 17-oct-2026): estos modulos son SOLO del dueño, por ROL, aunque
+ * alguien los tenga escritos en su fila de USUARIOS. Antes Finanzas se abria por el modulo: quien
+ * lo tuviera veia el maestro entero.
+ */
+var MODULOS_SOLO_DUENO_ = ['finanzas'];
+
+/** "Dueño" → "dueno", "Sala" → "sala". */
+function rolSinAcento_(rol) {
+  return String(rol || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
 function usuarioTieneModulo(usuario, modulo) {
-  return usuario && usuario.modulos.indexOf(modulo) !== -1;
+  if (!usuario) return false;
+  if (MODULOS_SOLO_DUENO_.indexOf(modulo) !== -1 && rolSinAcento_(usuario.rol) !== 'dueno') return false;
+  return usuario.modulos.indexOf(modulo) !== -1;
+}
+
+/**
+ * Pipeline de Eventos (Juanma, 17-oct-2026): el dueño todo; SALA ingresa y corrige lo suyo.
+ * Ya no se abre con el modulo marketing: pauta no ve el pipeline (montos y clientes).
+ */
+function puedeEventos_(usuario) {
+  var rol = rolSinAcento_(usuario && usuario.rol);
+  return rol === 'dueno' || rol === 'sala';
 }
 
 /**
