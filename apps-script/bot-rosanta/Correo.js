@@ -16,8 +16,11 @@
  *   - si el último mensaje del hilo es de Rosanta, Juanma ya contestó: no se toca
  */
 
-var CORREO_BUSQUEDA = 'label:01-clientes--reservas- -label:01-clientes--reservas--cotizaciones ' +
-  '-from:rosanta.rest -from:wixsiteautomations.com newer_than:2d';
+// 17-oct-2026 (Juanma): además de la etiqueta, todo lo de la bandeja Principal. El filtro de Gmail solo etiqueta
+// respuestas a la confirmación de Wix y el formulario de la web: Elan y Jenni llegaron sin etiqueta y nadie los leyó.
+var CORREO_BUSQUEDA = '(label:01-clientes--reservas- OR (in:inbox category:primary)) -label:01-clientes--reservas--cotizaciones ' +
+  '-from:rosanta.rest -from:wixsiteautomations.com -from:sat.gob.gt -from:notificacionesbi.com.gt -from:baccredomatic.gt ' +
+  '-from:baccredomatic.com -from:posfile.com -from:econtrisa.com -from:google.com -from:paypal.com -from:mailer-daemon newer_than:2d';
 var CORREO_SIN_CORREO_CLIENTE = false;   // mientras se atiende un correo, el bot no manda su propio correo de confirmación
 var CORREO_AUTO = null;                  // cambio o cancelación hechos en Wix: se contestan solos (Juanma, 15-oct-2026)
 
@@ -78,8 +81,14 @@ function correoHilo_(hilo, desde, vistos) {
   var auto = CORREO_AUTO; CORREO_AUTO = null;
   var cuerpo = auto ? auto.cuerpo : correoCuerpo_(result.respuesta);
   if (!cuerpo) return;
+  // Desde que el bot lee toda la bandeja Principal (17-oct): a quien no es cliente no se le contesta ni se cuenta.
+  var tipoCorreo = String((result.lead && result.lead.tipo) || '');
+  if (!auto && !c.openwidget && (tipoCorreo === 'otro' || tipoCorreo === 'spam')) {
+    Logger.log('correo de no cliente, sin borrador: ' + c.email + ' · ' + ((result.lead && result.lead.resumen) || ''));
+    return;
+  }
   if (auto) {
-    // Cambio o cancelación ya hechos en Wix: se contestan sin borrador, con el correo revisado por marca.
+    // Reserva creada, cambiada o cancelada en Wix: se contesta sin borrador, con el correo revisado por marca.
     if (c.openwidget) GmailApp.sendEmail(c.email, auto.asunto, cuerpo, { name: 'Rosanta' });
     else ultimo.reply(cuerpo, { name: 'Rosanta' });
   } else if (c.openwidget) {

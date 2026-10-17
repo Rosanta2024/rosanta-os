@@ -101,7 +101,8 @@ function handleWhatsApp(body) {
         // Se registra SIEMPRE, aunque el bot esté en pausa o pase el límite:
         // si no, la consola se queda ciega mientras un humano atiende.
         logMensaje('whatsapp', from, name, 'in', 'cliente', entrada.log);
-      if (botEnPausa(from)) return; // un humano está atendiendo este chat
+        const pausado = botEnPausa(from);                // un humano está atendiendo este chat
+        if (pausado && !humPuedeReservar_(from)) return; // salvo reservas mientras espera a Juanma (Humano.js)
         if (!dentroDeLimite(from)) {
           logLead({ canal: 'whatsapp', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, from);
           return;
@@ -112,6 +113,8 @@ function handleWhatsApp(body) {
         const firstName = (name || '').split(' ')[0] || '';
 
         const result = btAtender_('whatsapp', from, firstName, entrada);
+        if (pausado && !humEsReserva_(result)) return;  // no era de reservas: sigue callado
+        if (pausado) humTrasReserva_('whatsapp', from, result);
         btEnviar_('whatsapp', from, result.respuesta, result.botones, phoneNumberId);
         logMensaje('whatsapp', from, name, 'out', 'bot', btTextoLog_(result));
         PROPS.setProperty('WA_PHONE_NUMBER_ID', phoneNumberId);
@@ -164,7 +167,8 @@ function handleInstagram(body) {
       var nombreIG = nombreInstagram(senderId);
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
       logMensaje('instagram', senderId, nombreIG, 'in', 'cliente', entrada.log);
-      if (botEnPausa(senderId)) return;
+      const pausado = botEnPausa(senderId);
+      if (pausado && !humPuedeReservar_(senderId)) return;   // salvo reservas mientras espera a Juanma
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'instagram', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
         return;
@@ -173,6 +177,8 @@ function handleInstagram(body) {
       if (btClavePrueba_(senderId, text)) { sendInstagram(senderId, BT_TXT.es.pruebaOk); return; }
 
       const result = btAtender_('instagram', senderId, (nombreIG || '').split(' ')[0] || '', entrada);
+      if (pausado && !humEsReserva_(result)) return;
+      if (pausado) humTrasReserva_('instagram', senderId, result);
       btEnviar_('instagram', senderId, result.respuesta, result.botones);
       logMensaje('instagram', senderId, nombreIG, 'out', 'bot', btTextoLog_(result));
       logLead(result.lead, entrada.log, senderId, result.respuesta);
@@ -244,7 +250,8 @@ function handleMessenger(body) {
       const text = entrada.texto;
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
       logMensaje('messenger', senderId, '', 'in', 'cliente', entrada.log);
-      if (botEnPausa(senderId)) return;
+      const pausado = botEnPausa(senderId);
+      if (pausado && !humPuedeReservar_(senderId)) return;   // salvo reservas mientras espera a Juanma
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'messenger', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
         return;
@@ -253,6 +260,8 @@ function handleMessenger(body) {
       if (btClavePrueba_(senderId, text)) { sendMessenger(senderId, BT_TXT.es.pruebaOk); return; }
 
       const result = btAtender_('messenger', senderId, '', entrada);
+      if (pausado && !humEsReserva_(result)) return;
+      if (pausado) humTrasReserva_('messenger', senderId, result);
       btEnviar_('messenger', senderId, result.respuesta, result.botones);
       logMensaje('messenger', senderId, '', 'out', 'bot', btTextoLog_(result));
       logLead(result.lead, entrada.log, senderId, result.respuesta);
@@ -297,7 +306,7 @@ function askClaude(canal, nombre, mensaje, senderId, opts) {
     '. Usa SIEMPRE esta fecha para saber el día de la semana y el horario; nunca la inventes.\n' +
     'FRASE DE PASO A PERSONA EN ESTE MOMENTO — español: "' + btPromesa_('es') + '" · inglés: "' + btPromesa_('en') + '"\n' +
     (canal === 'correo'
-      ? 'ESTE MENSAJE LLEGÓ POR CORREO (o por el chat del sitio web) y tu respuesta queda como borrador que Juanma revisa y envía: escribe un correo breve, "Hola [nombre]," si lo sabes, sin asteriscos ni emojis, y cierra con "Rosanta". NO uses la FRASE DE PASO A PERSONA: si algo lo debe ver Juanma, di que lo revisas y le confirmas. Deja "opciones" vacía y mostrar_menu en false.\n\n'
+      ? 'ESTE MENSAJE LLEGÓ POR CORREO (o por el chat del sitio web) y tu respuesta queda como borrador que Juanma revisa y envía: escribe un correo breve, "Hola [nombre]," si lo sabes, sin asteriscos ni emojis, y cierra con "Rosanta". NO uses la FRASE DE PASO A PERSONA: si algo lo debe ver Juanma, di que lo revisas y le confirmas. Deja "opciones" vacía y mostrar_menu en false. Si el correo NO es de un cliente (proveedor, banco, contabilidad, socio, aviso automático, boletín), marca tipo:"otro": no se le contesta.\n\n'
       : '\n') +
     masterPrompt_()
       .replace('{{canal}}', canal)
@@ -559,7 +568,8 @@ function masterPrompt_() { return [
   'PRESUPUESTO O PEDIDOS ESPECIALES: si el cliente da un presupuesto por persona menor a los formatos de la base, o pide algo que no está en la base (equipo audiovisual, pantalla, proyector, salón para capacitación, montaje especial, horario fuera de lo normal), puedes decirle con amabilidad que su presupuesto queda por debajo de los menús de eventos, pero SIEMPRE agrega que Juanma le hará una propuesta, con la FRASE DE PASO A PERSONA. No lo des por imposible ni le pidas que elija un formato que no le alcanza. Pide los básicos que falten y marca requiere_humano:true, accion:“escalar_evento” en cuanto tengas su correo.',
 'EVENTOS PÚBLICOS DEL MES (maridajes, catas, noches temáticas con precio y cupo que aparezcan en la base): SÍ das la info completa tomada de la base y compartes el link de reservas. NO los escalas salvo grupo grande o caso especial. tipo:"evento", requiere_humano:false.',
 '',
-'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base, piden hablar con una persona, o algo fuera de lo normal (facturación especial, problemas con un pago, reenviar una cotización o propuesta ya enviada). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo" (aunque la base de conocimiento lo diga, usa solo la FRASE DE PASO A PERSONA, una sola vez). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
+'OPCIÓN PARECIDA: si piden algo que no está en la base pero en la base hay algo parecido (por ejemplo un picnic → la Cena Romántica para Dos), NO escales: di con honestidad que eso no lo tienen, ofrece lo parecido y sigue tú con la conversación (requiere_humano:false). Escala solo si el cliente insiste en lo que no hay o pide hablar con una persona.',
+'ESCALAR A HUMANO (requiere_humano:true) si: es queja, piden algo que no está en la base y no hay nada parecido que ofrecer, piden hablar con una persona, o algo fuera de lo normal (facturación especial, problemas con un pago, reenviar una cotización o propuesta ya enviada). Al escalar, termina tu respuesta con la FRASE DE PASO A PERSONA tal cual (Juanma es la única persona que atiende el chat, de 9:00 a 21:00). Nunca digas "en breve" ni "alguien del equipo" (aunque la base de conocimiento lo diga, usa solo la FRASE DE PASO A PERSONA, una sola vez). Para EVENTOS privados maneja tú la recolección y marca requiere_humano:true en cuanto tengas los básicos (nombre, correo, fecha, número de personas), con o sin formato de menú elegido.',
 'PROPUESTAS DE NEGOCIO (colaboraciones, influencers, creadores de contenido, prensa, proveedores, músicos, artistas): NO escalas. Agradece con calidez y pide que envíen su propuesta al correo restaurante@rosanta.rest. requiere_humano:false, accion:"responder_info", tipo:"otro". Si además quieren reservar una mesa, ayúdalos con la reserva.',
 'ANTICIPOS Y TRANSFERENCIAS (Cena Romántica, eventos, gift cards): pide la foto del comprobante UNA sola vez. Cuando el cliente diga que ya transfirió o mande el comprobante, NO lo vuelvas a pedir: dile que Juanma revisa la transferencia y le confirma, con la FRASE DE PASO A PERSONA, y marca requiere_humano:true. Tú nunca das un pago por recibido.',
 '',

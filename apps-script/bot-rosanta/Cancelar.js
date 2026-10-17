@@ -203,12 +203,20 @@ function rvCorreoCliente(d, caso) {
         : 'Tu mesa queda confirmada.\n\nFecha: ' + fecha + '\nHora: ' + d.hora + '\nPersonas: ' + d.personas +
           '\n\nTe esperamos en Rosanta, Antigua Guatemala.\n\n' +
           'Para cambiarla o cancelarla, respondes por WhatsApp y se resuelve.');
+    if (CORREO_SIN_CORREO_CLIENTE) {   // llegó por correo: se contesta en el hilo (plantilla revisada por marca, 17-oct-2026)
+      cuerpo = (en ? 'Hi ' : 'Hola ') + (nombre || (en ? 'there' : '')) + ',\n\n' +
+        (en
+          ? 'Your table is confirmed:\n\nDate: ' + fecha + '\nTime: ' + d.hora + '\nGuests: ' + d.personas +
+            '\n\nSee you in the garden.\n\nTo change or cancel it, just reply to this email.'
+          : 'Tu mesa queda confirmada:\n\nFecha: ' + fecha + '\nHora: ' + d.hora + '\nPersonas: ' + d.personas +
+            '\n\nTe esperamos en el jardín.\n\nPara cambiarla o cancelarla, responde a este correo.');
+    }
   }
 
-  // Canal de correo: no se manda aparte. Cambio y cancelación hechos se contestan en el mismo hilo sin
-  // pasar por Juanma (decisión de Juanma, 15-oct-2026); lo demás queda como borrador.
+  // Canal de correo: no se manda aparte. Reserva creada, cambio y cancelación hechos en Wix se contestan en el
+  // mismo hilo sin pasar por Juanma (decisiones de Juanma, 15 y 17-oct-2026); lo demás queda como borrador.
   if (CORREO_SIN_CORREO_CLIENTE) {
-    if (caso === 'cambiada' || caso === 'cancelada') CORREO_AUTO = { caso: caso, asunto: asunto, cuerpo: cuerpo + '\n\nRosanta\nAntigua Guatemala' };
+    if (caso === 'cambiada' || caso === 'cancelada' || caso === 'creada') CORREO_AUTO = { caso: caso, asunto: asunto, cuerpo: cuerpo + '\n\nRosanta\nAntigua Guatemala' };
     return;
   }
 
