@@ -1,4 +1,4 @@
-# Sombra 2 — Caja chica, Compras en efectivo y Clientes › Eventos
+# Sombra 2 — Caja chica, Compras en efectivo y la sección Clientes
 
 Desde el 17-oct-2026. Rama `claude/nube-fase2-mkt`. Diseño e inventario: `Rosanta OS/00_Admin/Apps_Script_e_IA/2026-10-17_Nube_Fase2_y_MarketingOS.md`. Lo general (base, gcloud, migraciones, sello y candado) está en `README.md`.
 
@@ -15,9 +15,17 @@ Desde el 17-oct-2026. Rama `claude/nube-fase2-mkt`. Diseño e inventario: `Rosan
 | Pantallas | `/caja?u=<enlace>`, `/compras?u=<enlace>`, `/clientes/eventos?u=<enlace>`, `/sombra2/fotos?u=<enlace del dueño>` |
 | Relojes (Scheduler, us-central1) | `refrescar-copia-sombra2` (minutos 7, 22, 37 y 52, de 6 a 23 GT, desfasado del de Pagos) y `comparar-sombra2-noche` (23:40 GT; responde 409 si la copia no coincide). La alerta de correo del proyecto cubre los dos |
 
+## Clientes, parte 1 (18-oct-2026)
+
+- **Pantallas:** `/clientes?u=<enlace>` abre la primera parte que esa persona puede ver; `/clientes/eventos`, `/clientes/crm` (CRM y ficha), `/clientes/reservas` y `/clientes/carritos`. La barra de arriba muestra solo lo permitido.
+- **Quién ve qué lo decide la matriz de accesos de la base** (tabla `permisos`, migración 020), no los módulos de USUARIOS: dueño todo; sala eventos, CRM y reservas; pauta CRM, reservas y carritos (no el pipeline); cocina solo reservas. En la sombra nadie guarda (409), aunque la matriz le permita ingresar.
+- **Código real:** CrmDatos, CrmVista, EventosDatos, EventosVista, EventosMes y MarketingDatos (`LISTA-CLIENTES.txt`). CrmVista y EventosVista se arman para quien entra, con un evaluador de plantillas igual a HtmlService (`plantilla`). Reservas y carritos son páginas nuevas de solo lectura sobre `crmReservasFilas_` y `mktRead`, reales.
+- **Hojas que lee (como Lector):** Marketing OS (cotizaciones, revisiones, reservas, carritos), Rosanta_CRM_Maestra (todas las pestañas) y Rosanta Leads (Conversaciones, Fichas, Leads).
+- **Comparación de cada noche:** además de lo anterior, compara contactos por segmento, reservas por estado y carritos por estado (columna `clientes` de `caja_fotos`, migración 011).
+
 ## Lo único que se cambia del código de la intranet
 
-`_cchLeerSiFaltan_` (lee Gmail si falta un cierre) y `cchSincronizarMaestro_` (reescribe 07_Caja_Chica del maestro) **no hacen nada** en la sombra (`anularEscriturasAlLeer`). La prueba "Control negativo" demuestra que, sin ese cambio, el código real sí intentaría escribir.
+`_cchLeerSiFaltan_` (lee Gmail si falta un cierre) y `cchSincronizarMaestro_` (reescribe 07_Caja_Chica del maestro) **no hacen nada** en la sombra (`anularEscriturasAlLeer`). La prueba "Control negativo" demuestra que, sin ese cambio, el código real sí intentaría escribir. En Clientes, las guardas `requiereCrm_`, `requiereEventos_` y `requiereMarketing_` se reemplazan por "ya lo autorizó el servidor con la matriz", y `leadsSheetId_` recibe el id directo (`prepararClientes`).
 
 ## Cuando cambia un archivo en la intranet
 
