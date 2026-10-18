@@ -26,7 +26,7 @@ El Python 3.9 del sistema no sirve. Cuenta: restaurante@rosanta.rest (`gcloud au
 
 ## Cambiar las tablas
 
-1. Archivo nuevo en `db/migraciones/` (`004_...sql`). **Una migración aplicada no se edita.** Números reservados: **001–009 Pagos y base** (esta rama); **010–019 Fase 2 (Caja) y Marketing OS** (rama `claude/nube-fase2-mkt`). Ninguna migración de un rango altera tablas del otro.
+1. Archivo nuevo en `db/migraciones/` (`004_...sql`). **Una migración aplicada no se edita.** Números reservados: **001–009 Pagos y base** (esta rama); **010–019 Fase 2 (Caja) y Marketing OS** (rama `claude/nube-fase2-mkt`). **020–029 accesos y roles** (rama `claude/nube-accesos`: la matriz de permisos, `020_permisos.sql`, que lee `app/src/permisos.js`). Ninguna migración de un rango altera tablas del otro.
 2. `node cloud/herramientas/migrar.js` (muestra lo pendiente) y `--aplicar`.
 
 ## Publicar el servidor
