@@ -9,12 +9,11 @@
  * se cambia en los dos.
  */
 
-/** Rol dueño o módulo marketing (no "contenido": el pipeline tiene montos y clientes). */
+/** Dueño o sala (matriz de accesos de Juanma, 17-oct-2026; antes: el modulo marketing). */
 function requiereEventos_(auth) {
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('No pude identificarte. Volvé a entrar con tu enlace.');
-  if (String(u.rol || '').toLowerCase() !== 'dueno' && !usuarioTieneModulo(u, 'marketing'))
-    throw new Error('Eventos es para el módulo de marketing.');
+  if (!puedeEventos_(u)) throw new Error('El pipeline de eventos es del dueño y de sala.');
   return u;
 }
 
@@ -26,8 +25,10 @@ function getEventos(auth) {
 /** writes = [{op:'set'|'update', id, data, if_version}]. Devuelve la lista fresca. */
 function guardarEventos(auth, writes) {
   var u = requiereEventos_(auth);
-  if (!u.puedeEditar && String(u.rol || '').toLowerCase() !== 'dueno') throw new Error('Tu usuario es de solo lectura.');
-  var r = evEscribir_(writes);
+  var dueno = rolSinAcento_(u.rol) === 'dueno';
+  if (!u.puedeEditar && !dueno) throw new Error('Tu usuario es de solo lectura.');
+  // Sala ingresa consultas y corrige SOLO las que anotó; lo demás lo corrige el dueño.
+  var r = evEscribir_(writes, dueno ? null : (u.nombre || u.email || ''));
   if (!r.ok) return r;
   return { ok: true, versiones: r.versiones, filas: evLeer_(), revisiones: evRevisiones_() };
 }
@@ -119,7 +120,8 @@ function evLeer_() {
  * coincide, o un set pisa una fila que ya existe sin if_version, no se escribe ninguna.
  * Devuelve {ok, versiones:{id:v}} o {ok:false, error, id, version_actual}.
  */
-function evEscribir_(writes) {
+/** autor: null = dueño (sin restriccion); un nombre = solo crea filas y corrige las que tienen su creado_por. */
+function evEscribir_(writes, autor) {
   if (!writes || !writes.length) return { ok: true, versiones: {} };
   if (writes.length > 60) return { ok: false, error: 'Máximo 60 escrituras por vez.' };
   var lock = LockService.getScriptLock();
@@ -143,6 +145,12 @@ function evEscribir_(writes) {
         if (Number(x.if_version) !== Number(actual.version)) return { ok: false, error: 'la fila cambió; releé y rehacé el cambio', id: id, version_actual: actual.version };
       } else if (x.op === 'update') return { ok: false, error: 'update de una fila que no existe', id: id };
       var data = x.data || {};
+      if (autor) {
+        if (existe && String(actual.creado_por || '') !== autor)
+          return { ok: false, error: 'Esa consulta la anotó ' + (actual.creado_por || 'el dueño') + ': la corrige el dueño.', id: id };
+        data = JSON.parse(JSON.stringify(data)); delete data.creado_por;   // el autor no se cambia desde la pantalla
+        if (!existe) data.creado_por = autor;
+      }
       var doc = (x.op === 'update' && actual) ? actual : {};
       Object.keys(data).forEach(function (k) {
         if (data[k] && data[k].__delete__) delete doc[k]; else doc[k] = data[k];

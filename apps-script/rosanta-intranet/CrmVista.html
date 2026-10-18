@@ -95,7 +95,7 @@
           <button class="btn-exportar sec" id="btnImportar">＋ Agregar CSV</button>
           <input type="file" id="fileCsv" accept=".csv,text/csv" style="display:none">
         <? } ?>
-        <button class="btn-exportar" id="btnExportar" disabled>⬇ Exportar CSV</button>
+        <? if (rolSinAcento_(usuario.rol) === 'dueno') { ?><button class="btn-exportar" id="btnExportar" disabled>⬇ Exportar CSV</button><? } ?><!-- exportar contactos: solo el dueño (matriz de accesos, 17-oct-2026) -->
       </div>
       <div class="crm-lista" id="lista">
         <div class="vacio">Cargando contactos de la maestra…</div>
@@ -241,7 +241,7 @@
       contactos.length.toLocaleString('es-GT') + ' contactos' +
       (nuevosHoy ? ' · ' + nuevosHoy + ' nuevo' + (nuevosHoy > 1 ? 's' : '') + ' hoy' : '');
 
-    $('btnExportar').disabled = !filtrados.length; // exporta lo que se ve ahora
+    if ($('btnExportar')) $('btnExportar').disabled = !filtrados.length; // exporta lo que se ve ahora
 
     if (!filtrados.length) {
       $('lista').innerHTML = '<div class="vacio">Sin contactos para ese filtro.</div>';
@@ -412,7 +412,7 @@
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
-  $('btnExportar').addEventListener('click', exportar);
+  if ($('btnExportar')) $('btnExportar').addEventListener('click', exportar);
 
   // ---- Agregar CSV (solo si el usuario puede editar; el botón existe o no)
   var btnImp = $('btnImportar');

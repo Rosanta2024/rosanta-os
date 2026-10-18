@@ -97,6 +97,13 @@
           <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
         </a>
       <? } ?>
+      <? if (rolTs === 'sala' && !usuarioTieneModulo(usuario, 'marketing')) { ?>
+        <a class="tarjeta" href="<?= urlBase ?>?page=eventos<?!= qs ?>">
+          <h3>Eventos</h3>
+          <p>El pipeline de eventos: anota las consultas que recibas y corrige las tuyas.</p>
+          <? if (usuario.puedeEditar) { ?><span class="chip">puedes editar</span><? } ?>
+        </a>
+      <? } ?>
     </div>
   </main>
   <style>

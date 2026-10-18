@@ -196,8 +196,16 @@ var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1,
 /* mktReplace (reemplazar una pestana completa) se archivo el 15-oct-2026: ninguna pantalla la llamaba
    (apps-script/_archivo/2026-10-15_mktreplace_y_retiros_viejos/). Las pestanas se escriben fila por fila. */
 
+/**
+ * Borrar desde Marketing ya no borra de verdad (matriz de accesos de Juanma, 17-oct-2026): la fila
+ * se copia ENTERA a la pestaña `papelera` de la hoja Marketing OS (fecha, quién, pestaña, id y la
+ * fila con sus encabezados) y recién entonces sale de su pestaña. Para recuperarla se copia de vuelta.
+ * `papelera` no está en SCHEMA a propósito: ninguna pantalla la lee ni la escribe.
+ */
+var MKT_PAPELERA_ = 'papelera';
+
 function mktDelete(tab, id, auth) {
-  requiereEdicionMarketing_(tab, auth);
+  var u = requiereEdicionMarketing_(tab, auth);
   if (!SCHEMA[tab]) throw new Error('Pestaña desconocida: ' + tab);
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -205,7 +213,18 @@ function mktDelete(tab, id, auth) {
     var sh = mktSheet_(tab);
     var vals = sh.getDataRange().getValues();
     for (var i = 1; i < vals.length; i++) {
-      if (String(vals[i][0]) === String(id)) { sh.deleteRow(i + 1); return { deleted: id }; }
+      if (String(vals[i][0]) !== String(id)) continue;
+      var ss = sh.getParent(), pap = ss.getSheetByName(MKT_PAPELERA_);
+      if (!pap) {
+        pap = ss.insertSheet(MKT_PAPELERA_, ss.getSheets().length);
+        pap.getRange(1, 1, 1, 6).setValues([['borrado_el', 'borrado_por', 'pestana', 'id', 'encabezados_json', 'fila_json']]).setFontWeight('bold');
+        pap.setFrozenRows(1);
+      }
+      pap.appendRow([new Date().toISOString(), (u && (u.nombre || u.email)) || '', tab, String(id),
+                     JSON.stringify(vals[0]), JSON.stringify(vals[i])]);
+      SpreadsheetApp.flush();
+      sh.deleteRow(i + 1);
+      return { deleted: id, papelera: true };
     }
     return { deleted: null };
   } finally {

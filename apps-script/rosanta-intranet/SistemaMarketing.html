@@ -33,7 +33,7 @@
       <? if (usuarioTieneModulo(usuario, 'resenas')) { ?>
         <button type="button" class="sm-item" data-sub="resenas">Reseñas</button>
       <? } ?>
-      <? if (usuarioTieneModulo(usuario, 'marketing')) { ?>
+      <? if (puedeEventos_(usuario)) { ?>
         <button type="button" class="sm-item" data-sub="eventos">Eventos</button>
       <? } ?>
       <? if (usuarioTieneModulo(usuario, 'crm')) { ?>
