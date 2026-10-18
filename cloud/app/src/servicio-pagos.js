@@ -76,12 +76,14 @@ function crearServicioPagos(pool, opciones) {
   /** Copia a la hoja lo guardado en el servidor que todavia no esta copiado (o cambio despues). */
   async function copiarPendientes() {
     if (!sheetsEscritura) return { nuevas: 0, actualizadas: 0, pendientes: 0 };
-    const r = await pool.query(`SELECT id, celdas, actualizado FROM pagos_proveedores
+    // actualizado como TEXTO: la base guarda microsegundos y un Date de JS solo milisegundos (con Date
+    // la marca nunca coincidia y todo se recopiaba en cada refresco; visto en el ensayo del 18-oct)
+    const r = await pool.query(`SELECT id, celdas, actualizado::text AS actualizado FROM pagos_proveedores
       WHERE origen = 'servidor' AND (copiado_a_hoja IS NULL OR actualizado > copiado_a_hoja) ORDER BY orden NULLS LAST, registrado`);
     if (!r.rows.length) return { nuevas: 0, actualizadas: 0, pendientes: 0 };
     const filas = r.rows.map((x) => ({ id: x.id, fila: C.decodificar([x.celdas])[0] }));
     const hecho = await EH.copiarFilas(sheetsEscritura(), C.LIBROS.config.id, filas);
-    for (const x of r.rows) await pool.query('UPDATE pagos_proveedores SET copiado_a_hoja = now() WHERE id = $1 AND actualizado = $2', [x.id, x.actualizado]);
+    for (const x of r.rows) await pool.query('UPDATE pagos_proveedores SET copiado_a_hoja = now() WHERE id = $1 AND actualizado = $2::timestamptz', [x.id, x.actualizado]);
     return Object.assign({ pendientes: r.rows.length }, hecho);
   }
 
