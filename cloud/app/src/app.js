@@ -103,7 +103,8 @@ function crearApp(deps) {
       const r = await deps.pagos.refrescar();
       // si la importacion encontro problemas (conflicto, fila sin ID, una que falta en la hoja), 409: el reloj avisa
       const mal = r.importacion && r.importacion.problemas.length > 0;
-      res.status(mal ? 409 : 200).json({ ok: !mal, ms: Date.now() - t0, pestanas: r.pestanas, importacion: r.importacion });
+      res.status(mal ? 409 : 200).json({ ok: !mal, ms: Date.now() - t0, modo: r.modo, interruptor: r.interruptor,
+        pestanas: r.pestanas, importacion: r.importacion, copia_hoja: r.copia_hoja });
     } catch (e) { next(e); }
   });
 
