@@ -69,4 +69,6 @@ Resultado del ensayo: las tres copias idénticas a la de verdad, tabla por tabla
 
 ## Pendiente
 
+- **Lo del ensayo del modo en vivo se queda hasta el 1-nov** (decisión de Juanma, 18-oct), para repetir el ensayo con la intranet ya publicada: la COPIA de Config `ENSAYO Pagos en vivo…` (`1ONlODUgpN0TtWeCm0hG6Wbgr9iE5-D4vAvZhenN2vbs`, `rosanta-nube@` como Editor solo ahí), el servicio `rosanta-nube-ensayo` y la base `rosanta_ensayo`. **Después del paso a vivo hay que borrarlos:** la copia a la papelera (contiene USUARIOS con enlaces), `gcloud run services delete rosanta-nube-ensayo --region northamerica-south1` y la base con `ROSANTA_NUBE_BORRAR="fin del ensayo" gcloud sql databases delete rosanta_ensayo --instance rosanta-db` (el candado pide el motivo; NUNCA la base `rosanta`).
+
 - Copia del respaldo fuera de Google Cloud (Drive): una cuenta de servicio no puede guardar archivos en un Drive personal; va con el servicio de procesos.
