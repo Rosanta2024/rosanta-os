@@ -50,7 +50,34 @@ function crearAppF2(deps) {
   const pagina = (k) => (req, res) => res.set('Cache-Control', 'no-store').type('html').send(deps.pantallas[k]());
   app.get('/caja', pagina('caja'));
   app.get('/compras', pagina('compras'));
-  app.get('/clientes/eventos', pagina('eventos'));
+  app.get('/clientes/reservas', pagina('reservas'));
+  app.get('/clientes/carritos', pagina('carritos'));
+
+  // ---- Clientes (18-oct-2026): lo que se ve sale de la matriz de accesos (tabla permisos).
+  app.get('/api/clientes/partes', exigirUsuario, (req, res) => res.json({ partes: deps.f2.partes ? deps.f2.partes(req.usuario) : [] }));
+
+  /** /clientes: abre la primera parte que esa persona puede ver. */
+  app.get('/clientes', async (req, res, next) => {
+    try {
+      const u = await quien(req);
+      if (!u) return res.status(401).type('html').send('<p style="font-family:sans-serif;padding:16px">No pude identificarte. Entrá con tu enlace de siempre.</p>');
+      const partes = deps.f2.partes ? deps.f2.partes(u) : [];
+      if (!partes.length) return res.status(403).type('html').send('<p style="font-family:sans-serif;padding:16px">Tu cuenta no tiene la sección Clientes.</p>');
+      res.redirect('/clientes/' + partes[0] + '?u=' + encodeURIComponent(String(req.query.u || '')));
+    } catch (e) { next(e); }
+  });
+
+  /** Eventos y CRM: la plantilla real necesita saber quien entra (rol, si edita), como render_ de la intranet. */
+  const vistaConUsuario = (parte) => async (req, res, next) => {
+    try {
+      const u = await quien(req);
+      if (!u) return res.status(401).type('html').send('<p style="font-family:sans-serif;padding:16px">No pude identificarte. Entrá con tu enlace de siempre.</p>');
+      if (!deps.f2.partes || deps.f2.partes(u).indexOf(parte) === -1) return res.status(403).type('html').send('<p style="font-family:sans-serif;padding:16px">Tu cuenta no tiene esta parte de Clientes.</p>');
+      res.set('Cache-Control', 'no-store').type('html').send(deps.pantallas[parte]({ usuario: u, authToken: String(req.query.u || '') }));
+    } catch (e) { next(e); }
+  };
+  app.get('/clientes/eventos', vistaConUsuario('eventos'));
+  app.get('/clientes/crm', vistaConUsuario('crm'));
   app.get('/sombra2/fotos', pagina('fotos'));
 
   app.post('/api/llamar/:nombre', exigirUsuario, async (req, res, next) => {
@@ -92,7 +119,7 @@ function crearAppF2(deps) {
   app.get('/api/fotos-f2', exigirUsuario, async (req, res, next) => {
     try {
       if (U.normalizarRol(req.usuario.rol) !== 'dueno') return res.status(403).json({ error: 'Solo el dueño ve las fotos de la comparación.' });
-      const r = await deps.pool.query(`SELECT to_char(cuando AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, caja, compras, eventos,
+      const r = await deps.pool.query(`SELECT to_char(cuando AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, caja, compras, eventos, clientes,
         copia_al_dia, diferencias, celdas_error FROM caja_fotos ORDER BY id DESC LIMIT 30`);
       res.json({ fotos: r.rows });
     } catch (e) { next(e); }

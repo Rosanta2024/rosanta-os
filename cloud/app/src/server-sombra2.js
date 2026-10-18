@@ -1,6 +1,6 @@
 /**
  * Arranque de rosanta-nube-sombra2 en Cloud Run (17-oct-2026): Caja chica, Compras en efectivo y
- * Clientes › Eventos en SOMBRA. Servicio aparte de rosanta-nube (Pagos): mismo codigo base, otro
+ * la seccion Clientes (eventos, CRM, reservas, carritos) en SOMBRA. Servicio aparte de rosanta-nube (Pagos): mismo codigo base, otro
  * punto de entrada (GOOGLE_ENTRYPOINT="node src/server-sombra2.js" al publicar).
  * Claves por Secret Manager (DB_CLAVE, CLAVE_TAREAS), nunca en el codigo.
  */
@@ -21,12 +21,14 @@ async function main() {
   const pool = await crearPool();
   const f2 = crearServicioF2(pool);
   await f2.cargar().catch((e) => console.error('La sombra 2 no cargo:', e.message));
-  const html = { caja: pantallas.armarCaja(), compras: pantallas.armarCompras(), eventos: pantallas.armarEventos(), fotos: pantallas.armarFotos() };
+  const html = { caja: pantallas.armarCaja(), compras: pantallas.armarCompras(), fotos: pantallas.armarFotos(),
+    reservas: pantallas.armarReservas(), carritos: pantallas.armarCarritos() };
   const app = crearAppF2({
     pool,
-    f2: { llamar: f2.llamar, estado: f2.estado, refrescar: () => f2.refrescar(clienteSheets()) },
+    f2: { llamar: f2.llamar, estado: f2.estado, partes: f2.partes, refrescar: () => f2.refrescar(clienteSheets()) },
     comparar: () => { const c = f2.copia(); return comparar({ pool, sheets: clienteSheets(), librosCopia: c.libros, copiaLeida: c.leida }); },
-    pantallas: { caja: () => html.caja, compras: () => html.compras, eventos: () => html.eventos, fotos: () => html.fotos },
+    pantallas: { caja: () => html.caja, compras: () => html.compras, eventos: (o) => pantallas.armarEventos(o), fotos: () => html.fotos,
+      reservas: () => html.reservas, carritos: () => html.carritos, crm: (o) => pantallas.armarCrm(Object.assign({ consolaUrl: f2.consolaUrl() }, o)) },
     anotarTiempo: (t) => pool.query('INSERT INTO tiempos (accion, donde, ms, quien) VALUES ($1,$2,$3,$4)', [t.accion, t.donde, t.ms, t.quien]),
     claveTareas: process.env.CLAVE_TAREAS,
     version: process.env.K_REVISION || 'local'

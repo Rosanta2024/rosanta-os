@@ -1,1 +1,1 @@
-fa2f20d 2026-10-17 Accesos: el equipo anula en Pagos solo lo que anotó; el precio de carta, solo el dueño
+3fbd8be 2026-10-17 Accesos fase 1: Finanzas solo del dueño por rol; exportar el CRM solo el dueño

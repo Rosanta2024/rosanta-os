@@ -1,4 +1,4 @@
-// Sombra 2 (Caja chica, Compras en efectivo y Clientes › Eventos), 17-oct-2026.
+// Sombra 2: Caja chica y Compras en efectivo (17-oct-2026) y Clientes parte 1 (18-oct-2026).
 // Corre con TZ=America/Guatemala (lo pone sellar-nube.py y Cloud Run). Datos inventados.
 const test = require('node:test');
 const assert = require('node:assert');
@@ -11,6 +11,8 @@ const K = require('../src/sombra2/comparar-f2');
 const P = require('../src/sombra2/pantallas-f2');
 const { crearAppF2 } = require('../src/sombra2/app-f2');
 const U = require('../src/usuarios');
+const PER = require('../src/permisos');
+const MATRIZ = PER.cargarDeMigracion();
 const { libros: librosPagos } = require('./fixtura');
 
 const DIR = path.join(__dirname, '..', 'intranet');
@@ -20,6 +22,7 @@ const CFG = C.LIBROS.config.id;
 const SALA = { email: 'sala@x', rol: 'sala', modulos: ['pagos'], nombre: 'Maco' };
 const DUENO = { email: 'd@x', rol: 'dueno', modulos: ['marketing'], nombre: 'Juanma' };
 const MKT_U = { email: 'v@x', rol: 'pauta', modulos: ['marketing'], nombre: 'Vanessa' };
+const CHEF = { email: 'c@x', rol: 'chef', modulos: ['recetario'], nombre: 'Jeffry' };
 
 const EV_COLS = (() => { const s = fs.readFileSync(path.join(DIR, 'EventosDatos.js'), 'utf8'); return JSON.parse(s.match(/var EV_COLS = (\[[\s\S]*?\]);/)[1].replace(/'/g, '"')); })();
 const filaEv = (o) => EV_COLS.map((c) => (o[c] !== undefined ? o[c] : ''));
@@ -39,14 +42,29 @@ function libros() {
     cotizaciones: [EV_COLS,
       filaEv({ id: 'a', version: 2, cliente: 'Ana', etapa: 'cotizada', estado: 'cotizada', monto_q: 5000, fecha_evento: '2026-11-20', fecha_consulta: '2026-10-05', historial_json: '[]' }),
       filaEv({ id: 'b', version: 1, cliente: 'Beto', etapa: 'ganada', estado: 'ganada', monto_q: 9000, etapa_desde: '2026-10-10', fecha_consulta: '2026-10-01' })],
-    revisiones: [['fecha', 'hora', 'resumen', 'contestaron', 'borradores'], ['2026-10-17', '07:15', 'ok', '0', '0']]
+    revisiones: [['fecha', 'hora', 'resumen', 'contestaron', 'borradores'], ['2026-10-17', '07:15', 'ok', '0', '0']],
+    reservas: [['id', 'fecha', 'nombre', 'email', 'telefono', 'personas', 'gasto', 'estado', 'optin'],
+      ['w1', '2026-10-10', 'Ana López', 'ana@x.com', '+502 5555 1234', 2, 450, 'SEATED', 'SI'],
+      ['w2', '2026-10-20', 'Ana López', 'ana@x.com', '+502 5555 1234', 4, '', 'RESERVED', 'SI'],
+      ['w3', '2026-10-12', 'Beto Ruiz', 'beto@x.com', '+1 555 000 9999', 3, '', 'CANCELED', 'NO']],
+    carritos: [['id', 'fecha', 'nombre', 'canal', 'valor', 'estado', 'consentimiento', 'contacto'],
+      ['k1', '2026-10-15', 'Carla', 'web', 600, 'nuevo', 'SI', '+502 4444 0000']]
+  };
+  L[S.CRM_ID] = { Contactos: [['first_name', 'telefono', 'email', 'segmento', 'idioma', 'fuente', 'ultima_reserva', 'gasto_gtq'],
+    ['Ana', '+502 5555 1234', 'ana@x.com', 'Cliente que visitó', 'ES', 'wix', '2026-10-10', 450],
+    ['Beto', '+1 555 000 9999', 'beto@x.com', 'Reserva histórica', 'EN', 'wix', '', 0]] };
+  L[S.LEADS_ID] = {
+    Conversaciones: [['Fecha/Hora', 'Canal', 'ContactoID', 'Nombre', 'Direccion', 'Autor', 'Texto'],
+      ['2026-10-09 18:00', 'whatsapp', '50255551234', 'Ana', 'entrante', 'cliente', 'Hola, quiero una mesa']],
+    Fichas: [['canal', 'contacto_id', 'nombre', 'telefono', 'email', 'tipo'], ['whatsapp', '50255551234', 'Ana', '+502 5555 1234', '', 'reserva']],
+    Leads: [['Fecha/Hora', 'Canal', 'Idioma', 'Nombre', 'Teléfono', 'Tipo']]
   };
   return L;
 }
 
 test('Sombra 2: los archivos son copias exactas de la intranet', () => {
-  const lista = ['LISTA-CAJA.txt', 'LISTA-EVENTOS.txt', 'LISTA-VISTAS-F2.txt'].flatMap(leerLista);
-  assert.ok(lista.includes('CajaChica.js') && lista.includes('ComprasEfectivo.js') && lista.includes('EventosDatos.js') && lista.includes('EventosVista.html'));
+  const lista = ['LISTA-CAJA.txt', 'LISTA-CLIENTES.txt', 'LISTA-VISTAS-F2.txt'].flatMap(leerLista);
+  ['CajaChica.js', 'ComprasEfectivo.js', 'EventosDatos.js', 'EventosVista.html', 'CrmDatos.js', 'CrmVista.html'].forEach((f) => assert.ok(lista.includes(f), f));
   const distintos = lista.filter((f) => fs.readFileSync(path.join(DIR, f), 'utf8') !== fs.readFileSync(path.join(ORIGEN, f), 'utf8'));
   assert.deepStrictEqual(distintos, [], 'correr cloud/herramientas/traer-intranet.sh');
 });
@@ -79,30 +97,55 @@ test('Compras en efectivo corre con el codigo real', () => {
   assert.strictEqual(r.solicitudes.length, 1);
 });
 
-test('Eventos corre con el codigo real y respeta la guarda de la intranet', () => {
+test('Clientes corre con el codigo real: eventos, CRM, ficha, reservas y carritos', () => {
   const M = S.crearMotores(libros());
-  const ev = M.eventos.correr(MKT_U, 'getEventos', []).resultado;
+  const ev = M.clientes.correr(DUENO, 'getEventos', []).resultado;
   assert.deepStrictEqual(ev.filas.map((f) => f.id), ['a', 'b']);
-  const inf = M.eventos.correr(MKT_U, 'getInformeEventos', [2026, 10]).resultado;
-  assert.strictEqual(inf.actual.ganadas.n, 1);
-  assert.throws(() => M.eventos.correr(SALA, 'getEventos', []), /módulo de marketing/);
-  assert.throws(() => M.eventos.correr(MKT_U, 'guardarEventos', [[{ op: 'update', id: 'a', data: { notas: 'x' }, if_version: 2 }]]), /solo lectura/,
+  assert.strictEqual(M.clientes.correr(DUENO, 'getInformeEventos', [2026, 10]).resultado.actual.ganadas.n, 1);
+  const cs = M.clientes.correr(DUENO, 'crmContactos', []).resultado;
+  assert.deepStrictEqual(cs.map((c) => c.nombre), ['Ana', 'Beto']);
+  assert.deepStrictEqual(M.clientes.correr(DUENO, 'crmClavesConChat', []).resultado, ['55551234']);
+  const fi = M.clientes.correr(DUENO, 'crmFicha', ['+502 5555 1234', 'ana@x.com']).resultado;
+  assert.strictEqual(fi.reservas.length, 2, 'sus dos reservas');
+  assert.strictEqual(fi.totales.visitas, 1);
+  assert.strictEqual(fi.chats.length, 1, 'su chat con el bot');
+  assert.strictEqual(fi.bot && fi.bot.tipo, 'reserva', 'lo que ya sabe el bot (Fichas)');
+  assert.deepStrictEqual(fi.avisos, []);
+  const rs = M.clientes.correr(CHEF, 'clientesReservas', []).resultado;
+  assert.deepStrictEqual(rs.map((r) => r.id), ['w2', 'w3', 'w1'], 'mas nuevas primero');
+  assert.strictEqual(M.clientes.correr(MKT_U, 'clientesCarritos', []).resultado[0].valor, 600);
+  assert.throws(() => M.clientes.correr(DUENO, 'guardarEventos', [[{ op: 'update', id: 'a', data: { notas: 'x' }, if_version: 2 }]]), /solo lectura/,
     'aun saltando el 409, la hoja es de solo lectura');
 });
 
+test('Clientes: la matriz de accesos de la base decide quien ve que (no los modulos de USUARIOS)', () => {
+  const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) }, { permisos: MATRIZ });
+  assert.deepStrictEqual(f2.partes(DUENO), ['eventos', 'crm', 'reservas', 'carritos']);
+  assert.deepStrictEqual(f2.partes(SALA), ['eventos', 'crm', 'reservas'], 'sala: sin carritos');
+  assert.deepStrictEqual(f2.partes(MKT_U), ['crm', 'reservas', 'carritos'], 'pauta: no ve el pipeline');
+  assert.deepStrictEqual(f2.partes(CHEF), ['reservas'], 'cocina: solo reservas');
+  // la guarda va ANTES de todo: sin copia cargada, el que no puede igual recibe 403 (no 503)
+  assert.throws(() => f2.llamar(MKT_U, 'getEventos', []), (e) => e.status === 403);
+  assert.throws(() => f2.llamar(CHEF, 'crmContactos', []), (e) => e.status === 403);
+  assert.throws(() => f2.llamar(SALA, 'clientesCarritos', []), (e) => e.status === 403);
+  assert.throws(() => f2.llamar(SALA, 'guardarEventos', []), (e) => e.status === 409, 'sala si ingresa eventos, pero en sombra es 409');
+  // control negativo: un pauta con el modulo "marketing" en USUARIOS igual no ve el pipeline
+  assert.ok(MKT_U.modulos.includes('marketing'));
+});
+
 test('En sombra todo lo que escribe responde 409, y Pagos no se puede llamar desde aca', async () => {
-  const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) });
-  S.MODULOS.caja.escritura.concat(S.MODULOS.eventos.escritura).forEach((n) => {
+  const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) }, { permisos: MATRIZ });
+  S.MODULOS.caja.escritura.concat(S.MODULOS.clientes.escritura).forEach((n) => {
     assert.throws(() => f2.llamar(DUENO, n, []), (e) => e.status === 409, n);
   });
   assert.throws(() => f2.llamar(DUENO, 'getPagosProveedores', []), (e) => e.status === 404);
   assert.throws(() => f2.llamar(DUENO, 'registrarPagoFacturas', []), (e) => e.status === 404);
 });
 
-test('Cada llamada de las tres pantallas esta clasificada como lectura o escritura', () => {
-  const llamadas = ['ProfitCajaJs.html', 'ProfitComprasJs.html', 'EventosVista.html'].flatMap((f) =>
+test('Cada llamada de las pantallas esta clasificada como lectura o escritura', () => {
+  const llamadas = ['ProfitCajaJs.html', 'ProfitComprasJs.html', 'EventosVista.html', 'CrmVista.html'].flatMap((f) =>
     Array.from(fs.readFileSync(path.join(DIR, f), 'utf8').matchAll(/\.([A-Za-z_]\w*)\(AUTH\b/g)).map((m) => m[1]));
-  assert.ok(llamadas.length >= 16, 'encontro las llamadas (' + llamadas.length + ')');
+  assert.ok(llamadas.length >= 20, 'encontro las llamadas (' + llamadas.length + ')');
   const sueltas = llamadas.filter((n) => !S.moduloDe(n));
   assert.deepStrictEqual(sueltas, [], 'una funcion nueva de la pantalla: decidir si es lectura o escritura');
 });
@@ -116,24 +159,41 @@ test('La comparacion da 0 diferencias con los mismos datos y avisa una diferenci
   const d = K.compararResumenes(K.armar(otra), K.armar(libros()));
   assert.ok(d.some((x) => /caja día 2026-10-14 contado: copia 2600 · hojas 2700/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /eventos por_etapa cotizada q: copia 5100 · hojas 5000/.test(x)), d.join('\n'));
+  const otra2 = libros();
+  otra2[S.MKT_ID].reservas[2][7] = 'NO_SHOW';            // una reserva con otro estado
+  otra2[S.CRM_ID].Contactos.pop();                       // un contacto menos
+  const d2 = K.compararResumenes(K.armar(otra2), K.armar(libros()));
+  assert.ok(d2.some((x) => /^reservas por_estado/.test(x)), d2.join('\n'));
+  assert.ok(d2.some((x) => /crm contactos: copia 1 · hojas 2/.test(x)), d2.join('\n'));
   const sinMkt = libros(); delete sinMkt[S.MKT_ID];
   assert.ok(K.compararResumenes(K.armar(sinMkt), K.armar(libros())).some((x) => /eventos: no se pudo armar con la copia/.test(x)),
     'las hojas tienen Marketing OS y la copia no: eso SI es diferencia');
   const avisos = [];
   assert.deepStrictEqual(K.compararResumenes(K.armar(sinMkt), K.armar(sinMkt), avisos), [], 'sin Marketing OS de los dos lados no es diferencia');
-  assert.deepStrictEqual(avisos, ['eventos: Sin copia de Marketing OS']);
+  assert.deepStrictEqual(avisos, ['eventos: Sin copia de Marketing OS', 'reservas: Sin copia de Marketing OS', 'carritos: Sin copia de Marketing OS']);
 });
 
 test('Las pantallas se arman con el codigo real y sin scriptlets', () => {
-  const caja = P.armarCaja(), compras = P.armarCompras(), ev = P.armarEventos();
+  const caja = P.armarCaja(), compras = P.armarCompras();
+  const ev = P.armarEventos({ usuario: SALA, authToken: 'tok-maco-12345' }), crm = P.armarCrm({ usuario: DUENO, authToken: 'tok-juanma-123' });
   assert.match(caja, /PF_CAJA\(document\.getElementById\("pf-host"\)/);
   assert.match(compras, /PF_COMPRAS\(document\.getElementById\("pf-host"\)/);
-  [caja, compras, ev].forEach((h) => {
+  [caja, compras, ev, crm, P.armarReservas(), P.armarCarritos()].forEach((h) => {
     assert.ok(!h.includes('<?'), 'sin scriptlets de Apps Script');
-    assert.match(h, /\/api\/llamar\//, 'lleva el traductor de google.script.run');
+    assert.match(h, /\/api\/llamar\//, 'llama al servidor nuevo');
     assert.match(h, /Prueba en sombra/);
   });
-  assert.match(ev, /const AUTH = new URLSearchParams\(location\.search\)/);
+  [ev, crm, P.armarReservas()].forEach((h) => assert.match(h, /\/api\/clientes\/partes/, 'lleva la barra de Clientes'));
+  assert.match(ev, /← Panel principal/, 'la plantilla real: sala ve el enlace al panel (@212)');
+  assert.ok(!P.armarEventos({ usuario: DUENO, authToken: 'tok-juanma-123' }).includes('← Panel principal'), 'el dueño no');
+  assert.match(crm, /btnExportar/, 'exportar: solo el dueño');
+  assert.ok(!P.armarCrm({ usuario: SALA, authToken: 'tok-maco-12345' }).includes('id="btnExportar"'), 'sala no exporta');
+  assert.strictEqual(P.tokenLimpio('a"><script>'), '', 'un token raro no se pega en la pagina');
+});
+
+test('Plantilla: igual que HtmlService (<?= ?> escapa, <?!= ?> no, <? ?> es codigo)', () => {
+  assert.strictEqual(P.plantilla('<? if (x) { ?>A<?= y ?><? } ?>|<?!= y ?>', { x: true, y: '<b>' }), 'A&lt;b&gt;|<b>');
+  assert.strictEqual(P.plantilla('<? if (x) { ?>A<? } ?>', { x: false }), '');
 });
 
 // ---- La app web ----
@@ -159,13 +219,14 @@ test('La app de la sombra 2: enlace, 409 al escribir, tareas con clave y fotos s
   const f2 = {
     estado: () => ({ modo: 'sombra' }),
     refrescar: async () => [],
+    partes: (u) => S.partesVisibles(MATRIZ, u),
     llamar: (u, n, a) => {
       if (S.MODULOS.caja.escritura.includes(n)) { const e = new Error('Prueba en sombra'); e.status = 409; throw e; }
-      return { resultado: M.caja.correr(u, n, a).resultado, ms: 1 };
+      return { resultado: M[S.moduloDe(n)].correr(u, n, a).resultado, ms: 1 };
     }
   };
   const deps = { pool, f2, comparar: async () => ({ copia_al_dia: false, diferencias: ['x'], celdas_error: {} }), claveTareas: 'clave-x',
-    pantallas: { caja: P.armarCaja, compras: P.armarCompras, eventos: P.armarEventos, fotos: P.armarFotos } };
+    pantallas: { caja: P.armarCaja, compras: P.armarCompras, eventos: P.armarEventos, crm: P.armarCrm, fotos: P.armarFotos, reservas: P.armarReservas, carritos: P.armarCarritos } };
   await servir(deps, async (b) => {
     const llamar = (n, tok, args) => fetch(b + '/api/llamar/' + n, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-u': tok || '' }, body: JSON.stringify(args || []) });
     assert.strictEqual((await llamar('getCajaChica', '')).status, 401);
@@ -176,7 +237,14 @@ test('La app de la sombra 2: enlace, 409 al escribir, tareas con clave y fotos s
     assert.strictEqual((await fetch(b + '/tareas/comparar', { method: 'POST', headers: { 'x-rosanta-tarea': 'clave-x' } })).status, 409, 'diferencia = 409 (alerta)');
     assert.strictEqual((await fetch(b + '/api/fotos-f2', { headers: { 'x-rosanta-u': 'tok-maco' } })).status, 403);
     assert.strictEqual((await fetch(b + '/api/fotos-f2', { headers: { 'x-rosanta-u': 'tok-juanma' } })).status, 200);
-    for (const p of ['/caja', '/compras', '/clientes/eventos', '/sombra2/fotos']) assert.strictEqual((await fetch(b + p)).status, 200, p);
+    for (const p of ['/caja', '/compras', '/clientes/reservas', '/clientes/carritos', '/sombra2/fotos']) assert.strictEqual((await fetch(b + p)).status, 200, p);
+    assert.strictEqual((await fetch(b + '/clientes/eventos')).status, 401, 'eventos y CRM se arman para quien entra');
+    assert.strictEqual((await fetch(b + '/clientes/crm?u=tok-juanma')).status, 200);
+    assert.strictEqual((await fetch(b + '/clientes/eventos?u=tok-maco')).status, 200, 'sala ve eventos');
+    const red = await fetch(b + '/clientes?u=tok-maco', { redirect: 'manual' });
+    assert.strictEqual(red.status, 302); assert.match(red.headers.get('location'), /^\/clientes\/eventos\?u=tok-maco$/);
+    const pa = await (await fetch(b + '/api/clientes/partes', { headers: { 'x-rosanta-u': 'tok-maco' } })).json();
+    assert.deepStrictEqual(pa.partes, ['eventos', 'crm', 'reservas']);
   });
 });
 
@@ -192,22 +260,32 @@ test('La copia se salta las pestañas que la intranet todavia no creo (como las 
   assert.strictEqual(r.solicitudes.length, 0, 'Compras sin la pestaña = sin solicitudes, no un error');
 });
 
-test('Copia: Marketing OS sin compartir es aviso; si ya se habia leido y deja de leerse, es falla', async () => {
+test('Copia: un libro sin compartir es aviso; si ya se habia leido y deja de leerse, es falla', async () => {
   const filasDe = (L) => { const r = []; Object.keys(L).forEach((id) => Object.keys(L[id]).forEach((p) => r.push({ libro: id, pestana: p, filas: C.codificar(L[id][p]), leida: new Date() }))); return r; };
-  let guardado = libros(); delete guardado[S.MKT_ID];
+  let guardado = libros(); delete guardado[S.MKT_ID]; delete guardado[S.LEADS_ID];
   const pool = { query: async (sql) => { if (/^SELECT libro/.test(sql)) return { rows: filasDe(guardado) }; return { rows: [] }; },
     connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }) };
-  const negar = new Set([S.MKT_ID]);
+  const negar = new Set([S.MKT_ID, S.LEADS_ID]);   // CRM si se lee
   const sheets = { spreadsheets: { get: async (q) => {
     if (negar.has(q.spreadsheetId)) throw new Error('The caller does not have permission');
     if (q.fields === 'sheets.properties.title') return { data: { sheets: [] } };
     return { data: { sheets: [] } };
   } } };
-  const f2 = S.crearServicioF2(pool);
+  const f2 = S.crearServicioF2(pool, { permisos: MATRIZ });
   await f2.cargar();
   const r = await f2.refrescar(sheets);
-  assert.match(r.aviso, /Eventos no: The caller does not have permission/);
-  guardado = libros();            // ahora la copia SI tenia Marketing OS
+  assert.match(r.aviso, /sin leer todavia \(no compartido\): marketing: The caller does not have permission · leads: /);
+  guardado = libros();            // ahora la copia SI tenia Marketing OS y Leads
   await f2.cargar();
-  await assert.rejects(() => f2.refrescar(sheets), /Eventos no/);
+  await assert.rejects(() => f2.refrescar(sheets), /dejaron de leerse: marketing: .* · leads: /);
+});
+
+test('Todo el JavaScript de las pantallas de la sombra 2 compila (y un error se detecta)', () => {
+  const paginas = { caja: P.armarCaja(), compras: P.armarCompras(), fotos: P.armarFotos(), reservas: P.armarReservas(), carritos: P.armarCarritos(),
+    eventos: P.armarEventos({ usuario: SALA, authToken: 'tok-maco-12345' }), crm: P.armarCrm({ usuario: DUENO, authToken: 'tok-juanma-123' }) };
+  const scripts = (h) => [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  let n = 0;
+  Object.keys(paginas).forEach((k) => scripts(paginas[k]).forEach((js, i) => { n++; assert.doesNotThrow(() => new Function(js), k + ' script ' + i); }));   // eslint-disable-line no-new-func
+  assert.ok(n >= 14, 'reviso ' + n + ' scripts');
+  assert.throws(() => new Function(scripts('<script>var a = ;</script>')[0]), SyntaxError, 'control negativo');   // eslint-disable-line no-new-func
 });

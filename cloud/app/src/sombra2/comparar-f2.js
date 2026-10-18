@@ -11,7 +11,7 @@
  */
 const C = require('../copia-hojas');
 const { formatDate } = require('../motor-pagos');
-const { crearMotores, soloExistentes, LIBROS_CAJA, LIBROS_EVENTOS, MKT_ID } = require('./servicio-f2');
+const { crearMotores, soloExistentes, LIBROS_CAJA, LIBROS_CLIENTES, MKT_ID, CRM_ID } = require('./servicio-f2');
 const { celdasConError } = require('../comparar-pagos');
 
 const DUENO = { email: 'comparacion@servidor', rol: 'dueno', modulos: ['pagos', 'marketing'], nombre: 'Comparación automática' };
@@ -28,6 +28,21 @@ function resumenCaja(c) {
   return o;
 }
 function resumenCompras(c) { const o = {}; CAMPOS_COMPRAS.forEach((k) => { o[k] = r2(c.resumen[k]); }); return o; }
+/** Cuantos por clave y cuanto suma un campo: { clave: { n, q } }. */
+function porClave(filas, clave, campo) {
+  const o = {};
+  filas.forEach((f) => { const k = String(clave(f) || 'sin dato'); const x = o[k] || (o[k] = { n: 0, q: 0 }); x.n++; if (campo) x.q = r2(x.q + (Number(f[campo]) || 0)); });
+  return o;
+}
+function resumenCrm(contactos) {
+  return { contactos: contactos.length, por_segmento: porClave(contactos, (c) => c.segmento, 'gasto') };
+}
+function resumenReservas(filas) {
+  return { reservas: filas.length, por_estado: porClave(filas, (r) => r.estado, 'personas') };
+}
+function resumenCarritos(filas) {
+  return { carritos: filas.length, por_estado: porClave(filas, (c) => c.estado, 'valor') };
+}
 function resumenEventos(ev) {
   const porEtapa = {};
   (ev.filas || []).forEach((f) => {
@@ -69,7 +84,10 @@ function armar(libros) {
   return {
     caja: intento(() => resumenCaja(M.caja.correr(DUENO, 'getCajaChica', []).resultado)),
     compras: intento(() => resumenCompras(M.caja.correr(DUENO, 'getComprasEfectivo', []).resultado)),
-    eventos: libros[MKT_ID] ? intento(() => resumenEventos(M.eventos.correr(DUENO, 'getEventos', []).resultado)) : { error: 'Sin copia de Marketing OS' }
+    eventos: libros[MKT_ID] ? intento(() => resumenEventos(M.clientes.correr(DUENO, 'getEventos', []).resultado)) : { error: 'Sin copia de Marketing OS' },
+    reservas: libros[MKT_ID] ? intento(() => resumenReservas(M.clientes.correr(DUENO, 'clientesReservas', []).resultado)) : { error: 'Sin copia de Marketing OS' },
+    carritos: libros[MKT_ID] ? intento(() => resumenCarritos(M.clientes.correr(DUENO, 'clientesCarritos', []).resultado)) : { error: 'Sin copia de Marketing OS' },
+    crm: libros[CRM_ID] ? intento(() => resumenCrm(M.clientes.correr(DUENO, 'crmContactos', []).resultado)) : { error: 'Sin copia del CRM' }
   };
 }
 
@@ -80,7 +98,7 @@ function armar(libros) {
  */
 function compararResumenes(copia, hojas, avisos) {
   const difs = [];
-  ['caja', 'compras', 'eventos'].forEach((m) => {
+  ['caja', 'compras', 'eventos', 'reservas', 'carritos', 'crm'].forEach((m) => {
     if (hojas[m].error && copia[m].error && hojas[m].error === copia[m].error) { if (avisos) avisos.push(m + ': ' + hojas[m].error); return; }
     if (hojas[m].error) { difs.push(m + ': no se pudo armar con las hojas (' + hojas[m].error + ')'); return; }
     if (copia[m].error) { difs.push(m + ': no se pudo armar con la copia (' + copia[m].error + ')'); return; }
@@ -94,10 +112,10 @@ async function leerFresco(sheets) {
   const fresco = {};
   const caja = await soloExistentes(sheets, LIBROS_CAJA);
   for (const k of Object.keys(caja)) fresco[caja[k].id] = await C.leerLibro(sheets, caja[k].id, caja[k].pestanas);
-  try {
-    const ev = await soloExistentes(sheets, LIBROS_EVENTOS);
-    fresco[MKT_ID] = await C.leerLibro(sheets, MKT_ID, ev.marketing.pestanas);
-  } catch (e) { /* queda sin eventos: armar() lo dice */ }
+  // Cada libro de Clientes por separado: uno sin compartir queda afuera y armar() lo dice.
+  for (const k of Object.keys(LIBROS_CLIENTES)) {
+    try { const L = await soloExistentes(sheets, { [k]: LIBROS_CLIENTES[k] }); fresco[L[k].id] = await C.leerLibro(sheets, L[k].id, L[k].pestanas); } catch (e) { /* idem */ }
+  }
   return fresco;
 }
 
@@ -112,14 +130,15 @@ async function comparar(o) {
     cuando_gt: formatDate(o.ahora || new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm'),
     caja: hojas.caja.error ? null : (({ dias, ...r }) => r)(hojas.caja), compras: hojas.compras.error ? null : hojas.compras,
     eventos: hojas.eventos.error ? null : { filas: hojas.eventos.filas, por_etapa: hojas.eventos.por_etapa },
+    clientes: { reservas: hojas.reservas.error ? null : hojas.reservas, carritos: hojas.carritos.error ? null : hojas.carritos, crm: hojas.crm.error ? null : hojas.crm },
     copia_leida: o.copiaLeida || null, copia_al_dia: difs.length === 0, diferencias: difs, avisos, celdas_error: celdasConError(fresco)
   };
   await o.pool.query(
-    `INSERT INTO caja_fotos (caja, compras, eventos, copia_leida, copia_al_dia, diferencias, celdas_error)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    `INSERT INTO caja_fotos (caja, compras, eventos, copia_leida, copia_al_dia, diferencias, celdas_error, clientes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
     [JSON.stringify(foto.caja), JSON.stringify(foto.compras), JSON.stringify(foto.eventos), foto.copia_leida, foto.copia_al_dia,
-      JSON.stringify(foto.diferencias.concat(avisos.map((a) => 'Aviso · ' + a))), JSON.stringify(foto.celdas_error)]);
+      JSON.stringify(foto.diferencias.concat(avisos.map((a) => 'Aviso · ' + a))), JSON.stringify(foto.celdas_error), JSON.stringify(foto.clientes)]);
   return foto;
 }
 
-module.exports = { comparar, armar, compararResumenes, resumenCaja, resumenCompras, resumenEventos, diferencias, difCaja };
+module.exports = { comparar, armar, compararResumenes, resumenCaja, resumenCompras, resumenEventos, resumenCrm, resumenReservas, resumenCarritos, diferencias, difCaja };

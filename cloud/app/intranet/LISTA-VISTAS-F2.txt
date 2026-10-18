@@ -1,3 +1,6 @@
 ProfitCajaJs.html
 ProfitComprasJs.html
 EventosVista.html
+CrmVista.html
+Estilos.html
+Logo.html
