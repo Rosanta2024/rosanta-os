@@ -66,13 +66,21 @@ function armar(opciones) {
     '.nb-top{display:flex;align-items:baseline;gap:12px;padding:14px 16px;background:var(--superficie);border-bottom:1px solid var(--linea)}' +
     '.nb-top h1{font-family:var(--rosanta-font-title);font-size:1.3rem;margin:0}.nb-top small{color:var(--texto-suave)}' +
     'main{max-width:1100px;margin:0 auto;padding:16px}' +
-    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}</style>' +
+    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}' +
+    '.nb-dentro .nb-top{display:none}.nb-dentro main{padding:0}.nb-dentro body{background:transparent}</style>' +
     '</head><body><header class="nb-top"><h1>Pagos</h1><small>servidor nuevo · Querétaro</small></header><main>' + aviso +
     '<div id="pf-host"></div></main>' +
     leer('GuardadoEstado.html') +
     '<script>' + TRADUCTOR + '\nwindow.AUTH = new URLSearchParams(location.search).get("u") || "";\n' + pfError() + '</script>' +
     leer('ProfitPagosJs.html') +
-    '<script>PF_PAGOS(document.getElementById("pf-host"), window.AUTH);</script>' +
+    // ?modo=admin:banco (pestañas de Administracion) y ?dentro=1 (dentro del marco de la intranet:
+    // sin encabezado propio, y le avisa a la intranet su alto para que el marco crezca)
+    '<script>(function(){var q=new URLSearchParams(location.search),m=q.get("modo")||"";' +
+    'if(!/^admin:(banco|balance|iva|equipo)$/.test(m))m="";' +
+    'if(q.get("dentro")==="1"){document.documentElement.classList.add("nb-dentro");' +
+    'var alto=function(){try{parent.postMessage({rosantaAlto:document.documentElement.scrollHeight},"*")}catch(e){}};' +
+    'new ResizeObserver(alto).observe(document.body);setInterval(alto,1500);}' +
+    'PF_PAGOS(document.getElementById("pf-host"),window.AUTH,m||undefined);})();</script>' +
     '</body></html>';
 }
 

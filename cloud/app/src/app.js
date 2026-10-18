@@ -90,7 +90,7 @@ function crearApp(deps) {
       }
       if (!deps.pagos) return res.status(404).json({ error: 'No disponible.' });
       let r;
-      try { r = deps.pagos.llamar(req.usuario, nombre, args); } catch (e) { return res.status(e.status || 400).json({ error: String(e.message || e) }); }
+      try { r = await deps.pagos.llamar(req.usuario, nombre, args); } catch (e) { return res.status(e.status || 400).json({ error: String(e.message || e) }); }
       if (deps.anotarTiempo) deps.anotarTiempo({ accion: 'Pagos · ' + nombre, donde: 'servidor', ms: r.ms, quien: req.usuario.email }).catch(() => {});
       res.json({ resultado: r.resultado });
     } catch (e) { next(e); }

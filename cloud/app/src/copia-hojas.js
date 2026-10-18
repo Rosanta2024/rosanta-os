@@ -11,8 +11,10 @@
 const LIBROS = {
   maestro: { id: '1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk',
              pestanas: ['01_FEL_Maestro', '01c_FEL_Para_IVA', '03_Banco_Industrial', '04_Banco_BAC', '05_Tarjeta_Credito_BAC', '06_Tarjeta_Credito_BI'] },
-  config: { id: '1OMFJUuW9TEp4cMaVculJgegDF1PqrsRJOQCT3VQX2Rw',
-            pestanas: ['PAGOS_PROVEEDORES', 'FEL_CORREO', 'BANCO_CORREO'] },
+  // CONFIG_SHEET_ID permite apuntar el servidor de ENSAYO a una copia de Config (18-oct-2026).
+  // PARAMETROS trae el interruptor motor_pagos (sheets | base).
+  config: { id: process.env.CONFIG_SHEET_ID || '1OMFJUuW9TEp4cMaVculJgegDF1PqrsRJOQCT3VQX2Rw',
+            pestanas: ['PAGOS_PROVEEDORES', 'FEL_CORREO', 'BANCO_CORREO', 'PARAMETROS'] },
   compras: { id: '1Py2KLc8o2GYzJhosnpi_R0OsDU76xa6d_F9B_UuUq0o', pestanas: '*' }   // todas: historial que ya no cambia
 };
 

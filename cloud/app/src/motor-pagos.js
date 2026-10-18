@@ -104,6 +104,8 @@ function crearMotor(opciones) {
     Logger: { log: (...a) => console.log('[intranet]', ...a) },
     ScriptApp: { getService: () => ({ getUrl: () => '' }), getOAuthToken: () => { throw new Error('No disponible en el servidor nuevo.'); } },
     UrlFetchApp: { fetch: () => { throw new Error('No disponible en el servidor nuevo.'); } },
+    // El servidor nuevo: la cerradura de NubePagos.js (_pagSoloConsulta_) no lo frena a el
+    NUBE_SERVIDOR_: true,
     console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN, parseFloat, parseInt, Intl
   };
   vm.createContext(ctx);

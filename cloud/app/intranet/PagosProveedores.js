@@ -585,6 +585,7 @@ function _pagPosibles_(abiertas, pagos, dtes) {
  * (la lista de descartados de Posibles pagos tiene "volver a ofrecer").
  */
 function descartarPosiblePago(auth, pagoLlave) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth);
   if (Q.rol !== 'dueno') throw new Error('Descartar pagos del banco lo hace el dueño.');
   var P = pagEstado_().posibles.filter(function (x) { return x.pago.llave === pagoLlave; })[0];
@@ -598,6 +599,7 @@ function descartarPosiblePago(auth, pagoLlave) {
 
 /** El dueño confirma que un pago del banco o de la tarjeta es el de esa(s) factura(s). */
 function confirmarPosiblePago(auth, pagoLlave, llaves) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth);
   if (Q.rol !== 'dueno') throw new Error('Confirmar pagos del banco lo hace el dueño.');
   llaves = [].concat(llaves || []).sort();
@@ -988,6 +990,7 @@ function _pagFechaValida_(s, nombre) {
  * proveedor que se aplica (el Excel: "pagar Q340, saldo a favor de 85").
  */
 function registrarPagoFacturas(auth, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   return _pagMedir_('pago de ' + [].concat(llaves || []).length + ' factura(s)', auth, function () {
     var Q = pagQuien_(auth);
     _pagRegistrarPago_(Q, llaves, estatus, fechaPagado, monto, favorUsado, detalle, medio);
@@ -1049,6 +1052,7 @@ var _PAG_ULTIMO_ = null;
 
 /** Fecha en que se piensa pagar una factura (la columna FECHA DE PAGAR del Excel). */
 function programarPagoFactura(auth, llave, fechaPagar) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth);
   fechaPagar = _pagFechaValida_(fechaPagar, 'Fecha de pagar');
   var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
@@ -1065,6 +1069,7 @@ function programarPagoFactura(auth, llave, fechaPagar) {
  * Busca la factura en el FEL por su numero de DTE (y el NIT si hay dos con el mismo numero).
  */
 function traerFacturaAnterior(auth, dte, saldo, nit, detalle) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth);
   if (Q.rol !== 'dueno') throw new Error('Traer una factura anterior lo hace el dueño.');
   dte = String(dte || '').replace(/\D/g, '');
@@ -1231,6 +1236,7 @@ function getFacturasParaDevolver(auth) {
 
 /** Por devolver: una o varias facturas (del mismo proveedor) que uno pago de su bolsa. Salen de Por pagar. */
 function agregarFacturaDeSuBolsa(auth, nombre, llaves, fecha, monto, nota) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth), e = _pagEquipoDe_(Q, nombre);
   // cualquier area: Maco a veces paga una factura de cocina y Jeffry una de barra
   _pagRegistrarPago_({ nombre: Q.nombre, rol: Q.rol, areas: ['COCINA', 'BARRA', 'ADMIN'] }, llaves, e.forma, fecha,
@@ -1241,6 +1247,7 @@ function agregarFacturaDeSuBolsa(auth, nombre, llaves, fecha, monto, nota) {
 
 /** Por devolver: una compra sin factura que uno pago de su bolsa. */
 function agregarCompraDeSuBolsa(auth, nombre, fecha, proveedor, detalle, monto) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   var Q = pagQuien_(auth), e = _pagEquipoDe_(Q, nombre);
   fecha = _pagFechaValida_(fecha, 'Fecha');
   monto = _finR_(Number(monto));
@@ -1262,6 +1269,7 @@ function getPorDevolverEquipo(auth) {
 
 /** El dueño anota que le devolvio a José o a Jeffry lo que pagaron de su bolsa. */
 function registrarDevolucionEquipo(auth, nombre, monto, fecha, detalle) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   return _pagMedir_('devolución al equipo', auth, function () {
     var Q = pagQuien_(auth);
     if (Q.rol !== 'dueno') throw new Error('Registrar una devolución lo hace el dueño.');
@@ -1280,6 +1288,7 @@ function registrarDevolucionEquipo(auth, nombre, monto, fecha, detalle) {
 
 /** Un saldo a favor que el proveedor le reconoce a Rosanta (credito, devolucion, pago de mas). */
 function registrarSaldoFavor(auth, nit, monto, detalle) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   return _pagMedir_('saldo a favor', auth, function () {
     var Q = pagQuien_(auth);
     nit = pagNit_(nit); monto = _finR_(Number(monto));
@@ -1299,6 +1308,7 @@ function registrarSaldoFavor(auth, nit, monto, detalle) {
  * la ofrece como detalle de ese retiro cuando el banco lo traiga (medMercadoDeRetiros_).
  */
 function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, estatus, medio) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   return _pagMedir_('compra de mercado', auth, function () {
     var Q = pagQuien_(auth);
     fecha = _pagFechaValida_(fecha, 'Fecha');
@@ -1327,6 +1337,11 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
 
 /** Anula un movimiento anotado por error. No se borra: el estatus pasa a "ANULADO: ...". */
 function anularMovimientoPago(auth, id) {
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
+  return _pagAnularMovimiento_(auth, id);
+}
+/** El anular de la pantalla, sin la cerradura de NubePagos: Compras en efectivo sigue anulando sus compras aca. */
+function _pagAnularMovimiento_(auth, id) {
   return _pagMedir_('anular', auth, function () {
     var Q = pagQuien_(auth);
     var m = pagMovimientos_().filter(function (x) { return x.id === String(id || '').trim(); })[0];

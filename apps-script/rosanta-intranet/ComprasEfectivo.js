@@ -374,7 +374,7 @@ function registrarCompraEfectivo_(auth, c) {
 /** Anula una compra registrada (misma regla que Pagos: lo que anoto uno mismo, o el dueño). */
 function anularCompraEfectivo(auth, id) {
   cpeQuien_(auth);
-  anularMovimientoPago(auth, id);
+  _pagAnularMovimiento_(auth, id);   // sin la cerradura de Pagos: Compras sigue anulando aca (NubePagos.js, 18-oct-2026)
   return getComprasEfectivo(auth);
 }
 

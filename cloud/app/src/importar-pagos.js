@@ -22,7 +22,9 @@ function llave(v) { return v === '' || v === null || v === undefined ? '' : Stri
  * matrizHoja: la pestaña completa con encabezado (como getValues). filasBase: [{ id, celdas, origen, orden }]
  * con celdas ya codificadas (JSON). Funcion pura: no toca la base.
  */
-function planificar(matrizHoja, filasBase) {
+function planificar(matrizHoja, filasBase, opciones) {
+  // hojaManda (sombra, o despues de volver atras): un cambio en la hoja de un pago del servidor se acepta
+  const hojaManda = !!(opciones && opciones.hojaManda);
   const H = (matrizHoja[0] || []).map((h) => String(h || '').trim());
   const iId = H.indexOf('ID');
   if (iId < 0) throw new Error('PAGOS_PROVEEDORES no tiene la columna ID.');
@@ -39,7 +41,7 @@ function planificar(matrizHoja, filasBase) {
     const b = base.get(id);
     if (!b) { nuevas.push({ id, celdas, orden: r, fila }); continue; }
     if (JSON.stringify(b.celdas) === JSON.stringify(celdas)) { if (b.orden !== r) reordenar.push({ id, orden: r }); continue; }
-    if (b.origen === 'servidor') { problemas.push('Conflicto en ' + id + ': la hoja tiene otra version de un pago guardado en el servidor nuevo. No se piso.'); continue; }
+    if (b.origen === 'servidor' && !hojaManda) { problemas.push('Conflicto en ' + id + ': la hoja tiene otra version de un pago guardado en el servidor nuevo. No se piso.'); continue; }
     actualizadas.push({ id, celdas, orden: r, fila });
   }
   filasBase.forEach((b) => { if (b.origen === 'hoja' && !vistos.has(b.id)) problemas.push('El pago ' + b.id + ' esta en la base y ya no en la hoja.'); });
@@ -58,18 +60,18 @@ function tipadas(H, fila) {
 }
 
 /** Aplica el plan en una transaccion y deja el resumen en pagos_importaciones. */
-async function importar(pool, matrizHoja) {
+async function importar(pool, matrizHoja, opciones) {
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
     const r = await c.query('SELECT id, celdas, origen, orden FROM pagos_proveedores FOR UPDATE');
-    const plan = planificar(matrizHoja, r.rows);
+    const plan = planificar(matrizHoja, r.rows, opciones);
     const H = plan.encabezado;
     // la posicion en la hoja (si alguien la ordena, cambia; no es un cambio del pago)
     for (const x of plan.reordenar) await c.query('UPDATE pagos_proveedores SET orden = $2 WHERE id = $1', [x.id, x.orden]);
     for (const x of plan.actualizadas) {
       await c.query(`UPDATE pagos_proveedores SET area=$2, proveedor=$3, dte=$4, fecha_de_pagar=$5, fecha_pagado=$6, cantidad_pagada=$7,
-        estatus=$8, nit=$9, detalle=$10, escrito_por=$11, registrado=$12, celdas=$13, orden=$14, actualizado=now() WHERE id=$1`,
+        estatus=$8, nit=$9, detalle=$10, escrito_por=$11, registrado=$12, celdas=$13, orden=$14, origen='hoja', actualizado=now() WHERE id=$1`,
       [x.id].concat(tipadas(H, x.fila), [JSON.stringify(x.celdas), x.orden]));
     }
     for (const x of plan.nuevas) {
