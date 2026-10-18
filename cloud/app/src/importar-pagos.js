@@ -14,8 +14,12 @@
  */
 const C = require('./copia-hojas');
 
-/** El ID como texto estable (4 IDs viejos quedaron como numero en la hoja). */
-function llave(v) { return v === '' || v === null || v === undefined ? '' : String(v).trim(); }
+/** La llave como texto estable: 4 IDs viejos quedaron como numero; la FECHA de un cierre llega como Date. */
+function llave(v) {
+  if (v === '' || v === null || v === undefined) return '';
+  if (v instanceof Date) return C.codificar([[v]])[0][0].$d.slice(0, 10);
+  return String(v).trim();
+}
 
 /**
  * planificar(matrizHoja, filasBase) → { nuevas, actualizadas, problemas }
@@ -26,16 +30,17 @@ function planificar(matrizHoja, filasBase, opciones) {
   // hojaManda (sombra, o despues de volver atras): un cambio en la hoja de un pago del servidor se acepta
   const hojaManda = !!(opciones && opciones.hojaManda);
   const H = (matrizHoja[0] || []).map((h) => String(h || '').trim());
-  const iId = H.indexOf('ID');
-  if (iId < 0) throw new Error('PAGOS_PROVEEDORES no tiene la columna ID.');
+  const col = (opciones && opciones.llave) || 'ID';
+  const iId = H.indexOf(col);
+  if (iId < 0) throw new Error('La pestaña no tiene la columna ' + col + '.');
   const base = new Map(filasBase.map((f) => [f.id, f]));
   const vistos = new Map();
   const problemas = [], nuevas = [], actualizadas = [], reordenar = [];
   for (let r = 1; r < matrizHoja.length; r++) {
     const fila = matrizHoja[r];
     const id = llave(fila[iId]);
-    if (!id) { problemas.push('Fila ' + (r + 1) + ' de la hoja sin ID: no se importa.'); continue; }
-    if (vistos.has(id)) { problemas.push('ID ' + id + ' repetido en la hoja (filas ' + (vistos.get(id) + 1) + ' y ' + (r + 1) + '): no se importa la segunda.'); continue; }
+    if (!id) { problemas.push('Fila ' + (r + 1) + ' de la hoja sin ' + col + ': no se importa.'); continue; }
+    if (vistos.has(id)) { problemas.push(col + ' ' + id + ' repetido en la hoja (filas ' + (vistos.get(id) + 1) + ' y ' + (r + 1) + '): no se importa la segunda.'); continue; }
     vistos.set(id, r);
     const celdas = C.codificar([fila])[0];
     const b = base.get(id);
@@ -92,4 +97,34 @@ async function matrizDesdeBase(pool, encabezado) {
   return [encabezado.slice()].concat(C.decodificar(r.rows.map((x) => x.celdas)));
 }
 
-module.exports = { planificar, importar, matrizDesdeBase, llave, tipadas };
+// ---- Las pestañas de Caja (filas_vivas, migracion 005): misma regla, tabla generica ----
+
+/** Importa una pestaña de Caja a filas_vivas (una transaccion) y deja el resumen. */
+async function importarFilas(pool, pestana, matrizHoja, opciones) {
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    const r = await c.query('SELECT llave AS id, celdas, origen, orden FROM filas_vivas WHERE pestana = $1 FOR UPDATE', [pestana]);
+    const plan = planificar(matrizHoja, r.rows, opciones);
+    for (const x of plan.reordenar) await c.query('UPDATE filas_vivas SET orden = $3 WHERE pestana = $1 AND llave = $2', [pestana, x.id, x.orden]);
+    for (const x of plan.actualizadas) {
+      await c.query(`UPDATE filas_vivas SET celdas = $3, orden = $4, origen = 'hoja', actualizado = now() WHERE pestana = $1 AND llave = $2`,
+        [pestana, x.id, JSON.stringify(x.celdas), x.orden]);
+    }
+    for (const x of plan.nuevas) {
+      await c.query(`INSERT INTO filas_vivas (pestana, llave, celdas, orden, origen) VALUES ($1,$2,$3,$4,'hoja')`, [pestana, x.id, JSON.stringify(x.celdas), x.orden]);
+    }
+    await c.query('INSERT INTO filas_vivas_importaciones (pestana, filas_hoja, nuevas, actualizadas, problemas) VALUES ($1,$2,$3,$4,$5)',
+      [pestana, plan.filas_hoja, plan.nuevas.length, plan.actualizadas.length, JSON.stringify(plan.problemas)]);
+    await c.query('COMMIT');
+    return { pestana, filas_hoja: plan.filas_hoja, nuevas: plan.nuevas.length, actualizadas: plan.actualizadas.length, problemas: plan.problemas };
+  } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
+}
+
+/** Una pestaña de Caja armada desde filas_vivas (encabezado + filas en su orden). */
+async function matrizDesdeFilas(pool, pestana, encabezado) {
+  const r = await pool.query('SELECT celdas FROM filas_vivas WHERE pestana = $1 ORDER BY orden NULLS LAST, actualizado, llave', [pestana]);
+  return [encabezado.slice()].concat(C.decodificar(r.rows.map((x) => x.celdas)));
+}
+
+module.exports = { planificar, importar, matrizDesdeBase, importarFilas, matrizDesdeFilas, llave, tipadas };

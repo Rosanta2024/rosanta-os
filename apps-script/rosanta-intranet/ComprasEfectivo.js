@@ -305,6 +305,7 @@ function _cpeAnotarRetiro_(Q, fecha, lugar, monto, nota) {
 
 /** Anula una solicitud: quien la hizo o el dueño. */
 function anularSolicitudRetiro(auth, id) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cpeQuien_(auth);
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -373,6 +374,7 @@ function registrarCompraEfectivo_(auth, c) {
 
 /** Anula una compra registrada (misma regla que Pagos: lo que anoto uno mismo, o el dueño). */
 function anularCompraEfectivo(auth, id) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   cpeQuien_(auth);
   _pagAnularMovimiento_(auth, id);   // sin la cerradura de Pagos: Compras sigue anulando aca (NubePagos.js, 18-oct-2026)
   return getComprasEfectivo(auth);
@@ -389,6 +391,7 @@ function anularCompraEfectivo(auth, id) {
  * retiro suelto que al reintentar se duplique). Si una fila esta mal no se guarda nada.
  */
 function registrarRetiroYCompras(auth, x) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cpeQuien_(auth);
   x = x || {};
   var fecha = _pagFechaValida_(x.fecha, 'Fecha');
@@ -446,6 +449,7 @@ function registrarRetiroYCompras(auth, x) {
  * saldo de la factura.
  */
 function asignarFacturaACompra(auth, id, llave) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cpeQuien_(auth);
   id = String(id || ''); llave = String(llave || '');
   _pagConCandado_(function () {

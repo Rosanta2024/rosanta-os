@@ -33,16 +33,23 @@ function celda(x, esId) {
  * valoresHoja: la pestaña como esta ahora (encabezado + filas). filas: [{ id, fila }] con la fila completa
  * en el orden del encabezado. Funcion pura.
  */
-function planCopia(valoresHoja, filas, sheetId) {
+function planCopia(valoresHoja, filas, sheetId, opciones) {
+  const o = opciones || {};
+  const col = o.llave || 'ID';
   const H = (valoresHoja[0] || []).map((h) => String(h || '').trim());
-  const iId = H.indexOf('ID');
-  if (iId < 0) throw new Error(PESTANA + ' no tiene la columna ID.');
+  const iId = H.indexOf(col);
+  if (iId < 0) throw new Error((o.pestana || PESTANA) + ' no tiene la columna ' + col + '.');
+  // la llave de cada fila de la hoja; una fecha (FECHA de un cierre) viene como numero de serie
+  const llaveHoja = (x) => (o.llaveEsFecha && typeof x === 'number'
+    ? (() => { const d = new Date(Math.round((x - 25569) * 86400000)); return d.toISOString().slice(0, 10); })()
+    : String(x === undefined ? '' : x).trim());
   const dondeEsta = new Map();
   for (let r = 1; r < valoresHoja.length; r++) {
-    const id = String(valoresHoja[r][iId] === undefined ? '' : valoresHoja[r][iId]).trim();
+    const id = llaveHoja(valoresHoja[r][iId]);
     if (id && !dondeEsta.has(id)) dondeEsta.set(id, r);
   }
-  const fila = (f) => ({ values: H.map((_, j) => celda(f[j] === undefined ? '' : f[j], j === iId)) });
+  // la columna llave va con formato texto solo si es un ID (una FECHA va como fecha)
+  const fila = (f) => ({ values: H.map((_, j) => celda(f[j] === undefined ? '' : f[j], j === iId && col === 'ID')) });
   const requests = [], nuevas = [];
   let actualizadas = 0;
   filas.forEach((x) => {
@@ -57,13 +64,22 @@ function planCopia(valoresHoja, filas, sheetId) {
 }
 
 /** Copia las filas a la hoja (una sola llamada a la API). filas: [{ id, fila }]. */
-async function copiarFilas(sheets, libroId, filas) {
+async function copiarFilas(sheets, libroId, filas, opciones) {
+  const o = Object.assign({ pestana: PESTANA, llave: 'ID' }, opciones || {});
   if (!filas.length) return { nuevas: 0, actualizadas: 0 };
   const meta = await sheets.spreadsheets.get({ spreadsheetId: libroId, fields: 'sheets.properties(sheetId,title)' });
-  const hoja = meta.data.sheets.find((s) => s.properties.title === PESTANA);
-  if (!hoja) throw new Error('La hoja no tiene la pestaña ' + PESTANA + '.');
-  const v = await sheets.spreadsheets.values.get({ spreadsheetId: libroId, range: "'" + PESTANA + "'", valueRenderOption: 'UNFORMATTED_VALUE' });
-  const plan = planCopia(v.data.values || [], filas, hoja.properties.sheetId);
+  let hoja = meta.data.sheets.find((s) => s.properties.title === o.pestana);
+  if (!hoja && o.encabezado && o.encabezado.length) {
+    // la intranet crea RETIROS_SOLICITUDES (y otras) con el primer movimiento: aca igual, con su encabezado
+    const r = await sheets.spreadsheets.batchUpdate({ spreadsheetId: libroId, requestBody: { requests: [
+      { addSheet: { properties: { title: o.pestana, gridProperties: { frozenRowCount: 1 } } } }] } });
+    hoja = { properties: r.data.replies[0].addSheet.properties };
+    await sheets.spreadsheets.values.update({ spreadsheetId: libroId, range: "'" + o.pestana + "'!A1", valueInputOption: 'RAW',
+      requestBody: { values: [o.encabezado.map(String)] } });
+  }
+  if (!hoja) throw new Error('La hoja no tiene la pestaña ' + o.pestana + '.');
+  const v = await sheets.spreadsheets.values.get({ spreadsheetId: libroId, range: "'" + o.pestana + "'", valueRenderOption: 'UNFORMATTED_VALUE' });
+  const plan = planCopia(v.data.values || [], filas, hoja.properties.sheetId, o);
   await sheets.spreadsheets.batchUpdate({ spreadsheetId: libroId, requestBody: { requests: plan.requests } });
   return { nuevas: plan.nuevas, actualizadas: plan.actualizadas };
 }

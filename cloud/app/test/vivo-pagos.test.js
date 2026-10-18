@@ -75,7 +75,8 @@ test('La bitacora guarda antes y despues; anular cuenta como borrar', () => {
 });
 
 test('Las acciones que tocan el maestro quedan en la intranet', () => {
-  assert.deepStrictEqual(SOLO_INTRANET.filter((n) => ESCRITURA.indexOf(n) === -1), []);
+  // cada una es de una pantalla real: Pagos (IVA) o Caja/Compras (leer el correo, la foto del comprobante)
+  assert.deepStrictEqual(SOLO_INTRANET.filter((n) => ESCRITURA.indexOf(n) === -1 && ['leerCierresCaja', 'leerComprobanteCompra'].indexOf(n) === -1), []);
   assert.ok(SOLO_INTRANET.includes('marcarFacturaParaIva'));
   assert.strictEqual(llave(630e50), String(630e50));
 });
@@ -132,4 +133,61 @@ test('getPagosDestino: con base da la direccion con el enlace de esa persona; co
   assert.deepStrictEqual(d2, { base: false });
   const d3 = M.correr(CHEF_, 'getPagosDestino', ['admin:<script>']).resultado;
   assert.ok(!/script/.test(d3.url), 'un modo raro no pasa a la direccion');
+});
+
+// ---- Caja chica y Compras (18-oct-2026): los interruptores en la intranet, con el codigo real ----
+function motorCaja(valores, enServidor) {
+  const L = librosFix();
+  L.CFG.PARAMETROS = [['parametro', 'valor']].concat(Object.keys(valores).map((k) => [k, valores[k]]));
+  L.CFG.USUARIOS = [['correo', 'rol', 'modulos', 'edita', 'nombre', 'token'], ['sala@x', 'sala', 'pagos,recetario', 'NO', 'Maco', 'tok-sala']];
+  const M0 = crearMotor({ libros: L, configId: 'CFG', listas: ['LISTA.txt', 'LISTA-CAJA.txt'] });
+  L.CFG.CAJA_CHICA = [M0.ctx.CCH_COLS_.slice()];
+  L.CFG.RETIROS_SOLICITUDES = [M0.ctx.CPE_SOL_COLS_.slice()];
+  const M = crearMotor({ libros: L, configId: 'CFG', editables: { CFG: ['PAGOS_PROVEEDORES', 'CAJA_CHICA', 'RETIROS_SOLICITUDES'] }, listas: ['LISTA.txt', 'LISTA-CAJA.txt'] });
+  if (!enServidor) M.ctx.NUBE_SERVIDOR_ = undefined;
+  M.ctx._cchLeerSiFaltan_ = () => null; M.ctx.cchSincronizarMaestro_ = () => ({ escrito: false });
+  return M;
+}
+const SALA_ = { email: 'sala@x', rol: 'sala', modulos: ['pagos', 'recetario'], nombre: 'Maco' };
+const gasto = ['SALIDA', '2026-10-18', 'barra', 'limones', 30, '', ''];
+
+test('Caja en base pero Pagos en sheets: Caja sigue en la intranet (nunca escriben por dos lados)', () => {
+  const M = motorCaja({ motor_pagos: 'sheets', motor_caja: 'base' }, false);
+  assert.strictEqual(M.ctx.cajaMotor_(), 'sheets');
+  const r = M.correr(SALA_, 'registrarMovimientoCaja', gasto);
+  assert.ok(r.escrituras['CFG|CAJA_CHICA'] || r.escrituras['CFG|PAGOS_PROVEEDORES'], 'la intranet anoto el gasto: ' + JSON.stringify(r.escrituras));
+});
+
+test('Caja y Pagos en base: en la intranet Caja chica y Compras no guardan', () => {
+  const M = motorCaja({ motor_pagos: 'base', motor_caja: 'base' }, false);
+  assert.strictEqual(M.ctx.cajaMotor_(), 'base');
+  assert.throws(() => M.correr(SALA_, 'registrarMovimientoCaja', gasto), /pantalla nueva/);
+  assert.throws(() => M.correr(SALA_, 'registrarConteoCaja', ['2026-10-18', 500, '']), /pantalla nueva/);
+  assert.throws(() => M.correr(SALA_, 'anularSolicitudRetiro', ['x']), /pantalla nueva/);
+  assert.throws(() => M.correr(SALA_, 'registrarRetiroYCompras', [{ fecha: '2026-10-18' }]), /pantalla nueva/);
+  assert.ok(M.correr(SALA_, 'getCajaChica', []).resultado.dias, 'mirar sigue funcionando');
+});
+
+test('En el servidor nuevo, Caja chica guarda aunque los interruptores digan base', () => {
+  const M = motorCaja({ motor_pagos: 'base', motor_caja: 'base' }, true);
+  const r = M.correr(SALA_, 'registrarMovimientoCaja', gasto);
+  assert.ok(Object.keys(r.escrituras).length > 0);
+});
+
+test('getCajaDestino arma la direccion de /caja o /compras con el mismo enlace', () => {
+  const M = motorCaja({ motor_pagos: 'base', motor_caja: 'base' }, false);
+  // directo, con el enlace de verdad (por el motor el enlace viaja como marcador)
+  M.ctx.resolverUsuario_ = () => ({ email: 'sala@x', rol: 'sala', modulos: ['pagos'], nombre: 'Maco' });
+  const d = M.ctx.getCajaDestino('tok-sala', 'compras');
+  assert.strictEqual(d.base, true);
+  assert.match(d.url, /^https:\/\/rosanta-nube-.*\/compras\?u=tok-sala&dentro=1$/);
+  assert.deepStrictEqual(motorCaja({ motor_pagos: 'sheets', motor_caja: 'base' }, false).correr(SALA_, 'getCajaDestino', ['caja']).resultado, { base: false });
+});
+
+test('modos(): Caja solo en vivo con Pagos en vivo; cierres por su cuenta', () => {
+  const { modos } = require('../src/servicio-pagos');
+  const L = (p, c, k) => ({ [C.LIBROS.config.id]: { PARAMETROS: [['p', 'v'], ['motor_pagos', p], ['motor_caja', c], ['motor_cierres', k]] } });
+  assert.deepStrictEqual(modos('vivo', L('base', 'base', 'sheets')), { pagos: true, caja: true, cierres: false });
+  assert.deepStrictEqual(modos('vivo', L('sheets', 'base', 'base')), { pagos: false, caja: false, cierres: true });
+  assert.deepStrictEqual(modos('sombra', L('base', 'base', 'base')), { pagos: false, caja: false, cierres: false }, 'si el servidor no lo permite, nada');
 });

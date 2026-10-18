@@ -31,11 +31,15 @@ async function main() {
     sheetsEscritura: process.env.MODO_PAGOS === 'vivo' ? () => sheets({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }) : null });
   await pagos.cargar().catch((e) => console.error('Pagos no cargo:', e.message));
   const htmlSombra = pantalla.armar({ sombra: true }), htmlVivo = pantalla.armar({ sombra: false });
+  const htmlCajaSombra = pantalla.armarCaja(true), htmlCajaVivo = pantalla.armarCaja(false);
+  const htmlComprasSombra = pantalla.armarCompras(true), htmlComprasVivo = pantalla.armarCompras(false);
   const htmlFotos = pantalla.armarFotos();
   const app = crearApp({
     pool,
     pagos: { llamar: pagos.llamar, estado: pagos.estado, refrescar: () => pagos.refrescar(clienteSheets()) },
     pantallaPagos: () => (pagos.estado().modo === 'vivo' ? htmlVivo : htmlSombra),
+    pantallaCaja: () => (pagos.estado().en_vivo.caja ? htmlCajaVivo : htmlCajaSombra),
+    pantallaCompras: () => (pagos.estado().en_vivo.caja ? htmlComprasVivo : htmlComprasSombra),
     pantallaFotos: () => htmlFotos,
     compararPagos: () => { const c = pagos.copia(); return comparar({ pool, sheets: clienteSheets(), librosCopia: c.libros, copiaLeida: c.leida }); },
     anotarTiempo: (t) => pool.query('INSERT INTO tiempos (accion, donde, ms, quien) VALUES ($1,$2,$3,$4)', [t.accion, t.donde, t.ms, t.quien]),

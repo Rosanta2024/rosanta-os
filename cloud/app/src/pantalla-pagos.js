@@ -84,6 +84,37 @@ function armar(opciones) {
     '</body></html>';
 }
 
+/**
+ * Caja chica y Compras en el servidor nuevo (modo en vivo, 18-oct-2026): las MISMAS pantallas de la
+ * intranet (ProfitCajaJs.html, ProfitComprasJs.html, que usan funciones de ProfitPagosJs.html), con el
+ * mismo traductor y ?dentro=1 para verse dentro de la pestaña de la intranet. sombra: con el aviso lila.
+ */
+function armarProfit(titulo, parcial, funcion, clase, sombra) {
+  const aviso = sombra ? '<div class="nb-aviso"><b>Prueba en sombra.</b> Esta pantalla es la del servidor nuevo y por ahora <b>solo muestra</b>: ' +
+    'todo se sigue anotando en la intranet de siempre.</div>' : '';
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>' + titulo + ' · Rosanta</title>' + paleta() +
+    '<style>body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--rosanta-font-body)}' +
+    '.nb-top{display:flex;align-items:baseline;gap:12px;padding:14px 16px;background:var(--superficie);border-bottom:1px solid var(--linea)}' +
+    '.nb-top h1{font-family:var(--rosanta-font-title);font-size:1.3rem;margin:0}.nb-top small{color:var(--texto-suave)}' +
+    'main{max-width:1100px;margin:0 auto;padding:16px}' +
+    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}' +
+    '.nb-dentro .nb-top{display:none}.nb-dentro main{padding:0}.nb-dentro body{background:transparent}</style>' +
+    '</head><body><header class="nb-top"><h1>' + titulo + '</h1><small>servidor nuevo · Querétaro</small></header><main>' + aviso +
+    '<div class="pg"><h2>' + titulo + '</h2></div><div class="' + clase + '" id="pf-host"></div></main>' +
+    leer('GuardadoEstado.html') +
+    '<script>' + TRADUCTOR + '\nwindow.AUTH = new URLSearchParams(location.search).get("u") || "";\n' + pfError() + '</script>' +
+    leer('ProfitPagosJs.html') + leer(parcial) +
+    '<script>(function(){var q=new URLSearchParams(location.search);' +
+    'if(q.get("dentro")==="1"){document.documentElement.classList.add("nb-dentro");' +
+    'var alto=function(){try{parent.postMessage({rosantaAlto:document.documentElement.scrollHeight},"*")}catch(e){}};' +
+    'new ResizeObserver(alto).observe(document.body);setInterval(alto,1500);}' +
+    funcion + '(document.getElementById("pf-host"),window.AUTH);})();</script>' +
+    '</body></html>';
+}
+const armarCaja = (sombra) => armarProfit('Caja chica', 'ProfitCajaJs.html', 'PF_CAJA', 'cj-host', sombra);
+const armarCompras = (sombra) => armarProfit('Compras en efectivo', 'ProfitComprasJs.html', 'PF_COMPRAS', 'ce-host', sombra);
+
 /** /pagos/fotos: las fotos de cada noche, para que Juanma las compare con la intranet. */
 function armarFotos() {
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
@@ -108,4 +139,4 @@ function armarFotos() {
     '}).catch(function(){document.getElementById("f").innerHTML="<tr><td colspan=6>No se pudo leer. Probá de nuevo.</td></tr>"})</script></body></html>';
 }
 
-module.exports = { armar, armarFotos, paleta, pfError, TRADUCTOR };
+module.exports = { armar, armarCaja, armarCompras, armarFotos, paleta, pfError, TRADUCTOR };

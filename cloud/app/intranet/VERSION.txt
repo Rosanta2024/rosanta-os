@@ -1,1 +1,1 @@
-3fbd8be 2026-10-17 Accesos fase 1: Finanzas solo del dueño por rol; exportar el CRM solo el dueño
+e3c15cc 2026-10-18 Nube: modo en vivo de Pagos (sin publicar) y su interruptor en la intranet

@@ -79,6 +79,21 @@ function crearApp(deps) {
     res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaFotos());
   });
 
+  // Caja chica y Compras (modo en vivo de Caja, 18-oct-2026): las mismas pantallas de la intranet
+  app.get('/caja', (req, res) => { if (!deps.pantallaCaja) return res.status(404).send('No disponible.'); res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaCaja()); });
+  app.get('/compras', (req, res) => { if (!deps.pantallaCompras) return res.status(404).send('No disponible.'); res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaCompras()); });
+
+  /** Un cierre del dia que manda el lector de la intranet (motor_cierres = base). body: { fila: [...] } */
+  app.post('/tareas/cierre', exigirTarea, async (req, res, next) => {
+    try {
+      if (!deps.pagos || !deps.pagos.guardarCierre) return res.status(404).json({ error: 'No disponible.' });
+      const fila = req.body && req.body.fila;
+      if (!Array.isArray(fila)) return res.status(400).json({ error: 'Falta la fila del cierre.' });
+      const r = await deps.pagos.guardarCierre(fila);
+      res.json({ ok: true, fecha: r.fecha, nuevo: r.nuevo });
+    } catch (e) { if (e.status) return res.status(e.status).json({ error: e.message }); next(e); }
+  });
+
   /** google.script.run.<nombre>(AUTH, ...args) de la pantalla llega aca. */
   app.post('/api/llamar/:nombre', exigirUsuario, async (req, res, next) => {
     const nombre = req.params.nombre;
