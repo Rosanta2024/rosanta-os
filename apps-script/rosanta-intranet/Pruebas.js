@@ -1570,13 +1570,14 @@ function prAccesos_(res) {
   });
 
   // 17-oct-2026, las 4 brechas medias de la matriz (aprobadas por Juanma desde la Central).
-  prCorrer_(g, 'Finanzas es solo del dueño, por rol', function () {
-    var nombre = 'Finanzas es solo del dueño, por rol';
-    var mal = ['chef', 'sala', 'pauta'].filter(function (r) { return usuarioTieneModulo({ rol: r, modulos: ['finanzas'] }, 'finanzas'); });
+  prCorrer_(g, 'Finanzas es del dueño y del contador, por rol', function () {
+    var nombre = 'Finanzas es del dueño y del contador, por rol';
+    var mal = ['chef', 'sala', 'pauta', 'equipo'].filter(function (r) { return usuarioTieneModulo({ rol: r, modulos: ['finanzas'] }, 'finanzas'); });
     var ok = !mal.length && usuarioTieneModulo({ rol: 'Dueño', modulos: ['finanzas'] }, 'finanzas') &&
+             usuarioTieneModulo({ rol: 'contador', modulos: ['finanzas'] }, 'finanzas') &&
              usuarioTieneModulo({ rol: 'chef', modulos: ['recetario'] }, 'recetario');
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
-      ok ? 'aunque la hoja USUARIOS le ponga "finanzas", solo el dueño entra' : 'abren Finanzas: ' + (mal.join(', ') || 'el dueño no entra') + ' (Config.js › MODULOS_SOLO_DUENO_)', ok ? 1 : 0, 1);
+      ok ? 'aunque la hoja USUARIOS le ponga "finanzas", solo entran el dueño y el contador (solo lectura)' : 'abren Finanzas: ' + (mal.join(', ') || 'el dueño no entra') + ' (Config.js › MODULOS_SOLO_DUENO_)', ok ? 1 : 0, 1);
   });
 
   prCorrer_(g, 'El pipeline de eventos es del dueño y de sala', function () {
@@ -1606,6 +1607,16 @@ function prAccesos_(res) {
     var ok = i > 0 && /rolSinAcento_\(usuario\.rol\) === 'dueno'/.test(antes);
     prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
       ok ? 'el botón solo se dibuja para el dueño' : 'el botón Exportar CSV quedó para cualquiera con crm (CrmVista.html)', ok ? 1 : 0, 1);
+  });
+
+  prCorrer_(g, 'El contador ve Finanzas pero no escribe', function () {
+    var nombre = 'El contador ve Finanzas pero no escribe';
+    var escriben = ['guardarAccion', 'marcarAccion', 'guardarAccionReporte', 'borrarAccionReporte', 'generarPdfReporteSemanal',
+                    'enviarReporteSupervisores', 'instalarSistemaMedicion', 'instalarVigia', 'vigiaEnviarAhora', 'vigiaSugerirAhora', 'leerCierresAhora'];
+    var sinGuarda = escriben.filter(function (n) { return typeof globalThis[n] !== 'function' || String(globalThis[n]).indexOf('invExigirDueno_(') === -1; });
+    var ok = !sinGuarda.length;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      ok ? escriben.length + ' funciones que escriben en Finanzas piden rol dueño' : 'sin guarda de dueño: ' + sinGuarda.join(', '), sinGuarda.length, 0);
   });
 
   prCorrer_(g, 'La hoja USUARIOS', function () {
