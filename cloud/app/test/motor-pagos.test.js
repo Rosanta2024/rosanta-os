@@ -60,6 +60,8 @@ test('Lo que no es PAGOS_PROVEEDORES es de solo lectura en el servidor nuevo', (
 test('Fechas: formatDate en hora de Guatemala y serie de Sheets → fecha local', () => {
   assert.strictEqual(formatDate(new Date(Date.UTC(2026, 9, 17, 5, 30)), 'America/Guatemala', 'dd/MM/yyyy HH:mm'), '16/10/2026 23:30');
   assert.strictEqual(formatDate(new Date(2026, 0, 2), 'America/Guatemala', 'yyyy-MM-dd'), '2026-01-02');
+  // texto entre comillas tal cual, como Apps Script (nubeGuardarCierre_ usa "yyyy-MM-dd'T'HH:mm:ss"; ensayo del puente, 18-oct)
+  assert.strictEqual(formatDate(new Date(2026, 9, 18, 19, 14, 9), 'America/Guatemala', "yyyy-MM-dd'T'HH:mm:ss"), '2026-10-18T19:14:09');
   const d = C.fechaDeSerie(46312.5);   // 17-oct-2026 12:00 en la hoja
   assert.deepStrictEqual([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()], [2026, 9, 17, 12]);
   assert.strictEqual(C.valorCelda({ effectiveValue: { numberValue: 46312 }, effectiveFormat: { numberFormat: { type: 'DATE' } } }).getDate(), 17);

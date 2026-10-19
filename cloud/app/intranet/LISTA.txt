@@ -7,3 +7,4 @@ CierresDiarios.js
 FelCorreo.js
 BancoCorreo.js
 Tiempos.js
+NubePagos.js

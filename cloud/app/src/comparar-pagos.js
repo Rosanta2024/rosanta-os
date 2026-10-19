@@ -12,6 +12,7 @@
  */
 const C = require('./copia-hojas');
 const { crearMotor, formatDate } = require('./motor-pagos');
+const IMP = require('./importar-pagos');
 
 const DUENO = { email: 'comparacion@servidor', rol: 'dueno', modulos: ['pagos'], nombre: 'Comparación automática' };
 const CAMPOS_CUADRE = ['n', 'facturado', 'pagado', 'pendiente', 'abonadas', 'de_mas', 'favor', 'por_confirmar'];
@@ -73,6 +74,15 @@ async function comparar(o) {
   const rCopia = arma(o.librosCopia);
   const rFresco = arma(fresco);
   const difs = diferencias(rCopia, rFresco);
+  // La base (opcion a, 17-oct): las mismas filas que la hoja, y Pagos armado desde la base = desde la hoja
+  const cfg = C.LIBROS.config.id, hojaPag = fresco[cfg].PAGOS_PROVEEDORES;
+  const matrizBase = await IMP.matrizDesdeBase(o.pool, hojaPag[0] || []);
+  const plan = IMP.planificar(hojaPag, matrizBase.slice(1).map((f, i) => ({ id: IMP.llave(f[(hojaPag[0] || []).indexOf('ID')]), celdas: C.codificar([f])[0], origen: 'hoja', orden: i })));
+  plan.nuevas.forEach((x) => difs.push('Base: falta el pago ' + x.id + ' que esta en la hoja'));
+  plan.actualizadas.forEach((x) => difs.push('Base: el pago ' + x.id + ' es distinto al de la hoja'));
+  plan.problemas.forEach((x) => difs.push('Base: ' + x));
+  const conBase = Object.assign({}, fresco, { [cfg]: Object.assign({}, fresco[cfg], { PAGOS_PROVEEDORES: matrizBase }) });
+  diferencias(arma(conBase), rFresco).forEach((d) => difs.push('Pagos desde la base: ' + d.replace('copia ', 'base ')));
   const errores = celdasConError(fresco);
   const foto = {
     por_pagar_n: rFresco.por_pagar_n, por_pagar_q: rFresco.por_pagar_q, vence_hoy: rFresco.vence_hoy, cuadre: rFresco.cuadre,

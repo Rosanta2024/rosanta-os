@@ -4,6 +4,7 @@
  *
  *   node cloud/herramientas/migrar.js            → muestra cuales faltan, sin aplicar
  *   node cloud/herramientas/migrar.js --aplicar  → las aplica, cada una en su transaccion
+ *   --base <nombre>   otra base de la misma instancia (por defecto rosanta), p. ej. rosanta_ensayo
  *
  * Entra como postgres con la clave de Secret Manager (db-postgres-root) y el token de gcloud de
  * quien la corre (restaurante@rosanta.rest). La primera vez crea la base "rosanta" y el usuario
@@ -23,6 +24,9 @@ const ENV = Object.assign({}, process.env, {
 });
 const PROYECTO = 'rosanta-apps-script';
 const DIR = path.join(__dirname, '..', 'db', 'migraciones');
+const iBase = process.argv.indexOf('--base');
+const BASE = iBase > -1 ? process.argv[iBase + 1] : 'rosanta';
+if (!/^rosanta(_[a-z0-9]+)?$/.test(BASE)) throw new Error('Nombre de base invalido: ' + BASE);
 
 function gcloud(args, entrada) {
   return execFileSync(GCLOUD, args.concat(['--project', PROYECTO]), { env: ENV, input: entrada, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -40,8 +44,8 @@ function authGcloud() {
 async function asegurarBaseYApp(auth) {
   const root = await crearPool({ usuario: 'postgres', clave: secreto('db-postgres-root'), base: 'postgres', auth });
   try {
-    const b = await root.query("SELECT 1 FROM pg_database WHERE datname = 'rosanta'");
-    if (!b.rowCount) { await root.query('CREATE DATABASE rosanta'); console.log('Base "rosanta" creada.'); }
+    const b = await root.query('SELECT 1 FROM pg_database WHERE datname = $1', [BASE]);
+    if (!b.rowCount) { await root.query('CREATE DATABASE ' + BASE); console.log('Base "' + BASE + '" creada.'); }
     const r = await root.query("SELECT 1 FROM pg_roles WHERE rolname = 'app'");
     if (!r.rowCount) {
       const clave = crypto.randomBytes(24).toString('base64url');
@@ -57,7 +61,7 @@ async function main() {
   const aplicar = process.argv.includes('--aplicar');
   const auth = authGcloud();
   if (aplicar) await asegurarBaseYApp(auth);
-  const pool = await crearPool({ usuario: 'postgres', clave: secreto('db-postgres-root'), base: aplicar ? 'rosanta' : 'postgres', auth });
+  const pool = await crearPool({ usuario: 'postgres', clave: secreto('db-postgres-root'), base: aplicar ? BASE : 'postgres', auth });
   try {
     let hechas = new Set();
     if (aplicar) {
@@ -65,7 +69,7 @@ async function main() {
       const r = await pool.query('SELECT archivo, sha256 FROM schema_migraciones');
       hechas = new Map(r.rows.map((x) => [x.archivo, x.sha256]));
     } else {
-      const b = await pool.query("SELECT 1 FROM pg_database WHERE datname = 'rosanta'");
+      const b = await pool.query('SELECT 1 FROM pg_database WHERE datname = $1', [BASE]);
       if (b.rowCount) {
         await cerrarPool(pool);
         return main2(auth);
@@ -95,7 +99,7 @@ async function main() {
 
 // Sin --aplicar y con la base ya creada: solo lista lo pendiente leyendo schema_migraciones.
 async function main2(auth) {
-  const pool = await crearPool({ usuario: 'postgres', clave: secreto('db-postgres-root'), base: 'rosanta', auth });
+  const pool = await crearPool({ usuario: 'postgres', clave: secreto('db-postgres-root'), base: BASE, auth });
   try {
     const t = await pool.query("SELECT to_regclass('schema_migraciones') AS t");
     const hechas = t.rows[0].t ? new Set((await pool.query('SELECT archivo FROM schema_migraciones')).rows.map((x) => x.archivo)) : new Set();
