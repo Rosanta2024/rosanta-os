@@ -95,6 +95,11 @@ function montarVivo(app, deps, tarea) {
     }
     res.json({ ok: true, guardadas: n, clavesOmitidas: omitidas });
   }));
+  // Una vez por semana (reloj, solo en vivo): renovar el token de Instagram y guardarlo en Secret Manager.
+  app.post('/tareas/refrescar-token-ig', tarea(async (req, res) => {
+    const r = await deps.refrescarIg();
+    res.status(r.ok ? 200 : 500).json(r);
+  }));
   // Para vigilar el paso: los ultimos mensajes y que paso con cada uno.
   app.get('/tareas/bot-eventos', tarea(async (req, res) => {
     const r = await deps.pool.query(`SELECT id, to_char(recibido AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI:SS') AS recibido, objeto, modo, resultado, envios, ms, error

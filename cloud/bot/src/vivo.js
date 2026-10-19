@@ -21,35 +21,58 @@ const { crearMotor } = require('./motor-bot');
 const SECRETAS = ['WHATSAPP_TOKEN', 'IG_TOKEN', 'MESSENGER_TOKEN', 'ANTHROPIC_API_KEY', 'WIX_RESERVAS_SECRETO', 'VERIFY_TOKEN', 'WEBHOOK_SECRET'];
 const MARCADOR = /\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO)\b/g;
 
-/** El pedido de verdad, sincrono (el bot espera como con UrlFetchApp), con las claves puestas en el proceso hijo. */
+/**
+ * El pedido de verdad, sincrono (el bot espera como con UrlFetchApp), con las claves puestas en el proceso hijo.
+ * Fotos de la consola (19-oct-2026): una respuesta que no es texto vuelve en base64 (blob), y un payload con un
+ * archivo (file: blob) se manda como formulario multipart, igual que UrlFetchApp.
+ */
 function pedidoConClaves(url, opciones, claves) {
   const guion = 'let d="";process.stdin.on("data",c=>d+=c).on("end",async()=>{const o=JSON.parse(d);' +
     'const R=s=>typeof s==="string"?s.replace(/\\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO)\\b/g,(m,k)=>process.env["S_"+k]||""):s;' +
-    'const h={};Object.keys(o.h||{}).forEach(k=>h[k]=R(o.h[k]));' +
-    'try{const r=await fetch(R(o.u),{method:o.m,headers:h,body:R(o.b)});process.stdout.write(JSON.stringify({c:r.status,t:await r.text()}));}' +
+    'const h={};Object.keys(o.h||{}).forEach(k=>h[k]=R(o.h[k]));let body=R(o.b);' +
+    'if(o.f){body=new FormData();Object.keys(o.f.campos).forEach(k=>body.append(k,R(o.f.campos[k])));body.append(o.f.campo,new Blob([Buffer.from(o.f.b64,"base64")],{type:o.f.mime}),o.f.nombre);delete h["content-type"];}' +
+    'try{const r=await fetch(R(o.u),{method:o.m,headers:h,body,redirect:"follow"});const ct=r.headers.get("content-type")||"";' +
+    'if(ct&&!/json|text|html|xml/.test(ct)){const b=Buffer.from(await r.arrayBuffer());process.stdout.write(JSON.stringify({c:r.status,b64:b.toString("base64"),mime:ct.split(";")[0]}));}' +
+    'else process.stdout.write(JSON.stringify({c:r.status,t:await r.text()}));}' +
     'catch(e){process.stdout.write(JSON.stringify({c:599,t:String(e)}));}});';
   const env = { PATH: process.env.PATH };
   Object.keys(claves || {}).forEach((k) => { env['S_' + k] = claves[k]; });
   const headers = Object.assign({}, opciones.headers || {});
   if (opciones.contentType) headers['content-type'] = opciones.contentType;
-  const payload = opciones.payload === undefined ? undefined : (typeof opciones.payload === 'string' ? opciones.payload : JSON.stringify(opciones.payload));
-  const sal = execFileSync(process.execPath, ['-e', guion], { input: JSON.stringify({ u: url, m: (opciones.method || 'get').toUpperCase(), h: headers, b: payload }),
-    env, maxBuffer: 20 * 1024 * 1024, timeout: 60000 });
+  let payload, form;
+  const p = opciones.payload;
+  const campo = p && typeof p === 'object' ? Object.keys(p).find((k) => p[k] && p[k]._b64 !== undefined) : null;
+  if (campo) {
+    const campos = {};
+    Object.keys(p).forEach((k) => { if (k !== campo) campos[k] = String(p[k]); });
+    form = { campos, campo, b64: p[campo]._b64, mime: p[campo].getContentType(), nombre: p[campo].getName() };
+  } else if (p !== undefined) payload = typeof p === 'string' ? p : JSON.stringify(p);
+  const sal = execFileSync(process.execPath, ['-e', guion], { input: JSON.stringify({ u: url, m: (opciones.method || 'get').toUpperCase(), h: headers, b: payload, f: form }),
+    env, maxBuffer: 30 * 1024 * 1024, timeout: 60000 });
   return JSON.parse(String(sal));
 }
 
-function respuesta(code, t) {
-  return { getResponseCode: () => code, getContentText: () => String(t), getBlob: () => ({ getContentType: () => 'application/json', getBytes: () => [] }) };
+/** Un blob como el de Apps Script, con los bytes en base64 (para volver a mandarlo). */
+function blob(b64, mime, nombre) {
+  return { _b64: b64, getContentType: () => mime, getBytes: () => Array.from(Buffer.from(b64, 'base64')), getName: () => nombre || 'foto', setName() { return this; } };
+}
+
+function respuesta(code, t, b) {
+  return { getResponseCode: () => code, getContentText: () => (t === undefined ? '' : String(t)),
+    getBlob: () => b || { getContentType: () => 'application/json', getBytes: () => [], getName: () => '' } };
 }
 
 /** Hosts a los que el bot en vivo puede llamar. Cualquier otro: 403 sin salir. */
 function crearRed(cfg) {
   const wix = cfg.wixOrigen;   // p.ej. https://www.rosanta.rest
-  const ok = (u) => /^https:\/\/(graph\.facebook\.com|graph\.instagram\.com|api\.anthropic\.com)\//.test(u) || (wix && u.indexOf(wix + '/_functions/') === 0);
+  // La foto que sube la consola: Drive, compartida con enlace, por su id (enviarImagenPorCanal).
+  const fotoDrive = (u) => /^https:\/\/drive\.google\.com\/uc\?export=download&id=[\w-]+$/.test(u);
+  const ok = (u) => /^https:\/\/(graph\.facebook\.com|graph\.instagram\.com|api\.anthropic\.com)\//.test(u) || (wix && u.indexOf(wix + '/_functions/') === 0) || fotoDrive(u);
   const red = (url, opciones) => {
     const u = String(url);
     if (!ok(u)) return respuesta(403, JSON.stringify({ error: 'El bot nuevo no llama a ' + u.slice(0, 60) }));
     const r = (cfg.pedido || pedidoConClaves)(u, opciones || {}, cfg.claves);
+    if (r.b64 !== undefined) return respuesta(r.c, '', blob(r.b64, r.mime, 'foto'));
     return respuesta(r.c, r.t);
   };
   return { red, permitido: ok, esWix: (u) => !!wix && String(u).indexOf(wix + '/_functions/') === 0 };
@@ -164,4 +187,21 @@ function crearBotVivo(deps) {
   return { recibir, minuto, interruptor: () => interruptor(deps.pool) };
 }
 
-module.exports = { crearBotVivo, crearRed, pedidoConClaves, cargarEstado, guardarEstado, foto, interruptor, SECRETAS };
+/**
+ * Refresco del token de Instagram desde el servidor (en Apps Script lo hacia refrescarTokenIG; el token vive 60 dias).
+ * guardarSecreto(nombre, valor): agrega una version nueva en Secret Manager. La clave nunca se devuelve ni se registra.
+ */
+async function refrescarTokenIg(deps) {
+  const r = (deps.pedido || pedidoConClaves)('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN',
+    { method: 'get' }, deps.claves);
+  let j = {};
+  try { j = JSON.parse(r.t || '{}'); } catch (e) { /* sin JSON */ }
+  if (r.c !== 200 || !j.access_token) {
+    return { ok: false, error: 'Instagram no renovo el token (HTTP ' + r.c + (j.error && j.error.message ? ': ' + String(j.error.message).slice(0, 120) : '') + ')' };
+  }
+  await deps.guardarSecreto('bot-ig-token', j.access_token);
+  deps.claves.IG_TOKEN = j.access_token;   // el mismo objeto que usa la red: los proximos envios ya van con el nuevo
+  return { ok: true, venceEnDias: j.expires_in ? Math.round(j.expires_in / 86400) : null };
+}
+
+module.exports = { refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, blob, cargarEstado, guardarEstado, foto, interruptor, SECRETAS };

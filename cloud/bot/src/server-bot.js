@@ -43,16 +43,24 @@ async function prepararVivo(pool) {
   if (!w.rows[0]) throw new Error('MODO_BOT=vivo sin el estado del bot importado (falta WIX_RESERVAS_URL en bot_estado).');
   const correo = crearCorreo({ pool, gmail: process.env.BOT_GMAIL ? JSON.parse(process.env.BOT_GMAIL) : null });
   const appsScript = process.env.BOT_APPS_SCRIPT_URL;   // la URL /exec del bot de siempre, con ?token=
-  const vivo = crearBotVivo({ pool, espejo, leadsId: LEADS_ID, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin,
-    claves: { WHATSAPP_TOKEN: process.env.BOT_WHATSAPP_TOKEN, IG_TOKEN: process.env.BOT_IG_TOKEN, MESSENGER_TOKEN: process.env.BOT_MESSENGER_TOKEN,
-      ANTHROPIC_API_KEY: process.env.BOT_ANTHROPIC_KEY, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO },
+  const claves = { WHATSAPP_TOKEN: process.env.BOT_WHATSAPP_TOKEN, IG_TOKEN: process.env.BOT_IG_TOKEN, MESSENGER_TOKEN: process.env.BOT_MESSENGER_TOKEN,
+    ANTHROPIC_API_KEY: process.env.BOT_ANTHROPIC_KEY, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO };
+  // Version nueva de un secreto (solo bot-ig-token: la cuenta del bot tiene secretVersionAdder solo ahi).
+  const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+  const guardarSecreto = async (nombre, valor) => {
+    const c = await auth.getClient();
+    await c.request({ url: 'https://secretmanager.googleapis.com/v1/projects/rosanta-apps-script/secrets/' + nombre + ':addVersion', method: 'POST',
+      data: { payload: { data: Buffer.from(valor, 'utf8').toString('base64') } } });
+  };
+  const vivo = crearBotVivo({ pool, espejo, leadsId: LEADS_ID, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin, claves,
     correo: (m) => correo.enviar(m),
     reenviar: async (cuerpo) => {
       const r = await fetch(appsScript, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo), redirect: 'follow' });
       if (r.status >= 400) throw new Error('El bot de Apps Script contesto ' + r.status);
     } });
   console.log('rosanta-bot-sombra: MODO EN VIVO preparado (interruptor en la base: ' + await vivo.interruptor() + ')');
-  return { vivo, correo, pool, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET };
+  const refrescarIg = () => require('./vivo').refrescarTokenIg({ claves, guardarSecreto });
+  return { vivo, correo, pool, refrescarIg, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET };
 }
 
 async function main() {

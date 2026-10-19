@@ -192,6 +192,7 @@ function crearMotor(op) {
         texto = p.message.text || '';
         if (p.message.quick_replies) botones = p.message.quick_replies.map((q) => q.title);
       }
+      if (o.red && /\/media$/.test(u)) return o.red(u, opt);   // subir la foto a WhatsApp: todavia no es un envio
       if (o.red) {   // en vivo: solo cuenta como enviado si Meta lo acepto (la red de seguridad mira esto)
         intentosEnvio.n++;
         const r = o.red(u, opt);

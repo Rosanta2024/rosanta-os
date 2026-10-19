@@ -4,7 +4,7 @@
  */
 const test = require('node:test');
 const assert = require('node:assert');
-const { crearBotVivo, crearRed, pedidoConClaves, guardarEstado, cargarEstado, foto, SECRETAS } = require('../src/vivo');
+const { refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, guardarEstado, cargarEstado, foto, SECRETAS } = require('../src/vivo');
 const { crearEspejo, leerCelda, escribirCelda, letra } = require('../src/hojas-vivo');
 const { crearCorreo, armarMime } = require('../src/correo-vivo');
 const { crearAppBot } = require('../src/app-bot');
@@ -207,4 +207,65 @@ test('Vivo: el webhook verifica como el bot, ignora WhatsApp sin token y el inte
       body: JSON.stringify({ props: { OWNER_WA: '502', WHATSAPP_TOKEN: 'no', IG_TOKEN: 'no', ANTHROPIC_API_KEY: 'no', hum_502: '{"estado":"esperando"}' } }) })).json();
     assert.deepStrictEqual(imp, { ok: true, guardadas: 2, clavesOmitidas: 3 });
   } finally { srv.close(); }
+});
+
+test('Vivo: una foto de la consola por WhatsApp se baja de Drive, se sube a Meta como archivo y se manda por su id', async () => {
+  const pool = poolDeMentira(Object.assign({ INTERRUPTOR_BOT: 'vivo' }, PROPS_BOT));
+  const espejo = espejoDeMentira();
+  espejo.libro.Salientes.push([new Date(), 'whatsapp', '50255501111', 'Así se ve la mesa', 'imagen:FOTO123', '']);
+  const llamadas = [];
+  const pedido = (url, op) => {
+    llamadas.push({ url, op });
+    if (url === 'https://drive.google.com/uc?export=download&id=FOTO123') return { c: 200, b64: Buffer.from('JPEGDATA').toString('base64'), mime: 'image/jpeg' };
+    if (/\/media$/.test(url)) return { c: 200, t: '{"id":"media-1"}' };
+    if (/\/messages$/.test(url)) return { c: 200, t: '{"messages":[{"id":"x"}]}' };
+    return { c: 404, t: '{}' };
+  };
+  const bot = crearBotVivo({ pool, espejo, leadsId: LEADS, kb: async () => '', claves: {}, wixOrigen: 'https://www.rosanta.rest', pedido,
+    correo: async () => {}, reenviar: async () => {} });
+  const r = await bot.minuto();
+  assert.strictEqual(r.error, null);
+  const subida = llamadas.find((l) => /\/media$/.test(l.url));
+  assert.ok(subida, 'subió la foto a Meta');
+  assert.strictEqual(subida.op.payload.file._b64, Buffer.from('JPEGDATA').toString('base64'));
+  assert.strictEqual(subida.op.payload.file.getContentType(), 'image/jpeg');
+  const envio = llamadas.find((l) => /\/messages$/.test(l.url));
+  assert.deepStrictEqual(JSON.parse(envio.op.payload).image, { id: 'media-1', caption: 'Así se ve la mesa' });
+  assert.ok(espejo.aplicadas.some((op) => op.hoja === 'Salientes' && op.op === 'fijar'), 'marca Enviado en Salientes');
+  assert.strictEqual(r.envios, 1);
+});
+
+test('Vivo: el formulario multipart lleva los bytes de la foto (proceso aparte, sin salir a internet)', async () => {
+  const { spawn } = require('child_process');
+  const srv = spawn(process.execPath, ['-e', 'require("http").createServer((q,s)=>{const b=[];q.on("data",c=>b.push(c));q.on("end",()=>{const t=Buffer.concat(b).toString("latin1");process.stderr.write(JSON.stringify({ct:q.headers["content-type"],auth:q.headers.authorization,tieneFoto:t.includes("JPEGDATA"),tieneCampo:t.includes("messaging_product")})+"\\n");s.setHeader("content-type","application/json");s.end("{\\"id\\":\\"m\\"}")})}).listen(0,function(){process.stdout.write(String(this.address().port)+"\\n")})']);
+  try {
+    const port = await new Promise((r) => srv.stdout.once('data', (d) => r(String(d).trim())));
+    let visto = '';
+    srv.stderr.on('data', (d) => { visto += d; });
+    const { blob } = require('../src/vivo');
+    const r = pedidoConClaves('http://127.0.0.1:' + port + '/media', { method: 'post', headers: { Authorization: 'Bearer $WHATSAPP_TOKEN' },
+      payload: { messaging_product: 'whatsapp', type: 'image/jpeg', file: blob(Buffer.from('JPEGDATA').toString('base64'), 'image/jpeg', 'foto.jpg') } }, { WHATSAPP_TOKEN: 'wa-1' });
+    assert.strictEqual(r.c, 200);
+    await new Promise((res) => setTimeout(res, 100));
+    const v = JSON.parse(visto.trim().split('\n')[0]);
+    assert.match(v.ct, /multipart\/form-data/);
+    assert.strictEqual(v.auth, 'Bearer wa-1');
+    assert.ok(v.tieneFoto && v.tieneCampo);
+  } finally { srv.kill(); }
+});
+
+test('Vivo: el token de Instagram se renueva, se guarda como versión nueva del secreto y nunca se devuelve', async () => {
+  const claves = { IG_TOKEN: 'viejo' };
+  const guardados = [];
+  let urlVista = '';
+  const r = await refrescarTokenIg({ claves, guardarSecreto: async (n, v) => { guardados.push([n, v]); },
+    pedido: (u) => { urlVista = u; return { c: 200, t: '{"access_token":"nuevo-123","token_type":"bearer","expires_in":5184000}' }; } });
+  assert.deepStrictEqual(r, { ok: true, venceEnDias: 60 });
+  assert.match(urlVista, /access_token=\$IG_TOKEN$/, 'el token va como marcador');
+  assert.deepStrictEqual(guardados, [['bot-ig-token', 'nuevo-123']]);
+  assert.strictEqual(claves.IG_TOKEN, 'nuevo-123');
+  assert.ok(!JSON.stringify(r).includes('nuevo-123'));
+  const mal = await refrescarTokenIg({ claves, guardarSecreto: async () => { throw new Error('no debia guardar'); }, pedido: () => ({ c: 400, t: '{"error":{"message":"Session has expired"}}' }) });
+  assert.strictEqual(mal.ok, false);
+  assert.match(mal.error, /HTTP 400: Session has expired/);
 });
