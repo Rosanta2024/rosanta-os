@@ -7,8 +7,8 @@
  *   - Botones: Reservar mesa · Ver menú · Evento privado · Hablar con alguien, en el
  *     primer mensaje y cuando el bot no sabe qué sigue. El texto libre sigue igual.
  *   - Juanma es la única persona que atiende el chat. Horario 9:00–21:00 todos los
- *     días. Promesa (19-oct-2026, Juanma: el bot NUNCA dice su nombre y es UNA sola frase): "Alguien del
- *     restaurante se pondrá en contacto con usted en menos de 24 horas."
+ *     días. Promesa (19-oct-2026, Juanma: el bot NUNCA dice su nombre, es UNA sola frase y NO promete plazo):
+ *     "Alguien del restaurante se pondrá en contacto con usted lo antes posible."
  *
  * Límites de Meta (documentación oficial, 15-oct-2026):
  *   WhatsApp: 3 reply buttons (título 20) o lista de 10 filas (título 24, botón 20);
@@ -26,7 +26,7 @@
 var BT_TZ = 'America/Guatemala';
 var BT_HORA_ABRE = 9;
 var BT_HORA_CIERRA = 21;
-// Desde el 19-oct-2026 la promesa es UNA sola (24 horas) en todos los tramos; los tramos quedan por si vuelve a cambiar.
+// Desde el 19-oct-2026 al cliente se le dice UNA sola frase sin plazo; los tramos solo arman el plazo de ayuda del aviso a Juanma.
 var BT_HORA_PROMESA_HASTA = 20;
 var BT_MENU_URL = {
   es: 'https://www.rosanta.rest/men%C3%BA-espa%C3%B1ol',
@@ -50,9 +50,9 @@ var BT_TXT = {
     },
     respHumano: function (promesa) { return 'Listo. ' + promesa + ' Si quieres, adelántame qué necesitas.'; },
     // Frase de paso a persona definida por Juanma (19-oct-2026): UNA sola para todos los casos, con "usted".
-    promesaYa: 'Alguien del restaurante se pondrá en contacto con usted en menos de 24 horas.',
-    promesaManana: 'Alguien del restaurante se pondrá en contacto con usted en menos de 24 horas.',
-    promesaHoy: 'Alguien del restaurante se pondrá en contacto con usted en menos de 24 horas.',
+    promesaYa: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
+    promesaManana: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
+    promesaHoy: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
     pruebaOk: 'Modo prueba de botones activado para este chat.'
   },
   en: {
@@ -69,9 +69,9 @@ var BT_TXT = {
       return "Here's the seasonal menu 🌿\n" + BT_MENU_URL.en + '\n\nWant me to save you a table?';
     },
     respHumano: function (promesa) { return 'Got it. ' + promesa + ' Feel free to tell me what you need in the meantime.'; },
-    promesaYa: 'Someone from the restaurant will get in touch with you within 24 hours.',
-    promesaManana: 'Someone from the restaurant will get in touch with you within 24 hours.',
-    promesaHoy: 'Someone from the restaurant will get in touch with you within 24 hours.',
+    promesaYa: 'Someone from the restaurant will get in touch with you as soon as possible.',
+    promesaManana: 'Someone from the restaurant will get in touch with you as soon as possible.',
+    promesaHoy: 'Someone from the restaurant will get in touch with you as soon as possible.',
     pruebaOk: 'Button test mode is on for this chat.'
   }
 };
@@ -125,10 +125,14 @@ function btPromesa_(idioma, ahora) {
   return tramo === 'ya' ? t.promesaYa : (tramo === 'manana' ? t.promesaManana : t.promesaHoy);
 }
 
-/** Para el aviso a Juanma: hasta cuándo prometimos contestar (24 horas desde ahora, 19-oct-2026). */
+/** Para el aviso a Juanma (solo de ayuda para él: al cliente nunca se le promete un plazo, 19-oct-2026). */
 function btLimite_(ahora) {
   var d = ahora || new Date();
-  return 'en menos de 24 horas (antes del ' + Utilities.formatDate(new Date(d.getTime() + 24 * 3600000), BT_TZ, 'dd/MM HH:mm') + ')';
+  var tramo = btTramo_(d);
+  if (tramo === 'ya') {
+    return 'antes de las ' + Utilities.formatDate(new Date(d.getTime() + 3600000), BT_TZ, 'HH:mm');
+  }
+  return (tramo === 'manana' ? 'mañana' : 'hoy') + ' antes de las 10:00';
 }
 
 /** Un texto del sistema que pasa a persona: se le pega la promesa al final. */
