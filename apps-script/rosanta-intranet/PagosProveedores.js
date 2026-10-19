@@ -79,6 +79,15 @@ var PAG_EQUIPO_ = [{ nombre: 'José', forma: 'Pagó Maco', devuelto: 'Devuelto a
 // pestañas de 2026 de COMPRAS_2026 (29-sep-2026); arriba se suman los que ya se anotaron aca.
 var PAG_PROV_MERCADO_ = ['Mercado', 'Carnicería Nueva Concepción', 'Mariscos', 'La Torre', 'La Bodegona',
   'Avícola Villa Lobos', 'Julio Hartman', 'Gas evento', 'Dollar City', 'Plásticos', 'Cemaco'];
+// Los del mercado (Juanma, 19-oct-2026): se pagan en efectivo en el momento y la factura llega
+// despues. Sus facturas no van a Por pagar (Pagos no tiene efectivo): se cierran en Compras, con
+// la compra que se anoto o con "Ya se pagó en efectivo". El banco no las casa. Las de antes de
+// PAG_MERCADO_CERRADO_ (el arranque del cuadre de Compras) cuentan como pagadas en efectivo.
+// Por NIT (regla 2): frutas y verduras Doña Mina y Don Rolando, pescaderia El Tiburoncito,
+// carniceria Santa Rosa.
+var PAG_NIT_MERCADO_ = { '52496325': 1, '47687916': 1, '7616325': 1 };
+var PAG_MERCADO_CERRADO_ = '2026-10-12';
+var PAG_MERCADO_ANTES_ = 'Pagada en efectivo (mercado, antes del 12/10)';
 
 /** Quien entra y que areas ve. Modulo 'pagos' (el dueño entra siempre). */
 function pagQuien_(auth) {
@@ -221,7 +230,7 @@ function pagFacturas_(ss, anteriores, ajenas, correo) {
       proveedor: String(f[iEst] || '').trim() || String(f[iNom] || '').trim(),
       razon: String(f[iNom] || '').trim(), fecha: pagIso_(d), dia: pagNumDia_(d), total: total, categoria: cat,
       area: PAG_AREA_CAT_[cat] || porNit[nit] || 'ADMIN',
-      grupo: _pagGrupo_(cat, porNit[nit])
+      grupo: _pagGrupo_(cat, porNit[nit]), mercado: !!PAG_NIT_MERCADO_[nit]
     });
   });
   // Las que SAT aviso por correo y el FEL del maestro todavia no trae (FelCorreo.js). La
@@ -239,7 +248,8 @@ function pagFacturas_(ss, anteriores, ajenas, correo) {
       out.push({
         llave: llave, nit: x.nit, dte: x.numero, serie: x.serie, fila: null, por_correo: true,
         proveedor: x.establecimiento || x.nombre, razon: x.nombre, fecha: pagIso_(x.fecha), dia: pagNumDia_(x.fecha),
-        total: x.total, categoria: cat, area: PAG_AREA_CAT_[cat] || porNit[x.nit] || 'ADMIN', grupo: _pagGrupo_(cat, porNit[x.nit])
+        total: x.total, categoria: cat, area: PAG_AREA_CAT_[cat] || porNit[x.nit] || 'ADMIN', grupo: _pagGrupo_(cat, porNit[x.nit]),
+        mercado: !!PAG_NIT_MERCADO_[x.nit]
       });
     });
   }
@@ -726,6 +736,14 @@ function pagEstado_() {
     f.pagado = f.total;
     f.pagos.push({ id: '', fecha: c.fecha, q: f.total, estatus: 'Pagado antes (COMPRAS_2026)', por: c.hoja, detalle: c.estatus });
   });
+  // Las del mercado de antes del cuadre de Compras ya se pagaron en efectivo (Juanma, 19-oct-2026):
+  // no se escribe nada, se dan por pagadas aca (como las de COMPRAS_2026)
+  facturas.forEach(function (f) {
+    var resta = _finR_(f.total - f.pagado - f.favor_usado);
+    if (!f.mercado || f.fecha >= PAG_MERCADO_CERRADO_ || f.marca_banco != null || resta <= 0.01) return;
+    f.pagado += resta;
+    f.pagos.push({ id: '', fecha: f.fecha, q: resta, estatus: PAG_MERCADO_ANTES_, por: 'Mercado', detalle: 'Se pagó en efectivo; el cuadre de retiros del 14-oct cerró lo anterior al 12/10.' });
+  });
   // 1. Los pagos marcados "Banco": cada marca se confirma con un pago del banco de SU monto, y
   //    las marcas de un mismo proveedor que no se confirmaron solas, con un pago que las sume.
   var usadoMarca = {}, conMarca = facturas.filter(function (f) { return f.marcas; });
@@ -756,7 +774,8 @@ function pagEstado_() {
   });
   banco = banco.filter(function (p) { return !usadoMarca[p.llave]; });
   // 2. El banco confirma lo que falta pagar (lo que ya tiene marcas, por su saldo)
-  var abiertas = facturas.filter(function (f) { return f.total - f.pagado - f.favor_usado > 0.01; }).map(function (f) {
+  //    (las del mercado no: se pagan en efectivo y un cargo del banco con su monto no es su pago)
+  var abiertas = facturas.filter(function (f) { return !f.mercado && f.total - f.pagado - f.favor_usado > 0.01; }).map(function (f) {
     return { llave: f.llave, nit: f.nit, dte: f.dte, dia: f.dia, saldo: _finR_(f.total - f.pagado - f.favor_usado),
              palabras: _pagPalabras_(f.proveedor + ' ' + f.razon), marcaBanco: null };
   });
@@ -778,7 +797,7 @@ function pagEstado_() {
     delete f.dia; delete f.marca_banco; delete f.marcas;
   });
   var usados = {}; Object.keys(cb.casados).forEach(function (k) { usados[cb.casados[k]] = 1; });
-  var abiertasYa = facturas.filter(function (f) { return f.saldo > 0.01 && !f.por_correo; }).map(function (f) {
+  var abiertasYa = facturas.filter(function (f) { return f.saldo > 0.01 && !f.por_correo && !f.mercado; }).map(function (f) {
     return { llave: f.llave, nit: f.nit, dte: f.dte, proveedor: f.proveedor, fecha: f.fecha, dia: pagNumDia_(pagDia_(f.fecha)),
              saldo: f.saldo, area: f.area, categoria: f.categoria,
              // con los alias del banco (14-oct-2026: "TEF A : 902410067" es Doorways); solo para Posibles pagos

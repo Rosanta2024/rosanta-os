@@ -49,7 +49,7 @@ ctx.Utilities.newBlob = () => ({}); ctx.Utilities.base64Decode = () => [];
 ['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // el espejo llega hasta el 11-oct: el cuadre se prueba desde septiembre
-vm.runInContext("PAG_DESDE_ = '2026-08-01'; CPE_ARRANQUE_ = '2026-09-01'; fecLeerSiToca_ = function () { return null; }; fecFacturas_ = function () { return []; };", ctx);
+vm.runInContext("PAG_DESDE_ = '2026-08-01'; CPE_ARRANQUE_ = '2026-09-01'; PAG_MERCADO_CERRADO_ = '2026-09-01'; fecLeerSiToca_ = function () { return null; }; fecFacturas_ = function () { return []; };", ctx);
 let ok = 0, mal = 0;
 const t = (n, c, info) => { if (c) ok++; else mal++; console.log((c ? 'OK   ' : 'FALLA') + ' ' + n + (info !== undefined ? '  → ' + info : '')); };
 const tira = (fn) => { try { fn(); return ''; } catch (e) { return e.message; } };
@@ -140,7 +140,7 @@ t('Con factura: la paga con Retiro de cajero', ctx.pagEstado_().facturas.filter(
 const pend = D.registradas.filter(x => x.proveedor === 'Doña Mina')[0];
 t('La pantalla la marca pendiente de emitir', pend && pend.pendiente && pend.detalle === '10 lb tomate');
 // llega la factura: se asigna
-let fy = ctx.pagEstado_().facturas.filter(x => x.saldo > 0.01 && x.area === 'COCINA')[0];
+let fy = ctx.pagEstado_().facturas.filter(x => x.saldo >= 300 && x.area === 'COCINA')[0];   // la compra es de Q300
 D = ctx.asignarFacturaACompra('tokchef', pend.id, fy.llave);
 const fy2 = ctx.pagEstado_().facturas.filter(x => x.llave === fy.llave)[0];
 t('Asignar la factura: queda pagada con la compra (misma fecha y monto)', fy2.pagos.some(p => p.estatus === 'Retiro de cajero' && p.fecha === '2026-09-10' && Math.abs(p.q - 300) < 0.01), fy.dte);
@@ -172,6 +172,45 @@ t('Asignar dos veces la misma compra: error', /No encontré esa compra/.test(tir
 t('Anular algo ya anulado: avisa', /ya estaba anulado/.test(tira(() => ctx.anularMovimientoPago('tok', pend2.id))));
 t('Anular algo que no existe: avisa', /No encontré ese movimiento/.test(tira(() => ctx.anularMovimientoPago('tok', 'no-existe'))));
 t('El recibo solo acepta enlaces de Google Drive', ctx._cpeUrlRecibo_('javascript:alert(1)') === '' && ctx._cpeUrlRecibo_('https://drive.google.com/file/d/x') === 'https://drive.google.com/file/d/x');
+
+// 7d. Las facturas del mercado (19-oct-2026): fuera de Pagos, se cierran en Compras
+ctx.LockService.getScriptLock = () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} });
+ctx._pagOlvidar_(true);
+E = ctx.pagEstado_();
+const MNIT = ['52496325', '47687916', '7616325'];
+const deMerc = E.facturas.filter(x => MNIT.indexOf(x.nit) !== -1);
+t('Las facturas de los 3 NIT del mercado vienen marcadas', deMerc.length > 0 && deMerc.every(x => x.mercado) && E.facturas.filter(x => x.mercado).every(x => MNIT.indexOf(x.nit) !== -1), deMerc.length + ' facturas');
+const antes = deMerc.filter(x => x.fecha < '2026-09-01'), abiertasM = deMerc.filter(x => x.saldo > 0.01);
+t('Las de antes del corte quedan pagadas solas', antes.length > 0 && antes.every(x => x.saldo <= 0.01), antes.length + ' facturas');
+t('…con "Pagada en efectivo (mercado…)" cuando no tenían pago', antes.some(x => x.pagos.some(p => /^Pagada en efectivo \(mercado/.test(p.estatus))));
+t('Ninguna del mercado la casa el banco', deMerc.every(x => !x.pagos.some(p => /confirmad/.test(p.estatus) && !p.id)));
+t('No salen en Posibles pagos', !(E.posibles || []).some(p => (p.facturas || []).some(k => MNIT.indexOf(String(k.llave || k).split('|')[0]) !== -1)));
+D = ctx.getComprasEfectivo('tok');
+t('Compras lista las del mercado abiertas', abiertasM.length > 0 && D.mercado.length === abiertasM.length, D.mercado.length + ' por cerrar');
+const fm = D.mercado[D.mercado.length - 1];
+t('Cerrar una factura que no es del mercado: error', /no es del mercado/.test(tira(() => ctx.cerrarFacturaMercado('tok', fx.llave, '2026-10-01'))));
+t('Cerrar sin fecha: error', /Fecha invalida/.test(tira(() => ctx.cerrarFacturaMercado('tok', fm.llave, ''))));
+t('Cerrar con fecha futura: error', /mañana/.test(tira(() => ctx.cerrarFacturaMercado('tok', fm.llave, '2099-01-01'))));
+const regAntes = D.resumen.registrado;
+D = ctx.cerrarFacturaMercado('tok', fm.llave, '2026-10-05');
+const fm2 = ctx.pagEstado_().facturas.filter(x => x.llave === fm.llave)[0];
+t('"Ya se pagó en efectivo": pagada con Retiro de cajero en esa fecha', fm2.saldo <= 0.01 && fm2.pagos.some(p => p.estatus === 'Retiro de cajero' && p.fecha === '2026-10-05'), fm.proveedor + ' ' + fm.dte + ' ' + fm.saldo);
+t('…sale de la lista de Compras', !D.mercado.some(x => x.llave === fm.llave));
+t('…y cuenta como efectivo registrado', Math.abs(D.resumen.registrado - regAntes - fm.saldo) < 0.01);
+t('Cerrarla dos veces: error', /ya está pagada/.test(tira(() => ctx.cerrarFacturaMercado('tok', fm.llave, '2026-10-05'))));
+const fmb = D.mercado.filter(x => x.area !== 'COCINA')[0];
+if (fmb) t('Jeffry no cierra una del mercado de otra área', /es de/.test(tira(() => ctx.cerrarFacturaMercado('tokchef', fmb.llave, '2026-10-05'))));
+// la compra anotada como factura pendiente se asigna a la del mercado (mismo monto)
+const fm3 = D.mercado.filter(x => x.area === 'COCINA')[0];
+if (fm3) {
+  D = ctx.registrarRetiroYCompras('tokchef', { fecha: '2026-10-03', retiro: null, compras: [{ proveedor: fm3.proveedor, detalle: 'compra del mercado', monto: fm3.saldo }] });
+  const pm = D.registradas.filter(x => x.pendiente && x.detalle === 'compra del mercado')[0];
+  D = ctx.asignarFacturaACompra('tokchef', pm.id, fm3.llave);
+  t('La compra pendiente se asigna a la factura del mercado y la cierra', !D.mercado.some(x => x.llave === fm3.llave) && !D.registradas.some(x => x.id === pm.id));
+}
+// Pagos y Hoy no las cuentan como por pagar
+const P = ctx._pagPantalla_(ctx.pagQuien_('tok'), ctx.pagEstado_(), null);
+t('Pagos las sigue mandando (la pantalla las separa con f.mercado)', P.facturas.some(x => x.mercado));
 
 // 8. Hoy y el vigia: lo de antes del arranque queda cerrado
 vm.runInContext("CPE_ARRANQUE_ = '2026-10-01';", ctx);

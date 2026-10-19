@@ -58,6 +58,7 @@ window.PF_COMPRAS = function (HOST, AUTH) {
       '<div><b>' + q(R.registrado) + '</b><span>compras en efectivo registradas</span></div>' +
       '<div><b class="' + (R.por_justificar > 0.01 ? 'ce-mal' : 'ce-ok') + '">' + q(R.por_justificar) + '</b><span>efectivo sin compras que lo cubran</span></div></div>' +
       '<div class="pg-tabs"><span class="pg-sp"></span><button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
+      tablaMercado() +
       '<div id="ce-form">' + formulario() + '</div>' +
       tablaRetiros() + tablaRegistradas() +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Banco cargado hasta el ' + esc(ddmm(D.banco_ult)) + '. ' +
@@ -137,6 +138,26 @@ window.PF_COMPRAS = function (HOST, AUTH) {
     var ret = RET.modo === 'nuevo' ? Number(RET.monto) || 0 : 0;
     el.innerHTML = (RET.modo === 'nuevo' ? 'Retiro <b>' + q(ret) + '</b> · ' : '') + 'Compras <b>' + q(tot) + '</b> (' + L.length + ')' +
       (RET.modo === 'nuevo' && ret > 0 ? ' · ' + (ret - tot >= -0.005 ? 'queda <b>' + q(ret - tot) + '</b> en efectivo' : '<b class="ce-mal">las compras pasan el retiro por ' + q(tot - ret) + '</b>') : '');
+  }
+
+  /* Las facturas del mercado (carniceria, fruteria, pescaderia; 19-oct-2026): se pagaron en efectivo
+     en el momento y la factura llego despues. Se cierran aca: con la compra anotada como factura
+     pendiente (mismo monto) o con "Ya se pagó en efectivo" (solo pide la fecha). */
+  function tablaMercado() {
+    var L = D.mercado || [];
+    if (!L.length) return '';
+    var pend = D.registradas.filter(function (m) { return m.pendiente && (D.rol === 'dueno' || m.por === D.nombre || D.areas.indexOf(m.area) !== -1); });
+    var filas = L.map(function (f) {
+      var igual = pend.filter(function (m) { return Math.abs(m.q - f.saldo) < 0.01; });
+      return '<tr data-merc="' + esc(f.llave) + '"><td>' + esc(ddmm(f.fecha)) + '<div class="pg-nota">' + esc(f.dte) + (f.por_correo ? ' · por correo' : '') + '</div></td>' +
+        '<td>' + esc(f.proveedor) + '</td><td class="n">' + q(f.saldo) + '</td><td>' +
+        igual.map(function (m) { return '<button type="button" class="pg-b" data-mercasig="' + esc(m.id) + '">Es la compra del ' + esc(ddmm(m.fecha)) + '</button> '; }).join('') +
+        '<label class="pg-nota">pagada el <input type="date" data-v="mercfecha" value="' + esc(f.fecha > D.hoy ? D.hoy : f.fecha) + '" max="' + esc(D.hoy) + '"></label> ' +
+        '<button type="button" class="pg-b pri" data-mercok="' + esc(f.llave) + '">Ya se pagó en efectivo</button><div class="pg-err" data-err></div></td></tr>';
+    }).join('');
+    return '<section class="pg-prov"><header><h3>Facturas del mercado por cerrar</h3>' +
+      '<span class="pg-nota">Se pagaron en efectivo y la factura llegó después. Si anotaste la compra como <b>factura pendiente</b>, tocá <b>Es la compra del…</b> (o <b>asignar factura</b> abajo); si no, <b>Ya se pagó en efectivo</b>.</span></header>' +
+      '<div class="ce-scroll"><table class="pg-t"><tr><th>Factura</th><th>Proveedor</th><th class="n">Monto</th><th></th></tr>' + filas + '</table></div></section>';
   }
 
   function tablaRetiros() {
@@ -274,6 +295,19 @@ window.PF_COMPRAS = function (HOST, AUTH) {
       google.script.run.withSuccessHandler(function (r) { OCUPADO = false; ASIGNAR = null; D = r; pintar(); })
         .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; b.textContent = 'Asignar'; pa.querySelector('[data-err]').textContent = PF_ERROR(e); })
         .asignarFacturaACompra(AUTH, b.getAttribute('data-asigok'), sel.value);
+      return;
+    }
+    if (b.hasAttribute('data-mercok') || b.hasAttribute('data-mercasig')) {
+      var tr = b.closest('[data-merc]'), llave = tr.getAttribute('data-merc'), er = tr.querySelector('[data-err]');
+      var fm = (D.mercado || []).filter(function (x) { return x.llave === llave; })[0] || {}, cierra = b.hasAttribute('data-mercok');
+      var fe = tr.querySelector('[data-v="mercfecha"]').value;
+      if (cierra && !fe) { er.textContent = 'Elegí la fecha en que se pagó.'; return; }
+      if (!confirm(cierra ? '¿Cerrar la factura ' + fm.dte + ' de ' + fm.proveedor + ' por ' + q(fm.saldo) + ' como pagada en efectivo el ' + ddmm(fe) + '?'
+                          : '¿La factura ' + fm.dte + ' (' + q(fm.saldo) + ') es esa compra? La compra pasa a ser el pago de la factura.')) return;
+      leerForm(); OCUPADO = true; b.disabled = true; var txt = b.textContent; b.textContent = 'Guardando…';
+      var run = google.script.run.withSuccessHandler(function (r) { OCUPADO = false; D = r; pintar(); })
+        .withFailureHandler(function (e) { OCUPADO = false; b.disabled = false; b.textContent = txt; er.textContent = PF_ERROR(e); });
+      if (cierra) run.cerrarFacturaMercado(AUTH, llave, fe); else run.asignarFacturaACompra(AUTH, b.getAttribute('data-mercasig'), llave);
       return;
     }
     if (b.hasAttribute('data-anular') || b.hasAttribute('data-anular-sol')) {

@@ -151,7 +151,9 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     var ir = !ADMIN && window.PF_TOMAR_IR && window.PF_TOMAR_IR('pagos');
     if (ir) { TAB = ir; ABIERTA = null; }
     // Por pagar: lo que falta, y lo marcado "Banco" que el banco todavia no confirma (13-oct-2026)
-    var abiertas = D.facturas.filter(function (f) { return f.saldo > 0.01 || f.estado === 'Banco por confirmar'; });
+    // las del mercado (carniceria, fruteria, pescaderia) se pagan en efectivo: se cierran en Compras (19-oct-2026)
+    var abiertas = D.facturas.filter(function (f) { return !f.mercado && (f.saldo > 0.01 || f.estado === 'Banco por confirmar'); });
+    var merc = D.facturas.filter(function (f) { return f.mercado && f.saldo > 0.01; });
     var pendQ = abiertas.reduce(function (a, f) { return a + f.saldo; }, 0);
     var vence = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoy(); }).length;
     if (ADMIN) return pintarAdmin();
@@ -170,7 +172,10 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
         .concat(D.posibles && D.posibles.length ? ['posibles:Posibles pagos (' + D.posibles.length + ')'] : []).map(function (t) {
         var k = t.split(':'); return '<button type="button" data-tab="' + k[0] + '" aria-pressed="' + (TAB === k[0]) + '">' + k[1] + '</button>';
       }).join('') + '<span class="pg-sp"></span>' + (D.rol === 'dueno' ? '<button type="button" class="pg-b" data-acc="anterior">+ Factura anterior</button> ' : '') + '<button type="button" class="pg-b pri" data-acc="mercado">+ Compra de mercado</button> <button type="button" class="pg-b" data-acc="recargar">Actualizar</button></div>' +
-      chipFiltro() + '<div id="pg-merc"></div><div id="pg-cuerpo">' + cuerpo(abiertas) + '</div>' +
+      chipFiltro() + '<div id="pg-merc"></div>' +
+      (TAB === 'pagar' && merc.length ? '<p class="pg-nota" style="margin:0 0 0.6rem">' + merc.length + (merc.length === 1 ? ' factura' : ' facturas') + ' del mercado (' + q(merc.reduce(function (a, f) { return a + f.saldo; }, 0)) +
+        ') no están acá: se pagan en efectivo y se cierran en <b>Compras</b>. <button type="button" class="pg-b" data-view="compras">Ir a Compras</button></p>' : '') +
+      '<div id="pg-cuerpo">' + cuerpo(abiertas) + '</div>' +
       (D.aviso_correo ? '<p class="pg-err">' + esc(D.aviso_correo) + '</p>' : '') +
       '<p class="pg-nota" style="margin-top:1rem">Actualizado ' + esc(D.gen) + '. Las facturas <b>por correo</b> son las que SAT avisó y todavía no entran en la carga del lunes.</p></div>';
     HOST.innerHTML = h;

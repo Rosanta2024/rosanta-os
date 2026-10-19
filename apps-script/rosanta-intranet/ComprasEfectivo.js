@@ -261,6 +261,10 @@ function getComprasEfectivo(auth) {
       return { id: s.id, fecha: s.fecha, lugar: s.lugar, q: s.q, area: s.area, nota: s.nota, por: s.por, estado: s.estado };
     }),
     cargos_debito: C.cargos_debito, registradas: reg, facturas: abiertas,
+    // las del mercado que siguen abiertas (19-oct-2026): se pagaron en efectivo y se cierran aca
+    mercado: E.facturas.filter(function (f) { return f.mercado && f.saldo > 0.01 && ve(f.area); })
+      .sort(function (a, b) { return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.llave < b.llave ? -1 : 1; })
+      .map(function (f) { return { llave: f.llave, proveedor: f.proveedor, nit: f.nit, dte: f.dte, fecha: f.fecha, saldo: f.saldo, area: f.area, por_correo: !!f.por_correo }; }),
     // la lista de efectivo y debito, y despues lo que ya se registro en Compras que no este en ella
     proveedores: _cpeProveedores_(C.efectivo.concat(C.debito))
   };
@@ -470,6 +474,30 @@ function asignarFacturaACompra(auth, id, llave) {
       _pagRegistrarPago_(Q, [llave], CPE_EFECTIVO_, m.fecha_pagado, m.q, 0,
                          ('Era la compra del ' + m.fecha_pagado + ' con factura pendiente. ' + det).slice(0, 300), '');
     } catch (e) { _pagDesanular_(A); throw e; }
+  }, 30000);
+  return getComprasEfectivo(auth);
+}
+
+/**
+ * Una factura del mercado que ya se pago en efectivo y no tiene compra anotada (19-oct-2026, Juanma:
+ * "debemos cerrarlas porque ya estan pagas"; solo pide la fecha). Queda pagada con 'Retiro de cajero'
+ * por su saldo, asi cuenta en el cuadre de los retiros. Si la compra se anoto como factura pendiente,
+ * va por asignarFacturaACompra (si no, el efectivo cuenta dos veces).
+ */
+function cerrarFacturaMercado(auth, llave, fecha) {
+  var Q = cpeQuien_(auth);
+  llave = String(llave || '');
+  fecha = _pagFechaValida_(fecha, 'Fecha');
+  if (fecha > medFechaIso_(new Date())) throw new Error('La fecha del pago no puede ser de mañana en adelante.');
+  _pagConCandado_(function () {
+    _pagOlvidar_(true);
+    var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
+    if (!f) throw new Error('No encontré esa factura. Tocá Actualizar.');
+    if (!f.mercado) throw new Error('La factura ' + f.dte + ' no es del mercado: se paga en Pagos.');
+    if (Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + '.');
+    if (f.saldo <= 0.01) throw new Error('La factura ' + f.dte + ' ya está pagada.');
+    // la fecha puede ser anterior a la factura: en el mercado se paga primero y la factura llega despues
+    _pagRegistrarPago_(Q, [llave], CPE_EFECTIVO_, fecha, f.saldo, 0, 'Pagada en efectivo en el mercado (cerrada en Compras)', '');
   }, 30000);
   return getComprasEfectivo(auth);
 }

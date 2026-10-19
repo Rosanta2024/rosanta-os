@@ -45,7 +45,11 @@ function getHoyProfit(auth) {
   if (puedePagos) intentar('Pagos', function () {
     var misAreas = esDueno ? ['COCINA', 'BARRA', 'ADMIN'] : areas;
     var E = pagEstado_();
-    var abiertas = E.facturas.filter(function (f) { return f.saldo > 0.01 && misAreas.indexOf(f.area) !== -1; });
+    var abiertas = E.facturas.filter(function (f) { return f.saldo > 0.01 && !f.mercado && misAreas.indexOf(f.area) !== -1; });
+    // las del mercado se cierran en Compras (19-oct-2026): van con su boton, no como "por pagar"
+    var merc = E.facturas.filter(function (f) { return f.saldo > 0.01 && f.mercado && misAreas.indexOf(f.area) !== -1; });
+    if (merc.length) add({ urgente: false, texto: merc.length + (merc.length === 1 ? ' factura del mercado' : ' facturas del mercado') + ' para cerrar en Compras',
+      detalle: 'Ya se pagaron en efectivo: asignalas a su compra o tocá "Ya se pagó en efectivo".', vista: 'compras', boton: 'Cerrar' });
     var hoyToca = abiertas.filter(function (f) { return f.fecha_pagar && f.fecha_pagar <= hoyIso; });
     var suma = function (l) { return l.reduce(function (a, f) { return a + f.saldo; }, 0); };
     if (hoyToca.length) add({ urgente: true, texto: hoyToca.length + (hoyToca.length === 1 ? ' factura para pagar hoy' : ' facturas para pagar hoy') + ' (' + Q(suma(hoyToca)) + ')',

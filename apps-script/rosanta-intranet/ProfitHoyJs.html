@@ -22,7 +22,7 @@
    Compras y Caja chica, marcando la pantalla en la que se esta. */
 window.PF_DONDE = function (aqui) {
   var L = [['pagos', 'Pagos', 'facturas pagadas por transferencia o con tarjeta (crédito o débito)'],
-           ['compras', 'Compras', 'lo pagado con efectivo del cajero, con su retiro'],
+           ['compras', 'Compras', 'lo pagado con efectivo del cajero, con su retiro, y las facturas del mercado (carnicería, frutería, pescadería)'],
            ['caja', 'Caja chica', 'lo pagado con la caja del restaurante']];
   return '<p class="pg-nota pf-donde" style="background:var(--fondo);border-radius:10px;padding:0.45rem 0.7rem;margin:0.4rem 0 0.8rem">¿Dónde se anota? ' +
     L.map(function (x) { return x[0] === aqui ? '<b>' + x[1] + ' (acá): ' + x[2] + '</b>' : x[1] + ': ' + x[2]; }).join(' · ') + '. Lo que pagaste de tu bolsa va en <b>Por devolver</b>.</p>';
