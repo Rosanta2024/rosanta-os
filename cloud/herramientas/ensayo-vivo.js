@@ -167,7 +167,9 @@ async function esperarModo(modo, maxMs) {
   // la intranet vuelve a mandar: anula en la hoja un pago que habia guardado el servidor
   const vals = (await S.spreadsheets.values.get({ spreadsheetId: CFG, range: 'PAGOS_PROVEEDORES', valueRenderOption: 'UNFORMATTED_VALUE' })).data.values;
   const iE = vals[0].indexOf('ESTATUS DE PAGO'), iD = vals[0].indexOf('DETALLE');
-  const rServ = vals.findIndex((f) => /ENSAYO limones/.test(String(f[iD] || '')));
+  // la mas reciente de ESTA corrida y sin anular (el ensayo puede correr varias veces sobre la misma copia)
+  let rServ = -1;
+  vals.forEach((f, i) => { if (String(f[iD] || '') === 'ENSAYO limones' && !/^ANULADO/.test(String(f[iE] || ''))) rServ = i; });
   await S.spreadsheets.values.update({ spreadsheetId: CFG, range: 'PAGOS_PROVEEDORES!' + String.fromCharCode(65 + iE) + (rServ + 1), valueInputOption: 'RAW',
     requestBody: { values: [['ANULADO: Pagado de caja (José, 2026-10-18)']] } });
   r = await tarea('refrescar-copia');

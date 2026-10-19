@@ -95,6 +95,11 @@ function crearServicioPagos(pool, opciones) {
   let matriz = null;                                         // la matriz de accesos (tabla permisos)
   let cola = Promise.resolve();                              // un guardado por vez
   const enCola = (fn) => { const p = cola.then(fn, fn); cola = p.catch(() => {}); return p; };
+  // La copia a la hoja va en SU propia fila de espera (ensayo de Caja, 18-oct): en la de los guardados,
+  // cada guardado esperaba la copia del anterior (~0.7 s de la API de Sheets). Solo lee lo ya guardado y
+  // marca copiado si no cambio despues, asi que puede correr al lado de un guardado sin pisarlo.
+  let colaCopia = Promise.resolve();
+  const enColaCopia = (fn) => { const p = colaCopia.then(fn, fn); colaCopia = p.catch(() => {}); return p; };
   const cfgId = C.LIBROS.config.id;
 
   async function cargar() {
@@ -162,7 +167,7 @@ function crearServicioPagos(pool, opciones) {
       importacion_caja.push(await enCola(() => IMP.importarFilas(pool, p, cfg[p], { llave: VIVAS[p].llave, hojaManda: manda })));
     }
     let copia_hoja = null;
-    if (modoMax === 'vivo') copia_hoja = await enCola(() => copiarPendientes()).catch((e) => ({ error: String(e.message || e) }));
+    if (modoMax === 'vivo') copia_hoja = await enColaCopia(() => copiarPendientes()).catch((e) => ({ error: String(e.message || e) }));
     await enCola(() => cargar());
     return { pestanas: resumen, importacion, importacion_caja, copia_hoja, modo: enVivo.pagos ? 'vivo' : 'sombra', en_vivo: enVivo,
       interruptor: interruptor(copia.libros, 'motor_pagos') };
@@ -268,7 +273,7 @@ function crearServicioPagos(pool, opciones) {
       try { await guardar(usuario, r.escrituras); } catch (e) { await cargar(); throw error('No se guardo: ' + String(e.message || e) + '. Proba de nuevo.', 503); }
       const ms = Date.now() - t0;
       // la copia a la hoja va despues de responder: lo guardado ya esta a salvo en la base
-      setImmediate(() => { enCola(() => copiarPendientes()).catch((e) => console.error('Copia a la hoja pendiente:', e.message)); });
+      setImmediate(() => { enColaCopia(() => copiarPendientes()).catch((e) => console.error('Copia a la hoja pendiente:', e.message)); });
       return { resultado: r.resultado, ms };
     });
   }
@@ -293,12 +298,12 @@ function crearServicioPagos(pool, opciones) {
         ON CONFLICT (pestana, llave) DO UPDATE SET celdas = EXCLUDED.celdas, origen = 'servidor', actualizado = now()
         RETURNING (xmax = 0) AS nuevo`, [id, celdas]);
       await cargar();
-      setImmediate(() => { enCola(() => copiarPendientes()).catch((e) => console.error('Copia a la hoja pendiente:', e.message)); });
+      setImmediate(() => { enColaCopia(() => copiarPendientes()).catch((e) => console.error('Copia a la hoja pendiente:', e.message)); });
       return { fecha: id, nuevo: r.rows[0].nuevo };
     });
   }
 
-  return { cargar, refrescar, llamar, guardarCierre, copiarPendientes: () => enCola(() => copiarPendientes()), copia: () => ({ libros, leida }),
+  return { cargar, refrescar, llamar, guardarCierre, copiarPendientes: () => enColaCopia(() => copiarPendientes()), copia: () => ({ libros, leida }),
     estado: () => ({ modo: enVivo.pagos ? 'vivo' : 'sombra', en_vivo: enVivo, modo_max: modoMax, interruptor: interruptor(libros, 'motor_pagos'),
       copia_leida: leida, listo: !!motor, error: error_ }) };
 }

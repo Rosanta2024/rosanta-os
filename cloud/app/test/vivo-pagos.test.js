@@ -191,3 +191,22 @@ test('modos(): Caja solo en vivo con Pagos en vivo; cierres por su cuenta', () =
   assert.deepStrictEqual(modos('vivo', L('sheets', 'base', 'base')), { pagos: false, caja: false, cierres: true });
   assert.deepStrictEqual(modos('sombra', L('base', 'base', 'base')), { pagos: false, caja: false, cierres: false }, 'si el servidor no lo permite, nada');
 });
+
+test('/tareas/cierre: pide la clave, valida la fila y pasa al servicio', async () => {
+  const { crearApp } = require('../src/app');
+  const recibido = [];
+  const pagos = { guardarCierre: async (fila) => { recibido.push(fila); return { fecha: '2026-12-31', nuevo: true }; }, estado: () => ({}) };
+  const srv = crearApp({ pool: { query: async () => ({ rows: [] }) }, claveTareas: 'k', pagos }).listen(0);
+  const b = 'http://127.0.0.1:' + srv.address().port;
+  try {
+    const sin = await fetch(b + '/tareas/cierre', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"fila":[]}' });
+    assert.strictEqual(sin.status, 403);
+    const mal = await fetch(b + '/tareas/cierre', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-tarea': 'k' }, body: '{}' });
+    assert.strictEqual(mal.status, 400);
+    const ok = await fetch(b + '/tareas/cierre', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-tarea': 'k' }, body: '{"fila":["2026-12-31",10]}' });
+    assert.strictEqual(ok.status, 200); assert.deepStrictEqual(recibido, [['2026-12-31', 10]]);
+  } finally { srv.close(); }
+  // server.js tiene que pasarle guardarCierre a la app (en el ensayo del 18-oct no se lo pasaba)
+  const fs = require('fs');
+  assert.match(fs.readFileSync(require('path').join(__dirname, '..', 'src', 'server.js'), 'utf8'), /guardarCierre: pagos\.guardarCierre/);
+});

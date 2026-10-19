@@ -118,8 +118,9 @@ function crearApp(deps) {
       const r = await deps.pagos.refrescar();
       // si la importacion encontro problemas (conflicto, fila sin ID, una que falta en la hoja), 409: el reloj avisa
       const mal = r.importacion && r.importacion.problemas.length > 0;
-      res.status(mal ? 409 : 200).json({ ok: !mal, ms: Date.now() - t0, modo: r.modo, interruptor: r.interruptor,
-        pestanas: r.pestanas, importacion: r.importacion, copia_hoja: r.copia_hoja });
+      const malCaja = (r.importacion_caja || []).some((x) => x.problemas && x.problemas.length);
+      res.status(mal || malCaja ? 409 : 200).json({ ok: !(mal || malCaja), ms: Date.now() - t0, modo: r.modo, en_vivo: r.en_vivo, interruptor: r.interruptor,
+        pestanas: r.pestanas, importacion: r.importacion, importacion_caja: r.importacion_caja, copia_hoja: r.copia_hoja });
     } catch (e) { next(e); }
   });
 

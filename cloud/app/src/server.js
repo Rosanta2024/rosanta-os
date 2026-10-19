@@ -36,7 +36,7 @@ async function main() {
   const htmlFotos = pantalla.armarFotos();
   const app = crearApp({
     pool,
-    pagos: { llamar: pagos.llamar, estado: pagos.estado, refrescar: () => pagos.refrescar(clienteSheets()) },
+    pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, refrescar: () => pagos.refrescar(clienteSheets()) },
     pantallaPagos: () => (pagos.estado().modo === 'vivo' ? htmlVivo : htmlSombra),
     pantallaCaja: () => (pagos.estado().en_vivo.caja ? htmlCajaVivo : htmlCajaSombra),
     pantallaCompras: () => (pagos.estado().en_vivo.caja ? htmlComprasVivo : htmlComprasSombra),
