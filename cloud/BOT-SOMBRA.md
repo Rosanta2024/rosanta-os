@@ -31,6 +31,17 @@ Desde el 19-oct-2026. Rama `claude/nube-bot-sombra`. Diseño, plan del paso a vi
 
 Si la copia se separa del bot, falla "Las copias del bot son exactas". Si cambian la consola o el panel de reseñas, falla la prueba de copias de `clientes2.test.js`: copiarlos, sellar y que la sombra 2 publique.
 
+## Modo en vivo — CONSTRUIDO Y APAGADO (19-oct-2026, aprobado construirlo; encenderlo espera el sí de Juanma)
+
+- **Dos llaves:** la variable `MODO_BOT=vivo` en el servicio (sin ella `/webhook` no existe, como hoy) y el interruptor en la base `bot_estado › INTERRUPTOR_BOT` (`puente` por defecto: cada mensaje se reenvía tal cual al bot de Apps Script; `vivo`: lo atiende el servidor). Se cambia con `POST /tareas/interruptor-bot {"valor":"vivo"|"puente"}` (clave de tareas). **Volver atrás = poner `puente`: segundos, sin entrar a Meta.**
+- **Código:** `src/vivo.js` (cola de a un mensaje, estado en la base, red con lista de direcciones, red de seguridad), `src/hojas-vivo.js` (Rosanta Leads en memoria y cada cambio copiado a la hoja en el mismo orden), `src/correo-vivo.js` (Gmail; si falla, `bot_correos` y reintento cada minuto). El motor es el mismo: `crearMotor({ relojReal, estado, libros, red, correo, alCambiarHoja })`.
+- **Red de seguridad:** si el bot falla, o intentó contestar y Meta no aceptó ningún envío, el mensaje se reenvía al bot de Apps Script. Si se calló a propósito (chat en manos de Juanma), no.
+- **Claves** (Secret Manager → variables): `BOT_WHATSAPP_TOKEN`, `BOT_IG_TOKEN`, `BOT_MESSENGER_TOKEN`, `BOT_ANTHROPIC_KEY`, `BOT_WIX_SECRETO`, `BOT_VERIFY_TOKEN`, `BOT_WEBHOOK_SECRET`, `BOT_APPS_SCRIPT_URL` (la `/exec` del bot con `?token=`), `BOT_GMAIL` (JSON de la autorización). El motor solo ve marcadores (`$WHATSAPP_TOKEN`); la clave se pone en un proceso aparte, nunca en la base ni en la línea de comandos.
+- **Tablas:** `bot_estado`, `bot_eventos`, `bot_correos` (migración 031, aplicada; respaldo previo 1792422615008).
+- **Tareas en vivo:** `POST /tareas/bot-minuto` (Salientes de la consola, devolver al bot, chats que vuelven, correos pendientes; reloj de 1 min solo en vivo), `POST /tareas/importar-estado-bot` (una vez: las Propiedades del bot sin claves), `GET /tareas/bot-eventos` (vigilar).
+- **Pendiente antes de encender:** fotos de la consola por WhatsApp (subida de archivo a Meta) en vivo; refresco del token de Instagram desde el servidor (vence a los 60 días); ensayo con el número de prueba de Meta. Pasos completos en el documento de diseño, sección 3.
+- Batería `cloud/bot`: 23 (14 sombra + 9 vivo).
+
 ## Límites conocidos
 
 - Mensajes que el bot real atendió con una versión anterior a la copiada no se comparan (cambió el comportamiento: antes del 15-oct no se callaba al pasar a Juanma).

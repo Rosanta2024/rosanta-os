@@ -40,7 +40,8 @@ function formatDate(d, tz, fmt) {
 }
 
 /** Una hoja en memoria con lo que el bot usa de Sheet. */
-function hoja(nombre, R) {
+function hoja(nombre, R, anotar) {
+  const nota = anotar || (() => {});
   const ancho = () => R.reduce((a, r) => Math.max(a, r.length), 0);
   const fijar = (f, c, v) => { while (R.length < f) R.push([]); const r = R[f - 1]; while (r.length < c) r.push(''); r[c - 1] = v; };
   const rango = (f, c, nf, nc) => {
@@ -48,8 +49,8 @@ function hoja(nombre, R) {
       getValues: () => { const o = []; for (let i = 0; i < (nf || 1); i++) { const row = R[f - 1 + i] || []; const x = []; for (let j = 0; j < (nc || 1); j++) x.push(row[c - 1 + j] === undefined ? '' : row[c - 1 + j]); o.push(x); } return o; },
       getValue: () => { const row = R[f - 1] || []; return row[c - 1] === undefined ? '' : row[c - 1]; },
       getDisplayValue: () => { const row = R[f - 1] || []; return row[c - 1] === undefined ? '' : String(row[c - 1]); },
-      setValues: (v) => { v.forEach((row, i) => row.forEach((x, j) => fijar(f + i, c + j, x))); return g; },
-      setValue: (x) => { fijar(f, c, x); return g; },
+      setValues: (v) => { v.forEach((row, i) => row.forEach((x, j) => fijar(f + i, c + j, x))); nota({ op: 'fijar', hoja: nombre, fila: f, col: c, valores: v }); return g; },
+      setValue: (x) => { fijar(f, c, x); nota({ op: 'fijar', hoja: nombre, fila: f, col: c, valores: [[x]] }); return g; },
       setNumberFormat: () => g, setFontWeight: () => g, setNote: () => g
     };
     return g;
@@ -68,8 +69,8 @@ function hoja(nombre, R) {
         return i < 0 ? null : { getRow: () => i + 1 };
       } }; return b; } };
     },
-    appendRow: (row) => { R.push(row.slice()); return self; },
-    deleteRows: (desde, n) => { R.splice(desde - 1, n); return self; },
+    appendRow: (row) => { R.push(row.slice()); nota({ op: 'agregar', hoja: nombre, fila: R.length, valores: [row.slice()] }); return self; },
+    deleteRows: (desde, n) => { R.splice(desde - 1, n); nota({ op: 'borrar', hoja: nombre, fila: desde, n }); return self; },
     setFrozenRows: () => self
   };
   return self;
@@ -96,43 +97,53 @@ function respuesta(code, cuerpo) {
 /**
  * crearMotor({ claude, wix, kb, props, nombresIg }) — claude(cuerpoPedido) → { code, body } (el cuerpo de la API);
  * wix(ruta, payload) → { code, body }. Devuelve { ctx, reloj, envios, correos, wixLlamadas, hojas, logs, ... }.
+ *
+ * Modo en vivo (19-oct-2026, APAGADO hasta el sí de Juanma) — opciones extra:
+ *   relojReal: true            la hora de verdad
+ *   estado: { props, cache }   Maps que viven fuera del motor (se cargan de la base y se guardan despues)
+ *   libros: { leads: {...} }   el espejo de Rosanta Leads (en vez de hojas vacias)
+ *   red(url, opciones)         hace el pedido de verdad (Meta, Wix, Claude); los envios se anotan igual
+ *   correo(m)                  manda el correo de verdad (MailApp); se anota igual
+ *   alCambiarHoja(op)          cada fila agregada/cambiada/borrada, para copiarla a la hoja real
  */
 function crearMotor(op) {
   const o = op || {};
-  let ahora = Date.UTC(2026, 9, 19, 15, 0, 0);
-  const reloj = { poner: (ms) => { ahora = ms; }, ahora: () => ahora, avanzar: (ms) => { ahora += ms; } };
+  let fijo = Date.UTC(2026, 9, 19, 15, 0, 0);
+  const actual = () => (o.relojReal ? Date.now() : fijo);
+  const reloj = { poner: (ms) => { fijo = ms; }, ahora: () => actual(), avanzar: (ms) => { fijo += ms; } };
   const RealDate = Date;
   class FDate extends RealDate {
-    constructor(...a) { if (a.length === 0) super(ahora); else super(...a); }
-    static now() { return ahora; }
+    constructor(...a) { if (a.length === 0) super(actual()); else super(...a); }
+    static now() { return actual(); }
   }
   FDate.UTC = RealDate.UTC; FDate.parse = RealDate.parse;
 
   const envios = [];       // { cuando, canal, a, tipo, texto, botones }
+  const intentosEnvio = { n: 0 };   // en vivo: envios que se intentaron (aceptados o no)
   const correos = [];      // { cuando, a, asunto, cuerpo }
   const wixLlamadas = [];  // { cuando, ruta, payload }
   const claudePedidos = []; // { cuando, cuerpo }
   const logs = [];
   // Las pestañas con su encabezado, como en Rosanta Leads (Fichas la crea el bot con FICHA_COLS al usarla).
-  const libros = { leads: {
+  const libros = o.libros || { leads: {
     Leads: [['Fecha/Hora', 'Canal', 'Idioma', 'Nombre', 'Teléfono', 'Tipo', 'Urgencia', 'Resumen', 'Acción', '¿Humano?', 'Mensaje original', 'ID destino (no tocar)', 'Respuesta', 'Enviado', 'Email', 'Respuesta_Bot']],
     Conversaciones: [['Fecha/Hora', 'Canal', 'ContactoID', 'Nombre', 'Direccion', 'Autor', 'Texto']],
     Salientes: [['Fecha/Hora', 'Canal', 'ContactoID', 'Texto', 'Tipo', 'Enviado']] } };
-  const props = new Map(Object.entries(Object.assign({
+  const props = (o.estado && o.estado.props) || new Map(Object.entries(Object.assign({
     SHEET_ID: 'leads', KB_DOC_ID: 'kb', WIX_RESERVAS_URL: WIX_URL, WIX_RESERVAS_SECRETO: 'sombra',
     WA_PHONE_NUMBER_ID: 'wa-sombra', OWNER_WA: '50200000000', BOTONES_MODO: 'todos', WEBHOOK_SECRET: SECRETO_WEBHOOK,
     ANTHROPIC_API_KEY: '$CLAVE', WHATSAPP_TOKEN: 'sombra', IG_TOKEN: 'sombra', MESSENGER_TOKEN: 'sombra', VERIFY_TOKEN: 'sombra'
   }, o.props || {})));
-  const cache = new Map();
+  const cache = (o.estado && o.estado.cache) || new Map();
 
-  const leerCache = (k) => { const e = cache.get(k); if (!e) return null; if (e.vence <= ahora) { cache.delete(k); return null; } return e.v; };
+  const leerCache = (k) => { const e = cache.get(k); if (!e) return null; if (e.vence <= actual()) { cache.delete(k); return null; } return e.v; };
   const libro = (id) => {
     const src = libros[id];
     if (!src) throw new Error('La sombra no tiene la hoja ' + id);
     return {
       getId: () => id,
-      getSheetByName: (n) => (src[n] ? hoja(n, src[n]) : null),
-      insertSheet: (n) => { src[n] = []; return hoja(n, src[n]); }
+      getSheetByName: (n) => (src[n] ? hoja(n, src[n], o.alCambiarHoja) : null),
+      insertSheet: (n) => { src[n] = []; if (o.alCambiarHoja) o.alCambiarHoja({ op: 'crear', hoja: n }); return hoja(n, src[n], o.alCambiarHoja); }
     };
   };
 
@@ -141,21 +152,29 @@ function crearMotor(op) {
     const opt = opciones || {};
     if (u.indexOf('https://api.anthropic.com/') === 0) {
       const cuerpo = JSON.parse(opt.payload);
-      claudePedidos.push({ cuando: ahora, cuerpo });
+      claudePedidos.push({ cuando: actual(), cuerpo });
+      if (o.red) return o.red(u, opt);
       const headers = Object.assign({ 'content-type': 'application/json' }, opt.headers || {});
       const r = o.claude ? o.claude(cuerpo, { headers, fetchSincrono }) : { code: 500, body: { error: 'sin modelo' } };
       return respuesta(r.code, r.body);
+    }
+    if (o.red && o.esWix && o.esWix(u)) {   // en vivo: el Wix de verdad
+      const payload = JSON.parse(opt.payload || '{}');
+      delete payload.secreto;
+      wixLlamadas.push({ cuando: actual(), ruta: u.replace(/^.*\//, ''), payload });
+      return o.red(u, opt);
     }
     if (u.indexOf('https://wix.simulado/') === 0) {
       const ruta = u.replace(/^.*\//, '');
       const payload = JSON.parse(opt.payload || '{}');
       delete payload.secreto;
-      wixLlamadas.push({ cuando: ahora, ruta, payload });
+      wixLlamadas.push({ cuando: actual(), ruta, payload });
       const r = o.wix ? o.wix(ruta, payload) : { code: 200, body: { ok: true } };
       return respuesta(r.code, r.body);
     }
     if (/^https:\/\/graph\.(facebook|instagram)\.com\//.test(u)) {
       if ((opt.method || 'get').toLowerCase() === 'get') {   // nombre de Instagram
+        if (o.red) return o.red(u, opt);
         const id = (u.match(/\.com\/([^?\/]+)\?/) || [])[1];
         return respuesta(200, { name: (o.nombresIg && o.nombresIg[id]) || '' });
       }
@@ -173,9 +192,16 @@ function crearMotor(op) {
         texto = p.message.text || '';
         if (p.message.quick_replies) botones = p.message.quick_replies.map((q) => q.title);
       }
-      envios.push({ cuando: ahora, canal, a: String(a), texto, botones });
+      if (o.red) {   // en vivo: solo cuenta como enviado si Meta lo acepto (la red de seguridad mira esto)
+        intentosEnvio.n++;
+        const r = o.red(u, opt);
+        if (r.getResponseCode() < 300) envios.push({ cuando: actual(), canal, a: String(a), texto, botones });
+        return r;
+      }
+      envios.push({ cuando: actual(), canal, a: String(a), texto, botones });
       return respuesta(200, { messages: [{ id: 'sombra-' + envios.length }], message_id: 'sombra-' + envios.length });
     }
+    if (o.red && o.permitido && o.permitido(u)) return o.red(u, opt);   // en vivo: la foto de Drive de la consola
     logs.push('fetch no previsto: ' + u);
     return respuesta(404, { error: 'La sombra no llama a ' + u.slice(0, 60) });
   };
@@ -190,7 +216,7 @@ function crearMotor(op) {
     }) },
     CacheService: { getScriptCache: () => ({
       get: leerCache,
-      put: (k, v, seg) => { cache.set(k, { v: String(v), vence: ahora + 1000 * (seg || 600) }); },
+      put: (k, v, seg) => { cache.set(k, { v: String(v), vence: actual() + 1000 * (seg || 600) }); },
       remove: (k) => { cache.delete(k); }
     }) },
     LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock: () => true, releaseLock: () => {} }) },
@@ -200,12 +226,13 @@ function crearMotor(op) {
     UrlFetchApp: { fetch },
     MailApp: { sendEmail: (a, asunto, cuerpo) => {
       const m = typeof a === 'object' ? a : { to: a, subject: asunto, body: cuerpo };
-      correos.push({ cuando: ahora, a: m.to, asunto: m.subject, cuerpo: m.body || m.htmlBody || '' });
+      correos.push({ cuando: actual(), a: m.to, asunto: m.subject, cuerpo: m.body || m.htmlBody || '' });
+      if (o.correo) o.correo(m);
     } },
     GmailApp: {
       search: () => [],
-      createDraft: (a, asunto, cuerpo) => { correos.push({ cuando: ahora, a, asunto: '[borrador] ' + asunto, cuerpo }); },
-      sendEmail: (a, asunto, cuerpo) => { correos.push({ cuando: ahora, a, asunto, cuerpo }); }
+      createDraft: (a, asunto, cuerpo) => { correos.push({ cuando: actual(), a, asunto: '[borrador] ' + asunto, cuerpo }); if (o.correo) o.correo({ borrador: true, to: a, subject: asunto, body: cuerpo }); },
+      sendEmail: (a, asunto, cuerpo) => { correos.push({ cuando: actual(), a, asunto, cuerpo }); }
     },
     ContentService: { createTextOutput: (s) => ({ getContent: () => s }) },
     ScriptApp: { getProjectTriggers: () => [], deleteTrigger: () => {}, newTrigger: () => { throw new Error('La sombra no crea activadores.'); } },
@@ -223,7 +250,7 @@ function crearMotor(op) {
     return ctx.doPost({ parameter: { token: SECRETO_WEBHOOK }, postData: { contents: JSON.stringify(body) } });
   }
 
-  return { ctx, reloj, envios, correos, wixLlamadas, claudePedidos, logs, libros, props, cache, CONFIG, recibir, leerCache };
+  return { ctx, reloj, envios, intentosEnvio, correos, wixLlamadas, claudePedidos, logs, libros, props, cache, CONFIG, recibir, leerCache };
 }
 
 module.exports = { crearMotor, formatDate, fetchSincrono, ARCHIVOS, DIR, WIX_URL };
