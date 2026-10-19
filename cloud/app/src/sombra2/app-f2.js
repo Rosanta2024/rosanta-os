@@ -134,6 +134,9 @@ function crearAppF2(deps) {
     } catch (e) { next(e); }
   });
 
+  // La entrada del telefono y los iconos de Rosanta (19-oct-2026): /intranet y /marca/...
+  require('../entrada').montarEntrada(app);
+
   // Clientes › Bot y Clientes › Reseñas y encuesta (sesion del bot en sombra, 19-oct-2026).
   require('../clientes2/rutas').montar(app, deps);
 
