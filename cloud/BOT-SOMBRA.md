@@ -9,7 +9,7 @@ Desde el 19-oct-2026. Rama `claude/nube-bot-sombra`. Diseño, plan del paso a vi
 
 | Pieza | Dónde |
 |---|---|
-| Servicio | Cloud Run **`rosanta-bot-sombra`**, Querétaro, `https://rosanta-bot-sombra-512086396641.northamerica-south1.run.app`, cuenta `rosanta-nube@…`, máx. 1 instancia, timeout 900 s. **Sin webhook de Meta** (la ruta no existe) |
+| Servicio | Cloud Run **`rosanta-bot-sombra`**, Querétaro, `https://rosanta-bot-sombra-512086396641.northamerica-south1.run.app`, cuenta PROPIA `rosanta-bot-sombra@…` (desde el 19-oct: la clave de Claude de la sombra la lee solo este servidor; tiene `cloudsql.client` y lee `db-app`, `clave-tareas` y `anthropic-sombra`; la base de conocimiento se comparte con esta cuenta), máx. 1 instancia, timeout 900 s. **Sin webhook de Meta** (la ruta no existe) |
 | Código | `cloud/bot/` (paquete propio). `bot-rosanta/` = copia EXACTA de `apps-script/bot-rosanta`, con la versión publicada en `VERSION.txt` (primera línea: `@N · hora ISO · commit`) |
 | Motor | `src/motor-bot.js`: corre el código real del bot con Meta, Wix, Claude, correo, hojas, propiedades, cache y el reloj imitados |
 | Reproductor | `src/reproductor.js` + `src/conversaciones.js`: arma cada chat desde Rosanta Leads (Conversaciones + Leads, la copia que guarda la sombra 2 en `hojas_copia_f2`), **anonimizado**, y le pasa al bot cada mensaje a la hora original, con el historial real. Compara: si contestó, la acción (reserva creada/cambiada/cancelada/consultada, informar, escalar), si pasó el chat a Juanma, el idioma |
