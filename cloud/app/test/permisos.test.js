@@ -13,7 +13,7 @@ const ok = (r) => r.ok;
 // cambia la migracion sin cambiar el documento (o al reves), esta prueba falla.
 // Columnas: dueño · cocina · sala · pauta.  T todo · I ingresar · V ver · - no lo ve
 const MATRIZ = {
-  pagos: 'T I I -', caja: 'T I I -', cierres: 'T - I -', recetario: 'T T T -', inventario: 'T I I -',
+  pagos: 'T I I -', caja: 'T - I -', retiros: 'T I I -', cierres: 'T - I -', recetario: 'T T T -', inventario: 'T I I -',
   finanzas: 'T - - -', reporte_semanal: 'T V V -',
   eventos: 'T - I -', crm: 'T - V V', reservas: 'T V I V', carritos: 'T - - V',
   resenas: 'T - - -', consola: 'T - - -',
@@ -22,7 +22,7 @@ const MATRIZ = {
 };
 const NIVEL = { T: 'todo', I: 'ingresar', V: 'ver' };
 
-test('La migracion 020 trae exactamente la matriz de Juanma', () => {
+test('Las migraciones 020+022 traen exactamente la matriz de Juanma (cocina sin Caja chica, 19-oct)', () => {
   const roles = ['dueno', 'chef', 'sala', 'pauta'];
   const esperado = [];
   for (const [parte, letras] of Object.entries(MATRIZ)) {
@@ -92,4 +92,19 @@ test('La migracion 021 (bitacora) no deja a la app editar ni borrar la bitacora'
   assert.match(sql, /GRANT SELECT, INSERT ON bitacora TO app;/);
   assert.doesNotMatch(sql, /GRANT[^;]*DELETE[^;]*bitacora/);
   assert.doesNotMatch(sql, /GRANT UPDATE ON bitacora/, 'solo puede marcar "avisado"');
+});
+
+test('Cocina no entra a Caja chica pero si a retiros (Juanma, 19-oct)', () => {
+  assert.ok(!ok(P.puede(M, jeffry, 'caja', 'ver')));
+  assert.ok(ok(P.puede(M, maco, 'caja', 'ingresar')));
+  assert.ok(ok(P.puede(M, jeffry, 'retiros', 'ingresar')));
+  assert.ok(ok(P.puede(M, jeffry, 'retiros', 'corregir', { escrito_por: 'Jeffry' })));
+  assert.ok(!ok(P.puede(M, jeffry, 'retiros', 'corregir', { escrito_por: 'Maco' })));
+  const solo020 = P.cargarDeMigracion(P.MIGRACION);
+  assert.ok(solo020.permisos.has('chef|caja'), 'control: sin la 022, cocina tenia Caja chica');
+});
+
+test('Meses cerrados: solo el dueño corrige (Juanma, 19-oct: bloqueo para el equipo)', () => {
+  for (const u of [jeffry, maco, vanessa]) assert.ok(!ok(P.puede(M, u, 'pagos', 'corregir_dia_cerrado')));
+  assert.ok(ok(P.puede(M, juanma, 'pagos', 'corregir_dia_cerrado')));
 });
