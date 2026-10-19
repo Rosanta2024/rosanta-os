@@ -40,6 +40,8 @@ function rvConsultar(result, canal, contactoId) {
     idioma:   String(result.lead.idioma || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es'
   };
   if (canal === 'whatsapp' && !d.telefono) d.telefono = String(contactoId || '').replace(/\D/g, '');
+  // Por correo, la direccion de quien escribe identifica la reserva, como el numero en WhatsApp (19-oct-2026, Louise).
+  if (canal === 'correo' && !d.email && /@/.test(String(contactoId || ''))) d.email = String(contactoId).trim().toLowerCase();
   result.lead.tipo = 'reserva';
   result.lead.accion = 'responder_info';
   result.lead.requiere_humano = false;

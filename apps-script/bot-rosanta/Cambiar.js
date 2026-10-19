@@ -47,6 +47,8 @@ function rvCambiar(result, canal, contactoId) {
     canal: canal
   };
   if (canal === 'whatsapp' && !d.telefono) d.telefono = String(contactoId || '').replace(/\D/g, '');
+  // Por correo, la direccion de quien escribe identifica la reserva, como el numero en WhatsApp (19-oct-2026, Louise).
+  if (canal === 'correo' && !d.email && /@/.test(String(contactoId || ''))) d.email = String(contactoId).trim().toLowerCase();
   result.lead.accion = 'responder_info';
   result.lead.requiere_humano = false;
 
@@ -128,7 +130,7 @@ function rvCambiar(result, canal, contactoId) {
   result.respuesta = rvTextoCambio(d.idioma, 'error', d);
   result.lead.accion = 'escalar_humano';
   result.lead.requiere_humano = true;
-  rvHistoria(contactoId, result, 'Falló el sistema al cambiar (' + r.motivo + '). La reserva actual sigue igual y ya se avisó a Juanma.');
+  rvHistoria(contactoId, result, 'Falló el sistema al cambiar (' + r.motivo + '). La reserva actual sigue igual y ya se avisó al restaurante.');
   return result;
 }
 
