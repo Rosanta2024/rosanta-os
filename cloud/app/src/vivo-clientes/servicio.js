@@ -122,12 +122,13 @@ function crearServicioVivo(pool, opciones) {
     if (!o.sheets && !o.copiar) return { copiadas: 0 };
     let copiadas = 0;
     for (const p of Object.keys(PESTANAS)) {
-      const r = await pool.query('SELECT llave, celdas, actualizado FROM filas_clientes WHERE pestana = $1 AND copiado_a_hoja IS NULL ORDER BY orden NULLS LAST, llave', [p]);
+      // actualizado como TEXTO: con un Date de JS se pierden los microsegundos y la marca nunca coincide
+      const r = await pool.query('SELECT llave, celdas, actualizado::text AS act FROM filas_clientes WHERE pestana = $1 AND copiado_a_hoja IS NULL ORDER BY orden NULLS LAST, llave', [p]);
       if (!r.rows.length) continue;
       await copiar(p, r.rows.map((x) => ({ id: x.llave, fila: C.decodificar([x.celdas])[0] })),
         { pestana: p, llave: PESTANAS[p], encabezado: encabezados[p] });
       for (const x of r.rows) {
-        await pool.query('UPDATE filas_clientes SET copiado_a_hoja = now() WHERE pestana = $1 AND llave = $2 AND actualizado = $3', [p, x.llave, x.actualizado]);
+        await pool.query('UPDATE filas_clientes SET copiado_a_hoja = now() WHERE pestana = $1 AND llave = $2 AND actualizado::text = $3', [p, x.llave, x.act]);
       }
       copiadas += r.rows.length;
     }

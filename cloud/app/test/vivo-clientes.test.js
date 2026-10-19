@@ -35,11 +35,12 @@ function baseFalsa() {
       t.set(k, { pestana: a[0], llave: a[1], celdas: JSON.parse(a[2]), origen: 'servidor', orden: prev ? prev.orden : a[3], actualizado: reloj++, copiado_a_hoja: null });
       return { rows: [] };
     }
-    if (/^SELECT llave, celdas, actualizado FROM filas_clientes WHERE pestana = \$1 AND copiado_a_hoja IS NULL/.test(sql)) {
-      return { rows: filasDe(a[0]).filter((x) => !x.copiado_a_hoja).map((x) => ({ llave: x.llave, celdas: x.celdas, actualizado: x.actualizado })) };
+    if (/^SELECT llave, celdas, actualizado::text AS act FROM filas_clientes WHERE pestana = \$1 AND copiado_a_hoja IS NULL/.test(sql)) {
+      // como Postgres: la hora como texto con microsegundos
+      return { rows: filasDe(a[0]).filter((x) => !x.copiado_a_hoja).map((x) => ({ llave: x.llave, celdas: x.celdas, act: '2026-10-19 10:00:00.' + String(x.actualizado).padStart(6, '0') + '-06' })) };
     }
-    if (/^UPDATE filas_clientes SET copiado_a_hoja = now\(\)/.test(sql)) {
-      const x = t.get(a[0] + '|' + a[1]); if (x && x.actualizado === a[2]) x.copiado_a_hoja = reloj++; return { rows: [] };
+    if (/^UPDATE filas_clientes SET copiado_a_hoja = now\(\) WHERE pestana = \$1 AND llave = \$2 AND actualizado::text = \$3/.test(sql)) {
+      const x = t.get(a[0] + '|' + a[1]); if (x && '2026-10-19 10:00:00.' + String(x.actualizado).padStart(6, '0') + '-06' === a[2]) x.copiado_a_hoja = reloj++; return { rows: [] };
     }
     if (/^SELECT llave AS id, celdas, origen, orden FROM filas_clientes WHERE pestana = \$1 FOR UPDATE/.test(sql)) {
       return { rows: filasDe(a[0]).map((x) => ({ id: x.llave, celdas: x.celdas, origen: x.origen, orden: x.orden })) };
@@ -232,3 +233,13 @@ test('Cerraduras: con motor_eventos = base la intranet y el hook de Marketing OS
   m.ctx.cotMotor_ = () => 'sheets';
   assert.deepStrictEqual(JSON.parse(JSON.stringify(m.ctx.cotHook_({ token: tok, accion: 'batch', writes: [] }))), { ok: true, versiones: {} }, 'con sheets, igual que siempre');
 });
+
+test('La marca de copia se pone (si no, cada importacion recopia y pisaria lo escrito a mano)', async () => {
+  const { base, v, poner } = armar('sheets');
+  await v.cargar(); await v.importar(); poner('base'); await v.importar();
+  await v.llamar(DUENO, 'guardarEventos', [[{ op: 'set', id: 'marca', data: { cliente: 'M' } }]]);
+  await esperarCopia();
+  assert.ok(base.t.get('cotizaciones|marca').copiado_a_hoja, 'copiado_a_hoja quedo puesto');
+  assert.deepStrictEqual(await v.copiarPendientes(), { copiadas: 0 }, 'no queda nada pendiente');
+});
+

@@ -188,6 +188,8 @@ async function main() {
     anota(r.j.error === 'unauthorized', 'El hook con otra clave: unauthorized');
     t = await tarea('copiar');
     anota(t.status === 200, 'Copia a la hoja (' + t.j.copiadas + ' pendientes)');
+    const sinMarca = (await pool.query('SELECT count(*)::int AS n FROM filas_clientes WHERE copiado_a_hoja IS NULL')).rows[0].n;
+    anota(sinMarca === 0, 'Todo lo guardado quedo marcado como copiado (' + sinMarca + ' sin marca)');
     await baseIgualHoja(S, pool, 'B1');
     t = await tarea('importar');
     anota(t.j.pestanas.every((p) => p.nuevas === 0 && p.actualizadas === 0 && !p.problemas.length), 'Importar otra vez no cambia nada');
