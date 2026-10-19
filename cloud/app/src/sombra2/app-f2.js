@@ -134,6 +134,9 @@ function crearAppF2(deps) {
     } catch (e) { next(e); }
   });
 
+  // Clientes › Bot y Clientes › Reseñas y encuesta (sesion del bot en sombra, 19-oct-2026).
+  require('../clientes2/rutas').montar(app, deps);
+
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);
     res.status(500).json({ error: String(err && err.message || err) });

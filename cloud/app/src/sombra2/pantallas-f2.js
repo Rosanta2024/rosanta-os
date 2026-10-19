@@ -77,7 +77,8 @@ function armarEventos(o) {
  * (/api/clientes/partes) y conserva el enlace ?u= al cambiar de pestaña.
  */
 function NAV(activa) {
-  const nombres = { eventos: 'Eventos', crm: 'CRM', reservas: 'Reservas', carritos: 'Carritos' };
+  const nombres = { eventos: 'Eventos', crm: 'CRM', reservas: 'Reservas', carritos: 'Carritos' }
+  try { Object.assign(nombres, require('../clientes2/partes').NOMBRES || {}); } catch (e) { /* sin clientes2 */ }
   return '<style>.cl-nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 16px;background:var(--superficie);border-bottom:1px solid var(--linea);font-family:var(--rosanta-font-body)}' +
     '.cl-nav b{font-family:var(--rosanta-font-title);margin-right:8px}.cl-nav a{padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--texto);min-height:28px}' +
     '.cl-nav a.on{background:var(--rosanta-lila-tint);font-weight:700}.cl-nav small{margin-left:auto;color:var(--texto-suave)}</style>' +
