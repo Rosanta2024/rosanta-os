@@ -20,8 +20,20 @@ async function leerUsuariosHoja() {
   return r.data.values || [];
 }
 
+/**
+ * Reintentos (19-oct-2026): la cuenta rosanta-nube@ comparte la cuota de Sheets (60 lecturas por minuto) con
+ * todos los servicios; con un 429, Google rechaza el pedido sin hacerlo y se puede reintentar con espera.
+ * Las LECTURAS reintentan tambien un 5xx. Las ESCRITURAS solo un 429: un 5xx puede llegar despues de que Google
+ * ya escribio, y reintentar un "agregar fila" la duplicaria (la copia a la hoja se reintenta sola en el
+ * proximo refresco, sin duplicar, porque escribe por ID).
+ */
+const REINTENTOS = (codigos) => ({ retryConfig: { retry: 4, retryDelay: 2000, statusCodesToRetry: codigos,
+  httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'POST', 'OPTIONS'], noResponseRetries: 0 } });
+const LECTURA_CON_REINTENTOS = REINTENTOS([[429, 429], [500, 599]]);
+const ESCRITURA_CON_REINTENTOS = REINTENTOS([[429, 429]]);
+
 function clienteSheets() {
-  return sheets({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] }) });
+  return sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] }) }, LECTURA_CON_REINTENTOS));
 }
 
 async function main() {
@@ -29,7 +41,7 @@ async function main() {
   const pool = await crearPool();
   // MODO_PAGOS=vivo solo PERMITE el modo en vivo; lo enciende PARAMETROS › motor_pagos = base en la hoja.
   const pagos = crearServicioPagos(pool, { modo: process.env.MODO_PAGOS || 'sombra',
-    sheetsEscritura: process.env.MODO_PAGOS === 'vivo' ? () => sheets({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }) : null });
+    sheetsEscritura: process.env.MODO_PAGOS === 'vivo' ? () => sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)) : null });
   await pagos.cargar().catch((e) => console.error('Pagos no cargo:', e.message));
   const htmlSombra = pantalla.armar({ sombra: true }), htmlVivo = pantalla.armar({ sombra: false });
   const htmlCajaSombra = pantalla.armarCaja(true), htmlCajaVivo = pantalla.armarCaja(false);

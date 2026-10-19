@@ -1,4 +1,5 @@
 // Corre con TZ=America/Guatemala.
+const fs_ = require('fs');
 const test = require('node:test');
 const assert = require('node:assert');
 const C = require('../src/copia-hojas');
@@ -229,4 +230,11 @@ test('?nube=ensayo: solo el dueño ve la pantalla del servidor de ENSAYO (aunque
   const p = M.ctx.getPagosDestino('tok-dueno', '', 'ensayo');
   assert.match(p.url, /^https:\/\/rosanta-nube-ensayo-.*\/pagos\?u=tok-dueno&dentro=1$/);
   assert.strictEqual(JSON.stringify(M.ctx.getCajaDestino('tok-dueno', 'caja', 'otra')), '{"base":false}', 'sin ?nube=ensayo, lo de siempre');
+});
+
+test('Sheets: las lecturas reintentan 429 y 5xx; las escrituras SOLO 429 (un 5xx puede haber escrito ya)', () => {
+  const s = fs_.readFileSync(require('path').join(__dirname, '..', 'src', 'server.js'), 'utf8');
+  assert.match(s, /LECTURA_CON_REINTENTOS = REINTENTOS\(\[\[429, 429\], \[500, 599\]\]\)/);
+  assert.match(s, /ESCRITURA_CON_REINTENTOS = REINTENTOS\(\[\[429, 429\]\]\)/);
+  assert.match(s, /spreadsheets'\] \}\) \}, ESCRITURA_CON_REINTENTOS\)/, 'el cliente que escribe usa la regla de escritura');
 });
