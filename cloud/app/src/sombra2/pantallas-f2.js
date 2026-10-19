@@ -154,6 +154,29 @@ function armarCarritos() {
     'Los carritos del formulario de reservas (pestaña carritos de Marketing OS). La recuperación se sigue haciendo en la intranet de siempre.');
 }
 
+// ---------------------------------------------------------------- Marketing (19-oct-2026)
+
+/**
+ * Traductor de google.script.run para pantallas que mandan el token al FINAL (Marketing: srv(fn,
+ * ...args, AUTH)). Igual que P.TRADUCTOR, pero saca el ultimo argumento en vez del primero.
+ */
+const TRADUCTOR_ULTIMO = P.TRADUCTOR.replace('var args = [].slice.call(arguments, 1);   // el primero es AUTH: va en la cabecera',
+  'var args = [].slice.call(arguments, 0, -1);   // el ULTIMO es AUTH: va en la cabecera');
+if (TRADUCTOR_ULTIMO === P.TRADUCTOR) throw new Error('pantalla-pagos.js cambio el traductor: revisar TRADUCTOR_ULTIMO.');
+
+/** Marketing (contenido y pauta): Marketing.html real, armado como lo arma doGet de la intranet. */
+function armarMarketing(o) {
+  const v = varsVista(o);
+  const vars = { urlBase: '/marketing', esFull: true, authToken: v.authToken, mostrarVolver: false, esDatos: false,
+    paletaCss_: v.paletaCss_, incluirCrudo_: (n) => leer(n + '.html') };
+  const h = plantilla(leer('Marketing.html'), vars);
+  if (h.split('<body>').length !== 2) throw new Error('Marketing.html cambio de forma: no encontre una sola vez <body>');
+  return h.replace('<body>', () => '<body><script>' + TRADUCTOR_ULTIMO + '</script>' +
+    '<style>.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin:12px auto;max-width:1100px;font-size:.9rem}</style>' +
+    '<div class="nb-aviso"><b>Prueba en sombra · Marketing (contenido y pauta).</b> Esta pantalla es la del servidor nuevo y por ahora <b>solo muestra</b>. ' +
+    'Guardar, Meta, el Creador (Claude), los reportes de Drive y la lectura del pilar se siguen usando en la intranet de siempre.</div>');
+}
+
 /** /sombra2/fotos: las fotos de cada noche (solo el dueño, lo exige /api/fotos-f2). */
 function armarFotos() {
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
@@ -179,4 +202,4 @@ function armarFotos() {
     '}).catch(function(){document.getElementById("f").innerHTML="<tr><td colspan=8>No se pudo leer. Probá de nuevo.</td></tr>"})</script></body></html>';
 }
 
-module.exports = { armarCaja, armarCompras, armarEventos, armarFotos, armarCrm, armarReservas, armarCarritos, plantilla, NAV, tokenLimpio };
+module.exports = { armarCaja, armarCompras, armarEventos, armarFotos, armarCrm, armarReservas, armarCarritos, armarMarketing, plantilla, NAV, tokenLimpio, TRADUCTOR_ULTIMO };

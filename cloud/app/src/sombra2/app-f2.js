@@ -77,6 +77,15 @@ function crearAppF2(deps) {
     } catch (e) { next(e); }
   };
   app.get('/clientes/eventos', vistaConUsuario('eventos'));
+  /** Marketing (contenido y pauta): parte 'pauta' de la matriz (dueño y pauta). */
+  app.get('/marketing', async (req, res, next) => {
+    try {
+      const u = await quien(req);
+      if (!u) return res.status(401).type('html').send('<p style="font-family:sans-serif;padding:16px">No pude identificarte. Entrá con tu enlace de siempre.</p>');
+      if (!deps.f2.puede || !deps.f2.puede(u, 'pauta')) return res.status(403).type('html').send('<p style="font-family:sans-serif;padding:16px">Tu cuenta no tiene Marketing.</p>');
+      res.set('Cache-Control', 'no-store').type('html').send(deps.pantallas.marketing({ usuario: u, authToken: String(req.query.u || '') }));
+    } catch (e) { next(e); }
+  });
   app.get('/clientes/crm', vistaConUsuario('crm'));
   app.get('/sombra2/fotos', pagina('fotos'));
 

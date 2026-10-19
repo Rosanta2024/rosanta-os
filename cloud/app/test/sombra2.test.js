@@ -50,6 +50,15 @@ function libros() {
     carritos: [['id', 'fecha', 'nombre', 'canal', 'valor', 'estado', 'consentimiento', 'contacto'],
       ['k1', '2026-10-15', 'Carla', 'web', 600, 'nuevo', 'SI', '+502 4444 0000']]
   };
+  // Marketing (contenido y pauta): encabezados reales de SCHEMA y PS_SCHEMA
+  const M0 = S.crearMotores({}).marketing.ctx, vm = require('vm');
+  const SC = vm.runInContext('SCHEMA', M0), PS = vm.runInContext('PS_SCHEMA', M0);
+  ['calendario', 'piezas', 'pauta_semanal', 'aprendizajes', 'propuestas', 'briefs'].forEach((t) => { L[S.MKT_ID][t] = [SC[t].slice()]; });
+  Object.keys(PS).forEach((t) => { L[S.MKT_ID][t] = [PS[t].slice()]; });
+  L[S.MKT_ID].calendario.push(['cal-1', '2026-10-20', 'La fogata', 'VALOR', 'Ambientes', 'Idea', 'Instagram', '', '', '', 'See', '', '', '', '', '']);
+  L[S.MKT_ID].reglas.push(['reservas_min_escalar', 6, 'volumen minimo', 'sistema', '2026-10-01']);
+  L[S.MKT_ID].bitacora_pruebas.push(['b1', '2026-10-10', 'Juanma', 'h', 'c', 'x', 'conj', 'reservas', '', '', '', '', '', '', '', '', 'propuesta']);
+  L[CFG].PARAMETROS = [['Parámetro', 'Valor']]; L[CFG].METAS = [['mes']];
   L[S.CRM_ID] = { Contactos: [['first_name', 'telefono', 'email', 'segmento', 'idioma', 'fuente', 'ultima_reserva', 'gasto_gtq'],
     ['Ana', '+502 5555 1234', 'ana@x.com', 'Cliente que visitó', 'ES', 'wix', '2026-10-10', 450],
     ['Beto', '+1 555 000 9999', 'beto@x.com', 'Reserva histórica', 'EN', 'wix', '', 0]] };
@@ -63,8 +72,8 @@ function libros() {
 }
 
 test('Sombra 2: los archivos son copias exactas de la intranet', () => {
-  const lista = ['LISTA-CAJA.txt', 'LISTA-CLIENTES.txt', 'LISTA-VISTAS-F2.txt'].flatMap(leerLista);
-  ['CajaChica.js', 'ComprasEfectivo.js', 'EventosDatos.js', 'EventosVista.html', 'CrmDatos.js', 'CrmVista.html'].forEach((f) => assert.ok(lista.includes(f), f));
+  const lista = ['LISTA-CAJA.txt', 'LISTA-CLIENTES.txt', 'LISTA-MARKETING.txt', 'LISTA-VISTAS-F2.txt'].flatMap(leerLista);
+  ['CajaChica.js', 'ComprasEfectivo.js', 'EventosDatos.js', 'EventosVista.html', 'CrmDatos.js', 'CrmVista.html', 'PautaSistema.js', 'Marketing.html'].forEach((f) => assert.ok(lista.includes(f), f));
   const distintos = lista.filter((f) => fs.readFileSync(path.join(DIR, f), 'utf8') !== fs.readFileSync(path.join(ORIGEN, f), 'utf8'));
   assert.deepStrictEqual(distintos, [], 'correr cloud/herramientas/traer-intranet.sh');
 });
@@ -133,9 +142,34 @@ test('Clientes: la matriz de accesos de la base decide quien ve que (no los modu
   assert.ok(MKT_U.modulos.includes('marketing'));
 });
 
+test('Marketing corre con el codigo real (token al final) y la matriz decide: dueño y pauta si, sala y cocina no', () => {
+  const M = S.crearMotores(libros());
+  const cal = S.correrUltimo(M.marketing, MKT_U, 'mktRead', ['calendario']).resultado;
+  assert.deepStrictEqual(cal.map((c) => c.title), ['La fogata']);
+  const t = S.correrUltimo(M.marketing, MKT_U, 'psTablero', []).resultado;
+  assert.ok(t.semana && t.hoy, 'el tablero de pauta se arma');
+  assert.ok(Array.isArray(S.correrUltimo(M.marketing, DUENO, 'psContextoCreativo', []).resultado.medir));
+  // aun saltando el 409, el motor no puede escribir (no hay pestañas editables ni appendRow)
+  assert.throws(() => S.correrUltimo(M.marketing, DUENO, 'mktUpsert', ['calendario', { id: 'x', title: 'y' }]), /solo lectura|no crea|appendRow/);
+  const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) }, { permisos: MATRIZ });
+  assert.ok(f2.puede(DUENO, 'pauta') && f2.puede(MKT_U, 'pauta'));
+  assert.ok(!f2.puede(SALA, 'pauta') && !f2.puede(CHEF, 'pauta'));
+  assert.throws(() => f2.llamar(SALA, 'mktRead', ['calendario']), (e) => e.status === 403);
+  ['mktUpsert', 'psGuardarPrueba', 'metaEntities', 'askClaudeSrv', 'driveDescargar', 'getLecturaPauta'].forEach((n) =>
+    assert.throws(() => f2.llamar(MKT_U, n, []), (e) => e.status === 409, n));
+});
+
+test('Cada llamada srv() de Marketing esta clasificada (y su lista blanca no tiene nada suelto)', () => {
+  const html = fs.readFileSync(path.join(DIR, 'Marketing.html'), 'utf8');
+  const blanca = JSON.parse(html.match(/const SRV_PERMITIDAS=new Set\((\[[\s\S]*?\])\)/)[1].replace(/'/g, '"'));
+  assert.ok(blanca.length >= 15, 'leyo la lista blanca (' + blanca.length + ')');
+  const sueltas = blanca.filter((n) => S.moduloDe(n) !== 'marketing');
+  assert.deepStrictEqual(sueltas, [], 'una funcion nueva en SRV_PERMITIDAS: decidir si es lectura o escritura');
+});
+
 test('En sombra todo lo que escribe responde 409, y Pagos no se puede llamar desde aca', async () => {
   const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) }, { permisos: MATRIZ });
-  S.MODULOS.caja.escritura.concat(S.MODULOS.clientes.escritura).forEach((n) => {
+  S.MODULOS.caja.escritura.concat(S.MODULOS.clientes.escritura, S.MODULOS.marketing.escritura).forEach((n) => {
     assert.throws(() => f2.llamar(DUENO, n, []), (e) => e.status === 409, n);
   });
   assert.throws(() => f2.llamar(DUENO, 'getPagosProveedores', []), (e) => e.status === 404);
@@ -165,12 +199,15 @@ test('La comparacion da 0 diferencias con los mismos datos y avisa una diferenci
   const d2 = K.compararResumenes(K.armar(otra2), K.armar(libros()));
   assert.ok(d2.some((x) => /^reservas por_estado/.test(x)), d2.join('\n'));
   assert.ok(d2.some((x) => /crm contactos: copia 1 · hojas 2/.test(x)), d2.join('\n'));
+  const otra3 = libros(); otra3[S.MKT_ID].calendario[1][5] = 'Lista';   // la pieza cambio de estado
+  const d3 = K.compararResumenes(K.armar(otra3), K.armar(libros()));
+  assert.ok(d3.some((x) => /^marketing calendario_por_estado/.test(x)), d3.join('\n'));
   const sinMkt = libros(); delete sinMkt[S.MKT_ID];
   assert.ok(K.compararResumenes(K.armar(sinMkt), K.armar(libros())).some((x) => /eventos: no se pudo armar con la copia/.test(x)),
     'las hojas tienen Marketing OS y la copia no: eso SI es diferencia');
   const avisos = [];
   assert.deepStrictEqual(K.compararResumenes(K.armar(sinMkt), K.armar(sinMkt), avisos), [], 'sin Marketing OS de los dos lados no es diferencia');
-  assert.deepStrictEqual(avisos, ['eventos: Sin copia de Marketing OS', 'reservas: Sin copia de Marketing OS', 'carritos: Sin copia de Marketing OS']);
+  assert.deepStrictEqual(avisos, ['eventos: Sin copia de Marketing OS', 'reservas: Sin copia de Marketing OS', 'carritos: Sin copia de Marketing OS', 'marketing: Sin copia de Marketing OS']);
 });
 
 test('Las pantallas se arman con el codigo real y sin scriptlets', () => {
@@ -220,13 +257,14 @@ test('La app de la sombra 2: enlace, 409 al escribir, tareas con clave y fotos s
     estado: () => ({ modo: 'sombra' }),
     refrescar: async () => [],
     partes: (u) => S.partesVisibles(MATRIZ, u),
+    puede: (u, p) => PER.puede(MATRIZ, u, p, 'ver').ok,
     llamar: (u, n, a) => {
       if (S.MODULOS.caja.escritura.includes(n)) { const e = new Error('Prueba en sombra'); e.status = 409; throw e; }
       return { resultado: M[S.moduloDe(n)].correr(u, n, a).resultado, ms: 1 };
     }
   };
   const deps = { pool, f2, comparar: async () => ({ copia_al_dia: false, diferencias: ['x'], celdas_error: {} }), claveTareas: 'clave-x',
-    pantallas: { caja: P.armarCaja, compras: P.armarCompras, eventos: P.armarEventos, crm: P.armarCrm, fotos: P.armarFotos, reservas: P.armarReservas, carritos: P.armarCarritos } };
+    pantallas: { caja: P.armarCaja, compras: P.armarCompras, eventos: P.armarEventos, crm: P.armarCrm, marketing: P.armarMarketing, fotos: P.armarFotos, reservas: P.armarReservas, carritos: P.armarCarritos } };
   await servir(deps, async (b) => {
     const llamar = (n, tok, args) => fetch(b + '/api/llamar/' + n, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-u': tok || '' }, body: JSON.stringify(args || []) });
     assert.strictEqual((await llamar('getCajaChica', '')).status, 401);
@@ -245,6 +283,8 @@ test('La app de la sombra 2: enlace, 409 al escribir, tareas con clave y fotos s
     assert.strictEqual(red.status, 302); assert.match(red.headers.get('location'), /^\/clientes\/eventos\?u=tok-maco$/);
     const pa = await (await fetch(b + '/api/clientes/partes', { headers: { 'x-rosanta-u': 'tok-maco' } })).json();
     assert.deepStrictEqual(pa.partes, ['eventos', 'crm', 'reservas']);
+    assert.strictEqual((await fetch(b + '/marketing?u=tok-juanma')).status, 200, 'dueño ve Marketing');
+    assert.strictEqual((await fetch(b + '/marketing?u=tok-maco')).status, 403, 'sala no');
   });
 });
 
@@ -282,10 +322,12 @@ test('Copia: un libro sin compartir es aviso; si ya se habia leido y deja de lee
 
 test('Todo el JavaScript de las pantallas de la sombra 2 compila (y un error se detecta)', () => {
   const paginas = { caja: P.armarCaja(), compras: P.armarCompras(), fotos: P.armarFotos(), reservas: P.armarReservas(), carritos: P.armarCarritos(),
-    eventos: P.armarEventos({ usuario: SALA, authToken: 'tok-maco-12345' }), crm: P.armarCrm({ usuario: DUENO, authToken: 'tok-juanma-123' }) };
+    eventos: P.armarEventos({ usuario: SALA, authToken: 'tok-maco-12345' }), crm: P.armarCrm({ usuario: DUENO, authToken: 'tok-juanma-123' }),
+    marketing: P.armarMarketing({ usuario: MKT_U, authToken: 'tok-vanessa-12' }) };
   const scripts = (h) => [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   let n = 0;
   Object.keys(paginas).forEach((k) => scripts(paginas[k]).forEach((js, i) => { n++; assert.doesNotThrow(() => new Function(js), k + ' script ' + i); }));   // eslint-disable-line no-new-func
-  assert.ok(n >= 14, 'reviso ' + n + ' scripts');
+  assert.ok(n >= 18, 'reviso ' + n + ' scripts');
+  assert.match(paginas.marketing, /arguments, 0, -1\)/, 'Marketing manda el token al final: su traductor saca el ultimo');
   assert.throws(() => new Function(scripts('<script>var a = ;</script>')[0]), SyntaxError, 'control negativo');   // eslint-disable-line no-new-func
 });

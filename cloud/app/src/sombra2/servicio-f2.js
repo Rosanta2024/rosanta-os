@@ -19,6 +19,11 @@
  *   - leadsSheetId_ busca Rosanta Leads en Drive; aca se le da el id directo.
  * Y dos funciones NUEVAS de solo lectura que la intranet no tiene como pantalla:
  *   clientesReservas (usa crmReservasFilas_ real) y clientesCarritos (usa mktRead real).
+ *
+ * MARKETING (contenido y pauta, 19-oct-2026): Marketing.html real, con PautaSistema.js. Su pantalla
+ * manda el token como ULTIMO argumento (srv(fn, ...args, AUTH)), por eso corre con correrUltimo.
+ * Lo que sale a Meta, Claude o Drive, y la lectura del pilar (que es el tablero de Finanzas, fase 3),
+ * sigue SOLO en la intranet: aca responde 409.
  */
 const C = require('../copia-hojas');
 const { crearMotor } = require('../motor-pagos');
@@ -32,13 +37,16 @@ const LEADS_ID = '1CxXcoLP9Fo523QJVLvNDuf_zqiLxWmrUDHLCzVoujrc';  // Rosanta Lea
 // Lo que lee Caja chica / Compras: lo de Pagos + sus tres pestañas de Config. Obligatorio.
 const LIBROS_CAJA = {
   maestro: C.LIBROS.maestro,
-  config: { id: C.LIBROS.config.id, pestanas: C.LIBROS.config.pestanas.concat(['CAJA_CHICA', 'RETIROS_SOLICITUDES', 'CIERRES_DIARIOS']) },
+  config: { id: C.LIBROS.config.id, pestanas: C.LIBROS.config.pestanas.concat(['CAJA_CHICA', 'RETIROS_SOLICITUDES', 'CIERRES_DIARIOS', 'PARAMETROS', 'METAS']) },
   compras: C.LIBROS.compras
 };
 // Lo que lee Clientes. Cada libro se copia por separado: si uno todavia no esta compartido con el
 // servidor, los demas siguen (ver refrescar).
 const LIBROS_CLIENTES = {
-  marketing: { id: MKT_ID, pestanas: ['cotizaciones', 'revisiones', 'reservas', 'carritos'] },
+  marketing: { id: MKT_ID, pestanas: ['cotizaciones', 'revisiones', 'reservas', 'carritos',
+    // Marketing (contenido y pauta). NO 'config': tiene el token de Meta.
+    'calendario', 'calendario_versiones', 'piezas', 'pauta_semanal', 'aprendizajes', 'propuestas', 'briefs',
+    'hechos_semana', 'pixel_semana', 'estados_semana', 'reglas', 'supuestos', 'bitacora_pruebas'] },
   crm: { id: CRM_ID, pestanas: '*' },          // crmContactos busca la pestaña por encabezado
   leads: { id: LEADS_ID, pestanas: ['Conversaciones', 'Fichas', 'Leads'] }
 };
@@ -58,6 +66,15 @@ const MODULOS = {
     lectura: ['getEventos', 'getInformeEventos', 'crmContactos', 'crmClavesConChat', 'crmFicha', 'clientesReservas', 'clientesCarritos'],
     escritura: ['guardarEventos', 'crmImportarContactos'],
     aviso: 'Prueba en sombra: esta pantalla solo muestra. Los cambios se hacen en la intranet de siempre.'
+  },
+  marketing: {
+    listas: ['LISTA.txt', 'LISTA-CLIENTES.txt', 'LISTA-MARKETING.txt'],
+    tokenAlFinal: true,
+    lectura: ['mktRead', 'psTablero', 'psContextoCreativo'],
+    escritura: ['mktUpsert', 'mktDelete', 'calGuardarVersion', 'psCapturarManual', 'psGuardarPrueba', 'psGuardarSupuesto', 'psGuardarRegla',
+      // lo que sale a Meta, Claude o Drive, y la lectura del pilar: todavia solo en la intranet
+      'metaEntities', 'adLibrarySearch', 'askClaudeSrv', 'driveBuscarReportes', 'driveDescargar', 'getLecturaPauta'],
+    aviso: 'Prueba en sombra: esta pantalla solo muestra. Guardar, Meta, Claude y Drive se siguen usando en la intranet de siempre.'
   }
 };
 
@@ -67,7 +84,11 @@ const PARTE = {
   crmContactos: 'crm', crmClavesConChat: 'crm', crmFicha: 'crm', crmImportarContactos: 'crm',
   clientesReservas: 'reservas', clientesCarritos: 'carritos'
 };
-const PARTES_CLIENTES = ['eventos', 'crm', 'reservas', 'carritos'];
+MODULOS.marketing.lectura.concat(MODULOS.marketing.escritura).forEach((n) => { PARTE[n] = 'pauta'; });   // matriz: seccion marketing
+// Partes que suma la sesion del bot (consola, reseñas, encuesta) en su propio archivo, si existe:
+// src/clientes2/partes.js exporta { PARTES: ['consola', ...] }. Asi no hace falta editar este archivo.
+const PARTES_EXTRA = (() => { try { return require('../clientes2/partes').PARTES || []; } catch (e) { return []; } })();
+const PARTES_CLIENTES = ['eventos', 'crm', 'reservas', 'carritos'].concat(PARTES_EXTRA);
 
 /** Las dos funciones de Caja chica que escriben al leer: en la sombra no hacen nada. */
 function anularEscriturasAlLeer(ctx) {
@@ -85,6 +106,8 @@ function prepararClientes(ctx) {
   ctx.requiereCrm_ = yaAutorizado;
   ctx.requiereEventos_ = yaAutorizado;
   ctx.requiereMarketing_ = (tab, auth) => yaAutorizado(auth);
+  ctx.requiereSoloMarketing_ = (auth) => yaAutorizado(auth);
+  ctx.requiereEdicionMarketing_ = (tab, auth) => yaAutorizado(auth);
   ctx.leadsSheetId_ = () => LEADS_ID;
   // Reservas: las filas tal como las lee el CRM real (crmReservasFilas_), mas nuevas primero.
   ctx.clientesReservas = (auth) => {
@@ -102,7 +125,25 @@ function crearMotores(libros) {
   anularEscriturasAlLeer(caja.ctx);
   const clientes = crearMotor({ libros, configId: C.LIBROS.config.id, editables: {}, listas: MODULOS.clientes.listas });
   prepararClientes(clientes.ctx);
-  return { caja, clientes };
+  const marketing = crearMotor({ libros, configId: C.LIBROS.config.id, editables: {}, listas: MODULOS.marketing.listas });
+  prepararClientes(marketing.ctx);
+  return { caja, clientes, marketing };
+}
+
+/**
+ * Como motor.correr, pero con el token al FINAL (las funciones de Marketing son f(...args, auth)).
+ * El motor no tiene hojas editables aca, asi que cualquier escritura tira "solo lectura".
+ */
+function correrUltimo(motor, usuario, nombre, args) {
+  const ctx = motor.ctx;
+  if (typeof ctx[nombre] !== 'function') throw new Error('La intranet no tiene la funcion ' + nombre + '.');
+  const u = usuario && { email: usuario.email, rol: usuario.rol, modulos: usuario.modulos || [], puedeEditar: !!usuario.puede_editar, nombre: usuario.nombre };
+  ctx.resolverUsuario_ = () => u || null;
+  ctx._PAG_LEIDO_ = { movs: null, hojas: {}, ss: null, escribio: false };
+  try {
+    const r = ctx[nombre].apply(null, (args || []).concat(['(token-verificado-por-el-servidor)']));
+    return { resultado: JSON.parse(JSON.stringify(r === undefined ? null : r)), escrituras: {} };
+  } finally { ctx.resolverUsuario_ = () => null; }
 }
 
 /**
@@ -180,13 +221,14 @@ function crearServicioF2(pool, opciones) {
     if (MODULOS[m].escritura.includes(nombre)) { const e = new Error(MODULOS[m].aviso); e.status = 409; throw e; }
     if (!motores) { const e = new Error(error || 'El servidor nuevo todavia esta cargando.'); e.status = 503; throw e; }
     const t0 = Date.now();
-    const r = motores[m].correr(usuario, nombre, args || []);
+    const r = MODULOS[m].tokenAlFinal ? correrUltimo(motores[m], usuario, nombre, args) : motores[m].correr(usuario, nombre, args || []);
     return { resultado: r.resultado, ms: Date.now() - t0, modulo: m };
   }
 
   return {
     cargar, refrescar, llamar,
     partes: (usuario) => (M ? partesVisibles(M, usuario) : []),
+    puede: (usuario, parte) => !!(M && P.puede(M, usuario, parte, 'ver').ok),
     consolaUrl: () => { try { return motores ? String(require('vm').runInContext('typeof CONFIG !== "undefined" ? CONFIG.CONSOLA_URL : ""', motores.clientes.ctx) || '') : ''; } catch (e) { return ''; } },
     copia: () => ({ libros, leida }),
     estado: () => ({ modo: 'sombra', copia_leida: leida, listo: !!motores, error, permisos: !!M,
@@ -194,5 +236,5 @@ function crearServicioF2(pool, opciones) {
   };
 }
 
-module.exports = { crearServicioF2, soloExistentes, crearMotores, anularEscriturasAlLeer, prepararClientes, moduloDe, partesVisibles,
+module.exports = { crearServicioF2, soloExistentes, crearMotores, correrUltimo, anularEscriturasAlLeer, prepararClientes, moduloDe, partesVisibles,
   MODULOS, PARTE, PARTES_CLIENTES, LIBROS_CAJA, LIBROS_CLIENTES, LIBROS_EVENTOS, TABLA, MKT_ID, CRM_ID, LEADS_ID };

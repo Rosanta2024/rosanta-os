@@ -16,7 +16,7 @@ git -C "$RAIZ" log -1 --format='%h %cs %s' -- $(for f in $ARCHIVOS; do echo "app
 echo "Copiados $(echo "$ARCHIVOS" | wc -w | tr -d ' ') archivos · $(cat "$DESTINO/VERSION.txt")"
 
 # Sombra 2 (17-oct-2026, rama claude/nube-fase2-mkt). Aparte para no mover el VERSION.txt de Pagos.
-F2=$(cat "$DESTINO/LISTA-CAJA.txt" "$DESTINO/LISTA-CLIENTES.txt" "$DESTINO/LISTA-VISTAS-F2.txt" | sort -u)
+F2=$(cat "$DESTINO/LISTA-CAJA.txt" "$DESTINO/LISTA-CLIENTES.txt" "$DESTINO/LISTA-MARKETING.txt" "$DESTINO/LISTA-VISTAS-F2.txt" | sort -u)
 for f in $F2; do cp "$ORIGEN/$f" "$DESTINO/$f"; done
 git -C "$RAIZ" log -1 --format='%h %cs %s' -- $(for f in $F2; do echo "apps-script/rosanta-intranet/$f"; done) > "$DESTINO/VERSION-F2.txt"
 echo "Sombra 2: $(echo "$F2" | wc -w | tr -d ' ') archivos · $(cat "$DESTINO/VERSION-F2.txt")"

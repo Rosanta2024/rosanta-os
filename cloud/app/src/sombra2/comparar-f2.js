@@ -11,7 +11,7 @@
  */
 const C = require('../copia-hojas');
 const { formatDate } = require('../motor-pagos');
-const { crearMotores, soloExistentes, LIBROS_CAJA, LIBROS_CLIENTES, MKT_ID, CRM_ID } = require('./servicio-f2');
+const { crearMotores, correrUltimo, soloExistentes, LIBROS_CAJA, LIBROS_CLIENTES, MKT_ID, CRM_ID } = require('./servicio-f2');
 const { celdasConError } = require('../comparar-pagos');
 
 const DUENO = { email: 'comparacion@servidor', rol: 'dueno', modulos: ['pagos', 'marketing'], nombre: 'Comparación automática' };
@@ -42,6 +42,19 @@ function resumenReservas(filas) {
 }
 function resumenCarritos(filas) {
   return { carritos: filas.length, por_estado: porClave(filas, (c) => c.estado, 'valor') };
+}
+/** Marketing: cuantas filas tiene cada pestaña (y el calendario y la bitacora por estado). */
+const TABS_MKT = ['calendario', 'piezas', 'pauta_semanal', 'aprendizajes', 'propuestas', 'briefs'];
+const TABS_PS = ['hechos_semana', 'pixel_semana', 'estados_semana', 'reglas', 'supuestos', 'bitacora_pruebas'];
+function resumenMarketing(M) {
+  const leer = (n, a) => correrUltimo(M, DUENO, n, a).resultado;
+  const o = { filas: {} };
+  TABS_MKT.forEach((t) => { o.filas[t] = leer('mktRead', [t]).length; });
+  TABS_PS.forEach((t) => { o.filas[t] = leer('psLeer_', [t]).length; });
+  o.calendario_por_estado = porClave(leer('mktRead', ['calendario']), (c) => c.estado);
+  o.bitacora_por_estado = porClave(leer('psLeer_', ['bitacora_pruebas']), (b) => b.estado);
+  o.reglas = Object.fromEntries(leer('psLeer_', ['reglas']).map((r) => [r.id, String(r.valor)]));
+  return o;
 }
 function resumenEventos(ev) {
   const porEtapa = {};
@@ -87,7 +100,8 @@ function armar(libros) {
     eventos: libros[MKT_ID] ? intento(() => resumenEventos(M.clientes.correr(DUENO, 'getEventos', []).resultado)) : { error: 'Sin copia de Marketing OS' },
     reservas: libros[MKT_ID] ? intento(() => resumenReservas(M.clientes.correr(DUENO, 'clientesReservas', []).resultado)) : { error: 'Sin copia de Marketing OS' },
     carritos: libros[MKT_ID] ? intento(() => resumenCarritos(M.clientes.correr(DUENO, 'clientesCarritos', []).resultado)) : { error: 'Sin copia de Marketing OS' },
-    crm: libros[CRM_ID] ? intento(() => resumenCrm(M.clientes.correr(DUENO, 'crmContactos', []).resultado)) : { error: 'Sin copia del CRM' }
+    crm: libros[CRM_ID] ? intento(() => resumenCrm(M.clientes.correr(DUENO, 'crmContactos', []).resultado)) : { error: 'Sin copia del CRM' },
+    marketing: libros[MKT_ID] ? intento(() => resumenMarketing(M.marketing)) : { error: 'Sin copia de Marketing OS' }
   };
 }
 
@@ -98,7 +112,7 @@ function armar(libros) {
  */
 function compararResumenes(copia, hojas, avisos) {
   const difs = [];
-  ['caja', 'compras', 'eventos', 'reservas', 'carritos', 'crm'].forEach((m) => {
+  ['caja', 'compras', 'eventos', 'reservas', 'carritos', 'crm', 'marketing'].forEach((m) => {
     if (hojas[m].error && copia[m].error && hojas[m].error === copia[m].error) { if (avisos) avisos.push(m + ': ' + hojas[m].error); return; }
     if (hojas[m].error) { difs.push(m + ': no se pudo armar con las hojas (' + hojas[m].error + ')'); return; }
     if (copia[m].error) { difs.push(m + ': no se pudo armar con la copia (' + copia[m].error + ')'); return; }
@@ -130,7 +144,7 @@ async function comparar(o) {
     cuando_gt: formatDate(o.ahora || new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm'),
     caja: hojas.caja.error ? null : (({ dias, ...r }) => r)(hojas.caja), compras: hojas.compras.error ? null : hojas.compras,
     eventos: hojas.eventos.error ? null : { filas: hojas.eventos.filas, por_etapa: hojas.eventos.por_etapa },
-    clientes: { reservas: hojas.reservas.error ? null : hojas.reservas, carritos: hojas.carritos.error ? null : hojas.carritos, crm: hojas.crm.error ? null : hojas.crm },
+    clientes: { reservas: hojas.reservas.error ? null : hojas.reservas, carritos: hojas.carritos.error ? null : hojas.carritos, crm: hojas.crm.error ? null : hojas.crm, marketing: hojas.marketing.error ? null : hojas.marketing },
     copia_leida: o.copiaLeida || null, copia_al_dia: difs.length === 0, diferencias: difs, avisos, celdas_error: celdasConError(fresco)
   };
   await o.pool.query(
@@ -141,4 +155,4 @@ async function comparar(o) {
   return foto;
 }
 
-module.exports = { comparar, armar, compararResumenes, resumenCaja, resumenCompras, resumenEventos, resumenCrm, resumenReservas, resumenCarritos, diferencias, difCaja };
+module.exports = { comparar, armar, compararResumenes, resumenCaja, resumenCompras, resumenEventos, resumenCrm, resumenReservas, resumenCarritos, resumenMarketing, diferencias, difCaja };

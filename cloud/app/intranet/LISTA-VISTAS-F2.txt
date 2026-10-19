@@ -4,3 +4,6 @@ EventosVista.html
 CrmVista.html
 Estilos.html
 Logo.html
+Marketing.html
+LecturaEstilo.html
+LecturaJs.html
