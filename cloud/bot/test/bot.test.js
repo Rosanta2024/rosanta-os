@@ -60,6 +60,7 @@ test('La versión copiada está anotada y es la @58 o posterior', () => {
   const v = versionBot();
   assert.ok(v.numero >= 58, v.texto);
   assert.ok(v.desde > Date.parse('2026-10-17T00:00:00-06:00'));
+  assert.ok(!/\n/.test(v.texto), 'solo la primera linea');
 });
 
 test('El motor carga el código real del bot sin tocar nada de afuera', () => {

@@ -24,7 +24,7 @@ const PRECIO = { entrada: 2 / 1e6, salida: 10 / 1e6 };   // claude-sonnet-5-5, U
 
 /** La version del bot copiada: "@58 · 2026-10-17T10:16:30-06:00 · 4eae1b3". Desde esa hora la comparacion vale. */
 function versionBot() {
-  const t = fs.readFileSync(path.join(__dirname, '..', 'bot-rosanta', 'VERSION.txt'), 'utf8').trim();
+  const t = fs.readFileSync(path.join(__dirname, '..', 'bot-rosanta', 'VERSION.txt'), 'utf8').trim().split('\n')[0].trim();
   const m = t.match(/@(\d+)\s*·\s*(\S+)/);
   return { texto: t, numero: m ? Number(m[1]) : null, desde: m ? Date.parse(m[2]) : 0 };
 }
