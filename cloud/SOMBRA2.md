@@ -38,6 +38,8 @@ Si los archivos se separan de la intranet, la prueba "Sombra 2: los archivos son
 
 ## Pendiente
 
+- **Caja en vivo (Estudio, 18-oct):** está ensayado en su rama (6e3a2a1, 37/37), sobre la copia de Config. Esa rama trae cambios de la intranet **sin publicar** (CajaChica.js, ComprasEfectivo.js, CierresDiarios.js, CosteoVista.html, Vigia.js, NubePagos.js) y la migración 005 (`filas_vivas`, aplicada solo en la base de ensayo). **No traer nada de esa rama a la sombra 2** hasta que la intranet lo publique. La propuesta para 07_Caja_Chica es que Vigia.js la regenere cada hora con `motor_caja = base`; la decisión es de Juanma.
+
 - **Migraciones:** 010–019 son de esta rama; 020–029 son de la sesión "C: accesos, roles y limpieza". No reusar esos números.
 - **PagosProveedores.js:** la sesión C lo cambió (`_pagAnular_`) y falta publicarlo. Caja y Compras también lo cargan (`LISTA.txt`). **Cuando la intranet lo publique:** `traer-intranet.sh`, sellar los dos servicios (lo de Pagos lo hace el Estudio) y volver a publicar `rosanta-nube-sombra2`. Hasta entonces la prueba de copias exactas falla, que es lo que tiene que pasar.
 
