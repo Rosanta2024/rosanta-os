@@ -88,11 +88,13 @@ function getUsuarioActual() {
 }
 
 /**
- * Matriz de accesos (Juanma, 17-oct-2026): estos modulos son SOLO del dueño, por ROL, aunque
- * alguien los tenga escritos en su fila de USUARIOS. Antes Finanzas se abria por el modulo: quien
- * lo tuviera veia el maestro entero.
+ * Matriz de accesos (Juanma, 17-oct-2026): estos modulos se abren por ROL, aunque alguien los tenga
+ * escritos en su fila de USUARIOS. Antes Finanzas se abria por el modulo: quien lo tuviera veia el
+ * maestro entero. Rol "contador" (Juanma, 19-oct; Raul y Tesoreria BTS): VE Finanzas y el reporte
+ * semanal; todo lo que escribe en Finanzas sigue pidiendo rol dueño (invExigirDueno_).
  */
 var MODULOS_SOLO_DUENO_ = ['finanzas'];
+var ROLES_FINANZAS_ = ['dueno', 'contador'];
 
 /** "Dueño" → "dueno", "Sala" → "sala". */
 function rolSinAcento_(rol) {
@@ -101,7 +103,7 @@ function rolSinAcento_(rol) {
 
 function usuarioTieneModulo(usuario, modulo) {
   if (!usuario) return false;
-  if (MODULOS_SOLO_DUENO_.indexOf(modulo) !== -1 && rolSinAcento_(usuario.rol) !== 'dueno') return false;
+  if (MODULOS_SOLO_DUENO_.indexOf(modulo) !== -1 && ROLES_FINANZAS_.indexOf(rolSinAcento_(usuario.rol)) === -1) return false;
   return usuario.modulos.indexOf(modulo) !== -1;
 }
 

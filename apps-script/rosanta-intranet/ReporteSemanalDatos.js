@@ -474,6 +474,7 @@ function _repAcciones_(clave) {
  */
 function guardarAccionReporte(auth, datos) {
   var u = exigirModulo_(auth, 'finanzas');
+  invExigirDueno_(u);   // el rol contador ve el reporte, no escribe acciones (19-oct-2026)
   datos = datos || {};
   var clave = Number(datos.clave) || 0;
   var accion = String(datos.accion || '').trim();
