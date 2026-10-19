@@ -68,6 +68,11 @@ function modos(modoMax, libros) {
   return { pagos, caja: pagos && interruptor(libros, 'motor_caja') === 'base', cierres: vivoOk && interruptor(libros, 'motor_cierres') === 'base' };
 }
 
+/** Las celdas de una fila codificada que dicen ser fecha ({$d}) y no tienen la forma AAAA-MM-DDTHH:MM:SS. */
+function fechasMalas(fila) {
+  return (fila || []).filter((x) => x && typeof x === 'object' && !(typeof x.$d === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(x.$d)));
+}
+
 /** La fecha de un registro (para la bitacora y los meses cerrados). */
 function fechaDe(H, fila) {
   for (const col of ['FECHA PAGADO', 'FECHA', 'FECHA DE PAGAR']) {
@@ -284,6 +289,9 @@ function crearServicioPagos(pool, opciones) {
    */
   async function guardarCierre(filaCodificada) {
     if (!enVivo.cierres) throw error('Los cierres van a la hoja (motor_cierres = sheets).', 409);
+    // una fecha mal escrita se rechaza: antes entraba como fecha invalida y la copia a la hoja quedaba en conflicto (ensayo del puente, 18-oct)
+    const malas = fechasMalas(filaCodificada);
+    if (malas.length) throw error('El cierre trae una fecha que no se entiende: ' + JSON.stringify(malas[0]).slice(0, 80), 400);
     return enCola(async () => {
       const fila = C.decodificar([filaCodificada])[0];
       const enc = libros[cfgId].CIERRES_DIARIOS[0].map((h) => String(h || '').trim()), iF = enc.indexOf('FECHA');
@@ -309,4 +317,4 @@ function crearServicioPagos(pool, opciones) {
 }
 
 module.exports = { crearServicioPagos, LECTURA, ESCRITURA, LECTURA_CAJA, ESCRITURA_CAJA, SOLO_INTRANET, VIVAS, LIBROS_VIVO,
-  interruptor, modos, bitacoraDe, fechaDe };
+  interruptor, modos, bitacoraDe, fechaDe, fechasMalas };

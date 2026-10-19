@@ -21,7 +21,9 @@ function formatDate(d, tz, fmt) {
   const partes = {};
   new Intl.DateTimeFormat('en-GB', { timeZone: tz || ZONA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
     .formatToParts(d).forEach((p) => { partes[p.type] = p.value; });
-  return String(fmt).replace(/yyyy|MM|dd|HH|mm|ss/g, (k) => ({ yyyy: partes.year, MM: partes.month, dd: partes.day, HH: partes.hour, mm: partes.minute, ss: partes.second })[k]);
+  // lo que va entre comillas simples es texto tal cual, como en Apps Script ("yyyy-MM-dd'T'HH:mm:ss")
+  return String(fmt).split(/('[^']*')/).map((t) => (/^'.*'$/.test(t) ? t.slice(1, -1)
+    : t.replace(/yyyy|MM|dd|HH|mm|ss/g, (k) => ({ yyyy: partes.year, MM: partes.month, dd: partes.day, HH: partes.hour, mm: partes.minute, ss: partes.second })[k]))).join('');
 }
 
 /** Una pestaña en memoria con la forma de Sheet de Apps Script. editable: si acepta escrituras. */

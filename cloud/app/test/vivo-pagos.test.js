@@ -210,3 +210,10 @@ test('/tareas/cierre: pide la clave, valida la fila y pasa al servicio', async (
   const fs = require('fs');
   assert.match(fs.readFileSync(require('path').join(__dirname, '..', 'src', 'server.js'), 'utf8'), /guardarCierre: pagos\.guardarCierre/);
 });
+
+test('Un cierre con una fecha mal escrita se rechaza (antes entraba como fecha invalida)', () => {
+  const { fechasMalas } = require('../src/servicio-pagos');
+  assert.deepStrictEqual(fechasMalas(['2026-10-13', 10, { $d: '2026-10-18T19:14:09' }]), []);
+  assert.strictEqual(fechasMalas([{ $d: "2026-10-18'T'19:14:09" }]).length, 1);
+  assert.strictEqual(fechasMalas([{ $d: 'NaN-NaN-NaNTNaN:NaN:NaN' }, { otra: 1 }]).length, 2);
+});

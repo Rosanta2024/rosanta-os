@@ -35,26 +35,67 @@ function pfError() {
     extraer('ProfitHoyJs.html', 'window.PF_DONDE = function', '/* Hoy (13-oct-2026)');
 }
 
-/** google.script.run del navegador → fetch al servidor nuevo, con el enlace en la cabecera. */
+/**
+ * google.script.run del navegador → fetch al servidor nuevo, con el enlace en la cabecera.
+ *
+ * EL PUENTE (18-oct-2026, condicion de Juanma: "Leer cierres se usa a diario"): "Leer cierres" y leer la
+ * foto de un comprobante usan Gmail, Drive y Claude, asi que los corre la INTRANET. Dentro de la pestaña
+ * de la intranet (?dentro=1), esas dos llamadas se le pasan a la pagina que contiene esta pantalla (la
+ * intranet, en googleusercontent.com), que corre su funcion de siempre y devuelve el resultado. Solo
+ * esas dos, y solo si quien contiene esta pantalla es Google. Con motor_cierres = base, despues de leer
+ * los cierres se pide la caja al servidor, que ya tiene el cierre en la base.
+ */
 const TRADUCTOR = `
+(function () {
+  var PUENTE = { leerCierresCaja: 1, leerComprobanteCompra: 1 };
+  var anc = (location.ancestorOrigins && location.ancestorOrigins[0]) || (function () { try { return new URL(document.referrer).origin; } catch (e) { return ''; } })();
+  var padre = new URLSearchParams(location.search).get('dentro') === '1' && window.parent !== window &&
+    /^https:[/][/][a-z0-9-]+-script[.]googleusercontent[.]com$/.test(anc) ? anc : '';
+  var pendientes = {}, n = 0;
+  window.addEventListener('message', function (ev) {
+    if (!padre || ev.source !== window.parent || ev.origin !== padre || !ev.data || !ev.data.rosantaPuenteResp) return;
+    var x = ev.data.rosantaPuenteResp, p = pendientes[x.id];
+    if (!p) return;
+    delete pendientes[x.id];
+    if (x.ok) p.ok(x.resultado); else p.mal({ message: x.error || 'No se pudo completar.' });
+  });
+  window.ROSANTA_PUENTE = function (nombre, args, ok, mal) {
+    if (!PUENTE[nombre] || !padre) return false;
+    var id = ++n;
+    pendientes[id] = { ok: ok || function () {}, mal: mal || function () {} };
+    window.parent.postMessage({ rosantaPuente: { id: id, nombre: nombre, args: args } }, padre);
+    setTimeout(function () { if (pendientes[id]) { delete pendientes[id]; (mal || function () {})({ message: 'No llegó respuesta de la intranet.' }); } }, 180000);
+    return true;
+  };
+})();
 window.google = { script: { run: (function () {
+  function llamarServidor(nombre, args, ok, mal) {
+    fetch('/api/llamar/' + encodeURIComponent(nombre), { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-rosanta-u': window.AUTH || '' }, body: JSON.stringify(args) })
+      .then(function (r) { return r.json().catch(function () { return { error: 'sin respuesta' }; }).then(function (j) { return { r: r, j: j }; }); })
+      .then(function (x) { if (x.r.ok) { if (ok) ok(x.j.resultado); } else if (mal) mal({ message: x.j.error || ('Error ' + x.r.status) }); })
+      .catch(function (e) { if (mal) mal({ message: 'NetworkError: ' + (e && e.message || e) }); });
+  }
   function corredor(ok, mal) {
     return new Proxy({}, { get: function (_, nombre) {
       if (nombre === 'withSuccessHandler') return function (f) { return corredor(f, mal); };
       if (nombre === 'withFailureHandler') return function (f) { return corredor(ok, f); };
       return function () {
         var args = [].slice.call(arguments, 1);   // el primero es AUTH: va en la cabecera
-        fetch('/api/llamar/' + encodeURIComponent(nombre), { method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-rosanta-u': window.AUTH || '' }, body: JSON.stringify(args) })
-          .then(function (r) { return r.json().catch(function () { return { error: 'sin respuesta' }; }).then(function (j) { return { r: r, j: j }; }); })
-          .then(function (x) { if (x.r.ok) { if (ok) ok(x.j.resultado); } else if (mal) mal({ message: x.j.error || ('Error ' + x.r.status) }); })
-          .catch(function (e) { if (mal) mal({ message: 'NetworkError: ' + (e && e.message || e) }); });
+        // los cierres: con motor_cierres = base el servidor ya tiene el cierre leido; la caja se pide alla
+        var okP = nombre !== 'leerCierresCaja' ? ok : function (res) {
+          fetch('/salud').then(function (r) { return r.json(); }).then(function (s) {
+            if (!(s && s.pagos && s.pagos.en_vivo && s.pagos.en_vivo.cierres)) { if (ok) ok(res); return; }
+            llamarServidor('getCajaChica', [], function (caja) { caja.lectura_ahora = res && res.lectura_ahora; if (ok) ok(caja); }, function () { if (ok) ok(res); });
+          }).catch(function () { if (ok) ok(res); });
+        };
+        if (window.ROSANTA_PUENTE(nombre, args, okP, mal)) return;
+        llamarServidor(nombre, args, ok, mal);
       };
     } });
   }
   return corredor(null, null);
 })() } };`;
-
 function armar(opciones) {
   const o = opciones || {};
   const aviso = o.sombra

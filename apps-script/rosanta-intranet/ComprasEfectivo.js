@@ -484,6 +484,10 @@ function _cpeUrlRecibo_(u) {
 /* ---- Leer la foto del recibo o la captura ----
    Claude lee proveedor, NIT, numero de factura, productos, total y como se pago. Nada se guarda
    sin que la persona lo confirme. La foto queda en Drive (Comprobantes_compras). */
+/* El modelo que lee las fotos. Vivia en MedicionDatos.js (MED_RET_MODELO_) y se archivo con la pantalla vieja de
+   retiros el 15-oct-2026: desde ahi este boton fallaba con "MED_RET_MODELO_ is not defined" (lo encontro el ensayo
+   del puente, 18-oct-2026). Ahora vive aca, con el mismo modelo. */
+var CPE_MODELO_ = 'claude-opus-5';
 var CPE_ESQUEMA_ = {
   type: 'object', additionalProperties: false, required: ['compras'],
   properties: { compras: { type: 'array', items: {
@@ -520,7 +524,7 @@ function leerComprobanteCompra(auth, archivos) {
   });
   contenido.push({ type: 'text', text: CPE_INSTRUCCION_ });
   var body = claudeLlamar_({
-    model: MED_RET_MODELO_, max_tokens: 4000, fallbacks: 'default',
+    model: CPE_MODELO_, max_tokens: 4000, fallbacks: 'default',
     output_config: { effort: 'low', format: { type: 'json_schema', schema: CPE_ESQUEMA_ } },
     messages: [{ role: 'user', content: contenido }]
   }, ['server-side-fallback-2026-07-01']);

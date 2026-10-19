@@ -1,1 +1,1 @@
-e3c15cc 2026-10-18 Nube: modo en vivo de Pagos (sin publicar) y su interruptor en la intranet
+8b5e3ac 2026-10-18 Nube: modo en vivo de Caja chica, Compras y cierres (sin publicar; interruptores motor_caja y motor_cierres)
