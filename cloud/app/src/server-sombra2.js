@@ -12,8 +12,12 @@ const { crearAppF2 } = require('./sombra2/app-f2');
 const { comparar } = require('./sombra2/comparar-f2');
 const pantallas = require('./sombra2/pantallas-f2');
 
+// La cuota de Sheets (60 por minuto) es de la cuenta rosanta-nube@ y la comparten todos los servicios: un 429
+// se reintenta con espera (Google no hizo nada). Este servidor solo LEE: reintenta 429 y 5xx (regla de server.js).
+const LECTURA_CON_REINTENTOS = { retryConfig: { retry: 4, retryDelay: 2000, statusCodesToRetry: [[429, 429], [500, 599]],
+  httpMethodsToRetry: ['GET', 'HEAD', 'PUT', 'POST', 'OPTIONS'], noResponseRetries: 0 } };
 function clienteSheets() {
-  return sheets({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] }) });
+  return sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] }) }, LECTURA_CON_REINTENTOS));
 }
 
 async function main() {
