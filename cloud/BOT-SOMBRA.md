@@ -39,8 +39,9 @@ Si la copia se separa del bot, falla "Las copias del bot son exactas". Si cambia
 - **Claves** (Secret Manager → variables): `BOT_WHATSAPP_TOKEN`, `BOT_IG_TOKEN`, `BOT_MESSENGER_TOKEN`, `BOT_ANTHROPIC_KEY`, `BOT_WIX_SECRETO`, `BOT_VERIFY_TOKEN`, `BOT_WEBHOOK_SECRET`, `BOT_APPS_SCRIPT_URL` (la `/exec` del bot con `?token=`), `BOT_GMAIL` (JSON de la autorización). El motor solo ve marcadores (`$WHATSAPP_TOKEN`); la clave se pone en un proceso aparte, nunca en la base ni en la línea de comandos.
 - **Tablas:** `bot_estado`, `bot_eventos`, `bot_correos` (migración 031, aplicada; respaldo previo 1792422615008).
 - **Tareas en vivo:** `POST /tareas/bot-minuto` (Salientes de la consola, devolver al bot, chats que vuelven, correos pendientes; reloj de 1 min solo en vivo), `POST /tareas/importar-estado-bot` (una vez: las Propiedades del bot sin claves), `GET /tareas/bot-eventos` (vigilar).
-- **Pendiente antes de encender:** fotos de la consola por WhatsApp (subida de archivo a Meta) en vivo; refresco del token de Instagram desde el servidor (vence a los 60 días); ensayo con el número de prueba de Meta. Pasos completos en el documento de diseño, sección 3.
-- Batería `cloud/bot`: 23 (14 sombra + 9 vivo).
+- **Fotos de la consola** (hecho): la foto de Drive vuelve como blob y la subida a `/media` va como multipart. **Token de Instagram** (hecho): `POST /tareas/refrescar-token-ig` (semanal en vivo) guarda una versión nueva de `bot-ig-token`; la cuenta del bot necesita `secretVersionAdder` SOLO en ese secreto.
+- **Pendiente antes de encender:** el ensayo con un número de prueba en una **app de Meta aparte** (servidor `rosanta-bot-ensayo`, base `rosanta_ensayo`, copia de Rosanta Leads). Plan en el documento de diseño, sección 3.
+- Batería `cloud/bot`: 27.
 
 ## Límites conocidos
 
