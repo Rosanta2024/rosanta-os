@@ -20,3 +20,14 @@ F2=$(cat "$DESTINO/LISTA-CAJA.txt" "$DESTINO/LISTA-CLIENTES.txt" "$DESTINO/LISTA
 for f in $F2; do cp "$ORIGEN/$f" "$DESTINO/$f"; done
 git -C "$RAIZ" log -1 --format='%h %cs %s' -- $(for f in $F2; do echo "apps-script/rosanta-intranet/$f"; done) > "$DESTINO/VERSION-F2.txt"
 echo "Sombra 2: $(echo "$F2" | wc -w | tr -d ' ') archivos · $(cat "$DESTINO/VERSION-F2.txt")"
+
+# Pipeline en vivo (19-oct-2026, rama claude/nube-clientes-vivo): LISTA-VIVO-CLIENTES.txt. Lo que empieza
+# con mktos/ viene de Marketing OS (apps-script/rosanta-marketing-os), lo demas de la intranet.
+for f in $(cat "$DESTINO/LISTA-VIVO-CLIENTES.txt"); do
+  case "$f" in
+    mktos/*) mkdir -p "$DESTINO/mktos"; cp "$RAIZ/apps-script/rosanta-marketing-os/${f#mktos/}" "$DESTINO/$f" ;;
+    *) cp "$ORIGEN/$f" "$DESTINO/$f" ;;
+  esac
+done
+echo "Pipeline en vivo: $(wc -l < "$DESTINO/LISTA-VIVO-CLIENTES.txt" | tr -d ' ') archivos"
+

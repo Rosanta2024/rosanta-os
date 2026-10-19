@@ -71,6 +71,7 @@ function crearServicioVivo(pool, opciones) {
     const m = crearMotor({ libros: { [mktId]: libro }, configId: 'x', editables: { [mktId]: Object.keys(PESTANAS) }, listas: LISTAS });
     m.ctx.MKT_SHEET_ID = mktId;   // EventosDatos.js
     m.ctx.SHEET_ID = mktId;       // Cotizaciones.js de Marketing OS
+    m.ctx.NUBE_SERVIDOR_ = true;  // NubeClientes.js: aca guarda el servidor, la cerradura no aplica
     return { m, libro };
   }
 

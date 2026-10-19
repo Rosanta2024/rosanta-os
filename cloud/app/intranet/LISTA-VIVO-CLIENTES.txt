@@ -3,4 +3,5 @@ MarketingDatos.js
 MedicionDatos.js
 EventosDatos.js
 EventosMes.js
+NubeClientes.js
 mktos/Cotizaciones.js

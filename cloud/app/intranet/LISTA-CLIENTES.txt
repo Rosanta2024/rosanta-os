@@ -4,3 +4,4 @@ MedicionDatos.js
 EventosDatos.js
 EventosMes.js
 CrmDatos.js
+NubeClientes.js

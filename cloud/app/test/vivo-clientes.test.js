@@ -210,3 +210,25 @@ test('La app en vivo: el hook exige su clave, la pantalla el enlace y las tareas
     assert.strictEqual((await fetch(b + '/tareas/importar', { method: 'POST', headers: { 'x-rosanta-tarea': 'tarea-x' } })).status, 200);
   } finally { srv.close(); }
 });
+
+test('Cerraduras: con motor_eventos = base la intranet y el hook de Marketing OS se niegan (y en el servidor no)', () => {
+  const vm = require('vm');
+  const { crearMotor } = require('../src/motor-pagos');
+  const m = crearMotor({ libros: {}, configId: 'x', listas: ['LISTA-VIVO-CLIENTES.txt'] });
+  let modo = 'base';
+  m.ctx._nubeInterruptor_ = () => modo;
+  m.ctx.NUBE_SERVIDOR_ = false;   // como en la intranet (el motor del servidor la pone en true)
+  assert.throws(() => m.ctx._evSoloConsulta_(), /se guarda ahora en la pantalla nueva/);
+  modo = 'sheets'; assert.doesNotThrow(() => m.ctx._evSoloConsulta_());
+  modo = 'base'; m.ctx.NUBE_SERVIDOR_ = true; assert.doesNotThrow(() => m.ctx._evSoloConsulta_(), 'en el servidor nuevo no aplica');
+  // guardarEventos llama la cerradura ANTES que todo
+  assert.match(fs.readFileSync(path.join(DIR, 'EventosDatos.js'), 'utf8'), /function guardarEventos\(auth, writes\) \{\n  _evSoloConsulta_\(\);/);
+  // cotHook_ de Marketing OS: con base niega batch y revision; list sigue
+  m.ctx.cotMotor_ = () => 'base';
+  vm.runInContext('PropertiesService = { getScriptProperties: function () { return { getProperty: function () { return "x".repeat(30); } }; } };', m.ctx);
+  const tok = 'x'.repeat(30);
+  assert.match(m.ctx.cotHook_({ token: tok, accion: 'batch', writes: [] }).error, /se mudó al servidor nuevo/);
+  assert.match(m.ctx.cotHook_({ token: tok, accion: 'revision', revision: {} }).error, /se mudó al servidor nuevo/);
+  m.ctx.cotMotor_ = () => 'sheets';
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(m.ctx.cotHook_({ token: tok, accion: 'batch', writes: [] }))), { ok: true, versiones: {} }, 'con sheets, igual que siempre');
+});

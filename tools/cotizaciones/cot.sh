@@ -19,6 +19,17 @@ case "$acc" in
   revision) BODY=$(python3 -c 'import json,sys;print(json.dumps({"token":sys.argv[1],"accion":"revision","revision":json.load(open(sys.argv[2]))}))' "$TOKEN" "${2:?falta el archivo}") ;;
   *) echo 'uso: cot.sh list|get <id>|batch <archivo>|revision <archivo>|revisiones' >&2; exit 2 ;;
 esac
+# Con el pipeline en el servidor nuevo (motor_eventos = base, 19-oct-2026): si existe
+# ~/.rosanta-secretos/cotizaciones-nube (dos lineas: la direccion /hooks/cotizaciones y su token), se usa
+# esa direccion. Volver atras = borrar (o renombrar) ese archivo. El cuerpo y la respuesta son iguales.
+NUBE="$HOME/.rosanta-secretos/cotizaciones-nube"
+if [ -f "$NUBE" ]; then
+  NURL=$(sed -n 1p "$NUBE"); NTOK=$(sed -n 2p "$NUBE" | tr -d '\n')
+  BODY=$(python3 -c 'import json,sys;b=json.loads(sys.argv[1]);b["token"]=sys.argv[2];print(json.dumps(b))' "$BODY" "$NTOK")
+  curl -sS -X POST -H 'Content-Type: application/json' --data-binary "$BODY" "$NURL"
+  echo
+  exit 0
+fi
 DEST=$(curl -sS -o /dev/null -w '%{redirect_url}' -X POST -H 'Content-Type: application/json' --data-binary "$BODY" "$URL")
 [ -n "$DEST" ] || { echo '{"ok":false,"error":"el web app no respondió con la redirección esperada"}'; exit 1; }
 curl -sS "$DEST"
