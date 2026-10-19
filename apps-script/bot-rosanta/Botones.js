@@ -8,7 +8,7 @@
  *     primer mensaje y cuando el bot no sabe qué sigue. El texto libre sigue igual.
  *   - Juanma es la única persona que atiende el chat. Horario 9:00–21:00 todos los
  *     días. Promesa (19-oct-2026, Juanma: el bot NUNCA dice su nombre, es UNA sola frase y NO promete plazo):
- *     "Alguien del restaurante se pondrá en contacto con usted lo antes posible."
+ *     "Alguien del restaurante se pondrá en contacto contigo lo antes posible."
  *
  * Límites de Meta (documentación oficial, 15-oct-2026):
  *   WhatsApp: 3 reply buttons (título 20) o lista de 10 filas (título 24, botón 20);
@@ -49,10 +49,10 @@ var BT_TXT = {
       return 'Aquí está la carta de temporada 🌿\n' + BT_MENU_URL.es + '\n\n¿Te ayudo con una mesa?';
     },
     respHumano: function (promesa) { return 'Listo. ' + promesa + ' Si quieres, adelántame qué necesitas.'; },
-    // Frase de paso a persona definida por Juanma (19-oct-2026): UNA sola para todos los casos, con "usted".
-    promesaYa: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
-    promesaManana: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
-    promesaHoy: 'Alguien del restaurante se pondrá en contacto con usted lo antes posible.',
+    // Frase de paso a persona definida por Juanma (19-oct-2026): UNA sola para todos los casos, sin plazo, con "contigo".
+    promesaYa: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
+    promesaManana: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
+    promesaHoy: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
     pruebaOk: 'Modo prueba de botones activado para este chat.'
   },
   en: {
