@@ -1,1 +1,1 @@
-239c078 2026-10-18 Nube: puente de Leer cierres y foto del comprobante a la intranet (ensayo 21/21); arregla MED_RET_MODELO_ en Compras
+d022bac 2026-10-19 Nube: compensacion de la sombra corta (base = hoja de caja/cierres/07 cada noche, conciliacion de mes) y ?nube=ensayo del dueño

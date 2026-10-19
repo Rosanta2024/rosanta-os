@@ -279,6 +279,8 @@ function cchSincronizarMaestro_(E) {
   if (viejas > 0) sh.getRange(5, 1, viejas, 8).clearContent();
   if (filas.length) {
     sh.getRange(5, 1, filas.length, 1).setNumberFormat('yyyy-mm-dd');
+    // el ID como texto (19-oct-2026): un ID de solo numeros ("08230445") Sheets lo volvia numero y perdia el cero
+    sh.getRange(5, 8, filas.length, 1).setNumberFormat('@');
     sh.getRange(5, 1, filas.length, 8).setValues(filas.map(function (r) {
       var p = r[0].split('-').map(Number);
       return [new Date(p[0], p[1] - 1, p[2], 12)].concat(r.slice(1));   // al mediodia: regla 10 de FinanzasDatos

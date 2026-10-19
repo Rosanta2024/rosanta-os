@@ -68,3 +68,9 @@ test('/tareas/conciliar-mes: pide la clave, valida el mes y responde 409 con dif
     assert.deepStrictEqual(pedidos, [undefined, '2026-09']);
   } finally { srv.close(); }
 });
+
+test('07_Caja_Chica: un ID de solo numeros que Sheets volvio numero (sin el cero) es la misma fila', () => {
+  const esp = [['2026-10-16', 'Extra Yhonathan', 100, '', 'NOMINA', 'No', 'Caja chica', '08230445']];
+  assert.deepStrictEqual(B.comparar07(esp, [['2026-10-16', 'Extra Yhonathan', 100, '', 'NOMINA', 'No', 'Caja chica', 8230445]], '2026-10-19'), []);
+  assert.strictEqual(B.comparar07(esp, [['2026-10-16', 'Extra Yhonathan', 100, '', 'NOMINA', 'No', 'Caja chica', 8230446]], '2026-10-19').length, 2);
+});

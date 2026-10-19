@@ -85,7 +85,9 @@ function filas07Hoja(fresco) {
 /** 07_Caja_Chica = lo esperado, en los dias anteriores a `hoy`. */
 function comparar07(esperadas, enHoja, hoy) {
   if (!enHoja) return ['07_Caja_Chica: no está en el maestro'];
-  const out = [], porId = (fs) => { const m = {}; fs.forEach((f) => { m[String(f[7])] = f; }); return m; };
+  // un ID de solo numeros pudo quedar como numero en la hoja ("08230445" → 8230445, antes del arreglo del 19-oct): se comparan sin los ceros de adelante
+  const id = (x) => { const t = String(x == null ? '' : x).trim(); return /^\d+$/.test(t) ? t.replace(/^0+(?=\d)/, '') : t; };
+  const out = [], porId = (fs) => { const m = {}; fs.forEach((f) => { m[id(f[7])] = f; }); return m; };
   const E = porId(esperadas.filter((f) => f[0] < hoy)), H = porId(enHoja.filter((f) => f[0] < hoy));
   Object.keys(E).forEach((id) => {
     const e = E[id], h = H[id];
