@@ -128,7 +128,7 @@ function rvCambiar(result, canal, contactoId) {
   result.respuesta = rvTextoCambio(d.idioma, 'error', d);
   result.lead.accion = 'escalar_humano';
   result.lead.requiere_humano = true;
-  rvHistoria(contactoId, result, 'Falló el sistema al cambiar (' + r.motivo + '). La reserva actual sigue igual y ya se avisó a Juanma.');
+  rvHistoria(contactoId, result, 'Falló el sistema al cambiar (' + r.motivo + '). La reserva actual sigue igual y ya se avisó al restaurante.');
   return result;
 }
 
