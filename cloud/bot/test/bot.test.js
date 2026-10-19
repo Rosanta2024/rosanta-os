@@ -24,14 +24,14 @@ function lead(t, canal, id, accion, humano, original, respuesta, resumen, email)
 const TEL = '50241234567';
 function datosReserva() {
   const C = [H_CONV,
-    conv('2026-10-18T19:00:00', 'whatsapp', TEL, 'Rocío Pérez', 'in', 'cliente', 'Hola, quiero reservar'),
-    conv('2026-10-18T19:00:05', 'whatsapp', TEL, 'Rocío Pérez', 'out', 'bot', '¿Pongo la reserva a nombre de Rocío?'),
-    conv('2026-10-18T19:01:00', 'whatsapp', TEL, 'Rocío Pérez', 'in', 'cliente', 'Sí, mañana 25 de octubre a las 8pm, 2 personas, rocio.perez@correo.com'),
-    conv('2026-10-18T19:01:06', 'whatsapp', TEL, 'Rocío Pérez', 'out', 'bot', 'Listo, Rocío 🌿 reserva confirmada')];
+    conv('2026-12-18T19:00:00', 'whatsapp', TEL, 'Rocío Pérez', 'in', 'cliente', 'Hola, quiero reservar'),
+    conv('2026-12-18T19:00:05', 'whatsapp', TEL, 'Rocío Pérez', 'out', 'bot', '¿Pongo la reserva a nombre de Rocío?'),
+    conv('2026-12-18T19:01:00', 'whatsapp', TEL, 'Rocío Pérez', 'in', 'cliente', 'Sí, mañana 25 de diciembre a las 8pm, 2 personas, rocio.perez@correo.com'),
+    conv('2026-12-18T19:01:06', 'whatsapp', TEL, 'Rocío Pérez', 'out', 'bot', 'Listo, Rocío 🌿 reserva confirmada')];
   const L = [H_LEADS,
-    lead('2026-10-18T19:00:05', 'whatsapp', TEL, 'responder_info', false, 'Hola, quiero reservar', '¿Pongo la reserva a nombre de Rocío?'),
-    lead('2026-10-18T19:01:06', 'whatsapp', TEL, 'crear_reserva', false, 'Sí, mañana 25 de octubre a las 8pm, 2 personas, rocio.perez@correo.com',
-      'Listo, Rocío 🌿 reserva confirmada', 'Reserva creada en Wix: 2026-10-25 20:00, 2 personas', 'rocio.perez@correo.com')];
+    lead('2026-12-18T19:00:05', 'whatsapp', TEL, 'responder_info', false, 'Hola, quiero reservar', '¿Pongo la reserva a nombre de Rocío?'),
+    lead('2026-12-18T19:01:06', 'whatsapp', TEL, 'crear_reserva', false, 'Sí, mañana 25 de diciembre a las 8pm, 2 personas, rocio.perez@correo.com',
+      'Listo, Rocío 🌿 reserva confirmada', 'Reserva creada en Wix: 2026-12-25 20:00, 2 personas', 'rocio.perez@correo.com')];
   return { C, L };
 }
 function datosEscala() {
@@ -84,7 +84,7 @@ test('Reserva: la sombra crea en el Wix de mentira la misma reserva que creó el
   assert.strictEqual(t.sombra.categoria, 'reserva_creada');
   assert.deepStrictEqual(t.sombra.wix, ['reservarBot']);
   assert.deepStrictEqual(compararTurno(t), []);
-  assert.match(t.sombra.respuesta, /25 de octubre|20:00/);   // el texto de confirmación lo arma el bot, no el grabado
+  assert.match(t.sombra.respuesta, /25 de diciembre|20:00/);   // el texto de confirmación lo arma el bot, no el grabado
 });
 
 test('Pasar a Juanma: la sombra avisa por correo y se calla en el mensaje siguiente, igual que el real', () => {
@@ -146,12 +146,12 @@ test('Anonimizado: ningún teléfono, correo ni nombre real queda en lo que se g
 
 test('Modo modelo: solo los mensajes del rango van al modelo; el contexto anterior va con el grabado', () => {
   const { C, L } = datosReserva();
-  const chat = armarChats(C, L, { desde: '2026-10-18T19:00:30-06:00' })[0];
+  const chat = armarChats(C, L, { desde: '2026-12-18T19:00:30-06:00' })[0];
   const pedidos = [];
   const claudeModelo = (cuerpo) => {
     pedidos.push(cuerpo);
     assert.match(cuerpo.system, /BASE DE CONOCIMIENTO:\nKB de prueba/);
-    const resp = { respuesta: 'Perfecto, la confirmo', lead: { idioma: 'es', nombre: 'Ana', email: 'cliente1@ejemplo.test', fecha: '2026-10-25', hora: '20:00', personas: '2',
+    const resp = { respuesta: 'Perfecto, la confirmo', lead: { idioma: 'es', nombre: 'Ana', email: 'cliente1@ejemplo.test', fecha: '2026-12-25', hora: '20:00', personas: '2',
       telefono: '', tipo: 'reserva', urgencia: 'caliente', resumen: 'reserva', accion: 'crear_reserva', requiere_humano: false, opciones: [], mostrar_menu: false } };
     return { code: 200, body: { model: 'claude-sonnet-5-5', content: [{ type: 'text', text: JSON.stringify(resp) }] } };
   };
@@ -186,7 +186,7 @@ function poolDeMentira(C, L, leida) {
 
 test('Comparación de la noche: guarda la corrida y responde ok si la sombra hizo lo mismo', async () => {
   const { C, L } = datosReserva();
-  const ahora = Date.parse('2026-10-19T00:30:00-06:00');
+  const ahora = Date.parse('2026-12-19T00:30:00-06:00');   // despues de la version copiada (la comparacion vale desde ahi)
   const pool = poolDeMentira(C, L, new Date(ahora - 600000));
   const s = crearServicioBot({ pool, kb: async () => '', claveModelo: '' });
   const r = await s.compararNoche(ahora);
@@ -200,7 +200,7 @@ test('Comparación de la noche: guarda la corrida y responde ok si la sombra hiz
 
 test('Comparación de la noche: copia vieja → no ok (alerta)', async () => {
   const { C, L } = datosReserva();
-  const ahora = Date.parse('2026-10-19T00:30:00-06:00');
+  const ahora = Date.parse('2026-12-19T00:30:00-06:00');   // despues de la version copiada (la comparacion vale desde ahi)
   const s = crearServicioBot({ pool: poolDeMentira(C, L, new Date(ahora - 5 * 3600000)), kb: async () => '', claveModelo: '' });
   const r = await s.compararNoche(ahora);
   assert.strictEqual(r.ok, false);
@@ -225,7 +225,7 @@ test('Las tareas piden la clave; /salud no', async () => {
 
 test('Modo modelo: si Claude no contesta (clave mala), la noche lo marca como problema y no cuenta como igual', async () => {
   const { C, L } = datosReserva();
-  const ahora = Date.parse('2026-10-19T00:30:00-06:00');
+  const ahora = Date.parse('2026-12-19T00:30:00-06:00');   // despues de la version copiada (la comparacion vale desde ahi)
   const pool = poolDeMentira(C, L, new Date(ahora - 600000));
   const { crearClaudeModelo } = require('../src/servicio-bot');
   // Claude de mentira que contesta 401, como con una clave invalida. Nada sale a internet.

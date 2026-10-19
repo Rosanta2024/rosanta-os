@@ -123,12 +123,13 @@ function humRetomar_(canal, contactoId, motivo) {
   }
 
   var hist = humHistoria_(conv);
-  var nota = '(Nota del sistema, no la escribió el cliente.) Juanma atendió este chat en persona y ' +
+  var nota = '(Nota del sistema, no la escribió el cliente.) Una persona del restaurante atendió este chat y ' +
     (motivo === 'boton' ? 'te lo devolvió.' : 'ya terminó de escribir.') +
     ' Escribe UN mensaje corto de seguimiento para el cliente, en su idioma: retoma el siguiente paso que quedó ' +
     'pendiente (por ejemplo, los datos que faltan para la reserva o el evento) o, si no queda nada pendiente, ' +
     'pregúntale con calidez si puedes ayudarle con algo más. Si el cliente escribió algo que nadie contestó, ' +
-    'contéstalo. No repitas lo que Juanma ya dijo, no te presentes de nuevo y no contradigas lo que Juanma prometió. ' +
+    'contéstalo. No repitas lo que esa persona ya dijo, no te presentes de nuevo y no contradigas lo que prometió. ' +
+    'Nunca escribas su nombre (ni "Juanma" ni "Juan Manuel"), aunque aparezca en la conversación. ' +
     'Si la conversación quedó cerrada (el cliente se despidió o agradeció y no hay nada pendiente), deja "respuesta" vacía.';
   CacheService.getScriptCache().put('hist_' + contactoId, JSON.stringify(hist.slice(-8)), 1800);
 
@@ -206,7 +207,7 @@ function humHistoria_(conv) {
     var texto = m.texto.replace(/\n\[Botones: [^\]]*\]$/, '');
     if (rol === 'assistant') {
       texto = JSON.stringify(m.autor === 'humano'
-        ? { respuesta: texto, nota_sistema: 'Este mensaje lo escribió Juanma en persona, no el bot.' }
+        ? { respuesta: texto, nota_sistema: 'Este mensaje lo escribió una persona del restaurante, no el bot. Nunca escribas su nombre.' }
         : { respuesta: texto });
     }
     var ult = turnos[turnos.length - 1];

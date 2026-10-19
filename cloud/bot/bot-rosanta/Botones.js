@@ -7,7 +7,8 @@
  *   - Botones: Reservar mesa · Ver menú · Evento privado · Hablar con alguien, en el
  *     primer mensaje y cuando el bot no sabe qué sigue. El texto libre sigue igual.
  *   - Juanma es la única persona que atiende el chat. Horario 9:00–21:00 todos los
- *     días. Promesa: "Te escribe Juanma en menos de 1 hora".
+ *     días. Promesa (19-oct-2026, Juanma: el bot NUNCA dice su nombre): "Alguien del restaurante se pondrá en
+ *     contacto contigo en menos de una hora".
  *
  * Límites de Meta (documentación oficial, 15-oct-2026):
  *   WhatsApp: 3 reply buttons (título 20) o lista de 10 filas (título 24, botón 20);
@@ -48,9 +49,9 @@ var BT_TXT = {
       return 'Aquí está la carta de temporada 🌿\n' + BT_MENU_URL.es + '\n\n¿Te ayudo con una mesa?';
     },
     respHumano: function (promesa) { return 'Listo. ' + promesa + ' Si quieres, adelántame qué necesitas.'; },
-    promesaYa: 'Te escribe Juanma en menos de una hora.',
-    promesaManana: 'Te escribe Juanma mañana a partir de las 9:00.',
-    promesaHoy: 'Te escribe Juanma hoy a partir de las 9:00.',
+    promesaYa: 'Alguien del restaurante se pondrá en contacto contigo en menos de una hora.',
+    promesaManana: 'Alguien del restaurante se pondrá en contacto contigo mañana a partir de las 9:00.',
+    promesaHoy: 'Alguien del restaurante se pondrá en contacto contigo hoy a partir de las 9:00.',
     pruebaOk: 'Modo prueba de botones activado para este chat.'
   },
   en: {
@@ -67,9 +68,9 @@ var BT_TXT = {
       return "Here's the seasonal menu 🌿\n" + BT_MENU_URL.en + '\n\nWant me to save you a table?';
     },
     respHumano: function (promesa) { return 'Got it. ' + promesa + ' Feel free to tell me what you need in the meantime.'; },
-    promesaYa: 'Juanma will message you within the hour.',
-    promesaManana: 'Juanma will message you tomorrow after 9 a.m. (Guatemala time).',
-    promesaHoy: 'Juanma will message you today after 9 a.m. (Guatemala time).',
+    promesaYa: 'Someone from the restaurant will get in touch with you within the hour.',
+    promesaManana: 'Someone from the restaurant will get in touch with you tomorrow after 9 a.m. (Guatemala time).',
+    promesaHoy: 'Someone from the restaurant will get in touch with you today after 9 a.m. (Guatemala time).',
     pruebaOk: 'Button test mode is on for this chat.'
   }
 };
