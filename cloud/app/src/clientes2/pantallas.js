@@ -84,7 +84,7 @@ function armarBotSombra() {
     'google.script.run.withSuccessHandler(function(c){var t=document.getElementById("c");if(!c.length){t.innerHTML="<tr><td colspan=11>Todavía no hay corridas: la primera sale mañana a las 6:20.</td></tr>";return}' +
     't.innerHTML=c.map(function(x){return "<tr><td>"+esc(x.cuando)+"</td><td>"+esc(x.modo)+"</td><td><small>"+esc(x.desde)+" → "+esc(x.hasta)+"</small></td><td class=n>"+(x.turnos||0)+"</td><td class=n>"+' +
     '(x.diferencias?"<span class=mal>"+(x.iguales||0)+"</span>":"<span class=ok>"+(x.iguales||0)+"</span>")+"</td><td class=n>"+f(x.contesto)+"</td><td class=n>"+f(x.accion)+"</td><td class=n>"+f(x.juanma)+"</td><td class=n>"+' +
-    '(x.reservas?x.reservas.real+" / "+x.reservas.sombra:"—")+"</td><td class=n>"+(x.costo?"US$"+x.costo.toFixed(2):"—")+"</td><td><button class=lnk data-id="+x.id+">Ver</button></td></tr>"}).join("");' +
+    '(x.reservas?x.reservas.real+" / "+x.reservas.sombra:"—")+"</td><td class=n>"+(x.modeloFallas?"<span class=mal>Claude no contestó</span>":(x.costo?"US$"+x.costo.toFixed(2):"—"))+"</td><td><button class=lnk data-id="+x.id+">Ver</button></td></tr>"}).join("");' +
     't.querySelectorAll("button").forEach(function(b){b.onclick=function(){ver(Number(b.getAttribute("data-id")))}})}).withFailureHandler(function(e){document.getElementById("c").innerHTML="<tr><td colspan=11>"+esc(e.message)+"</td></tr>"}).botSombra();' +
     'function ver(id){var d=document.getElementById("d");d.innerHTML="<p>Leyendo…</p>";google.script.run.withSuccessHandler(function(ts){' +
     'd.innerHTML="<h1>Corrida "+id+"</h1>"+(ts.length?ts.map(function(t){var r=t.real||{},s=t.sombra||{},dif=t.diferencias||[];' +

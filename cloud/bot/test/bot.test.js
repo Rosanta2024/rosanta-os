@@ -222,3 +222,17 @@ test('Las tareas piden la clave; /salud no', async () => {
     assert.strictEqual((await fetch(base + '/webhook', { method: 'POST' })).status, 404);   // no hay webhook de Meta
   } finally { srv.close(); }
 });
+
+test('Modo modelo: si Claude no contesta (clave mala), la noche lo marca como problema y no cuenta como igual', async () => {
+  const { C, L } = datosReserva();
+  const ahora = Date.parse('2026-10-19T00:30:00-06:00');
+  const pool = poolDeMentira(C, L, new Date(ahora - 600000));
+  const { crearClaudeModelo } = require('../src/servicio-bot');
+  // Claude de mentira que contesta 401, como con una clave invalida. Nada sale a internet.
+  const crearClaude = (gasto) => (cuerpo, aux) => crearClaudeModelo('x', gasto)(cuerpo, Object.assign({}, aux, { fetchSincrono: () => ({ c: 401, t: '{"error":{"message":"invalid x-api-key"}}' }) }));
+  const s = crearServicioBot({ pool, kb: async () => 'KB', claveModelo: 'mala', crearClaude });
+  const n = await s.compararNoche(ahora);
+  assert.strictEqual(n.ok, false);
+  assert.ok(n.problemas.some((p) => /Claude no contesto/.test(p)), JSON.stringify(n.problemas));
+  assert.ok(n.modelo.resumen.modeloFallas >= 1);
+});
