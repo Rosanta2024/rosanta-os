@@ -1,1 +1,1 @@
-8b5e3ac 2026-10-18 Nube: modo en vivo de Caja chica, Compras y cierres (sin publicar; interruptores motor_caja y motor_cierres)
+51bdc85 2026-10-18 Merge remote-tracking branch 'origin/main' into claude/infallible-roentgen-5185e3

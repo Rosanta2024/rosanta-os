@@ -39,6 +39,9 @@ var CPE_JUSTIFICADO_ = 0.9;
 // Los cajeros que mas se usan (cuadre del 14-oct-2026), para no escribirlos cada vez.
 var CPE_LUGARES_ = ['ATM 095 Agencia Recolección Antigua', 'ATM 603 Despensa Antigua', 'ATM 152 Agencia Antigua 5'];
 var CPE_CARPETA_ = 'Comprobantes_compras';
+// Modelo que lee la foto del comprobante: el mismo que tenia MED_RET_MODELO_ (MedicionDatos), que se
+// archivo el 15-oct-2026 con la pantalla vieja de retiros y dejo esta lectura rota (18-oct-2026).
+var CPE_MODELO_ = 'claude-opus-5';
 var CPE_FACTURAS_DIAS_ = 45;
 // Una compra cuya factura todavia no se emite (14-oct-2026, Juanma: "no es que sea sin factura,
 // la factura esta pendiente de ser emitida"). Va como SIN FACTURA con esta marca al inicio del
@@ -484,10 +487,6 @@ function _cpeUrlRecibo_(u) {
 /* ---- Leer la foto del recibo o la captura ----
    Claude lee proveedor, NIT, numero de factura, productos, total y como se pago. Nada se guarda
    sin que la persona lo confirme. La foto queda en Drive (Comprobantes_compras). */
-/* El modelo que lee las fotos. Vivia en MedicionDatos.js (MED_RET_MODELO_) y se archivo con la pantalla vieja de
-   retiros el 15-oct-2026: desde ahi este boton fallaba con "MED_RET_MODELO_ is not defined" (lo encontro el ensayo
-   del puente, 18-oct-2026). Ahora vive aca, con el mismo modelo. */
-var CPE_MODELO_ = 'claude-opus-5';
 var CPE_ESQUEMA_ = {
   type: 'object', additionalProperties: false, required: ['compras'],
   properties: { compras: { type: 'array', items: {
