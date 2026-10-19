@@ -118,10 +118,10 @@ function doGet(e) {
     tplCosteo.buscarIni = String((e && e.parameter && e.parameter.q) || '').slice(0, 60);
     tplCosteo.abrirIni = String((e && e.parameter && e.parameter.abrir) || '').slice(0, 80);
     tplCosteo.puedePagos = puedePagos; // la herramienta Pagos arriba
-    return tplCosteo.evaluate()
-      .setTitle('Rosanta \u00b7 Recetario y Proveedores').setFaviconUrl(INTRANET_ICONO_)
+    return conIcono_(tplCosteo.evaluate()
+      .setTitle('Rosanta \u00b7 Recetario y Proveedores')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL));
   }
 
   // ---- Sistema de Marketing: shell con panel lateral (Marketing OS / Reseñas / CRM / Consola).
@@ -156,10 +156,10 @@ function doGet(e) {
     // La pestana Datos expone la Sheet y los botones de sincronizacion:
     // solo para cuentas de la casa, no para invitados con Gmail.
     tplMkt.esDatos = String(usuario.email || '').indexOf('@rosanta.rest') > -1;
-    return tplMkt.evaluate()
-      .setTitle('Marketing OS · Rosanta').setFaviconUrl(INTRANET_ICONO_)
+    return conIcono_(tplMkt.evaluate()
+      .setTitle('Marketing OS · Rosanta')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL));
   }
 
   // Diagnóstico de Meta en el navegador: evita el editor de Apps Script y su
@@ -178,7 +178,7 @@ function doGet(e) {
     } catch (errProps) {
       diag.propiedades = { error: String(errProps && errProps.message || errProps) };
     }
-    return HtmlService.createHtmlOutput(
+    return conIcono_(HtmlService.createHtmlOutput(
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<body style="font-family:ui-monospace,Menlo,monospace;background:' + paletaHex_('--texto') + ';color:' + paletaHex_('--linea') + ';padding:1.5rem">' +
       '<p style="font-family:Georgia,serif;color:' + paletaHex_('--rosanta-verde-medio') + ';font-size:1.1rem;margin:0 0 1rem">' +
@@ -187,7 +187,7 @@ function doGet(e) {
       JSON.stringify(diag, null, 2)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
       '</pre></body>'
-    ).setTitle('Diagnóstico Meta').setFaviconUrl(INTRANET_ICONO_);
+    ).setTitle('Diagnóstico Meta'));
   }
 
   // Bateria de pruebas de la intranet. Solo direccion: el resultado trae nombres de
@@ -201,9 +201,9 @@ function doGet(e) {
     // completa en carriles paralelos. Solo letras y comas: va a un atributo de la pagina.
     tplPruebas.grupos = String((e && e.parameter && e.parameter.grupos) || '').toLowerCase().replace(/[^a-z,]/g, '').slice(0, 120);
     tplPruebas.carriles = PRUEBAS_CARRILES_.length;
-    return tplPruebas.evaluate()
-      .setTitle('Pruebas \u00b7 Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    return conIcono_(tplPruebas.evaluate()
+      .setTitle('Pruebas \u00b7 Rosanta Intranet')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1'));
   }
 
   // Tiempos de guardado (15-oct-2026, Tiempos.js): cuanto tarda cada guardado de Pagos y
@@ -340,10 +340,10 @@ function doGet(e) {
     } catch (errPdf) {
       cuerpo = '<h1>No se pudo generar el PDF</h1><p>' + _htmlEsc_(String(errPdf && errPdf.message || errPdf)) + '</p>';
     }
-    return HtmlService.createHtmlOutput('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    return conIcono_(HtmlService.createHtmlOutput('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
         '<style>body{font-family:Arial,Helvetica,sans-serif;background:' + paletaHex_('--rosanta-crema') + ';color:' + paletaHex_('--texto') + ';padding:2rem;max-width:40rem;margin:auto}h1{font-family:Georgia,serif;color:' + paletaHex_('--rosanta-verde') + '}a{color:' + paletaHex_('--rosanta-verde') + '}</style></head><body>' +
         cuerpo + '<p><a href="' + _htmlEsc_(volverA) + '">Volver al reporte</a></p></body></html>')
-      .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_);
+      .setTitle('Rosanta Intranet'));
   }
 
   // Caja: proyeccion del saldo del banco a 90 dias (p94) contra el piso y el objetivo
@@ -359,10 +359,10 @@ function doGet(e) {
   tpl.usuario = usuario;
   tpl.urlBase = urlBase;
   tpl.authToken = authToken;
-  return tpl.evaluate()
-    .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
+  return conIcono_(tpl.evaluate()
+    .setTitle('Rosanta Intranet')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT));
 }
 
 /**
@@ -373,12 +373,17 @@ function doGet(e) {
  */
 var INTRANET_ICONO_ = 'https://rosanta-nube-sombra2-512086396641.northamerica-south1.run.app/marca/favicon-32.png';
 
+/** Pone el favicon. Si Apps Script rechazara la URL, la pagina sale igual, sin icono (nunca tumba doGet). */
+function conIcono_(salida) {
+  try { return salida.setFaviconUrl(INTRANET_ICONO_); } catch (e) { return salida; }
+}
+
 function render_(nombre, datos) {
   const tpl = HtmlService.createTemplateFromFile(nombre);
   Object.keys(datos || {}).forEach(function (k) { tpl[k] = datos[k]; });
-  return tpl.evaluate()
-    .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  return conIcono_(tpl.evaluate()
+    .setTitle('Rosanta Intranet')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1'));
 }
 
 /**
