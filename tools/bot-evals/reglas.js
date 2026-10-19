@@ -10,7 +10,7 @@
  * Críticas: si una de estas empeora respecto de la línea base, la batería frena la publicación.
  */
 
-const CRITICAS = new Set(['se_calla', 'pasa_a_juanma', 'no_inventa_precios', 'no_confirma_sin_sistema', 'no_confirma_pago',
+const CRITICAS = new Set(['se_calla', 'pasa_a_juanma', 'avisa_a_juanma', 'no_inventa_precios', 'no_confirma_sin_sistema', 'no_confirma_pago',
   'no_rompe', 'no_cancela', 'no_crea_reserva', 'crea_reserva', 'no_promete_disponibilidad', 'no_nombra_a_juanma']);
 
 const RE = {
@@ -80,6 +80,9 @@ const REGLAS = {
     const w = t.wix.find((x) => x.ruta === 'cancelarBot');
     return { ok: !w, detalle: w ? 'intentó cancelar una reserva' : '' };
   } },
+  // 19-oct-2026 (Louise): un correo que el bot no resolvió nunca queda sin aviso a Juanma.
+  avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: t.avisoJuanma, detalle: t.avisoJuanma ? '' : 'no le llegó a Juanma el aviso "Lead para atender"' }) },
+  no_avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: !t.avisoJuanma, detalle: t.avisoJuanma ? 'le avisó a Juanma sin necesidad' : '' }) },
   aviso_con_datos_evento: { clase: 'flujo', f: (t) => ({ ok: t.pipeline, detalle: t.pipeline ? '' : 'el aviso a Juanma no trae el bloque del evento' }) },
   no_rompe: { clase: 'flujo', f: (t) => {
     const e = t.errores.concat(t.logsError);

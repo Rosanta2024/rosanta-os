@@ -3077,6 +3077,95 @@
      "texto": "¡Eso sí que es entusiasmo! 😄 ¿Qué se te antoja hoy — una mesa, info del menú, o algo más?"
     }
    ]
+  },
+  {
+   "origen": "correo real 2026-10-16/19 (Louise Thomas), anonimizado",
+   "canal": "correo",
+   "perfil": "Louise Thomas",
+   "estado": null,
+   "grupo": "reservas",
+   "id": "RES-12",
+   "titulo": "Louise: cambiar la reserva por correo, de lunes a domingo, desde OTRA dirección (no aparece): borrador + aviso a Juanma, nunca silencio",
+   "correo": "louise.trabajo@ejemplo.test",
+   "wix": {
+    "cambiarBot": {
+     "ok": false,
+     "motivo": "SIN_COINCIDENCIA"
+    }
+   },
+   "eventos": [
+    {
+     "t": "2026-10-19T05:33:00-06:00",
+     "de": "cliente",
+     "texto": "Hi! We have a reservation for 3 on Monday Oct 26 at 5:30pm. Could we move it to Sunday Oct 25 at 6:00pm instead? Also, we'd prefer a table inside in case it rains. Thanks, Louise",
+     "grabado": {
+      "respuesta": "Hi Louise! Let me check that for you.",
+      "categoria": "reserva_cambiada",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Quiere mover su reserva del lunes 26 al domingo 25 a las 18:00",
+      "email": "",
+      "nombre": "Louise Thomas",
+      "lead": {
+       "accion": "cambiar_reserva",
+       "tipo": "reserva",
+       "fecha_actual": "2026-10-26",
+       "hora_actual": "17:30",
+       "fecha": "2026-10-25",
+       "hora": "18:00",
+       "personas": "3",
+       "idioma": "en"
+      }
+     },
+     "reglas": [
+      "avisa_a_juanma",
+      "no_crea_reserva",
+      "idioma:en"
+     ]
+    }
+   ]
+  },
+  {
+   "origen": "correo real 2026-10-16/19 (Louise Thomas), anonimizado",
+   "canal": "correo",
+   "perfil": "Louise Thomas",
+   "estado": null,
+   "grupo": "reservas",
+   "id": "RES-13",
+   "titulo": "Louise: el mismo cambio por correo desde la dirección de la reserva: se hace en Wix y se contesta sola, sin molestar a Juanma",
+   "correo": "louise@ejemplo.test",
+   "eventos": [
+    {
+     "t": "2026-10-19T05:33:00-06:00",
+     "de": "cliente",
+     "texto": "Hi! Could we move our Monday Oct 26 5:30pm reservation for 3 to Sunday Oct 25 at 6:00pm? Thanks, Louise",
+     "grabado": {
+      "respuesta": "Hi Louise! Done.",
+      "categoria": "reserva_cambiada",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Quiere mover su reserva al domingo 25 a las 18:00",
+      "email": "",
+      "nombre": "Louise Thomas",
+      "lead": {
+       "accion": "cambiar_reserva",
+       "tipo": "reserva",
+       "fecha_actual": "2026-10-26",
+       "hora_actual": "17:30",
+       "fecha": "2026-10-25",
+       "hora": "18:00",
+       "personas": "3",
+       "idioma": "en"
+      }
+     },
+     "reglas": [
+      "contesta",
+      "accion:reserva_cambiada",
+      "no_avisa_a_juanma",
+      "idioma:en"
+     ]
+    }
+   ]
   }
  ]
 }

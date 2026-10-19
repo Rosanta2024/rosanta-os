@@ -96,8 +96,11 @@ function versionBot() {
 function correrCaso(caso, n, M, ctx) {
   const { crearMotor, fetchSincrono } = M.motor;
   const { leadGrabado, crearWix, webhook, historiaReal } = M.rep;
-  const id = caso.canal === 'whatsapp' ? '5025559' + String(n).padStart(4, '0') : '99999000' + String(n).padStart(4, '0');
-  const wixBase = crearWix();
+  const id = caso.canal === 'whatsapp' ? '5025559' + String(n).padStart(4, '0') : caso.canal === 'correo' ? (caso.correo || 'cliente' + n + '@ejemplo.test')
+    : '99999000' + String(n).padStart(4, '0');
+  // caso.wix: { ruta: cuerpo } fija lo que contesta Wix (p. ej. que con esa dirección no hay reserva).
+  const wixBase = crearWix(caso.wix ? (ruta) => (caso.wix[ruta] ? { code: 200, body: caso.wix[ruta] } : null) : undefined);
+  const salCorreo = { respuestas: [], borradores: [] };
   const wixLog = [];
   const wix = (ruta, p) => { const r = wixBase(ruta, p); wixLog.push({ ruta, ok: r.code < 300 && !(r.body && r.body.ok === false) }); return r; };
   let turno = null;
@@ -148,11 +151,18 @@ function correrCaso(caso, n, M, ctx) {
     const n0 = { envios: motor.envios.length, leads: motor.libros.leads.Leads.length, correos: motor.correos.length, wix: wixLog.length,
       conv: motor.libros.leads.Conversaciones.length, logs: motor.logs.length, claude: motor.claudePedidos.length };
     const errTurno = [];
-    try { motor.recibir(e.foto ? webhookFoto(caso.canal, id, caso.perfil, e.texto, i) : webhook(caso.canal, id, caso.perfil, e.texto, i)); } catch (x) { errTurno.push('mensaje ' + i + ': ' + x.message); }
+    const c0 = { r: salCorreo.respuestas.length, b: salCorreo.borradores.length };
+    try {
+      if (caso.canal === 'correo') correoRecibir(motor, id, caso.perfil, e.texto, t, i, salCorreo);
+      else motor.recibir(e.foto ? webhookFoto(caso.canal, id, caso.perfil, e.texto, i) : webhook(caso.canal, id, caso.perfil, e.texto, i));
+    } catch (x) { errTurno.push('mensaje ' + i + ': ' + x.message); }
     if (enRafaga && humTras !== null && !motor.props.has(clave)) motor.props.set(clave, humTras);
     if (!e.reglas) { errores.push(...errTurno); return; }
 
-    const envs = motor.envios.slice(n0.envios).filter((s) => s.a === id);
+    // Por correo "contestó" = salió la respuesta sola; un borrador no le llega al cliente (Juanma tiene que mandarlo).
+    const envs = caso.canal === 'correo' ? salCorreo.respuestas.slice(c0.r).map((b) => ({ a: id, texto: b }))
+      : motor.envios.slice(n0.envios).filter((s) => s.a === id);
+    const borradores = salCorreo.borradores.slice(c0.b);
     const leadsN = motor.libros.leads.Leads.slice(Math.max(n0.leads, 1)).filter((r) => String(r[11]) === id);
     const ult = leadsN[leadsN.length - 1];
     const correos = motor.correos.slice(n0.correos);
@@ -160,7 +170,8 @@ function correrCaso(caso, n, M, ctx) {
       cliente: e.texto || (e.foto ? '(foto)' : ''), canal: caso.canal, t: e.t,
       clienteTodo: caso.eventos.slice(0, i + 1).filter((x) => x.de === 'cliente').map((x) => x.texto || '').join('\n'),
       contesto: envs.length > 0,
-      respuesta: envs.map((s) => s.texto).join('\n'),
+      respuesta: envs.map((s) => s.texto).concat(borradores).join('\n'),
+      borrador: borradores.length > 0,
       botones: envs.reduce((a, s) => a.concat(s.botones || []), []),
       categoria: ult ? M.rep.categoriaDe(ult[8], ult[7]) : '',
       humano: ult ? ult[9] === 'Sí' : null,
@@ -192,6 +203,17 @@ function correrCaso(caso, n, M, ctx) {
     turnos.push({ i, cliente: R.corto(res.cliente), respuesta: res.respuesta, categoria: res.categoria, humano: res.humano, wix: res.wix.map((w) => w.ruta), reglas });
   });
   return { id: caso.id, grupo: caso.grupo, titulo: caso.titulo, turnos, errores };
+}
+
+/** Un correo del cliente, por el camino real del canal de correo (revisarCorreosClientes con Gmail imitado). */
+function correoRecibir(motor, email, nombre, texto, t, n, sal) {
+  const msg = { getId: () => 'eval-' + email + '-' + n, getFrom: () => '"' + nombre + '" <' + email + '>', getPlainBody: () => texto,
+    getSubject: () => 'Reservation', getDate: () => new Date(t), isDraft: () => false,
+    reply: (b) => sal.respuestas.push(b), createDraftReply: (b) => sal.borradores.push(b) };
+  motor.ctx.GmailApp.search = () => [{ getId: () => 'hilo-' + email, getMessages: () => [msg] }];
+  motor.props.set('CORREO_DESDE', String(t - 60000));
+  motor.props.set('CORREO_RED_ULTIMA', String(t));   // la red de cada hora no corre en la batería
+  motor.ctx.revisarCorreosClientes();
 }
 
 function webhookFoto(canal, id, nombre, texto, n) {
