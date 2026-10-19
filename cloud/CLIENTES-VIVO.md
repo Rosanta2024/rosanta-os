@@ -1,0 +1,23 @@
+# Clientes en vivo — el pipeline de eventos (construido y ensayado el 19-oct-2026, SIN encender)
+
+Rama `claude/nube-clientes-vivo`. Diseño: `Rosanta OS/00_Admin/Apps_Script_e_IA/2026-10-17_Nube_Fase2_y_MarketingOS.md` (secciones 3b, 5 y 8).
+
+## Un solo escritor
+Hoy escriben en Marketing OS › `cotizaciones` y `revisiones` la pantalla Eventos de la intranet y la revisión diaria de la Mac (`cot.sh` → `?hook=cotizaciones` de Marketing OS). El bot NO escribe ahí. Con **PARAMETROS › `motor_eventos` = base**:
+- la pantalla Eventos del servidor nuevo guarda con el **código real** (`EventosDatos.js`: versión todo o nada, y sala corrige solo lo suyo);
+- la revisión diaria escribe por `/hooks/cotizaciones` del servidor nuevo, con el **mismo contrato** que `cotHook_` (list, get, batch, revision, revisiones; usa el `Cotizaciones.js` real de Marketing OS). `cot.sh` usa la dirección nueva **si existe** `~/.rosanta-secretos/cotizaciones-nube` (2 líneas: la URL y el token);
+- la base (`filas_clientes`, migración 012) manda y cada guardado se copia a la hoja; la consola, el CRM y el informe del mes la siguen leyendo;
+- **cerraduras** (sin publicar): con base, `guardarEventos` de la intranet (`NubeClientes.js`) y `cotHook_` (batch y revision) se niegan;
+- si alguien escribe a mano en la hoja una fila del servidor: **conflicto**, no se pisa y queda en `filas_clientes_importaciones`.
+Reservas (Wix), carritos (Wix) y CRM (CRMSync) NO cambian de escritor en esta fase: la sombra de Clientes los copia.
+
+## Ensayo (`cloud/herramientas/ensayo-clientes.js`): 37/37
+Servicio `rosanta-nube-clientes-ensayo`, base `rosanta_ensayo`, hoja "ENSAYO Clientes en vivo" (`1OzqU5Av0Wx4ajGeTON__A0SQeJmoW0OZ-a-mduAJ56c`, sembrada con el pipeline real; `rosanta-nube@` como Editor solo ahí). Con sheets (409, Apps Script escribe y se importa), encendido (~6.5 s), guardados por pantalla y por hook (210–1112 ms desde la Mac), versión vieja rechazada, cocina 403, revisión del día sin duplicar, clave del hook, copia con su marca, conflicto, vuelta atrás (~7 s) y Apps Script escribiendo otra vez. En cada paso: base = hoja, sin duplicados ni faltantes. (El "sala" de prueba es de solo lectura: el código real lo niega; lo de sala solo-lo-suyo lo cubre la batería.)
+
+## Paso a vivo (después del 26-oct, con el sí de Juanma)
+1. Publicar la intranet con `NubeClientes.js` y la cerradura de `EventosDatos.js` (batería del navegador, candado clasp), con `motor_eventos` todavía en sheets; publicar Marketing OS con la cerradura de `cotHook_`.
+2. Aplicar la 012 en `rosanta`; compartir Marketing OS con `rosanta-nube@` como **Editor**; secreto `COTIZ_TOKEN` en Secret Manager (el valor de las Propiedades de Marketing OS).
+3. Publicar el servicio con `MKT_VIVO_ID` = Marketing OS, `CLIENTES_VIVO_REAL=si`, `INTERRUPTOR_LIBRO` = Config, y su reloj de importar cada 15 min.
+4. `motor_eventos = base` en PARAMETROS, importar, y crear `~/.rosanta-secretos/cotizaciones-nube` en la Mac.
+**Volver atrás:** `motor_eventos = sheets` y borrar ese archivo (~7 s).
+Después del paso: borrar el servicio de ensayo, la hoja de ensayo (papelera) y las filas de ensayo de `rosanta_ensayo`.
