@@ -45,7 +45,32 @@ function cargarDeMigracion(archivo) {
       return Object.fromEntries(cols.map((c, i) => [c, vals[i]]));
     });
   };
-  return armar(bloque('permisos'), bloque('acciones_solo_dueno'));
+  let permisos = bloque('permisos');
+  const soloDueno = bloque('acciones_solo_dueno');
+  // Sin archivo explicito: aplica encima las migraciones posteriores del rango (022 en adelante), con
+  // los mismos tres tipos de sentencia que usan: DELETE por rol y parte, UPDATE de nota e INSERT.
+  if (!archivo) {
+    const dir = path.dirname(MIGRACION);
+    fs.readdirSync(dir).filter((f) => /^02[2-9]_.*\.sql$/.test(f)).sort().forEach((f) => {
+      const s2 = fs.readFileSync(path.join(dir, f), 'utf8').replace(/--[^\n]*/g, '');
+      for (const m of s2.matchAll(/DELETE FROM permisos WHERE rol = '(\w+)' AND parte = '(\w+)';/g)) {
+        permisos = permisos.filter((x) => !(x.rol === m[1] && x.parte === m[2]));
+      }
+      for (const m of s2.matchAll(/UPDATE permisos SET nota = '((?:[^']|'')*)' WHERE parte = '(\w+)';/g)) {
+        permisos.filter((x) => x.parte === m[2]).forEach((x) => { x.nota = m[1]; });
+      }
+      const ins = s2.match(/INSERT INTO permisos \(([^)]*)\) VALUES([\s\S]*?\))\s*;/);
+      if (ins) {
+        const cols = ins[1].split(',').map((c) => c.trim());
+        [...ins[2].matchAll(/\(([^()]*)\)/g)].forEach((t) => {
+          const vals = [...t[1].matchAll(/'((?:[^']|'')*)'/g)].map((v) => v[1]);
+          permisos.push(Object.fromEntries(cols.map((c, i) => [c, vals[i]])));
+        });
+      }
+      if (/\b(ALTER|DROP|TRUNCATE)\b/i.test(s2)) throw new Error(f + ' trae una sentencia que este lector no sabe aplicar.');
+    });
+  }
+  return armar(permisos, soloDueno);
 }
 
 /**
