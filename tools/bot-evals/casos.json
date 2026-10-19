@@ -1109,7 +1109,7 @@
      },
      "reglas": [
       "pasa_a_juanma",
-      "menciona_juanma"
+      "no_nombra_a_juanma"
      ]
     },
     {
@@ -1485,7 +1485,7 @@
      },
      "reglas": [
       "pasa_a_juanma",
-      "menciona_juanma",
+      "no_nombra_a_juanma",
       "sin_frases_prohibidas",
       "no_promete_compensacion",
       "juez:tono"
@@ -1522,7 +1522,7 @@
      },
      "reglas": [
       "pasa_a_juanma",
-      "menciona_juanma",
+      "no_nombra_a_juanma",
       "no_promete_compensacion",
       "sin_frases_prohibidas"
      ]
@@ -1777,7 +1777,7 @@
      "reglas": [
       "pasa_a_juanma",
       "idioma:en",
-      "menciona_juanma"
+      "no_nombra_a_juanma"
      ]
     },
     {
@@ -1888,7 +1888,7 @@
      },
      "reglas": [
       "pasa_a_juanma",
-      "menciona_juanma"
+      "no_nombra_a_juanma"
      ]
     },
     {
@@ -2507,7 +2507,7 @@
      "de": "cliente",
      "texto": "Listo, ya hice la transferencia del anticipo",
      "grabado": {
-      "respuesta": "Gracias 🙌 Juanma revisa la transferencia y te confirma.",
+      "respuesta": "Gracias 🙌 Alguien del restaurante revisa la transferencia y te confirma.",
       "categoria": "escalar_humano",
       "humano": true,
       "idioma": "es",

@@ -11,7 +11,7 @@
  */
 
 const CRITICAS = new Set(['se_calla', 'pasa_a_juanma', 'no_inventa_precios', 'no_confirma_sin_sistema', 'no_confirma_pago',
-  'no_rompe', 'no_cancela', 'no_crea_reserva', 'crea_reserva', 'no_promete_disponibilidad']);
+  'no_rompe', 'no_cancela', 'no_crea_reserva', 'crea_reserva', 'no_promete_disponibilidad', 'no_nombra_a_juanma']);
 
 const RE = {
   prohibidas: /en breve|alguien del equipo|a la brevedad|persona del equipo|someone (from|on) (the|our) team|\bshortly\b/i,
@@ -125,9 +125,11 @@ const REGLAS = {
     const m = t.respuesta.match(RE.prohibidas);
     return { ok: !m, detalle: m ? 'dice "' + m[0] + '"' : '' };
   } },
-  menciona_juanma: { clase: 'texto', conTexto: true, f: (t) => {
-    const ok = /juanma/i.test(t.respuesta);
-    return { ok, detalle: ok ? '' : 'no usa la frase de paso a Juanma' };
+  // Regla de Juanma (19-oct-2026): el bot NUNCA le da su nombre al cliente. Al pasar un chat dice que alguien del
+  // restaurante se pondrá en contacto. Se revisa en TODOS los mensajes en que el bot contesta.
+  no_nombra_a_juanma: { clase: 'texto', conTexto: true, f: (t) => {
+    const m = t.respuesta.match(/juanma|juan manuel/i);
+    return { ok: !m, detalle: m ? 'le da al cliente el nombre: "' + m[0] + '"' : '' };
   } },
   no_pide_otro_canal: { clase: 'texto', conTexto: true, f: (t) => {
     const m = t.respuesta.match(RE.otroCanal);
@@ -179,8 +181,8 @@ function parsear(r) {
 /** Evalúa las reglas deterministas de un turno. Las de juez quedan con ok:null y juez:true. */
 function evaluar(turno, reglas, ctx) {
   const lista = reglas.map(parsear);
-  // Siempre: que no se rompa y que los botones sean válidos; si contestó, que no invente precios.
-  ['no_rompe', 'botones_validos'].concat(turno.contesto ? ['no_inventa_precios'] : []).forEach((g) => {
+  // Siempre: que no se rompa y que los botones sean válidos; si contestó, que no invente precios ni nombre a Juanma.
+  ['no_rompe', 'botones_validos'].concat(turno.contesto ? ['no_inventa_precios', 'no_nombra_a_juanma'] : []).forEach((g) => {
     if (!lista.some((x) => x.nombre === g)) lista.push({ id: g, nombre: g, arg: '', pendiente: false, auto: true });
   });
   return lista.map((r) => {

@@ -1,18 +1,18 @@
-Batería del bot · @58 · 4eae1b3 2026-10-17 · modo grabado · 0.2 s
-Puntaje: 93.2% de las reglas (357 pasan, 26 fallan, 20 sin dato, 2 pendientes de decisión)
-  texto (lo que dice la respuesta que recibió el cliente real): 122 ok, 19 fallas
+Batería del bot · @58 · 4eae1b3 2026-10-17 · modo grabado · 0.1 s
+Puntaje: 94.6% de las reglas (424 pasan, 24 fallan, 20 sin dato, 2 pendientes de decisión)
+  texto (lo que dice la respuesta que recibió el cliente real): 189 ok, 17 fallas
   flujo (lo que hace el código: callarse, pasar a Juanma, Wix): 235 ok, 7 fallas
   juez (tono, fiel a la base): 0 ok, 0 fallas
 Casos sin ninguna falla: 32 de 50
-  reservas              5/11 casos · 98 ok, 9 fallas
-  eventos               1/7 casos · 58 ok, 8 fallas
-  quejas_cobros         2/7 casos · 51 ok, 8 fallas
-  ingles                4/4 casos · 26 ok, 0 fallas
-  horarios              3/3 casos · 19 ok, 0 fallas
-  menu_precios          3/3 casos · 17 ok, 0 fallas
-  fotos                 3/3 casos · 15 ok, 0 fallas
-  juanma_tiene_el_chat  4/4 casos · 28 ok, 0 fallas
-  spam_raros            7/8 casos · 45 ok, 1 fallas
+  reservas              5/11 casos · 117 ok, 9 fallas
+  eventos               1/7 casos · 71 ok, 7 fallas
+  quejas_cobros         3/7 casos · 59 ok, 6 fallas
+  ingles                4/4 casos · 31 ok, 0 fallas
+  horarios              3/3 casos · 24 ok, 0 fallas
+  menu_precios          3/3 casos · 21 ok, 0 fallas
+  fotos                 3/3 casos · 17 ok, 0 fallas
+  juanma_tiene_el_chat  3/4 casos · 29 ok, 1 fallas
+  spam_raros            7/8 casos · 55 ok, 1 fallas
 
 Fallas (las críticas primero; --detalle para ver la respuesta):
   !! RES-02 #2 no_promete_disponibilidad — promete lugar sin revisar: "queda perfecto"
@@ -24,20 +24,18 @@ Fallas (las críticas primero; --detalle para ver la respuesta):
   !! EVE-03 #2 no_inventa_precios — precio que no está en la base: Q320, Q230
   !! EVE-04 #2 no_inventa_precios — precio que no está en la base: Q320, Q470, Q230, Q160
   !! EVE-06 #6 no_inventa_precios — precio que no está en la base: Q470, Q380
+  !! QUE-02 #0 no_nombra_a_juanma — le da al cliente el nombre: "Juanma"
   !! QUE-03 #0 pasa_a_juanma — no le pasó el chat a Juanma (acción: responder_info)
   !! QUE-04 #7 pasa_a_juanma — no le pasó el chat a Juanma (acción: responder_info)
+  !! JUA-03 #0 no_nombra_a_juanma — le da al cliente el nombre: "Juanma"
      RES-05 #5 no_pasa_a_juanma — le pasó el chat a Juanma sin necesidad (acción: escalar_humano)
      RES-05 #5 sin_frases_prohibidas — dice "Alguien del equipo"
      RES-06 #0 accion:reserva_cambiada — acción escalar_humano (se esperaba reserva_cambiada)
      RES-07 #3 pide:correo — no pide correo
      RES-07 #10 no_pide_otro_canal — manda al cliente a otro canal: "llamar"
      RES-10 #0 accion:cancelar_reserva — acción escalar_humano (se esperaba cancelar_reserva)
-     EVE-03 #2 menciona_juanma — no usa la frase de paso a Juanma
      EVE-05 #2 pide:correo — no pide correo
-     QUE-01 #0 menciona_juanma — no usa la frase de paso a Juanma
      QUE-01 #0 sin_frases_prohibidas — dice "Alguien del equipo"
      QUE-03 #0 no_contiene:número equivocado — dice "número equivocado"
      QUE-04 #7 no_contiene:número equivocado — dice "número equivocado"
-     QUE-05 #4 menciona_juanma — no usa la frase de paso a Juanma
-     QUE-07 #2 menciona_juanma — no usa la frase de paso a Juanma
      RAR-02 #0 no_pasa_a_juanma — le pasó el chat a Juanma sin necesidad (acción: escalar_humano)

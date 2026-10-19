@@ -1,11 +1,11 @@
 {
- "fecha": "2026-10-19T16:05:17.822Z",
+ "fecha": "2026-10-19T16:11:29.619Z",
  "version": "@58 · 4eae1b3 2026-10-17",
  "modo": "grabado",
  "juez": false,
  "casosArchivo": "tools/bot-evals/casos.json",
  "motor": "../sad-merkle-6c168a/cloud/bot/src",
- "segundos": 0.2,
+ "segundos": 0.1,
  "gasto": {
   "bot": {
    "llamadas": 0,
@@ -26,8 +26,8 @@
   "casos": 50,
   "casosOk": 32,
   "reglas": {
-   "ok": 357,
-   "falla": 26,
+   "ok": 424,
+   "falla": 24,
    "sinDato": 20,
    "pendientes": 2
   },
@@ -35,55 +35,55 @@
    "reservas": {
     "casos": 11,
     "casosOk": 5,
-    "ok": 98,
+    "ok": 117,
     "falla": 9
    },
    "eventos": {
     "casos": 7,
     "casosOk": 1,
-    "ok": 58,
-    "falla": 8
+    "ok": 71,
+    "falla": 7
    },
    "quejas_cobros": {
     "casos": 7,
-    "casosOk": 2,
-    "ok": 51,
-    "falla": 8
+    "casosOk": 3,
+    "ok": 59,
+    "falla": 6
    },
    "ingles": {
     "casos": 4,
     "casosOk": 4,
-    "ok": 26,
+    "ok": 31,
     "falla": 0
    },
    "horarios": {
     "casos": 3,
     "casosOk": 3,
-    "ok": 19,
+    "ok": 24,
     "falla": 0
    },
    "menu_precios": {
     "casos": 3,
     "casosOk": 3,
-    "ok": 17,
+    "ok": 21,
     "falla": 0
    },
    "fotos": {
     "casos": 3,
     "casosOk": 3,
-    "ok": 15,
+    "ok": 17,
     "falla": 0
    },
    "juanma_tiene_el_chat": {
     "casos": 4,
-    "casosOk": 4,
-    "ok": 28,
-    "falla": 0
+    "casosOk": 3,
+    "ok": 29,
+    "falla": 1
    },
    "spam_raros": {
     "casos": 8,
     "casosOk": 7,
-    "ok": 45,
+    "ok": 55,
     "falla": 1
    }
   },
@@ -120,6 +120,10 @@
     "ok": 65,
     "falla": 5
    },
+   "no_nombra_a_juanma": {
+    "ok": 68,
+    "falla": 2
+   },
    "crea_reserva": {
     "ok": 6,
     "falla": 0
@@ -155,10 +159,6 @@
    "aviso_con_datos_evento": {
     "ok": 1,
     "falla": 0
-   },
-   "menciona_juanma": {
-    "ok": 1,
-    "falla": 4
    },
    "contesta": {
     "ok": 3,
@@ -199,8 +199,8 @@
   },
   "porClase": {
    "texto": {
-    "ok": 122,
-    "falla": 19
+    "ok": 189,
+    "falla": 17
    },
    "flujo": {
     "ok": 235,
@@ -348,17 +348,6 @@
     "caso": "EVE-03",
     "grupo": "eventos",
     "turno": 2,
-    "regla": "menciona_juanma",
-    "critica": false,
-    "clase": "texto",
-    "detalle": "no usa la frase de paso a Juanma",
-    "cliente": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
-    "respuesta": "¡Perfecto, Pablo! Anotado todo 👍 Ahora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la ate…"
-   },
-   {
-    "caso": "EVE-03",
-    "grupo": "eventos",
-    "turno": 2,
     "regla": "no_inventa_precios",
     "critica": true,
     "clase": "texto",
@@ -403,17 +392,6 @@
     "caso": "QUE-01",
     "grupo": "quejas_cobros",
     "turno": 0,
-    "regla": "menciona_juanma",
-    "critica": false,
-    "clase": "texto",
-    "detalle": "no usa la frase de paso a Juanma",
-    "cliente": "Estimado equipo de Rosanta, Quisiera compartir una retroalimentación sobre la experiencia que tuve junto a una amiga durante la cena y exper…",
-    "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad. Leer tu experiencia nos importa,…"
-   },
-   {
-    "caso": "QUE-01",
-    "grupo": "quejas_cobros",
-    "turno": 0,
     "regla": "sin_frases_prohibidas",
     "critica": false,
     "clase": "texto",
@@ -422,6 +400,17 @@
     "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad. Leer tu experiencia nos importa,…"
    },
    {
+    "caso": "QUE-02",
+    "grupo": "quejas_cobros",
+    "turno": 0,
+    "regla": "no_nombra_a_juanma",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "le da al cliente el nombre: \"Juanma\"",
+    "cliente": "Qué tal, buenas noches! Disculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos v…",
+    "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. …"
+   },
+   {
     "caso": "QUE-03",
     "grupo": "quejas_cobros",
     "turno": 0,
@@ -466,26 +455,15 @@
     "respuesta": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos infor…"
    },
    {
-    "caso": "QUE-05",
-    "grupo": "quejas_cobros",
-    "turno": 4,
-    "regla": "menciona_juanma",
-    "critica": false,
+    "caso": "JUA-03",
+    "grupo": "juanma_tiene_el_chat",
+    "turno": 0,
+    "regla": "no_nombra_a_juanma",
+    "critica": true,
     "clase": "texto",
-    "detalle": "no usa la frase de paso a Juanma",
-    "cliente": "We are on the door but it is closed",
-    "respuesta": "Oh no! Let me flag this for the team right away — someone will be with you in just a moment 🚪"
-   },
-   {
-    "caso": "QUE-07",
-    "grupo": "quejas_cobros",
-    "turno": 2,
-    "regla": "menciona_juanma",
-    "critica": false,
-    "clase": "texto",
-    "detalle": "no usa la frase de paso a Juanma",
-    "cliente": "Uds me podrían confirmar si lleva algún edulcorante?",
-    "respuesta": "Entiendo la consulta, pero honestamente no tengo esa información en la mano — y no quiero darte un dato incorrecto. Lo mejor es que alguien …"
+    "detalle": "le da al cliente el nombre: \"Juanma\"",
+    "cliente": "Qué tal, buenas noches! Disculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos v…",
+    "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. …"
    },
    {
     "caso": "RAR-02",
@@ -515,7 +493,7 @@
     "detalle": "la foto no queda ni en Conversaciones"
    }
   ],
-  "puntaje": 93.2
+  "puntaje": 94.6
  },
  "resultados": [
   {
@@ -602,6 +580,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -662,6 +649,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -749,6 +745,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -800,6 +805,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -878,6 +892,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -929,6 +952,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1027,6 +1059,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -1084,6 +1125,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1148,6 +1198,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1226,6 +1285,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -1289,6 +1357,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -1338,6 +1415,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1417,6 +1503,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -1468,6 +1563,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1546,6 +1650,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -1588,6 +1701,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1666,6 +1788,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -1729,6 +1860,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -1771,6 +1911,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -1849,6 +1998,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -1913,6 +2071,15 @@
        "clase": "texto",
        "ok": false,
        "detalle": "precio que no está en la base: Q470, Q230"
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -1976,6 +2143,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -2020,6 +2196,15 @@
        "pendiente": false,
        "auto": true,
        "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
        "ok": true,
        "detalle": ""
       }
@@ -2086,6 +2271,15 @@
        "clase": "flujo",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -2107,13 +2301,13 @@
        "detalle": "no le pasó el chat a Juanma (acción: responder_info)"
       },
       {
-       "regla": "menciona_juanma",
-       "critica": false,
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
        "pendiente": false,
        "auto": false,
        "clase": "texto",
-       "ok": false,
-       "detalle": "no usa la frase de paso a Juanma"
+       "ok": true,
+       "detalle": ""
       },
       {
        "regla": "no_rompe",
@@ -2204,6 +2398,15 @@
        "clase": "flujo",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -2259,6 +2462,15 @@
        "clase": "texto",
        "ok": false,
        "detalle": "precio que no está en la base: Q320, Q470, Q230, Q160"
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -2313,6 +2525,15 @@
        "pendiente": false,
        "auto": true,
        "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
        "ok": true,
        "detalle": ""
       }
@@ -2396,6 +2617,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -2459,6 +2689,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -2514,6 +2753,15 @@
        "clase": "texto",
        "ok": false,
        "detalle": "precio que no está en la base: Q470, Q380"
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -2587,6 +2835,15 @@
        "clase": "flujo",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -2616,13 +2873,13 @@
        "detalle": ""
       },
       {
-       "regla": "menciona_juanma",
-       "critica": false,
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
        "pendiente": false,
        "auto": false,
        "clase": "texto",
-       "ok": false,
-       "detalle": "no usa la frase de paso a Juanma"
+       "ok": true,
+       "detalle": ""
       },
       {
        "regla": "sin_frases_prohibidas",
@@ -2707,13 +2964,13 @@
        "detalle": ""
       },
       {
-       "regla": "menciona_juanma",
-       "critica": false,
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
        "pendiente": false,
        "auto": false,
        "clase": "texto",
-       "ok": true,
-       "detalle": ""
+       "ok": false,
+       "detalle": "le da al cliente el nombre: \"Juanma\""
       },
       {
        "regla": "no_promete_compensacion",
@@ -2896,6 +3153,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -2944,6 +3210,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -2999,6 +3274,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -3069,6 +3353,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -3099,13 +3392,13 @@
        "detalle": ""
       },
       {
-       "regla": "menciona_juanma",
-       "critica": false,
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
        "pendiente": false,
        "auto": false,
        "clase": "texto",
-       "ok": false,
-       "detalle": "no usa la frase de paso a Juanma"
+       "ok": true,
+       "detalle": ""
       },
       {
        "regla": "no_rompe",
@@ -3181,6 +3474,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -3279,6 +3581,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -3300,13 +3611,13 @@
        "detalle": ""
       },
       {
-       "regla": "menciona_juanma",
-       "critica": false,
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
        "pendiente": false,
        "auto": false,
        "clase": "texto",
-       "ok": false,
-       "detalle": "no usa la frase de paso a Juanma"
+       "ok": true,
+       "detalle": ""
       },
       {
        "regla": "no_rompe",
@@ -3407,6 +3718,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -3471,6 +3791,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -3529,6 +3858,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -3607,6 +3945,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -3668,6 +4015,15 @@
        "pendiente": false,
        "auto": true,
        "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
        "ok": true,
        "detalle": ""
       }
@@ -3743,6 +4099,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -3807,6 +4172,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -3854,6 +4228,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -3895,6 +4278,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -3959,6 +4351,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4031,6 +4432,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4111,6 +4521,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -4160,6 +4579,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4220,6 +4648,15 @@
        "pendiente": false,
        "auto": true,
        "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
        "ok": true,
        "detalle": ""
       }
@@ -4314,6 +4751,15 @@
        "clase": "flujo",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -4328,7 +4774,7 @@
     {
      "i": 0,
      "cliente": "Listo, ya hice la transferencia del anticipo",
-     "respuesta": "Gracias 🙌 Juanma revisa la transferencia y te confirma.",
+     "respuesta": "Gracias 🙌 Alguien del restaurante revisa la transferencia y te confirma.",
      "categoria": "escalar_humano",
      "humano": true,
      "wix": [],
@@ -4371,6 +4817,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4677,6 +5132,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "le da al cliente el nombre: \"Juanma\""
       }
      ]
     },
@@ -4735,6 +5199,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4886,6 +5359,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -4926,6 +5408,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -4995,6 +5486,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -5043,6 +5543,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -5112,6 +5621,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     },
@@ -5161,6 +5679,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -5231,6 +5758,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -5288,6 +5824,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
@@ -5357,6 +5902,15 @@
        "clase": "texto",
        "ok": true,
        "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
       }
      ]
     }
@@ -5405,6 +5959,15 @@
       },
       {
        "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_nombra_a_juanma",
        "critica": true,
        "pendiente": false,
        "auto": true,
