@@ -113,6 +113,11 @@ function crearServicioClientes2(deps) {
     }
     if (!m.resenas) throw error(503, 'Todavía no hay copia de la hoja de reseñas (falta compartirla con el servidor como Lector).');
     if (nombre === 'getDatosDashboard') return datosDesdeHoja(m.c.libros[GBP_ID]['Reseñas']);
+    // La hoja de control todavia no tiene pestaña TripAdvisor (la crea el lector de TripAdvisor la primera vez que corre):
+    // el codigo real la crearia; en la sombra se muestra vacia.
+    if (!m.c.libros[GBP_ID].TripAdvisor) {
+      return { reviews: [], configurada: false, ficha: 'https://www.tripadvisor.com/Restaurant_Review-g295366-d27893564-Reviews-Rosanta.html' };
+    }
     return m.resenas.getDatosTripAdvisor();
   }
 

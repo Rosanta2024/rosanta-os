@@ -93,6 +93,10 @@ test('Clientes2: reseñas desde la hoja de control y TripAdvisor con el código 
   assert.strictEqual(ta.reviews.length, 1);
   assert.strictEqual(ta.configurada, false);
   assert.deepStrictEqual(datosDesdeHoja(null).reviews, []);
+  // Sin pestaña TripAdvisor (la hoja real hoy no la tiene): vacio, sin error
+  const sinTA = copiaDeMentira(); delete sinTA.libros[GBP_ID].TripAdvisor;
+  const s2 = crearServicioClientes2({ pool, copia: () => sinTA, puede: () => true });
+  assert.deepStrictEqual((await s2.llamar({}, 'resenas', 'getDatosTripAdvisor', [])).reviews, []);
 });
 
 test('Clientes2: encuesta (promedio y las de 5 estrellas que van a Google)', () => {
