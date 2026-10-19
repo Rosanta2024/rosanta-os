@@ -45,7 +45,7 @@ const PAG = 'PAGOS_PROVEEDORES';
 // Las pestañas de Caja en la base (filas_vivas, migracion 005) y su llave.
 const VIVAS = {
   CAJA_CHICA: { llave: 'ID', columnas: 'CCH_COLS_', parte: 'caja' },
-  RETIROS_SOLICITUDES: { llave: 'ID', columnas: 'CPE_SOL_COLS_', parte: 'caja' },
+  RETIROS_SOLICITUDES: { llave: 'ID', columnas: 'CPE_SOL_COLS_', parte: 'retiros' },   // parte propia desde la 022 (cocina sin Caja chica)
   CIERRES_DIARIOS: { llave: 'FECHA', columnas: 'CIE_COLS_', parte: 'cierres', fecha: true }
 };
 // Lo que se copia de las hojas: lo de Pagos + las tres pestañas de Caja (las que existan).
@@ -124,7 +124,7 @@ function crearServicioPagos(pool, opciones) {
       const enc = (cfg[p] && cfg[p][0] && cfg[p][0].length) ? cfg[p][0] : (m.ctx[VIVAS[p].columnas] || []).slice();
       if (vivo) cfg[p] = await IMP.matrizDesdeFilas(pool, p, enc);
       else if (!cfg[p]) cfg[p] = [enc];   // la intranet la crea con el primer movimiento; aca existe vacia
-      if (vivo && VIVAS[p].parte === 'caja') editables.push(p);
+      if (vivo && VIVAS[p].parte !== 'cierres') editables.push(p);   // caja y retiros los guarda el servidor; los cierres llegan por /tareas/cierre
     }
     motor = m;
     try { matriz = await PERM.cargarDeBase(pool); } catch (e) { matriz = null; }
@@ -201,7 +201,7 @@ function crearServicioPagos(pool, opciones) {
           const fAntes = previo ? fechaDe(H, C.decodificar([previo.celdas])[0]) : null, fDespues = fechaDe(H, fila);
           const cerrado = [fAntes, fDespues].find((f) => f && meses.has(f.slice(0, 7)));
           if (cerrado) {
-            const r = matriz ? PERM.puede(matriz, usuario, p === PAG ? 'pagos' : 'caja', 'corregir_dia_cerrado')
+            const r = matriz ? PERM.puede(matriz, usuario, p === PAG ? 'pagos' : VIVAS[p].parte, 'corregir_dia_cerrado')
               : require('./usuarios').normalizarRol(usuario.rol) === 'dueno' ? { ok: true } : { ok: false, motivo: 'Eso solo lo hace el dueño.' };
             if (!r.ok) throw error('Eso es de ' + cerrado.slice(0, 7) + ', un mes ya cerrado: ' + r.motivo, 403);
           }
@@ -254,7 +254,7 @@ function crearServicioPagos(pool, opciones) {
       if (!fila) continue;
       const f = fechaDe(H, fila);
       if (f && meses.has(f.slice(0, 7))) {
-        const r = matriz ? PERM.puede(matriz, usuario, p === PAG ? 'pagos' : 'caja', 'corregir_dia_cerrado') : { ok: false, motivo: 'Eso solo lo hace el dueño.' };
+        const r = matriz ? PERM.puede(matriz, usuario, p === PAG ? 'pagos' : VIVAS[p].parte, 'corregir_dia_cerrado') : { ok: false, motivo: 'Eso solo lo hace el dueño.' };
         if (!r.ok) throw error('Ese movimiento es de ' + f.slice(0, 7) + ', un mes ya cerrado: ' + r.motivo, 403);
       }
       return;
