@@ -33,6 +33,12 @@ function crearAppBot(deps) {
     res.status(r.ok ? 200 : 409).json(corto);
   }));
 
+  // El texto de la base de conocimiento que lee el bot (el Doc), para correr la bateria de evals con la misma base.
+  app.get('/tareas/kb', tarea(async (req, res) => {
+    if (!deps.kb) return res.status(404).json({ error: 'Sin lector de la base de conocimiento.' });
+    res.type('text').send(await deps.kb());
+  }));
+
   // A mano: { modo: 'grabado'|'modelo', desde, hasta (ISO), maxModelo }
   app.post('/tareas/reproducir', tarea(async (req, res) => {
     const b = req.body || {};

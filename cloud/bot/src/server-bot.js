@@ -73,8 +73,9 @@ async function main() {
   if (process.env.TZ !== 'America/Guatemala') throw new Error('El servidor tiene que correr con TZ=America/Guatemala.');
   const pool = await crearPool();
   const claveModelo = process.env.ANTHROPIC_SOMBRA || '';
-  const servicio = crearServicioBot({ pool, kb: crearLectorKb(), claveModelo });
-  const deps = { servicio, claveTareas: process.env.CLAVE_TAREAS, version: process.env.K_REVISION || 'local', modeloEncendido: !!claveModelo };
+  const kb = crearLectorKb();
+  const servicio = crearServicioBot({ pool, kb, claveModelo });
+  const deps = { servicio, kb, claveTareas: process.env.CLAVE_TAREAS, version: process.env.K_REVISION || 'local', modeloEncendido: !!claveModelo };
   if (process.env.MODO_BOT === 'vivo') Object.assign(deps, await prepararVivo(pool));   // APAGADO: solo con el sí de Juanma
   const app = crearAppBot(deps);
   const port = Number(process.env.PORT || 8080);
