@@ -37,7 +37,10 @@ async function prepararVivo(pool) {
     .filter((k) => !process.env[k]);
   if (falta.length) throw new Error('MODO_BOT=vivo sin estas claves: ' + falta.join(', '));
   const cliente = sheets({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) });
-  const espejo = crearEspejo({ sheets: cliente, id: LEADS_ID });
+  // En el ensayo la hoja es una COPIA de Rosanta Leads (BOT_LEADS_ID); en vivo, la real.
+  const leadsId = process.env.BOT_LEADS_ID || LEADS_ID;
+  if (process.env.BOT_APPS_SCRIPT_URL === 'ensayo' && leadsId === LEADS_ID) throw new Error('El ensayo no puede escribir en la Rosanta Leads real: falta BOT_LEADS_ID (la copia).');
+  const espejo = crearEspejo({ sheets: cliente, id: leadsId });
   await espejo.cargar();
   const w = await pool.query("SELECT valor FROM bot_estado WHERE clave = 'WIX_RESERVAS_URL' AND valor IS NOT NULL");
   if (!w.rows[0]) throw new Error('MODO_BOT=vivo sin el estado del bot importado (falta WIX_RESERVAS_URL en bot_estado).');
@@ -52,12 +55,15 @@ async function prepararVivo(pool) {
     await c.request({ url: 'https://secretmanager.googleapis.com/v1/projects/rosanta-apps-script/secrets/' + nombre + ':addVersion', method: 'POST',
       data: { payload: { data: Buffer.from(valor, 'utf8').toString('base64') } } });
   };
-  const vivo = crearBotVivo({ pool, espejo, leadsId: LEADS_ID, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin, claves,
+  const vivo = crearBotVivo({ pool, espejo, leadsId, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin, claves,
     correo: (m) => correo.enviar(m),
-    reenviar: async (cuerpo) => {
-      const r = await fetch(appsScript, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo), redirect: 'follow' });
-      if (r.status >= 400) throw new Error('El bot de Apps Script contesto ' + r.status);
-    } });
+    // En el ENSAYO (BOT_APPS_SCRIPT_URL=ensayo) la red de seguridad NO le pasa nada al bot real: solo queda anotado.
+    reenviar: appsScript === 'ensayo'
+      ? async (cuerpo) => { await pool.query("INSERT INTO bot_eventos (objeto, modo, resultado, error) VALUES ($1, 'ensayo', 'reenvio_simulado', 'en produccion iria al bot de Apps Script')", [cuerpo && cuerpo.object]); }
+      : async (cuerpo) => {
+        const r = await fetch(appsScript, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo), redirect: 'follow' });
+        if (r.status >= 400) throw new Error('El bot de Apps Script contesto ' + r.status);
+      } });
   console.log('rosanta-bot-sombra: MODO EN VIVO preparado (interruptor en la base: ' + await vivo.interruptor() + ')');
   const refrescarIg = () => require('./vivo').refrescarTokenIg({ claves, guardarSecreto });
   return { vivo, correo, pool, refrescarIg, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET };

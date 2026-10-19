@@ -32,7 +32,7 @@ def rutas(servicio='rosanta-nube'):
 SELLO, HISTORIAL = rutas()
 CARPETAS = ['app', 'bot', 'db']   # bot: el bot en sombra (19-oct-2026); cualquier cambio vence todos los sellos
 # Que bateria corre cada servicio (carpeta con su package.json y test/); los demas, cloud/app.
-CARPETA_POR_SERVICIO = {'rosanta-bot-sombra': 'bot'}
+CARPETA_POR_SERVICIO = {'rosanta-bot-sombra': 'bot', 'rosanta-bot-ensayo': 'bot'}
 FUERA = {'node_modules', '.DS_Store', '__pycache__'}
 
 
