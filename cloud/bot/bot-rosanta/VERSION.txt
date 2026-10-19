@@ -1,4 +1,4 @@
-@61 · 2026-10-19T10:53:09-06:00 · 4c0e3fc
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 61, "frase con contigo: lo antes posible"),
-verificada el 19-oct-2026 bajando la versión 61 aparte (11 de 11 archivos iguales). La hora es la de la publicación; la
+@62 · 2026-10-19T12:08:18-06:00 · f1a05f7
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 62, "por correo usa la dirección del remitente"),
+verificada el 19-oct-2026 bajando la versión 62 aparte (11 de 11 archivos iguales). La hora es la de la publicación; la
 comparación de la sombra vale para los mensajes desde esa hora.
