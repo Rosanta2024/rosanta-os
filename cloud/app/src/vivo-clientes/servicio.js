@@ -56,7 +56,7 @@ function crearServicioVivo(pool, opciones) {
   if (!mktId) throw new Error('Falta el id de la hoja del pipeline.');
   let M = o.permisos || null, modo = 'sheets', encabezados = {}, ultimaImportacion = null;
   const leerHoja = o.leerHoja || ((pestanas) => C.leerLibro(o.sheets(), mktId, pestanas));
-  const copiar = o.copiar || ((pestana, filas, op) => EH.copiarFilas(o.sheets(), mktId, filas, op));
+  const copiar = o.copiar || ((pestana, filas, op) => EH.copiarFilas((o.sheetsEscritura || o.sheets)(), mktId, filas, op));   // escrituras: solo reintentan 429
 
   let cola = Promise.resolve();
   const enCola = (fn) => { const p = cola.then(fn, fn); cola = p.catch(() => {}); return p; };
