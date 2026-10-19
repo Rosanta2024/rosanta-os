@@ -245,6 +245,22 @@ function prGuardasPropias_() {
 function prCimientos_(res) {
   var g = prGrupo_(res, '1. Cimientos');
 
+  // 18-oct-2026: MED_RET_MODELO_ se archivo el 15-oct y Compras siguio usandola ("is not defined"
+  // al leer la foto del comprobante). Con el codigo de la @212 esta prueba da FALLA.
+  prCorrer_(g, 'Ninguna constante usada sin definir', function () {
+    var nombre = 'Ninguna constante usada sin definir';
+    var G = (typeof globalThis !== 'undefined') ? globalThis : this;
+    var existe = function (n) {
+      try { return (0, eval)('typeof ' + n) !== 'undefined'; } catch (e) { return typeof G[n] !== 'undefined'; }
+    };
+    var r = prConstantesSinDefinir_(G, existe), malos = Object.keys(r.faltan);
+    var ok = !malos.length && r.revisadas > 300;
+    prAnotar_(g, nombre, ok ? 'OK' : 'FALLA',
+      malos.length ? malos.map(function (n) { return n + ' (en ' + r.faltan[n].slice(0, 3).join(', ') + ')'; }).join(' · ')
+                   : r.revisadas + ' funciones revisadas' + (r.revisadas > 300 ? '' : ': son muy pocas, la prueba no leyó el proyecto'),
+      malos.length, 0);
+  });
+
   prCorrer_(g, 'Los carriles cubren cada grupo una vez', function () {
     var nombre = 'Los carriles cubren cada grupo una vez';
     var vistos = {}, dobles = [];
@@ -1482,6 +1498,37 @@ function prSrvPasaToken_(txt) {
 function prParametros_(f) {
   var m = String(f).match(/^function\s+[\w$]+\s*\(([^)]*)\)/);
   return m ? m[1].split(',').map(function (p) { return p.trim(); }).filter(String) : [];
+}
+
+/**
+ * Constantes de la casa (MAYUSCULAS con guion bajo final, como MED_RET_MODELO_) que alguna funcion
+ * usa y que no estan definidas en ningun archivo del proyecto (18-oct-2026: archivar MED_RET_MODELO_
+ * el 15-oct rompio la foto del comprobante de Compras y ninguna prueba lo vio). Lee el codigo de cada
+ * funcion global, sin textos ni comentarios, y pregunta al ambito global si el nombre existe.
+ * G: el objeto global; existe(nombre) -> boolean. Devuelve { revisadas, faltan: {nombre: [funciones]} }.
+ */
+function prConstantesSinDefinir_(G, existe) {
+  var faltan = {}, revisadas = 0;
+  Object.keys(G).forEach(function (k) {
+    var f = G[k];
+    if (typeof f !== 'function') return;
+    var src;
+    try { src = Function.prototype.toString.call(f); } catch (e) { return; }
+    if (src.indexOf('[native code]') !== -1) return;
+    revisadas++;
+    src = src.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, "''")
+             .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+    var re = /(^|[^.\w$])([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_)(?![\w$])/g, m, vistos = {};
+    while ((m = re.exec(src))) {
+      var n = m[2];
+      if (vistos[n]) continue;
+      vistos[n] = 1;
+      if (new RegExp('(\\b(var|let|const|function)\\s+|[(,]\\s*)' + n + '\\b').test(src)) continue;  // local o parametro
+      if (existe(n)) continue;
+      (faltan[n] = faltan[n] || []).push(k);
+    }
+  });
+  return { revisadas: revisadas, faltan: faltan };
 }
 
 // ---------------------------------------------------------------- 4. accesos
