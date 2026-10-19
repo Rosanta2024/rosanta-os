@@ -371,7 +371,7 @@ function doGet(e) {
  * de la nube. El icono de la pantalla de inicio del iPhone NO se controla desde aca (la intranet corre
  * dentro de la pagina de Google): para eso esta la entrada /intranet del servidor de la nube.
  */
-var INTRANET_ICONO_ = 'https://rosanta-nube-sombra2-512086396641.northamerica-south1.run.app/marca/favicon-32.png';
+var INTRANET_ICONO_ = 'https://rosanta-nube-512086396641.northamerica-south1.run.app/marca/favicon-32.png';
 
 /** Pone el favicon. Si Apps Script rechazara la URL, la pagina sale igual, sin icono (nunca tumba doGet). */
 function conIcono_(salida) {
