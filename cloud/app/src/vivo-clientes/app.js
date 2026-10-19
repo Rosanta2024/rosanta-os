@@ -51,7 +51,7 @@ function crearAppVivo(deps) {
   });
 
   app.post('/tareas/importar', exigirTarea, async (req, res) => {
-    try { res.json({ ok: true, modo: deps.vivo.modo(), pestanas: await deps.vivo.importar() }); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    try { const pestanas = await deps.vivo.importar(); res.json({ ok: true, modo: deps.vivo.modo(), pestanas }); }   // el modo, DESPUES de releer el interruptor catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
   });
   app.post('/tareas/copiar', exigirTarea, async (req, res) => {
     try { res.json(Object.assign({ ok: true }, await deps.vivo.copiarPendientes())); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }

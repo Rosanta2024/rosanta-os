@@ -53,7 +53,11 @@ async function poolRoot() {
 }
 const claveTareas = () => gcloud(['secrets', 'versions', 'access', 'latest', '--secret', 'clave-tareas']);
 const claveHook = () => gcloud(['secrets', 'versions', 'access', 'latest', '--secret', 'cotiz-token-ensayo']);
+// La cuota de lectura de Sheets (60 por minuto) la comparte la cuenta del servidor con las copias de
+// produccion: el ensayo va despacio para no gastarla.
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms || 4000));
 async function tarea(nombre) {
+  await pausa();
   const r = await fetch(URL + '/tareas/' + nombre, { method: 'POST', headers: { 'x-rosanta-tarea': claveTareas() } });
   return { status: r.status, j: await r.json() };
 }
@@ -70,14 +74,19 @@ async function hook(cuerpo) {
 
 /** Escribe una pestaña completa (con tipos exactos) en la hoja de ensayo, creandola si falta. */
 async function escribirPestana(S, nombre, matriz) {
-  const meta = await S.spreadsheets.get({ spreadsheetId: MKT, fields: 'sheets.properties(sheetId,title)' });
+  const meta = await S.spreadsheets.get({ spreadsheetId: MKT, fields: 'sheets.properties(sheetId,title,gridProperties)' });
   let h = meta.data.sheets.find((s) => s.properties.title === nombre);
   if (!h) {
     const r = await S.spreadsheets.batchUpdate({ spreadsheetId: MKT, requestBody: { requests: [{ addSheet: { properties: { title: nombre } } }] } });
     h = { properties: r.data.replies[0].addSheet.properties };
   }
   const ancho = matriz.reduce((a, f) => Math.max(a, f.length), 1);
+  const g = h.properties.gridProperties || {};
   await S.spreadsheets.batchUpdate({ spreadsheetId: MKT, requestBody: { requests: [
+    // una hoja nueva trae 26 columnas y 1000 filas: el pipeline usa 45 columnas (y deja aire para crecer)
+    { updateSheetProperties: { properties: { sheetId: h.properties.sheetId, gridProperties: {
+      columnCount: Math.max(g.columnCount || 26, ancho + 5), rowCount: Math.max(g.rowCount || 1000, matriz.length + 200) } },
+      fields: 'gridProperties.columnCount,gridProperties.rowCount' } },
     { updateCells: { range: { sheetId: h.properties.sheetId }, fields: 'userEnteredValue,userEnteredFormat.numberFormat' } },
     { updateCells: { range: { sheetId: h.properties.sheetId, startRowIndex: 0, startColumnIndex: 0 },
       rows: matriz.map((f) => ({ values: Array.from({ length: ancho }, (_, j) => EH.celda(f[j] === undefined ? '' : f[j], false)) })),
@@ -87,6 +96,7 @@ const ponerInterruptor = (S, v) => escribirPestana(S, 'PARAMETROS', [['Parámetr
 
 /** "La intranet / Apps Script escribe": el codigo real de Cotizaciones.js sobre la hoja de ensayo, y la fila a la hoja. */
 async function escribeAppsScript(S, fn) {
+  await pausa();
   const L = await C.leerLibro(S, MKT, Object.keys(PEST));
   const m = crearMotor({ libros: { [MKT]: L }, configId: 'x', editables: { [MKT]: Object.keys(PEST) }, listas: ['LISTA-VIVO-CLIENTES.txt'] });
   m.ctx.SHEET_ID = MKT; m.ctx.MKT_SHEET_ID = MKT;
@@ -101,6 +111,7 @@ async function escribeAppsScript(S, fn) {
 
 /** base = hoja: mismas llaves, una sola vez cada una, y mismas celdas. */
 async function baseIgualHoja(S, pool, etiqueta) {
+  await pausa();
   const L = await C.leerLibro(S, MKT, Object.keys(PEST));
   for (const p of Object.keys(PEST)) {
     const H = L[p][0].map(String), iL = H.indexOf(PEST[p]);
@@ -121,7 +132,11 @@ async function main() {
   const S = await sheetsComoServidor();
   const pool = await poolRoot();
   try {
-    // (0) sembrar la hoja de ensayo con el pipeline real (leido como Lector) e interruptor en sheets
+    // (0) empezar de cero: las filas de ensayos anteriores salen de la base DE ENSAYO (nunca de rosanta)
+    const db = (await pool.query('SELECT current_database() AS d')).rows[0].d;
+    if (db !== 'rosanta_ensayo') throw new Error('No es la base de ensayo: ' + db);
+    await pool.query('DELETE FROM filas_clientes');
+        // (0) sembrar la hoja de ensayo con el pipeline real (leido como Lector) e interruptor en sheets
     const real = await C.leerLibro(S, REAL, Object.keys(PEST));
     for (const p of Object.keys(PEST)) await escribirPestana(S, p, real[p]);
     await ponerInterruptor(S, 'sheets');
@@ -153,10 +168,11 @@ async function main() {
     tiempos.push(r.ms);
     anota(r.status === 200 && r.j.resultado.ok, 'El dueño guarda una consulta por el servidor (' + r.ms + ' ms)');
     r = await llamar(T.sala, 'guardarEventos', [[{ op: 'set', id: 'ensayo-sala', data: { cliente: 'Ensayo sala', etapa: 'consulta', estado: 'consulta' } }]]);
-    tiempos.push(r.ms);
-    anota(r.status === 200 && r.j.resultado.ok, 'Sala ingresa una consulta (' + r.ms + ' ms)');
+    // el usuario "sala" del ensayo del Estudio es de solo lectura (puede editar = NO): la intranet real lo niega
+    anota((r.status === 200 && r.j.resultado.ok) || /solo lectura/.test(r.j.error || ''),
+      'Sala: ' + (r.j.error ? 'el usuario de prueba es de solo lectura y el codigo real lo niega (' + r.j.error + ')' : 'ingresa una consulta (' + r.ms + ' ms)'));
     r = await llamar(T.sala, 'guardarEventos', [[{ op: 'update', id: 'ensayo-dueno', data: { notas: 'x' }, if_version: 1 }]]);
-    anota(r.status === 200 && r.j.resultado.ok === false, 'Sala NO corrige lo que anotó el dueño: ' + (r.j.resultado && r.j.resultado.error));
+    anota((r.status === 200 && r.j.resultado.ok === false) || /solo lectura/.test(r.j.error || ''), 'Sala NO corrige lo que anotó el dueño: ' + ((r.j.resultado && r.j.resultado.error) || r.j.error));
     r = await llamar(T.chef, 'getEventos', []);
     anota(r.status === 403, 'Cocina no ve el pipeline (403)');
     r = await llamar(T.dueno, 'guardarEventos', [[{ op: 'update', id: 'ensayo-dueno', data: { notas: 'vieja' }, if_version: 7 }]]);
@@ -181,7 +197,9 @@ async function main() {
     const cambiada = L.cotizaciones[fila].slice(); cambiada[H.indexOf('notas')] = 'escrito a mano en la hoja';
     await EH.copiarFilas(S, MKT, [{ id: 'ensayo-dueno', fila: cambiada }], { pestana: 'cotizaciones', llave: 'id' });
     t = await tarea('importar');
-    anota(t.j.pestanas[0].problemas.some((p) => /Conflicto en ensayo-dueno/.test(p)), 'Escribir a mano en la hoja con base: CONFLICTO, la base no se pisa');
+    anota(t.j.pestanas[0].problemas.some((p) => /Conflicto en ensayo-dueno/.test(p)), 'Escribir a mano en la hoja con base: CONFLICTO, la base no se pisa · ' + JSON.stringify(t.j.pestanas[0]).slice(0, 300));
+    const enBase = (await pool.query("SELECT celdas FROM filas_clientes WHERE pestana = 'cotizaciones' AND llave = 'ensayo-dueno'")).rows[0];
+    anota(enBase && !/escrito a mano/.test(JSON.stringify(enBase.celdas)), 'La base conserva lo del servidor');
     // la siguiente escritura del servidor deja la hoja otra vez igual a la base
     r = await llamar(T.dueno, 'guardarEventos', [[{ op: 'update', id: 'ensayo-dueno', data: { notas: 'corregido desde la pantalla' }, if_version: 2 }]]);
     tiempos.push(r.ms);
@@ -195,8 +213,8 @@ async function main() {
     anota(t.j.modo === 'sheets', 'Vuelta atras: motor_eventos = sheets (' + (Date.now() - t1) + ' ms)');
     r = await llamar(T.dueno, 'guardarEventos', [[{ op: 'set', id: 'ensayo-c', data: { cliente: 'C' } }]]);
     anota(r.status === 409, 'El servidor deja de guardar (409)');
-    const y = await escribeAppsScript(S, (c) => c.cotEscribir_([{ op: 'update', id: 'ensayo-sala', if_version: 1, data: { notas: 'otra vez desde Apps Script' } }]));
-    anota(y.ok, 'Apps Script vuelve a escribir (una fila que habia escrito el servidor)');
+    const y = await escribeAppsScript(S, (c) => c.cotEscribir_([{ op: 'update', id: 'ensayo-dueno', if_version: 3, data: { notas: 'otra vez desde Apps Script' } }]));
+    anota(y.ok, 'Apps Script vuelve a escribir (una fila que habia escrito el servidor) ' + (y.ok ? '' : JSON.stringify(y)));
     t = await tarea('importar');
     anota(t.j.pestanas[0].actualizadas === 1 && !t.j.pestanas[0].problemas.length, 'Con sheets la hoja manda: se trae sin conflicto');
     await baseIgualHoja(S, pool, 'C1');
