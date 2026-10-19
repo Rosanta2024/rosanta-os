@@ -1,0 +1,3082 @@
+{
+ "version": 1,
+ "generado": "2026-10-19",
+ "nota": "Casos sacados de chats reales de Rosanta Leads, anonimizados (nombres, apellidos, telefonos y correos cambiados). No contiene datos reales de clientes.",
+ "casos": [
+  {
+   "id": "RES-01",
+   "grupo": "reservas",
+   "titulo": "Reserva en inglés para hoy: pide los datos y la crea",
+   "origen": "chat real 2026-10-07 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Mateo 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-07T15:59:03-06:00",
+     "de": "cliente",
+     "texto": "Hola! Can we book a table for two tonight at 19:30?",
+     "grabado": {
+      "respuesta": "Hey! Love to have you tonight 🙌 Let me grab a few quick details to set up your reservation:\n\n*Your name:*\n*Email:*",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Wants to book a table for 2 tonight at 19:30",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "pide:correo",
+      "no_confirma_sin_sistema",
+      "no_promete_disponibilidad",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-07T15:59:09-06:00",
+     "de": "bot",
+     "texto": "Hey! Love to have you tonight 🙌 Let me grab a few quick details to set up your reservation:\n\n*Your name:*\n*Email:*"
+    },
+    {
+     "t": "2026-10-07T16:00:04-06:00",
+     "de": "cliente",
+     "texto": "Hugo Mateo\ncliente50@ejemplo.test",
+     "grabado": {
+      "respuesta": "All set, Mateo 🌿\n\n📅 Wednesday 7 October\n🕗 19:30\n👥 2\n\nYour table is confirmed. The confirmation email goes to cliente50@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Reserva creada en Wix: 2026-10-07 19:30, 2 personas",
+      "email": "cliente50@ejemplo.test",
+      "nombre": "Mateo 12"
+     },
+     "reglas": [
+      "crea_reserva",
+      "idioma:en",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-07T16:00:11-06:00",
+     "de": "bot",
+     "texto": "All set, Mateo 🌿\n\n📅 Wednesday 7 October\n🕗 19:30\n👥 2\n\nYour table is confirmed. The confirmation email goes to cliente50@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "RES-02",
+   "grupo": "reservas",
+   "titulo": "Pide mesa para hoy: no promete lugar antes de tener los datos",
+   "origen": "chat real 2026-10-09 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Andrés 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-09T10:38:13-06:00",
+     "de": "cliente",
+     "texto": "Hola buenos días 👋🏼",
+     "grabado": {
+      "respuesta": "¡Hola! Buenos días 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial, sin consulta específica aún",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-09T10:38:20-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Buenos días 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-09T10:39:14-06:00",
+     "de": "cliente",
+     "texto": "Quería preguntar si sería posible hacer una reservación para hoy en la noche para 4 personas a las 7pm",
+     "grabado": {
+      "respuesta": "¡Claro que sí! Para hoy en la noche estamos abiertos hasta las 22:00, así que las 7 pm queda perfecto 🙌\n\nPara crear la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n\n(Fecha y hora ya las tengo: hoy 9 de octubre, 7:00 pm, para 4 personas)",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para hoy, 4 personas a las 7pm",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pide:correo",
+      "no_promete_disponibilidad",
+      "no_confirma_sin_sistema",
+      "no_crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-10-09T10:39:16-06:00",
+     "de": "cliente",
+     "texto": "Gracias",
+     "grabado": {
+      "respuesta": "¡Claro que sí! Aquí estoy cuando me necesites 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente agradeció, sin consulta específica",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-09T10:39:20-06:00",
+     "de": "bot",
+     "texto": "¡Claro que sí! Aquí estoy cuando me necesites 😊"
+    },
+    {
+     "t": "2026-10-09T10:39:22-06:00",
+     "de": "bot",
+     "texto": "¡Claro que sí! Para hoy en la noche estamos abiertos hasta las 22:00, así que las 7 pm queda perfecto 🙌\n\nPara crear la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n\n(Fecha y hora ya las tengo: hoy 9 de octubre, 7:00 pm, para 4 personas)"
+    },
+    {
+     "t": "2026-10-09T10:39:52-06:00",
+     "de": "cliente",
+     "texto": "Andrés Rivas",
+     "grabado": {
+      "respuesta": "¡Perfecto, Andrés! Solo me falta tu correo electrónico para completar la reserva 😊\n\n*Correo:*",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para hoy, 4 personas a las 7pm",
+      "email": "",
+      "nombre": "Andrés 12"
+     }
+    },
+    {
+     "t": "2026-10-09T10:39:56-06:00",
+     "de": "bot",
+     "texto": "¡Perfecto, Andrés! Solo me falta tu correo electrónico para completar la reserva 😊\n\n*Correo:*"
+    },
+    {
+     "t": "2026-10-09T10:40:09-06:00",
+     "de": "cliente",
+     "texto": "cliente52@ejemplo.test",
+     "grabado": {
+      "respuesta": "Listo, Andrés Rivas 🌿\n\n📅 viernes 9 de octubre\n🕗 19:00\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente52@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-10-09 19:00, 4 personas",
+      "email": "cliente52@ejemplo.test",
+      "nombre": "Andrés 12"
+     },
+     "reglas": [
+      "crea_reserva",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-09T10:40:17-06:00",
+     "de": "bot",
+     "texto": "Listo, Andrés Rivas 🌿\n\n📅 viernes 9 de octubre\n🕗 19:00\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente52@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "RES-03",
+   "grupo": "reservas",
+   "titulo": "Reserva para 9 al almuerzo de mañana",
+   "origen": "chat real 2026-10-09 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Jorge 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-09T15:49:50-06:00",
+     "de": "cliente",
+     "texto": "Hola cómo estás",
+     "grabado": {
+      "respuesta": "¡Hola! Todo bien por acá, gracias por preguntar 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-09T15:49:56-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Todo bien por acá, gracias por preguntar 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-09T15:51:50-06:00",
+     "de": "cliente",
+     "texto": "Quiero hacer una reserva para mañana al almuerzo a la 1:30 pm",
+     "grabado": {
+      "respuesta": "¡Claro, con gusto! Para armarla necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Personas:*\n\nLa fecha ya la tengo (mañana sábado 10 de octubre) y la hora (13:30). ¡Dime y lo gestionamos! 🍽️",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para mañana sábado a la 1:30 pm",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pide:correo",
+      "no_crea_reserva",
+      "no_confirma_sin_sistema"
+     ]
+    },
+    {
+     "t": "2026-10-09T15:51:56-06:00",
+     "de": "bot",
+     "texto": "¡Claro, con gusto! Para armarla necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Personas:*\n\nLa fecha ya la tengo (mañana sábado 10 de octubre) y la hora (13:30). ¡Dime y lo gestionamos! 🍽️"
+    },
+    {
+     "t": "2026-10-09T16:20:02-06:00",
+     "de": "cliente",
+     "texto": "Jorge Jorge\ncliente53@ejemplo.test\nPara 9 personas",
+     "grabado": {
+      "respuesta": "Listo, Jorge Jorge 🌿\n\n📅 sábado 10 de octubre\n🕗 13:30\n👥 9\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente53@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-10-10 13:30, 9 personas",
+      "email": "cliente53@ejemplo.test",
+      "nombre": "Jorge 12"
+     },
+     "reglas": [
+      "crea_reserva",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-09T16:20:10-06:00",
+     "de": "bot",
+     "texto": "Listo, Jorge Jorge 🌿\n\n📅 sábado 10 de octubre\n🕗 13:30\n👥 9\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente53@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "RES-04",
+   "grupo": "reservas",
+   "titulo": "Cambiar la hora de una reserva hecha por el bot",
+   "origen": "chat real 2026-10-09 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Jorge 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-09T15:49:50-06:00",
+     "de": "cliente",
+     "texto": "Hola cómo estás",
+     "grabado": {
+      "respuesta": "¡Hola! Todo bien por acá, gracias por preguntar 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-09T15:49:56-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Todo bien por acá, gracias por preguntar 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-09T15:51:50-06:00",
+     "de": "cliente",
+     "texto": "Quiero hacer una reserva para mañana al almuerzo a la 1:30 pm",
+     "grabado": {
+      "respuesta": "¡Claro, con gusto! Para armarla necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Personas:*\n\nLa fecha ya la tengo (mañana sábado 10 de octubre) y la hora (13:30). ¡Dime y lo gestionamos! 🍽️",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para mañana sábado a la 1:30 pm",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-09T15:51:56-06:00",
+     "de": "bot",
+     "texto": "¡Claro, con gusto! Para armarla necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Personas:*\n\nLa fecha ya la tengo (mañana sábado 10 de octubre) y la hora (13:30). ¡Dime y lo gestionamos! 🍽️"
+    },
+    {
+     "t": "2026-10-09T16:20:02-06:00",
+     "de": "cliente",
+     "texto": "Jorge Jorge\ncliente53@ejemplo.test\nPara 9 personas",
+     "grabado": {
+      "respuesta": "Listo, Jorge Jorge 🌿\n\n📅 sábado 10 de octubre\n🕗 13:30\n👥 9\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente53@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-10-10 13:30, 9 personas",
+      "email": "cliente53@ejemplo.test",
+      "nombre": "Jorge 12"
+     }
+    },
+    {
+     "t": "2026-10-09T16:20:10-06:00",
+     "de": "bot",
+     "texto": "Listo, Jorge Jorge 🌿\n\n📅 sábado 10 de octubre\n🕗 13:30\n👥 9\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente53@ejemplo.test."
+    },
+    {
+     "t": "2026-10-10T13:01:16-06:00",
+     "de": "cliente",
+     "texto": "Hola quisiera cambiar el horario para las 2:30 de la tarde estamos retrasados",
+     "grabado": {
+      "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Quiere cambiar su reserva a las 14:30 por retraso",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "accion": "cambiar_reserva",
+       "tipo": "reserva",
+       "fecha": "",
+       "hora": "14:30",
+       "personas": "",
+       "fecha_actual": "2026-10-10",
+       "hora_actual": "13:30"
+      }
+     },
+     "reglas": [
+      "accion:reserva_cambiada",
+      "no_crea_reserva",
+      "no_cancela",
+      "no_pasa_a_juanma",
+      "sin_frases_prohibidas"
+     ],
+     "nota": "Lo grabado se reconstruyó: el modelo pidió cambiar la reserva (el texto \"No pude cancelarla\" lo escribe el código cuando Wix falla)."
+    },
+    {
+     "t": "2026-10-10T13:01:27-06:00",
+     "de": "bot",
+     "texto": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌"
+    }
+   ]
+  },
+  {
+   "id": "RES-05",
+   "grupo": "reservas",
+   "titulo": "Solo pregunta a qué hora era su reserva: se busca, no se cancela",
+   "origen": "chat real 2026-10-10 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Tomás 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-10T12:22:33-06:00",
+     "de": "cliente",
+     "texto": "hola buenas tardes",
+     "grabado": {
+      "respuesta": "¡Hola! Buenas tardes 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-10T12:22:39-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Buenas tardes 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-10T12:22:43-06:00",
+     "de": "cliente",
+     "texto": "tiengo una reserva pero no me recuerdo que horas",
+     "grabado": {
+      "respuesta": "¡Claro, con gusto te ayudo a buscarla! Dame un segundo que la localizo.\n\n¿Me das el correo con el que la hiciste o el número de teléfono que usaste?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente quiere saber la hora de su reserva",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_cancela",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-10T12:22:47-06:00",
+     "de": "bot",
+     "texto": "¡Claro, con gusto te ayudo a buscarla! Dame un segundo que la localizo.\n\n¿Me das el correo con el que la hiciste o el número de teléfono que usaste?"
+    },
+    {
+     "t": "2026-10-10T12:34:53-06:00",
+     "de": "cliente",
+     "texto": "credo que",
+     "grabado": {
+      "respuesta": "Parece que tu mensaje quedó incompleto 😊 ¿Me decías el correo o teléfono con el que hiciste la reserva?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente quiere consultar la hora de su reserva existente",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-10T12:34:57-06:00",
+     "de": "cliente",
+     "texto": "cliente54@ejemplo.test",
+     "grabado": {
+      "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente quiere saber la hora de su reserva, dio su correo cliente54@ejemplo.test",
+      "email": "cliente54@ejemplo.test",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_cancela",
+      "no_pasa_a_juanma",
+      "sin_frases_prohibidas"
+     ]
+    },
+    {
+     "t": "2026-10-10T12:35:04-06:00",
+     "de": "bot",
+     "texto": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌"
+    },
+    {
+     "t": "2026-10-10T12:35:05-06:00",
+     "de": "bot",
+     "texto": "Parece que tu mensaje quedó incompleto 😊 ¿Me decías el correo o teléfono con el que hiciste la reserva?"
+    },
+    {
+     "t": "2026-10-10T12:35:08-06:00",
+     "de": "cliente",
+     "texto": "o cliente55@ejemplo.test",
+     "grabado": {
+      "respuesta": "Dame un segundo que la busco 🙌",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente quiere consultar la hora de su reserva, posibles correos: cliente54@ejemplo.test o cliente55@ejemplo.test",
+      "email": "cliente55@ejemplo.test",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-10T12:35:12-06:00",
+     "de": "bot",
+     "texto": "Dame un segundo que la busco 🙌"
+    }
+   ]
+  },
+  {
+   "id": "RES-06",
+   "grupo": "reservas",
+   "titulo": "Hizo reserva para 10 y serán 11: no promete el cambio sin el sistema",
+   "origen": "chat real 2026-10-12 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Javier 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-12T17:14:07-06:00",
+     "de": "cliente",
+     "texto": "I just made a reservation for 10 people at 7 pm, but there will be 11 of us. My name is Javier. Thank you",
+     "grabado": {
+      "respuesta": "Hey Javier! No worries, we'll update it to 11 people 🙌 Give me just a second while I look up your reservation.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Wants to update an existing reservation from 10 to 11 people at 7 pm",
+      "email": "",
+      "nombre": "Javier 12"
+     },
+     "reglas": [
+      "idioma:en",
+      "no_confirma_sin_sistema",
+      "accion:reserva_cambiada"
+     ]
+    },
+    {
+     "t": "2026-10-12T17:14:15-06:00",
+     "de": "bot",
+     "texto": "Hey Javier! No worries, we'll update it to 11 people 🙌 Give me just a second while I look up your reservation."
+    }
+   ]
+  },
+  {
+   "id": "RES-07",
+   "grupo": "reservas",
+   "titulo": "Reserva para 16 personas (más de 15): se trata como evento",
+   "origen": "chat real 2026-07-11 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Laura 1",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-11T19:56:58-06:00",
+     "de": "cliente",
+     "texto": "hola",
+     "grabado": {
+      "respuesta": "¡Hola! 👋 Bienvenido a Rosanta. ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-11T19:57:04-06:00",
+     "de": "bot",
+     "texto": "¡Hola! 👋 Bienvenido a Rosanta. ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-07-11T19:57:53-06:00",
+     "de": "cliente",
+     "texto": "¿Puedo hacer una reserva para 15 personas?",
+     "grabado": {
+      "respuesta": "¡Claro que sí! Para grupos de 15 personas lo mejor es hacer la reserva directo desde aquí 👇\n\nhttps://www.rosanta.rest/reservas\n\nAhí puedes elegir fecha, hora y el espacio que prefieras (jardín, chimenea, cava...). Si tienes alguna duda o quieres algo especial para el grupo, con gusto te ayudo.",
+      "categoria": "redirigir_reservas",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para 15 personas",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-11T19:57:59-06:00",
+     "de": "cliente",
+     "texto": "16",
+     "grabado": {
+      "respuesta": "Sin problema, para 16 personas puedes reservar desde aquí 👇\n\nhttps://www.rosanta.rest/reservas\n\n¿Tienes ya una fecha en mente?",
+      "categoria": "redirigir_reservas",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para 16 personas",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_crea_reserva",
+      "pide:correo"
+     ]
+    },
+    {
+     "t": "2026-07-11T19:58:00-06:00",
+     "de": "bot",
+     "texto": "¡Claro que sí! Para grupos de 15 personas lo mejor es hacer la reserva directo desde aquí 👇\n\nhttps://www.rosanta.rest/reservas\n\nAhí puedes elegir fecha, hora y el espacio que prefieras (jardín, chimenea, cava...). Si tienes alguna duda o quieres algo especial para el grupo, con gusto te ayudo."
+    },
+    {
+     "t": "2026-07-11T19:58:03-06:00",
+     "de": "bot",
+     "texto": "Sin problema, para 16 personas puedes reservar desde aquí 👇\n\nhttps://www.rosanta.rest/reservas\n\n¿Tienes ya una fecha en mente?"
+    },
+    {
+     "t": "2026-07-11T19:58:50-06:00",
+     "de": "cliente",
+     "texto": "Hoy a las 9:30 p. m.",
+     "grabado": {
+      "respuesta": "Te cuento un detalle importante: hoy siendo sábado cerramos a las 10:00 pm, así que las 9:30 pm ya es muy tarde para llegar y disfrutar con calma, especialmente con 16 personas.\n\nTe recomendaría una hora más temprana, desde el mediodía estamos abiertos hoy. ¿Te acomoda otro horario?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar para hoy sábado a las 9:30 pm para 16 personas",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-11T19:58:56-06:00",
+     "de": "bot",
+     "texto": "Te cuento un detalle importante: hoy siendo sábado cerramos a las 10:00 pm, así que las 9:30 pm ya es muy tarde para llegar y disfrutar con calma, especialmente con 16 personas.\n\nTe recomendaría una hora más temprana, desde el mediodía estamos abiertos hoy. ¿Te acomoda otro horario?"
+    },
+    {
+     "t": "2026-07-11T20:01:14-06:00",
+     "de": "cliente",
+     "texto": "Vale, ¿te vendría bien a las 9 p. m.? La novia y el novio regresaron del paseo en atri, así que tienen que prepararse.",
+     "grabado": {
+      "respuesta": "Entiendo la situación, pero honestamente a las 9:00 pm también sería muy ajustado para 16 personas — cerramos a las 10:00 pm y no da mucho tiempo para disfrutar bien la experiencia.\n\n¿Qué tal si los festejan mañana domingo? Abrimos desde las 3:00 pm hasta las 8:00 pm, y habría más espacio para celebrar con calma. O si prefieren un viernes o sábado próximo, abrimos desde el mediodía hasta las 10:00 pm 🎉\n\n¿Qué te parece?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar para hoy a las 9 pm para 16 personas, celebración de pareja recién llegada de paseo",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-11T20:01:22-06:00",
+     "de": "bot",
+     "texto": "Entiendo la situación, pero honestamente a las 9:00 pm también sería muy ajustado para 16 personas — cerramos a las 10:00 pm y no da mucho tiempo para disfrutar bien la experiencia.\n\n¿Qué tal si los festejan mañana domingo? Abrimos desde las 3:00 pm hasta las 8:00 pm, y habría más espacio para celebrar con calma. O si prefieren un viernes o sábado próximo, abrimos desde el mediodía hasta las 10:00 pm 🎉\n\n¿Qué te parece?"
+    },
+    {
+     "t": "2026-07-11T20:01:34-06:00",
+     "de": "cliente",
+     "texto": "No me deja reservar en el sitio web",
+     "grabado": {
+      "respuesta": "Ay, qué fastidio 😕 Puede ser que para hoy ya no haya disponibilidad en línea, especialmente a esa hora y con 16 personas.\n\nLo que te sugiero es llamar directamente al restaurante para que el equipo te ayude en tiempo real:\n\n📞 (502) 55500002\n\nEllos pueden ver si hay alguna opción para esta noche. ¿Te animas a llamar?",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Quiere reservar para hoy a las 9 pm para 16 personas pero no puede hacerlo en el sitio web",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pide_otro_canal",
+      "no_crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-07-11T20:01:40-06:00",
+     "de": "bot",
+     "texto": "Ay, qué fastidio 😕 Puede ser que para hoy ya no haya disponibilidad en línea, especialmente a esa hora y con 16 personas.\n\nLo que te sugiero es llamar directamente al restaurante para que el equipo te ayude en tiempo real:\n\n📞 (502) 55500002\n\nEllos pueden ver si hay alguna opción para esta noche. ¿Te animas a llamar?"
+    }
+   ]
+  },
+  {
+   "id": "RES-08",
+   "grupo": "reservas",
+   "titulo": "Domingo a las 4 pm en inglés: el horario del domingo es de 15:00 a 20:00",
+   "origen": "chat real 2026-09-10 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Diego 10",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-10T22:14:08-06:00",
+     "de": "cliente",
+     "texto": "Hello! Can I make a reservation for 6 on September 13th 4pm?",
+     "grabado": {
+      "respuesta": "Hey! Love to have you over 🎉\n\nJust a heads up — we open at 5pm on Sundays, so the earliest I can book you on the 13th is 5pm. Want me to lock that in?\n\nI just need a couple more details:\n\n*Your name:*\n*Email:*\n*Time:* (5pm or later)\n\nAnd to confirm — it's 6 people, September 13th, right?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Wants to reserve a table for 6 on September 13th at 4pm (outside opening hours)",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "juez:fiel_a_la_base",
+      "no_confirma_sin_sistema"
+     ]
+    },
+    {
+     "t": "2026-09-10T22:14:18-06:00",
+     "de": "bot",
+     "texto": "Hey! Love to have you over 🎉\n\nJust a heads up — we open at 5pm on Sundays, so the earliest I can book you on the 13th is 5pm. Want me to lock that in?\n\nI just need a couple more details:\n\n*Your name:*\n*Email:*\n*Time:* (5pm or later)\n\nAnd to confirm — it's 6 people, September 13th, right?"
+    },
+    {
+     "t": "2026-09-11T00:42:07-06:00",
+     "de": "cliente",
+     "texto": "Yes that’s okay! My name is Diego Ruiz, email is cliente42@ejemplo.test. We would like 5pm on Sept 13 please!",
+     "grabado": {
+      "respuesta": "To lock in your table I just need:\n\n*People:*",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Diego wants to make a table reservation for Sept 13 at 5pm",
+      "email": "cliente42@ejemplo.test",
+      "nombre": "Diego 10"
+     }
+    },
+    {
+     "t": "2026-09-11T00:42:14-06:00",
+     "de": "bot",
+     "texto": "To lock in your table I just need:\n\n*People:*"
+    },
+    {
+     "t": "2026-09-11T00:45:48-06:00",
+     "de": "cliente",
+     "texto": "Yes for 6 people",
+     "grabado": {
+      "respuesta": "All set, Diego Ruiz 🌿\n\n📅 Sunday 13 September\n🕗 17:00\n👥 6\n\nYour table is confirmed. The confirmation email goes to cliente42@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Reserva creada en Wix: 2026-09-13 17:00, 6 personas",
+      "email": "cliente42@ejemplo.test",
+      "nombre": "Diego 10"
+     },
+     "reglas": [
+      "crea_reserva",
+      "idioma:en"
+     ]
+    },
+    {
+     "t": "2026-09-11T00:45:54-06:00",
+     "de": "bot",
+     "texto": "All set, Diego Ruiz 🌿\n\n📅 Sunday 13 September\n🕗 17:00\n👥 6\n\nYour table is confirmed. The confirmation email goes to cliente42@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "RES-09",
+   "grupo": "reservas",
+   "titulo": "\"¿Ya tienen agenda para octubre?\": no promete disponibilidad",
+   "origen": "chat real 2026-09-10 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Pablo 10",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-10T22:47:55-06:00",
+     "de": "cliente",
+     "texto": "Hola! Quisiera hacer una reserva en octubre, ya tienen agenda para ese mes?",
+     "grabado": {
+      "respuesta": "¡Hola! Claro que sí, octubre ya está disponible 🎉\n\nPara hacerte la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha exacta:*\n*Hora:*\n*Número de personas:*\n\n¿Me los compartes?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere hacer una reserva en octubre",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_promete_disponibilidad",
+      "pide:correo",
+      "no_crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-09-10T22:48:02-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Claro que sí, octubre ya está disponible 🎉\n\nPara hacerte la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha exacta:*\n*Hora:*\n*Número de personas:*\n\n¿Me los compartes?"
+    },
+    {
+     "t": "2026-09-10T23:04:19-06:00",
+     "de": "cliente",
+     "texto": "Isabel Mora\ncliente43@ejemplo.test\n9 de octubre\n7:30 pm\n5 personas",
+     "grabado": {
+      "respuesta": "Listo, Isabel Mora 🌿\n\n📅 viernes 9 de octubre\n🕗 19:30\n👥 5\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente43@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-10-09 19:30, 5 personas",
+      "email": "cliente43@ejemplo.test",
+      "nombre": "Pablo 10"
+     },
+     "reglas": [
+      "crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-09-10T23:04:30-06:00",
+     "de": "bot",
+     "texto": "Listo, Isabel Mora 🌿\n\n📅 viernes 9 de octubre\n🕗 19:30\n👥 5\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente43@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "RES-10",
+   "grupo": "reservas",
+   "titulo": "Quiere cancelar la reserva de hoy: el bot la cancela por chat",
+   "origen": "chat real 2026-09-08 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Mateo 10",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-08T16:50:20-06:00",
+     "de": "cliente",
+     "texto": "Hola! Tengo reserva hoy a nombre de Mateo Gil pero la tengo que cancelar",
+     "grabado": {
+      "respuesta": "Hola Mateo 👋 Claro, entendido. Lamentablemente no puedo hacer cambios en reservas desde aquí directamente, pero paso tu solicitud al equipo para que la cancelen. ¿Me confirmas el correo con el que hiciste la reserva para que puedan ubicarla más fácil?",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Quiere cancelar su reserva de hoy a nombre de Mateo Gil",
+      "email": "",
+      "nombre": "Mateo 10"
+     },
+     "reglas": [
+      "accion:cancelar_reserva",
+      "sin_frases_prohibidas",
+      "no_confirma_sin_sistema"
+     ]
+    },
+    {
+     "t": "2026-09-08T16:50:28-06:00",
+     "de": "bot",
+     "texto": "Hola Mateo 👋 Claro, entendido. Lamentablemente no puedo hacer cambios en reservas desde aquí directamente, pero paso tu solicitud al equipo para que la cancelen. ¿Me confirmas el correo con el que hiciste la reserva para que puedan ubicarla más fácil?"
+    },
+    {
+     "t": "2026-09-08T16:50:57-06:00",
+     "de": "cliente",
+     "texto": "cliente41@ejemplo.test",
+     "grabado": {
+      "respuesta": "Perfecto, Mateo. Le paso al equipo tu solicitud para cancelar la reserva de hoy a nombre de Mateo Gil con el correo cliente41@ejemplo.test. Alguien te confirma en breve 🙌",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Quiere cancelar su reserva de hoy, a nombre de Mateo Gil, correo cliente41@ejemplo.test",
+      "email": "cliente41@ejemplo.test",
+      "nombre": "Mateo 10"
+     }
+    },
+    {
+     "t": "2026-09-08T16:51:03-06:00",
+     "de": "bot",
+     "texto": "Perfecto, Mateo. Le paso al equipo tu solicitud para cancelar la reserva de hoy a nombre de Mateo Gil con el correo cliente41@ejemplo.test. Alguien te confirma en breve 🙌"
+    }
+   ]
+  },
+  {
+   "id": "RES-11",
+   "grupo": "reservas",
+   "titulo": "Mensajes cortados y con faltas (\"Tienees disponkble\")",
+   "origen": "chat real 2026-10-13 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Martín 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-13T18:10:39-06:00",
+     "de": "cliente",
+     "texto": "Hola buenas noches",
+     "grabado": {
+      "respuesta": "¡Hola! Buenas noches 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-13T18:10:48-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Buenas noches 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-13T18:11:11-06:00",
+     "de": "cliente",
+     "texto": "Quería pedirte una reserva para hoy para 4 personas",
+     "grabado": {
+      "respuesta": "¡Claro! Con gusto te ayudo 😊\n\nNecesito estos datos para crearla:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Hora:*\n\n(La fecha ya la tengo: hoy, 13 de octubre)",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar mesa para 4 personas hoy",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-13T18:11:17-06:00",
+     "de": "cliente",
+     "texto": "Tienees disponkble",
+     "grabado": {
+      "respuesta": "¡Claro! Cuéntame, ¿qué necesitas? ¿Una mesa para cenar, información del menú, un evento privado...? 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta sobre disponibilidad, sin especificar qué",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_promete_disponibilidad",
+      "no_crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-10-13T18:11:19-06:00",
+     "de": "bot",
+     "texto": "¡Claro! Con gusto te ayudo 😊\n\nNecesito estos datos para crearla:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Hora:*\n\n(La fecha ya la tengo: hoy, 13 de octubre)"
+    },
+    {
+     "t": "2026-10-13T18:11:24-06:00",
+     "de": "bot",
+     "texto": "¡Claro! Cuéntame, ¿qué necesitas? ¿Una mesa para cenar, información del menú, un evento privado...? 😊"
+    },
+    {
+     "t": "2026-10-13T18:12:04-06:00",
+     "de": "cliente",
+     "texto": "César Gómez \ncliente56@ejemplo.test \n19:20",
+     "grabado": {
+      "respuesta": "Listo, Martín Gómez 🌿\n\n📅 martes 13 de octubre\n🕗 19:20\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente56@ejemplo.test.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-10-13 19:20, 4 personas",
+      "email": "cliente56@ejemplo.test",
+      "nombre": "Martín 12"
+     },
+     "reglas": [
+      "crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-10-13T18:12:11-06:00",
+     "de": "bot",
+     "texto": "Listo, Martín Gómez 🌿\n\n📅 martes 13 de octubre\n🕗 19:20\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente56@ejemplo.test."
+    }
+   ]
+  },
+  {
+   "id": "EVE-01",
+   "grupo": "eventos",
+   "titulo": "Fiesta de bienvenida de boda, 40 personas: con el correo pasa a Juanma",
+   "origen": "chat real 2026-08-04 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Lucía 6",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-04T16:56:05-06:00",
+     "de": "cliente",
+     "texto": "¡Hola! 😊 Me caso en Antigua el 10/11/2026 y estoy buscando organizar una fiesta de bienvenida el 09/11/2026 para aproximadamente 40 personas. ¿Sería algo con lo que ustedes podrían ayudarme? ¡Muchas gracias!",
+     "grabado": {
+      "respuesta": "¡Hola! Qué emocionante, ¡muchas felicidades por tu boda! 🎉\n\nClaro que sí, una fiesta de bienvenida para 40 personas es justo el tipo de evento que hacemos en Rosanta. Tenemos espacios preciosos — jardín, cava, chimenea, fogata — perfectos para ese momento especial.\n\nPara poder armarles una cotización necesito unos datos básicos. ¿Me los puedes compartir?\n\n*Tu nombre:*\n*Correo electrónico:* (te enviamos la cotización ahí)\n\nYa tengo la fecha (9 de noviembre) y las personas (40). Solo me faltan esos dos 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere organizar una fiesta de bienvenida para 40 personas el 9 de noviembre, previa a su boda el 10/11/2026",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pide:correo",
+      "no_crea_reserva",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-08-04T16:56:15-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Qué emocionante, ¡muchas felicidades por tu boda! 🎉\n\nClaro que sí, una fiesta de bienvenida para 40 personas es justo el tipo de evento que hacemos en Rosanta. Tenemos espacios preciosos — jardín, cava, chimenea, fogata — perfectos para ese momento especial.\n\nPara poder armarles una cotización necesito unos datos básicos. ¿Me los puedes compartir?\n\n*Tu nombre:*\n*Correo electrónico:* (te enviamos la cotización ahí)\n\nYa tengo la fecha (9 de noviembre) y las personas (40). Solo me faltan esos dos 😊"
+    },
+    {
+     "t": "2026-08-04T16:58:05-06:00",
+     "de": "cliente",
+     "texto": "¡Perfecto! Mi correo electrónico es: cliente23@ejemplo.test.",
+     "grabado": {
+      "respuesta": "¡Gracias, Lucía! Ya tengo todo lo que necesito 😊\n\nAhora cuéntame, ¿cómo te imaginas la velada? Tenemos tres formatos para el evento:\n\n1️⃣ *Menú servido individual* — Entrante + plato fuerte + postre por persona. Desde Q470/persona (comida + bebidas).\n\n2️⃣ *Menú para compartir* — Platos al centro entre todos, estilo familiar. Plato fuerte + postre desde Q230/persona, más entrantes para compartir y bebidas aparte (Q150/persona).\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra libre de cócteles, vinos y cervezas (máx. 4 bebidas/persona). Todo incluido a Q350/persona.\n\n¿Cuál te llama más la atención para la fiesta de bienvenida?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Fiesta de bienvenida para 40 personas el 9 de noviembre, pre-boda. Tiene nombre, correo, fecha y personas. Falta formato de menú.",
+      "email": "cliente23@ejemplo.test",
+      "nombre": "Lucía 6",
+      "lead": {
+       "tipo": "evento",
+       "accion": "responder_info",
+       "requiere_humano": false,
+       "email": "cliente24@ejemplo.test",
+       "fecha": "2026-11-09",
+       "personas": "40",
+       "tipo_evento": "boda"
+      }
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_crea_reserva",
+      "aviso_con_datos_evento"
+     ],
+     "nota": "Lo grabado se completó con lo que el modelo ya sabía (evento, correo, fecha, personas) para probar la red de seguridad que escala eventos."
+    },
+    {
+     "t": "2026-08-04T16:58:16-06:00",
+     "de": "bot",
+     "texto": "¡Gracias, Lucía! Ya tengo todo lo que necesito 😊\n\nAhora cuéntame, ¿cómo te imaginas la velada? Tenemos tres formatos para el evento:\n\n1️⃣ *Menú servido individual* — Entrante + plato fuerte + postre por persona. Desde Q470/persona (comida + bebidas).\n\n2️⃣ *Menú para compartir* — Platos al centro entre todos, estilo familiar. Plato fuerte + postre desde Q230/persona, más entrantes para compartir y bebidas aparte (Q150/persona).\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra libre de cócteles, vinos y cervezas (máx. 4 bebidas/persona). Todo incluido a Q350/persona.\n\n¿Cuál te llama más la atención para la fiesta de bienvenida?"
+    }
+   ]
+  },
+  {
+   "id": "EVE-02",
+   "grupo": "eventos",
+   "titulo": "Cena de bienvenida de boda (27 adultos y 7 niños) con todos los datos",
+   "origen": "chat real 2026-09-19 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Andrés 11",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-19T11:02:36-06:00",
+     "de": "cliente",
+     "texto": "Hola buen día me gustaría saber si en sus instalaciones se pueden hacer cenas de bienvenida? para invitados a una boda?",
+     "grabado": {
+      "respuesta": "¡Hola! Claro que sí, es un tipo de evento que se puede organizar perfectamente aquí 🎉\n\nTenemos espacio para hasta 200 personas, diferentes áreas (jardín, chimenea, cava, fogata) y menús especiales para grupos. Suena ideal para una cena de bienvenida.\n\nPara armarte una cotización a la medida, necesito unos datos básicos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha tentativa:*\n*Número de invitados:*",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Consulta sobre evento privado: cena de bienvenida para invitados a una boda",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pide:correo",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-09-19T11:02:46-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Claro que sí, es un tipo de evento que se puede organizar perfectamente aquí 🎉\n\nTenemos espacio para hasta 200 personas, diferentes áreas (jardín, chimenea, cava, fogata) y menús especiales para grupos. Suena ideal para una cena de bienvenida.\n\nPara armarte una cotización a la medida, necesito unos datos básicos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha tentativa:*\n*Número de invitados:*"
+    },
+    {
+     "t": "2026-09-19T11:03:44-06:00",
+     "de": "cliente",
+     "texto": "Andrés Soto, cliente48@ejemplo.test 22 de abril 2027, 27 adultos y 7 niños",
+     "grabado": {
+      "respuesta": "¡Perfecto, Andrés! Ya tengo todo lo básico 😊\n\nAhora te cuento los formatos de menú que manejamos para eventos, para que elijas el que mejor se adapta a la cena:\n\n*1. Menú servido (individual)*\nEntrante + plato fuerte + postre. Desde Q320/persona. Agua incluida, bebidas aparte (Q150/persona: 2 copas de vino o 2 cócteles, 3 cervezas, mocktails o agua gasificada).\n\n*2. Menú para compartir*\nPlato fuerte a escoger + postre + agua: Q230/persona. Los entrantes van al centro de la mesa, Q160 por plato (rinde ~3 personas). Bebidas aparte: Q150/persona.\n\n*3. Tapas Guatemaltecas & Barra Libre*\nTapas (6 piezas + postre) + barra libre de cócteles, vinos y cerveza (máx. 4 bebidas/persona): Q350/persona. Bebidas ya incluidas.\n\n¿Cuál de estos formatos te llama más la atención para la cena de bienvenida?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Evento privado: cena de bienvenida para 34 personas (27 adultos + 7 niños), 22 abril 2027",
+      "email": "cliente48@ejemplo.test",
+      "nombre": "Andrés 11",
+      "lead": {
+       "tipo": "evento",
+       "accion": "responder_info",
+       "requiere_humano": false,
+       "email": "cliente48@ejemplo.test",
+       "fecha": "2027-04-22",
+       "personas": "34",
+       "tipo_evento": "boda"
+      }
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_inventa_precios"
+     ]
+    },
+    {
+     "t": "2026-09-19T11:03:56-06:00",
+     "de": "bot",
+     "texto": "¡Perfecto, Andrés! Ya tengo todo lo básico 😊\n\nAhora te cuento los formatos de menú que manejamos para eventos, para que elijas el que mejor se adapta a la cena:\n\n*1. Menú servido (individual)*\nEntrante + plato fuerte + postre. Desde Q320/persona. Agua incluida, bebidas aparte (Q150/persona: 2 copas de vino o 2 cócteles, 3 cervezas, mocktails o agua gasificada).\n\n*2. Menú para compartir*\nPlato fuerte a escoger + postre + agua: Q230/persona. Los entrantes van al centro de la mesa, Q160 por plato (rinde ~3 personas). Bebidas aparte: Q150/persona.\n\n*3. Tapas Guatemaltecas & Barra Libre*\nTapas (6 piezas + postre) + barra libre de cócteles, vinos y cerveza (máx. 4 bebidas/persona): Q350/persona. Bebidas ya incluidas.\n\n¿Cuál de estos formatos te llama más la atención para la cena de bienvenida?"
+    }
+   ]
+  },
+  {
+   "id": "EVE-03",
+   "grupo": "eventos",
+   "titulo": "Capacitación con pantalla y presupuesto de Q120: pedido especial, pasa a Juanma",
+   "origen": "chat real 2026-10-08 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Pablo 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-08T16:53:28-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes un gusto saludarles,\n\nEstoy en busca de un espacio para realizar una capacitación empresarial con las siguientes características:\n-\tParticipantes: 15 a 20 personas.\n-\tHorario: 7:00 p. m. a 10:00 p. m.\nFecha: 21 de octubre\n-\tAlimentación: cena o refacción individual incluida por participante.\n-\tEspacio: salón privado, terraza o área apartada del restaurante, adecuada para impartir una capacitación.\n-\tEquipo: pantalla o televisión con conexión HDMI para laptop.\n-\tPresupuesto máximo: Q120 por persona, incluyendo cena, uso del espacio y equipo audiovisual.\n\n¿Podrían indicarme si cuentan con un espacio que cumpla con estos requisitos y enviarme una cotización detallada? Agradecería también confirmar el horario disponible, las opciones de menú y si existe algún cargo adicional por el uso del salón o equipo.",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! Qué gusto que nos escribas 😊\n\nSí manejamos eventos corporativos y grupos privados — Rosanta tiene varios espacios que pueden funcionar bien para una capacitación.\n\nPara armarte una cotización que se ajuste a lo que necesitas, me faltan un par de datos:\n\n*Tu nombre:*\n*Correo electrónico:* (aquí te enviamos la cotización)\n\nLa fecha, el horario y el número de personas ya los tengo anotados. En cuanto me confirmes estos dos, te cuento las opciones de menú disponibles y el equipo lo prepara todo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Busca espacio privado para capacitación empresarial el 21 de octubre, 15-20 personas, de 7pm a 10pm, con cena incluida, pantalla HDMI y presupuesto máximo de Q120/persona.",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_inventa_precios",
+      "pide:correo",
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-10-08T16:53:40-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! Qué gusto que nos escribas 😊\n\nSí manejamos eventos corporativos y grupos privados — Rosanta tiene varios espacios que pueden funcionar bien para una capacitación.\n\nPara armarte una cotización que se ajuste a lo que necesitas, me faltan un par de datos:\n\n*Tu nombre:*\n*Correo electrónico:* (aquí te enviamos la cotización)\n\nLa fecha, el horario y el número de personas ya los tengo anotados. En cuanto me confirmes estos dos, te cuento las opciones de menú disponibles y el equipo lo prepara todo."
+    },
+    {
+     "t": "2026-10-08T16:54:35-06:00",
+     "de": "cliente",
+     "texto": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
+     "grabado": {
+      "respuesta": "¡Perfecto, Pablo! Anotado todo 👍\n\nAhora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la atención para la cena:\n\n1️⃣ *Menú servido individual* — entrante, plato fuerte y postre por persona. Desde Q320/persona en comida (bebidas aparte, Q150/persona).\n\n2️⃣ *Menú para compartir* — plato fuerte + postre por persona (desde Q230), más entrantes al centro para compartir. Bebidas aparte.\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra de bebidas incluida (cócteles, vino, cerveza, mocktails, máx. 4 bebidas/persona). Q375/persona todo incluido.\n\nTe comento que el presupuesto que manejas (Q120/persona) está por debajo de los formatos disponibles, pero el equipo puede orientarte mejor sobre opciones o ajustes posibles. ¿Cuál de los tres formatos se acerca más a lo que buscas?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Empresa Agro Ejemplo busca espacio privado para capacitación el 21 de octubre, 15-20 personas, 7pm-10pm, con cena y pantalla HDMI. Presupuesto Q120/persona.",
+      "email": "cliente51@ejemplo.test",
+      "nombre": "Pablo 12"
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "menciona_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-08T16:54:48-06:00",
+     "de": "bot",
+     "texto": "¡Perfecto, Pablo! Anotado todo 👍\n\nAhora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la atención para la cena:\n\n1️⃣ *Menú servido individual* — entrante, plato fuerte y postre por persona. Desde Q320/persona en comida (bebidas aparte, Q150/persona).\n\n2️⃣ *Menú para compartir* — plato fuerte + postre por persona (desde Q230), más entrantes al centro para compartir. Bebidas aparte.\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra de bebidas incluida (cócteles, vino, cerveza, mocktails, máx. 4 bebidas/persona). Q375/persona todo incluido.\n\nTe comento que el presupuesto que manejas (Q120/persona) está por debajo de los formatos disponibles, pero el equipo puede orientarte mejor sobre opciones o ajustes posibles. ¿Cuál de los tres formatos se acerca más a lo que buscas?"
+    }
+   ]
+  },
+  {
+   "id": "EVE-04",
+   "grupo": "eventos",
+   "titulo": "Cena de 60 adultos en inglés; pregunta por bebidas con un precio equivocado (Q150)",
+   "origen": "chat real 2026-07-15 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Elena 2",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-17T08:22:25-06:00",
+     "de": "cliente",
+     "texto": "Hi, \nI would like to host a dinner at your restaurant on Sunday April 25,2027. We are anticipating 60 adults, 6 children between 4-9 years old and 9 toddlers between 1-3 years old. Would you be able to send me an event menu and pricing? Do you have a children’s menu? Would it be plated or buffet dinner? \n\nThank you! I look forward to hearing from you!",
+     "grabado": {
+      "respuesta": "Hi! What a fun dinner to plan 🎉 We'd love to host you at Rosanta on April 25, 2027 — great choice!\n\nTo put together your quote and send it over, I just need a couple more details from you:\n\n*Your name:*\n*Your email:* (we'll send the full quote there)\n\nOnce I have those, I'll walk you through our event menu formats so you can pick what feels right for your group!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Client wants to host a dinner for ~75 people (60 adults + kids) on April 25, 2027. Asking about menu, pricing, children's menu and service style.",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "pide:correo",
+      "no_inventa_precios"
+     ]
+    },
+    {
+     "t": "2026-07-17T08:22:34-06:00",
+     "de": "bot",
+     "texto": "Hi! What a fun dinner to plan 🎉 We'd love to host you at Rosanta on April 25, 2027 — great choice!\n\nTo put together your quote and send it over, I just need a couple more details from you:\n\n*Your name:*\n*Your email:* (we'll send the full quote there)\n\nOnce I have those, I'll walk you through our event menu formats so you can pick what feels right for your group!"
+    },
+    {
+     "t": "2026-07-17T08:30:37-06:00",
+     "de": "cliente",
+     "texto": "Alex Moore, cliente14@ejemplo.test",
+     "grabado": {
+      "respuesta": "Perfect, thanks Alex! 😊\n\nNow for the fun part — here are the 3 event menu formats we offer, so you can tell me which one feels like the right fit:\n\n**1. Plated Individual Menu** — from Q320/person\nIncludes starter, main course and dessert + still water. Drinks are separate at Q150/person (2 glasses of wine or house cocktails, 3 beers, mocktails, or sparkling water).\n→ Food + drinks from Q470/person.\n\n**2. Family-Style / Sharing Menu** — from Q230/person\nA main course to share (lomito or catch of the day) + dessert + still water. Shared starters go in the center at Q160/dish (~3 people per dish). Drinks separate at Q150/person.\n→ Exact total depends on how many sharing plates you'd like.\n\n**3. Guatemalan Tapas & Open Bar** — Q350/person\nIncludes 6 tapas + dessert + open bar (house cocktails, wine, Gallo beer, mocktails & soft drinks, up to 4 drinks/person). Drinks are already included here!\n\nOn the kids — we don't have a fixed children's menu, but the kitchen is happy to adapt portions and flavors for little ones. We can go over that in the quote.\n\nWhich format sounds most like what you had in mind?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Alex wants to host a dinner for ~75 people on April 25, 2027. Basics collected, awaiting menu format selection.",
+      "email": "cliente14@ejemplo.test",
+      "nombre": "Elena 2",
+      "lead": {
+       "tipo": "evento",
+       "accion": "responder_info",
+       "requiere_humano": false,
+       "email": "cliente15@ejemplo.test",
+       "fecha": "2027-04-25",
+       "personas": "75"
+      }
+     },
+     "reglas": [
+      "idioma:en",
+      "pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-17T08:30:51-06:00",
+     "de": "bot",
+     "texto": "Perfect, thanks Alex! 😊\n\nNow for the fun part — here are the 3 event menu formats we offer, so you can tell me which one feels like the right fit:\n\n**1. Plated Individual Menu** — from Q320/person\nIncludes starter, main course and dessert + still water. Drinks are separate at Q150/person (2 glasses of wine or house cocktails, 3 beers, mocktails, or sparkling water).\n→ Food + drinks from Q470/person.\n\n**2. Family-Style / Sharing Menu** — from Q230/person\nA main course to share (lomito or catch of the day) + dessert + still water. Shared starters go in the center at Q160/dish (~3 people per dish). Drinks separate at Q150/person.\n→ Exact total depends on how many sharing plates you'd like.\n\n**3. Guatemalan Tapas & Open Bar** — Q350/person\nIncludes 6 tapas + dessert + open bar (house cocktails, wine, Gallo beer, mocktails & soft drinks, up to 4 drinks/person). Drinks are already included here!\n\nOn the kids — we don't have a fixed children's menu, but the kitchen is happy to adapt portions and flavors for little ones. We can go over that in the quote.\n\nWhich format sounds most like what you had in mind?"
+    },
+    {
+     "t": "2026-07-17T08:31:07-06:00",
+     "de": "cliente",
+     "texto": "Thank you",
+     "grabado": {
+      "respuesta": "Of course, Alex! 😊 Take your time looking over the options — whenever you're ready, just let me know which format catches your eye and we'll get the ball rolling on your quote!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Alex reviewing the 3 event menu format options for April 25, 2027 dinner.",
+      "email": "cliente14@ejemplo.test",
+      "nombre": "Elena 2"
+     }
+    },
+    {
+     "t": "2026-07-17T08:31:13-06:00",
+     "de": "bot",
+     "texto": "Of course, Alex! 😊 Take your time looking over the options — whenever you're ready, just let me know which format catches your eye and we'll get the ball rolling on your quote!"
+    },
+    {
+     "t": "2026-07-17T08:31:35-06:00",
+     "de": "cliente",
+     "texto": "Sharing style",
+     "grabado": {
+      "respuesta": "Love that choice — sharing style is always such a warm, convivial vibe for a group dinner! 🙌\n\nYou're all set, Alex. The team will put together your full quote for the Family-Style / Sharing Menu for April 25, 2027 and send it over to cliente14@ejemplo.test.\n\nThey'll also address your questions about the kids and toddlers in the quote. Keep an eye on your inbox!",
+      "categoria": "escalar_evento",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Alex wants a family-style sharing dinner for ~75 people on April 25, 2027. All info collected, ready for quote.",
+      "email": "cliente14@ejemplo.test",
+      "nombre": "Elena 2"
+     }
+    },
+    {
+     "t": "2026-07-17T08:31:45-06:00",
+     "de": "bot",
+     "texto": "Love that choice — sharing style is always such a warm, convivial vibe for a group dinner! 🙌\n\nYou're all set, Alex. The team will put together your full quote for the Family-Style / Sharing Menu for April 25, 2027 and send it over to cliente14@ejemplo.test.\n\nThey'll also address your questions about the kids and toddlers in the quote. Keep an eye on your inbox!"
+    },
+    {
+     "t": "2026-07-17T08:32:48-06:00",
+     "de": "cliente",
+     "texto": "Also if they can share now drinks work, if only 30 adults drink, do I pay Q150 for 30 adults!",
+     "grabado": {
+      "respuesta": "Great question, Alex! So the way it works is — yes, drinks are charged per person for those who want them, not for the whole group. So if only 30 adults will be drinking, the drink package (Q150/person) would apply to those 30.\n\nThat said, the exact breakdown and how to handle the kids and non-drinkers is something the team will detail in your quote — they'll make sure everything is clear and fair. 😊",
+      "categoria": "escalar_evento",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Alex confirmed sharing menu format. Asking how drinks pricing works for partial group (only 30 of 60 adults drinking).",
+      "email": "cliente14@ejemplo.test",
+      "nombre": "Elena 2"
+     },
+     "reglas": [
+      "idioma:en",
+      "no_inventa_precios",
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-07-17T08:32:59-06:00",
+     "de": "bot",
+     "texto": "Great question, Alex! So the way it works is — yes, drinks are charged per person for those who want them, not for the whole group. So if only 30 adults will be drinking, the drink package (Q150/person) would apply to those 30.\n\nThat said, the exact breakdown and how to handle the kids and non-drinkers is something the team will detail in your quote — they'll make sure everything is clear and fair. 😊"
+    }
+   ]
+  },
+  {
+   "id": "EVE-05",
+   "grupo": "eventos",
+   "titulo": "Rehearsal dinner de 23 con todo menos nombre y correo",
+   "origen": "chat real 2026-08-26 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Jorge 8",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-26T12:25:47-06:00",
+     "de": "cliente",
+     "texto": "Buenos días",
+     "grabado": {
+      "respuesta": "¡Buenos días! 😊 Bienvenido a Rosanta. ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial, sin consulta específica aún",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-08-26T12:25:53-06:00",
+     "de": "bot",
+     "texto": "¡Buenos días! 😊 Bienvenido a Rosanta. ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-08-26T12:31:08-06:00",
+     "de": "cliente",
+     "texto": "Quisiera molestarles con una cotización para rehearsal dinner:\n\n- 23 personas\n- ⁠Domingo 8 de noviembre \n- ⁠19:00 hrs \n- Cena familiar\n- ⁠Vino y Cerveza únicamente \n\nPor favor",
+     "grabado": {
+      "respuesta": "Gracias por tu mensaje 🌿 En un momento te responde una persona del equipo.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "",
+      "resumen": "No se pudo clasificar automáticamente",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "pide:correo",
+      "no_crea_reserva",
+      "idioma:es"
+     ]
+    },
+    {
+     "t": "2026-08-26T12:31:23-06:00",
+     "de": "bot",
+     "texto": "Gracias por tu mensaje 🌿 En un momento te responde una persona del equipo."
+    }
+   ]
+  },
+  {
+   "id": "EVE-06",
+   "grupo": "eventos",
+   "titulo": "\"Reserva para 23 personas\": es evento; con el correo pasa a Juanma",
+   "origen": "chat real 2026-08-06 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Valeria 6",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-06T08:55:34-06:00",
+     "de": "cliente",
+     "texto": "Hola buenos dias!",
+     "grabado": {
+      "respuesta": "¡Hola! Buenos días 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-08-06T08:55:42-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Buenos días 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-08-06T08:55:58-06:00",
+     "de": "cliente",
+     "texto": "Queria saber si tendrán disponibilidad para una reserva de 23 personas para el miercoles 12 de agosto a partir de laa 7PM",
+     "grabado": {
+      "respuesta": "¡Qué bueno que escribes! Para un grupo de 23 personas te recomendaría hacer una solicitud de evento privado — así el equipo puede asegurarte el espacio y darte una atención personalizada 🙌\n\nPara pasarles tu info necesito unos datos rápidos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Tipo de evento:* (cumpleaños, reunión de amigos, corporativo, etc.)\n\nYa tengo la fecha (miércoles 12 de agosto) y el número de personas (23). ¿Me compartes los datos que faltan?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar para 23 personas el miércoles 12 de agosto a las 7pm",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_crea_reserva",
+      "no_promete_disponibilidad"
+     ]
+    },
+    {
+     "t": "2026-08-06T08:56:07-06:00",
+     "de": "bot",
+     "texto": "¡Qué bueno que escribes! Para un grupo de 23 personas te recomendaría hacer una solicitud de evento privado — así el equipo puede asegurarte el espacio y darte una atención personalizada 🙌\n\nPara pasarles tu info necesito unos datos rápidos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Tipo de evento:* (cumpleaños, reunión de amigos, corporativo, etc.)\n\nYa tengo la fecha (miércoles 12 de agosto) y el número de personas (23). ¿Me compartes los datos que faltan?"
+    },
+    {
+     "t": "2026-08-06T08:56:15-06:00",
+     "de": "cliente",
+     "texto": "Le saluda Daniela Ortiz de una empresa 😊",
+     "grabado": {
+      "respuesta": "¡Hola Daniela! Qué gusto 😊\n\nY para completar tu solicitud:\n\n*Correo electrónico:*\n*Tipo de evento:* (reunión corporativa, celebración, otro)",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Daniela Ortiz de una empresa quiere reservar para 23 personas el miércoles 12 de agosto a las 7pm",
+      "email": "",
+      "nombre": "Valeria 6"
+     }
+    },
+    {
+     "t": "2026-08-06T08:56:23-06:00",
+     "de": "bot",
+     "texto": "¡Hola Daniela! Qué gusto 😊\n\nY para completar tu solicitud:\n\n*Correo electrónico:*\n*Tipo de evento:* (reunión corporativa, celebración, otro)"
+    },
+    {
+     "t": "2026-08-06T08:57:24-06:00",
+     "de": "cliente",
+     "texto": "Gracias!! \n\nCorreo electrónico: cliente24@ejemplo.test\nTipo de evento: reunión corporativa pero es más como celebración de equipo :)",
+     "grabado": {
+      "respuesta": "¡Perfecto Daniela, ya tengo todo! 🎉\n\nAhora cuéntame sobre el formato de la cena — tenemos tres opciones:\n\n*1. Menú servido individual* — entrante + plato fuerte + postre. Desde Q470/persona (comida + bebidas).\n\n*2. Menú para compartir* — platos al centro entre todos + plato fuerte a elegir. Desde Q380/persona aprox. (bebidas aparte).\n\n*3. Tapas Guatemaltecas & Barra Libre* — tapas + postre + barra libre (cócteles, vinos, cerveza, mocktails). Q350/persona, todo incluido.\n\n¿Cuál se ajusta más al ambiente que buscan para la celebración?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Daniela Ortiz de una empresa quiere una celebración de equipo para 23 personas el miércoles 12 de agosto a las 7pm",
+      "email": "cliente24@ejemplo.test",
+      "nombre": "Valeria 6",
+      "lead": {
+       "tipo": "evento",
+       "accion": "responder_info",
+       "requiere_humano": false,
+       "email": "cliente25@ejemplo.test",
+       "fecha": "2026-08-12",
+       "personas": "23",
+       "tipo_evento": "corporativo"
+      }
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_crea_reserva"
+     ]
+    },
+    {
+     "t": "2026-08-06T08:57:33-06:00",
+     "de": "bot",
+     "texto": "¡Perfecto Daniela, ya tengo todo! 🎉\n\nAhora cuéntame sobre el formato de la cena — tenemos tres opciones:\n\n*1. Menú servido individual* — entrante + plato fuerte + postre. Desde Q470/persona (comida + bebidas).\n\n*2. Menú para compartir* — platos al centro entre todos + plato fuerte a elegir. Desde Q380/persona aprox. (bebidas aparte).\n\n*3. Tapas Guatemaltecas & Barra Libre* — tapas + postre + barra libre (cócteles, vinos, cerveza, mocktails). Q350/persona, todo incluido.\n\n¿Cuál se ajusta más al ambiente que buscan para la celebración?"
+    }
+   ]
+  },
+  {
+   "id": "EVE-07",
+   "grupo": "eventos",
+   "titulo": "Cree que la Cena Romántica cuesta Q800: el precio es Q900",
+   "origen": "chat real 2026-10-16 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Lucía 13",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-16T22:16:00-06:00",
+     "de": "cliente",
+     "texto": "Hola, buenas tardes. Quisiera información sobre los paquetes que ofrecen para parejas. Sería para 2 personas, para celebrar nuestro aniversario y hacer también la revelación del sexo de nuestro bebé, solo nosotros dos.\nNos interesa algo íntimo y bonito, como picnic romántico o cena/almuerzo romántico, de preferencia en un espacio tranquilo o con cierta privacidad.\nSería un domingo aproximadamente a las 3:00 pm. ¿Qué paquetes tienen disponibles, qué incluyen y cuáles son los precios para 2 personas?",
+     "grabado": {
+      "respuesta": "¡Hola, Lucía! Felicidades por su aniversario y por el bebé. Qué bonito plan. Picnic no tenemos en la base, pero sí la Cena Romántica para Dos:\n\n*Incluye:*\n• Pulpo a la parrilla para compartir\n• Dos Lomitos de la Casa\n• Un postre para compartir\n• Una botella de vino tinto Cabernet Sauvignon\n• Decoración especial: pétalos, velas y chimenea\n\n*Precio:* Q900 por pareja. Se reserva con 24 horas de anticipación y se confirma con un anticipo del 50% (Q450) por transferencia.\n\nLos domingos abrimos de 15:00 a 20:00, así que las 3:00 pm entra perfecto. Sobre la revelación del sexo del bebé o un espacio con más privacidad, no tengo el detalle y prefiero no inventarte nada. Te lo confirma una persona. Te escribe Juanma mañana a partir de las 9:00.\n\nPara avanzar con la reserva, ¿me compartes estos datos?\n*Tu nombre:*\n*Correo:*\n*Fecha del domingo:*\n\nAquí tienes un video de cómo queda la decoración: https://drive.google.com/file/d/1Yd4f33KZc7t4fTYToi45NrISoFX1sO5I/view",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Pareja busca cena/almuerzo romántico o picnic para 2 por aniversario y revelación de sexo del bebé, un domingo a las 15:00, con privacidad.",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-16T22:16:07-06:00",
+     "de": "cliente",
+     "texto": "Creo que tiene un paquete de cena romántica de Q. 800",
+     "grabado": {
+      "respuesta": "Casi, Lucía. La Cena Romántica para Dos está en Q900 por pareja (valorada en Q1,120). Incluye pulpo a la parrilla para compartir, dos Lomitos de la Casa, un postre para compartir, una botella de vino tinto Cabernet Sauvignon y decoración especial con pétalos, velas y chimenea. Se reserva con 24 horas de anticipación y se confirma con el 50% de anticipo (Q450). ¿Te gustaría que te la reserve? 🌿",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta por el precio de la Cena Romántica, cree que es Q800; se le aclaró que son Q900 por pareja.",
+      "email": "",
+      "nombre": "Lucía 13"
+     },
+     "reglas": [
+      "contiene:Q900",
+      "no_inventa_precios",
+      "no_pasa_a_juanma",
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-10-16T22:16:09-06:00",
+     "de": "bot",
+     "texto": "¡Hola, Lucía! Felicidades por su aniversario y por el bebé. Qué bonito plan. Picnic no tenemos en la base, pero sí la Cena Romántica para Dos:\n\n*Incluye:*\n• Pulpo a la parrilla para compartir\n• Dos Lomitos de la Casa\n• Un postre para compartir\n• Una botella de vino tinto Cabernet Sauvignon\n• Decoración especial: pétalos, velas y chimenea\n\n*Precio:* Q900 por pareja. Se reserva con 24 horas de anticipación y se confirma con un anticipo del 50% (Q450) por transferencia.\n\nLos domingos abrimos de 15:00 a 20:00, así que las 3:00 pm entra perfecto. Sobre la revelación del sexo del bebé o un espacio con más privacidad, no tengo el detalle y prefiero no inventarte nada. Te lo confirma una persona. Te escribe Juanma mañana a partir de las 9:00.\n\nPara avanzar con la reserva, ¿me compartes estos datos?\n*Tu nombre:*\n*Correo:*\n*Fecha del domingo:*\n\nAquí tienes un video de cómo queda la decoración: https://drive.google.com/file/d/1Yd4f33KZc7t4fTYToi45NrISoFX1sO5I/view"
+    },
+    {
+     "t": "2026-10-16T22:16:12-06:00",
+     "de": "bot",
+     "texto": "Casi, Lucía. La Cena Romántica para Dos está en Q900 por pareja (valorada en Q1,120). Incluye pulpo a la parrilla para compartir, dos Lomitos de la Casa, un postre para compartir, una botella de vino tinto Cabernet Sauvignon y decoración especial con pétalos, velas y chimenea. Se reserva con 24 horas de anticipación y se confirma con el 50% de anticipo (Q450). ¿Te gustaría que te la reserve? 🌿\n[Botones: Sí, quiero reservar · Solo preguntaba]"
+    }
+   ]
+  },
+  {
+   "id": "QUE-01",
+   "grupo": "quejas_cobros",
+   "titulo": "Queja larga por la cena de maridaje",
+   "origen": "chat real 2026-06-22 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Elena",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-06-22T16:19:27-06:00",
+     "de": "cliente",
+     "texto": "Estimado equipo de Rosanta,\n\nQuisiera compartir una retroalimentación sobre la experiencia que tuve junto a una amiga durante la cena y experiencia de maridaje del pasado 18 de junio.\n\nDecidimos reservar porque nos parecía una propuesta interesante y teníamos expectativas altas, especialmente considerando el precio de la experiencia. Sin embargo, salimos bastante decepcionadas.\n\nUno de los principales aspectos fue el tiempo de servicio. Para recibir las primeras tres degustaciones esperamos más de 25 minutos, a pesar de tratarse de porciones muy pequeñas. Además, los cócteles que debían acompañar cada plato llegaron de forma descoordinada: el primero varios minutos después de la comida y los siguientes con retrasos aún mayores. Esto afectó por completo la intención del maridaje, ya que la experiencia de armonización entre bebida y comida prácticamente se perdió.\n\nRespecto a la propuesta gastronómica, lamentablemente no encontramos sabores memorables ni una ejecución que justificara el valor de la experiencia. Las porciones parecían más cercanas a pequeñas boquitas que a un menú de degustación. (…)",
+     "grabado": {
+      "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad.\n\nLeer tu experiencia nos importa, y entiendo perfectamente la frustración: salir a comer a otro lugar después de una experiencia por la que pagaste y te ilusionaste dice mucho sobre cómo terminó la noche, y eso no debió pasar.\n\nLos puntos que describes —los tiempos, la descoordinación del maridaje, las porciones, el cóctel que no funcionó, la falta de alguien que preguntara cómo iban— son exactamente el tipo de cosas que el equipo necesita escuchar para mejorar. Y lo voy a hacer llegar completo.\n\nAlguien del equipo se va a comunicar contigo directamente. Merecen darte una respuesta de persona a persona, no solo de chat. 🙏",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Elena comparte retroalimentación detallada y negativa sobre el maridaje del 18 de junio: tiempos de servicio, descoordinación de cócteles, porciones muy pequeñas, sabores planos, falta de atención al cliente y presentación por debajo del precio.",
+      "email": "",
+      "nombre": "Elena"
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "menciona_juanma",
+      "sin_frases_prohibidas",
+      "no_promete_compensacion",
+      "juez:tono"
+     ]
+    },
+    {
+     "t": "2026-06-22T16:19:40-06:00",
+     "de": "bot",
+     "texto": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad.\n\nLeer tu experiencia nos importa, y entiendo perfectamente la frustración: salir a comer a otro lugar después de una experiencia por la que pagaste y te ilusionaste dice mucho sobre cómo terminó la noche, y eso no debió pasar.\n\nLos puntos que describes —los tiempos, la descoordinación del maridaje, las porciones, el cóctel que no funcionó, la falta de alguien que preguntara cómo iban— son exactamente el tipo de cosas que el equipo necesita escuchar para mejorar. Y lo voy a hacer llegar completo.\n\nAlguien del equipo se va a comunicar contigo directamente. Merecen darte una respuesta de persona a persona, no solo de chat. 🙏"
+    }
+   ]
+  },
+  {
+   "id": "QUE-02",
+   "grupo": "quejas_cobros",
+   "titulo": "Le cobraron dos veces la tarjeta; después el bot se calla",
+   "origen": "chat real 2026-10-17 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Valeria 13",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-17T23:08:11-06:00",
+     "de": "cliente",
+     "texto": "Qué tal, buenas noches!\nDisculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos veces, habrá forma de solucionar eso, perdon?",
+     "grabado": {
+      "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente reporta doble cobro en su tarjeta tras visitar el restaurante hoy y pide solución.",
+      "email": "",
+      "nombre": "Valeria 13"
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "menciona_juanma",
+      "no_promete_compensacion",
+      "sin_frases_prohibidas"
+     ]
+    },
+    {
+     "t": "2026-10-17T23:08:18-06:00",
+     "de": "bot",
+     "texto": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00."
+    },
+    {
+     "t": "2026-10-17T23:09:32-06:00",
+     "de": "cliente",
+     "texto": "Perfecto, te agradezco mucho Juanma 🙌🏻",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-10-18T06:55:52-06:00",
+     "de": "cliente",
+     "texto": "Buen día, Juanma\nSí, con gusto. Le mando capturas de lo que me aparece en mi banca en línea y también de los mensajes de texto que me llegaron",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-10-18T07:37:15-06:00",
+     "de": "cliente",
+     "texto": "Muy bien, muchas gracias!",
+     "grabado": null
+    }
+   ]
+  },
+  {
+   "id": "QUE-03",
+   "grupo": "quejas_cobros",
+   "titulo": "Le escriben a \"Juan Manuel\" por un depósito pendiente",
+   "origen": "chat real 2026-09-30 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Luis 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-30T10:11:17-06:00",
+     "de": "cliente",
+     "texto": "Hola Juan Manuel buenas tardes \nMe quede pendiente el depósito del mes de septiembre y ya estamos a punto de entrar a octubre",
+     "grabado": {
+      "respuesta": "Hola! 👋 Creo que me escribes al número equivocado — este es el chat de Rosanta, el restaurante. ¿Hay algo en lo que pueda ayudarte por acá?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente menciona un depósito pendiente de septiembre, posiblemente número equivocado",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_contiene:número equivocado"
+     ]
+    },
+    {
+     "t": "2026-09-30T10:11:24-06:00",
+     "de": "bot",
+     "texto": "Hola! 👋 Creo que me escribes al número equivocado — este es el chat de Rosanta, el restaurante. ¿Hay algo en lo que pueda ayudarte por acá?"
+    }
+   ]
+  },
+  {
+   "id": "QUE-04",
+   "grupo": "quejas_cobros",
+   "titulo": "El banco busca a Juanma por su tarjeta empresarial",
+   "origen": "chat real 2026-07-13 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Carlos 2",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-13T14:40:57-06:00",
+     "de": "cliente",
+     "texto": "Buena tarde Juan como esta? le saluda Carlos de Banco Industrial  al final ya salio la tarjeta le comente a una compañera no se si le indico",
+     "grabado": {
+      "respuesta": "¡Hola Carlos! Buenas tardes 😊 Gracias por escribir.\n\nTe cuento con honestidad: no tengo información sobre ese tema desde este canal. Lo mejor es que alguien del equipo te confirme directamente lo de la tarjeta.\n\nTe puedo pasar el mensaje para que se comuniquen contigo, ¿te parece bien?",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente de Banco Industrial consulta sobre una tarjeta, menciona haber hablado con una compañera",
+      "email": "",
+      "nombre": "Carlos 2"
+     },
+     "reglas": [
+      "pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-13T14:41:04-06:00",
+     "de": "bot",
+     "texto": "¡Hola Carlos! Buenas tardes 😊 Gracias por escribir.\n\nTe cuento con honestidad: no tengo información sobre ese tema desde este canal. Lo mejor es que alguien del equipo te confirme directamente lo de la tarjeta.\n\nTe puedo pasar el mensaje para que se comuniquen contigo, ¿te parece bien?"
+    },
+    {
+     "t": "2026-07-13T14:46:57-06:00",
+     "de": "cliente",
+     "texto": "Si por favor",
+     "grabado": {
+      "respuesta": "Listo Carlos, le dejo el mensaje al equipo para que se comuniquen contigo a la brevedad 🙌 Que tengas una excelente tarde.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente de Banco Industrial pregunta por una tarjeta, dice haber hablado con una compañera; quiere que el equipo la contacte",
+      "email": "",
+      "nombre": "Carlos 2"
+     }
+    },
+    {
+     "t": "2026-07-13T14:47:02-06:00",
+     "de": "bot",
+     "texto": "Listo Carlos, le dejo el mensaje al equipo para que se comuniquen contigo a la brevedad 🙌 Que tengas una excelente tarde."
+    },
+    {
+     "t": "2026-07-13T14:47:29-06:00",
+     "de": "cliente",
+     "texto": "Gracias :) feliz tarde",
+     "grabado": {
+      "respuesta": "¡Igualmente Carlos! Feliz tarde 😊",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente de Banco Industrial consultó sobre una tarjeta y quedó pendiente contacto del equipo",
+      "email": "",
+      "nombre": "Carlos 2"
+     }
+    },
+    {
+     "t": "2026-07-13T14:47:32-06:00",
+     "de": "bot",
+     "texto": "¡Igualmente Carlos! Feliz tarde 😊"
+    },
+    {
+     "t": "2026-07-13T15:12:53-06:00",
+     "de": "juanma",
+     "texto": "Buenas tardes, Carlos. \nMe comenta una compañera. Que tendria que pasar a fimar. Es eso correcto"
+    },
+    {
+     "t": "2026-07-20T10:07:53-06:00",
+     "de": "cliente",
+     "texto": "Buen día Juan consultando que día estara viniendo por su tarjeta empresarial",
+     "grabado": {
+      "respuesta": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos información sobre tarjetas empresariales aquí.\n\nSi en algún momento quieres hacer una reserva o tienes dudas sobre el restaurante, con gusto te ayudo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta por tarjeta empresarial, mensaje dirigido al número equivocado",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_contiene:número equivocado"
+     ]
+    },
+    {
+     "t": "2026-07-20T10:08:01-06:00",
+     "de": "bot",
+     "texto": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos información sobre tarjetas empresariales aquí.\n\nSi en algún momento quieres hacer una reserva o tienes dudas sobre el restaurante, con gusto te ayudo."
+    },
+    {
+     "t": "2026-07-20T10:08:48-06:00",
+     "de": "cliente",
+     "texto": "Buen día, no el señor Juan solicito tarjeta con nosotros le saludo de banco industrial, usted podria compartirme el contacto directo de el por favor",
+     "grabado": {
+      "respuesta": "¡Buen día! Entiendo, pero no me es posible compartir datos de contacto de personas por este medio 😊 Te recomiendo comunicarte directamente con el restaurante llamando al (502) 55500002 o escribiendo a restaurante@rosanta.rest, y alguien del equipo puede orientarte.\n\n¿Hay algo más en lo que te pueda ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Representante de Banco Industrial busca contacto directo de un cliente del restaurante",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-20T10:08:54-06:00",
+     "de": "bot",
+     "texto": "¡Buen día! Entiendo, pero no me es posible compartir datos de contacto de personas por este medio 😊 Te recomiendo comunicarte directamente con el restaurante llamando al (502) 55500002 o escribiendo a restaurante@rosanta.rest, y alguien del equipo puede orientarte.\n\n¿Hay algo más en lo que te pueda ayudar?"
+    }
+   ]
+  },
+  {
+   "id": "QUE-05",
+   "grupo": "quejas_cobros",
+   "titulo": "Turistas llegan y encuentran cerrado (inglés)",
+   "origen": "chat real 2026-07-15 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Sofía 3",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-15T19:24:27-06:00",
+     "de": "cliente",
+     "texto": "Hey, we had a reservation for tonight at 8pm but our transport is later than plannend. I think we can be there at 9pm. Is this to late for you or can we still come? Kind regards, Sofía",
+     "grabado": {
+      "respuesta": "Hey Sofía! Thanks for the heads up 🙏\n\nTonight we're open until 10pm, so 9pm works just fine. Come on over and enjoy your evening!\n\nJust a heads up — if anything changes with your reservation, you can update it through the link: https://www.rosanta.rest/reservations\n\nSee you soon!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Has a reservation tonight and wants to know if arriving at 9pm instead of 8pm is okay",
+      "email": "",
+      "nombre": "Sofía 3"
+     },
+     "reglas": [
+      "idioma:en",
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-07-15T19:24:34-06:00",
+     "de": "bot",
+     "texto": "Hey Sofía! Thanks for the heads up 🙏\n\nTonight we're open until 10pm, so 9pm works just fine. Come on over and enjoy your evening!\n\nJust a heads up — if anything changes with your reservation, you can update it through the link: https://www.rosanta.rest/reservations\n\nSee you soon!"
+    },
+    {
+     "t": "2026-07-15T21:23:18-06:00",
+     "de": "cliente",
+     "texto": "We will come in 5 minutes :)",
+     "grabado": {
+      "respuesta": "Yay, we'll have everything ready for you! 🙌 See you in a bit!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Client is arriving in 5 minutes",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-15T21:23:24-06:00",
+     "de": "bot",
+     "texto": "Yay, we'll have everything ready for you! 🙌 See you in a bit!"
+    },
+    {
+     "t": "2026-07-15T21:23:40-06:00",
+     "de": "cliente",
+     "texto": "We are on the door but it is closed",
+     "grabado": {
+      "respuesta": "Oh no! Let me flag this for the team right away — someone will be with you in just a moment 🚪",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Client is at the door and it appears closed",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "idioma:en",
+      "menciona_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-15T21:23:45-06:00",
+     "de": "bot",
+     "texto": "Oh no! Let me flag this for the team right away — someone will be with you in just a moment 🚪"
+    }
+   ]
+  },
+  {
+   "id": "QUE-06",
+   "grupo": "quejas_cobros",
+   "titulo": "Olvidó una botella en el jardín",
+   "origen": "chat real 2026-07-23 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Tomás 4",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-23T07:24:36-06:00",
+     "de": "cliente",
+     "texto": "Hola! Creo que dejé mi botella de agua anoche. Comí en el jardín con mi novio para su cumpleaños y la botella es negra. Por favor me dice si lo ver 🙏",
+     "grabado": {
+      "respuesta": "Hola! Claro que sí, con gusto lo revisamos 🙏 ¿Puedes decirme tu nombre y el número de mesa aproximado o el área del jardín donde estuvieron? Así le paso el dato al equipo y te confirman en cuanto lo verifiquen.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente dejó una botella de agua negra anoche en el jardín y quiere saber si la encontraron",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-23T07:24:45-06:00",
+     "de": "bot",
+     "texto": "Hola! Claro que sí, con gusto lo revisamos 🙏 ¿Puedes decirme tu nombre y el número de mesa aproximado o el área del jardín donde estuvieron? Así le paso el dato al equipo y te confirman en cuanto lo verifiquen."
+    },
+    {
+     "t": "2026-07-23T07:30:58-06:00",
+     "de": "cliente",
+     "texto": "Me llamo Tomás y la mesa estaba cerca de la fogata en el centro del jardín.",
+     "grabado": {
+      "respuesta": "Gracias, Tomás! Ya le paso el aviso al equipo: botella negra de agua, cerca de la fogata en el jardín, anoche. Te confirman en cuanto la revisen 🙏",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Tomás dejó una botella de agua negra anoche cerca de la fogata en el jardín y quiere saber si la encontraron",
+      "email": "",
+      "nombre": "Tomás 4"
+     },
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-07-23T07:31:02-06:00",
+     "de": "bot",
+     "texto": "Gracias, Tomás! Ya le paso el aviso al equipo: botella negra de agua, cerca de la fogata en el jardín, anoche. Te confirman en cuanto la revisen 🙏"
+    }
+   ]
+  },
+  {
+   "id": "QUE-07",
+   "grupo": "quejas_cobros",
+   "titulo": "Pregunta si el postre llevaba edulcorante (no está en la base)",
+   "origen": "chat real 2026-08-21 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Laura 7",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-21T17:57:49-06:00",
+     "de": "cliente",
+     "texto": "Buenos días, hoy fui al restante y comí un mousse de chocolate.",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! 😊 Qué rico suena ese mousse de chocolate... aunque te cuento que no tenemos ese postre en nuestro menú actual. ¿Puede ser que hayas visitado otro restaurante? Si fuiste a Rosanta, con gusto te ayudo con cualquier duda o comentario que tengas.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente menciona haber comido mousse de chocolate, plato que no está en el menú",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-08-21T17:57:57-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! 😊 Qué rico suena ese mousse de chocolate... aunque te cuento que no tenemos ese postre en nuestro menú actual. ¿Puede ser que hayas visitado otro restaurante? Si fuiste a Rosanta, con gusto te ayudo con cualquier duda o comentario que tengas."
+    },
+    {
+     "t": "2026-08-21T17:58:02-06:00",
+     "de": "cliente",
+     "texto": "Uds me podrían confirmar si lleva algún edulcorante?",
+     "grabado": {
+      "respuesta": "Entiendo la consulta, pero honestamente no tengo esa información en la mano — y no quiero darte un dato incorrecto. Lo mejor es que alguien del equipo te confirme directamente. ¿Quieres que les pase tu pregunta?",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente pregunta si el mousse de chocolate lleva edulcorante",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "menciona_juanma"
+     ]
+    },
+    {
+     "t": "2026-08-21T17:58:08-06:00",
+     "de": "bot",
+     "texto": "Entiendo la consulta, pero honestamente no tengo esa información en la mano — y no quiero darte un dato incorrecto. Lo mejor es que alguien del equipo te confirme directamente. ¿Quieres que les pase tu pregunta?"
+    }
+   ]
+  },
+  {
+   "id": "ING-01",
+   "grupo": "ingles",
+   "titulo": "\"Are you open today?\" un lunes",
+   "origen": "chat real 2026-08-24 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Elena 8",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-24T15:58:11-06:00",
+     "de": "cliente",
+     "texto": "Good afternoon are you open today?",
+     "grabado": {
+      "respuesta": "Good afternoon! 🙌 Today is Monday, so we're open from 5:00 PM to 9:00 PM. Would you like to grab a table? You can reserve here: https://www.rosanta.rest/reservations",
+      "categoria": "redirigir_reservas",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asking if the restaurant is open today (Monday)",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "juez:fiel_a_la_base",
+      "link_en_su_idioma"
+     ]
+    },
+    {
+     "t": "2026-08-24T15:58:18-06:00",
+     "de": "bot",
+     "texto": "Good afternoon! 🙌 Today is Monday, so we're open from 5:00 PM to 9:00 PM. Would you like to grab a table? You can reserve here: https://www.rosanta.rest/reservations"
+    }
+   ]
+  },
+  {
+   "id": "ING-02",
+   "grupo": "ingles",
+   "titulo": "Pide el link de reservas en inglés",
+   "origen": "chat real 2026-10-05 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Carlos 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-05T18:52:39-06:00",
+     "de": "cliente",
+     "texto": "Hi. Are reservations needed tonight for 2 people?",
+     "grabado": {
+      "respuesta": "Hey! Tonight we close at 9 PM (it's Monday). Walk-ins are welcome, but a reservation guarantees your spot, especially on weekends 😊\n\nWant me to share the reservation link, or would you like to book right here in chat? I just need a few quick details.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asking if a reservation is needed tonight for 2 people",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-10-05T18:52:46-06:00",
+     "de": "bot",
+     "texto": "Hey! Tonight we close at 9 PM (it's Monday). Walk-ins are welcome, but a reservation guarantees your spot, especially on weekends 😊\n\nWant me to share the reservation link, or would you like to book right here in chat? I just need a few quick details."
+    },
+    {
+     "t": "2026-10-05T18:53:17-06:00",
+     "de": "cliente",
+     "texto": "Reservation link",
+     "grabado": {
+      "respuesta": "Here you go! 👉 https://www.rosanta.rest/reservations\n\nHope to see you tonight!",
+      "categoria": "redirigir_reservas",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Wants the reservation link for tonight for 2 people",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:en",
+      "contiene:rosanta.rest/reservations",
+      "link_en_su_idioma"
+     ]
+    },
+    {
+     "t": "2026-10-05T18:53:21-06:00",
+     "de": "bot",
+     "texto": "Here you go! 👉 https://www.rosanta.rest/reservations\n\nHope to see you tonight!"
+    }
+   ]
+  },
+  {
+   "id": "ING-03",
+   "grupo": "ingles",
+   "titulo": "Avisa que alguien más llegará después",
+   "origen": "chat real 2026-08-07 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Pablo 6",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-07T17:41:08-06:00",
+     "de": "cliente",
+     "texto": "Hi this is Pablo. We have a reservation at 7:30 pm today. FYI another person May join us later fort drinks.",
+     "grabado": {
+      "respuesta": "Hey Pablo! Thanks for the heads up 🙌 No worries at all — if someone joins you later for drinks, just let your server know when you arrive and they'll take care of it. See you tonight!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Has a reservation tonight at 7:30pm, mentions a possible extra guest joining later for drinks",
+      "email": "",
+      "nombre": "Pablo 6"
+     },
+     "reglas": [
+      "idioma:en",
+      "no_confirma_sin_sistema",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-08-07T17:41:16-06:00",
+     "de": "bot",
+     "texto": "Hey Pablo! Thanks for the heads up 🙌 No worries at all — if someone joins you later for drinks, just let your server know when you arrive and they'll take care of it. See you tonight!"
+    }
+   ]
+  },
+  {
+   "id": "ING-04",
+   "grupo": "ingles",
+   "titulo": "Gift card en inglés",
+   "origen": "chat real 2026-08-13 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Laura 6",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-13T13:28:54-06:00",
+     "de": "cliente",
+     "texto": "Do you sell giftcard/ tarjeto de regalo? Best regard Laura",
+     "grabado": {
+      "respuesta": "Hey Laura! Yes, we do 🎁\n\nOur gift cards are perfect for someone who deserves a special experience at Rosanta.\n\n*Available amounts:* Q300 and Q500\n*No expiration date*\nPayment by bank transfer.\n\nHere's how it works:\n1. Transfer to this account:\n *CORSAGA, S.A.*\n *BAC Checking Account:* 9048025432\n2. Send us the name of the person receiving it — we personalize it and send it as a photo right away.\n\nWant to get one? Just let me know and I'll help you from here! 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asks about gift cards availability and how to purchase",
+      "email": "",
+      "nombre": "Laura 6"
+     },
+     "reglas": [
+      "idioma:en",
+      "no_inventa_precios",
+      "contiene:Q300"
+     ]
+    },
+    {
+     "t": "2026-08-13T13:29:04-06:00",
+     "de": "bot",
+     "texto": "Hey Laura! Yes, we do 🎁\n\nOur gift cards are perfect for someone who deserves a special experience at Rosanta.\n\n*Available amounts:* Q300 and Q500\n*No expiration date*\nPayment by bank transfer.\n\nHere's how it works:\n1. Transfer to this account:\n *CORSAGA, S.A.*\n *BAC Checking Account:* 9048025432\n2. Send us the name of the person receiving it — we personalize it and send it as a photo right away.\n\nWant to get one? Just let me know and I'll help you from here! 😊"
+    }
+   ]
+  },
+  {
+   "id": "HOR-01",
+   "grupo": "horarios",
+   "titulo": "\"¿A qué hora abren?\" un viernes",
+   "origen": "chat real 2026-09-04 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Diego 9",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-04T09:08:32-06:00",
+     "de": "cliente",
+     "texto": "Buenos días, a qué hora abren?",
+     "grabado": {
+      "respuesta": "¡Buenos días! Hoy es viernes, así que abrimos a las 12:00 del mediodía hasta las 10 de la noche 🙌 ¿Te puedo ayudar con algo más?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta por horario de apertura",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "idioma:es",
+      "juez:fiel_a_la_base",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-09-04T09:08:40-06:00",
+     "de": "bot",
+     "texto": "¡Buenos días! Hoy es viernes, así que abrimos a las 12:00 del mediodía hasta las 10 de la noche 🙌 ¿Te puedo ayudar con algo más?"
+    }
+   ]
+  },
+  {
+   "id": "HOR-02",
+   "grupo": "horarios",
+   "titulo": "Almuerzo un domingo, luego horario entre semana y sábado",
+   "origen": "chat real 2026-09-06 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Martín 9",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-06T11:51:36-06:00",
+     "de": "cliente",
+     "texto": "Hola buena tarde. Ustedes sirven almuerzo hoy ? :) quisiera hacer una RSV a la 1:30 para 3 personas pero me aparece solo en la tarde noche",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! 😊 Hoy domingo el restaurante abre a las 3:00 pm, por eso no aparece disponibilidad a la 1:30 pm — es el horario de los domingos.\n\nSi te acomoda llegar después de las 3, con gusto te paso el link para reservar tu mesa para 3:\n👉 https://www.rosanta.rest/reservas",
+      "categoria": "redirigir_reservas",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente quiere reservar para hoy domingo a la 1:30 pm para 3 personas, pero el restaurante abre a las 3 pm los domingos",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base",
+      "no_promete_disponibilidad"
+     ]
+    },
+    {
+     "t": "2026-09-06T11:51:46-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! 😊 Hoy domingo el restaurante abre a las 3:00 pm, por eso no aparece disponibilidad a la 1:30 pm — es el horario de los domingos.\n\nSi te acomoda llegar después de las 3, con gusto te paso el link para reservar tu mesa para 3:\n👉 https://www.rosanta.rest/reservas"
+    },
+    {
+     "t": "2026-09-06T11:52:11-06:00",
+     "de": "cliente",
+     "texto": "Gracias ☺️ \n\nY entre semana cuál es el horario ?",
+     "grabado": {
+      "respuesta": "¡Con gusto! Los horarios entre semana son:\n\nLunes y martes: 5:00 pm – 9:00 pm\nMiércoles y jueves: 12:00 pm – 9:00 pm\nViernes: 12:00 pm – 10:00 pm\n\nLos miércoles y jueves ya puedes venir a almorzar 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta horarios entre semana",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-09-06T11:52:20-06:00",
+     "de": "bot",
+     "texto": "¡Con gusto! Los horarios entre semana son:\n\nLunes y martes: 5:00 pm – 9:00 pm\nMiércoles y jueves: 12:00 pm – 9:00 pm\nViernes: 12:00 pm – 10:00 pm\n\nLos miércoles y jueves ya puedes venir a almorzar 😊"
+    },
+    {
+     "t": "2026-09-06T11:52:42-06:00",
+     "de": "cliente",
+     "texto": "Gracias :) y sábados ?",
+     "grabado": {
+      "respuesta": "Los sábados abrimos de 12:00 pm a 10:00 pm, así que también hay almuerzo 🙌",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta horario del sábado",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-09-06T11:52:48-06:00",
+     "de": "bot",
+     "texto": "Los sábados abrimos de 12:00 pm a 10:00 pm, así que también hay almuerzo 🙌"
+    }
+   ]
+  },
+  {
+   "id": "HOR-03",
+   "grupo": "horarios",
+   "titulo": "\"¿Están abiertos hoy?\" un lunes",
+   "origen": "chat real 2026-08-01 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Javier 5",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-21T17:55:15-06:00",
+     "de": "cliente",
+     "texto": "Holaaaa",
+     "grabado": {
+      "respuesta": "¡Hola! 👋 Bienvenido a Rosanta. ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial del cliente",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-09-21T17:55:17-06:00",
+     "de": "cliente",
+     "texto": "Una pregunta",
+     "grabado": {
+      "respuesta": "¡Claro, aquí estoy! ¿Qué querías preguntarme? 😊",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente va a hacer una pregunta, aún no especifica cuál",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-09-21T17:55:22-06:00",
+     "de": "bot",
+     "texto": "¡Hola! 👋 Bienvenido a Rosanta. ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-09-21T17:55:24-06:00",
+     "de": "bot",
+     "texto": "¡Claro, aquí estoy! ¿Qué querías preguntarme? 😊"
+    },
+    {
+     "t": "2026-09-21T17:55:25-06:00",
+     "de": "cliente",
+     "texto": "Solo quería asegurarme de que están abiertos el día de hoy?",
+     "grabado": {
+      "respuesta": "¡Sí, hoy estamos abiertos! 🎉 Es lunes y el horario es de 5:00 PM a 9:00 PM. Ya casi es hora, ¿se te antoja venir?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta si están abiertos hoy lunes",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-09-21T17:55:30-06:00",
+     "de": "bot",
+     "texto": "¡Sí, hoy estamos abiertos! 🎉 Es lunes y el horario es de 5:00 PM a 9:00 PM. Ya casi es hora, ¿se te antoja venir?"
+    }
+   ]
+  },
+  {
+   "id": "MEN-01",
+   "grupo": "menu_precios",
+   "titulo": "Pide el menú",
+   "origen": "chat real 2026-09-04 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Valeria 9",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-04T07:21:34-06:00",
+     "de": "cliente",
+     "texto": "Buen día, me podrían compartir el menú por favor.",
+     "grabado": {
+      "respuesta": "¡Buen día! 😊 Aquí te comparto el menú:\n\nhttps://www.rosanta.rest/menú-español\n\nSi tienes alguna duda sobre algún plato o restricción alimentaria, con gusto te ayudo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pide el menú",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contiene:rosanta.rest/men",
+      "link_en_su_idioma",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-09-04T07:21:43-06:00",
+     "de": "bot",
+     "texto": "¡Buen día! 😊 Aquí te comparto el menú:\n\nhttps://www.rosanta.rest/menú-español\n\nSi tienes alguna duda sobre algún plato o restricción alimentaria, con gusto te ayudo."
+    }
+   ]
+  },
+  {
+   "id": "MEN-02",
+   "grupo": "menu_precios",
+   "titulo": "Foto del menú y parqueo (Instagram)",
+   "origen": "chat real 2026-06-30 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Ana 1",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-06-30T00:01:24-06:00",
+     "de": "cliente",
+     "texto": "Buenas noches, una consulta tendrían foto del menú ? Y cuentan con parqueo?",
+     "grabado": {
+      "respuesta": "¡Buenas noches! Claro que sí 😊\n\nAquí te dejo el menú completo:\n👉 https://www.rosanta.rest/menú-español\n\nY sobre el parqueo: sí hay. Dentro del Parque Santa Rosa (justo frente al restaurante) y también tenemos convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada.\n\n¿Algo más en que te pueda ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta por menú en foto y disponibilidad de parqueo",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contiene:rosanta.rest/men",
+      "juez:fiel_a_la_base",
+      "juez:responde_lo_preguntado"
+     ]
+    },
+    {
+     "t": "2026-06-30T00:01:35-06:00",
+     "de": "bot",
+     "texto": "¡Buenas noches! Claro que sí 😊\n\nAquí te dejo el menú completo:\n👉 https://www.rosanta.rest/menú-español\n\nY sobre el parqueo: sí hay. Dentro del Parque Santa Rosa (justo frente al restaurante) y también tenemos convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada.\n\n¿Algo más en que te pueda ayudar?"
+    }
+   ]
+  },
+  {
+   "id": "MEN-03",
+   "grupo": "menu_precios",
+   "titulo": "Para llevar y una paella que no está en la carta",
+   "origen": "chat real 2026-07-12 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Inés 1",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-12T18:02:00-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-12T18:02:06-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-07-12T18:02:31-06:00",
+     "de": "cliente",
+     "texto": "Disculpa tines para llevar ?",
+     "grabado": {
+      "respuesta": "No, por el momento no manejamos take-out ni delivery. La experiencia de Rosanta es para disfrutarla aquí 🙂 ¿Se te ofrece algo más?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta sobre servicio para llevar",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base"
+     ]
+    },
+    {
+     "t": "2026-07-12T18:02:35-06:00",
+     "de": "bot",
+     "texto": "No, por el momento no manejamos take-out ni delivery. La experiencia de Rosanta es para disfrutarla aquí 🙂 ¿Se te ofrece algo más?"
+    },
+    {
+     "t": "2026-07-12T18:06:47-06:00",
+     "de": "cliente",
+     "texto": "Me puede mandar el menú",
+     "grabado": {
+      "respuesta": "¡Claro! Aquí lo tienes 👉 https://www.rosanta.rest/menú-español\n\nSi tienes alguna pregunta sobre algún platillo o quieres saber qué recomienda el chef, con gusto te ayudo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Solicita el menú",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-07-12T18:07:01-06:00",
+     "de": "bot",
+     "texto": "¡Claro! Aquí lo tienes 👉 https://www.rosanta.rest/menú-español\n\nSi tienes alguna pregunta sobre algún platillo o quieres saber qué recomienda el chef, con gusto te ayudo."
+    },
+    {
+     "t": "2026-07-12T18:10:13-06:00",
+     "de": "cliente",
+     "texto": "Te puedo pedir una paella mixta, y puedo pasar por ella ?",
+     "grabado": {
+      "respuesta": "Qué rico suena, pero la paella no está en nuestro menú 😊 Y como te comenté antes, no manejamos para llevar — todo se disfruta aquí en el restaurante.\n\n¿Te animás a venir? Con gusto te cuento qué tenemos disponible o te ayudo a reservar tu mesa.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta por paella para llevar",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "juez:fiel_a_la_base",
+      "no_inventa_precios",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-12T18:10:18-06:00",
+     "de": "bot",
+     "texto": "Qué rico suena, pero la paella no está en nuestro menú 😊 Y como te comenté antes, no manejamos para llevar — todo se disfruta aquí en el restaurante.\n\n¿Te animás a venir? Con gusto te cuento qué tenemos disponible o te ayudo a reservar tu mesa."
+    }
+   ]
+  },
+  {
+   "id": "FOT-01",
+   "grupo": "fotos",
+   "titulo": "Manda una foto y escribe \"Quisiera esto\"",
+   "origen": "chat real 2026-09-28 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Ana 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-07T15:57:29-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes quiero ser cotizando con ustedes",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! Con gusto te ayudo 😊\n\n¿Me cuentas un poco más? ¿Es para un evento privado (cumpleaños, reunión, celebración) o para reservar una mesa?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente quiere una cotización, tipo por definir",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-07T15:57:35-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! Con gusto te ayudo 😊\n\n¿Me cuentas un poco más? ¿Es para un evento privado (cumpleaños, reunión, celebración) o para reservar una mesa?"
+    },
+    {
+     "t": "2026-10-07T15:57:35-06:00",
+     "de": "cliente",
+     "texto": "Se podría almuerzo ?",
+     "grabado": {
+      "respuesta": "¡Claro que sí! Hacemos almuerzos 🍽️\n\n¿Es para reservar una mesa o estás pensando en un evento privado con grupo grande?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente pregunta si pueden hacer almuerzo",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-07T15:57:40-06:00",
+     "de": "bot",
+     "texto": "¡Claro que sí! Hacemos almuerzos 🍽️\n\n¿Es para reservar una mesa o estás pensando en un evento privado con grupo grande?"
+    },
+    {
+     "t": "2026-10-07T16:00:30-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe"
+     ]
+    },
+    {
+     "t": "2026-10-07T16:01:28-06:00",
+     "de": "cliente",
+     "texto": "Quisiera esto",
+     "grabado": {
+      "respuesta": "Parece que se te fue el archivo o imagen sin adjuntar 😊\n\n¿Qué tenías en mente? Cuéntame y con gusto te ayudo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente quiere cotizar almuerzo, intentó adjuntar algo pero no llegó",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "juez:no_finge_ver_foto",
+      "no_inventa_precios"
+     ]
+    },
+    {
+     "t": "2026-10-07T16:01:33-06:00",
+     "de": "bot",
+     "texto": "Parece que se te fue el archivo o imagen sin adjuntar 😊\n\n¿Qué tenías en mente? Cuéntame y con gusto te ayudo."
+    }
+   ]
+  },
+  {
+   "id": "FOT-02",
+   "grupo": "fotos",
+   "titulo": "Manda la foto del comprobante de la Cena Romántica",
+   "origen": "sintético sobre un chat real del 28-sep (WhatsApp)",
+   "canal": "whatsapp",
+   "perfil": "Ana",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-29T12:00:00-06:00",
+     "de": "cliente",
+     "texto": "Listo, ya hice la transferencia del anticipo",
+     "grabado": {
+      "respuesta": "Gracias 🙌 Juanma revisa la transferencia y te confirma.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Dice que ya transfirió el anticipo de la Cena Romántica"
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_confirma_pago"
+     ]
+    },
+    {
+     "t": "2026-09-29T12:00:20-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      {
+       "regla": "foto_queda_registrada",
+       "pendiente": true
+      }
+     ]
+    }
+   ],
+   "pregunta_para_juanma": "Hoy el bot no ve las fotos: un comprobante no le llega a nadie. ¿Debe avisarte?"
+  },
+  {
+   "id": "FOT-03",
+   "grupo": "fotos",
+   "titulo": "Foto sola por Instagram, sin texto",
+   "origen": "sintético (Instagram)",
+   "canal": "instagram",
+   "perfil": "Mateo",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-15T19:00:00-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      {
+       "regla": "foto_queda_registrada",
+       "pendiente": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JUA-01",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma ya contestó con el video: el bot no se mete",
+   "origen": "chat real 2026-09-28 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Ana 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-29T13:12:53-06:00",
+     "de": "juanma",
+     "texto": "Te envio nuestro video de la cena romantica - (enlace al video)\nAqui lo puedes ver."
+    },
+    {
+     "t": "2026-09-29T13:17:12-06:00",
+     "de": "cliente",
+     "texto": "Hola y si será un lugar algo alejado de los demás verdad ?",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-09-29T13:17:25-06:00",
+     "de": "cliente",
+     "texto": "Podría incluir un ramo de rosas grande ?",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-09-29T13:17:29-06:00",
+     "de": "cliente",
+     "texto": "Cuánto costaría si si ?",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JUA-02",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma confirmó el cambio y la clienta da las gracias",
+   "origen": "chat real 2026-10-14 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Ana 13",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-14T17:51:32-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes",
+     "grabado": {
+      "respuesta": "¡Buenas tardes! 😊 ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo inicial",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-14T17:51:39-06:00",
+     "de": "bot",
+     "texto": "¡Buenas tardes! 😊 ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-10-14T17:52:14-06:00",
+     "de": "cliente",
+     "texto": "Quería saber si puedo mover mi reserva para las 7:15?",
+     "grabado": {
+      "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Quiere cambiar su reserva a las 7:15 pm",
+      "email": "",
+      "nombre": ""
+     }
+    },
+    {
+     "t": "2026-10-14T17:52:22-06:00",
+     "de": "bot",
+     "texto": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌"
+    },
+    {
+     "t": "2026-10-14T17:55:00-06:00",
+     "de": "juanma",
+     "texto": "Con todo gusto, recibirás el correo con la nueva confirmación"
+    },
+    {
+     "t": "2026-10-14T17:56:38-06:00",
+     "de": "cliente",
+     "texto": "Muchas gracias",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JUA-03",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Esperando a Juanma por un cobro, pide una reserva: el bot sí la atiende",
+   "origen": "chat real 2026-10-17 (instagram) + un mensaje sintético",
+   "canal": "instagram",
+   "perfil": "Valeria 13",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-17T23:08:11-06:00",
+     "de": "cliente",
+     "texto": "Qué tal, buenas noches!\nDisculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos veces, habrá forma de solucionar eso, perdon?",
+     "grabado": {
+      "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cliente reporta doble cobro en su tarjeta tras visitar el restaurante hoy y pide solución.",
+      "email": "",
+      "nombre": "Valeria 13"
+     },
+     "reglas": [
+      "pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-17T23:08:18-06:00",
+     "de": "bot",
+     "texto": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00."
+    },
+    {
+     "t": "2026-10-18T09:30:00-06:00",
+     "de": "cliente",
+     "texto": "Y aprovecho, ¿me ayudas con una mesa para mañana a las 8 pm para 2?",
+     "grabado": {
+      "respuesta": "¡Claro! Para dejarla lista necesito tu *Correo:* 😊",
+      "categoria": "",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Mesa para 2 mañana 20:00",
+      "lead": {
+       "tipo": "reserva",
+       "accion": "responder_info",
+       "requiere_humano": false
+      }
+     },
+     "reglas": [
+      "contesta",
+      "pide:correo",
+      "no_crea_reserva"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JUA-04",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma escribió desde la app de Instagram: el bot se calla aunque pidan reserva",
+   "origen": "chat real 2026-09-14 (instagram), con Juanma escribiendo desde la app",
+   "canal": "instagram",
+   "perfil": "Lucía 11",
+   "estado": "pausa_app",
+   "eventos": [
+    {
+     "t": "2026-09-14T19:22:43-06:00",
+     "de": "cliente",
+     "texto": "Hola abren mañana al mediodía día ?",
+     "grabado": {
+      "respuesta": "¡Hola! Mañana es martes, así que abrimos a las 5 de la tarde 🙌 Los mediodías los tenemos a partir del miércoles al sábado. ¿Te apunto una mesa para la tarde?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta si abren al mediodía mañana (martes)",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-09-14T19:23:30-06:00",
+     "de": "cliente",
+     "texto": "Para 4 personas la reserva Rosa le saluda",
+     "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RAR-01",
+   "grupo": "spam_raros",
+   "titulo": "Spam: \"quitamos reseñas malas\"",
+   "origen": "chat real 2026-08-25 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Paula 8",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-08-25T12:41:55-06:00",
+     "de": "cliente",
+     "texto": "Hello Sir,\n🚀 Remove Bad Reviews – 100% Professional Service! ⭐\n\n🔥 Need help protecting your business or brand? Paula an expert in bad review removal with a satisfaction guarantee. (…)",
+     "grabado": {
+      "respuesta": "Thanks for reaching out! This looks like a service proposal — please send it to restaurante@rosanta.rest and the team will take a look. 🙂",
+      "categoria": "escalar_humano",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Spam/proveedor ofreciendo servicio de eliminación de reseñas negativas",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma",
+      "deriva_al_correo"
+     ]
+    },
+    {
+     "t": "2026-08-25T12:42:03-06:00",
+     "de": "bot",
+     "texto": "Thanks for reaching out! This looks like a service proposal — please send it to restaurante@rosanta.rest and the team will take a look. 🙂"
+    },
+    {
+     "t": "2026-08-25T12:42:51-06:00",
+     "de": "cliente",
+     "texto": "If you should have to remove the bad review.. share with link",
+     "grabado": {
+      "respuesta": "We handle all external proposals through email — just send the details to restaurante@rosanta.rest and the team will review it. 👍",
+      "categoria": "escalar_humano",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Insiste en ofrecer servicio de eliminación de reseñas negativas",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-08-25T12:42:56-06:00",
+     "de": "bot",
+     "texto": "We handle all external proposals through email — just send the details to restaurante@rosanta.rest and the team will review it. 👍"
+    }
+   ]
+  },
+  {
+   "id": "RAR-02",
+   "grupo": "spam_raros",
+   "titulo": "Phishing: \"aviso del equipo de Meta\" por Messenger",
+   "origen": "chat real 2026-07-28 (messenger), anonimizado",
+   "canal": "messenger",
+   "perfil": "",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-28T14:40:54-06:00",
+     "de": "cliente",
+     "texto": "⚠️𝗔𝘃𝗶𝘀𝗼 𝗶𝗺𝗽𝗼𝗿𝘁𝗮𝗻𝘁𝗲 𝗱𝗲𝗹 𝗘𝗾𝘂𝗶𝗽𝗼 𝗱𝗲 𝗦𝗼𝗽𝗼𝗿𝘁𝗲 𝗱𝗲 𝗣𝗼𝗹𝗶́𝘁𝗶𝗰𝗮𝘀 𝗱𝗲 𝗠𝗲𝘁𝗮\n\n𝗘𝘀𝘁𝗶𝗺𝗮𝗱𝗼 𝗮𝗱𝗺𝗶𝗻𝗶𝘀𝘁𝗿𝗮𝗱𝗼𝗿 𝗱𝗲 𝗹𝗮 𝗽𝗮́𝗴𝗶𝗻𝗮:\n\n𝗦𝗼𝗺𝗼𝘀 𝗲𝗹 𝗘𝗾𝘂𝗶𝗽𝗼 𝗱𝗲 𝗦𝗼𝗽𝗼𝗿𝘁𝗲 𝗱𝗲 𝗣𝗼𝗹𝗶́𝘁𝗶𝗰𝗮𝘀 𝗱𝗲 𝗠𝗲𝘁𝗮.\n\n(…)",
+     "grabado": {
+      "respuesta": "Hola, esto parece un intento de phishing o estafa. Meta/Facebook nunca contacta a páginas por Messenger de esta forma. No hagas clic en ningún enlace ni compartas datos. Si tienes dudas sobre tu página, gestiónalas directamente en facebook.com/help. 🚨",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Mensaje de phishing suplantando al equipo de soporte de Meta",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma",
+      "no_contiene:http"
+     ]
+    },
+    {
+     "t": "2026-07-28T14:41:05-06:00",
+     "de": "bot",
+     "texto": "Hola, esto parece un intento de phishing o estafa. Meta/Facebook nunca contacta a páginas por Messenger de esta forma. No hagas clic en ningún enlace ni compartas datos. Si tienes dudas sobre tu página, gestiónalas directamente en facebook.com/help. 🚨"
+    }
+   ],
+   "pregunta_para_juanma": "Un aviso falso de \"Meta\" llegó por Messenger y el bot te lo pasó. ¿Quieres verlos o solo que queden anotados como spam?"
+  },
+  {
+   "id": "RAR-03",
+   "grupo": "spam_raros",
+   "titulo": "Solo un link sospechoso",
+   "origen": "chat real 2026-07-22 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Jorge 4",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-22T19:01:02-06:00",
+     "de": "cliente",
+     "texto": "https://byvn.net/Notificación11",
+     "grabado": {
+      "respuesta": "Hola 👀 parece que me llegó un link, pero no puedo abrirlo ni acceder a URLs externas. ¿En qué te puedo ayudar? Con gusto te cuento sobre Rosanta, reservas, el menú o lo que necesites.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente envió un link externo sospechoso",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-22T19:01:11-06:00",
+     "de": "bot",
+     "texto": "Hola 👀 parece que me llegó un link, pero no puedo abrirlo ni acceder a URLs externas. ¿En qué te puedo ayudar? Con gusto te cuento sobre Rosanta, reservas, el menú o lo que necesites."
+    }
+   ]
+  },
+  {
+   "id": "RAR-04",
+   "grupo": "spam_raros",
+   "titulo": "Otro bot automático le pide un correo",
+   "origen": "chat real 2026-10-16 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Sofía 13",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-16T18:15:04-06:00",
+     "de": "cliente",
+     "texto": "Hey there! So glad you’re here 😊\nI’ll need your email address first. Please share it in the chat.",
+     "grabado": {
+      "respuesta": "Hey Sofía, welcome! 😊 No email needed just to chat. Are you looking to book a table, see the menu, or ask about a private event?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Message looks like an automated greeting asking for an email; no clear request yet.",
+      "email": "",
+      "nombre": "Sofía 13"
+     },
+     "reglas": [
+      "no_pasa_a_juanma",
+      "no_contiene:@"
+     ]
+    },
+    {
+     "t": "2026-10-16T18:15:13-06:00",
+     "de": "bot",
+     "texto": "Hey Sofía, welcome! 😊 No email needed just to chat. Are you looking to book a table, see the menu, or ask about a private event?\n[Botones: Book a table · See the menu · Private event · Talk to someone]"
+    },
+    {
+     "t": "2026-10-16T18:15:21-06:00",
+     "de": "cliente",
+     "texto": "Please enter a valid email address, for example cliente34@ejemplo.test",
+     "grabado": {
+      "respuesta": "Looks like that message is an automated one, not from us, so no worries about it. 😊 Just tell me what you'd like: book a table, see the menu, or ask about a private event?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Automated-looking message asking for a valid email; no real request yet.",
+      "email": "",
+      "nombre": "Sofía 13"
+     },
+     "reglas": [
+      "no_pasa_a_juanma",
+      "no_contiene:@"
+     ]
+    },
+    {
+     "t": "2026-10-16T18:15:27-06:00",
+     "de": "bot",
+     "texto": "Looks like that message is an automated one, not from us, so no worries about it. 😊 Just tell me what you'd like: book a table, see the menu, or ask about a private event?\n[Botones: Book a table · See the menu · Private event · Talk to someone]"
+    },
+    {
+     "t": "2026-10-16T18:15:37-06:00",
+     "de": "cliente",
+     "texto": "Please enter a valid email address, for example cliente34@ejemplo.test",
+     "grabado": null
+    }
+   ]
+  },
+  {
+   "id": "RAR-05",
+   "grupo": "spam_raros",
+   "titulo": "Busca una mascota perdida",
+   "origen": "chat real 2026-07-05 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Pablo 1",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-05T02:26:54-06:00",
+     "de": "cliente",
+     "texto": "Por favor ayúdenme a compartir !!! La seguimos buscando, es muy importante para mí encontrarla, la rescate desde pequeñita para darle una mejor vida y se escapó de la casa de su adoptante... 🙏🏻",
+     "grabado": {
+      "respuesta": "Hola 😊 Qué situación tan difícil, de verdad espero que la encuentren pronto.\n\nPero te cuento que soy el asistente de Rosanta, un restaurante en Antigua Guatemala — no tenemos cómo ayudar con la búsqueda desde aquí.\n\nTe recomiendo publicar en grupos de Facebook de Antigua o de mascotas perdidas en Guatemala, que tienen mucho alcance. ¡Mucho ánimo!",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Persona busca ayuda para difundir búsqueda de mascota perdida — fuera del ámbito del restaurante",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma",
+      "juez:tono"
+     ]
+    },
+    {
+     "t": "2026-07-05T02:27:03-06:00",
+     "de": "bot",
+     "texto": "Hola 😊 Qué situación tan difícil, de verdad espero que la encuentren pronto.\n\nPero te cuento que soy el asistente de Rosanta, un restaurante en Antigua Guatemala — no tenemos cómo ayudar con la búsqueda desde aquí.\n\nTe recomiendo publicar en grupos de Facebook de Antigua o de mascotas perdidas en Guatemala, que tienen mucho alcance. ¡Mucho ánimo!"
+    }
+   ]
+  },
+  {
+   "id": "RAR-07",
+   "grupo": "spam_raros",
+   "titulo": "Proveedor de vegetales ofrece productos",
+   "origen": "chat real 2026-07-16 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Mariana 3",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-07-16T20:26:11-06:00",
+     "de": "cliente",
+     "texto": "🌱 Descubre la excelencia de nuestros vegetales orgánicos 🌱,\nEn Finca Ejemplo nos enorgullece ofrecer 🍃productos orgánicos 100% naturales, cultivados con el mayor cuidado y respeto por el medio ambiente. Nuestros vegetales no solo son frescos y llenos de sabor, sino que también elevan la experiencia gastronómica de sus clientes.\nAl elegir nuestros productos, estarán garantizando calidad premium y un compromiso con la sostenibilidad. Estamos aquí para ayudarles a destacarse y ofrecer lo mejor a sus comensales.\n¡Esperamos poder colaborar con ustedes muy pronto!\nAtentamente,\nMariana \nFinca Ejemplo \n📱55500006\n📧 cliente17@ejemplo.test\n🔗https://online.fliphtml5.com/xhngx/fmug/",
+     "grabado": {
+      "respuesta": "¡Hola, Mariana! Qué buena onda lo que hacen en Finca Ejemplo 🌱 — suena como algo muy alineado con lo que buscamos.\n\nPara que tu propuesta llegue a las personas correctas, te pido que la envíes a restaurante@rosanta.rest con toda la info. Desde ahí el equipo la revisa y se pone en contacto contigo.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Proveedor de vegetales orgánicos (Finca Ejemplo) ofreciendo sus productos al restaurante",
+      "email": "cliente17@ejemplo.test",
+      "nombre": "Mariana 3"
+     },
+     "reglas": [
+      "deriva_al_correo",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-07-16T20:26:23-06:00",
+     "de": "bot",
+     "texto": "¡Hola, Mariana! Qué buena onda lo que hacen en Finca Ejemplo 🌱 — suena como algo muy alineado con lo que buscamos.\n\nPara que tu propuesta llegue a las personas correctas, te pido que la envíes a restaurante@rosanta.rest con toda la info. Desde ahí el equipo la revisa y se pone en contacto contigo."
+    }
+   ]
+  },
+  {
+   "id": "RAR-08",
+   "grupo": "spam_raros",
+   "titulo": "Busca trabajo de cocinero",
+   "origen": "chat real 2026-09-12 (whatsapp), anonimizado",
+   "canal": "whatsapp",
+   "perfil": "Javier 10",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-09-12T12:23:04-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes \nEstoy interesado en una plaza para cocina como cocinero me podría indicar si cuentan con una plaza disponible les saluda Kevin",
+     "grabado": {
+      "respuesta": "¡Hola Kevin! Gracias por tu interés en ser parte del equipo 🙌\n\nPara que tu solicitud llegue a las personas indicadas, envía tu CV al correo *restaurante@rosanta.rest* y desde ahí te dan seguimiento.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Kevin busca plaza de cocinero",
+      "email": "",
+      "nombre": "Javier 10"
+     },
+     "reglas": [
+      "deriva_al_correo",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-09-12T12:23:10-06:00",
+     "de": "bot",
+     "texto": "¡Hola Kevin! Gracias por tu interés en ser parte del equipo 🙌\n\nPara que tu solicitud llegue a las personas indicadas, envía tu CV al correo *restaurante@rosanta.rest* y desde ahí te dan seguimiento."
+    }
+   ]
+  },
+  {
+   "id": "RAR-09",
+   "grupo": "spam_raros",
+   "titulo": "Solo un emoji (reacción a una historia)",
+   "origen": "chat real 2026-10-13 (instagram), anonimizado",
+   "canal": "instagram",
+   "perfil": "Ricardo 12",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-10-13T18:20:26-06:00",
+     "de": "cliente",
+     "texto": "🔥",
+     "grabado": {
+      "respuesta": "¡Eso sí que es entusiasmo! 😄 ¿Qué se te antoja hoy — una mesa, info del menú, o algo más?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Cliente envió emoji de fuego, intención no clara",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-10-13T18:20:34-06:00",
+     "de": "bot",
+     "texto": "¡Eso sí que es entusiasmo! 😄 ¿Qué se te antoja hoy — una mesa, info del menú, o algo más?"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,5421 @@
+{
+ "fecha": "2026-10-19T16:05:17.822Z",
+ "version": "@58 · 4eae1b3 2026-10-17",
+ "modo": "grabado",
+ "juez": false,
+ "casosArchivo": "tools/bot-evals/casos.json",
+ "motor": "../sad-merkle-6c168a/cloud/bot/src",
+ "segundos": 0.2,
+ "gasto": {
+  "bot": {
+   "llamadas": 0,
+   "entrada": 0,
+   "salida": 0,
+   "usd": 0,
+   "fallas": 0
+  },
+  "juez": {
+   "llamadas": 0,
+   "entrada": 0,
+   "salida": 0,
+   "usd": 0
+  },
+  "totalUsd": 0
+ },
+ "resumen": {
+  "casos": 50,
+  "casosOk": 32,
+  "reglas": {
+   "ok": 357,
+   "falla": 26,
+   "sinDato": 20,
+   "pendientes": 2
+  },
+  "porGrupo": {
+   "reservas": {
+    "casos": 11,
+    "casosOk": 5,
+    "ok": 98,
+    "falla": 9
+   },
+   "eventos": {
+    "casos": 7,
+    "casosOk": 1,
+    "ok": 58,
+    "falla": 8
+   },
+   "quejas_cobros": {
+    "casos": 7,
+    "casosOk": 2,
+    "ok": 51,
+    "falla": 8
+   },
+   "ingles": {
+    "casos": 4,
+    "casosOk": 4,
+    "ok": 26,
+    "falla": 0
+   },
+   "horarios": {
+    "casos": 3,
+    "casosOk": 3,
+    "ok": 19,
+    "falla": 0
+   },
+   "menu_precios": {
+    "casos": 3,
+    "casosOk": 3,
+    "ok": 17,
+    "falla": 0
+   },
+   "fotos": {
+    "casos": 3,
+    "casosOk": 3,
+    "ok": 15,
+    "falla": 0
+   },
+   "juanma_tiene_el_chat": {
+    "casos": 4,
+    "casosOk": 4,
+    "ok": 28,
+    "falla": 0
+   },
+   "spam_raros": {
+    "casos": 8,
+    "casosOk": 7,
+    "ok": 45,
+    "falla": 1
+   }
+  },
+  "porRegla": {
+   "idioma": {
+    "ok": 17,
+    "falla": 0
+   },
+   "pide": {
+    "ok": 9,
+    "falla": 2
+   },
+   "no_confirma_sin_sistema": {
+    "ok": 6,
+    "falla": 1
+   },
+   "no_promete_disponibilidad": {
+    "ok": 4,
+    "falla": 2
+   },
+   "no_pasa_a_juanma": {
+    "ok": 23,
+    "falla": 2
+   },
+   "no_rompe": {
+    "ok": 82,
+    "falla": 0
+   },
+   "botones_validos": {
+    "ok": 82,
+    "falla": 0
+   },
+   "no_inventa_precios": {
+    "ok": 65,
+    "falla": 5
+   },
+   "crea_reserva": {
+    "ok": 6,
+    "falla": 0
+   },
+   "no_crea_reserva": {
+    "ok": 13,
+    "falla": 0
+   },
+   "accion": {
+    "ok": 1,
+    "falla": 2
+   },
+   "no_cancela": {
+    "ok": 3,
+    "falla": 0
+   },
+   "sin_frases_prohibidas": {
+    "ok": 3,
+    "falla": 2
+   },
+   "no_pide_otro_canal": {
+    "ok": 0,
+    "falla": 1
+   },
+   "juez": {
+    "ok": 0,
+    "falla": 0
+   },
+   "pasa_a_juanma": {
+    "ok": 12,
+    "falla": 3
+   },
+   "aviso_con_datos_evento": {
+    "ok": 1,
+    "falla": 0
+   },
+   "menciona_juanma": {
+    "ok": 1,
+    "falla": 4
+   },
+   "contesta": {
+    "ok": 3,
+    "falla": 0
+   },
+   "contiene": {
+    "ok": 5,
+    "falla": 0
+   },
+   "no_promete_compensacion": {
+    "ok": 2,
+    "falla": 0
+   },
+   "se_calla": {
+    "ok": 9,
+    "falla": 0
+   },
+   "no_contiene": {
+    "ok": 3,
+    "falla": 2
+   },
+   "link_en_su_idioma": {
+    "ok": 3,
+    "falla": 0
+   },
+   "no_confirma_pago": {
+    "ok": 1,
+    "falla": 0
+   },
+   "foto_queda_registrada": {
+    "ok": 0,
+    "falla": 0
+   },
+   "deriva_al_correo": {
+    "ok": 3,
+    "falla": 0
+   }
+  },
+  "porClase": {
+   "texto": {
+    "ok": 122,
+    "falla": 19
+   },
+   "flujo": {
+    "ok": 235,
+    "falla": 7
+   },
+   "juez": {
+    "ok": 0,
+    "falla": 0
+   }
+  },
+  "fallas": [
+   {
+    "caso": "RES-02",
+    "grupo": "reservas",
+    "turno": 2,
+    "regla": "no_promete_disponibilidad",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "promete lugar sin revisar: \"queda perfecto\"",
+    "cliente": "Quería preguntar si sería posible hacer una reservación para hoy en la noche para 4 personas a las 7pm",
+    "respuesta": "¡Claro que sí! Para hoy en la noche estamos abiertos hasta las 22:00, así que las 7 pm queda perfecto 🙌 Para crear la reserva necesito esto…"
+   },
+   {
+    "caso": "RES-05",
+    "grupo": "reservas",
+    "turno": 5,
+    "regla": "no_pasa_a_juanma",
+    "critica": false,
+    "clase": "flujo",
+    "detalle": "le pasó el chat a Juanma sin necesidad (acción: escalar_humano)",
+    "cliente": "cliente54@ejemplo.test",
+    "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌"
+   },
+   {
+    "caso": "RES-05",
+    "grupo": "reservas",
+    "turno": 5,
+    "regla": "sin_frases_prohibidas",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "dice \"Alguien del equipo\"",
+    "cliente": "cliente54@ejemplo.test",
+    "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌"
+   },
+   {
+    "caso": "RES-06",
+    "grupo": "reservas",
+    "turno": 0,
+    "regla": "no_confirma_sin_sistema",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "da por hecho algo que el sistema no hizo: \"we'll update\"",
+    "cliente": "I just made a reservation for 10 people at 7 pm, but there will be 11 of us. My name is Javier. Thank you",
+    "respuesta": "Hey Javier! No worries, we'll update it to 11 people 🙌 Give me just a second while I look up your reservation."
+   },
+   {
+    "caso": "RES-06",
+    "grupo": "reservas",
+    "turno": 0,
+    "regla": "accion:reserva_cambiada",
+    "critica": false,
+    "clase": "flujo",
+    "detalle": "acción escalar_humano (se esperaba reserva_cambiada)",
+    "cliente": "I just made a reservation for 10 people at 7 pm, but there will be 11 of us. My name is Javier. Thank you",
+    "respuesta": "Hey Javier! No worries, we'll update it to 11 people 🙌 Give me just a second while I look up your reservation."
+   },
+   {
+    "caso": "RES-07",
+    "grupo": "reservas",
+    "turno": 3,
+    "regla": "pide:correo",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no pide correo",
+    "cliente": "16",
+    "respuesta": "Sin problema, para 16 personas puedes reservar desde aquí 👇 https://www.rosanta.rest/reservas ¿Tienes ya una fecha en mente?"
+   },
+   {
+    "caso": "RES-07",
+    "grupo": "reservas",
+    "turno": 10,
+    "regla": "no_pide_otro_canal",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "manda al cliente a otro canal: \"llamar\"",
+    "cliente": "No me deja reservar en el sitio web",
+    "respuesta": "Ay, qué fastidio 😕 Puede ser que para hoy ya no haya disponibilidad en línea, especialmente a esa hora y con 16 personas. Lo que te sugiero…"
+   },
+   {
+    "caso": "RES-09",
+    "grupo": "reservas",
+    "turno": 0,
+    "regla": "no_promete_disponibilidad",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "promete lugar sin revisar: \"ya está disponible\"",
+    "cliente": "Hola! Quisiera hacer una reserva en octubre, ya tienen agenda para ese mes?",
+    "respuesta": "¡Hola! Claro que sí, octubre ya está disponible 🎉 Para hacerte la reserva necesito estos datos: *Tu nombre:* *Correo electrónico:* *Fecha e…"
+   },
+   {
+    "caso": "RES-10",
+    "grupo": "reservas",
+    "turno": 0,
+    "regla": "accion:cancelar_reserva",
+    "critica": false,
+    "clase": "flujo",
+    "detalle": "acción escalar_humano (se esperaba cancelar_reserva)",
+    "cliente": "Hola! Tengo reserva hoy a nombre de Mateo Gil pero la tengo que cancelar",
+    "respuesta": "Hola Mateo 👋 Claro, entendido. Lamentablemente no puedo hacer cambios en reservas desde aquí directamente, pero paso tu solicitud al equipo…"
+   },
+   {
+    "caso": "EVE-01",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "no_inventa_precios",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "precio que no está en la base: Q470, Q230",
+    "cliente": "¡Perfecto! Mi correo electrónico es: cliente23@ejemplo.test.",
+    "respuesta": "¡Gracias, Lucía! Ya tengo todo lo que necesito 😊 Ahora cuéntame, ¿cómo te imaginas la velada? Tenemos tres formatos para el evento: 1️⃣ *Me…"
+   },
+   {
+    "caso": "EVE-02",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "no_inventa_precios",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "precio que no está en la base: Q320, Q230, Q160",
+    "cliente": "Andrés Soto, cliente48@ejemplo.test 22 de abril 2027, 27 adultos y 7 niños",
+    "respuesta": "¡Perfecto, Andrés! Ya tengo todo lo básico 😊 Ahora te cuento los formatos de menú que manejamos para eventos, para que elijas el que mejor …"
+   },
+   {
+    "caso": "EVE-03",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "pasa_a_juanma",
+    "critica": true,
+    "clase": "flujo",
+    "detalle": "no le pasó el chat a Juanma (acción: responder_info)",
+    "cliente": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
+    "respuesta": "¡Perfecto, Pablo! Anotado todo 👍 Ahora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la ate…"
+   },
+   {
+    "caso": "EVE-03",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "menciona_juanma",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no usa la frase de paso a Juanma",
+    "cliente": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
+    "respuesta": "¡Perfecto, Pablo! Anotado todo 👍 Ahora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la ate…"
+   },
+   {
+    "caso": "EVE-03",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "no_inventa_precios",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "precio que no está en la base: Q320, Q230",
+    "cliente": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
+    "respuesta": "¡Perfecto, Pablo! Anotado todo 👍 Ahora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la ate…"
+   },
+   {
+    "caso": "EVE-04",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "no_inventa_precios",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "precio que no está en la base: Q320, Q470, Q230, Q160",
+    "cliente": "Alex Moore, cliente14@ejemplo.test",
+    "respuesta": "Perfect, thanks Alex! 😊 Now for the fun part — here are the 3 event menu formats we offer, so you can tell me which one feels like the righ…"
+   },
+   {
+    "caso": "EVE-05",
+    "grupo": "eventos",
+    "turno": 2,
+    "regla": "pide:correo",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no pide correo",
+    "cliente": "Quisiera molestarles con una cotización para rehearsal dinner: - 23 personas - ⁠Domingo 8 de noviembre - ⁠19:00 hrs - Cena familiar - ⁠Vino …",
+    "respuesta": "Gracias por tu mensaje 🌿 En un momento te responde una persona del equipo."
+   },
+   {
+    "caso": "EVE-06",
+    "grupo": "eventos",
+    "turno": 6,
+    "regla": "no_inventa_precios",
+    "critica": true,
+    "clase": "texto",
+    "detalle": "precio que no está en la base: Q470, Q380",
+    "cliente": "Gracias!! Correo electrónico: cliente24@ejemplo.test Tipo de evento: reunión corporativa pero es más como celebración de equipo :)",
+    "respuesta": "¡Perfecto Daniela, ya tengo todo! 🎉 Ahora cuéntame sobre el formato de la cena — tenemos tres opciones: *1. Menú servido individual* — entr…"
+   },
+   {
+    "caso": "QUE-01",
+    "grupo": "quejas_cobros",
+    "turno": 0,
+    "regla": "menciona_juanma",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no usa la frase de paso a Juanma",
+    "cliente": "Estimado equipo de Rosanta, Quisiera compartir una retroalimentación sobre la experiencia que tuve junto a una amiga durante la cena y exper…",
+    "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad. Leer tu experiencia nos importa,…"
+   },
+   {
+    "caso": "QUE-01",
+    "grupo": "quejas_cobros",
+    "turno": 0,
+    "regla": "sin_frases_prohibidas",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "dice \"Alguien del equipo\"",
+    "cliente": "Estimado equipo de Rosanta, Quisiera compartir una retroalimentación sobre la experiencia que tuve junto a una amiga durante la cena y exper…",
+    "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad. Leer tu experiencia nos importa,…"
+   },
+   {
+    "caso": "QUE-03",
+    "grupo": "quejas_cobros",
+    "turno": 0,
+    "regla": "pasa_a_juanma",
+    "critica": true,
+    "clase": "flujo",
+    "detalle": "no le pasó el chat a Juanma (acción: responder_info)",
+    "cliente": "Hola Juan Manuel buenas tardes Me quede pendiente el depósito del mes de septiembre y ya estamos a punto de entrar a octubre",
+    "respuesta": "Hola! 👋 Creo que me escribes al número equivocado — este es el chat de Rosanta, el restaurante. ¿Hay algo en lo que pueda ayudarte por acá?"
+   },
+   {
+    "caso": "QUE-03",
+    "grupo": "quejas_cobros",
+    "turno": 0,
+    "regla": "no_contiene:número equivocado",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "dice \"número equivocado\"",
+    "cliente": "Hola Juan Manuel buenas tardes Me quede pendiente el depósito del mes de septiembre y ya estamos a punto de entrar a octubre",
+    "respuesta": "Hola! 👋 Creo que me escribes al número equivocado — este es el chat de Rosanta, el restaurante. ¿Hay algo en lo que pueda ayudarte por acá?"
+   },
+   {
+    "caso": "QUE-04",
+    "grupo": "quejas_cobros",
+    "turno": 7,
+    "regla": "pasa_a_juanma",
+    "critica": true,
+    "clase": "flujo",
+    "detalle": "no le pasó el chat a Juanma (acción: responder_info)",
+    "cliente": "Buen día Juan consultando que día estara viniendo por su tarjeta empresarial",
+    "respuesta": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos infor…"
+   },
+   {
+    "caso": "QUE-04",
+    "grupo": "quejas_cobros",
+    "turno": 7,
+    "regla": "no_contiene:número equivocado",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "dice \"número equivocado\"",
+    "cliente": "Buen día Juan consultando que día estara viniendo por su tarjeta empresarial",
+    "respuesta": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos infor…"
+   },
+   {
+    "caso": "QUE-05",
+    "grupo": "quejas_cobros",
+    "turno": 4,
+    "regla": "menciona_juanma",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no usa la frase de paso a Juanma",
+    "cliente": "We are on the door but it is closed",
+    "respuesta": "Oh no! Let me flag this for the team right away — someone will be with you in just a moment 🚪"
+   },
+   {
+    "caso": "QUE-07",
+    "grupo": "quejas_cobros",
+    "turno": 2,
+    "regla": "menciona_juanma",
+    "critica": false,
+    "clase": "texto",
+    "detalle": "no usa la frase de paso a Juanma",
+    "cliente": "Uds me podrían confirmar si lleva algún edulcorante?",
+    "respuesta": "Entiendo la consulta, pero honestamente no tengo esa información en la mano — y no quiero darte un dato incorrecto. Lo mejor es que alguien …"
+   },
+   {
+    "caso": "RAR-02",
+    "grupo": "spam_raros",
+    "turno": 0,
+    "regla": "no_pasa_a_juanma",
+    "critica": false,
+    "clase": "flujo",
+    "detalle": "le pasó el chat a Juanma sin necesidad (acción: escalar_humano)",
+    "cliente": "⚠️𝗔𝘃𝗶𝘀𝗼 𝗶𝗺𝗽𝗼𝗿𝘁𝗮𝗻𝘁𝗲 𝗱𝗲𝗹 𝗘𝗾𝘂𝗶𝗽𝗼 𝗱𝗲 𝗦𝗼𝗽𝗼𝗿𝘁𝗲 𝗱𝗲 𝗣𝗼𝗹𝗶́𝘁𝗶𝗰𝗮𝘀 𝗱𝗲 𝗠𝗲𝘁𝗮 𝗘𝘀𝘁𝗶𝗺𝗮𝗱𝗼 𝗮𝗱𝗺𝗶𝗻…",
+    "respuesta": "Hola, esto parece un intento de phishing o estafa. Meta/Facebook nunca contacta a páginas por Messenger de esta forma. No hagas clic en ning…"
+   }
+  ],
+  "pendientes": [
+   {
+    "caso": "FOT-02",
+    "turno": 1,
+    "regla": "foto_queda_registrada",
+    "ok": false,
+    "detalle": "la foto no queda ni en Conversaciones"
+   },
+   {
+    "caso": "FOT-03",
+    "turno": 0,
+    "regla": "foto_queda_registrada",
+    "ok": false,
+    "detalle": "la foto no queda ni en Conversaciones"
+   }
+  ],
+  "puntaje": 93.2
+ },
+ "resultados": [
+  {
+   "id": "RES-01",
+   "grupo": "reservas",
+   "titulo": "Reserva en inglés para hoy: pide los datos y la crea",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola! Can we book a table for two tonight at 19:30?",
+     "respuesta": "Hey! Love to have you tonight 🙌 Let me grab a few quick details to set up your reservation:\n\n*Your name:*\n*Email:*",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Hugo Mateo cliente50@ejemplo.test",
+     "respuesta": "All set, Mateo 12 🌿\n\n📅 Wednesday 7 October\n🕗 19:30\n👥 2\n\nYour table is confirmed. The confirmation email goes to cliente50@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-02",
+   "grupo": "reservas",
+   "titulo": "Pide mesa para hoy: no promete lugar antes de tener los datos",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "Quería preguntar si sería posible hacer una reservación para hoy en la noche para 4 personas a las 7pm",
+     "respuesta": "¡Claro que sí! Para hoy en la noche estamos abiertos hasta las 22:00, así que las 7 pm queda perfecto 🙌\n\nPara crear la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n\n(Fecha y hora ya las tengo: hoy 9 de octubre, 7:00 pm, para 4 personas)",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "promete lugar sin revisar: \"queda perfecto\""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 8,
+     "cliente": "cliente52@ejemplo.test",
+     "respuesta": "Listo, Andrés 12 🌿\n\n📅 viernes 9 de octubre\n🕗 19:00\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente52@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-03",
+   "grupo": "reservas",
+   "titulo": "Reserva para 9 al almuerzo de mañana",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "Quiero hacer una reserva para mañana al almuerzo a la 1:30 pm",
+     "respuesta": "¡Claro, con gusto! Para armarla necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Personas:*\n\nLa fecha ya la tengo (mañana sábado 10 de octubre) y la hora (13:30). ¡Dime y lo gestionamos! 🍽️",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 4,
+     "cliente": "Jorge Jorge cliente53@ejemplo.test Para 9 personas",
+     "respuesta": "Listo, Jorge 12 🌿\n\n📅 sábado 10 de octubre\n🕗 13:30\n👥 9\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente53@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-04",
+   "grupo": "reservas",
+   "titulo": "Cambiar la hora de una reserva hecha por el bot",
+   "turnos": [
+    {
+     "i": 6,
+     "cliente": "Hola quisiera cambiar el horario para las 2:30 de la tarde estamos retrasados",
+     "respuesta": "Listo, tu mesa quedó cambiada 🌿\n\n📅 sábado 10 de octubre\n🕗 14:30\n👥 9\n\nTe llega la nueva confirmación a cliente53@ejemplo.test.",
+     "categoria": "reserva_cambiada",
+     "humano": false,
+     "wix": [
+      "cambiarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "accion:reserva_cambiada",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_cancela",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "sin_frases_prohibidas",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-05",
+   "grupo": "reservas",
+   "titulo": "Solo pregunta a qué hora era su reserva: se busca, no se cancela",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "tiengo una reserva pero no me recuerdo que horas",
+     "respuesta": "¡Claro, con gusto te ayudo a buscarla! Dame un segundo que la localizo.\n\n¿Me das el correo con el que la hiciste o el número de teléfono que usaste?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_cancela",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "cliente": "cliente54@ejemplo.test",
+     "respuesta": "No pude cancelarla en el sistema. Alguien del equipo te escribe para confirmarte 🙌",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_cancela",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "le pasó el chat a Juanma sin necesidad (acción: escalar_humano)"
+      },
+      {
+       "regla": "sin_frases_prohibidas",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "dice \"Alguien del equipo\""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-06",
+   "grupo": "reservas",
+   "titulo": "Hizo reserva para 10 y serán 11: no promete el cambio sin el sistema",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "I just made a reservation for 10 people at 7 pm, but there will be 11 of us. My name is Javier. Thank you",
+     "respuesta": "Hey Javier! No worries, we'll update it to 11 people 🙌 Give me just a second while I look up your reservation.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "da por hecho algo que el sistema no hizo: \"we'll update\""
+      },
+      {
+       "regla": "accion:reserva_cambiada",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "acción escalar_humano (se esperaba reserva_cambiada)"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-07",
+   "grupo": "reservas",
+   "titulo": "Reserva para 16 personas (más de 15): se trata como evento",
+   "turnos": [
+    {
+     "i": 3,
+     "cliente": "16",
+     "respuesta": "Sin problema, para 16 personas puedes reservar desde aquí 👇\n\nhttps://www.rosanta.rest/reservas\n\n¿Tienes ya una fecha en mente?",
+     "categoria": "redirigir_reservas",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no pide correo"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 10,
+     "cliente": "No me deja reservar en el sitio web",
+     "respuesta": "Ay, qué fastidio 😕 Puede ser que para hoy ya no haya disponibilidad en línea, especialmente a esa hora y con 16 personas.\n\nLo que te sugiero es llamar directamente al restaurante para que el equipo te ayude en tiempo real:\n\n📞 (502) 55500002\n\nEllos pueden ver si hay alguna opción para esta noche. ¿Te animas a llamar?",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pide_otro_canal",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "manda al cliente a otro canal: \"llamar\""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-08",
+   "grupo": "reservas",
+   "titulo": "Domingo a las 4 pm en inglés: el horario del domingo es de 15:00 a 20:00",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hello! Can I make a reservation for 6 on September 13th 4pm?",
+     "respuesta": "Hey! Love to have you over 🎉\n\nJust a heads up — we open at 5pm on Sundays, so the earliest I can book you on the 13th is 5pm. Want me to lock that in?\n\nI just need a couple more details:\n\n*Your name:*\n*Email:*\n*Time:* (5pm or later)\n\nAnd to confirm — it's 6 people, September 13th, right?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 4,
+     "cliente": "Yes for 6 people",
+     "respuesta": "All set, Diego 10 🌿\n\n📅 Sunday 13 September\n🕗 17:00\n👥 6\n\nYour table is confirmed. The confirmation email goes to cliente42@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-09",
+   "grupo": "reservas",
+   "titulo": "\"¿Ya tienen agenda para octubre?\": no promete disponibilidad",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola! Quisiera hacer una reserva en octubre, ya tienen agenda para ese mes?",
+     "respuesta": "¡Hola! Claro que sí, octubre ya está disponible 🎉\n\nPara hacerte la reserva necesito estos datos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha exacta:*\n*Hora:*\n*Número de personas:*\n\n¿Me los compartes?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "promete lugar sin revisar: \"ya está disponible\""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Isabel Mora cliente43@ejemplo.test 9 de octubre 7:30 pm 5 personas",
+     "respuesta": "Listo, Pablo 10 🌿\n\n📅 viernes 9 de octubre\n🕗 19:30\n👥 5\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente43@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-10",
+   "grupo": "reservas",
+   "titulo": "Quiere cancelar la reserva de hoy: el bot la cancela por chat",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola! Tengo reserva hoy a nombre de Mateo Gil pero la tengo que cancelar",
+     "respuesta": "Hola Mateo 👋 Claro, entendido. Lamentablemente no puedo hacer cambios en reservas desde aquí directamente, pero paso tu solicitud al equipo para que la cancelen. ¿Me confirmas el correo con el que hiciste la reserva para que puedan ubicarla más fácil?",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "accion:cancelar_reserva",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "acción escalar_humano (se esperaba cancelar_reserva)"
+      },
+      {
+       "regla": "sin_frases_prohibidas",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RES-11",
+   "grupo": "reservas",
+   "titulo": "Mensajes cortados y con faltas (\"Tienees disponkble\")",
+   "turnos": [
+    {
+     "i": 3,
+     "cliente": "Tienees disponkble",
+     "respuesta": "¡Claro! Cuéntame, ¿qué necesitas? ¿Una mesa para cenar, información del menú, un evento privado...? 😊",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "cliente": "César Gómez cliente56@ejemplo.test 19:20",
+     "respuesta": "Listo, Martín 12 🌿\n\n📅 martes 13 de octubre\n🕗 19:20\n👥 4\n\nTu mesa queda confirmada. Te llega el correo de confirmación a cliente56@ejemplo.test.",
+     "categoria": "reserva_creada",
+     "humano": false,
+     "wix": [
+      "reservarBot"
+     ],
+     "reglas": [
+      {
+       "regla": "crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-01",
+   "grupo": "eventos",
+   "titulo": "Fiesta de bienvenida de boda, 40 personas: con el correo pasa a Juanma",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "¡Hola! 😊 Me caso en Antigua el 10/11/2026 y estoy buscando organizar una fiesta de bienvenida el 09/11/2026 para aproximadamente 40 persona…",
+     "respuesta": "¡Hola! Qué emocionante, ¡muchas felicidades por tu boda! 🎉\n\nClaro que sí, una fiesta de bienvenida para 40 personas es justo el tipo de evento que hacemos en Rosanta. Tenemos espacios preciosos — jardín, cava, chimenea, fogata — perfectos para ese momento especial.\n\nPara poder armarles una cotización necesito unos datos básicos. ¿Me los puedes compartir?\n\n*Tu nombre:*\n*Correo electrónico:* (te enviamos la cotización ahí)\n\nYa tengo la fecha (9 de noviembre) y las personas (40). Solo me faltan esos dos 😊",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "¡Perfecto! Mi correo electrónico es: cliente23@ejemplo.test.",
+     "respuesta": "¡Gracias, Lucía! Ya tengo todo lo que necesito 😊\n\nAhora cuéntame, ¿cómo te imaginas la velada? Tenemos tres formatos para el evento:\n\n1️⃣ *Menú servido individual* — Entrante + plato fuerte + postre por persona. Desde Q470/persona (comida + bebidas).\n\n2️⃣ *Menú para compartir* — Platos al centro entre todos, estilo familiar. Plato fuerte + postre desde Q230/persona, más entrantes para compartir y bebidas aparte (Q150/persona).\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra libre de cócteles, vinos y cervezas (máx. 4 bebidas/persona). Todo incluido a Q350/persona.\n\n¿Cuál te llama más la atención para la fiesta de bienvenida?",
+     "categoria": "escalar_evento",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "aviso_con_datos_evento",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "precio que no está en la base: Q470, Q230"
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-02",
+   "grupo": "eventos",
+   "titulo": "Cena de bienvenida de boda (27 adultos y 7 niños) con todos los datos",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola buen día me gustaría saber si en sus instalaciones se pueden hacer cenas de bienvenida? para invitados a una boda?",
+     "respuesta": "¡Hola! Claro que sí, es un tipo de evento que se puede organizar perfectamente aquí 🎉\n\nTenemos espacio para hasta 200 personas, diferentes áreas (jardín, chimenea, cava, fogata) y menús especiales para grupos. Suena ideal para una cena de bienvenida.\n\nPara armarte una cotización a la medida, necesito unos datos básicos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Fecha tentativa:*\n*Número de invitados:*",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Andrés Soto, cliente48@ejemplo.test 22 de abril 2027, 27 adultos y 7 niños",
+     "respuesta": "¡Perfecto, Andrés! Ya tengo todo lo básico 😊\n\nAhora te cuento los formatos de menú que manejamos para eventos, para que elijas el que mejor se adapta a la cena:\n\n*1. Menú servido (individual)*\nEntrante + plato fuerte + postre. Desde Q320/persona. Agua incluida, bebidas aparte (Q150/persona: 2 copas de vino o 2 cócteles, 3 cervezas, mocktails o agua gasificada).\n\n*2. Menú para compartir*\nPlato fuerte a escoger + postre + agua: Q230/persona. Los entrantes van al centro de la mesa, Q160 por plato (rinde ~3 personas). Bebidas aparte: Q150/persona.\n\n*3. Tapas Guatemaltecas & Barra Libre*\nTapas (6 piezas + postre) + barra libre de cócteles, vinos y cerveza (máx. 4 bebidas/persona): Q350/persona. Bebidas ya incluidas.\n\n¿Cuál de estos formatos te llama más la atención para la cena de bienvenida?",
+     "categoria": "escalar_evento",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "precio que no está en la base: Q320, Q230, Q160"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-03",
+   "grupo": "eventos",
+   "titulo": "Capacitación con pantalla y presupuesto de Q120: pedido especial, pasa a Juanma",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buenas tardes un gusto saludarles, Estoy en busca de un espacio para realizar una capacitación empresarial con las siguientes característica…",
+     "respuesta": "¡Buenas tardes! Qué gusto que nos escribas 😊\n\nSí manejamos eventos corporativos y grupos privados — Rosanta tiene varios espacios que pueden funcionar bien para una capacitación.\n\nPara armarte una cotización que se ajuste a lo que necesitas, me faltan un par de datos:\n\n*Tu nombre:*\n*Correo electrónico:* (aquí te enviamos la cotización)\n\nLa fecha, el horario y el número de personas ya los tengo anotados. En cuanto me confirmes estos dos, te cuento las opciones de menú disponibles y el equipo lo prepara todo.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Nombre; Agro Ejemplo, correo electronico cliente51@ejemplo.test",
+     "respuesta": "¡Perfecto, Pablo! Anotado todo 👍\n\nAhora sí, para cerrar la info antes de pasarla al equipo, cuéntame qué formato de menú te llama más la atención para la cena:\n\n1️⃣ *Menú servido individual* — entrante, plato fuerte y postre por persona. Desde Q320/persona en comida (bebidas aparte, Q150/persona).\n\n2️⃣ *Menú para compartir* — plato fuerte + postre por persona (desde Q230), más entrantes al centro para compartir. Bebidas aparte.\n\n3️⃣ *Tapas Guatemaltecas & Barra Libre* — 6 tapas + postre + barra de bebidas incluida (cócteles, vino, cerveza, mocktails, máx. 4 bebidas/persona). Q375/persona todo incluido.\n\nTe comento que el presupuesto que manejas (Q120/persona) está por debajo de los formatos disponibles, pero el equipo puede orientarte mejor sobre opciones o ajustes posibles. ¿Cuál de los tres formatos se acerca más a lo que buscas?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "no le pasó el chat a Juanma (acción: responder_info)"
+      },
+      {
+       "regla": "menciona_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no usa la frase de paso a Juanma"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "precio que no está en la base: Q320, Q230"
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-04",
+   "grupo": "eventos",
+   "titulo": "Cena de 60 adultos en inglés; pregunta por bebidas con un precio equivocado (Q150)",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hi, I would like to host a dinner at your restaurant on Sunday April 25,2027. We are anticipating 60 adults, 6 children between 4-9 years ol…",
+     "respuesta": "Hi! What a fun dinner to plan 🎉 We'd love to host you at Rosanta on April 25, 2027 — great choice!\n\nTo put together your quote and send it over, I just need a couple more details from you:\n\n*Your name:*\n*Your email:* (we'll send the full quote there)\n\nOnce I have those, I'll walk you through our event menu formats so you can pick what feels right for your group!",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Alex Moore, cliente14@ejemplo.test",
+     "respuesta": "Perfect, thanks Alex! 😊\n\nNow for the fun part — here are the 3 event menu formats we offer, so you can tell me which one feels like the right fit:\n\n**1. Plated Individual Menu** — from Q320/person\nIncludes starter, main course and dessert + still water. Drinks are separate at Q150/person (2 glasses of wine or house cocktails, 3 beers, mocktails, or sparkling water).\n→ Food + drinks from Q470/person.\n\n**2. Family-Style / Sharing Menu** — from Q230/person\nA main course to share (lomito or catch of the day) + dessert + still water. Shared starters go in the center at Q160/dish (~3 people per dish). Drinks separate at Q150/person.\n→ Exact total depends on how many sharing plates you'd like.\n\n**3. Guatemalan Tapas & Open Bar** — Q350/person\nIncludes 6 tapas + dessert + open bar (house cocktails, wine, Gallo beer, mocktails & soft drinks, up to 4 drinks/person). Drinks are already included here!\n\nOn the kids — we don't have a fixed children's menu, but the kitchen is happy to adapt portions and flavors for little ones. We can go over that in the quote.\n\nWhich format sounds most like what you had in mind?",
+     "categoria": "escalar_evento",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "precio que no está en la base: Q320, Q470, Q230, Q160"
+      }
+     ]
+    },
+    {
+     "i": 8,
+     "cliente": "Also if they can share now drinks work, if only 30 adults drink, do I pay Q150 for 30 adults!",
+     "respuesta": "Great question, Alex! So the way it works is — yes, drinks are charged per person for those who want them, not for the whole group. So if only 30 adults will be drinking, the drink package (Q150/person) would apply to those 30.\n\nThat said, the exact breakdown and how to handle the kids and non-drinkers is something the team will detail in your quote — they'll make sure everything is clear and fair. 😊",
+     "categoria": "escalar_evento",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-05",
+   "grupo": "eventos",
+   "titulo": "Rehearsal dinner de 23 con todo menos nombre y correo",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "Quisiera molestarles con una cotización para rehearsal dinner: - 23 personas - ⁠Domingo 8 de noviembre - ⁠19:00 hrs - Cena familiar - ⁠Vino …",
+     "respuesta": "Gracias por tu mensaje 🌿 En un momento te responde una persona del equipo.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contesta",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no pide correo"
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "idioma:es",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-06",
+   "grupo": "eventos",
+   "titulo": "\"Reserva para 23 personas\": es evento; con el correo pasa a Juanma",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "Queria saber si tendrán disponibilidad para una reserva de 23 personas para el miercoles 12 de agosto a partir de laa 7PM",
+     "respuesta": "¡Qué bueno que escribes! Para un grupo de 23 personas te recomendaría hacer una solicitud de evento privado — así el equipo puede asegurarte el espacio y darte una atención personalizada 🙌\n\nPara pasarles tu info necesito unos datos rápidos:\n\n*Tu nombre:*\n*Correo electrónico:*\n*Tipo de evento:* (cumpleaños, reunión de amigos, corporativo, etc.)\n\nYa tengo la fecha (miércoles 12 de agosto) y el número de personas (23). ¿Me compartes los datos que faltan?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "cliente": "Gracias!! Correo electrónico: cliente24@ejemplo.test Tipo de evento: reunión corporativa pero es más como celebración de equipo :)",
+     "respuesta": "¡Perfecto Daniela, ya tengo todo! 🎉\n\nAhora cuéntame sobre el formato de la cena — tenemos tres opciones:\n\n*1. Menú servido individual* — entrante + plato fuerte + postre. Desde Q470/persona (comida + bebidas).\n\n*2. Menú para compartir* — platos al centro entre todos + plato fuerte a elegir. Desde Q380/persona aprox. (bebidas aparte).\n\n*3. Tapas Guatemaltecas & Barra Libre* — tapas + postre + barra libre (cócteles, vinos, cerveza, mocktails). Q350/persona, todo incluido.\n\n¿Cuál se ajusta más al ambiente que buscan para la celebración?",
+     "categoria": "escalar_evento",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "precio que no está en la base: Q470, Q380"
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "EVE-07",
+   "grupo": "eventos",
+   "titulo": "Cree que la Cena Romántica cuesta Q800: el precio es Q900",
+   "turnos": [
+    {
+     "i": 1,
+     "cliente": "Creo que tiene un paquete de cena romántica de Q. 800",
+     "respuesta": "Casi, Lucía. La Cena Romántica para Dos está en Q900 por pareja (valorada en Q1,120). Incluye pulpo a la parrilla para compartir, dos Lomitos de la Casa, un postre para compartir, una botella de vino tinto Cabernet Sauvignon y decoración especial con pétalos, velas y chimenea. Se reserva con 24 horas de anticipación y se confirma con el 50% de anticipo (Q450). ¿Te gustaría que te la reserve? 🌿",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contiene:Q900",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-01",
+   "grupo": "quejas_cobros",
+   "titulo": "Queja larga por la cena de maridaje",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Estimado equipo de Rosanta, Quisiera compartir una retroalimentación sobre la experiencia que tuve junto a una amiga durante la cena y exper…",
+     "respuesta": "Elena, gracias por tomarte el tiempo de escribir esto con tanto detalle y con tanta generosidad. De verdad.\n\nLeer tu experiencia nos importa, y entiendo perfectamente la frustración: salir a comer a otro lugar después de una experiencia por la que pagaste y te ilusionaste dice mucho sobre cómo terminó la noche, y eso no debió pasar.\n\nLos puntos que describes —los tiempos, la descoordinación del maridaje, las porciones, el cóctel que no funcionó, la falta de alguien que preguntara cómo iban— son exactamente el tipo de cosas que el equipo necesita escuchar para mejorar. Y lo voy a hacer llegar completo.\n\nAlguien del equipo se va a comunicar contigo directamente. Merecen darte una respuesta de persona a persona, no solo de chat. 🙏",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "menciona_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no usa la frase de paso a Juanma"
+      },
+      {
+       "regla": "sin_frases_prohibidas",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "dice \"Alguien del equipo\""
+      },
+      {
+       "regla": "no_promete_compensacion",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:tono",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "tono",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-02",
+   "grupo": "quejas_cobros",
+   "titulo": "Le cobraron dos veces la tarjeta; después el bot se calla",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Qué tal, buenas noches! Disculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos v…",
+     "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "menciona_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_promete_compensacion",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "sin_frases_prohibidas",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Perfecto, te agradezco mucho Juanma 🙌🏻",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 3,
+     "cliente": "Buen día, Juanma Sí, con gusto. Le mando capturas de lo que me aparece en mi banca en línea y también de los mensajes de texto que me llegar…",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-03",
+   "grupo": "quejas_cobros",
+   "titulo": "Le escriben a \"Juan Manuel\" por un depósito pendiente",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola Juan Manuel buenas tardes Me quede pendiente el depósito del mes de septiembre y ya estamos a punto de entrar a octubre",
+     "respuesta": "Hola! 👋 Creo que me escribes al número equivocado — este es el chat de Rosanta, el restaurante. ¿Hay algo en lo que pueda ayudarte por acá?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "no le pasó el chat a Juanma (acción: responder_info)"
+      },
+      {
+       "regla": "no_contiene:número equivocado",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "dice \"número equivocado\""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-04",
+   "grupo": "quejas_cobros",
+   "titulo": "El banco busca a Juanma por su tarjeta empresarial",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buena tarde Juan como esta? le saluda Carlos de Banco Industrial al final ya salio la tarjeta le comente a una compañera no se si le indico",
+     "respuesta": "¡Hola Carlos! Buenas tardes 😊 Gracias por escribir.\n\nTe cuento con honestidad: no tengo información sobre ese tema desde este canal. Lo mejor es que alguien del equipo te confirme directamente lo de la tarjeta.\n\nTe puedo pasar el mensaje para que se comuniquen contigo, ¿te parece bien?",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 7,
+     "cliente": "Buen día Juan consultando que día estara viniendo por su tarjeta empresarial",
+     "respuesta": "¡Buen día! Creo que me escribiste al número equivocado 😊 Soy el asistente de Rosanta, el restaurante en Antigua Guatemala. No tenemos información sobre tarjetas empresariales aquí.\n\nSi en algún momento quieres hacer una reserva o tienes dudas sobre el restaurante, con gusto te ayudo.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "no le pasó el chat a Juanma (acción: responder_info)"
+      },
+      {
+       "regla": "no_contiene:número equivocado",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "dice \"número equivocado\""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-05",
+   "grupo": "quejas_cobros",
+   "titulo": "Turistas llegan y encuentran cerrado (inglés)",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hey, we had a reservation for tonight at 8pm but our transport is later than plannend. I think we can be there at 9pm. Is this to late for y…",
+     "respuesta": "Hey Sofía! Thanks for the heads up 🙏\n\nTonight we're open until 10pm, so 9pm works just fine. Come on over and enjoy your evening!\n\nJust a heads up — if anything changes with your reservation, you can update it through the link: https://www.rosanta.rest/reservations\n\nSee you soon!",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 4,
+     "cliente": "We are on the door but it is closed",
+     "respuesta": "Oh no! Let me flag this for the team right away — someone will be with you in just a moment 🚪",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "menciona_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no usa la frase de paso a Juanma"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-06",
+   "grupo": "quejas_cobros",
+   "titulo": "Olvidó una botella en el jardín",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola! Creo que dejé mi botella de agua anoche. Comí en el jardín con mi novio para su cumpleaños y la botella es negra. Por favor me dice si…",
+     "respuesta": "Hola! Claro que sí, con gusto lo revisamos 🙏 ¿Puedes decirme tu nombre y el número de mesa aproximado o el área del jardín donde estuvieron? Así le paso el dato al equipo y te confirman en cuanto lo verifiquen.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Me llamo Tomás y la mesa estaba cerca de la fogata en el centro del jardín.",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "QUE-07",
+   "grupo": "quejas_cobros",
+   "titulo": "Pregunta si el postre llevaba edulcorante (no está en la base)",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buenos días, hoy fui al restante y comí un mousse de chocolate.",
+     "respuesta": "¡Buenas tardes! 😊 Qué rico suena ese mousse de chocolate... aunque te cuento que no tenemos ese postre en nuestro menú actual. ¿Puede ser que hayas visitado otro restaurante? Si fuiste a Rosanta, con gusto te ayudo con cualquier duda o comentario que tengas.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Uds me podrían confirmar si lleva algún edulcorante?",
+     "respuesta": "Entiendo la consulta, pero honestamente no tengo esa información en la mano — y no quiero darte un dato incorrecto. Lo mejor es que alguien del equipo te confirme directamente. ¿Quieres que les pase tu pregunta?",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "menciona_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": false,
+       "detalle": "no usa la frase de paso a Juanma"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "ING-01",
+   "grupo": "ingles",
+   "titulo": "\"Are you open today?\" un lunes",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Good afternoon are you open today?",
+     "respuesta": "Good afternoon! 🙌 Today is Monday, so we're open from 5:00 PM to 9:00 PM. Would you like to grab a table? You can reserve here: https://www.rosanta.rest/reservations",
+     "categoria": "redirigir_reservas",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "link_en_su_idioma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "ING-02",
+   "grupo": "ingles",
+   "titulo": "Pide el link de reservas en inglés",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hi. Are reservations needed tonight for 2 people?",
+     "respuesta": "Hey! Tonight we close at 9 PM (it's Monday). Walk-ins are welcome, but a reservation guarantees your spot, especially on weekends 😊\n\nWant me to share the reservation link, or would you like to book right here in chat? I just need a few quick details.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Reservation link",
+     "respuesta": "Here you go! 👉 https://www.rosanta.rest/reservations\n\nHope to see you tonight!",
+     "categoria": "redirigir_reservas",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "contiene:rosanta.rest/reservations",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "link_en_su_idioma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "ING-03",
+   "grupo": "ingles",
+   "titulo": "Avisa que alguien más llegará después",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hi this is Pablo. We have a reservation at 7:30 pm today. FYI another person May join us later fort drinks.",
+     "respuesta": "Hey Pablo! Thanks for the heads up 🙌 No worries at all — if someone joins you later for drinks, just let your server know when you arrive and they'll take care of it. See you tonight!",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_sin_sistema",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "ING-04",
+   "grupo": "ingles",
+   "titulo": "Gift card en inglés",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Do you sell giftcard/ tarjeto de regalo? Best regard Laura",
+     "respuesta": "Hey Laura! Yes, we do 🎁\n\nOur gift cards are perfect for someone who deserves a special experience at Rosanta.\n\n*Available amounts:* Q300 and Q500\n*No expiration date*\nPayment by bank transfer.\n\nHere's how it works:\n1. Transfer to this account:\n *CORSAGA, S.A.*\n *BAC Checking Account:* 9048025432\n2. Send us the name of the person receiving it — we personalize it and send it as a photo right away.\n\nWant to get one? Just let me know and I'll help you from here! 😊",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:en",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "contiene:Q300",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "HOR-01",
+   "grupo": "horarios",
+   "titulo": "\"¿A qué hora abren?\" un viernes",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buenos días, a qué hora abren?",
+     "respuesta": "¡Buenos días! Hoy es viernes, así que abrimos a las 12:00 del mediodía hasta las 10 de la noche 🙌 ¿Te puedo ayudar con algo más?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "idioma:es",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "HOR-02",
+   "grupo": "horarios",
+   "titulo": "Almuerzo un domingo, luego horario entre semana y sábado",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola buena tarde. Ustedes sirven almuerzo hoy ? :) quisiera hacer una RSV a la 1:30 para 3 personas pero me aparece solo en la tarde noche",
+     "respuesta": "¡Buenas tardes! 😊 Hoy domingo el restaurante abre a las 3:00 pm, por eso no aparece disponibilidad a la 1:30 pm — es el horario de los domingos.\n\nSi te acomoda llegar después de las 3, con gusto te paso el link para reservar tu mesa para 3:\n👉 https://www.rosanta.rest/reservas",
+     "categoria": "redirigir_reservas",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_promete_disponibilidad",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Gracias ☺️ Y entre semana cuál es el horario ?",
+     "respuesta": "¡Con gusto! Los horarios entre semana son:\n\nLunes y martes: 5:00 pm – 9:00 pm\nMiércoles y jueves: 12:00 pm – 9:00 pm\nViernes: 12:00 pm – 10:00 pm\n\nLos miércoles y jueves ya puedes venir a almorzar 😊",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 4,
+     "cliente": "Gracias :) y sábados ?",
+     "respuesta": "Los sábados abrimos de 12:00 pm a 10:00 pm, así que también hay almuerzo 🙌",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "HOR-03",
+   "grupo": "horarios",
+   "titulo": "\"¿Están abiertos hoy?\" un lunes",
+   "turnos": [
+    {
+     "i": 4,
+     "cliente": "Solo quería asegurarme de que están abiertos el día de hoy?",
+     "respuesta": "¡Sí, hoy estamos abiertos! 🎉 Es lunes y el horario es de 5:00 PM a 9:00 PM. Ya casi es hora, ¿se te antoja venir?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "MEN-01",
+   "grupo": "menu_precios",
+   "titulo": "Pide el menú",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buen día, me podrían compartir el menú por favor.",
+     "respuesta": "¡Buen día! 😊 Aquí te comparto el menú:\n\nhttps://www.rosanta.rest/menú-español\n\nSi tienes alguna duda sobre algún plato o restricción alimentaria, con gusto te ayudo.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contiene:rosanta.rest/men",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "link_en_su_idioma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "MEN-02",
+   "grupo": "menu_precios",
+   "titulo": "Foto del menú y parqueo (Instagram)",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buenas noches, una consulta tendrían foto del menú ? Y cuentan con parqueo?",
+     "respuesta": "¡Buenas noches! Claro que sí 😊\n\nAquí te dejo el menú completo:\n👉 https://www.rosanta.rest/menú-español\n\nY sobre el parqueo: sí hay. Dentro del Parque Santa Rosa (justo frente al restaurante) y también tenemos convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada.\n\n¿Algo más en que te pueda ayudar?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contiene:rosanta.rest/men",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "juez:responde_lo_preguntado",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "responde_lo_preguntado",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "MEN-03",
+   "grupo": "menu_precios",
+   "titulo": "Para llevar y una paella que no está en la carta",
+   "turnos": [
+    {
+     "i": 2,
+     "cliente": "Disculpa tines para llevar ?",
+     "respuesta": "No, por el momento no manejamos take-out ni delivery. La experiencia de Rosanta es para disfrutarla aquí 🙂 ¿Se te ofrece algo más?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "cliente": "Te puedo pedir una paella mixta, y puedo pasar por ella ?",
+     "respuesta": "Qué rico suena, pero la paella no está en nuestro menú 😊 Y como te comenté antes, no manejamos para llevar — todo se disfruta aquí en el restaurante.\n\n¿Te animás a venir? Con gusto te cuento qué tenemos disponible o te ayudo a reservar tu mesa.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "juez:fiel_a_la_base",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "fiel_a_la_base",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "FOT-01",
+   "grupo": "fotos",
+   "titulo": "Manda una foto y escribe \"Quisiera esto\"",
+   "turnos": [
+    {
+     "i": 4,
+     "cliente": "(foto)",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "cliente": "Quisiera esto",
+     "respuesta": "Parece que se te fue el archivo o imagen sin adjuntar 😊\n\n¿Qué tenías en mente? Cuéntame y con gusto te ayudo.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contesta",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:no_finge_ver_foto",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "no_finge_ver_foto",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "FOT-02",
+   "grupo": "fotos",
+   "titulo": "Manda la foto del comprobante de la Cena Romántica",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Listo, ya hice la transferencia del anticipo",
+     "respuesta": "Gracias 🙌 Juanma revisa la transferencia y te confirma.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_confirma_pago",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "cliente": "(foto)",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "foto_queda_registrada",
+       "critica": false,
+       "pendiente": true,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "la foto no queda ni en Conversaciones"
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "FOT-03",
+   "grupo": "fotos",
+   "titulo": "Foto sola por Instagram, sin texto",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "(foto)",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "foto_queda_registrada",
+       "critica": false,
+       "pendiente": true,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "la foto no queda ni en Conversaciones"
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "JUA-01",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma ya contestó con el video: el bot no se mete",
+   "turnos": [
+    {
+     "i": 1,
+     "cliente": "Hola y si será un lugar algo alejado de los demás verdad ?",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Podría incluir un ramo de rosas grande ?",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 3,
+     "cliente": "Cuánto costaría si si ?",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "JUA-02",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma confirmó el cambio y la clienta da las gracias",
+   "turnos": [
+    {
+     "i": 5,
+     "cliente": "Muchas gracias",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "JUA-03",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Esperando a Juanma por un cobro, pide una reserva: el bot sí la atiende",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Qué tal, buenas noches! Disculpe la molestia, hoy por la noche visité el restaurante pero revisando mi tarjeta vi que el cobro se hizo dos v…",
+     "respuesta": "¡Buenas noches, Valeria! No es molestia, gracias por avisarnos. Lamento lo del doble cobro, y queremos revisarlo contigo para solucionarlo. Te escribe Juanma mañana a partir de las 9:00.",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "pasa_a_juanma",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Y aprovecho, ¿me ayudas con una mesa para mañana a las 8 pm para 2?",
+     "respuesta": "¡Claro! Para dejarla lista necesito tu *Correo:* 😊",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "contesta",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "pide:correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_crea_reserva",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "JUA-04",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Juanma escribió desde la app de Instagram: el bot se calla aunque pidan reserva",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hola abren mañana al mediodía día ?",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "cliente": "Para 4 personas la reserva Rosa le saluda",
+     "respuesta": "",
+     "categoria": "",
+     "humano": null,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "se_calla",
+       "critica": true,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-01",
+   "grupo": "spam_raros",
+   "titulo": "Spam: \"quitamos reseñas malas\"",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hello Sir, 🚀 Remove Bad Reviews – 100% Professional Service! ⭐ 🔥 Need help protecting your business or brand? Paula an expert in bad revie…",
+     "respuesta": "Thanks for reaching out! This looks like a service proposal — please send it to restaurante@rosanta.rest and the team will take a look. 🙂",
+     "categoria": "escalar_humano",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "deriva_al_correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "If you should have to remove the bad review.. share with link",
+     "respuesta": "We handle all external proposals through email — just send the details to restaurante@rosanta.rest and the team will review it. 👍",
+     "categoria": "escalar_humano",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-02",
+   "grupo": "spam_raros",
+   "titulo": "Phishing: \"aviso del equipo de Meta\" por Messenger",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "⚠️𝗔𝘃𝗶𝘀𝗼 𝗶𝗺𝗽𝗼𝗿𝘁𝗮𝗻𝘁𝗲 𝗱𝗲𝗹 𝗘𝗾𝘂𝗶𝗽𝗼 𝗱𝗲 𝗦𝗼𝗽𝗼𝗿𝘁𝗲 𝗱𝗲 𝗣𝗼𝗹𝗶́𝘁𝗶𝗰𝗮𝘀 𝗱𝗲 𝗠𝗲𝘁𝗮 𝗘𝘀𝘁𝗶𝗺𝗮𝗱𝗼 𝗮𝗱𝗺𝗶𝗻…",
+     "respuesta": "Hola, esto parece un intento de phishing o estafa. Meta/Facebook nunca contacta a páginas por Messenger de esta forma. No hagas clic en ningún enlace ni compartas datos. Si tienes dudas sobre tu página, gestiónalas directamente en facebook.com/help. 🚨",
+     "categoria": "escalar_humano",
+     "humano": true,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": false,
+       "detalle": "le pasó el chat a Juanma sin necesidad (acción: escalar_humano)"
+      },
+      {
+       "regla": "no_contiene:http",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-03",
+   "grupo": "spam_raros",
+   "titulo": "Solo un link sospechoso",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "https://byvn.net/Notificación11",
+     "respuesta": "Hola 👀 parece que me llegó un link, pero no puedo abrirlo ni acceder a URLs externas. ¿En qué te puedo ayudar? Con gusto te cuento sobre Rosanta, reservas, el menú o lo que necesites.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-04",
+   "grupo": "spam_raros",
+   "titulo": "Otro bot automático le pide un correo",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Hey there! So glad you’re here 😊 I’ll need your email address first. Please share it in the chat.",
+     "respuesta": "Hey Sofía, welcome! 😊 No email needed just to chat. Are you looking to book a table, see the menu, or ask about a private event?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_contiene:@",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "cliente": "Please enter a valid email address, for example cliente34@ejemplo.test",
+     "respuesta": "Looks like that message is an automated one, not from us, so no worries about it. 😊 Just tell me what you'd like: book a table, see the menu, or ask about a private event?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_contiene:@",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-05",
+   "grupo": "spam_raros",
+   "titulo": "Busca una mascota perdida",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Por favor ayúdenme a compartir !!! La seguimos buscando, es muy importante para mí encontrarla, la rescate desde pequeñita para darle una me…",
+     "respuesta": "Hola 😊 Qué situación tan difícil, de verdad espero que la encuentren pronto.\n\nPero te cuento que soy el asistente de Rosanta, un restaurante en Antigua Guatemala — no tenemos cómo ayudar con la búsqueda desde aquí.\n\nTe recomiendo publicar en grupos de Facebook de Antigua o de mascotas perdidas en Guatemala, que tienen mucho alcance. ¡Mucho ánimo!",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "juez:tono",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "juez",
+       "criterio": "tono",
+       "ok": null,
+       "detalle": "sin juez"
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-07",
+   "grupo": "spam_raros",
+   "titulo": "Proveedor de vegetales ofrece productos",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "🌱 Descubre la excelencia de nuestros vegetales orgánicos 🌱, En Finca Ejemplo nos enorgullece ofrecer 🍃productos orgánicos 100% naturales,…",
+     "respuesta": "¡Hola, Mariana! Qué buena onda lo que hacen en Finca Ejemplo 🌱 — suena como algo muy alineado con lo que buscamos.\n\nPara que tu propuesta llegue a las personas correctas, te pido que la envíes a restaurante@rosanta.rest con toda la info. Desde ahí el equipo la revisa y se pone en contacto contigo.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "deriva_al_correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-08",
+   "grupo": "spam_raros",
+   "titulo": "Busca trabajo de cocinero",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "Buenas tardes Estoy interesado en una plaza para cocina como cocinero me podría indicar si cuentan con una plaza disponible les saluda Kevin",
+     "respuesta": "¡Hola Kevin! Gracias por tu interés en ser parte del equipo 🙌\n\nPara que tu solicitud llegue a las personas indicadas, envía tu CV al correo *restaurante@rosanta.rest* y desde ahí te dan seguimiento.",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "deriva_al_correo",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  },
+  {
+   "id": "RAR-09",
+   "grupo": "spam_raros",
+   "titulo": "Solo un emoji (reacción a una historia)",
+   "turnos": [
+    {
+     "i": 0,
+     "cliente": "🔥",
+     "respuesta": "¡Eso sí que es entusiasmo! 😄 ¿Qué se te antoja hoy — una mesa, info del menú, o algo más?",
+     "categoria": "responder_info",
+     "humano": false,
+     "wix": [],
+     "reglas": [
+      {
+       "regla": "no_pasa_a_juanma",
+       "critica": false,
+       "pendiente": false,
+       "auto": false,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_rompe",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "botones_validos",
+       "critica": false,
+       "pendiente": false,
+       "auto": true,
+       "clase": "flujo",
+       "ok": true,
+       "detalle": ""
+      },
+      {
+       "regla": "no_inventa_precios",
+       "critica": true,
+       "pendiente": false,
+       "auto": true,
+       "clase": "texto",
+       "ok": true,
+       "detalle": ""
+      }
+     ]
+    }
+   ],
+   "errores": []
+  }
+ ]
+}
