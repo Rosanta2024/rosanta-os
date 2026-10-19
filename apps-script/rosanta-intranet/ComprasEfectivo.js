@@ -39,6 +39,9 @@ var CPE_JUSTIFICADO_ = 0.9;
 // Los cajeros que mas se usan (cuadre del 14-oct-2026), para no escribirlos cada vez.
 var CPE_LUGARES_ = ['ATM 095 Agencia Recolección Antigua', 'ATM 603 Despensa Antigua', 'ATM 152 Agencia Antigua 5'];
 var CPE_CARPETA_ = 'Comprobantes_compras';
+// Modelo que lee la foto del comprobante: el mismo que tenia MED_RET_MODELO_ (MedicionDatos), que se
+// archivo el 15-oct-2026 con la pantalla vieja de retiros y dejo esta lectura rota (18-oct-2026).
+var CPE_MODELO_ = 'claude-opus-5';
 var CPE_FACTURAS_DIAS_ = 45;
 // Una compra cuya factura todavia no se emite (14-oct-2026, Juanma: "no es que sea sin factura,
 // la factura esta pendiente de ser emitida"). Va como SIN FACTURA con esta marca al inicio del
@@ -516,7 +519,7 @@ function leerComprobanteCompra(auth, archivos) {
   });
   contenido.push({ type: 'text', text: CPE_INSTRUCCION_ });
   var body = claudeLlamar_({
-    model: MED_RET_MODELO_, max_tokens: 4000, fallbacks: 'default',
+    model: CPE_MODELO_, max_tokens: 4000, fallbacks: 'default',
     output_config: { effort: 'low', format: { type: 'json_schema', schema: CPE_ESQUEMA_ } },
     messages: [{ role: 'user', content: contenido }]
   }, ['server-side-fallback-2026-07-01']);
