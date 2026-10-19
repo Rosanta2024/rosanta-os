@@ -1,0 +1,22 @@
+{
+  "name": "rosanta-bot-sombra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bot de Rosanta en sombra: reproduce conversaciones guardadas con el codigo real del bot (19-oct-2026)",
+  "type": "commonjs",
+  "main": "src/server-bot.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server-bot.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@google-cloud/cloud-sql-connector": "^1.4.0",
+    "@googleapis/sheets": "^9.0.0",
+    "express": "^4.21.0",
+    "google-auth-library": "^11.3.1",
+    "pg": "^8.13.0"
+  }
+}

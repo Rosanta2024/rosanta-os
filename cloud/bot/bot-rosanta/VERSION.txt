@@ -1,0 +1,4 @@
+@58 · 2026-10-17T10:16:30-06:00 · 4eae1b3
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 58, "no escribe encima de Juanma"),
+verificada el 19-oct-2026 bajando la versión 58 aparte (11 de 11 archivos iguales). La hora es la del commit; la
+comparación de la sombra vale para los mensajes desde esa hora.
