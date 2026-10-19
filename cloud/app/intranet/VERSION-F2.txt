@@ -1,1 +1,1 @@
-51bdc85 2026-10-18 Merge remote-tracking branch 'origin/main' into claude/infallible-roentgen-5185e3
+8912722 2026-10-18 Concilia con @213: una sola CPE_MODELO_ (la de main)

@@ -9,6 +9,7 @@ const { crearPool } = require('./db');
 const { crearServicioPagos } = require('./servicio-pagos');
 const pantalla = require('./pantalla-pagos');
 const { comparar } = require('./comparar-pagos');
+const { conciliarMes } = require('./conciliar');
 
 async function leerUsuariosHoja() {
   const id = process.env.CONFIG_SHEET_ID;
@@ -41,7 +42,8 @@ async function main() {
     pantallaCaja: () => (pagos.estado().en_vivo.caja ? htmlCajaVivo : htmlCajaSombra),
     pantallaCompras: () => (pagos.estado().en_vivo.caja ? htmlComprasVivo : htmlComprasSombra),
     pantallaFotos: () => htmlFotos,
-    compararPagos: () => { const c = pagos.copia(); return comparar({ pool, sheets: clienteSheets(), librosCopia: c.libros, copiaLeida: c.leida }); },
+    compararPagos: () => { const c = pagos.copia(); return comparar({ pool, sheets: clienteSheets(), librosCopia: c.libros, copiaLeida: c.leida, enVivo: pagos.estado().en_vivo }); },
+    conciliarMes: (mes) => conciliarMes({ pool, sheets: clienteSheets(), mes, exigir07: pagos.estado().en_vivo.caja }),
     anotarTiempo: (t) => pool.query('INSERT INTO tiempos (accion, donde, ms, quien) VALUES ($1,$2,$3,$4)', [t.accion, t.donde, t.ms, t.quien]),
     leerUsuariosHoja,
     claveTareas: process.env.CLAVE_TAREAS,

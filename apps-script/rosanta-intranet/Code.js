@@ -118,6 +118,9 @@ function doGet(e) {
     tplCosteo.buscarIni = String((e && e.parameter && e.parameter.q) || '').slice(0, 60);
     tplCosteo.abrirIni = String((e && e.parameter && e.parameter.abrir) || '').slice(0, 80);
     tplCosteo.puedePagos = puedePagos; // la herramienta Pagos arriba
+    // ?nube=ensayo (19-oct-2026): SOLO el dueño ve en Pagos, Caja y Compras la pantalla del servidor de ENSAYO,
+    // para probar el puente en su Chrome con la intranet publicada. Nadie mas nota nada (NubePagos.js).
+    tplCosteo.nubeIni = (e && e.parameter && e.parameter.nube) === 'ensayo' ? 'ensayo' : '';
     return tplCosteo.evaluate()
       .setTitle('Rosanta \u00b7 Recetario y Proveedores')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')

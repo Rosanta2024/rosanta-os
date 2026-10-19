@@ -277,6 +277,7 @@ window.PROFIT_AREA_INI = <?!= JSON.stringify(rol === 'sala' ? 'BARRA' : 'COCINA'
    de verdad los revisa el servidor en cada llamada. */
 window.PROFIT_ROL = <?!= JSON.stringify(rol || '') ?>;
 window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
+window.NUBE_PRUEBA = <?!= JSON.stringify(nubeIni || '') ?>;   // 'ensayo': solo el dueño, ver NubePagos.js
 window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
 /* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
    estaba escribiendo). Sin iframe: el cuerpo del reporte se copia del <template> y cada
@@ -322,7 +323,7 @@ function pagosOServidorNuevo(sec, modo){
     window.addEventListener('message', function(ev){
       if(ev.source === f.contentWindow && ev.data && ev.data.rosantaAlto) f.style.height = Math.max(600, ev.data.rosantaAlto + 40) + 'px';
     });
-  }).withFailureHandler(deSiempre).getPagosDestino(AUTH, modo || '');
+  }).withFailureHandler(deSiempre).getPagosDestino(AUTH, modo || '', window.NUBE_PRUEBA || '');
 }
 /* Caja chica y Compras en el servidor nuevo (18-oct-2026, NubePagos.js): con motor_caja = base (y Pagos en base),
    la pestaña muestra la del servidor nuevo en un marco; si no, la de siempre (deSiempre). */
@@ -339,7 +340,7 @@ function cajaOServidorNuevo(sec, cual, deSiempre){
       if(ev.data.rosantaAlto) f.style.height = Math.max(600, ev.data.rosantaAlto + 40) + 'px';
       if(ev.data.rosantaPuente) cajaPuente_(ev.source, origen, ev.data.rosantaPuente);
     });
-  }).withFailureHandler(deSiempre).getCajaDestino(AUTH, cual);
+  }).withFailureHandler(deSiempre).getCajaDestino(AUTH, cual, window.NUBE_PRUEBA || '');
 }
 /* EL PUENTE (18-oct-2026): "Leer cierres" y leer la foto de un comprobante usan Gmail, Drive y Claude, asi
    que los sigue corriendo la intranet aunque la pantalla sea la del servidor nuevo. La pantalla nueva pide

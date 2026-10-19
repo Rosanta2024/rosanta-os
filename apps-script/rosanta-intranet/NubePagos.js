@@ -13,6 +13,8 @@
  * Volver atras = poner motor_pagos = sheets.
  */
 var NUBE_PAGOS_URL_ = 'https://rosanta-nube-512086396641.northamerica-south1.run.app/pagos';
+/** El servidor de ENSAYO (se borra despues del paso a vivo): solo para ?nube=ensayo del dueño. */
+var NUBE_ENSAYO_URL_ = 'https://rosanta-nube-ensayo-512086396641.northamerica-south1.run.app';
 
 /** Un interruptor de PARAMETROS: 'base' o 'sheets' (texto). Se guarda 1 minuto. */
 function _nubeInterruptor_(clave, cacheKey) {
@@ -60,9 +62,10 @@ function _pagSoloConsulta_() {
  * persona, el mismo de siempre). Quien entra con la sesion de rosanta.rest (sin ?u=) usa su enlace de USUARIOS.
  * modo: el de PF_PAGOS ('' o 'admin:banco', etc.).
  */
-function getPagosDestino(auth, modo) {
+function getPagosDestino(auth, modo, prueba) {
   var Q = pagQuien_(auth);
-  if (pagMotor_() !== 'base') return { base: false };
+  var ensayo = _nubeEsPruebaDueno_(auth, prueba);
+  if (!ensayo && pagMotor_() !== 'base') return { base: false };
   var token = String(auth || '').trim();
   if (!token) {
     var u = resolverUsuario_(auth), filas = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS').getDataRange().getValues();
@@ -73,7 +76,19 @@ function getPagosDestino(auth, modo) {
   if (!token) throw new Error('Tu cuenta no tiene enlace para la pantalla nueva de Pagos. Avisale a Juanma.');
   var m = String(modo || '').trim();
   if (m && !/^admin:(banco|balance|iva|equipo)$/.test(m)) m = '';
-  return { base: true, url: NUBE_PAGOS_URL_ + '?u=' + encodeURIComponent(token) + (m ? '&modo=' + encodeURIComponent(m) : '') + '&dentro=1', nombre: Q.nombre };
+  return { base: true, url: (ensayo ? NUBE_ENSAYO_URL_ + '/pagos' : NUBE_PAGOS_URL_) + '?u=' + encodeURIComponent(token) + (m ? '&modo=' + encodeURIComponent(m) : '') + '&dentro=1',
+           nombre: Q.nombre, ensayo: ensayo };
+}
+
+/**
+ * ?nube=ensayo (19-oct-2026): el dueño, y solo el, ve la pantalla del servidor de ENSAYO dentro de la intranet
+ * publicada, para probar el puente ("Leer cierres", la foto del comprobante) en su Chrome antes del paso a vivo.
+ * No cambia ningun interruptor: lo que el puente corre en la intranet hace lo de siempre.
+ */
+function _nubeEsPruebaDueno_(auth, prueba) {
+  if (prueba !== 'ensayo') return false;
+  var u = resolverUsuario_(auth);
+  return !!u && normalizar_(u.rol) === 'dueno';
 }
 
 /** La cerradura de las funciones de GUARDAR de Caja chica y Compras (igual que _pagSoloConsulta_). */
@@ -85,12 +100,13 @@ function _cajaSoloConsulta_() {
 }
 
 /** Para la pestaña de Caja chica o Compras: si va por el servidor nuevo, la direccion (como getPagosDestino). */
-function getCajaDestino(auth, cual) {
+function getCajaDestino(auth, cual, prueba) {
   var Q = cchQuien_(auth);
-  if (cajaMotor_() !== 'base') return { base: false };
-  var d = getPagosDestino(auth, '');
+  var ensayo = _nubeEsPruebaDueno_(auth, prueba);
+  if (!ensayo && cajaMotor_() !== 'base') return { base: false };
+  var d = getPagosDestino(auth, '', ensayo ? 'ensayo' : '');
   if (!d.base) return { base: false };
-  return { base: true, url: d.url.replace(/\/pagos\?/, '/' + (cual === 'compras' ? 'compras' : 'caja') + '?').replace(/&modo=[^&]*/, ''), nombre: Q.nombre };
+  return { base: true, url: d.url.replace(/\/pagos\?/, '/' + (cual === 'compras' ? 'compras' : 'caja') + '?').replace(/&modo=[^&]*/, ''), nombre: Q.nombre, ensayo: ensayo };
 }
 
 /**
