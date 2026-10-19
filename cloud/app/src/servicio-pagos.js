@@ -193,9 +193,19 @@ function crearServicioPagos(pool, opciones) {
           const fila = M[n - 1], id = IMP.llave(fila[iK]);
           if (!id) throw new Error('El motor escribio una fila sin ' + col + ' en ' + p + '.');
           const celdas = JSON.stringify(C.codificar([fila])[0]);
-          let previo;
+          const previo = p === PAG
+            ? (await c.query('SELECT celdas FROM pagos_proveedores WHERE id = $1 FOR UPDATE', [id])).rows[0]
+            : (await c.query('SELECT celdas FROM filas_vivas WHERE pestana = $1 AND llave = $2 FOR UPDATE', [p, id])).rows[0];
+          // MES CERRADO (decision de Juanma, 19-oct): el equipo no puede tocar nada de un mes cerrado, ni corregir ni
+          // agregar con esa fecha; el dueño si, y queda en la bitacora. Se mira la fecha de antes y la de despues.
+          const fAntes = previo ? fechaDe(H, C.decodificar([previo.celdas])[0]) : null, fDespues = fechaDe(H, fila);
+          const cerrado = [fAntes, fDespues].find((f) => f && meses.has(f.slice(0, 7)));
+          if (cerrado) {
+            const r = matriz ? PERM.puede(matriz, usuario, p === PAG ? 'pagos' : 'caja', 'corregir_dia_cerrado')
+              : require('./usuarios').normalizarRol(usuario.rol) === 'dueno' ? { ok: true } : { ok: false, motivo: 'Eso solo lo hace el dueño.' };
+            if (!r.ok) throw error('Eso es de ' + cerrado.slice(0, 7) + ', un mes ya cerrado: ' + r.motivo, 403);
+          }
           if (p === PAG) {
-            previo = (await c.query('SELECT celdas FROM pagos_proveedores WHERE id = $1 FOR UPDATE', [id])).rows[0];
             const t = IMP.tipadas(H, fila);
             if (!previo) {
               await c.query(`INSERT INTO pagos_proveedores (id, area, proveedor, dte, fecha_de_pagar, fecha_pagado, cantidad_pagada, estatus, nit, detalle,
@@ -206,7 +216,6 @@ function crearServicioPagos(pool, opciones) {
                 estatus=$8, nit=$9, detalle=$10, escrito_por=$11, registrado=$12, celdas=$13, origen='servidor', actualizado=now() WHERE id=$1`, [id].concat(t, [celdas]));
             }
           } else {
-            previo = (await c.query('SELECT celdas FROM filas_vivas WHERE pestana = $1 AND llave = $2 FOR UPDATE', [p, id])).rows[0];
             if (!previo) {
               await c.query(`INSERT INTO filas_vivas (pestana, llave, celdas, orden, origen) VALUES ($1,$2,$3,
                 (SELECT coalesce(max(orden), 0) + 1 FROM filas_vivas WHERE pestana = $1), 'servidor')`, [p, id, celdas]);
@@ -214,12 +223,12 @@ function crearServicioPagos(pool, opciones) {
               await c.query(`UPDATE filas_vivas SET celdas = $3, origen = 'servidor', actualizado = now() WHERE pestana = $1 AND llave = $2`, [p, id, celdas]);
             }
           }
-          if (previo) {
-            const b = bitacoraDe(H, C.decodificar([previo.celdas])[0], fila);
+          if (previo || cerrado) {   // un registro NUEVO en un mes cerrado (solo el dueño) tambien queda: "corregir" con antes vacio
+            const b = previo ? bitacoraDe(H, C.decodificar([previo.celdas])[0], fila) : Object.assign(bitacoraDe(H, fila, fila), { antes: null });
             await c.query(`INSERT INTO bitacora (quien, rol, parte, tabla, registro_id, accion, antes, despues, fecha_registro, mes_cerrado)
               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
             [usuario.email, usuario.rol, p === PAG ? 'pagos' : VIVAS[p].parte, p === PAG ? 'pagos_proveedores' : 'filas_vivas:' + p, id, b.accion,
-              JSON.stringify(b.antes), JSON.stringify(b.despues), b.fecha, !!b.fecha && meses.has(b.fecha.slice(0, 7))]);
+              JSON.stringify(b.antes), JSON.stringify(b.despues), b.fecha || cerrado || null, !!cerrado]);
           }
         }
       }
@@ -275,7 +284,7 @@ function crearServicioPagos(pool, opciones) {
       const permitidas = new Set([cfgId + '|' + PAG].concat(enVivo.caja ? [cfgId + '|CAJA_CHICA', cfgId + '|RETIROS_SOLICITUDES'] : []));
       const otras = Object.keys(r.escrituras).filter((k) => !permitidas.has(k));
       if (otras.length) { await cargar(); throw error('El guardado quiso escribir fuera de lo permitido (' + otras.join(', ') + '). No se guardo nada.', 500); }
-      try { await guardar(usuario, r.escrituras); } catch (e) { await cargar(); throw error('No se guardo: ' + String(e.message || e) + '. Proba de nuevo.', 503); }
+      try { await guardar(usuario, r.escrituras); } catch (e) { await cargar(); if (e.status) throw e; throw error('No se guardo: ' + String(e.message || e) + '. Proba de nuevo.', 503); }
       const ms = Date.now() - t0;
       // la copia a la hoja va despues de responder: lo guardado ya esta a salvo en la base
       setImmediate(() => { enColaCopia(() => copiarPendientes()).catch((e) => console.error('Copia a la hoja pendiente:', e.message)); });
