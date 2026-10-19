@@ -845,8 +845,10 @@ function menuOlvidar() { olvidarProgreso(); _avisoLog(); }
    correr dos veces sin dano.
    8-oct-2026 (tarde): retiros_personales_tc.js ya corrio (las 7 filas estan en
    PERSONAL) y salio a apps-script/_archivo/2026-10-08_lotes_corridos_maestro.
-   Queda solo entre_volcanes_ajena.js. */
-function menuReclasRevisar() { revisarEntreVolcanesAjena(); _avisoLog(); }
+   Queda solo entre_volcanes_ajena.js.
+   19-oct-2026: se suma carniceria_atrasadas_s42.js (7 facturas atrasadas de la
+   Carniceria Santa Rosa del 15-oct a PERIODO_ANTERIOR). Los dos se pueden correr dos veces. */
+function menuReclasRevisar() { revisarEntreVolcanesAjena(); revisarCarniceriaS42(); _avisoLog(); }
 
 function menuReclasAplicar() {
   var ui = SpreadsheetApp.getUi();
@@ -861,6 +863,7 @@ function menuReclasAplicar() {
     return;
   }
   aplicarEntreVolcanesAjena();
+  aplicarCarniceriaS42();
 
   /* 12-sep-2026: este flush NO es decorativo. La primera corrida escribio las 36
      filas correctamente —el Sheet lo confirma— pero el espejo que se genero cinco
@@ -873,7 +876,7 @@ function menuReclasAplicar() {
   ui.alert('Rosanta',
     'Lote aplicado y espejo regenerado.\n\n' +
     'VERIFICA en Extensiones > Apps Script > Ejecuciones que aparezca ' +
-    '"menuReclasAplicar" y en su registro el lote de Entre Volcanes. Si no aparece, no se escribio.',
+    '"menuReclasAplicar" y en su registro los lotes de Entre Volcanes y Carniceria S42. Si no aparece, no se escribio.',
     ui.ButtonSet.OK);
 }
 function _avisoLog() {
