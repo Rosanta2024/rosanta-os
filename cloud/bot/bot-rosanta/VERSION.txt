@@ -1,4 +1,4 @@
-@59 · 2026-10-19T10:31:48-06:00 · e31f1ab
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 59, "el bot nunca da el nombre de Juanma"),
-verificada el 19-oct-2026 bajando la versión 59 aparte (11 de 11 archivos iguales). La hora es la de la publicación; la
+@60 · 2026-10-19T10:46:01-06:00 · 2bf9217
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 60, "frase sin plazo: lo antes posible"),
+verificada el 19-oct-2026 bajando la versión 60 aparte (11 de 11 archivos iguales). La hora es la de la publicación; la
 comparación de la sombra vale para los mensajes desde esa hora.

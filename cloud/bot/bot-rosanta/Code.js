@@ -854,7 +854,7 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
   }
 
   // Lo que se le prometió al cliente (Botones.js): Juanma ve hasta cuándo tiene.
-  var prometido = 'Prometido al cliente: ' + btLimite_() + '\n' +
+  var prometido = 'Plazo sugerido para contestar (al cliente no se le dio hora): ' + btLimite_() + '\n' +
     (callado ? 'El bot NO contesta en este chat hasta que respondas desde la consola.\n' : '');
 
   // Bloque listo para pegar en Presupuestos (solo para eventos)
