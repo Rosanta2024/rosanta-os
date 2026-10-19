@@ -40,6 +40,7 @@ function crearClaudeModelo(clave, gasto) {
   return function (cuerpo, aux) {
     const r = aux.fetchSincrono('https://api.anthropic.com/v1/messages', { method: 'post', headers: aux.headers, payload: JSON.stringify(cuerpo) }, { CLAVE_HIJO: clave });
     let body = r.t;
+    if (r.c !== 200) { gasto.fallas = (gasto.fallas || 0) + 1; gasto.ultimoError = 'HTTP ' + r.c + ' ' + String(r.t).slice(0, 160); }
     try {
       const j = JSON.parse(r.t);
       if (j.usage) {
@@ -83,12 +84,12 @@ function crearServicioBot(deps) {
     const copia = await leerCopia();
     const an = crearAnonimizador();
     let chats = armarChats(copia.conversaciones, copia.leads, { desde: new Date(desde), hasta: new Date(hasta), anonimizador: an });
-    const gasto = { llamadas: 0, entrada: 0, salida: 0 };
+    const gasto = { llamadas: 0, entrada: 0, salida: 0, fallas: 0 };
     let kb = '';
     let claudeModelo = null;
     if (modo === 'modelo') {
       kb = await deps.kb();
-      claudeModelo = crearClaudeModelo(deps.claveModelo, gasto);
+      claudeModelo = deps.crearClaude ? deps.crearClaude(gasto) : crearClaudeModelo(deps.claveModelo, gasto);   // crearClaude: solo pruebas
       // Tope de gasto: solo los primeros maxModelo mensajes del rango van al modelo; el resto queda fuera de la corrida.
       let cupo = o.maxModelo || 40;
       chats = chats.filter((c) => { const n = c.eventos.filter((e) => e.tipo === 'cliente' && e.enRango).length; if (n > cupo) return false; cupo -= n; return true; });
@@ -96,6 +97,8 @@ function crearServicioBot(deps) {
     const t0 = Date.now();
     const resultados = chats.map((c) => reproducirChat(c, { modo, kb, claudeModelo }));
     const resumen = resumir(resultados);
+    // Si el modelo no contesto, el bot responde su mensaje de respaldo: esa corrida no dice nada de las decisiones.
+    if (modo === 'modelo') { resumen.modeloFallas = gasto.fallas; resumen.modeloLlamadas = gasto.llamadas; if (gasto.fallas) resumen.modeloError = gasto.ultimoError; }
     resumen.ms = Date.now() - t0;
     resumen.seguimientos = resultados.reduce((a, r) => ({ real: a.real + r.seguimientos.filter((s) => s.real).length,
       sombra: a.sombra + r.seguimientos.filter((s) => s.sombra).length }), { real: 0, sombra: 0 });
@@ -130,6 +133,8 @@ function crearServicioBot(deps) {
     let m = null;
     if (deps.claveModelo) {
       try { m = await reproducir({ modo: 'modelo', desde, hasta, maxModelo: 40 }); } catch (e) { m = { error: e.message }; }
+      if (m.error) problemas.push('El modo con el modelo no corrio: ' + m.error);
+      else if (m.resumen.modeloFallas) problemas.push('Claude no contesto ' + m.resumen.modeloFallas + ' veces (' + m.resumen.modeloError + '): revisar la clave anthropic-sombra.');
     }
     return { ok: problemas.length === 0, problemas, grabado: g, modelo: m };
   }

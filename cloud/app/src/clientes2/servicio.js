@@ -127,7 +127,7 @@ function crearServicioClientes2(deps) {
       version_bot, resumen, costo_usd FROM bot_corridas ORDER BY id DESC LIMIT 40`);
     return r.rows.map((x) => { const s = x.resumen || {}; return { id: Number(x.id), cuando: x.cuando, modo: x.modo, desde: x.desde, hasta: x.hasta,
       version: x.version_bot, costo: Number(x.costo_usd || 0), chats: s.chats, turnos: s.turnos, iguales: s.iguales, contesto: s.contesto,
-      accion: s.accion, juanma: s.juanma, reservas: s.reservas, errores: s.errores, diferencias: (s.diferencias || []).length }; });
+      accion: s.accion, juanma: s.juanma, reservas: s.reservas, errores: s.errores, diferencias: (s.diferencias || []).length, modeloFallas: s.modeloFallas || 0 }; });
   }
 
   async function botSombraTurnos(corrida) {
