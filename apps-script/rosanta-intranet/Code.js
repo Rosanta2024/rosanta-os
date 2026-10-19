@@ -119,7 +119,7 @@ function doGet(e) {
     tplCosteo.abrirIni = String((e && e.parameter && e.parameter.abrir) || '').slice(0, 80);
     tplCosteo.puedePagos = puedePagos; // la herramienta Pagos arriba
     return tplCosteo.evaluate()
-      .setTitle('Rosanta \u00b7 Recetario y Proveedores')
+      .setTitle('Rosanta \u00b7 Recetario y Proveedores').setFaviconUrl(INTRANET_ICONO_)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
@@ -157,7 +157,7 @@ function doGet(e) {
     // solo para cuentas de la casa, no para invitados con Gmail.
     tplMkt.esDatos = String(usuario.email || '').indexOf('@rosanta.rest') > -1;
     return tplMkt.evaluate()
-      .setTitle('Marketing OS · Rosanta')
+      .setTitle('Marketing OS · Rosanta').setFaviconUrl(INTRANET_ICONO_)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
@@ -187,7 +187,7 @@ function doGet(e) {
       JSON.stringify(diag, null, 2)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
       '</pre></body>'
-    ).setTitle('Diagnóstico Meta');
+    ).setTitle('Diagnóstico Meta').setFaviconUrl(INTRANET_ICONO_);
   }
 
   // Bateria de pruebas de la intranet. Solo direccion: el resultado trae nombres de
@@ -202,7 +202,7 @@ function doGet(e) {
     tplPruebas.grupos = String((e && e.parameter && e.parameter.grupos) || '').toLowerCase().replace(/[^a-z,]/g, '').slice(0, 120);
     tplPruebas.carriles = PRUEBAS_CARRILES_.length;
     return tplPruebas.evaluate()
-      .setTitle('Pruebas \u00b7 Rosanta Intranet')
+      .setTitle('Pruebas \u00b7 Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
 
@@ -343,7 +343,7 @@ function doGet(e) {
     return HtmlService.createHtmlOutput('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
         '<style>body{font-family:Arial,Helvetica,sans-serif;background:' + paletaHex_('--rosanta-crema') + ';color:' + paletaHex_('--texto') + ';padding:2rem;max-width:40rem;margin:auto}h1{font-family:Georgia,serif;color:' + paletaHex_('--rosanta-verde') + '}a{color:' + paletaHex_('--rosanta-verde') + '}</style></head><body>' +
         cuerpo + '<p><a href="' + _htmlEsc_(volverA) + '">Volver al reporte</a></p></body></html>')
-      .setTitle('Rosanta Intranet');
+      .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_);
   }
 
   // Caja: proyeccion del saldo del banco a 90 dias (p94) contra el piso y el objetivo
@@ -360,16 +360,24 @@ function doGet(e) {
   tpl.urlBase = urlBase;
   tpl.authToken = authToken;
   return tpl.evaluate()
-    .setTitle('Rosanta Intranet')
+    .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
+
+/**
+ * Icono de la pestaña (favicon) de todas las paginas de la intranet (19-oct-2026, pedido de Juanma).
+ * Es la "O" de Rosanta (isotipo del Brand Kit) en crema sobre verde bosque, servida por el servidor
+ * de la nube. El icono de la pantalla de inicio del iPhone NO se controla desde aca (la intranet corre
+ * dentro de la pagina de Google): para eso esta la entrada /intranet del servidor de la nube.
+ */
+var INTRANET_ICONO_ = 'https://rosanta-nube-sombra2-512086396641.northamerica-south1.run.app/marca/favicon-32.png';
 
 function render_(nombre, datos) {
   const tpl = HtmlService.createTemplateFromFile(nombre);
   Object.keys(datos || {}).forEach(function (k) { tpl[k] = datos[k]; });
   return tpl.evaluate()
-    .setTitle('Rosanta Intranet')
+    .setTitle('Rosanta Intranet').setFaviconUrl(INTRANET_ICONO_)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
