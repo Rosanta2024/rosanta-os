@@ -62,6 +62,13 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - **Intranet sin publicar:** `NubePagos.js` (cajaMotor_, cierresMotor_, `_cajaSoloConsulta_`, getCajaDestino, nubeGuardarCierre_), cerraduras en las 8 funciones de guardar de Caja y Compras, `CosteoVista.html` monta `/caja` y `/compras` en un marco, `CierresDiarios.js` manda el cierre al servidor con base, `Vigia.js` regenera 07_Caja_Chica cada hora con Caja en base (antes la reescribía abrir la pantalla). El día del paso: `NUBE_CLAVE_TAREAS` en las Propiedades del script (el valor del secreto `clave-tareas`).
 - **Ensayo** (`cloud/herramientas/ensayo-caja.js`, sobre la copia): **37/37**. Combinaciones Pagos en base + Caja en sheets (la intranet escribe con el código real y el servidor importa) y todo en base; gastos de caja chica, conteo, compra en efectivo con su retiro, anular lo propio, lo ajeno negado, mes cerrado solo el dueño, un cierre del día (repetido no se duplica), vuelta atrás de cada interruptor (~9–10 s) y la intranet escribiendo otra vez; en cada paso base = hoja en las 4 pestañas. Guardados 0.12–0.46 s. El de Pagos se repitió después del cambio: 19/19.
 
+## Paso a vivo de Pagos + Caja + cierres (plan acelerado, 19-oct)
+
+- **Guion completo:** `~/My Drive/Rosanta OS/00_Admin/Apps_Script_e_IA/2026-10-19_Guion_Paso_a_Vivo_Pagos_Caja.md`. Fecha propuesta: lunes 26-oct 7:30–9:30. Nada en vivo sin el sí de Juanma.
+- **Compensación de la sombra corta:** la comparación de cada noche suma base = hoja en CAJA_CHICA, RETIROS_SOLICITUDES y CIERRES_DIARIOS (`base-vs-hoja.js`, si existe `filas_vivas`) y, con Caja en vivo, 07_Caja_Chica del maestro = lo que dice la base (días ya pasados). `POST /tareas/conciliar-mes` (`conciliar.js`, migración 006, cuerpo opcional `{mes}`): cuadre por proveedor, pagado, caja, retiros, 07 y cierres del mes; 409 con diferencias. `GET /api/conciliaciones` solo el dueño. Ensayo `ensayo-compensacion.js`: 10/10.
+- **`&nube=ensayo`** en la dirección de la intranet: solo el dueño ve en Pagos, Caja y Compras la pantalla del servidor de ENSAYO, para probar el puente en su Chrome con la intranet publicada. Quitar después del 1-nov.
+- **Orden en producción:** primero migraciones 005 y 006, DESPUÉS publicar el servidor (el refresco importa caja y cierres y necesita `filas_vivas`).
+
 ## Tareas
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.
