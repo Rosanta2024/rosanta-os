@@ -167,6 +167,9 @@ function crearApp(deps) {
     } catch (e) { next(e); }
   });
 
+  // la entrada del telefono (/intranet) y los iconos de Rosanta (/marca): de la sesion de la Fase 2, 19-oct
+  require('./entrada').montarEntrada(app);
+
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);
     res.status(500).json({ error: String(err && err.message || err) });
