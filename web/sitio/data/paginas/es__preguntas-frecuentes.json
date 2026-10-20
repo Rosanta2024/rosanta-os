@@ -1,0 +1,292 @@
+{
+  "ruta": "/es/preguntas-frecuentes",
+  "idioma": "es",
+  "lang": "es",
+  "titulo": "Rosanta | Frequently Asked Questions | Antigua Guatemala",
+  "descripcion": "Everything you want to know before visiting Rosanta in Antigua Guatemala: reservations, seasonal menu, vegetarian options, parking and pets.",
+  "canonical": "https://www.rosanta.rest/es/preguntas-frecuentes",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/preguntas-frecuentes"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/preguntas-frecuentes"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/preguntas-frecuentes"
+    }
+  ],
+  "og": {
+    "og:title": "Preguntas Frecuentes | Rosanta, Antigua Guatemala",
+    "og:description": "Reservas, menú de temporada, opciones vegetarianas, parqueo, mascotas y eventos. Todo lo que quieres saber antes de tu visita a Rosanta.",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest/es/preguntas-frecuentes",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Preguntas Frecuentes | Rosanta, Antigua Guatemala",
+    "twitter:description": "Reservas, menú de temporada, opciones vegetarianas, parqueo, mascotas y eventos. Todo lo que quieres saber antes de tu visita a Rosanta.",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Qué es Rosanta?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Un restaurante de gastrococtelería en Antigua Guatemala: cocina creativa de temporada maridada con coctelería moderna, en medio de un jardín. Cocina con carisma, ingredientes locales y sabores que se recuerdan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Dónde está ubicado Rosanta?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Estás dentro del Parque Santa Rosa, en Antigua Guatemala, rodeado de jardín y naturaleza. Llegas fácil desde el centro de Antigua en pocos minutos."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué tipo de cocina van a encontrar?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cocina de temporada con producto local y fresco, pensada para maridarse con coctelería de autor. El menú cambia según la cosecha del huerto, así que siempre hay algo nuevo para probar."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Necesito reservar?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Te recomendamos reservar para asegurar tu mesa, sobre todo en fines de semana y noches especiales. Puedes hacerlo desde rosanta.rest o por WhatsApp."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Hay opciones vegetarianas o veganas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Además de lo que ves en el menú, siempre se pueden sugerir platos vegetarianos o veganos según la cosecha y el producto fresco del día. Avisa al reservar y te preparamos algo a tu gusto."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Hay opciones sin gluten o para alergias?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, hay opciones libres de gluten, lácteos y frutos secos. Solo avisa al reservar o al llegar para adaptar tu experiencia con cuidado."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Es un buen lugar para ir con niños?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. No hay un menú infantil fijo, pero los platos se pueden adaptar con porciones y sabores más amigables para los más pequeños."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Tienen barra de coctelería?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, y es parte del corazón de la experiencia. Hay coctelería de autor y también se pueden crear cócteles a tu gusto: solo cuéntanos tus sabores o destilados favoritos."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Hay parqueo cerca?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Puedes dejar tu carro en la calle privada dentro del Parque Santa Rosa, justo frente al restaurante. También hay convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Aceptan mascotas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, es un lugar pet friendly. Tu mascota es bienvenida en el jardín y las áreas abiertas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿El jardín es al aire libre? ¿Qué pasa si llueve?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "El jardín es al aire libre, con chimeneas y fogata para los días frescos. No está techado, pero hay áreas interiores acogedoras para seguir disfrutando si llueve."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Es accesible para personas con movilidad reducida?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, hay acceso para personas con movilidad reducida en la mayoría de las áreas. Por ahora no hay baños adaptados, pero el equipo te ayuda a encontrar la mejor solución durante tu visita."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Ofrecen comida para llevar o a domicilio?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La propuesta está pensada para vivirse aquí, rodeado del jardín, así que no hay servicio para llevar ni entregas a domicilio."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Aceptan tarjetas y moneda extranjera?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, se aceptan todas las tarjetas de crédito y débito, y también moneda extranjera con un tipo de cambio establecido por la dirección."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo llevar mi propio vino?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, puedes traer tu vino favorito. Pregunta por el costo de descorche al reservar."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Hacen eventos privados o bodas?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí. Se organizan celebraciones privadas, cumpleaños y bodas; puedes reservar áreas específicas o el espacio completo según tu evento. El jardín es ideal para momentos especiales."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Reciben grupos grandes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, con reserva previa. El espacio se adapta al número de personas para que todos disfruten cómodos en el ambiente que más les guste."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo reservo o me pongo en contacto?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Puedes reservar y escribir desde rosanta.rest o por WhatsApp. Cuéntanos la ocasión y te ayudamos a preparar tu mesa favorita."
+          }
+        }
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVACIONES EVENTOS IDEAS PARA REGALAR PREGUNTAS FRECUENTES Política de Privacidad CONTACT LOCATION More Use tab to navigate through the menu items. © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-mqiapm5g",
+      "fondo": null,
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "componente",
+          "id": "comp-mqr5rgam",
+          "alto": 1797,
+          "pos": {
+            "top": 0,
+            "abajo": 10,
+            "ml": 0,
+            "estirar": true,
+            "area": "1 / 1 / 2 / 2"
+          },
+          "nombre": "faq"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1151 @@
+{
+  "ruta": "/",
+  "idioma": "en",
+  "lang": "en",
+  "titulo": "Rosanta | Farm to Table in Antigua Guatemala",
+  "descripcion": "Rosanta, Farm to Table restaurant in Antigua Guatemala. Honest, seasonal cuisine and gastro-cocktails, from the garden to your table.",
+  "canonical": "https://www.rosanta.rest",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/"
+    }
+  ],
+  "og": {
+    "og:title": "Rosanta | Farm to Table in Antigua Guatemala",
+    "og:description": "Rosanta, Farm to Table restaurant in Antigua Guatemala. Honest, seasonal cuisine and gastro-cocktails, from the garden to your table. ",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Rosanta | Farm to Table in Antigua Guatemala",
+    "twitter:description": "Rosanta, Farm to Table restaurant in Antigua Guatemala. Honest, seasonal cuisine and gastro-cocktails, from the garden to your table. ",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [
+    "A GARDEN THAT GIVES",
+    "THE JOY OF HONEST COOKING",
+    "GARDEN, HARVEST, TABLE, GATHER, LINGER, REMEMBER.",
+    "MENU",
+    "COOKING WITH PURPOSE"
+  ],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "WebSite",
+      "url": "https://www.rosanta.rest/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.rosanta.rest/search?q={search_term}"
+        },
+        "query-input": "required name=search_term"
+      }
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://static.wixstatic.com/media/b75909_045bbfcd01d242eea5dd11b61aaedb76~mv2.png",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "GT",
+        "addressLocality": "Antigua Guatemala",
+        "postalCode": "30001",
+        "streetAddress": "15 1a Calle Oriente"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "14.5606883",
+        "longitude": "-90.7291704"
+      },
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Wednesday",
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Thursday",
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Friday",
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Saturday",
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True"
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "WebSite",
+      "name": "Rosanta",
+      "url": "https://www.rosanta.rest"
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVATIONS EVENTS GIFT IDEAS FAQ Privacy Policy CONTACT LOCATION More Use tab to navigate through the menu items. A GARDEN THAT GIVES AND A GRATEFUL KITCHEN THE JOY OF HONEST COOKING Flavor here begins in the soil and ends at your table: fresh, local, picked the same day. Come for the food, stay for the garden, and turn an ordinary night into one worth remembering. Your table is waiting. Reservations GARDEN, HARVEST, TABLE, GATHER, LINGER, REMEMBER. HONEST COOKING: SEASONAL, LOCAL, INTENTIONAL. It begins in the soil, a few steps from your table. Much of what you'll taste grew in the garden around you: picked at its peak, cooked the same day, guided by whatever the season decided to give. What the garden doesn't grow comes from nearby hands, small producers who move slow, follow the seasons, and care for the same land you're standing on. The bar tells the same story. Herbs cut that morning, fruit at its ripest, spirits chosen with care and mixed for you on the spot. Tell the bartender what you love, and a glass gets built around it. Nothing here is rushed or dressed up. The flavors are honest because the ingredients are: fresh, local, close to home. In every bite there's a little sun, a little rain, a little of the earth it came from. And then there's the garden itself: string lights overhead, the evening settling in slow. A place made for lingering, for long conversations, for the kind of evening that ends far later than you planned. So settle in. Share a plate, raise a glass, let the garden light do the rest. This isn't food to rush through: it's an evening to live, one that leaves you with a memory worth carrying home, and a reason to come back. Menu MENU Every detail you find here has a reason to be. From the fresh, local and seasonal ingredients we use, to the flavors that seek to reconnect you with what is natural. We cook with respect: for the land, for those who grow it, for what grows nearby, and for you. Many of the ingredients you taste come straight from the garden, a living space grown with regenerative practices that care for the soil and fill it with life. The rest comes from local producers who share that way of seeing the world: harvesting without rush, respecting the season, strengthening the community. We cook with principles that matter to us and that represent us. We prefer what is simple and true. Every dish, every cocktail, every corner of this place is meant for you to feel good, to connect with your people, with your surroundings, and with yourself. That is how sustainable gastronomy is done here: honest, creative and conscious. Thank you for being part of this space. Enjoy, celebrate, and make memories worth keeping. COOKING WITH PURPOSE Cooking that is born from the land and served with purpose. FULL MENU PULPO A LA PARRILLA / GRILL OCTOPUS 14° N · 91° W The coordinates of Antigua. The exact point where almost everything that reaches your table grows. Gallery CONTACT INFO ADDRESS CONTACT OPEN HOURS 1a Calle Oriente 15, Antigua Guatemala, Sacatepéquez. (502) 7768 8880 restaurante@rosanta.rest 🍸🌿 From the garden to your table: fresh ingredients picked close to home, changing with every season. Come taste what grows just steps away. 14° N · 91° W · Antigua Guatemala Monday Tuesday 17:00 - 21:00 Hrs Wed - Thu 12:00 - 21:00 Hrs Friday - Saturday 12:00 - 22:00 Hrs Sunday 15:00 - 20:00 Hrs 17:00 - 21:00 Hrs © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [
+    {
+      "medio": "b75909_5266a1c24a004c8a8c8e47b2b42e550f~mv2.jpg",
+      "alt": "portadaweb.jpg"
+    },
+    {
+      "medio": "b75909_ad68a2df2e8842d3bca667cc26ece499~mv2.jpg",
+      "alt": "Rosanta es un Restaurante con Jardín en Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_2a8d36375f5a413cba2daf8374387b1c~mv2.png",
+      "alt": "Grilled octopus, served with paprika potatoes and a smooth pea puree"
+    },
+    {
+      "medio": "b75909_e549fb68cb0243ac9f86aecb49752a31~mv2.jpg",
+      "alt": "Grilled tenderloin with potato gratin and Red Pepper Old Fashioned cocktail at Rosanta farm to table restaurant Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_7133620604c641ccaffe83e1a0431fe2~mv2.jpg",
+      "alt": "Sunset views at Rosanta garden restaurant in Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_aa78dd2d888c4b1f84075d6e2366f365~mv2.jpg",
+      "alt": "Outdoor garden firepit at Rosanta restaurant Antigua Guatemala in a warm and cozy atmosphere"
+    },
+    {
+      "medio": "b75909_ca941d3db6ea47f7929633db70743606~mv2.jpg",
+      "alt": "Mushroom tartar with grilled peach and mezcal cocktail at Rosanta farm to table restaurant Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_f1dad37ede17456285165b186a0367d2~mv2.jpg",
+      "alt": "Warm and romantic dining space at Rosanta gastrococtelería Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_39b4e3990ad54445b712b66ca79d215c~mv2.jpg",
+      "alt": ""
+    },
+    {
+      "medio": "b75909_36cbf41aaeb74416850f8a67d76d8940~mv2.jpg",
+      "alt": "Pork burger with chile adobo and tequila cocktail at Rosanta gastrococtelería Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_ae50e7e6101d46a0988892560702b508~mv2.jpg",
+      "alt": "Slow-baked pork ribs with whiskey cocktail at Rosanta sustainable restaurant Antigua Guatemala"
+    },
+    {
+      "medio": "b75909_0a01f3bdebd54c70b524101062d2e72a~mv2.png",
+      "alt": "Disfruta una bella tarde en uno de los mejores restaurante de Anituga Guatemala"
+    },
+    {
+      "medio": "b75909_fe231207f1274963a21dab5337ea9de4~mv2.jpg",
+      "alt": "Rosanta Rated one of the most up and coming restaurants in Antigua Guatemala."
+    }
+  ],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-msdmi62n",
+      "fondo": "rgb(106,138,120)",
+      "fondoImg": {
+        "medio": "b75909_5266a1c24a004c8a8c8e47b2b42e550f~mv2.jpg",
+        "alt": "portadaweb.jpg",
+        "w": 87,
+        "h": 69,
+        "modo": "fill"
+      },
+      "alto": null,
+      "hijos": [
+        {
+          "t": "rico",
+          "id": "comp-mt07akbq",
+          "html": "<div><h1 class=\"font_0\" style=\"font-size:150px\"><span style=\"font-size:150px\"><span style=\"color:rgb(255,255,255)\">A GARDEN THAT GIVES</span></span></h1></div>",
+          "pos": {
+            "w": 1091,
+            "top": 104,
+            "base": 980,
+            "x": -55,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-mt07bza3",
+          "html": "<div><p class=\"font_7\" style=\"font-size:60px\"><span style=\"font-size:60px\"><span style=\"color:rgb(255,255,255)\">AND A GRATEFUL KITCHEN</span></span></p></div>",
+          "pos": {
+            "w": 880,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 110,
+            "area": "2 / 1 / 3 / 2"
+          }
+        }
+      ]
+    },
+    {
+      "t": "seccion",
+      "id": "comp-lnbyxau0",
+      "fondo": "rgb(242, 238, 235)",
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "rico",
+          "id": "comp-mszgr7vv",
+          "html": "<div><h1 class=\"font_0\" style=\"font-size:70px\"><span style=\"font-size:70px\">THE JOY OF HONEST COOKING</span></h1></div>",
+          "pos": {
+            "w": 706,
+            "top": 45,
+            "abajo": 12,
+            "base": 980,
+            "x": 157,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-mszgsmi2",
+          "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">Flavor here begins in the soil and ends at your table: fresh, local, picked the same day. Come for the food, stay for the garden, and turn an ordinary night into one worth remembering. Your table is waiting.</span></p></div>",
+          "pos": {
+            "w": 651,
+            "top": 0,
+            "abajo": 32,
+            "base": 980,
+            "x": 171,
+            "area": "2 / 1 / 3 / 2"
+          }
+        },
+        {
+          "t": "boton",
+          "id": "comp-mszgtzji",
+          "texto": "Reservations",
+          "href": "/",
+          "ancla": "anchors-lnbyxavd1",
+          "nueva": false,
+          "pos": {
+            "w": 193,
+            "top": 0,
+            "abajo": 31,
+            "base": 980,
+            "x": 413,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "componente",
+          "id": "comp-mrz9aoj0",
+          "alto": 562,
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "abajo": 14,
+            "base": 980,
+            "x": 6,
+            "area": "4 / 1 / 5 / 2"
+          },
+          "nombre": "resenas-google"
+        }
+      ]
+    },
+    {
+      "t": "seccion",
+      "id": "comp-lgv2q4wf2",
+      "fondo": "rgb(242, 238, 235)",
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "columnas",
+          "id": "comp-kybj3u7h",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-kybj3u84",
+              "fondo": "rgb(92,97,70)",
+              "fondoImg": {
+                "medio": "b75909_ad68a2df2e8842d3bca667cc26ece499~mv2.jpg",
+                "alt": "Rosanta es un Restaurante con Jardín en Antigua Guatemala",
+                "w": 110,
+                "h": 165,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "rico",
+                  "id": "comp-mszgypvv",
+                  "html": "<div><h1 class=\"font_0\" style=\"font-size:70px\"><span style=\"font-size:70px\">GARDEN,<br>\nHARVEST,<br>\nTABLE,<br>\nGATHER,<br>\nLINGER,<br>\nREMEMBER.</span></h1></div>",
+                  "pos": {
+                    "w": 600,
+                    "top": 25,
+                    "abajo": 10,
+                    "base": 440,
+                    "x": 3,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 440
+              }
+            },
+            {
+              "t": "columna",
+              "id": "comp-kybj3z6w",
+              "fondo": null,
+              "fondoImg": null,
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "rico",
+                  "id": "comp-mszh0tv1",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:45px\"><span style=\"font-size:45px\"><span style=\"color:rgb(78,109,91)\"><span style=\"font-weight:normal\">HONEST COOKING: </span></span></span></p>\n\n<p class=\"font_7\" style=\"font-size:45px\"><span style=\"font-size:45px\"><span style=\"color:rgb(78,109,91)\"><span style=\"font-weight:normal\">SEASONAL, LOCAL, INTENTIONAL.</span></span></span></p></div>",
+                  "pos": {
+                    "w": 591,
+                    "top": 0,
+                    "abajo": 8,
+                    "base": 440,
+                    "x": -130,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszh26e7",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"font-weight:bold\"><span style=\"color:rgb(78,109,91)\">It begins in the soil, a few steps from your table.</span></span></span></p></div>",
+                  "pos": {
+                    "w": 474,
+                    "top": 0,
+                    "abajo": 26,
+                    "base": 440,
+                    "x": -81,
+                    "area": "2 / 1 / 3 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszh3qyb",
+                  "html": "<div><p class=\"font_8\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">Much of what you'll taste grew in the garden around you: picked at its peak, cooked the same day, guided by whatever the season decided to give. What the garden doesn't grow comes from nearby hands, small producers who move slow, follow the seasons, and care for the same land you're standing on.</span></span></p>\n\n<p class=\"font_8\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">The bar tells the same story. Herbs cut that morning, fruit at its ripest, spirits chosen with care and mixed for you on the spot. Tell the bartender what you love, and a glass gets built around it.</span></span></p>\n\n<p class=\"font_8\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">Nothing here is rushed or dressed up. The flavors are honest because the ingredients are: fresh, local, close to home. In every bite there's a little sun, a little rain, a little of the earth it came from.</span></span></p>\n\n<p class=\"font_8\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">And then there's the garden itself: string lights overhead, the evening settling in slow. A place made for lingering, for long conversations, for the kind of evening that ends far later than you planned.</span></span></p>\n\n<p class=\"font_8\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(78,109,91)\">So settle in. Share a plate, raise a glass, let the garden light do the rest. This isn't food to rush through: it's an evening to live, one that leaves you with a memory worth carrying home, and a reason to come back.</span></span></p></div>",
+                  "pos": {
+                    "w": 535,
+                    "top": 0,
+                    "abajo": 10,
+                    "base": 440,
+                    "x": -95,
+                    "area": "3 / 1 / 4 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 440
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 62,
+            "abajo": 10,
+            "base": 980,
+            "x": 0,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "ancla",
+          "id": "comp-mszglxqs",
+          "etiqueta": "Menu",
+          "pos": {
+            "top": 180,
+            "abajo": 10,
+            "ml": 0,
+            "estirar": true,
+            "area": "2 / 1 / 3 / 2"
+          }
+        },
+        {
+          "t": "columnas",
+          "id": "comp-kybjx46n",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-kybjx47j",
+              "fondo": "rgb(78, 109, 90)",
+              "fondoImg": null,
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "svg",
+                  "id": "comp-lhi1yr33",
+                  "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"2.08 0 1854.44 1047.17\" viewBox=\"0 0 1856.52 1048.17\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"ugc\" role=\"presentation\" aria-hidden=\"true\">\n    <g>\n        <path d=\"m1622.09 860.28-19.18-547.43s203.13 147.32 114.77 249.08c-88.36 101.76 42.83 195.84-95.59 298.35Z\" fill=\"#57a77f\"></path>\n        <path d=\"m1535.53 662.62-547.74 4.61s152.67-199.14 252.04-108.1c99.37 91.04 196.91-37.61 295.7 103.49Z\" fill=\"#57a77f\"></path>\n        <path d=\"M1856.52 520.66s-142.1-2.76-141.89 200.48\" fill=\"#57a77f\"></path>\n        <path d=\"M1609.26 99.8s-249.66 198.68-306.53 493.57\" stroke=\"#57a77f\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n        <path d=\"M1082.11 325.04c14.41 71.39-265.17-194.21-166.2-233.42C1014.88 52.4 956.92 0 956.92 0s65.16 58.99 148.61 22.01c160.49-71.11 145.99 81.76 115.86 127.51-13.09 19.87-179.66-24.55-139.28 175.51Z\" fill=\"#aeaae2\"></path>\n        <path d=\"M1572.81 1044.21s67.89-288.27-45.87-440.56C1413.18 451.36 1069.67 335 1069.67 335\" stroke=\"#aeaae2\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n        <path d=\"M1571.23 1047.17 2.08 1044.21s261.85-326.98 718.93-153.22c356.29 135.44 610.28-96.89 850.22 156.18Z\" stroke=\"#57a77f\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n    </g>\n</svg>",
+                  "href": null,
+                  "etiqueta": null,
+                  "pos": {
+                    "w": 1636,
+                    "top": 33,
+                    "abajo": 10,
+                    "ml": 0,
+                    "x": 234,
+                    "area": "1 / 1 / 6 / 2"
+                  }
+                },
+                {
+                  "t": "imagen",
+                  "id": "comp-lhi1vcac",
+                  "medio": "b75909_2a8d36375f5a413cba2daf8374387b1c~mv2.png",
+                  "alt": "Grilled octopus, served with paprika potatoes and a smooth pea puree",
+                  "w": 673,
+                  "h": 981,
+                  "modo": "fill",
+                  "href": null,
+                  "pos": {
+                    "w": 673,
+                    "top": 5,
+                    "abajo": 45,
+                    "ml": 0,
+                    "x": 625,
+                    "area": "1 / 1 / 7 / 2"
+                  }
+                },
+                {
+                  "t": "svg",
+                  "id": "comp-lhi5zux6",
+                  "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"0 0 161.08 157.89\" viewBox=\"0 0 161.08 157.89\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"color\" role=\"presentation\" aria-hidden=\"true\"><defs><style>#comp-lhi5zux6 svg [data-color=&quot;1&quot;] {fill: #F2EEEB;}</style></defs>\n    <g>\n        <path d=\"M161.08 89.31 94.1 84.53l50.24 43.06-15.15 15.15-41.46-47.85 4.78 63H69.39l3.98-63-41.46 47.85-15.15-15.15L67 84.53 0 89.31V68.58l66.98 4.78L16.75 30.3 31.9 15.15l41.46 47.84L69.38 0H92.5l-4.78 62.99 41.46-47.84 15.15 15.15-50.24 43.06 66.98-4.78v20.73Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n    </g>\n</svg>",
+                  "href": null,
+                  "etiqueta": null,
+                  "pos": {
+                    "w": 132,
+                    "top": 60,
+                    "abajo": 10,
+                    "ml": 0,
+                    "x": 609,
+                    "area": "4 / 1 / 5 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-msvvq3g7",
+                  "html": "<div><h1 class=\"font_0\" style=\"font-size:100px\"><span style=\"color:rgb(255,255,255)\">MENU</span></h1></div>",
+                  "pos": {
+                    "w": 600,
+                    "top": 46,
+                    "abajo": 8,
+                    "ml": 0,
+                    "x": 146,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-msvvt1t1",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Every detail you find here has a reason to be. From the fresh, local and seasonal ingredients we use, to the flavors that seek to reconnect you with what is natural. We cook with respect: for the land, for those who grow it, for what grows nearby, and for you.</span></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Many of the ingredients you taste come straight from the garden, a living space grown with regenerative practices that care for the soil and fill it with life. The rest comes from local producers who share that way of seeing the world: harvesting without rush, respecting the season, strengthening the community.</span></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">We cook with principles that matter to us and that represent us. We prefer what is simple and true. Every dish, every cocktail, every corner of this place is meant for you to feel good, to connect with your people, with your surroundings, and with yourself.</span></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"></span></p>\n\n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">That is how sustainable gastronomy is done here: honest, creative and conscious. Thank you for being part of this space. Enjoy, celebrate, and make memories worth keeping.</span></span></p></div>",
+                  "pos": {
+                    "w": 445,
+                    "top": 0,
+                    "abajo": 58,
+                    "ml": 0,
+                    "x": 140,
+                    "area": "4 / 1 / 5 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-msvvw9tf",
+                  "html": "<div><h1 class=\"font_0\" style=\"font-size:25px\"><span style=\"font-size:25px\"><span style=\"color:rgb(255,255,255)\"><span style=\"font-weight:normal\">COOKING WITH PURPOSE</span></span></span></h1></div>",
+                  "pos": {
+                    "w": 600,
+                    "top": 0,
+                    "abajo": 18,
+                    "ml": 0,
+                    "x": 163,
+                    "area": "2 / 1 / 3 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-msvx54vc",
+                  "html": "<div><h2 class=\"font_2\" style=\"font-size:35px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\"><span style=\"font-weight:normal\">Cooking that is born from the land and served with purpose.</span></span></span></h2></div>",
+                  "pos": {
+                    "w": 577,
+                    "top": 0,
+                    "ml": 0,
+                    "x": 140,
+                    "area": "3 / 1 / 4 / 2"
+                  }
+                },
+                {
+                  "t": "boton",
+                  "id": "comp-lhi26c4o",
+                  "texto": "FULL MENU",
+                  "href": "/full-menu",
+                  "ancla": null,
+                  "nueva": false,
+                  "pos": {
+                    "w": 199,
+                    "top": 0,
+                    "abajo": 7,
+                    "ml": 0,
+                    "x": 359,
+                    "area": "7 / 1 / 8 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-lhm7wu7n",
+                  "html": "<div><h6 class=\"font_6\" style=\"font-size:16px;line-height:1.3em\"><span style=\"letter-spacing:0.25em\"><span style=\"color:#FFFFFF\"><span style=\"font-size:16px\"><span style=\"font-weight:normal\">PULPO A LA PARRILLA /<br>\nGRILL OCTOPUS</span></span></span></span></h6></div>",
+                  "pos": {
+                    "w": 310,
+                    "top": 8,
+                    "abajo": 7,
+                    "ml": 0,
+                    "x": 830,
+                    "area": "7 / 1 / 8 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-msvygwmb",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">14° N · 91° W<br>\nThe coordinates of Antigua. The exact point where almost everything that reaches your table grows.</span></span></p></div>",
+                  "pos": {
+                    "w": 484,
+                    "top": 0,
+                    "abajo": 45,
+                    "ml": 0,
+                    "x": 178,
+                    "area": "8 / 1 / 9 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 980
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "base": 980,
+            "x": 0,
+            "area": "2 / 1 / 3 / 2"
+          }
+        },
+        {
+          "t": "ancla",
+          "id": "comp-mstjttj6",
+          "etiqueta": "Gallery",
+          "pos": {
+            "top": 493,
+            "abajo": 10,
+            "ml": 0,
+            "estirar": true,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "galeria",
+          "id": "comp-lhi748dz",
+          "imagenes": [
+            {
+              "medio": "b75909_e549fb68cb0243ac9f86aecb49752a31~mv2.jpg",
+              "alt": "Grilled tenderloin with potato gratin and Red Pepper Old Fashioned cocktail at Rosanta farm to table restaurant Antigua Guatemala",
+              "w": 960,
+              "h": 1439,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_7133620604c641ccaffe83e1a0431fe2~mv2.jpg",
+              "alt": "Sunset views at Rosanta garden restaurant in Antigua Guatemala",
+              "w": 960,
+              "h": 1440,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_aa78dd2d888c4b1f84075d6e2366f365~mv2.jpg",
+              "alt": "Outdoor garden firepit at Rosanta restaurant Antigua Guatemala in a warm and cozy atmosphere",
+              "w": 1440,
+              "h": 1920,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_ca941d3db6ea47f7929633db70743606~mv2.jpg",
+              "alt": "Mushroom tartar with grilled peach and mezcal cocktail at Rosanta farm to table restaurant Antigua Guatemala",
+              "w": 1440,
+              "h": 1893,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_f1dad37ede17456285165b186a0367d2~mv2.jpg",
+              "alt": "Warm and romantic dining space at Rosanta gastrococtelería Antigua Guatemala",
+              "w": 960,
+              "h": 1440,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_39b4e3990ad54445b712b66ca79d215c~mv2.jpg",
+              "alt": "",
+              "w": 960,
+              "h": 1440,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_36cbf41aaeb74416850f8a67d76d8940~mv2.jpg",
+              "alt": "Pork burger with chile adobo and tequila cocktail at Rosanta gastrococtelería Antigua Guatemala",
+              "w": 960,
+              "h": 1383,
+              "modo": "fit"
+            },
+            {
+              "medio": "b75909_ae50e7e6101d46a0988892560702b508~mv2.jpg",
+              "alt": "Slow-baked pork ribs with whiskey cocktail at Rosanta sustainable restaurant Antigua Guatemala",
+              "w": 960,
+              "h": 1440,
+              "modo": "fit"
+            }
+          ],
+          "alto": 1380,
+          "pos": {
+            "top": 0,
+            "ml": 0,
+            "estirar": true,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "columnas",
+          "id": "comp-lhi89k75",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-lhi89ll9",
+              "fondo": "rgb(106,138,120)",
+              "fondoImg": null,
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "svg",
+                  "id": "comp-lhjbe6ui",
+                  "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"142.245 288.18 793.605 573.82\" aria-label=\"Where the garden meets your table in every bite\" viewBox=\"0 0 1080 1080\" height=\"1080\" width=\"1080\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"ugc\" role=\"presentation\" aria-hidden=\"true\">\n    <g>\n        <path d=\"M539.225 288.2c.465.078 1.434-.271 2.325.775s-.775-3.41 3.1 5.425 14.144 34.565 20.15 47.663 12.013 23.947 15.888 31c3.875 7.052 5.037 8.02 7.362 11.237 2.325 3.216 4.379 5.735 6.588 8.137 2.208 2.403 4.34 4.457 6.587 6.2s4.96 3.294 6.975 4.263 3.371 1.279 5.037 1.55c1.667.271 3.488.194 5.038 0s2.79-.504 4.263-1.162c1.472-.66 1.666-.388 4.65-2.713 2.983-2.325 8.447-8.021 13.174-11.238s11.044-6.2 15.113-8.137 5.619-2.325 9.3-3.488 7.169-2.402 12.788-3.487c5.618-1.085 13.174-2.596 20.924-3.1s17.826-.581 25.576 0 16.003 2.441 20.925 3.488c4.92 1.046 5.54 1.55 8.524 2.712s6.86 2.984 9.3 4.262c2.442 1.28 3.566 2.015 5.426 3.488s4.068 3.216 5.812 5.425 3.604 5.309 4.65 7.75 1.472 4.185 1.55 6.975c.077 2.79-.271 6.394-1.163 9.688-.89 3.293-3.022 7.556-4.262 10.075s-1.279 2.596-3.1 5.037-2.596 4.146-7.75 9.688c-5.154 5.54-16.663 16.584-23.25 23.637s-12.206 13.369-16.275 18.6-6.665 9.688-8.138 12.788-1.162 4.262-.774 5.812 1.472 2.635 3.1 3.488c1.627.852 3.41 1.278 6.587 1.55 3.178.27 6.471.27 12.4 0 5.929-.272 17.128-1.357 23.25-1.55s10.462.077 13.563.387c3.1.31 3.37.853 5.037 1.55s2.906.891 5.038 2.712c2.13 1.822 5.812 5.503 7.75 8.138s2.79 4.727 3.875 7.75 2.208 6.084 2.712 10.462c.504 4.38.465 12.284.388 15.888s-.31 3.488-.776 5.813c-.465 2.324-.774 4.65-1.937 8.137-1.162 3.487-3.1 8.835-5.037 12.788-1.938 3.952-4.728 8.06-6.588 10.85s-2.712 3.68-4.65 5.812c-1.937 2.131-4.572 4.844-6.975 6.975a81 81 0 0 1-7.362 5.813c-2.597 1.82-4.767 3.293-8.138 5.037s-8.06 3.952-12.012 5.425-7.48 2.519-11.625 3.487c-4.147.97-9.417 1.822-13.175 2.326-3.76.503-4.534.697-9.3.774s-13.95 0-19.375-.387-8.797-1.046-13.176-1.937c-4.378-.892-9.416-2.325-13.174-3.488-3.76-1.163-5.813-1.937-9.3-3.488s-8.06-3.797-11.625-5.812c-3.566-2.015-6.588-3.991-9.688-6.2s-4.534-2.829-8.913-6.975c-4.378-4.146-12.128-11.509-17.437-17.825s-10.579-14.415-14.337-20.15c-3.76-5.735-5.736-9.804-8.138-14.337-2.403-4.534-3.681-6.975-6.2-12.788-2.519-5.812-6.471-15.5-8.912-22.087-2.442-6.588-3.953-11.315-5.813-17.438s-3.371-10.928-5.425-19.375-4.727-19.104-6.975-31.387-4.766-27.784-6.587-42.238c-1.822-14.454-3.178-29.566-4.263-44.562-1.085-14.997-1.821-37.976-2.325-45.338s-.504-3.294-.775 1.162c-.271 4.457-.31 16.47-.775 25.575-.465 9.107-.891 17.515-1.937 29.063s-2.635 27.9-4.263 40.3-3.178 22.359-5.425 34.1-5.309 25.459-8.138 36.425-6.47 21.971-8.912 29.45c-2.441 7.479-3.681 10.269-5.812 15.5s-3.604 9.223-6.976 15.888c-3.37 6.664-8.447 16.585-13.175 24.025-4.727 7.44-10.462 14.918-15.112 20.537s-9.765 10.191-12.787 13.175-1.434 1.821-5.425 4.65c-3.992 2.829-14.028 9.61-18.6 12.4s-5.038 2.712-8.913 4.262-9.494 3.682-14.337 5.038c-4.844 1.356-10.27 2.403-14.725 3.1-4.457.697-7.673.969-12.013 1.163-4.34.193-9.184.27-13.95 0-4.766-.272-10.269-.853-14.725-1.55s-8.447-1.744-12.013-2.713c-3.564-.969-6.316-1.937-9.3-3.1-2.983-1.162-5.502-2.247-8.524-3.875-3.023-1.627-6.86-3.875-9.688-5.812s-4.65-3.294-7.363-5.813-6.47-6.394-8.912-9.3c-2.441-2.906-3.952-5.037-5.812-8.138s-3.953-7.052-5.425-10.462c-1.473-3.41-2.597-6.859-3.488-10.075s-1.55-5.115-1.937-9.3c-.388-4.185-.465-12.322-.388-15.887s.271-3.178.775-5.425c.504-2.248 1.279-5.503 2.325-8.138s2.829-5.929 3.875-7.75.852-1.628 2.325-3.1 3.991-4.262 6.587-5.812c2.597-1.55 5.154-2.83 8.913-3.488 3.759-.659 7.44-.581 13.563-.387 6.122.193 17.243 1.278 23.25 1.55 6.006.27 9.493.31 12.787 0s5.425-1.086 6.975-1.938 2.054-1.627 2.325-3.1c.271-1.472-.116-3.875-.775-5.812s-1.744-3.682-3.1-5.813-1.55-2.79-5.037-6.975-9.378-11.238-15.888-18.212-18.212-18.29-23.25-23.638c-5.037-5.347-5.115-6.006-6.975-8.525s-2.829-3.797-4.262-6.587c-1.434-2.79-3.372-7.286-4.263-10.075-.891-2.79-1.162-3.992-1.162-6.588s.31-6.2 1.162-8.912c.853-2.713 2.441-5.31 3.875-7.363s2.596-3.294 4.65-5.037c2.054-1.744 4.921-3.798 7.75-5.425 2.829-1.628 6.316-3.1 9.3-4.263s3.604-1.666 8.525-2.712 13.175-2.907 20.925-3.488 17.825-.504 25.575 0 14.919 1.86 20.925 3.1 10.966 2.906 15.113 4.262c4.146 1.357 6.393 2.325 9.687 3.875s7.285 3.76 10.075 5.426 3.991 2.518 6.588 4.65c2.596 2.13 6.78 6.393 8.912 8.137 2.131 1.744 2.402 1.666 3.875 2.325s3.371 1.279 5.037 1.55c1.667.271 3.488.194 5.038 0s2.248-.194 4.263-1.162c2.015-.97 5.347-2.83 7.75-4.65 2.402-1.822 4.068-3.372 6.587-6.2 2.519-2.83 6.006-7.285 8.525-10.85s3.371-4.573 6.588-10.463 7.246-12.594 12.787-24.8 16.469-39.06 20.538-48.437c4.068-9.378 2.983-6.2 3.875-7.75.89-1.55 1.24-1.24 1.55-1.55s-.078-.466.387-.388\" fill=\"#F0EDE6\"></path>\n        <text letter-spacing=\"7.92\" font-size=\"18\" font-family=\"Lato,&#x27;Helvetica Neue&#x27;,Helvetica,Arial,sans-serif\" fill=\"#F0EDE6\" text-anchor=\"middle\" y=\"700\" x=\"543.96\">WHERE THE GARDEN</text>\n        <path d=\"m193.45 730 18.68 76.68q.58 2.43 1.91 3.42 1.33.98 1.45 1.1h-9.4v-.81h2.09l-17.51-71.46q-.47 6.15-2.32 12.76-1.86 6.61-4.41 12.99t-5.34 11.95q-.93 1.86-1.85 4.64l6.14 25.41q.35 1.39 1.28 2.66.93 1.28 2.2 1.86h-9.51v-.81h2.21l-17.64-71.46q-.81 9.28-4.29 19.32-3.48 10.03-7.65 18.38-2.09 4.06-3.25 9.8-1.16 5.75-.18 12.13.99 6.38 5.51 12.64h-4.75q-3.48-4.76-4.24-9.63-.75-4.87.18-9.45t2.72-8.64q1.8-4.06 3.31-7.2 2.9-5.8 5.57-12.64t4.46-13.86q1.8-7.02 2.03-13.52l-1.62-6.26h5.1l11.95 49.53q4.99-10.32 9.11-20.99 4.12-10.68 4.58-22.28l-1.51-6.26zm53.82.81q-4.75 0-8.93 4-4.17 4.01-7.02 10.85-2.84 6.84-4 15.66h4.53q7.54 0 12.58-.93 5.05-.93 5.63-1.04v4.87q-.58-.23-5.63-1.16-5.04-.93-12.58-.93h-4.53q-.23 2.09-.35 4.18-.11 2.09-.11 4.29 0 8.24 1.56 15.43 1.57 7.19 4.41 12.7t6.56 8.58q3.71 3.08 7.88 3.08 3.6 0 6.85-2.26 3.25-2.27 5.8-6.21v3.83q-2.79 2.55-5.98 4t-6.67 1.45q-5.22 0-9.8-3.13t-8.06-8.76-5.45-12.99q-1.97-7.37-1.97-15.72t1.97-15.72q1.97-7.36 5.45-12.99t8.06-8.76 9.8-3.13q3.48 0 6.67 1.39t5.98 4.06v3.83q-2.55-4.06-5.8-6.26-3.25-2.21-6.85-2.21m46.17 0q-4.75 0-8.93 4-4.18 4.01-7.02 10.85t-4 15.66h4.52q7.54 0 12.59-.93t5.63-1.04v4.87q-.58-.23-5.63-1.16t-12.59-.93h-4.52q-.23 2.09-.35 4.18-.11 2.09-.11 4.29 0 8.24 1.56 15.43 1.57 7.19 4.41 12.7t6.55 8.58q3.72 3.08 7.89 3.08 3.6 0 6.85-2.26 3.24-2.27 5.8-6.21v3.83q-2.79 2.55-5.98 4t-6.67 1.45q-5.22 0-9.8-3.13t-8.06-8.76-5.45-12.99q-1.98-7.37-1.98-15.72t1.98-15.72q1.97-7.36 5.45-12.99t8.06-8.76 9.8-3.13q3.48 0 6.67 1.39t5.98 4.06v3.83q-2.56-4.06-5.8-6.26-3.25-2.21-6.85-2.21m20.88 3.95V730h49.53v4.87q-.23-1.27-1.1-2.67-.87-1.39-2.49-1.39h-17.4q-.47.47-.93 1.39-.46.93-.46 2.32v72.16q0 2.43 1.1 3.42 1.1.98 1.22 1.1h-9.4v-.81h2.32v-75.87q0-1.39-.46-2.32-.47-.92-.93-1.39H317.8q-1.51 0-2.38 1.34-.87 1.33-1.1 2.61m98.14 5.68-3.83 2.67q-2.2-4.76-6.73-8.06-4.52-3.31-9.97-3.66-5.69-.58-10.33 2.09-2.55 1.39-4.35 3.54-1.8 2.14-2.38 4.81t.18 5.28q.75 2.61 2.26 4.7 1.62 2.2 3.65 3.94t4.24 3.37q2.32 1.5 4.64 3.01l4.64 3.02q5.1 3.36 9.34 7.07 4.23 3.72 6.9 9.52 1.27 2.66 1.91 5.62t.29 5.98q-.46 5.91-4.7 10.38-4.23 4.46-9.68 6.32-2.67.81-5.57 1.04-2.9.24-5.8-.34-6.5-1.28-10.73-5.4t-4.47-10.96q-.11-6.03 2.21-11.83l4.29 1.97q-1.16 2.2-1.97 4.76-.81 2.55-.93 5.1t.64 4.99q.75 2.43 2.38 4.41 1.62 1.97 4 3.24 2.38 1.28 4.93 1.98 5.45 1.62 10.79.23 5.33-1.63 8.93-5.92 1.85-2.2 2.84-4.81t.75-5.16q-.11-4.3-2.37-8.18-2.27-3.89-5.51-7.25-3.25-3.37-6.62-5.69l-4.52-3.13q-4.52-3.36-9.11-7.25-4.58-3.88-7.25-8.87-1.5-2.55-2.03-5.51-.52-2.96.29-5.86 1.16-3.94 4.12-6.5 2.96-2.55 6.85-3.82 3.88-1.28 7.59-1.28 5.92 0 11.2 3.02 5.28 3.01 8.99 7.42m74.7-9.63V730h5.45q-.23.12-1.74 1.04-1.5.93-2.43 3.25l-15.2 36.31v36.08q0 2.43 1.1 3.42 1.11.98 1.22 1.1h-9.51v-.81h2.32V770.6l-13.57-36.08q-.47-1.39-1.57-2.66-1.1-1.28-2.49-1.86h9.51v.81h-2.09l14.62 38.75 16.35-38.75zm37.12-.81q5.22 0 9.86 3.13t8.12 8.76 5.45 12.99q1.98 7.37 1.98 15.72t-1.98 15.72q-1.97 7.36-5.45 12.99t-8.12 8.76-9.86 3.13-9.8-3.13-8.06-8.76-5.45-12.99q-1.98-7.37-1.98-15.72t1.98-15.72q1.97-7.36 5.45-12.99t8.06-8.76 9.8-3.13m0 80.39q4.29 0 8.01-3.08 3.71-3.07 6.55-8.58t4.41-12.7q1.56-7.19 1.56-15.43t-1.56-15.43q-1.57-7.19-4.41-12.7t-6.55-8.58q-3.72-3.08-8.01-3.08-4.17 0-7.89 3.08-3.71 3.07-6.55 8.58t-4.41 12.7q-1.56 7.19-1.56 15.43t1.56 15.43q1.57 7.19 4.41 12.7t6.55 8.58q3.72 3.08 7.89 3.08m73.78-79.58V730h5.33q-.11.12-1.16 1.04-1.04.93-1.04 3.25v59.39q0 5.11-3.13 9.11t-7.89 6.21q-4.76 2.2-9.51 2.2-4.64 0-9.4-2.26-4.75-2.26-7.94-6.27-3.19-4-3.19-8.99v-59.16q0-2.43-1.05-3.42-1.04-.98-1.27-1.1h9.51v.81H565v62.64q0 6.5 2.61 10.21t6.26 5.22q3.66 1.51 6.79 1.51 5.45 0 9.92-2.38 4.46-2.38 7.13-6.21 2.67-3.82 2.67-8.12v-62.87zm53.47 80.39h-9.74v-.81h2.44l-13.58-41.53q-3.94 3.48-7.25 8.18-3.3 4.7-4.58 9.8v19.84q0 2.43 1.1 3.42 1.11.98 1.22 1.1h-9.51v-.81h2.32v-75.87q0-2.43-1.04-3.42-1.05-.98-1.28-1.1h9.05q3.36 0 7.6.52 4.23.52 8.23 1.92 4 1.39 6.85 4 2.84 2.61 3.42 6.9.58 3.02-.06 6.21t-2.26 5.74q-2.21 3.48-5.34 6.32t-6.26 5.39l14.96 39.68q.93 2.32 2.26 3.36 1.34 1.04 1.45 1.16m-32.71-80.39v53.25q1.86-5.46 4.76-9.52t6.09-7.54 6.03-6.84 4.7-7.19q2.09-4.29 1.51-8.82-.47-3.83-2.85-6.38-2.37-2.55-5.8-4.12-3.42-1.56-7.13-2.2t-6.96-.64zm72.27 3.95V730h49.53v4.87q-.23-1.27-1.1-2.67-.87-1.39-2.49-1.39h-17.4q-.47.47-.93 1.39-.47.93-.47 2.32v72.16q0 2.43 1.11 3.42 1.1.98 1.21 1.1h-9.39v-.81h2.32v-75.87q0-1.39-.47-2.32-.46-.92-.92-1.39h-17.52q-1.51 0-2.38 1.34-.87 1.33-1.1 2.61m77.95-4.76 18.56 76.68q.35 1.39 1.28 2.66.93 1.28 2.2 1.86h-9.63v-.81h2.32l-4.29-17.29q-1.85-5.33-5.22-9.16-3.36-3.83-7.77-5.57-3.6-1.39-7.19-1.04-3.6.35-6.38 2.32-1.63 4.06-2.32 9.34-.7 5.27.52 10.96 1.22 5.68 5.16 11.25h-4.75q-3.48-4.76-4.24-9.63-.75-4.87.18-9.45.92-4.58 2.72-8.64t3.31-7.2q2.9-5.8 5.57-12.64 2.66-6.84 4.46-13.86t2.03-13.52l-1.62-6.26zm-2.2 47.68q3.71 1.39 6.61 4.17 2.9 2.79 4.87 6.61l-12.18-49.53q-.46 6.15-2.49 13.23-2.03 7.07-4.76 13.86-2.72 6.78-5.51 12.35 2.9-1.62 6.44-1.85 3.54-.24 7.02 1.16m80.5 6.26q0 4.87-1.68 9.74-1.68 4.88-5.16 8.82t-8.64 6.32q-5.17 2.38-12.13 2.38h-22.27v-.81h2.32v-75.87q0-2.43-1.04-3.42-1.05-.98-1.28-1.1h9.05q3.36 0 7.6.52 4.23.52 8.23 1.92 4.01 1.39 6.85 4t3.42 6.9q.58 3.02-.06 6.21t-2.26 5.74q-.46.58-.87 1.22-.41.63-.87 1.21 5.45 1.63 9.69 5.46 4.23 3.82 6.67 9.16 2.43 5.34 2.43 11.6m-42.69-53.13v53.25q1.86-5.22 4.7-9.34t6.09-7.66 6.09-6.9 4.7-7.19q2.09-4.06 1.51-8.82-.47-3.94-2.9-6.49-2.44-2.56-5.86-4.06-3.42-1.51-7.19-2.15t-7.14-.64m1.4 79.58h4.29q7.77 0 12.76-1.22t7.94-3.07q2.96-1.86 4.7-3.72 3.13-3.71 4.93-8.41 1.8-4.69 1.8-10.03 0-5.57-1.28-10.61-1.27-5.05-4.46-8.99-3.19-3.95-8.76-6.04-1.16 1.51-2.55 2.79l-2.79 2.55q-1.97 1.86-4.06 3.48-2.08 1.62-4.06 3.6-3.24 3.36-5.91 7.42t-3.95 8.7v19.84q0 1.39.47 2.26.46.87.93 1.45m57.88 0h22.27q1.63 0 2.44-1.39.81-1.4 1.16-2.67v4.87h-34.34v-.81h2.32v-75.87q0-2.43-1.04-3.42-1.05-.98-1.28-1.1h9.51v.81h-2.32v75.87q0 1.39.41 2.26t.87 1.45m59.28-79.58q-4.76 0-8.94 4-4.17 4.01-7.01 10.85-2.85 6.84-4.01 15.66h4.53q7.54 0 12.58-.93 5.05-.93 5.63-1.04v4.87q-.58-.23-5.63-1.16-5.04-.93-12.58-.93h-4.53q-.23 2.09-.34 4.18-.12 2.09-.12 4.29 0 8.24 1.57 15.43 1.56 7.19 4.4 12.7 2.85 5.51 6.56 8.58 3.71 3.08 7.89 3.08 3.59 0 6.84-2.26 3.25-2.27 5.8-6.21v3.83q-2.78 2.55-5.97 4t-6.67 1.45q-5.22 0-9.81-3.13-4.58-3.13-8.06-8.76t-5.45-12.99q-1.97-7.37-1.97-15.72t1.97-15.72q1.97-7.36 5.45-12.99t8.06-8.76q4.59-3.13 9.81-3.13 3.48 0 6.67 1.39t5.97 4.06v3.83q-2.55-4.06-5.8-6.26-3.25-2.21-6.84-2.21\" fill=\"#F0EDE6\"></path>\n        <text letter-spacing=\"7.92\" font-size=\"18\" font-family=\"Lato,&#x27;Helvetica Neue&#x27;,Helvetica,Arial,sans-serif\" fill=\"#F0EDE6\" text-anchor=\"middle\" y=\"858\" x=\"543.96\">IN EVERY BITE</text>\n    </g>\n</svg>",
+                  "href": null,
+                  "etiqueta": null,
+                  "pos": {
+                    "w": 730,
+                    "top": 0,
+                    "base": 421,
+                    "x": -154,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 421
+              }
+            },
+            {
+              "t": "columna",
+              "id": "comp-lhi89lwh",
+              "fondo": "rgb(78, 109, 90)",
+              "fondoImg": {
+                "medio": "b75909_0a01f3bdebd54c70b524101062d2e72a~mv2.png",
+                "alt": "Disfruta una bella tarde en uno de los mejores restaurante de Anituga Guatemala",
+                "w": 54,
+                "h": 52,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [],
+              "pos": {
+                "w": 559
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "base": 980,
+            "x": 0,
+            "area": "4 / 1 / 5 / 2"
+          }
+        },
+        {
+          "t": "columnas",
+          "id": "comp-kybml12w",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-kybml13w",
+              "fondo": "rgb(242, 238, 235)",
+              "fondoImg": {
+                "medio": "b75909_fe231207f1274963a21dab5337ea9de4~mv2.jpg",
+                "alt": "Rosanta Rated one of the most up and coming restaurants in Antigua Guatemala.",
+                "w": 147,
+                "h": 110,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [],
+              "pos": {
+                "w": 980
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "base": 980,
+            "x": 0,
+            "area": "5 / 1 / 6 / 2"
+          }
+        }
+      ]
+    },
+    {
+      "t": "seccion",
+      "id": "comp-lhjc19fq",
+      "fondo": "rgb(78, 109, 90)",
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "grupo",
+          "id": "comp-lnkjh91o",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "rico",
+              "id": "comp-lhjc19k8",
+              "html": "<div><h2 class=\"font_0\" style=\"font-size:23px;line-height:normal;text-align:center\"><span style=\"letter-spacing:0.25em\"><span style=\"font-size:23px\"><span style=\"color:#FAFAFA\">CONTACT INFO</span></span></span></h2></div>",
+              "pos": {
+                "w": 932,
+                "top": 0,
+                "abajo": 67,
+                "ml": 0,
+                "x": 0,
+                "area": "1 / 1 / 2 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19ki",
+              "html": "<div><h3 class=\"font_4\" style=\"font-size:16px;line-height:normal\"><span style=\"letter-spacing:0.25em\"><span style=\"font-size:16px\">ADDRESS</span></span></h3></div>",
+              "pos": {
+                "w": 247,
+                "top": 0,
+                "abajo": 29,
+                "ml": 0,
+                "x": 5,
+                "area": "2 / 1 / 3 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19kp",
+              "html": "<div><h3 class=\"font_4\" style=\"font-size:16px;line-height:normal\"><span style=\"letter-spacing:0.25em\"><span style=\"font-size:16px\">CONTACT</span></span></h3></div>",
+              "pos": {
+                "w": 257,
+                "top": 0,
+                "abajo": 29,
+                "ml": 0,
+                "x": 338,
+                "area": "2 / 1 / 3 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19lh",
+              "html": "<div><h3 class=\"font_4\" style=\"font-size:16px;line-height:normal\"><span style=\"letter-spacing:0.25em\"><span style=\"font-size:16px\">OPEN HOURS</span></span></h3></div>",
+              "pos": {
+                "w": 280,
+                "top": 0,
+                "abajo": 29,
+                "ml": 0,
+                "x": 634,
+                "area": "2 / 1 / 3 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19km",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.3em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">1a Calle Oriente 15, Antigua </span></span></span></p>\n\n<p class=\"font_8\" style=\"line-height:1.3em;font-size:16px\"><span style=\"color:#FFFFFF\">Guatemala, Sacatepéquez.</span></p></div>",
+              "pos": {
+                "w": 247,
+                "top": 5,
+                "ml": 0,
+                "x": 5,
+                "area": "3 / 1 / 4 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19kt",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">(502) 7768 8880</span></span></span></p></div>",
+              "pos": {
+                "w": 257,
+                "top": 0,
+                "abajo": 11,
+                "ml": 0,
+                "x": 338,
+                "area": "3 / 1 / 4 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19kw",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><a href=\"mailto:restaurante@rosanta.rest\"><span style=\"color:#FFFFFF\"><span style=\"text-decoration:underline\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">restaurante@rosanta.rest</span></span></span></span></a></p></div>",
+              "pos": {
+                "w": 257,
+                "top": 0,
+                "abajo": 13,
+                "ml": 0,
+                "x": 338,
+                "area": "5 / 1 / 6 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lmihpanw",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px\"><span style=\"color:rgb(255,255,255)\">🍸🌿 From the garden to your table: fresh ingredients picked close to home, changing with every season. Come taste what grows just steps away.<br>\n14° N · 91° W · Antigua Guatemala</span></p></div>",
+              "pos": {
+                "w": 305,
+                "top": 14,
+                "ml": 0,
+                "x": 5,
+                "area": "7 / 1 / 8 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjc19lr",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:rgb(255,255,255)\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">Monday</span></span></span></p></div>",
+              "pos": {
+                "w": 95,
+                "top": 5,
+                "abajo": 6,
+                "ml": 0,
+                "x": 634,
+                "area": "3 / 1 / 4 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjcmbpr",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">Tuesday</span></span></span></p></div>",
+              "pos": {
+                "w": 184,
+                "top": 0,
+                "ml": 0,
+                "x": 634,
+                "area": "4 / 1 / 5 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lhjcmbpy",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">17:00 - 21:00 Hrs</span></span></span></p></div>",
+              "pos": {
+                "w": 147,
+                "top": 0,
+                "ml": 0,
+                "x": 786,
+                "area": "4 / 1 / 5 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidavzjr",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">Wed - Thu</span></span></span></p></div>",
+              "pos": {
+                "w": 184,
+                "top": 8,
+                "abajo": 5,
+                "ml": 0,
+                "x": 634,
+                "area": "5 / 1 / 6 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidavzjv2",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">12:00 - 21:00 Hrs</span></span></span></p></div>",
+              "pos": {
+                "w": 147,
+                "top": 9,
+                "abajo": 4,
+                "ml": 0,
+                "x": 786,
+                "area": "5 / 1 / 6 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidawv8i",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">Friday - Saturday</span></span></span></p></div>",
+              "pos": {
+                "w": 184,
+                "top": 0,
+                "abajo": 1,
+                "ml": 0,
+                "x": 634,
+                "area": "6 / 1 / 7 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidawv8l",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">12:00 - 22:00 Hrs</span></span></span></p></div>",
+              "pos": {
+                "w": 147,
+                "top": 1,
+                "ml": 0,
+                "x": 786,
+                "area": "6 / 1 / 7 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidaydb8",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">Sunday</span></span></span></p></div>",
+              "pos": {
+                "w": 184,
+                "top": 0,
+                "abajo": 10,
+                "ml": 0,
+                "x": 634,
+                "area": "7 / 1 / 8 / 2"
+              }
+            },
+            {
+              "t": "rico",
+              "id": "comp-lidaydba2",
+              "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em;text-align:center !important\"><span style=\"color:#FFFFFF;text-align:center !important\"><span style=\"text-align:center !important\"><span style=\"letter-spacing:normal;text-align:center !important\"><span style=\"font-size:16px;text-align:center !important\">15:00 - 20:00 Hrs</span></span></span></span></p></div>",
+              "pos": {
+                "w": 124,
+                "top": 0,
+                "abajo": 10,
+                "ml": 0,
+                "x": 786,
+                "area": "7 / 1 / 8 / 2"
+              }
+            }
+          ],
+          "pos": {
+            "w": 933,
+            "top": 144,
+            "abajo": 24,
+            "base": 980,
+            "x": 10,
+            "area": "1 / 1 / 5 / 2"
+          }
+        },
+        {
+          "t": "grupo",
+          "id": "comp-lnbvw2sk",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "svg",
+              "id": "comp-lhhvqeyo",
+              "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"137 112 325 325.05\" viewBox=\"137 112 325 325.05\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"color\" role=\"presentation\" aria-hidden=\"true\"><defs><style>#comp-lhhvqeyo svg [data-color=&quot;1&quot;] {fill: #6A8A78;}</style></defs>\n    <g>\n        <path d=\"M299.5 141.3c43.42 0 48.55.15 65.66.91 15.84.76 24.48 3.4 30.21 5.64 7.57 2.95 13 6.45 18.69 12.14 5.69 5.69 9.19 11.12 12.14 18.69 2.23 5.74 4.87 14.32 5.59 30.16.81 17.16.96 22.29.96 65.66 0 43.42-.15 48.55-.96 65.71-.71 15.84-3.35 24.43-5.59 30.16-2.95 7.57-6.45 13-12.14 18.69-5.69 5.69-11.12 9.19-18.69 12.14-5.74 2.23-14.37 4.87-30.21 5.64-17.11.76-22.24.91-65.66.91s-48.55-.15-65.66-.91c-15.84-.76-24.48-3.4-30.21-5.64-7.57-2.95-13-6.45-18.69-12.14-5.69-5.69-9.19-11.12-12.14-18.69-2.23-5.74-4.87-14.32-5.59-30.16-.81-17.16-.96-22.29-.96-65.71 0-43.37.15-48.5.96-65.66.71-15.84 3.35-24.43 5.59-30.16 2.95-7.57 6.45-13 12.14-18.69 5.69-5.69 11.12-9.19 18.69-12.14 5.74-2.23 14.37-4.87 30.21-5.64 17.12-.76 22.24-.91 65.66-.91m0-29.3c-44.13 0-49.66.2-67.03.96-17.27.81-29.1 3.55-39.41 7.57-10.71 4.16-19.75 9.7-28.79 18.74s-14.62 18.13-18.74 28.79c-4.06 10.36-6.8 22.14-7.57 39.46-.81 17.32-.96 22.85-.96 66.98 0 44.18.15 49.71.96 67.03.76 17.32 3.5 29.1 7.57 39.46 4.11 10.66 9.7 19.75 18.74 28.79s18.08 14.57 28.79 18.74c10.31 4.01 22.14 6.75 39.41 7.57 17.37.76 22.9.96 67.03.96s49.66-.2 67.03-.96c17.27-.81 29.1-3.55 39.41-7.57 10.71-4.16 19.75-9.7 28.79-18.74s14.62-18.13 18.74-28.79c4.06-10.36 6.8-22.14 7.57-39.46.81-17.32.96-22.85.96-67.03 0-44.13-.15-49.66-.96-66.98-.76-17.32-3.5-29.1-7.57-39.46-4.11-10.66-9.7-19.75-18.74-28.79s-18.08-14.57-28.79-18.74c-10.31-4.01-22.14-6.75-39.41-7.57-17.36-.76-22.9-.96-67.03-.96\" fill=\"#4e6d5a\" data-color=\"1\"></path>\n        <path d=\"M299.5 191.08c-46.11 0-83.43 37.37-83.43 83.43 0 46.11 37.32 83.48 83.43 83.48s83.43-37.37 83.43-83.48c0-46.05-37.32-83.43-83.43-83.43m0 137.62c-29.91 0-54.18-24.27-54.18-54.18s24.27-54.18 54.18-54.18 54.18 24.27 54.18 54.18c.01 29.9-24.27 54.18-54.18 54.18\" fill=\"#4e6d5a\" data-color=\"1\"></path>\n        <path d=\"M405.76 187.77c0 10.77-8.73 19.5-19.5 19.5s-19.5-8.74-19.5-19.5 8.73-19.5 19.5-19.5 19.5 8.73 19.5 19.5\" fill=\"#4e6d5a\" data-color=\"1\"></path>\n    </g>\n</svg>",
+              "href": "https://instagram.com/rosanta.rest?igshid=MzRlODBiNWFlZA==",
+              "etiqueta": null,
+              "pos": {
+                "w": 21,
+                "top": 0,
+                "ml": 0,
+                "x": 0,
+                "area": "1 / 1 / 2 / 2"
+              }
+            },
+            {
+              "t": "svg",
+              "id": "comp-lhhvr03b",
+              "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"176.64 82 236.51 445\" viewBox=\"176.64 82 236.51 445\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"color\" role=\"presentation\" aria-hidden=\"true\"><defs><style>#comp-lhhvr03b svg [data-color=&quot;1&quot;] {fill: #6A8A78;}</style></defs>\n    <g>\n        <path d=\"m397.64 330.42 12.24-79.91h-76.64v-51.89c0-21.87 10.72-43.19 45.04-43.19h34.87V87.38S381.49 82 351.25 82c-63.15 0-104.44 38.29-104.44 107.59v60.92h-70.17v79.91h70.17v193.21c14.09 2.23 28.5 3.37 43.19 3.37 14.74 0 29.16-1.14 43.24-3.37V330.42h64.4z\" fill=\"#4e6d5a\" data-color=\"1\"></path>\n    </g>\n</svg>",
+              "href": "https://www.facebook.com/rosanta.rest?mibextid=LQQJ4d",
+              "etiqueta": null,
+              "pos": {
+                "w": 11,
+                "top": 0,
+                "ml": 0,
+                "x": 37,
+                "area": "1 / 1 / 2 / 2"
+              }
+            },
+            {
+              "t": "svg",
+              "id": "comp-lhjgexqy",
+              "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"0 0 115.97 108.22\" viewBox=\"0 0 115.97 108.22\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"color\" role=\"presentation\" aria-hidden=\"true\">\n    <g>\n        <path d=\"M65.23 93.79C21.34 93.79 0 85.53 0 68.54c0-1.99 1.62-3.61 3.62-3.61 3.59 0 6.22-1.02 8.02-3.12 4.23-4.93 2.91-14.27 2.89-14.37C14.49 21.04 37.26 0 65.23 0s50.74 21.04 50.74 46.9S93.2 93.8 65.23 93.8ZM7.8 71.77c3.45 9.71 23.14 14.81 57.43 14.81 23.98 0 43.49-17.81 43.49-39.68S89.22 7.21 65.23 7.21 21.74 25.01 21.74 46.9c.04 0 1.85 12.13-4.59 19.61-2.4 2.79-5.53 4.55-9.36 5.27Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n        <path d=\"M94.23 93.79c0 7.97-6.49 14.43-14.5 14.43s-14.5-6.46-14.5-14.43 6.49-14.43 14.5-14.43 14.5 6.46 14.5 14.43Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n        <path d=\"M50.74 93.79c0 7.97-6.49 14.43-14.5 14.43s-14.5-6.46-14.5-14.43 6.49-14.43 14.5-14.43 14.5 6.46 14.5 14.43Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n        <path d=\"M50.88 39.68c-2 0-3.66-1.62-3.66-3.61s1.59-3.61 3.59-3.61h.07c2 0 3.62 1.62 3.62 3.61s-1.62 3.61-3.62 3.61Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n        <path d=\"M79.88 39.68c-2 0-3.66-1.62-3.66-3.61s1.58-3.61 3.59-3.61h.08c2 0 3.62 1.62 3.62 3.61s-1.62 3.61-3.62 3.61Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n        <path d=\"M65.23 72.15c-10.45 0-19.36-7.08-21.66-17.24-.44-1.95.79-3.87 2.74-4.31 1.96-.42 3.89.78 4.33 2.72 1.55 6.84 7.55 11.62 14.58 11.62s13.04-4.78 14.58-11.62a3.616 3.616 0 0 1 4.33-2.72c1.96.44 3.18 2.36 2.75 4.31-2.3 10.15-11.21 17.24-21.67 17.24Z\" fill=\"#ffffff\" data-color=\"1\"></path>\n    </g>\n</svg>",
+              "href": "http://waze.com/ul/h9fx6z6tn9",
+              "etiqueta": null,
+              "pos": {
+                "w": 22,
+                "top": 0,
+                "ml": 0,
+                "x": 61,
+                "area": "1 / 1 / 2 / 2"
+              }
+            }
+          ],
+          "pos": {
+            "w": 83,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 361,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-moq9ockp",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px;line-height:1.8em\"><span style=\"color:#FFFFFF\"><span style=\"letter-spacing:normal\"><span style=\"font-size:16px\">17:00 - 21:00 Hrs</span></span></span></p></div>",
+          "pos": {
+            "w": 147,
+            "top": 292,
+            "abajo": 10,
+            "base": 980,
+            "x": 796,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "mapa",
+          "id": "comp-lnkjiqad",
+          "alto": 700,
+          "pos": {
+            "w": 1960,
+            "top": 0,
+            "abajo": 4,
+            "base": 980,
+            "x": -490,
+            "area": "5 / 1 / 6 / 2"
+          }
+        }
+      ]
+    }
+  ]
+}

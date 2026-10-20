@@ -1,0 +1,89 @@
+---
+// Plantilla de todas las páginas: <head> con el mismo SEO que Wix (título, descripción,
+// canonical, hreflang, Open Graph, JSON-LD), la medición (GTM y las etiquetas que hoy carga
+// Wix) y el encabezado y pie del sitio.
+import Encabezado from '../components/Encabezado.astro';
+import Pie from '../components/Pie.astro';
+import '../styles/sitio.css';
+import { descripcion, robots, schema, imagenLocal, datos } from '../lib/sitio.mjs';
+import { GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
+
+const { pagina } = Astro.props;
+const desc = descripcion(pagina);
+const rob = robots(pagina);
+const ld = schema(pagina);
+const og = { ...pagina.og };
+// og:image: la misma foto que usa Wix, servida desde la copia (Wix deja de existir en enero).
+if (pagina.og_imagen_medio) {
+  const im = imagenLocal(pagina.og_imagen_medio);
+  if (im?.og_archivo) {
+    og['og:image'] = 'https://www.rosanta.rest' + im.og_archivo;
+    if (og['twitter:image']) og['twitter:image'] = og['og:image'];
+    delete og['og:image:width'];
+    delete og['og:image:height'];
+  }
+}
+if (!og['og:description'] && desc) og['og:description'] = desc;
+const lang = pagina.lang || pagina.idioma;
+const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pagina.titulo}</title>
+    {desc && <meta name="description" content={desc} />}
+    {rob && <meta name="robots" content={rob} />}
+    {pagina.canonical && <link rel="canonical" href={pagina.canonical} />}
+    {pagina.hreflang.map((h) => <link rel="alternate" href={h.href} hreflang={h.hreflang} />)}
+    {Object.entries(og).map(([k, v]) => (k.startsWith('twitter:') ? <meta name={k} content={v} /> : <meta property={k} content={v} />))}
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+    {ld.map((o) => <script type="application/ld+json" set:html={ldJson(o)} />)}
+
+    <!-- Google Tag Manager (el mismo contenedor de hoy) -->
+    <script is:inline define:vars={{ GTM_ID }}>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',GTM_ID);
+    </script>
+    <!-- Fuente del tráfico (antes masterPage.js): viaja con la reserva y el carrito -->
+    <script is:inline src="/js/fuente.js"></script>
+    {/* Etiquetas que hoy inyecta Wix fuera de GTM (el contenedor GTM-M78RL4HH está vacío). */}
+    {(GA4_ID || GOOGLE_ADS_ID) && (
+      <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID || GOOGLE_ADS_ID}`}></script>
+    )}
+    {(GA4_ID || GOOGLE_ADS_ID) && (
+      <script is:inline define:vars={{ GA4_ID, GOOGLE_ADS_ID }}>
+        window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('js',new Date());
+        var f=(window.RosantaFuente&&window.RosantaFuente.obtener())||{};
+        if(GA4_ID)gtag('config',GA4_ID,{fuente_canal:f.canal,fuente_source:f.source});
+        if(GOOGLE_ADS_ID)gtag('config',GOOGLE_ADS_ID);
+      </script>
+    )}
+    {META_PIXEL_ID && (
+      <script is:inline define:vars={{ META_PIXEL_ID }}>
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init',META_PIXEL_ID);fbq('track','PageView');
+      </script>
+    )}
+  </head>
+  <body data-idioma={pagina.idioma}>
+    <noscript><iframe src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`} height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe></noscript>
+    <a class="saltar" data-paridad="ignorar" href="#contenido">{pagina.idioma === 'es' ? 'Ir al contenido' : 'Skip to Main Content'}</a>
+    <Encabezado pagina={pagina} />
+    <main id="contenido">
+      <slot />
+    </main>
+    <Pie pagina={pagina} />
+    {OPENWIDGET_ORG && (
+      <script is:inline define:vars={{ OPENWIDGET_ORG }}>
+        window.__ow=window.__ow||{};window.__ow.organizationId=OPENWIDGET_ORG;window.__ow.integration_name='manual_settings';
+        (function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[OpenWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.openwidget.com/openwidget.js",t.head.appendChild(n)}};!n.__ow.asyncInit&&e.init(),n.OpenWidget=n.OpenWidget||e}(window,document,[].slice));
+      </script>
+    )}
+    {POPTIN_ID && <script is:inline async src={`https://cdn.popt.in/pixel.js?id=${POPTIN_ID}`} id="pixel-script-poptin"></script>}
+  </body>
+</html>

@@ -1,0 +1,344 @@
+{
+  "ruta": "/es/gift-ideas",
+  "idioma": "es",
+  "lang": "es",
+  "titulo": "Rosanta | Tarjeta de Regalo | Restaurante en Antigua Guatemala",
+  "descripcion": "Tarjetas de regalo de Rosanta desde Q300. Regala una cena en el jardín, con cocina de temporada y coctelería en Antigua Guatemala.",
+  "canonical": "https://www.rosanta.rest/es/gift-ideas",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/gift-ideas"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/gift-ideas"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/gift-ideas"
+    }
+  ],
+  "og": {
+    "og:title": "Rosanta | Tarjeta de Regalo | Restaurante en Antigua Guatemala",
+    "og:description": "Tarjetas de regalo de Rosanta desde Q300. Regala una cena en el jardín, con cocina de temporada y coctelería en Antigua Guatemala.",
+    "og:image": "https://static.wixstatic.com/media/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33~mv2.jpg/v1/fill/w_801,h_470,al_c/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33~mv2.jpg",
+    "og:image:width": "801",
+    "og:image:height": "470",
+    "og:url": "https://www.rosanta.rest/es/gift-ideas",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Rosanta | Tarjeta de Regalo | Restaurante en Antigua Guatemala",
+    "twitter:description": "Tarjetas de regalo de Rosanta desde Q300. Regala una cena en el jardín, con cocina de temporada y coctelería en Antigua Guatemala.",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33~mv2.jpg/v1/fill/w_801,h_470,al_c/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33~mv2.jpg"
+  },
+  "h1": [
+    "IDEAS PARA REGALAR"
+  ],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVACIONES EVENTOS IDEAS PARA REGALAR PREGUNTAS FRECUENTES Política de Privacidad CONTACT LOCATION More Use tab to navigate through the menu items. IDEAS PARA REGALAR Hay regalos que terminan en un cajón. Hay noches que se quedan contigo para siempre. Regala una mesa, una copa hecha a tu gusto, y una noche que se recuerda mucho después de la última luz del jardín. Esto no es un objeto: es sabor, un jardín, y una historia que vale la pena contar. REGALA UNA NOCHE Hay regalos que se abren una vez. Hay noches que se recuerdan para siempre. Una gift card de Rosanta pone una noche entera en las manos de alguien: cocina honesta del jardín a la mesa, cocteles hechos a su gusto en la barra, y un jardín que invita a quedarse. Disponibles en Q500 y Q300, cada tarjeta llega personalizada, con una nota para la persona que quieres sorprender, para que el regalo se sienta tan pensado como la noche que guarda. Úsala para una comida especial o para la experiencia completa en la Casa de la Gastrococtelería. Para conseguir la tuya, escríbenos, visítanos en 1a Calle Oriente 15, Antigua Guatemala, Sacatepéquez, o llama al (502) 7768-8880, y resolvemos cada detalle contigo. REGALA ROSANTA SABORES DE ROMANCE Hay noches que piden algo más. Una mesa para dos, un rincón tranquilo, y el resto del mundo esperando afuera. La Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q800 para dos, valorada en Q1000. Se prepara solo con reservación, con 24 horas de anticipación: llama al 7768-8880 o escribe a restaurante@rosanta.rest, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar. HAZ RECUERDOS QUE VALGA LA PENA GUARDAR © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_e62ca6e7908149b2a4ed1b964cb1fc33~mv2.jpg",
+  "imagenes": [
+    {
+      "medio": "3de38d_93e8a19d113a4060a12bd6059d5cc3ba~mv2.png",
+      "alt": "Rosanta Gift Card Q300-selection_edited.png"
+    },
+    {
+      "medio": "3de38d_c28eb9b7a60d4ae4b4bb8facdc163a54~mv2.png",
+      "alt": "1.png"
+    }
+  ],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-moqfz4li",
+      "fondo": null,
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "rico",
+          "id": "comp-moqg08v8",
+          "html": "<div><h1 class=\"font_8\" style=\"text-align:center;font-size:60px\"><span style=\"font-size:60px\"><span style=\"font-weight:normal\"><span style=\"color:#AEAAE2\"><span style=\"font-style:normal\">IDEAS PARA REGALAR</span></span></span></span></h1></div>",
+          "pos": {
+            "w": 769,
+            "top": 25,
+            "abajo": 11,
+            "base": 980,
+            "x": 92,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-mszhr53v",
+          "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Hay regalos que terminan en un cajón. Hay noches que se quedan contigo para siempre. Regala una mesa, una copa hecha a tu gusto, y una noche que se recuerda mucho después de la última luz del jardín. Esto no es un objeto: es sabor, un jardín, y una historia que vale la pena contar.</span></p></div>",
+          "pos": {
+            "w": 708,
+            "top": 0,
+            "abajo": 32,
+            "base": 980,
+            "x": 160,
+            "area": "2 / 1 / 3 / 2"
+          }
+        }
+      ]
+    },
+    {
+      "t": "seccion",
+      "id": "comp-m5mon9b3",
+      "fondo": "rgb(78,109,91)",
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "columnas",
+          "id": "comp-m5mon9b42",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-m5mon9b52",
+              "fondo": "rgb(106,138,120)",
+              "fondoImg": {
+                "medio": "3de38d_93e8a19d113a4060a12bd6059d5cc3ba~mv2.png",
+                "alt": "Rosanta Gift Card Q300-selection_edited.png",
+                "w": 122,
+                "h": 217,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [],
+              "pos": {
+                "w": 488
+              }
+            },
+            {
+              "t": "columna",
+              "id": "comp-m5mon9b63",
+              "fondo": "rgb(78,109,91)",
+              "fondoImg": null,
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "rico",
+                  "id": "comp-mszhs5j2",
+                  "html": "<div><h2 class=\"font_2\" style=\"font-size:45px\"><span style=\"font-size:45px\"><span style=\"color:#AEAAE2\">REGALA UNA NOCHE</span></span></h2></div>",
+                  "pos": {
+                    "w": 224,
+                    "top": 167,
+                    "abajo": 10,
+                    "base": 489,
+                    "x": 132,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszhv2sb",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Hay regalos que se abren una vez. Hay noches que se recuerdan para siempre. Una gift card de Rosanta pone una noche entera en las manos de alguien: cocina honesta del jardín a la mesa, cocteles hechos a su gusto en la barra, y un jardín que invita a quedarse. </span></p> \n<p class=\"vacio\"> </p> \n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Disponibles en Q500 y Q300, cada tarjeta llega personalizada, con una nota para la persona que quieres sorprender, para que el regalo se sienta tan pensado como la noche que guarda. Úsala para una comida especial o para la experiencia completa en la Casa de la Gastrococtelería. </span></p> \n<p class=\"vacio\"> </p> \n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">Para conseguir la tuya, escríbenos, visítanos en 1a Calle Oriente 15, Antigua Guatemala, Sacatepéquez, o llama al </span></p> \n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\">(502) 7768-8880, y resolvemos cada detalle contigo.</span></p></div>",
+                  "pos": {
+                    "w": 481,
+                    "top": 0,
+                    "abajo": 10,
+                    "base": 489,
+                    "x": 7,
+                    "area": "3 / 1 / 4 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszhw6of",
+                  "html": "<div><h2 class=\"font_2\" style=\"font-size:45px\"><span style=\"font-size:45px\"><span style=\"color:#AEAAE2\">REGALA ROSANTA</span></span></h2></div>",
+                  "pos": {
+                    "w": 450,
+                    "top": 0,
+                    "abajo": 10,
+                    "base": 489,
+                    "x": 123,
+                    "area": "5 / 1 / 6 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 489
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "abajo": 1,
+            "base": 980,
+            "x": 0,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "columnas",
+          "id": "comp-m5mon9b82",
+          "fondo": "rgb(255,255,255)",
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-m5mon9b92",
+              "fondo": "rgb(78,109,91)",
+              "fondoImg": null,
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "rico",
+                  "id": "comp-mszhx9gp",
+                  "html": "<div><h2 class=\"font_2\" style=\"font-size:35px\"><span style=\"color:#AEAAE2\">SABORES DE ROMANCE</span></h2></div>",
+                  "pos": {
+                    "w": 450,
+                    "top": 52,
+                    "abajo": 62,
+                    "base": 488,
+                    "x": 104,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszhy56d",
+                  "html": "<div><p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\"><span style=\"font-style:normal\"><span style=\"font-weight:400\"><span style=\"letter-spacing:normal\">Hay noches que piden algo más. Una mesa para dos, un rincón tranquilo, y el resto del mundo esperando afuera. </span></span></span></span></span></p> \n<p class=\"vacio\"> </p> \n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\"><span style=\"font-style:normal\"><span style=\"font-weight:400\"><span style=\"letter-spacing:normal\">La Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q800 para dos, valorada en Q1000. </span></span></span></span></span></p> \n<p class=\"vacio\"> </p> \n<p class=\"font_7\" style=\"font-size:20px\"><span style=\"font-size:20px\"><span style=\"color:rgb(255,255,255)\"><span style=\"font-style:normal\"><span style=\"font-weight:400\"><span style=\"letter-spacing:normal\">Se prepara solo con reservación, con 24 horas de anticipación: llama al 7768-8880 o escribe a <a href=\"mailto:restaurante@rosanta.rest\">restaurante@rosanta.rest</a>, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar.</span></span></span></span></span></p></div>",
+                  "pos": {
+                    "w": 488,
+                    "top": 0,
+                    "abajo": 10,
+                    "base": 488,
+                    "x": 0,
+                    "area": "2 / 1 / 3 / 2"
+                  }
+                },
+                {
+                  "t": "rico",
+                  "id": "comp-mszi0r6k",
+                  "html": "<div><h2 class=\"font_2\" style=\"font-size:45px\"><span style=\"font-size:45px\"><span style=\"color:#AEAAE2\">HAZ RECUERDOS QUE VALGA LA PENA GUARDAR</span></span></h2></div>",
+                  "pos": {
+                    "w": 529,
+                    "top": 0,
+                    "abajo": 10,
+                    "base": 488,
+                    "x": 0,
+                    "area": "4 / 1 / 5 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 488
+              }
+            },
+            {
+              "t": "columna",
+              "id": "comp-m5mon9bd",
+              "fondo": null,
+              "fondoImg": {
+                "medio": "3de38d_c28eb9b7a60d4ae4b4bb8facdc163a54~mv2.png",
+                "alt": "1.png",
+                "w": 113,
+                "h": 200,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [],
+              "pos": {
+                "w": 489
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "base": 980,
+            "x": 0,
+            "area": "2 / 1 / 3 / 2"
+          }
+        }
+      ]
+    }
+  ]
+}

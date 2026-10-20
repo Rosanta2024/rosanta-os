@@ -1,0 +1,43 @@
+{
+  "_nota": "Lo ÚNICO que la copia cambia respecto de Wix. Decisión del coordinador (20-oct): los errores de SEO de Wix se copian TAL CUAL el día del cambio y se corrigen después (4-8 semanas de monitoreo): /events titulado 'COTIZACIONES' en inglés; /gift-card, /experiences, /loyalty, /encuesta y /events sin descripción; hreflang es-es. Las correcciones ya redactadas quedan en 'propuestas_despues_del_traslado' (NO se aplican; pasar por revisor-marca antes de usarlas).",
+  "redirigir": {
+    "_nota": "Direcciones que en la copia responden 301 (una a una) en vez de 200. /es/blank es una página VACÍA (titulada 'Cotizaciones') que está en el sitemap en español; su par en inglés /blank ya hace 301 a /preguntas-frecuentes en Wix. Se iguala el comportamiento.",
+    "/es/blank": "/es/preguntas-frecuentes"
+  },
+  "robots_invalidos": {
+    "_nota": "Wix publica <meta name=robots content=true> en /experience-details (valor inválido). La copia lo omite.",
+    "valores": [
+      "true"
+    ]
+  },
+  "omitir_bloques": {
+    "_nota": "Bloques del HTML de Wix que la copia NO dibuja. Cada uno con su motivo. (Hoy ninguno.)"
+  },
+  "ocultar_bloques": {
+    "_nota": "Bloques que se mantienen en el HTML (los leen Google y las IA, igual que en Wix) pero no se ven, porque en Wix tampoco se ven.",
+    "TPASection_lgwpkt8t": "/reservas y /es/reservas: widget de Wix Table Reservations con el H1 'RESERVE YOUR TABLE' / 'Reserva tu lugar', 'Party size · Date · Time'. En Wix queda TAPADO por el formulario propio (iframe de 717 px encima), pero su texto y su H1 están en el HTML. Se conserva igual (texto y H1) y oculto. Después del traslado: que el título visible del formulario sea el H1."
+  },
+  "propuestas_despues_del_traslado": {
+    "descripciones": {
+      "/events": "Event menus at Rosanta in Antigua Guatemala: tasting menu, special events menu, and bites with open bar. Download the PDFs and ask us for a quote.",
+      "/es/events": "Menús para eventos en Rosanta, Antigua Guatemala: menú degustación, menú de eventos especiales y boquitas con barra libre. Descarga los PDF y pide tu cotización.",
+      "/gift-card": "Rosanta gift card in quetzales, from GTQ 25 to GTQ 200. A table in the garden in Antigua Guatemala, ready to give.",
+      "/es/gift-card": "Tarjeta de regalo de Rosanta en quetzales, de Q25 a Q200. Una mesa en el jardín de Antigua Guatemala, lista para regalar.",
+      "/experiences": "Experiences at Rosanta, garden restaurant in Antigua Guatemala. Nothing is open right now: check back soon or book your table.",
+      "/es/experiences": "Experiencias en Rosanta, restaurante con jardín en Antigua Guatemala. Por ahora no hay ninguna abierta: vuelve pronto o reserva tu mesa.",
+      "/loyalty": "Rosanta loyalty program, garden restaurant in Antigua Guatemala. The program is not available right now.",
+      "/es/loyalty": "Programa de fidelización de Rosanta, restaurante con jardín en Antigua Guatemala. Por ahora el programa no está disponible.",
+      "/encuesta": "Tell us how your evening at Rosanta in Antigua Guatemala went. A short survey that helps us cook better.",
+      "/es/encuesta": "Cuéntanos cómo te fue en Rosanta, Antigua Guatemala. Una encuesta corta que nos ayuda a cocinar mejor."
+    },
+    "promover_h1": [
+      "/events",
+      "/es/events"
+    ]
+  },
+  "descripciones": {},
+  "promover_h1": {
+    "_nota": "Vacío a propósito: se copia sin H1 donde Wix no tiene.",
+    "rutas": []
+  }
+}

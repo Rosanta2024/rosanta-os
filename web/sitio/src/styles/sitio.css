@@ -1,0 +1,240 @@
+/* Rosanta · estilos de la copia de rosanta.rest.
+   Paleta y tipografías del tema publicado en Wix (variables --color_N y --font_N):
+   títulos en Peskia Bold (fuente de Rosanta) y cuerpo en Avenir Light, que es una fuente con
+   licencia de Wix: aquí la reemplaza Lato Light (respaldo aprobado en la guía de marca).
+   No es un rediseño: solo lo necesario para que se parezca y funcione en el teléfono. */
+@import './formulario.css';
+
+@font-face {
+  font-family: 'Peskia';
+  src: url('/fonts/peskia-bold.woff2') format('woff2');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+:root {
+  --verde: rgb(78, 109, 90);      /* #4E6D5A · encabezado, pie, contacto */
+  --verde-tema: rgb(57, 113, 99); /* --color_22 · font_0 */
+  --verde-claro: rgb(106, 138, 120);
+  --menta: rgb(190, 226, 208);    /* --color_15 / --color_45 */
+  --crema: rgb(242, 238, 235);    /* #F2EEEB */
+  --lila: #b7abdc;
+  --tinta: #2f342f;
+  --cuerpo: 'Lato', 'Avenir', Arial, sans-serif;
+  --titulo: 'Peskia', 'Playfair Display', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--tinta);
+  font-family: var(--cuerpo);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; }
+.saltar { position: absolute; left: -9999px; top: 0; }
+.saltar:focus { left: 8px; z-index: 100; background: #fff; padding: 8px; }
+.ancla { display: block; height: 0; overflow: hidden; }
+.ancla span, .visualmente-oculto {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+[id] { scroll-margin-top: 90px; }
+
+/* ---------- encabezado ---------- */
+.encabezado { background: var(--verde); color: #fff; position: sticky; top: 0; z-index: 50; }
+.encabezado-in {
+  max-width: 1280px; margin: 0 auto; padding: 10px 24px;
+  display: flex; align-items: center; gap: 18px; min-height: 70px;
+}
+.logo { display: block; width: 130px; flex: 0 0 auto; color: #fff; }
+.logo svg { width: 100%; height: auto; display: block; }
+.logo svg path, .logo svg [data-color] { fill: #fff; }
+.idioma { display: flex; border: 1.5px solid #fff; border-radius: 30px; overflow: hidden; flex: 0 0 auto; }
+.idioma a { padding: 7px 14px; text-decoration: none; font-size: 14px; letter-spacing: .5px; color: #fff; }
+.idioma a.activo { background: rgba(255,255,255,.18); }
+.menu { margin-left: auto; }
+.menu > ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; justify-content: flex-end; }
+.menu li { position: relative; }
+.menu a { text-decoration: none; font-size: 12px; letter-spacing: .6px; color: #fff; padding: 6px 0; display: inline-block; }
+.menu a:hover { opacity: .75; }
+.menu .sub { display: none; position: absolute; left: -12px; top: 100%; list-style: none; margin: 0; padding: 8px 12px; background: var(--verde); white-space: nowrap; }
+.menu li.con-sub:hover .sub, .menu li.con-sub:focus-within .sub { display: block; }
+.menu-abrir { display: none; }
+.menu-boton { display: none; }
+
+@media (max-width: 999px) {
+  .encabezado-in { flex-wrap: wrap; padding: 10px 16px; }
+  .menu-boton { display: flex; flex-direction: column; justify-content: center; gap: 5px; margin-left: auto; width: 44px; height: 44px; cursor: pointer; }
+  .menu-boton span { display: block; height: 2px; background: #fff; border-radius: 2px; }
+  .menu { display: none; flex-basis: 100%; margin: 0; }
+  .menu-abrir:checked ~ .menu { display: block; }
+  .menu > ul { flex-direction: column; gap: 0; padding: 8px 0 14px; }
+  .menu a { font-size: 15px; padding: 10px 0; }
+  .menu .sub { display: block; position: static; padding: 0 0 0 16px; background: none; }
+}
+
+/* ---------- secciones y columnas (estructura de Wix) ---------- */
+.seccion { position: relative; background-size: cover; background-position: center; overflow-x: clip; }
+.seccion-in { max-width: 980px; margin: 0 auto; padding: 0 20px 40px; }
+.seccion.con-fondo-img { min-height: 60vh; }
+.columnas { display: flex; flex-wrap: wrap; }
+.columna { flex: 1 1 300px; background-size: cover; background-position: center; min-width: 0; padding: 0 0 24px; }
+.columna.con-fondo-img { min-height: 420px; }
+.imagen-caja .imagen { margin: 0; }
+
+/* La grilla de Wix: cada elemento en su celda (grid-area), con el mismo margen y ancho en px
+   que en Wix (--base, --x, --w, --top puestas por Bloques.astro). Solo en pantallas anchas. */
+@media (min-width: 1000px) {
+  .seccion-in { max-width: none; padding: 0 0 40px; }
+  .malla { display: grid; grid-template-columns: 100%; grid-auto-rows: min-content; align-items: start; }
+  .malla > .pos {
+    grid-area: var(--area);
+    margin-left: calc((100% - var(--base, 100%)) * 0.5 + var(--x, 0px));
+    width: var(--w, auto);
+    max-width: 100vw;
+    margin-top: var(--top, 0);
+    margin-bottom: var(--abajo, 0);
+    justify-self: start;
+  }
+  .malla > .columnas.pos { width: max(980px, calc(100% - 200px)); margin-left: auto; margin-right: auto; justify-self: center; }
+  .columnas { flex-wrap: nowrap; }
+  .columnas > .columna { flex: 0 0 calc(var(--cw, 0.5) * 100%); }
+}
+@media (max-width: 999px) {
+  .malla > .pos { margin-top: min(var(--top, 0px), 28px); }
+  .rico, .boton-fila { margin-left: 0; }
+}
+
+/* ---------- texto enriquecido de Wix ---------- */
+.rico { margin: 0; overflow-wrap: anywhere; }
+.rico h1, .rico h2, .rico h3, .rico h4, .rico h5, .rico h6, .rico p { margin: 0; }
+.rico p.vacio { min-height: 1em; }
+.rico ul, .rico ol { margin: .4em 0; padding-left: 1.3em; }
+.font_0 { font: bold 100px/1em var(--titulo); color: var(--verde-tema); }
+.font_2 { font: bold 35px/1.2em var(--titulo); color: var(--menta); }
+.font_3 { font: bold 40px/1.4em var(--titulo); color: var(--menta); }
+.font_4 { font: bold 35px/1.4em var(--titulo); color: var(--menta); }
+.font_5 { font: bold 30px/1.1em var(--titulo); color: var(--menta); }
+.font_6 { font: bold 20px/1.4em var(--titulo); color: var(--menta); }
+.font_7 { font: 300 20px/1.4em var(--cuerpo); color: var(--menta); }
+.font_8 { font: 300 16px/1.8em var(--cuerpo); color: var(--menta); }
+.font_9 { font: 300 14px/1.4em var(--cuerpo); color: var(--menta); }
+.font_1 { font: 300 16px/1.4em var(--cuerpo); color: rgb(162,197,179); }
+.font_10 { font: 300 12px/1.4em var(--cuerpo); color: rgb(162,197,179); }
+@media (max-width: 700px) {
+  .font_0 { font-size: 44px; }
+  .font_2, .font_3, .font_4 { font-size: 28px; }
+}
+
+/* ---------- botones e imágenes ---------- */
+.boton-fila { margin: 18px 0; text-align: center; }
+.malla > .boton-fila.pos { text-align: left; margin-bottom: 0; }
+.boton {
+  display: inline-block; padding: 12px 34px; background: var(--verde); color: #fff;
+  text-decoration: none; letter-spacing: 1px; font-size: 15px; border-radius: 2px; transition: opacity .15s;
+}
+.boton:hover { opacity: .85; }
+button.boton { border: 0; font-family: inherit; cursor: default; }
+.imagen { margin: 12px 0; }
+.imagen img { width: 100%; object-fit: cover; }
+.svg { display: block; max-width: 160px; }
+.svg svg { width: 100%; height: auto; }
+.galeria {
+  display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px;
+  width: 100vw; position: relative; left: 50%; margin-left: -50vw !important;
+}
+.galeria > div { flex: 0 0 min(78vw, 520px); scroll-snap-align: start; }
+.galeria .imagen { margin: 0; }
+.galeria img { height: min(70vh, 640px); width: 100%; object-fit: cover; }
+.redes { display: flex; gap: 16px; }
+.mapa, .encuesta { width: 100%; border: 0; display: block; }
+
+/* ---------- widgets de Wix (menú, gift card, experiencias) ---------- */
+.widget { margin: 10px 0; }
+.widget h1 { font: bold clamp(32px, 6vw, 56px)/1.1 var(--titulo); color: var(--verde); margin: 0 0 14px; text-align: center; }
+.widget h2 { font: bold clamp(24px, 4vw, 34px)/1.2 var(--titulo); color: var(--verde); margin: 28px 0 6px; }
+.widget hr { border: 0; border-top: 1px solid #e4e0da; margin: 10px 0; }
+.widget p { margin: 4px 0; }
+[data-hook="menu.description"] { white-space: pre-line; text-align: center; max-width: 720px; margin: 0 auto 20px; }
+[data-hook="section.description"] { font-style: italic; color: #5b615b; }
+[data-hook="item.root"] { padding: 6px 0; }
+[data-hook="item.name"] { font-weight: 700; font-size: 18px; color: var(--verde); }
+[data-hook="item.description"] { color: #4a4f4a; }
+[data-hook="item.price"], [data-hook="variant.price"] { font-weight: 700; color: var(--verde); }
+[data-hook="item.variant"] > div { display: flex; justify-content: space-between; max-width: 420px; }
+[data-hook="item.labels"] { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; margin-top: 4px; }
+[data-hook="item.label"] { border: 1px solid var(--verde-claro); color: var(--verde-claro); border-radius: 12px; padding: 1px 8px; }
+[data-hook="popover-element"] { display: none; }
+.widget-gift { text-align: center; }
+
+/* ---------- FAQ y privacidad (antes en iframe; mismos colores) ---------- */
+.faq-r, .priv-r { background: #52735c; color: #fff; padding: 0 20px; }
+.componente-faq, .componente-privacidad { width: 100vw; position: relative; left: 50%; margin-left: -50vw !important; }
+.priv-r { background: #4E6D5B; }
+.faq-r a, .priv-r a { color: #c7bedd; }
+.faq-r .hero, .priv-r .hero { text-align: center; padding: 44px 0 14px; }
+.faq-r h1, .priv-r h1, .faq-r .h1, .priv-r .h1 {
+  font: 500 clamp(44px, 9vw, 84px)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: 6px;
+  text-transform: uppercase; color: rgba(255,255,255,.92); margin: 0;
+}
+.faq-r .hero p, .priv-r .hero p { margin-top: 14px; font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.faq-r .toolbar, .priv-r .toolbar { display: flex; justify-content: center; margin-top: 22px; }
+.faq-r .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.faq-r .controls > button {
+  display: none; font: 700 13px var(--cuerpo); letter-spacing: .5px; background: transparent;
+  border: 1px solid rgba(255,255,255,.45); border-radius: 30px; padding: 9px 18px; color: #fff; cursor: pointer;
+}
+.lang-toggle { display: flex; border: 1px solid rgba(255,255,255,.5); border-radius: 30px; overflow: hidden; }
+.lang-toggle button { font: 700 12px var(--cuerpo); letter-spacing: 1px; padding: 8px 15px; background: transparent; color: #fff; border: 0; cursor: pointer; }
+.lang-toggle button.active { background: #A89DC8; color: #4E6D5B; }
+.faq-r .layout { max-width: 860px; margin: 34px auto 0; padding-bottom: 50px; }
+.faq-r .cat-block { margin-bottom: 42px; }
+.faq-r h2, .priv-r h2 { font: 600 34px 'Cormorant Garamond', Georgia, serif; letter-spacing: 1px; color: #fff; margin: 0 0 18px; }
+.faq-r .item { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); border-radius: 16px; margin-bottom: 13px; }
+.faq-r .item[open] { border-color: #A89DC8; background: rgba(255,255,255,.10); }
+.faq-r .q { padding: 20px 24px; cursor: pointer; font-size: 18px; font-weight: 700; list-style: none; }
+.faq-r .q::-webkit-details-marker { display: none; }
+.faq-r .q::after { content: '⌄'; float: right; color: #c7bedd; }
+.faq-r .a-inner { padding: 4px 24px 22px; color: rgba(255,255,255,.78); }
+.faq-r .cta { text-align: center; margin-top: 30px; }
+.faq-r .cta a { display: inline-block; background: #A89DC8; color: #4E6D5B; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; padding: 16px 38px; border-radius: 4px; text-decoration: none; }
+.faq-pie, .priv-pie { text-align: center; color: rgba(255,255,255,.55); font-size: 13px; letter-spacing: 1px; padding-bottom: 40px; margin: 0; }
+.priv-r .doc { max-width: 820px; margin: 30px auto 0; padding-bottom: 50px; }
+.priv-r .intro, .priv-r .sec p, .priv-r .sec li { color: rgba(255,255,255,.82); }
+.priv-r .sec { margin-top: 30px; }
+.priv-r .sec h2 { font-size: 27px; margin-bottom: 10px; }
+
+/* ---------- reseñas de Google ---------- */
+.resenas { text-align: center; color: #5a5f5a; padding: 8px 0 16px; }
+.resenas .badge { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: #456B50; }
+.resenas .badge[hidden] { display: none; }
+.resenas .stars { position: relative; display: inline-block; font-size: 19px; letter-spacing: 1px; line-height: 1; }
+.resenas .base { color: #d9d5cc; }
+.resenas .fill { position: absolute; left: 0; top: 0; overflow: hidden; white-space: nowrap; color: #FBBC04; }
+.resenas .grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 20px; }
+.resenas .card { background: #fff; border-radius: 12px; padding: 18px; width: 320px; max-width: 100%; text-align: left; box-shadow: 0 2px 14px rgba(60,63,58,.08); }
+.resenas .crow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.resenas .av { width: 34px; height: 34px; border-radius: 50%; background: #456B50 center/cover; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.resenas .who { font-weight: 700; font-size: 14px; color: #2f342f; }
+.resenas .when { font-size: 12px; color: #9a9a92; }
+.resenas .cstars { color: #FBBC04; font-size: 14px; }
+.resenas .ctext { font-size: 14px; line-height: 1.55; color: #555; }
+.resenas .foot a { color: #456B50; font-weight: 700; font-size: 14px; text-decoration: none; }
+
+/* ---------- pie ---------- */
+.pie { background: var(--verde); color: #fff; }
+.pie .seccion-in, .pie .columnas { padding-top: 10px; padding-bottom: 10px; }
+.pie .columna { padding: 14px 20px; }
+
+@media (max-width: 700px) {
+  .seccion-in { padding: 0 16px 32px; }
+  .faq-r, .priv-r { padding: 0 16px; }
+  .rsv .title { font-size: 44px; }
+}

@@ -1,0 +1,10 @@
+---
+// Pie de Wix ("© 2026 Rosanta.").
+import Bloques from './Bloques.astro';
+import { datos } from '../lib/sitio.mjs';
+const { pagina } = Astro.props;
+const comun = datos().comun[pagina.idioma] || datos().comun.en;
+---
+<footer class="pie" style={comun.fondo_encabezado ? `background:${comun.fondo_encabezado}` : undefined}>
+  <Bloques bloques={comun.pie} pagina={pagina} />
+</footer>

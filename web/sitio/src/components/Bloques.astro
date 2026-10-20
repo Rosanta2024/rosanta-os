@@ -1,0 +1,143 @@
+---
+// Dibuja, en el mismo orden que Wix, los bloques capturados por scripts/extraer.mjs:
+// secciones, columnas, textos, botones, imágenes, galerías y componentes.
+// Ubicación: Wix pone cada elemento en una grilla (grid-area) con un margen izquierdo y un ancho
+// en px sobre 980 px. Aquí se usa la misma grilla en pantallas anchas (clase .malla) y en el
+// teléfono todo va apilado a ancho completo.
+import Bloques from './Bloques.astro';
+import Imagen from './Imagen.astro';
+import FormularioReservas from './FormularioReservas.astro';
+import ResenasGoogle from './ResenasGoogle.astro';
+import Faq from './Faq.astro';
+import Privacidad from './Privacidad.astro';
+import { htmlResponsivo, hrefMenu, imagenLocal } from '../lib/sitio.mjs';
+import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP } from '../config.mjs';
+
+const { bloques = [], pagina, ref = 980 } = Astro.props;
+const idioma = pagina.idioma;
+
+function imagenesLocales(html) {
+  return html.replace(/<img data-medio="([^"]+)" alt="([^"]*)"(?: width="\d+")?(?: height="\d+")?>/g, (m, medio, alt) => {
+    const im = imagenLocal(medio.replace(/&amp;/g, '&'));
+    if (!im) return '';
+    return `<img src="${im.archivo}" alt="${alt}" width="${im.ancho}" height="${im.alto}" loading="lazy" decoding="async">`;
+  });
+}
+function fondo(b) {
+  const st = [];
+  if (b.fondo) st.push(`background-color:${b.fondo}`);
+  if (b.fondoImg) {
+    const im = imagenLocal(b.fondoImg.medio);
+    if (im) st.push(`background-image:url('${im.archivo}')`);
+  }
+  return st;
+}
+const r4 = (n) => Math.round(n * 10000) / 10000;
+/** Variables CSS con la posición de Wix (las usa .malla > .pos en sitio.css):
+ *  --base: ancho de la caja centrada de Wix (calc((100% - base) * 0.5)); --x: "left"; --w: ancho. */
+function pos(b, extra = []) {
+  const st = [...extra];
+  const p = b.pos;
+  if (p && p.area) {
+    st.push(`--area:${p.area}`);
+    if (p.estirar) st.push('--base:100%', '--x:0px', '--w:100%');
+    else {
+      st.push(p.base ? `--base:${p.base}px` : '--base:100%');
+      st.push(`--x:${Math.round((p.x || 0) + (p.ml || 0))}px`);
+      st.push(p.w ? `--w:${Math.round(p.w)}px` : '--w:auto');
+    }
+    // Siempre explícitas: las variables CSS se heredan del contenedor si faltan.
+    st.push(`--top:${Math.round(p.top || 0)}px`, `--abajo:${Math.round(p.abajo || 0)}px`);
+  }
+  return st.length ? st.join(';') : undefined;
+}
+const conPos = (b) => (b.pos && b.pos.area ? 'pos' : null);
+const urlGift = GIFTCARD_URL || `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(idioma === 'es' ? 'Hola, quiero comprar una tarjeta de regalo de Rosanta.' : 'Hi, I would like to buy a Rosanta gift card.')}`;
+const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) || 980;
+---
+{bloques.map((b) => {
+  switch (b.t) {
+    case 'seccion':
+      return (
+        <section id={b.id} class:list={['seccion', { 'con-fondo-img': b.fondoImg }]} style={fondo(b).join(';') || undefined}>
+          <div class="seccion-in malla"><Bloques bloques={b.hijos} pagina={pagina} ref={980} /></div>
+        </section>
+      );
+    case 'columnas': {
+      const total = anchoColumnas(b);
+      return (
+        <div id={b.id} class:list={['columnas', conPos(b)]} style={pos(b, fondo(b))}>
+          {b.hijos.map((c) => (
+            <div id={c.id} class:list={['columna', 'malla', { 'con-fondo-img': c.fondoImg }]}
+              style={[...fondo(c), `--cw:${r4((c.pos?.w || total / b.hijos.length) / total)}`].join(';')}>
+              <Bloques bloques={c.hijos || []} pagina={pagina} ref={c.pos?.w || 980} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+    case 'columna':
+      return <div id={b.id} class:list={['columna', 'malla', conPos(b)]} style={pos(b, fondo(b))}><Bloques bloques={b.hijos} pagina={pagina} ref={b.pos?.w || ref} /></div>;
+    case 'caja':
+    case 'grupo':
+      return <div id={b.id} class:list={[b.t, 'malla', conPos(b)]} style={pos(b, fondo(b))}><Bloques bloques={b.hijos} pagina={pagina} ref={b.pos?.w || ref} /></div>;
+    case 'rico':
+      return <div id={b.id} class:list={['rico', conPos(b)]} style={pos(b)} set:html={htmlResponsivo(imagenesLocales(b.html))} />;
+    case 'boton': {
+      const href = b.ancla ? hrefMenu({ ancla: b.ancla, href: b.href }, idioma) : b.href;
+      // Sin enlace en Wix (p. ej. "Request a quote" en /events-1): se copia igual, como botón.
+      if (!href) return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><button id={b.id} type="button" class="boton">{b.texto}</button></p>;
+      return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href={href} {...(b.nueva ? { target: '_blank', rel: 'noopener' } : {})}>{b.texto}</a></p>;
+    }
+    case 'imagen':
+      return <div class:list={['imagen-caja', conPos(b)]} style={pos(b)}><Imagen medio={b.medio} alt={b.alt} href={b.href} id={b.id} /></div>;
+    case 'svg':
+      return b.href
+        ? <a id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} href={b.href} aria-label={b.etiqueta || undefined} set:html={b.svg} />
+        : <div id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} aria-hidden="true" set:html={b.svg} />;
+    case 'galeria':
+      return (
+        <div id={b.id} class:list={['galeria', conPos(b)]} style={pos(b)} role="list">
+          {b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} /></div>)}
+        </div>
+      );
+    case 'ancla':
+      return <div id={b.id} class="ancla" role="region" aria-label={b.etiqueta || undefined}>{b.etiqueta && <span>{b.etiqueta}</span>}</div>;
+    case 'componente': {
+      let c = null;
+      if (b.nombre === 'formulario-reservas') c = <FormularioReservas idioma={idioma} />;
+      else if (b.nombre === 'resenas-google') c = <ResenasGoogle idioma={idioma} />;
+      else if (b.nombre === 'faq') c = <Faq idioma={idioma} />;
+      else if (b.nombre === 'privacidad') c = <Privacidad idioma={idioma} />;
+      else if (/\/encuesta$/.test(pagina.ruta))
+        c = <iframe class="encuesta" src={ENCUESTA_URL} title={idioma === 'es' ? 'Encuesta' : 'Survey'} loading="lazy" style={`height:${b.alto || 600}px`}></iframe>;
+      return c && <div id={b.id} class:list={['componente', `componente-${b.nombre}`, conPos(b)]} style={pos(b)}>{c}</div>;
+    }
+    case 'mapa':
+      return (
+        <div id={b.id} class:list={['mapa-caja', conPos(b)]} style={pos(b)}>
+          <iframe class="mapa" title="Rosanta · 1a Calle Oriente 15, Antigua Guatemala" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://maps.google.com/maps?q=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala&z=16&output=embed"
+            style={`height:${b.alto || 400}px`}></iframe>
+        </div>
+      );
+    case 'widget': {
+      const esGift = /gift-card$/.test(pagina.ruta);
+      return (
+        <div id={b.id} class:list={['widget', { 'widget-gift': esGift, 'visualmente-oculto': b.oculto }, conPos(b)]} style={pos(b)}>
+          <Fragment set:html={imagenesLocales(b.html)} />
+          {esGift && (
+            <p class="boton-fila" data-paridad="mejora"><a class="boton" href={urlGift} target="_blank" rel="noopener">{idioma === 'es' ? 'Comprar' : 'Buy Now'}</a></p>
+          )}
+        </div>
+      );
+    }
+    case 'redes':
+      return <p class="redes">{b.enlaces.map((e) => <a href={e.href} target="_blank" rel="noopener">{e.etiqueta || e.href}</a>)}</p>;
+    case 'idioma':
+    case 'menu':
+      return null;
+    default:
+      return b.hijos ? <Bloques bloques={b.hijos} pagina={pagina} ref={ref} /> : null;
+  }
+})}

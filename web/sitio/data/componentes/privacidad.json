@@ -1,0 +1,129 @@
+{
+  "fuente": "origin/claude/editor-componentes-html:editor/html/politica-de-privacidad__texto__3de38d_fe35f920.html",
+  "i18n": {
+    "es": {
+      "title": "Política de Privacidad",
+      "subtitle": "Última actualización: 14 de junio de 2026",
+      "footer": "© 2026 Rosanta · rosanta.rest",
+      "intro": "Esta Política de Privacidad describe cómo Rosanta (operado por CORSAGA, S.A.) recopila, usa y protege la información de las personas que se comunican con nosotros, incluyendo a través de nuestros canales de mensajería de WhatsApp e Instagram. Al escribirnos por estos canales, aceptas las prácticas descritas en esta política."
+    },
+    "en": {
+      "title": "Privacy Policy",
+      "subtitle": "Last updated: June 14, 2026",
+      "footer": "© 2026 Rosanta · rosanta.rest",
+      "intro": "This Privacy Policy describes how Rosanta (operated by CORSAGA, S.A.) collects, uses, and protects the information of people who contact us, including through our WhatsApp and Instagram messaging channels. By writing to us through these channels, you accept the practices described in this policy."
+    }
+  },
+  "sections": [
+    {
+      "h": {
+        "es": "1. Quiénes somos",
+        "en": "1. Who we are"
+      },
+      "body": {
+        "es": "<p>Rosanta es un restaurante ubicado en Antigua Guatemala. Para consultas sobre privacidad puedes escribirnos a restaurante@rosanta.rest.</p>",
+        "en": "<p>Rosanta is a restaurant located in Antigua Guatemala. For privacy inquiries, you can write to us at restaurante@rosanta.rest.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "2. Qué información recopilamos",
+        "en": "2. What information we collect"
+      },
+      "body": {
+        "es": "<p>Cuando te comunicas con nosotros por WhatsApp o Instagram, podemos recopilar:</p><ul><li>El contenido de los mensajes que nos envías.</li><li>Tu nombre de usuario o nombre de perfil, según lo proporcione la plataforma.</li><li>Tu número de teléfono (en el caso de WhatsApp) o identificador de cuenta (en el caso de Instagram).</li><li>Cualquier dato que compartas voluntariamente en la conversación, como fecha y número de personas para una reserva, o detalles de un evento.</li></ul><p>No recopilamos datos sensibles ni información financiera a través de estos canales.</p>",
+        "en": "<p>When you contact us via WhatsApp or Instagram, we may collect:</p><ul><li>The content of the messages you send us.</li><li>Your username or profile name, as provided by the platform.</li><li>Your phone number (in the case of WhatsApp) or account identifier (in the case of Instagram).</li><li>Any information you voluntarily share in the conversation, such as the date and number of guests for a reservation, or details of an event.</li></ul><p>We do not collect sensitive data or financial information through these channels.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "3. Para qué usamos tu información",
+        "en": "3. How we use your information"
+      },
+      "body": {
+        "es": "<p>Usamos la información únicamente para:</p><ul><li>Responder a tus consultas sobre el restaurante (menú, horarios, ubicación, reservas, eventos).</li><li>Orientarte para realizar una reserva o solicitar un evento.</li><li>Dar seguimiento a tu solicitud cuando se requiere la atención de una persona del equipo.</li><li>Mejorar la calidad de nuestra atención.</li></ul><p>No usamos tu información para publicidad ni la vendemos a terceros.</p>",
+        "en": "<p>We use your information solely to:</p><ul><li>Respond to your inquiries about the restaurant (menu, hours, location, reservations, events).</li><li>Guide you in making a reservation or requesting an event.</li><li>Follow up on your request when a team member's attention is needed.</li><li>Improve the quality of our service.</li></ul><p>We do not use your information for advertising, nor do we sell it to third parties.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "4. Asistente automatizado e inteligencia artificial",
+        "en": "4. Automated assistant and artificial intelligence"
+      },
+      "body": {
+        "es": "<p>Para responder con rapidez, algunos mensajes son procesados por un asistente automatizado que utiliza tecnología de inteligencia artificial proporcionada por Anthropic (Claude). El texto de tu mensaje se envía a este servicio con el único fin de generar una respuesta adecuada. No se utiliza para entrenar modelos ni para fines ajenos a tu atención.</p>",
+        "en": "<p>To respond quickly, some messages are processed by an automated assistant that uses artificial intelligence technology provided by Anthropic (Claude). The text of your message is sent to this service solely to generate an appropriate response. It is not used to train models or for any purpose unrelated to assisting you.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "5. Con quién compartimos información",
+        "en": "5. Who we share information with"
+      },
+      "body": {
+        "es": "<p>Para operar este servicio utilizamos proveedores tecnológicos que actúan como procesadores de datos:</p><ul><li>Meta Platforms (WhatsApp e Instagram): plataformas a través de las cuales recibes y envías los mensajes.</li><li>Anthropic (Claude): procesa el texto de los mensajes para generar respuestas.</li><li>Google (Google Workspace): almacenamos el registro de las conversaciones y solicitudes para darles seguimiento.</li></ul><p>Cada uno de estos proveedores trata la información conforme a sus propias políticas de privacidad. No compartimos tu información con terceros con fines comerciales.</p>",
+        "en": "<p>To operate this service, we use technology providers that act as data processors:</p><ul><li>Meta Platforms (WhatsApp and Instagram): platforms through which you receive and send messages.</li><li>Anthropic (Claude): processes the text of messages to generate responses.</li><li>Google (Google Workspace): we store the record of conversations and requests to follow up on them.</li></ul><p>Each of these providers handles information in accordance with its own privacy policies. We do not share your information with third parties for commercial purposes.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "6. Conservación de los datos",
+        "en": "6. Data retention"
+      },
+      "body": {
+        "es": "<p>Conservamos los registros de las conversaciones solo durante el tiempo necesario para atender tu solicitud y para fines internos de seguimiento y mejora del servicio. Puedes solicitar la eliminación de tus datos en cualquier momento.</p>",
+        "en": "<p>We keep records of conversations only for as long as necessary to handle your request and for internal follow-up and service improvement purposes. You can request the deletion of your data at any time.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "7. Tus derechos",
+        "en": "7. Your rights"
+      },
+      "body": {
+        "es": "<p>Puedes solicitar acceder, corregir o eliminar la información que tengamos sobre ti escribiéndonos a restaurante@rosanta.rest. Atenderemos tu solicitud conforme a la legislación aplicable.</p>",
+        "en": "<p>You can request to access, correct, or delete the information we hold about you by writing to us at restaurante@rosanta.rest. We will handle your request in accordance with applicable law.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "8. Menores de edad",
+        "en": "8. Minors"
+      },
+      "body": {
+        "es": "<p>Nuestros servicios están dirigidos a personas mayores de edad. No recopilamos de forma intencional información de menores. Si crees que un menor nos ha proporcionado información, escríbenos y la eliminaremos.</p>",
+        "en": "<p>Our services are intended for adults. We do not intentionally collect information from minors. If you believe a minor has provided us with information, please write to us and we will delete it.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "9. Seguridad",
+        "en": "9. Security"
+      },
+      "body": {
+        "es": "<p>Aplicamos medidas razonables para proteger tu información frente a accesos no autorizados. Ningún sistema es completamente infalible, pero nos comprometemos a tratar tus datos con cuidado y responsabilidad.</p>",
+        "en": "<p>We apply reasonable measures to protect your information from unauthorized access. No system is completely infallible, but we are committed to handling your data with care and responsibility.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "10. Cambios a esta política",
+        "en": "10. Changes to this policy"
+      },
+      "body": {
+        "es": "<p>Podemos actualizar esta Política de Privacidad cuando sea necesario. Publicaremos la versión vigente en esta misma página con su fecha de actualización.</p>",
+        "en": "<p>We may update this Privacy Policy when necessary. We will publish the current version on this same page along with its update date.</p>"
+      }
+    },
+    {
+      "h": {
+        "es": "11. Contacto",
+        "en": "11. Contact"
+      },
+      "body": {
+        "es": "<p>Si tienes preguntas sobre esta política o sobre el tratamiento de tus datos, escríbenos a restaurante@rosanta.rest.</p>",
+        "en": "<p>If you have questions about this policy or how your data is handled, write to us at restaurante@rosanta.rest.</p>"
+      }
+    }
+  ]
+}

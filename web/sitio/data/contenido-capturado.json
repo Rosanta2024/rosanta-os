@@ -1,0 +1,2835 @@
+{
+  "formato": 1,
+  "version": 0,
+  "publicada": "2026-10-20T23:34:39.612Z",
+  "huella": "00a78b5065fce0b64c22d7d25fc247d0964768becf4696a15c08f1168b9a2517",
+  "_nota": "Capturado de www.rosanta.rest (Wix) para sembrar() del editor. Claves de bloque = id del componente de Wix. Menú: precio_q es el primer precio; las variantes van al final de la descripción. Fotos con URL del sitio nuevo (quedan como externa/… hasta subirlas).",
+  "ajustes": {
+    "tipo_cambio_usd": null
+  },
+  "paginas": {
+    "inicio": {
+      "orden": 0,
+      "ruta": {
+        "en": "/",
+        "es": "/es"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Rosanta | Restaurante Farm to Table en Antigua Guatemala",
+          "en": "Rosanta | Farm to Table in Antigua Guatemala"
+        },
+        "descripcion": {
+          "es": "Rosanta, restaurante farm to table en Antigua Guatemala. Cocina honesta de temporada y gastrococtelería, del jardín a tu mesa.",
+          "en": "Rosanta, Farm to Table restaurant in Antigua Guatemala. Honest, seasonal cuisine and gastro-cocktails, from the garden to your table."
+        },
+        "foto": {
+          "id": 10,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-mt07akbq": {
+          "id": 1,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "UN JARDÍN QUE DA",
+          "en": "A GARDEN THAT GIVES"
+        },
+        "comp-mt07bza3": {
+          "id": 2,
+          "tipo": "parrafo",
+          "orden": 1,
+          "es": "Y UNA COCINA AGRADECIDA",
+          "en": "AND A GRATEFUL KITCHEN"
+        },
+        "comp-mszgr7vv": {
+          "id": 3,
+          "tipo": "texto",
+          "orden": 2,
+          "es": "EL PLACER DE LA\nCOCINA HONESTA",
+          "en": "THE JOY OF HONEST COOKING"
+        },
+        "comp-mszgsmi2": {
+          "id": 4,
+          "tipo": "parrafo",
+          "orden": 3,
+          "es": "Aquí el sabor empieza en la tierra y termina en tu mesa: fresco, local, cosechado el mismo día. Ven por la comida, quédate por el jardín, y convierte una noche cualquiera en una que vale la pena recordar. Tu mesa te espera.",
+          "en": "Flavor here begins in the soil and ends at your table: fresh, local, picked the same day. Come for the food, stay for the garden, and turn an ordinary night into one worth remembering. Your table is waiting."
+        },
+        "comp-mszgtzji": {
+          "id": 5,
+          "tipo": "enlace",
+          "orden": 4,
+          "es": "Reservaciones",
+          "en": "Reservations",
+          "enlace": "/"
+        },
+        "comp-mszgypvv": {
+          "id": 6,
+          "tipo": "texto",
+          "orden": 5,
+          "es": "JARDÍN,\nCOSECHA,\nMESA,\nREUNIÓN,\nSOBREMESA,\nRECUERDO.",
+          "en": "GARDEN,\nHARVEST,\nTABLE,\nGATHER,\nLINGER,\nREMEMBER."
+        },
+        "comp-mszh0tv1": {
+          "id": 7,
+          "tipo": "parrafo",
+          "orden": 6,
+          "es": "COCINA HONESTA:\nDE TEMPORADA, LOCAL, CON INTENCIÓN.",
+          "en": "HONEST COOKING:\nSEASONAL, LOCAL, INTENTIONAL."
+        },
+        "comp-mszh26e7": {
+          "id": 8,
+          "tipo": "parrafo",
+          "orden": 7,
+          "es": "Empieza en la tierra, a unos pasos de tu mesa.",
+          "en": "It begins in the soil, a few steps from your table."
+        },
+        "comp-mszh3qyb": {
+          "id": 9,
+          "tipo": "parrafo",
+          "orden": 8,
+          "es": "Buena parte de lo que pruebas creció en el jardín que te rodea: cosechado en su punto, cocinado el mismo día, al ritmo de lo que la temporada quiso dar. Lo que el jardín no da llega de manos cercanas, pequeños productores que van despacio, siguen las estaciones y cuidan la misma tierra que pisas.\nLa barra cuenta la misma historia. Hierbas cortadas esa mañana, fruta en su punto, destilados elegidos con cuidado y mezclados para ti al momento. Dile al bartender qué te gusta, y una copa nace a tu medida.\nAquí nada se apura ni se disfraza. Los sabores son honestos porque los ingredientes lo son: frescos, locales, de aquí cerca. En cada bocado hay un poco de sol, un poco de lluvia, un poco de la tierra de donde vino.\nY luego está el jardín: luces colgando, la noche cayendo despacio. Un lugar hecho para quedarse, para las conversaciones largas, para esas noches que no quieres que terminen.\nAsí que acomódate. Comparte un plato, levanta una copa, deja que la luz del jardín haga el resto. Esta es comida para vivirse, no solo comerse, y para dejarte un recuerdo que te lleves a casa, y una razón para volver.",
+          "en": "Much of what you'll taste grew in the garden around you: picked at its peak, cooked the same day, guided by whatever the season decided to give. What the garden doesn't grow comes from nearby hands, small producers who move slow, follow the seasons, and care for the same land you're standing on.\nThe bar tells the same story. Herbs cut that morning, fruit at its ripest, spirits chosen with care and mixed for you on the spot. Tell the bartender what you love, and a glass gets built around it.\nNothing here is rushed or dressed up. The flavors are honest because the ingredients are: fresh, local, close to home. In every bite there's a little sun, a little rain, a little of the earth it came from.\nAnd then there's the garden itself: string lights overhead, the evening settling in slow. A place made for lingering, for long conversations, for the kind of evening that ends far later than you planned.\nSo settle in. Share a plate, raise a glass, let the garden light do the rest. This isn't food to rush through: it's an evening to live, one that leaves you with a memory worth carrying home, and a reason to come back."
+        },
+        "comp-lhi1vcac": {
+          "id": 10,
+          "tipo": "foto",
+          "orden": 9,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 1,
+            "url": "https://www.rosanta.rest/img/b75909_2a8d36375f5a413cba2daf8374387b1c.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_2a8d36375f5a413cba2daf8374387b1c.webp",
+            "ancho": 1098,
+            "alto": 1346,
+            "alt": {
+              "es": "Grilled octopus, served with paprika potatoes and a smooth pea puree",
+              "en": "Grilled octopus, served with paprika potatoes and a smooth pea puree"
+            }
+          }
+        },
+        "comp-msvvq3g7": {
+          "id": 11,
+          "tipo": "texto",
+          "orden": 10,
+          "es": "MENÚ",
+          "en": "MENU"
+        },
+        "comp-msvvt1t1": {
+          "id": 12,
+          "tipo": "parrafo",
+          "orden": 11,
+          "es": "Cada detalle que encuentras aquí tiene una razón de ser. Desde los ingredientes frescos, locales y de temporada que usamos, hasta los sabores que buscan reconectarte con lo natural. Cocinamos con respeto: por la tierra, por quienes la trabajan, por lo que crece cerca, y por ti.\nMuchos de los ingredientes que pruebas vienen directo del jardín, un espacio vivo cultivado con prácticas regenerativas que cuidan el suelo y lo llenan de vida. El resto llega de productores locales que comparten esa forma de ver el mundo: cosechar sin prisa, respetar la temporada, fortalecer la comunidad.\nCocinamos con principios que nos importan y que nos representan. Preferimos lo simple y lo verdadero. Cada plato, cada coctel, cada rincón de este lugar está pensado para que te sientas bien, para que conectes con los tuyos, con tu entorno, y contigo mismo.\nAsí se hace gastronomía sostenible aquí: honesta, creativa y consciente. Gracias por ser parte de este espacio. Disfruta, celebra, y haz recuerdos que valga la pena guardar.",
+          "en": "Every detail you find here has a reason to be. From the fresh, local and seasonal ingredients we use, to the flavors that seek to reconnect you with what is natural. We cook with respect: for the land, for those who grow it, for what grows nearby, and for you.\nMany of the ingredients you taste come straight from the garden, a living space grown with regenerative practices that care for the soil and fill it with life. The rest comes from local producers who share that way of seeing the world: harvesting without rush, respecting the season, strengthening the community.\nWe cook with principles that matter to us and that represent us. We prefer what is simple and true. Every dish, every cocktail, every corner of this place is meant for you to feel good, to connect with your people, with your surroundings, and with yourself.\nThat is how sustainable gastronomy is done here: honest, creative and conscious. Thank you for being part of this space. Enjoy, celebrate, and make memories worth keeping."
+        },
+        "comp-msvvw9tf": {
+          "id": 13,
+          "tipo": "texto",
+          "orden": 12,
+          "es": "COCINA CON PROPÓSITO",
+          "en": "COOKING WITH PURPOSE"
+        },
+        "comp-msvx54vc": {
+          "id": 14,
+          "tipo": "texto",
+          "orden": 13,
+          "es": "Cocina que nace de la tierra y se sirve con propósito.",
+          "en": "Cooking that is born from the land and served with purpose."
+        },
+        "comp-lhi26c4o": {
+          "id": 15,
+          "tipo": "enlace",
+          "orden": 14,
+          "es": "MENÚ COMPLETO",
+          "en": "FULL MENU",
+          "enlace": "/full-menu"
+        },
+        "comp-lhm7wu7n": {
+          "id": 16,
+          "tipo": "texto",
+          "orden": 15,
+          "es": "PULPO A LA PARRILLA /\nGRILL OCTOPUS",
+          "en": "PULPO A LA PARRILLA /\nGRILL OCTOPUS"
+        },
+        "comp-msvygwmb": {
+          "id": 17,
+          "tipo": "parrafo",
+          "orden": 16,
+          "es": "14° N · 91° O\nLas coordenadas de Antigua. El punto exacto donde crece casi todo lo que llega a tu mesa.",
+          "en": "14° N · 91° W\nThe coordinates of Antigua. The exact point where almost everything that reaches your table grows."
+        },
+        "comp-lhi748dz.foto1": {
+          "id": 18,
+          "tipo": "foto",
+          "orden": 17,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 2,
+            "url": "https://www.rosanta.rest/img/b75909_e549fb68cb0243ac9f86aecb49752a31.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_e549fb68cb0243ac9f86aecb49752a31.webp",
+            "ancho": 1067,
+            "alto": 1600,
+            "alt": {
+              "es": "Grilled tenderloin with potato gratin and Red Pepper Old Fashioned cocktail at Rosanta farm to table restaurant Antigua Guatemala",
+              "en": "Grilled tenderloin with potato gratin and Red Pepper Old Fashioned cocktail at Rosanta farm to table restaurant Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhi748dz.foto2": {
+          "id": 19,
+          "tipo": "foto",
+          "orden": 18,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 3,
+            "url": "https://www.rosanta.rest/img/b75909_7133620604c641ccaffe83e1a0431fe2.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_7133620604c641ccaffe83e1a0431fe2.webp",
+            "ancho": 1066,
+            "alto": 1600,
+            "alt": {
+              "es": "Sunset views at Rosanta garden restaurant in Antigua Guatemala",
+              "en": "Sunset views at Rosanta garden restaurant in Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhi748dz.foto3": {
+          "id": 20,
+          "tipo": "foto",
+          "orden": 19,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 4,
+            "url": "https://www.rosanta.rest/img/b75909_aa78dd2d888c4b1f84075d6e2366f365.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_aa78dd2d888c4b1f84075d6e2366f365.webp",
+            "ancho": 1200,
+            "alto": 1600,
+            "alt": {
+              "es": "Outdoor garden firepit at Rosanta restaurant Antigua Guatemala in a warm and cozy atmosphere",
+              "en": "Outdoor garden firepit at Rosanta restaurant Antigua Guatemala in a warm and cozy atmosphere"
+            }
+          }
+        },
+        "comp-lhi748dz.foto4": {
+          "id": 21,
+          "tipo": "foto",
+          "orden": 20,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 5,
+            "url": "https://www.rosanta.rest/img/b75909_ca941d3db6ea47f7929633db70743606.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_ca941d3db6ea47f7929633db70743606.webp",
+            "ancho": 1217,
+            "alto": 1600,
+            "alt": {
+              "es": "Mushroom tartar with grilled peach and mezcal cocktail at Rosanta farm to table restaurant Antigua Guatemala",
+              "en": "Mushroom tartar with grilled peach and mezcal cocktail at Rosanta farm to table restaurant Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhi748dz.foto5": {
+          "id": 22,
+          "tipo": "foto",
+          "orden": 21,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 6,
+            "url": "https://www.rosanta.rest/img/b75909_f1dad37ede17456285165b186a0367d2.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_f1dad37ede17456285165b186a0367d2.webp",
+            "ancho": 1066,
+            "alto": 1600,
+            "alt": {
+              "es": "Warm and romantic dining space at Rosanta gastrococtelería Antigua Guatemala",
+              "en": "Warm and romantic dining space at Rosanta gastrococtelería Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhi748dz.foto6": {
+          "id": 23,
+          "tipo": "foto",
+          "orden": 22,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 7,
+            "url": "https://www.rosanta.rest/img/b75909_39b4e3990ad54445b712b66ca79d215c.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_39b4e3990ad54445b712b66ca79d215c.webp",
+            "ancho": 1066,
+            "alto": 1600,
+            "alt": {
+              "es": "",
+              "en": ""
+            }
+          }
+        },
+        "comp-lhi748dz.foto7": {
+          "id": 24,
+          "tipo": "foto",
+          "orden": 23,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 8,
+            "url": "https://www.rosanta.rest/img/b75909_36cbf41aaeb74416850f8a67d76d8940.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_36cbf41aaeb74416850f8a67d76d8940.webp",
+            "ancho": 1110,
+            "alto": 1600,
+            "alt": {
+              "es": "Pork burger with chile adobo and tequila cocktail at Rosanta gastrococtelería Antigua Guatemala",
+              "en": "Pork burger with chile adobo and tequila cocktail at Rosanta gastrococtelería Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhi748dz.foto8": {
+          "id": 25,
+          "tipo": "foto",
+          "orden": 24,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 9,
+            "url": "https://www.rosanta.rest/img/b75909_ae50e7e6101d46a0988892560702b508.webp",
+            "url_chica": "https://www.rosanta.rest/img/b75909_ae50e7e6101d46a0988892560702b508.webp",
+            "ancho": 1066,
+            "alto": 1600,
+            "alt": {
+              "es": "Slow-baked pork ribs with whiskey cocktail at Rosanta sustainable restaurant Antigua Guatemala",
+              "en": "Slow-baked pork ribs with whiskey cocktail at Rosanta sustainable restaurant Antigua Guatemala"
+            }
+          }
+        },
+        "comp-lhjc19k8": {
+          "id": 26,
+          "tipo": "texto",
+          "orden": 25,
+          "es": "CONTACTO",
+          "en": "CONTACT INFO"
+        },
+        "comp-lhjc19ki": {
+          "id": 27,
+          "tipo": "texto",
+          "orden": 26,
+          "es": "DIRECCIÓN",
+          "en": "ADDRESS"
+        },
+        "comp-lhjc19kp": {
+          "id": 28,
+          "tipo": "texto",
+          "orden": 27,
+          "es": "CONTACTO",
+          "en": "CONTACT"
+        },
+        "comp-lhjc19lh": {
+          "id": 29,
+          "tipo": "texto",
+          "orden": 28,
+          "es": "HORARIOS",
+          "en": "OPEN HOURS"
+        },
+        "comp-lhjc19km": {
+          "id": 30,
+          "tipo": "parrafo",
+          "orden": 29,
+          "es": "1a Calle Oriente 15, Antigua \nGuatemala, Sacatepéquez.",
+          "en": "1a Calle Oriente 15, Antigua \nGuatemala, Sacatepéquez."
+        },
+        "comp-lhjc19kt": {
+          "id": 31,
+          "tipo": "parrafo",
+          "orden": 30,
+          "es": "(502) 7768 8880",
+          "en": "(502) 7768 8880"
+        },
+        "comp-lhjc19kw": {
+          "id": 32,
+          "tipo": "parrafo",
+          "orden": 31,
+          "es": "restaurante@rosanta.rest",
+          "en": "restaurante@rosanta.rest"
+        },
+        "comp-lmihpanw": {
+          "id": 33,
+          "tipo": "parrafo",
+          "orden": 32,
+          "es": "🍸🌿 Del jardín a tu mesa: ingredientes frescos cosechados aquí cerca, que cambian con cada temporada. Ven a probar lo que crece a unos pasos.\n14° N · 91° O · Antigua Guatemala",
+          "en": "🍸🌿 From the garden to your table: fresh ingredients picked close to home, changing with every season. Come taste what grows just steps away.\n14° N · 91° W · Antigua Guatemala"
+        },
+        "comp-lhjc19lr": {
+          "id": 34,
+          "tipo": "parrafo",
+          "orden": 33,
+          "es": "Lunes",
+          "en": "Monday"
+        },
+        "comp-lhjcmbpr": {
+          "id": 35,
+          "tipo": "parrafo",
+          "orden": 34,
+          "es": "Martes",
+          "en": "Tuesday"
+        },
+        "comp-lhjcmbpy": {
+          "id": 36,
+          "tipo": "parrafo",
+          "orden": 35,
+          "es": "17:00 - 21:00 Hrs",
+          "en": "17:00 - 21:00 Hrs"
+        },
+        "comp-lidavzjr": {
+          "id": 37,
+          "tipo": "parrafo",
+          "orden": 36,
+          "es": "Mié - Jue",
+          "en": "Wed - Thu"
+        },
+        "comp-lidavzjv2": {
+          "id": 38,
+          "tipo": "parrafo",
+          "orden": 37,
+          "es": "12:00 - 21:00 Hrs",
+          "en": "12:00 - 21:00 Hrs"
+        },
+        "comp-lidawv8i": {
+          "id": 39,
+          "tipo": "parrafo",
+          "orden": 38,
+          "es": "Viernes - Sábado",
+          "en": "Friday - Saturday"
+        },
+        "comp-lidawv8l": {
+          "id": 40,
+          "tipo": "parrafo",
+          "orden": 39,
+          "es": "12:00 - 22:00 Hrs",
+          "en": "12:00 - 22:00 Hrs"
+        },
+        "comp-lidaydb8": {
+          "id": 41,
+          "tipo": "parrafo",
+          "orden": 40,
+          "es": "Domingo",
+          "en": "Sunday"
+        },
+        "comp-lidaydba2": {
+          "id": 42,
+          "tipo": "parrafo",
+          "orden": 41,
+          "es": "15:00 - 20:00 Hrs",
+          "en": "15:00 - 20:00 Hrs"
+        },
+        "comp-moq9ockp": {
+          "id": 43,
+          "tipo": "parrafo",
+          "orden": 42,
+          "es": "17:00 - 21:00 Hrs",
+          "en": "17:00 - 21:00 Hrs"
+        }
+      }
+    },
+    "reservas": {
+      "orden": 1,
+      "ruta": {
+        "en": "/reservas",
+        "es": "/es/reservas"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Reservaciones | Rosanta · Antigua Guatemala",
+          "en": "RESERVATIONS | Rosanta"
+        },
+        "descripcion": {
+          "es": "¡Reserva ahora en Rosanta y asegura tu lugar para una experiencia culinaria inolvidable en Antigua Guatemala!",
+          "en": "¡Reserva ahora en Rosanta y asegura tu lugar para una experiencia culinaria inolvidable en Antigua Guatemala!"
+        },
+        "foto": {
+          "id": 15,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-lujxv6ly.foto1": {
+          "id": 44,
+          "tipo": "foto",
+          "orden": 0,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 11,
+            "url": "https://www.rosanta.rest/img/3de38d_e4c35f5714904dd989d8d150b0d207ae.webp",
+            "url_chica": "https://www.rosanta.rest/img/3de38d_e4c35f5714904dd989d8d150b0d207ae.webp",
+            "ancho": 637,
+            "alto": 799,
+            "alt": {
+              "es": "Mesa servida en Rosanta con flores secas y cristalería, lista para recibir a los comensales",
+              "en": "Mesa servida en Rosanta con flores secas y cristalería, lista para recibir a los comensales"
+            }
+          }
+        },
+        "comp-lujxv6ly.foto2": {
+          "id": 45,
+          "tipo": "foto",
+          "orden": 1,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 12,
+            "url": "https://www.rosanta.rest/img/3de38d_b7d5733c03334c23b8b2ffcdbb4aa7d6.webp",
+            "url_chica": "https://www.rosanta.rest/img/3de38d_b7d5733c03334c23b8b2ffcdbb4aa7d6.webp",
+            "ancho": 640,
+            "alto": 800,
+            "alt": {
+              "es": "Queso horneado en sartén de hierro con costra de pepitoria y fresas maceradas en vino tinto",
+              "en": "Queso horneado en sartén de hierro con costra de pepitoria y fresas maceradas en vino tinto"
+            }
+          }
+        },
+        "comp-lujxv6ly.foto3": {
+          "id": 46,
+          "tipo": "foto",
+          "orden": 2,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 13,
+            "url": "https://www.rosanta.rest/img/3de38d_8476578563334ebb872db843778ff09d.webp",
+            "url_chica": "https://www.rosanta.rest/img/3de38d_8476578563334ebb872db843778ff09d.webp",
+            "ancho": 640,
+            "alto": 800,
+            "alt": {
+              "es": "Jardín de Rosanta en Antigua Guatemala con sombrillas y luces colgantes al atardecer",
+              "en": "Jardín de Rosanta en Antigua Guatemala con sombrillas y luces colgantes al atardecer"
+            }
+          }
+        },
+        "comp-lujxv6ly.foto4": {
+          "id": 47,
+          "tipo": "foto",
+          "orden": 3,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 14,
+            "url": "https://www.rosanta.rest/img/3de38d_2d75f14a7109478a98ad63dea18d1e8d.webp",
+            "url_chica": "https://www.rosanta.rest/img/3de38d_2d75f14a7109478a98ad63dea18d1e8d.webp",
+            "ancho": 640,
+            "alto": 800,
+            "alt": {
+              "es": "Comensales compartiendo la cena en el jardín de Rosanta bajo luces colgantes",
+              "en": "Comensales compartiendo la cena en el jardín de Rosanta bajo luces colgantes"
+            }
+          }
+        }
+      }
+    },
+    "menu": {
+      "orden": 2,
+      "ruta": {
+        "en": "/full-menu",
+        "es": "/es/full-menu"
+      },
+      "seo": {
+        "titulo": {
+          "es": "MENÚ ROSANTA · ANTIGUA GUATEMALA | Rosanta",
+          "en": "ROSANTA MENU · ANTIGUA GUATEMALA | Rosanta"
+        },
+        "descripcion": {
+          "es": "Rosanta's full menu in Antigua Guatemala: starters, mains, gastro-cocktails and wines, with current prices in English and Spanish.",
+          "en": "Rosanta's full menu in Antigua Guatemala: starters, mains, gastro-cocktails and wines, with current prices in English and Spanish."
+        },
+        "foto": {
+          "id": 16,
+          "url": "https://www.rosanta.rest/img/b75909_045bbfcd01d242eea5dd11b61aaedb76.webp",
+          "url_chica": "https://www.rosanta.rest/img/b75909_045bbfcd01d242eea5dd11b61aaedb76.webp",
+          "ancho": 1598,
+          "alto": 1600,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {}
+    },
+    "eventos": {
+      "orden": 3,
+      "ruta": {
+        "en": "/events",
+        "es": "/es/events"
+      },
+      "seo": {
+        "titulo": {
+          "es": "COTIZACIONES | Rosanta",
+          "en": "COTIZACIONES | Rosanta"
+        },
+        "descripcion": {
+          "es": "",
+          "en": ""
+        },
+        "foto": {
+          "id": 17,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-lsz94156": {
+          "id": 48,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "COTIZACIONES",
+          "en": "COTIZACIONES"
+        },
+        "comp-lsz9415e": {
+          "id": 49,
+          "tipo": "parrafo",
+          "orden": 1,
+          "es": "OPCIONES DE MENÚ",
+          "en": "OPCIONES DE MENÚ"
+        },
+        "comp-lsz9415h": {
+          "id": 50,
+          "tipo": "enlace",
+          "orden": 2,
+          "es": "MENU DEGUSTACIÓN",
+          "en": "MENU DEGUSTACIÓN",
+          "enlace": "/_files/ugd/3de38d_7f417b2d9c4645d4a39a0b166d7f7e9e.pdf"
+        },
+        "comp-lwk3tw02": {
+          "id": 51,
+          "tipo": "enlace",
+          "orden": 3,
+          "es": "MENÚ EVENTOS ESPECIALES",
+          "en": "MENÚ EVENTOS ESPECIALES",
+          "enlace": "/_files/ugd/3de38d_09439677a0a74caab0fbbb9562485334.pdf"
+        },
+        "comp-lwk4bcwf": {
+          "id": 52,
+          "tipo": "enlace",
+          "orden": 4,
+          "es": "BOQUITAS & BARRA LIBRE",
+          "en": "BOQUITAS & BARRA LIBRE",
+          "enlace": "/_files/ugd/3de38d_dde190a54ad14f0f872ff51c5fa26798.pdf"
+        }
+      }
+    },
+    "eventos-privados": {
+      "orden": 4,
+      "ruta": {
+        "en": "/events-1",
+        "es": "/es/events-1"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Rosanta | Eventos y Celebraciones en Antigua Guatemala",
+          "en": "Rosanta | Private Events & Celebrations in Antigua Guatemala"
+        },
+        "descripcion": {
+          "es": "Celebra en Rosanta: eventos privados, cenas especiales y celebraciones en el jardín. Cotiza tu evento en Antigua Guatemala.",
+          "en": "Host your event at Rosanta: private events, special dinners and celebrations in the garden. Request a quote in Antigua Guatemala."
+        },
+        "foto": {
+          "id": 18,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-lwk3p2zc": {
+          "id": 53,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "EVENTOS ESPECIALES",
+          "en": "SPECIAL EVENTS"
+        },
+        "comp-lwk3p2zn1": {
+          "id": 54,
+          "tipo": "parrafo",
+          "orden": 1,
+          "es": "UN MENÚ HECHO PARA LA OCASIÓN",
+          "en": "A MENU MADE FOR THE OCCASION"
+        },
+        "comp-m0g4p5ps": {
+          "id": 55,
+          "tipo": "enlace",
+          "orden": 2,
+          "es": "Cotiza tu evento",
+          "en": "Request a quote",
+          "enlace": "/events-1"
+        },
+        "comp-mt1plt5d": {
+          "id": 56,
+          "tipo": "parrafo",
+          "orden": 3,
+          "es": "Cada evento empieza con una conversación. Armamos el menú alrededor de lo que el jardín está dando esa semana, de lo que le gusta a tu gente y de cómo quieres que vaya la noche. Cuéntanos la ocasión y nosotros nos encargamos: todo el restaurante se prepara para ustedes.",
+          "en": "Every event starts with a conversation. We build the menu around what the garden is giving that week, what your people like, and how you want the night to go. Tell us the occasion and we take it from there: the whole restaurant gets ready for you."
+        }
+      }
+    },
+    "gift-ideas": {
+      "orden": 5,
+      "ruta": {
+        "en": "/gift-ideas",
+        "es": "/es/gift-ideas"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Rosanta | Tarjeta de Regalo | Restaurante en Antigua Guatemala",
+          "en": "Rosanta | Gift Cards in Antigua Guatemala | Garden Restaurant"
+        },
+        "descripcion": {
+          "es": "Tarjetas de regalo de Rosanta desde Q300. Regala una cena en el jardín, con cocina de temporada y coctelería en Antigua Guatemala.",
+          "en": "Give the gift of an unforgettable dining experience at Rosanta. Gift cards for the garden restaurant in Antigua Guatemala. Farm-to-table cuisine and creative cocktails."
+        },
+        "foto": {
+          "id": 19,
+          "url": "https://www.rosanta.rest/img/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_e62ca6e7908149b2a4ed1b964cb1fc33.webp",
+          "ancho": 801,
+          "alto": 470,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-moqg08v8": {
+          "id": 57,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "IDEAS PARA REGALAR",
+          "en": "GIFT IDEAS"
+        },
+        "comp-mszhr53v": {
+          "id": 58,
+          "tipo": "parrafo",
+          "orden": 1,
+          "es": "Hay regalos que terminan en un cajón. Hay noches que se quedan contigo para siempre. Regala una mesa, una copa hecha a tu gusto, y una noche que se recuerda mucho después de la última luz del jardín. Esto no es un objeto: es sabor, un jardín, y una historia que vale la pena contar.",
+          "en": "Some gifts end up in a drawer. Some nights stay with you for good. Give a table, a glass made to your taste, and an evening remembered long after the last light in the garden. This is not an object: it is flavor, a garden, and a story worth telling."
+        },
+        "comp-mszhs5j2": {
+          "id": 59,
+          "tipo": "texto",
+          "orden": 2,
+          "es": "REGALA UNA NOCHE",
+          "en": "GIVE A NIGHT"
+        },
+        "comp-mszhv2sb": {
+          "id": 60,
+          "tipo": "parrafo",
+          "orden": 3,
+          "es": "Hay regalos que se abren una vez. Hay noches que se recuerdan para siempre. Una gift card de Rosanta pone una noche entera en las manos de alguien: cocina honesta del jardín a la mesa, cocteles hechos a su gusto en la barra, y un jardín que invita a quedarse.\n \nDisponibles en Q500 y Q300, cada tarjeta llega personalizada, con una nota para la persona que quieres sorprender, para que el regalo se sienta tan pensado como la noche que guarda. Úsala para una comida especial o para la experiencia completa en la Casa de la Gastrococtelería.\n \nPara conseguir la tuya, escríbenos, visítanos en 1a Calle Oriente 15, Antigua Guatemala, Sacatepéquez, o llama al\n(502) 7768-8880, y resolvemos cada detalle contigo.",
+          "en": "Some gifts are opened once. Some nights are remembered for good. A Rosanta gift card puts a whole evening in someone's hands: honest, garden-to-table cooking, cocktails built to their taste at the bar, and a garden that invites them to stay.\n \nAvailable in Q500 and Q300, each card arrives personalized, with a note for the person you want to surprise, so the gift feels as thoughtful as the night it holds. Use it for a special meal or for the full experience at the Casa de la Gastrococtelería.\n \nTo get yours, write to us, visit 1a Calle Oriente 15, Antigua Guatemala, Sacatepéquez, or call\n(502) 7768-8880, and we will sort out every detail with you."
+        },
+        "comp-mszhw6of": {
+          "id": 61,
+          "tipo": "texto",
+          "orden": 4,
+          "es": "REGALA ROSANTA",
+          "en": "GIVE ROSANTA"
+        },
+        "comp-mszhx9gp": {
+          "id": 62,
+          "tipo": "texto",
+          "orden": 5,
+          "es": "SABORES DE ROMANCE",
+          "en": "FLAVOURS OF ROMANCE"
+        },
+        "comp-mszhy56d": {
+          "id": 63,
+          "tipo": "parrafo",
+          "orden": 6,
+          "es": "Hay noches que piden algo más. Una mesa para dos, un rincón tranquilo, y el resto del mundo esperando afuera.\n \nLa Cena Romántica está hecha para una noche completa: un entrante y un postre para compartir, dos platos fuertes, una botella de vino para estirar cada palabra, y la mesa vestida con velas y pétalos de rosa que la vuelven un lugar solo suyo. Para cerrar, un regalo para llevar a casa, y que la noche siga después de la última luz del jardín. Q800 para dos, valorada en Q1000.\n \nSe prepara solo con reservación, con 24 horas de anticipación: llama al 7768-8880 o escribe a restaurante@rosanta.rest, y arreglamos cada detalle para que lo único que tengas que hacer sea llegar.",
+          "en": "Some nights ask for something more. A table for two, a quiet corner, and the rest of the world waiting outside.\n \nThe Romantic Dinner is made for a whole evening: a starter and a dessert to share, two main courses, a bottle of wine to stretch every word, and the table dressed in candles and rose petals that make it a place only yours. To close, a gift to carry home, so the night lingers long after the last light in the garden. Q900 for two, valued at Q1120. \n \nPrepared by reservation only, with 24 hours' notice: call 7768-8880 or write to restaurante@rosanta.rest, and we will arrange every detail so all you have to do is arrive."
+        },
+        "comp-mszi0r6k": {
+          "id": 64,
+          "tipo": "texto",
+          "orden": 7,
+          "es": "HAZ RECUERDOS QUE VALGA LA PENA GUARDAR",
+          "en": "MAKE MEMORIES WORTH KEEPING"
+        }
+      }
+    },
+    "gift-cards": {
+      "orden": 6,
+      "ruta": {
+        "en": "/gift-card",
+        "es": "/es/gift-card"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Tarjeta de regalo | Rosanta",
+          "en": "Tarjeta de regalo | Rosanta"
+        },
+        "descripcion": {
+          "es": "",
+          "en": ""
+        },
+        "foto": {
+          "id": 20,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {}
+    },
+    "faq": {
+      "orden": 7,
+      "ruta": {
+        "en": "/preguntas-frecuentes",
+        "es": "/es/preguntas-frecuentes"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Rosanta | Frequently Asked Questions | Antigua Guatemala",
+          "en": "Rosanta | Frequently Asked Questions | Antigua Guatemala"
+        },
+        "descripcion": {
+          "es": "Everything you want to know before visiting Rosanta in Antigua Guatemala: reservations, seasonal menu, vegetarian options, parking and pets.",
+          "en": "Everything you want to know before visiting Rosanta in Antigua Guatemala: reservations, seasonal menu, vegetarian options, parking and pets."
+        },
+        "foto": {
+          "id": 21,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {}
+    },
+    "privacidad": {
+      "orden": 8,
+      "ruta": {
+        "en": "/política-de-privacidad",
+        "es": "/es/política-de-privacidad"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Política de Privacidad | Rosanta · Antigua Guatemala",
+          "en": "Privacy Policy | Rosanta"
+        },
+        "descripcion": {
+          "es": "Conoce nuestra política de privacidad en Rosanta, porque estamos comprometidos con proteger tus datos y garantizar una experiencia segura y confiable.",
+          "en": "Conoce nuestra política de privacidad en Rosanta, porque estamos comprometidos con proteger tus datos y garantizar una experiencia segura y confiable."
+        },
+        "foto": {
+          "id": 22,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {}
+    },
+    "terminos": {
+      "orden": 9,
+      "ruta": {
+        "en": "/términos-y-condiciones",
+        "es": "/es/términos-y-condiciones"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Términos y Condiciones | Rosanta",
+          "en": "Términos y Condiciones | Rosanta"
+        },
+        "descripcion": {
+          "es": "En Rosanta, fusionamos la creatividad culinaria y la mixología moderna en una experiencia memorable. Nuestra pasión por los ingredientes locales y la sostenibilidad crea platos y cócteles excepcionales en un ambiente acogedor. ¡Bienvenido a un oasis gastronómico en armonía con la naturaleza!",
+          "en": "En Rosanta, fusionamos la creatividad culinaria y la mixología moderna en una experiencia memorable. Nuestra pasión por los ingredientes locales y la sostenibilidad crea platos y cócteles excepcionales en un ambiente acogedor. ¡Bienvenido a un oasis gastronómico en armonía con la naturaleza!"
+        },
+        "foto": {
+          "id": 23,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {
+        "comp-lcn8udib1": {
+          "id": 65,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "TÉRMINOS Y CONDICIONES",
+          "en": "TÉRMINOS Y CONDICIONES"
+        },
+        "comp-lcn86q5l": {
+          "id": 66,
+          "tipo": "texto",
+          "orden": 1,
+          "es": "Aviso legal",
+          "en": "Aviso legal"
+        },
+        "comp-lcn86q5m2": {
+          "id": 67,
+          "tipo": "parrafo",
+          "orden": 2,
+          "es": "Las explicaciones e información proporcionadas en esta página son solo explicaciones e información generales y a grandes rasgos sobre cómo redactar tu propio documento de Términos y Condiciones. No debes considerar este artículo como asesoramiento legal o recomendaciones sobre lo que realmente debes hacer, porque no podemos saber de antemano cuáles son los términos específicos que deseas establecer entre tu negocio y tus clientes y visitantes. Te recomendamos que busques asesoramiento legal para entender y elaborar tus propios Términos y Condiciones.",
+          "en": "Las explicaciones e información proporcionadas en esta página son solo explicaciones e información generales y a grandes rasgos sobre cómo redactar tu propio documento de Términos y Condiciones. No debes considerar este artículo como asesoramiento legal o recomendaciones sobre lo que realmente debes hacer, porque no podemos saber de antemano cuáles son los términos específicos que deseas establecer entre tu negocio y tus clientes y visitantes. Te recomendamos que busques asesoramiento legal para entender y elaborar tus propios Términos y Condiciones."
+        },
+        "comp-lcn86q5o": {
+          "id": 68,
+          "tipo": "texto",
+          "orden": 3,
+          "es": "Términos y Condiciones: fundamentos",
+          "en": "Términos y Condiciones: fundamentos"
+        },
+        "comp-lcn86q5p2": {
+          "id": 69,
+          "tipo": "parrafo",
+          "orden": 4,
+          "es": "Dicho esto, los Términos y Condiciones («T&C») son un conjunto de términos legalmente vinculantes definidos por ti, como propietario de este sitio web. Los T&C establecen los límites legales que rigen las actividades de los visitantes del sitio web, o tus clientes, mientras visitan o participan en este sitio web. Los T&C tienen como finalidad establecer la relación legal entre los visitantes del sitio y tú como propietario de dicho sitio.",
+          "en": "Dicho esto, los Términos y Condiciones («T&C») son un conjunto de términos legalmente vinculantes definidos por ti, como propietario de este sitio web. Los T&C establecen los límites legales que rigen las actividades de los visitantes del sitio web, o tus clientes, mientras visitan o participan en este sitio web. Los T&C tienen como finalidad establecer la relación legal entre los visitantes del sitio y tú como propietario de dicho sitio."
+        },
+        "comp-lcn86q5r": {
+          "id": 70,
+          "tipo": "parrafo",
+          "orden": 5,
+          "es": "Los T&C deben definirse según las necesidades específicas y la naturaleza de cada sitio web. Por ejemplo, un sitio web que ofrece productos a los clientes en operaciones de comercio electrónico, requiere T&C diferentes a los T&C de un sitio web que únicamente proporciona información (como un blog, página de inicio, etc.).",
+          "en": "Los T&C deben definirse según las necesidades específicas y la naturaleza de cada sitio web. Por ejemplo, un sitio web que ofrece productos a los clientes en operaciones de comercio electrónico, requiere T&C diferentes a los T&C de un sitio web que únicamente proporciona información (como un blog, página de inicio, etc.)."
+        },
+        "comp-lcn86q5s1": {
+          "id": 71,
+          "tipo": "parrafo",
+          "orden": 6,
+          "es": "Los T&C te confieren, como propietario del sitio web, la capacidad de protegerte de una responsabilidad jurídica, pero esto puede diferir de una jurisdicción a otra, así que asegúrate de recibir asesoramiento legal local si estás tratando de protegerte de la responsabilidad jurídica.",
+          "en": "Los T&C te confieren, como propietario del sitio web, la capacidad de protegerte de una responsabilidad jurídica, pero esto puede diferir de una jurisdicción a otra, así que asegúrate de recibir asesoramiento legal local si estás tratando de protegerte de la responsabilidad jurídica."
+        },
+        "comp-lcn86q5u": {
+          "id": 72,
+          "tipo": "texto",
+          "orden": 7,
+          "es": "Qué debe incluirse en el documento de Términos y Condiciones",
+          "en": "Qué debe incluirse en el documento de Términos y Condiciones"
+        },
+        "comp-lcn86q5v1": {
+          "id": 73,
+          "tipo": "parrafo",
+          "orden": 8,
+          "es": "En general, los T&C suelen abordar este tipo de cuestiones: quién está autorizado a utilizar el sitio web, los posibles métodos de pago, una declaración de que el propietario del sitio web puede cambiar su oferta en el futuro, los tipos de garantías que el propietario del sitio web ofrece a sus clientes, una referencia a cuestiones de propiedad intelectual o derechos de autor (en caso de ser relevante), el derecho del propietario del sitio web a suspender o cancelar la cuenta de un miembro y mucho más. \n \nPara obtener más información, lee nuestro artículo Cómo crear una política de Términos y Condiciones.",
+          "en": "En general, los T&C suelen abordar este tipo de cuestiones: quién está autorizado a utilizar el sitio web, los posibles métodos de pago, una declaración de que el propietario del sitio web puede cambiar su oferta en el futuro, los tipos de garantías que el propietario del sitio web ofrece a sus clientes, una referencia a cuestiones de propiedad intelectual o derechos de autor (en caso de ser relevante), el derecho del propietario del sitio web a suspender o cancelar la cuenta de un miembro y mucho más. \n \nPara obtener más información, lee nuestro artículo Cómo crear una política de Términos y Condiciones."
+        }
+      }
+    },
+    "encuesta": {
+      "orden": 10,
+      "ruta": {
+        "en": "/encuesta",
+        "es": "/es/encuesta"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Encuesta | Rosanta",
+          "en": "Encuesta | Rosanta"
+        },
+        "descripcion": {
+          "es": "",
+          "en": ""
+        },
+        "foto": {
+          "id": 24,
+          "url": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "url_chica": "https://www.rosanta.rest/img/3de38d_79caaf07dba148f6aef59d3aefd535d3.webp",
+          "ancho": 1600,
+          "alto": 900,
+          "alt": {
+            "es": "",
+            "en": ""
+          }
+        }
+      },
+      "bloques": {}
+    }
+  },
+  "menu": [
+    {
+      "id": 1,
+      "clave": "to-start-flavorful-beginnings",
+      "orden": 0,
+      "nombre": {
+        "es": "PARA EMPEZAR · Comienzos con sabor",
+        "en": "TO START · Flavorful beginnings"
+      },
+      "nota": {
+        "es": "Entrantes pensados para darte la bienvenida a la mesa con intención y cuidado. Preparados con ingredientes frescos que resaltan la riqueza de la temporada y de la tierra.",
+        "en": "Starters made to welcome you to the table with intention and care. Prepared with fresh ingredients that bring out the richness of the season and the land."
+      },
+      "platos": [
+        {
+          "id": 1,
+          "orden": 0,
+          "nombre": {
+            "es": "Ensalada Rosanta",
+            "en": "Rosanta Salad"
+          },
+          "descripcion": {
+            "es": "Lechugas mixtas, tomates rostizados, naranja, cremoso aguacate, melocotón macerado con un toque de picante y encurtidos de la casa, con vinagreta de fresa y hierbabuena. Maridaje sugerido: El Fufurufo · Gin, cordial de pepino, jarabe simple, limón.\nNormal 75,00 GTQ · Lomito 100,00 GTQ · Camarones 135,00 GTQ",
+            "en": "Mixed greens, roasted tomatoes, orange, creamy avocado, peach macerated with a touch of heat, house pickles, and a strawberry and spearmint vinaigrette. Suggested pairing: El Fufurufo · Gin, cucumber cordial, simple syrup, lime.\nRegular GTQ 75.00 · Tenderloin GTQ 100.00 · Shrimp GTQ 135.00"
+          },
+          "precio_q": 75,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 2,
+          "orden": 1,
+          "nombre": {
+            "es": "Coliflor a la Parrilla con Romesco",
+            "en": "Grilled Cauliflower with Romesco"
+          },
+          "descripcion": {
+            "es": "Coliflor a la parrilla, dorada por fuera y tierna por dentro, sobre una salsa romesco de pimiento asado y almendra, terminada con hierbas del jardín.",
+            "en": "Grilled cauliflower, golden outside and tender inside, over a romesco sauce of roasted pepper and almond, finished with herbs from the garden."
+          },
+          "precio_q": 115,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 3,
+          "orden": 2,
+          "nombre": {
+            "es": "Brócoli con Nduja",
+            "en": "Broccoli with Nduja"
+          },
+          "descripcion": {
+            "es": "Brócoli asado con nduja de Sal Charcutería, embutido calabrés curado aquí en Guatemala. Suave, untable y lleno de carácter. Creado con Sal Charcutería · Al pedirlo apoyas a Niños de Guatemala y los estudios de niños de la zona. Conoce el proyecto en ninosdeguatemala.org",
+            "en": "Roasted broccoli with nduja from Sal Charcutería, a Calabrian cured sausage made here in Guatemala. Soft, spreadable and full of character. Created with Sal Charcutería · Ordering it supports Niños de Guatemala and the schooling of children in the area. Learn about the project at ninosdeguatemala.org"
+          },
+          "precio_q": 115,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 4,
+          "orden": 3,
+          "nombre": {
+            "es": "Queso Horneado",
+            "en": "Baked Cheese"
+          },
+          "descripcion": {
+            "es": "Queso al horno incrustado en pepitoria, acompañado de fresas maceradas en vino tinto, una compota de tomate y cebollas caramelizadas, servido junto a un pan tostado hecho en casa con hierbas del jardín. Maridaje sugerido: Negroni de Remolacha · Gin, shrub de remolacha clarificado y completado con Campari. Queso de cooperativa de pequeños productores de Quetzaltenango.",
+            "en": "Oven-baked cheese crusted in pepitoria, with strawberries macerated in red wine, a tomato compote and caramelized onions, served with house-made toast with garden herbs. Suggested pairing: Beetroot Negroni · Gin, clarified beet shrub, finished with Campari. Cheese from a cooperative of small producers in Quetzaltenango."
+          },
+          "precio_q": 140,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 5,
+          "orden": 4,
+          "nombre": {
+            "es": "Pulpo a la Parrilla",
+            "en": "Grilled Octopus"
+          },
+          "descripcion": {
+            "es": "Pulpo del Pacífico a la parrilla, con papas al pimentón, un suave puré de alverjas, mayonesa de hierbabuena, suprema de naranja y tomates rostizados. Maridaje sugerido: Mezcal a la Piña · Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas.",
+            "en": "Pacific octopus from the grill, with paprika potatoes, a smooth pea purée, spearmint mayonnaise, orange supremes and roasted tomatoes. Suggested pairing: Mezcal a la Piña · Espadín mezcal, pineapple jam smoked with rosemary and scented with herbs."
+          },
+          "precio_q": 150,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 6,
+          "orden": 5,
+          "nombre": {
+            "es": "Tabla de Jamones y Quesos",
+            "en": "Charcuterie and Cheese Board"
+          },
+          "descripcion": {
+            "es": "Quesos maduros y jamones curados para compartir, servidos con encurtidos de la casa y frutas frescas. Maridaje sugerido: Para disfrutar en el jardín, un Rosé Pasión Spritz.",
+            "en": "Aged cheeses and cured meats to share, served with house pickles and fresh fruit. Suggested pairing: To enjoy in the garden, a Rosé Pasión Spritz."
+          },
+          "precio_q": 210,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "clave": "healthy-options-nourishing-harvests",
+      "orden": 1,
+      "nombre": {
+        "es": "OPCIONES SALUDABLES · Cosechas nutritivas",
+        "en": "HEALTHY OPTIONS · Nourishing harvests"
+      },
+      "nota": {
+        "es": "Cocinar de forma consciente también es nutrir con intención. Elaborados con ingredientes frescos, vegetales de temporada y aderezos caseros. Cada combinación está pensada para cuidarte y reconectar con sabores naturales. Todos los platos pueden personalizarse con tofu, atún o pollo a la plancha como fuente de proteína.",
+        "en": "Cooking consciously also means nourishing with intention. Made with fresh ingredients, seasonal vegetables and house dressings. Every combination is meant to take care of you and reconnect you with natural flavors. All dishes can be customized with tofu, tuna or grilled chicken as your protein."
+      },
+      "platos": [
+        {
+          "id": 101,
+          "orden": 0,
+          "nombre": {
+            "es": "Tartar de Hongos",
+            "en": "Mushroom Tartare"
+          },
+          "descripcion": {
+            "es": "Fusión de hongos frescos, rábanos encurtidos, melocotón macerado en whiskey irlandés con un toque picante y grillado, servido con mantequilla de maní y chips crujientes de malanga. Plato vegano, sin proteína personalizada. Maridaje sugerido: La Lotería · Mezcal Espadín, cordial de rábano, limón, jarabe. Hongos silvestres y encurtidos de la casa.",
+            "en": "A fusion of fresh mushrooms, pickled radish, peach macerated in Irish whiskey with a touch of heat and grilled, served with peanut butter and crisp malanga chips. Vegan dish, no protein customization. Suggested pairing: La Lotería · Espadín mezcal, radish cordial, lime, syrup. Wild mushrooms and house pickles."
+          },
+          "precio_q": 100,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 102,
+          "orden": 1,
+          "nombre": {
+            "es": "Bok Choy a la Parrilla",
+            "en": "Grilled Bok Choy"
+          },
+          "descripcion": {
+            "es": "Bok choy a la parrilla, sobre una cama de yogur de eneldo hecho en casa, acompañado de tomates rostizados y aceite de albahaca. Yogur de eneldo hecho en casa.",
+            "en": "Grilled bok choy over a bed of house-made dill yogurt, with roasted tomatoes and basil oil. House-made dill yogurt."
+          },
+          "precio_q": 100,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 103,
+          "orden": 2,
+          "nombre": {
+            "es": "Bol Mediterráneo",
+            "en": "Mediterranean Bowl"
+          },
+          "descripcion": {
+            "es": "Una base de lechuga o cuscús, con una colorida mezcla de vegetales frescos, aceitunas, garbanzos, pepitoria y aguacate, todo armonizado con un aderezo de chile pimiento asado y un huevo cocido encima.",
+            "en": "A base of lettuce or couscous with a colorful mix of fresh vegetables, olives, chickpeas, pumpkin seed and avocado, brought together with a roasted red pepper dressing and a boiled egg on top."
+          },
+          "precio_q": 105,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 104,
+          "orden": 3,
+          "nombre": {
+            "es": "Vegetales Fermentados",
+            "en": "Fermented Vegetables"
+          },
+          "descripcion": {
+            "es": "Bol de vegetales en fermentación natural y lenta, bañados en salsa tai de maní con un toque de miel. Maridaje sugerido: Rose Collins · Gin de frutos rojos, jugo de limón, jarabe.",
+            "en": "A bowl of naturally slow-fermented vegetables in a Thai peanut sauce with a touch of honey. Suggested pairing: Rose Collins · Red berry gin, lime juice, syrup."
+          },
+          "precio_q": 115,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "clave": "burgers-from-the-garden-and-the-grill",
+      "orden": 2,
+      "nombre": {
+        "es": "HAMBURGUESAS · Del huerto y la parrilla",
+        "en": "BURGERS · From the garden and the grill"
+      },
+      "nota": {
+        "es": "Comer bien es simple cuando se eligen ingredientes frescos y técnicas que respetan el producto. Estas combinaciones están pensadas para disfrutarse con sencillez, sabor y cuidado. Cada hamburguesa va en pan brioche de cúrcuma, con mozzarella derretida, pepinillos y mayonesa de aguacate y apio. Acompañada de papas y camotes fritos crujientes.",
+        "en": "Eating well is simple when you choose fresh ingredients and techniques that respect the product. These combinations are meant to be enjoyed simply, with flavor and care. Every burger comes on a turmeric brioche bun with melted mozzarella, pickles and avocado and celery mayonnaise. Served with crispy potato and sweet potato fries."
+      },
+      "platos": [
+        {
+          "id": 201,
+          "orden": 0,
+          "nombre": {
+            "es": "Portobello Asado",
+            "en": "Roasted Portobello"
+          },
+          "descripcion": {
+            "es": "Jugoso hongo portobello horneado con mantequilla de hierbas del jardín. Maridaje sugerido: La Feria · Mezcal Espadín, mermelada de piña con especias y vino.",
+            "en": "Juicy portobello mushroom roasted with garden herb butter. Suggested pairing: La Feria · Espadín mezcal, spiced pineapple jam and wine."
+          },
+          "precio_q": 105,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 202,
+          "orden": 1,
+          "nombre": {
+            "es": "Lomito en Tiras",
+            "en": "Sliced Tenderloin"
+          },
+          "descripcion": {
+            "es": "Con cebollines tiernos asados y fresca gremolata de hierbas del jardín. Maridaje sugerido: El Colonial · Ron Colonial Antigüeño, sirope de especias con Jamaica. Corte local, gremolata cortada al momento.",
+            "en": "With tender grilled spring onions and a fresh gremolata of garden herbs. Suggested pairing: El Colonial · Colonial Antigüeño rum, spiced syrup with hibiscus. Local cut, gremolata chopped to order."
+          },
+          "precio_q": 130,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "clave": "something-stronger-cooking-with-roots-an",
+      "orden": 3,
+      "nombre": {
+        "es": "ALGO MÁS FUERTE · Cocina con raíz y fuego",
+        "en": "SOMETHING STRONGER · Cooking with roots and fire"
+      },
+      "nota": {
+        "es": "Platos fuertes pensados para honrar lo que da la tierra. Cada preparación combina técnicas que respetan el ingrediente, cocción lenta cuando se necesita y un equilibrio entre intensidad y frescura. Aquí se celebra el producto local, las recetas con historia y el sabor bien trabajado.",
+        "en": "Main courses meant to honor what the land gives. Each preparation combines techniques that respect the ingredient, slow cooking when it is needed, and a balance between intensity and freshness. Here we celebrate local product, recipes with history and flavor that is properly worked."
+      },
+      "platos": [
+        {
+          "id": 301,
+          "orden": 0,
+          "nombre": {
+            "es": "Pasta de la Casa",
+            "en": "House Pasta"
+          },
+          "descripcion": {
+            "es": "Fetuccini hecho en casa, en salsa roja, tomates confitados, ajo, cebolla, salpimentado con un toque de vino y champiñones.\nNormal 155,00 GTQ · Con lomito 185,00 GTQ · Camarones 195,00 GTQ",
+            "en": "House-made fettuccine in red sauce with confit tomatoes, garlic, onion, mushrooms and a touch of wine.\nRegular GTQ 155.00 · With tenderloin GTQ 185.00 · Shrimp GTQ 195.00"
+          },
+          "precio_q": 155,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 302,
+          "orden": 1,
+          "nombre": {
+            "es": "Arroz Meloso",
+            "en": "Creamy Rice"
+          },
+          "descripcion": {
+            "es": "Arroz cocido despacio hasta quedar meloso y cremoso, con lo que el mar y el jardín dieron esta semana.",
+            "en": "Rice cooked slowly until creamy, with whatever the sea and the garden gave this week."
+          },
+          "precio_q": 165,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 303,
+          "orden": 2,
+          "nombre": {
+            "es": "Pollo en Salsa de Tamarindo",
+            "en": "Chicken in Tamarind Sauce"
+          },
+          "descripcion": {
+            "es": "Pechuga de pollo con salsa de tamarindo y morrón con toque de jengibre y flameado en ron. Crema de zanahoria, hongos almendrados y remolachas rostizadas. Cítrico, ahumado y lleno de textura.",
+            "en": "Chicken breast in a tamarind and red pepper sauce with a touch of ginger, flambéed in rum. Carrot cream, almond mushrooms and roasted beets. Citrusy, smoky and full of texture."
+          },
+          "precio_q": 165,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 304,
+          "orden": 3,
+          "nombre": {
+            "es": "Costillas de Cerdo en Café y Cardamomo",
+            "en": "Coffee and Cardamom Pork Ribs"
+          },
+          "descripcion": {
+            "es": "Costillas al horno en una deliciosa mezcla de café y cardamomo, acompañadas de cebollas asadas, cremoso puré de yuca y brócoli escabechado. Maridaje sugerido: La Chef · Whiskey americano en fatwash.",
+            "en": "Oven-baked ribs in a delicious coffee and cardamom rub, with roasted onions, creamy yuca purée and pickled broccoli. Suggested pairing: La Chef · Fat-washed American whiskey."
+          },
+          "precio_q": 180,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 305,
+          "orden": 4,
+          "nombre": {
+            "es": "Lomito Rosanta",
+            "en": "Rosanta Tenderloin"
+          },
+          "descripcion": {
+            "es": "Lomito a la parrilla sobre una salsa cremosa de ajo asado, acompañado de un suave gratín de papa y tocino, terminado con gremolata de hierbas y zanahorias asadas. Maridaje sugerido: Red Pepper · Ron Colonial con chiles morrones asados, bitter de tabaco, un toque de jarabe y ahumado con tabaco de vainilla.",
+            "en": "Grilled tenderloin over roasted garlic cream sauce, served with a soft potato and bacon gratin, finished with herb gremolata and roasted carrots. Pair it with: Red Pepper · Colonial rum with roasted red bell peppers, tobacco bitters, a touch of syrup, smoked with vanilla tobacco."
+          },
+          "precio_q": 190,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 306,
+          "orden": 5,
+          "nombre": {
+            "es": "Lomito de la Casa",
+            "en": "House Tenderloin"
+          },
+          "descripcion": {
+            "es": "Medallón de lomito al término de tu preferencia, acompañado de puré de espinaca y romero, sobre una salsa de ajo negro complementado con zanahorias fermentadas. Maridaje sugerido: Chaitenango · Ron Zacapa 23, infusión de chai guatemalteco, jugo de limón y miel.",
+            "en": "Tenderloin medallion cooked to your liking, served over black garlic sauce with a spinach and rosemary purée and fermented carrots. Pair it with: Chaitenango · Zacapa 23 rum, Guatemalan chai infusion, lime juice and honey."
+          },
+          "precio_q": 180,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 307,
+          "orden": 6,
+          "nombre": {
+            "es": "Brisket en Salsa Bordelesa",
+            "en": "Brisket in Bordelaise Sauce"
+          },
+          "descripcion": {
+            "es": "Con puré de plátano asado y ajo confitado. Lingote de yuca, uvas maceradas en vermut rosé y hojas de bok choy.",
+            "en": "With roasted plantain purée and confit garlic. Yuca terrine, grapes macerated in rosé vermouth and bok choy leaves."
+          },
+          "precio_q": 180,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 308,
+          "orden": 7,
+          "nombre": {
+            "es": "Estofado de Rabo",
+            "en": "Braised Oxtail"
+          },
+          "descripcion": {
+            "es": "Rabo de res en versión de estofado tradicional, con puré de coliflor horneada, salsa demi-glace y rábanos macerados.",
+            "en": "Oxtail in a traditional stew, with roasted cauliflower purée, demi-glace and macerated radish."
+          },
+          "precio_q": 180,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 309,
+          "orden": 8,
+          "nombre": {
+            "es": "Pescado del Día",
+            "en": "Catch of the Day"
+          },
+          "descripcion": {
+            "es": "Pesca del día, servida con una salsa de vino blanco aromatizada con salvia, puré de camote y zanahorias horneadas, ejotes tiernos y bok choy asado. Preparación suave y herbal.",
+            "en": "The day's catch, served with a white wine sauce scented with sage, sweet potato purée and roasted carrots, tender green beans and grilled bok choy. Gentle, herbal preparation."
+          },
+          "precio_q": 185,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 310,
+          "orden": 9,
+          "nombre": {
+            "es": "Camarones al Horno",
+            "en": "Oven-Baked Shrimp"
+          },
+          "descripcion": {
+            "es": "Camarones al horno con hierbas del jardín, acompañados de tomates cherry, aceite de oliva, aceite de sésamo, ajo y cebolla. Sencillo, aromático y lleno de frescura.",
+            "en": "Shrimp baked with garden herbs, with cherry tomatoes, olive oil, sesame oil, garlic and onion. Simple, aromatic and full of freshness."
+          },
+          "precio_q": 190,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 311,
+          "orden": 10,
+          "nombre": {
+            "es": "Mar & Tierra",
+            "en": "Surf & Turf"
+          },
+          "descripcion": {
+            "es": "Lomito a la parrilla, camarones al ajo, cebollines asados, fresca ensalada y papas fritas crujientes.",
+            "en": "Grilled tenderloin, garlic shrimp, grilled spring onions, fresh salad and crispy fries."
+          },
+          "precio_q": 325,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "clave": "something-stronger-side-dishes",
+      "orden": 4,
+      "nombre": {
+        "es": "ALGO MÁS FUERTE · Para Acompañar",
+        "en": "SOMETHING STRONGER · Side Dishes"
+      },
+      "nota": {
+        "es": "Para completar el plato o para poner en medio de la mesa. Cosas simples, bien hechas, pensadas para acompañar.",
+        "en": "To round out a plate or to set in the middle of the table. Simple things, well made, meant to accompany."
+      },
+      "platos": [
+        {
+          "id": 401,
+          "orden": 0,
+          "nombre": {
+            "es": "Pan de la casa",
+            "en": "House bread"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 20,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 402,
+          "orden": 1,
+          "nombre": {
+            "es": "Gratín de papas",
+            "en": "Potato gratin"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 403,
+          "orden": 2,
+          "nombre": {
+            "es": "Ejotes al aceite de ajonjolí y ajo",
+            "en": "Green beans in sesame oil and garlic"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 404,
+          "orden": 3,
+          "nombre": {
+            "es": "Mix de fritas (papas, camote, malanga)",
+            "en": "Mixed fries (potato, sweet potato, malanga)"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 45,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "clave": "drinks-house-refreshments",
+      "orden": 5,
+      "nombre": {
+        "es": "BEBIDAS · Refrescos de la casa",
+        "en": "DRINKS · House refreshments"
+      },
+      "nota": {
+        "es": "Hechos aquí con fruta de verdad y hierbas cortadas en el jardín. Recetas propias, preparadas frescas cada día.",
+        "en": "Made here with real fruit and herbs cut in the garden. Our own recipes, prepared fresh every day."
+      },
+      "platos": [
+        {
+          "id": 501,
+          "orden": 0,
+          "nombre": {
+            "es": "Agua con gas 1L",
+            "en": "Sparkling water 1L"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 502,
+          "orden": 1,
+          "nombre": {
+            "es": "Ginger Beer",
+            "en": "Ginger Beer"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 503,
+          "orden": 2,
+          "nombre": {
+            "es": "Kombucha",
+            "en": "Kombucha"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 504,
+          "orden": 3,
+          "nombre": {
+            "es": "Limonada con agua o soda",
+            "en": "Lemonade with water or soda"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 505,
+          "orden": 4,
+          "nombre": {
+            "es": "Naranjada con agua o soda",
+            "en": "Orangeade with water or soda"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 506,
+          "orden": 5,
+          "nombre": {
+            "es": "Refresco de citronela",
+            "en": "Lemongrass cooler"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 507,
+          "orden": 6,
+          "nombre": {
+            "es": "Soda del día",
+            "en": "Soda of the day"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "clave": "drinks-coffee-from-guatemala",
+      "orden": 6,
+      "nombre": {
+        "es": "BEBIDAS · Café de Guatemala",
+        "en": "DRINKS · Coffee from Guatemala"
+      },
+      "nota": {
+        "es": "Café cultivado en Guatemala, preparado simple para que el origen se note. Para abrir la mañana o para cerrar la mesa.",
+        "en": "Coffee grown in Guatemala, prepared simply so the origin comes through. To open the morning or to close the table."
+      },
+      "platos": [
+        {
+          "id": 601,
+          "orden": 0,
+          "nombre": {
+            "es": "Café Americano",
+            "en": "Americano"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 25,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 602,
+          "orden": 1,
+          "nombre": {
+            "es": "Café con leche",
+            "en": "Coffee with milk"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 25,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "clave": "drinks-garden-herb-teas",
+      "orden": 7,
+      "nombre": {
+        "es": "BEBIDAS · Tés especiales del jardín",
+        "en": "DRINKS · Garden herb teas"
+      },
+      "nota": {
+        "es": "Infusiones de hierbas cultivadas a unos pasos de tu mesa, servidas por medio litro para compartir.",
+        "en": "Infusions made with herbs and spices grown steps from your table, served by the half litre to share."
+      },
+      "platos": [
+        {
+          "id": 701,
+          "orden": 0,
+          "nombre": {
+            "es": "Manzanilla, 500 ml",
+            "en": "Chamomile, 500 ml"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 702,
+          "orden": 1,
+          "nombre": {
+            "es": "Jengibre-Lemongrass, 500 ml",
+            "en": "Ginger-Lemongrass, 500 ml"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 703,
+          "orden": 2,
+          "nombre": {
+            "es": "Hierbaluisa-Menta, 500 ml",
+            "en": "Lemon verbena-Mint, 500 ml"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "clave": "drinks-artisan-tea-infusions",
+      "orden": 8,
+      "nombre": {
+        "es": "BEBIDAS · Infusiones de té artesanal",
+        "en": "DRINKS · Artisan tea infusions"
+      },
+      "nota": {
+        "es": "Mezclas de té artesanal, preparadas por infusión y servidas por medio litro para compartir.",
+        "en": "Artisan tea blends, brewed by infusion and served by the half litre to share."
+      },
+      "platos": [
+        {
+          "id": 801,
+          "orden": 0,
+          "nombre": {
+            "es": "Pachamama Tropical",
+            "en": "Pachamama Tropical"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 45,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 802,
+          "orden": 1,
+          "nombre": {
+            "es": "Jade Negro",
+            "en": "Jade Negro"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 45,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "clave": "drinks-beers",
+      "orden": 9,
+      "nombre": {
+        "es": "BEBIDAS · Cervezas",
+        "en": "DRINKS · Beers"
+      },
+      "nota": {
+        "es": "Cervezas guatemaltecas, frías y sin complicaciones, para una tarde larga en el jardín.",
+        "en": "Guatemalan beers, cold and straightforward, for a long afternoon in the garden."
+      },
+      "platos": [
+        {
+          "id": 901,
+          "orden": 0,
+          "nombre": {
+            "es": "Mix Michelada",
+            "en": "Michelada Mix"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 25,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 902,
+          "orden": 1,
+          "nombre": {
+            "es": "Gallo Botella",
+            "en": "Gallo, bottle"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 35,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 903,
+          "orden": 2,
+          "nombre": {
+            "es": "Cabro Reserva",
+            "en": "Cabro Reserva"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 904,
+          "orden": 3,
+          "nombre": {
+            "es": "Monte Carlo",
+            "en": "Monte Carlo"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 40,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "clave": "drinks-craft-beers",
+      "orden": 10,
+      "nombre": {
+        "es": "BEBIDAS · Cervezas artesanales",
+        "en": "DRINKS · Craft beers"
+      },
+      "nota": {
+        "es": "Cervezas artesanales de Antigua Guatemala, hechas por cervecerías pequeñas de aquí.",
+        "en": "Craft beers from Antigua Guatemala, made by small local breweries."
+      },
+      "platos": [
+        {
+          "id": 1001,
+          "orden": 0,
+          "nombre": {
+            "es": "Antigua Sin Novia",
+            "en": "Antigua Sin Novia"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 45,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1002,
+          "orden": 1,
+          "nombre": {
+            "es": "Antigua Muy Noble",
+            "en": "Antigua Muy Noble"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 45,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "clave": "drinks-digestifs",
+      "orden": 11,
+      "nombre": {
+        "es": "BEBIDAS · Digestivos",
+        "en": "DRINKS · Digestifs"
+      },
+      "nota": {
+        "es": "Para cerrar la mesa sin prisa. Digestivos clásicos y tragos con café para estirar la conversación.",
+        "en": "To close the table without rushing. Classic digestifs and coffee-based drinks to stretch the conversation."
+      },
+      "platos": [
+        {
+          "id": 1101,
+          "orden": 0,
+          "nombre": {
+            "es": "Amaretto Cremoso",
+            "en": "Creamy Amaretto"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 60,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1102,
+          "orden": 1,
+          "nombre": {
+            "es": "Grand Marnier",
+            "en": "Grand Marnier"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 60,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1103,
+          "orden": 2,
+          "nombre": {
+            "es": "Carajillo",
+            "en": "Carajillo"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1104,
+          "orden": 3,
+          "nombre": {
+            "es": "Expresso Martini",
+            "en": "Espresso Martini"
+          },
+          "descripcion": {
+            "es": "",
+            "en": ""
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "clave": "cocktails-the-essentials",
+      "orden": 12,
+      "nombre": {
+        "es": "CÓCTELES · Los Imperdibles",
+        "en": "COCKTAILS · The Essentials"
+      },
+      "nota": {
+        "es": "Nuestra barra también refleja la filosofía de sostenibilidad. Trabajamos con macerados, jarabes naturales, tés artesanales y productos frescos. Pregunta por nuestras creaciones de temporada.",
+        "en": "Our bar reflects the same philosophy of sustainability. We work with macerations, natural syrups, artisan teas and fresh product. Ask about our seasonal creations."
+      },
+      "platos": [
+        {
+          "id": 1201,
+          "orden": 0,
+          "nombre": {
+            "es": "El Fufurufo",
+            "en": "El Fufurufo"
+          },
+          "descripcion": {
+            "es": "Gin, cordial de pepino con Samat, jarabe simple, jugo de limón y un toque de kombucha saborizada con romero. Maridaje sugerido: Ensalada Rosanta.",
+            "en": "Gin, cucumber cordial with Samat, simple syrup, lime juice and a touch of rosemary-infused kombucha. Suggested pairing: Rosanta Salad."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1202,
+          "orden": 1,
+          "nombre": {
+            "es": "Mezcal a la Piña",
+            "en": "Mezcal with Pineapple"
+          },
+          "descripcion": {
+            "es": "Mezcal Espadín, mermelada de piña ahumada con romero y aromatizada con hierbas del jardín, jarabe simple, jugo de limón y borde de sal de rosa de jamaica. Maridaje sugerido: Pulpo a la Parrilla.",
+            "en": "Espadín mezcal, smoked pineapple jam with rosemary and garden herbs, simple syrup, lime juice and a hibiscus salt rim. Suggested pairing: Grilled Octopus."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1203,
+          "orden": 2,
+          "nombre": {
+            "es": "El Colonial",
+            "en": "El Colonial"
+          },
+          "descripcion": {
+            "es": "Ron Colonial Antigüeño, sirope de especias con jamaica, jugo de mandarina y terminado con soda del día. Maridaje sugerido: Hamburguesa de Lomito en Tiras.",
+            "en": "Colonial Antigüeño rum, spiced hibiscus syrup, mandarin juice, finished with house soda. Suggested pairing: Sliced Tenderloin Burger."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1204,
+          "orden": 3,
+          "nombre": {
+            "es": "Negroni de Remolacha",
+            "en": "Beetroot Negroni"
+          },
+          "descripcion": {
+            "es": "Gin, shrub de remolacha, terminado con Campari. Maridaje sugerido: Queso Horneado.",
+            "en": "Gin, beetroot shrub, finished with Campari. Suggested pairing: Baked Cheese."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1205,
+          "orden": 4,
+          "nombre": {
+            "es": "Red Pepper",
+            "en": "Red Pepper"
+          },
+          "descripcion": {
+            "es": "Ron Colonial Antigüeño macerado en chiles morrones horneados, bitter de tabaco, un toque de jarabe y ahumado con tabaco de vainilla. Maridaje sugerido: Lomito Rosanta.",
+            "en": "Colonial Antigüeño rum infused with roasted red bell peppers, tobacco bitters, a touch of syrup, smoked with vanilla tobacco. Suggested pairing: Rosanta Tenderloin."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1206,
+          "orden": 5,
+          "nombre": {
+            "es": "Chaitenango",
+            "en": "Chaitenango"
+          },
+          "descripcion": {
+            "es": "Ron Zacapa 23, infusión de chai guatemalteco, jugo de limón y miel.",
+            "en": "Zacapa 23 rum, Guatemalan chai infusion, lime juice and honey."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "clave": "cocktails-seasonal-harvest",
+      "orden": 13,
+      "nombre": {
+        "es": "CÓCTELES · Cosecha de Temporada",
+        "en": "COCKTAILS · Seasonal Harvest"
+      },
+      "nota": {
+        "es": "Cambian con lo que da el jardín. Lo que esté en su punto esa semana decide qué va en la copa.",
+        "en": "These change with what the garden gives. Whatever is ripe that week decides what goes in the glass."
+      },
+      "platos": [
+        {
+          "id": 1301,
+          "orden": 0,
+          "nombre": {
+            "es": "La Lotería",
+            "en": "La Lotería"
+          },
+          "descripcion": {
+            "es": "Gin, cordial de rábano, jugo de limón, jarabe simple y jugo de piña asada, ahumada y especiada. Maridaje sugerido: Tartar de Hongos.",
+            "en": "Gin, radish cordial, lime juice, simple syrup and roasted, smoked and spiced pineapple juice. Suggested pairing: Mushroom Tartare."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1302,
+          "orden": 1,
+          "nombre": {
+            "es": "La Feria",
+            "en": "La Feria"
+          },
+          "descripcion": {
+            "es": "Mezcal Espadín, mermelada de piña con especias y vino, jugo de limón, jarabe simple y un borde de azúcar de hierbabuena. Maridaje sugerido: Hamburguesa de Portobello Asado.",
+            "en": "Espadín mezcal, pineapple jam with spices and wine, lime juice, simple syrup, finished with a mint sugar rim. Suggested pairing: Roasted Portobello Burger."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1303,
+          "orden": 2,
+          "nombre": {
+            "es": "La Chef",
+            "en": "La Chef"
+          },
+          "descripcion": {
+            "es": "Whiskey americano macerado con la extracción de sabor de las costillas de cerdo en fatwash, rodajas de pepino, sirope de lavanda y jugo de mandarina. Maridaje sugerido: Costillas de Cerdo.",
+            "en": "American whiskey fat-washed with pork rib flavor extraction, cucumber slices, lavender syrup and mandarin juice. Suggested pairing: Pork Ribs."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1304,
+          "orden": 3,
+          "nombre": {
+            "es": "El Canche",
+            "en": "El Canche"
+          },
+          "descripcion": {
+            "es": "Gin, Campari, jugo de toronja, lavanda y terminado con soda. Maridaje sugerido: Camarones al Horno.",
+            "en": "Gin, Campari, grapefruit juice, lavender, finished with soda. Suggested pairing: Oven-Baked Shrimp."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1305,
+          "orden": 4,
+          "nombre": {
+            "es": "Boga",
+            "en": "Boga"
+          },
+          "descripcion": {
+            "es": "Wild Turkey 81, jugo de limón, jarabe de lavanda y soda de piña con lemongrass.",
+            "en": "Wild Turkey 81, lime juice, lavender syrup and pineapple soda with lemongrass."
+          },
+          "precio_q": 80,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "clave": "cocktails-house-roots",
+      "orden": 14,
+      "nombre": {
+        "es": "CÓCTELES · Raíces de la Casa",
+        "en": "COCKTAILS · House Roots"
+      },
+      "nota": {
+        "es": "Rones guatemaltecos e ingredientes locales, en recetas que son de esta casa.",
+        "en": "Guatemalan rums and local ingredients, in recipes that belong to this house."
+      },
+      "platos": [
+        {
+          "id": 1401,
+          "orden": 0,
+          "nombre": {
+            "es": "El Mero, Mero",
+            "en": "El Mero, Mero"
+          },
+          "descripcion": {
+            "es": "Vermouth Bianco, Ron Colonial, mango, maracuyá e infusión de hierbas del jardín.",
+            "en": "Bianco vermouth, Colonial rum, mango, passion fruit and garden herb infusion."
+          },
+          "precio_q": 75,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1402,
+          "orden": 1,
+          "nombre": {
+            "es": "Los Penitentes",
+            "en": "Los Penitentes"
+          },
+          "descripcion": {
+            "es": "Ron Botran 12, Ron Botran Reserva Blanca, maracuyá, infusión de romero, jugo de mandarina y jarabe simple.",
+            "en": "Botran 12 rum, Botran White Reserve rum, passion fruit, rosemary infusion, mandarin juice and simple syrup."
+          },
+          "precio_q": 75,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1403,
+          "orden": 2,
+          "nombre": {
+            "es": "Comal Borracho",
+            "en": "Comal Borracho"
+          },
+          "descripcion": {
+            "es": "Tequila, dilución de remolacha, jugo de limón, sal y jarabe simple.",
+            "en": "Tequila, beetroot dilution, lime juice, salt and simple syrup."
+          },
+          "precio_q": 75,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "clave": "wines-red-wines",
+      "orden": 15,
+      "nombre": {
+        "es": "VINOS · Tintos",
+        "en": "WINES · Red Wines"
+      },
+      "nota": {
+        "es": "Tintos de España, Chile y Argentina, elegidos para acompañar las cocciones lentas y los cortes de la casa. Por copa o por botella.",
+        "en": "Reds from Spain, Chile and Argentina, chosen to go with the slow-cooked dishes and the house cuts. By the glass or the bottle."
+      },
+      "platos": [
+        {
+          "id": 1501,
+          "orden": 0,
+          "nombre": {
+            "es": "Don Luis",
+            "en": "Don Luis"
+          },
+          "descripcion": {
+            "es": "Cabernet Sauvignon · Valle del Maipo, Chile\nCopa 70,00 GTQ · Botella 350,00 GTQ",
+            "en": "Cabernet Sauvignon · Maipo Valley, Chile\nGlass GTQ 70.00 · Bottle GTQ 350.00"
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1502,
+          "orden": 1,
+          "nombre": {
+            "es": "La Linda",
+            "en": "La Linda"
+          },
+          "descripcion": {
+            "es": "Malbec · Luján de Cuyo, Mendoza, Argentina\nCopa 70,00 GTQ · Botella 350,00 GTQ",
+            "en": "Malbec · Luján de Cuyo, Mendoza, Argentina\nGlass GTQ 70.00 · Bottle GTQ 350.00"
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1503,
+          "orden": 2,
+          "nombre": {
+            "es": "Mariluna Tinto",
+            "en": "Mariluna Tinto"
+          },
+          "descripcion": {
+            "es": "Tempranillo, Bobal · Valencia, España\nCopa 70,00 GTQ · Botella 350,00 GTQ",
+            "en": "Tempranillo, Bobal · Valencia, Spain\nGlass GTQ 70.00 · Bottle GTQ 350.00"
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1504,
+          "orden": 3,
+          "nombre": {
+            "es": "Bohigas Garnatxa Negra",
+            "en": "Bohigas Garnatxa Negra"
+          },
+          "descripcion": {
+            "es": "Garnacha Tinta · Valle de Anoia, Catalunya, España",
+            "en": "Garnacha Tinta · Anoia Valley, Catalunya, Spain"
+          },
+          "precio_q": 375,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1505,
+          "orden": 4,
+          "nombre": {
+            "es": "Lan Reserva",
+            "en": "Lan Reserva"
+          },
+          "descripcion": {
+            "es": "Tempranillo, Mazuelo · Rioja Alta, España",
+            "en": "Tempranillo, Mazuelo · Rioja Alta, Spain"
+          },
+          "precio_q": 455,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1506,
+          "orden": 5,
+          "nombre": {
+            "es": "Pulenta Estate, Red Blend V",
+            "en": "Pulenta Estate, Red Blend V"
+          },
+          "descripcion": {
+            "es": "Malbec, Cabernet Sauvignon, Merlot · Luján de Cuyo, Mendoza, Argentina",
+            "en": "Malbec, Cabernet Sauvignon, Merlot · Luján de Cuyo, Mendoza, Argentina"
+          },
+          "precio_q": 535,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "clave": "wines-white-wine-rose",
+      "orden": 16,
+      "nombre": {
+        "es": "VINOS · Blancos y Rosados",
+        "en": "WINES · White Wine & Rose"
+      },
+      "nota": {
+        "es": "Blancos y rosados frescos para los entrantes, el pescado y las tardes largas en el jardín. Por copa o por botella.",
+        "en": "Fresh whites and rosés for the starters, the fish and the long afternoons in the garden. By the glass or the bottle."
+      },
+      "platos": [
+        {
+          "id": 1601,
+          "orden": 0,
+          "nombre": {
+            "es": "Don Luis",
+            "en": "Don Luis"
+          },
+          "descripcion": {
+            "es": "Chardonnay · Valle del Maipo, Chile\nCopa 70,00 GTQ · Botella 350,00 GTQ",
+            "en": "Chardonnay · Maipo Valley, Chile\nGlass GTQ 70.00 · Bottle GTQ 350.00"
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1602,
+          "orden": 1,
+          "nombre": {
+            "es": "Mariluna Blanco",
+            "en": "Mariluna Blanco"
+          },
+          "descripcion": {
+            "es": "Verdejo, Macabeo · Valencia, España\nCopa 70,00 GTQ · Botella 350,00 GTQ",
+            "en": "Verdejo, Macabeo · Valencia, Spain\nGlass GTQ 70.00 · Bottle GTQ 350.00"
+          },
+          "precio_q": 70,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1603,
+          "orden": 2,
+          "nombre": {
+            "es": "La Val",
+            "en": "La Val"
+          },
+          "descripcion": {
+            "es": "Albariño · Pontevedra, Galicia, España",
+            "en": "Albariño · Pontevedra, Galicia, Spain"
+          },
+          "precio_q": 350,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1604,
+          "orden": 3,
+          "nombre": {
+            "es": "Salentein Killka",
+            "en": "Salentein Killka"
+          },
+          "descripcion": {
+            "es": "Malbec Blanco · Valle de Uco, Mendoza, Argentina",
+            "en": "Malbec Blanco · Uco Valley, Mendoza, Argentina"
+          },
+          "precio_q": 375,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1605,
+          "orden": 4,
+          "nombre": {
+            "es": "Santiago Ruiz",
+            "en": "Santiago Ruiz"
+          },
+          "descripcion": {
+            "es": "Albariño · DO Rías Baixas, Galicia, España",
+            "en": "Albariño · DO Rías Baixas, Galicia, Spain"
+          },
+          "precio_q": 510,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        },
+        {
+          "id": 1606,
+          "orden": 5,
+          "nombre": {
+            "es": "Pasión de Bodal",
+            "en": "Pasión de Bodal"
+          },
+          "descripcion": {
+            "es": "Bodal · Valencia, España",
+            "en": "Bodal · Valencia, Spain"
+          },
+          "precio_q": 405,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "clave": "cava",
+      "orden": 17,
+      "nombre": {
+        "es": "CAVA",
+        "en": "CAVA"
+      },
+      "nota": {
+        "es": "Espumoso catalán de método tradicional. Para brindar al empezar o para cerrar la noche.",
+        "en": "Traditional-method Catalan sparkling wine. To toast at the start or to close the night."
+      },
+      "platos": [
+        {
+          "id": 1701,
+          "orden": 0,
+          "nombre": {
+            "es": "Cava Bohigas Brut Reserva",
+            "en": "Cava Bohigas Brut Reserva"
+          },
+          "descripcion": {
+            "es": "Xarel·lo, Macabeo, Perellada · Valle de Anoia, Catalunya, España",
+            "en": "Xarel·lo, Macabeo, Perellada · Anoia Valley, Catalunya, Spain"
+          },
+          "precio_q": 375,
+          "precio_usd_ref": null,
+          "alergenos": [],
+          "etiquetas": [],
+          "foto": null
+        }
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "id": 1,
+      "orden": 0,
+      "categoria": "general",
+      "pregunta": {
+        "es": "¿Qué es Rosanta?",
+        "en": "What is Rosanta?"
+      },
+      "respuesta": {
+        "es": "Un restaurante de gastrococtelería en Antigua Guatemala: cocina creativa de temporada maridada con coctelería moderna, en medio de un jardín. Cocina con carisma, ingredientes locales y sabores que se recuerdan.",
+        "en": "A gastrococtelería restaurant in Antigua Guatemala: creative seasonal cuisine paired with modern cocktails, set in a garden. Cooking with character, local ingredients, and flavors you'll remember."
+      }
+    },
+    {
+      "id": 2,
+      "orden": 1,
+      "categoria": "general",
+      "pregunta": {
+        "es": "¿Dónde está ubicado Rosanta?",
+        "en": "Where is Rosanta located?"
+      },
+      "respuesta": {
+        "es": "Estamos en 1a Calle Oriente #15, dentro del Parque Santa Rosa, Antigua Guatemala. En Waze o Google Maps busca Rosanta Antigua Guatemala.",
+        "en": "We're at 1a Calle Oriente #15, inside Parque Santa Rosa, Antigua Guatemala. On Waze or Google Maps, search Rosanta Antigua Guatemala."
+      }
+    },
+    {
+      "id": 3,
+      "orden": 2,
+      "categoria": "general",
+      "pregunta": {
+        "es": "¿Qué tipo de cocina van a encontrar?",
+        "en": "What kind of cuisine do you serve?"
+      },
+      "respuesta": {
+        "es": "Cocina de temporada con producto local y fresco, pensada para maridarse con la barra: el coctel llega a tu mesa de igual a igual con el plato. El menú cambia según la cosecha del huerto, así que siempre hay algo nuevo para probar.",
+        "en": "Seasonal cooking with local, fresh produce, made to pair with the bar: the cocktail comes to your table as an equal to the dish. The menu changes with the garden's harvest, so there's always something new to try."
+      }
+    },
+    {
+      "id": 4,
+      "orden": 3,
+      "categoria": "general",
+      "pregunta": {
+        "es": "¿Necesito reservar?",
+        "en": "Do I need a reservation?"
+      },
+      "respuesta": {
+        "es": "Te recomendamos reservar para asegurar tu mesa, sobre todo en fines de semana y noches especiales. Puedes hacerlo desde rosanta.rest o por WhatsApp.",
+        "en": "A reservation is recommended to secure your table, especially on weekends and special nights. You can book through rosanta.rest or via WhatsApp."
+      }
+    },
+    {
+      "id": 5,
+      "orden": 4,
+      "categoria": "menu",
+      "pregunta": {
+        "es": "¿Hay opciones vegetarianas o veganas?",
+        "en": "Are there vegetarian or vegan options?"
+      },
+      "respuesta": {
+        "es": "Sí. Además de lo que ves en el menú, siempre se pueden sugerir platos vegetarianos o veganos según la cosecha y el producto fresco del día. Avisa al reservar y te preparamos algo a tu gusto.",
+        "en": "Yes. Beyond what's on the menu, vegetarian or vegan dishes can always be suggested based on the day's harvest and fresh produce. Let us know when you book and we'll prepare something for you."
+      }
+    },
+    {
+      "id": 6,
+      "orden": 5,
+      "categoria": "menu",
+      "pregunta": {
+        "es": "¿Hay opciones sin gluten o para alergias?",
+        "en": "Are there gluten-free or allergy-friendly options?"
+      },
+      "respuesta": {
+        "es": "Sí, hay opciones libres de gluten, lácteos y frutos secos. Solo avisa al reservar o al llegar para adaptar tu experiencia con cuidado.",
+        "en": "Yes — there are gluten-free, dairy-free, and nut-free options. Just let us know when you book or arrive so we can adapt your experience with care."
+      }
+    },
+    {
+      "id": 7,
+      "orden": 6,
+      "categoria": "menu",
+      "pregunta": {
+        "es": "¿Es un buen lugar para ir con niños?",
+        "en": "Is it a good place to bring kids?"
+      },
+      "respuesta": {
+        "es": "Sí. No hay un menú infantil fijo, pero los platos se pueden adaptar con porciones y sabores más amigables para los más pequeños.",
+        "en": "Yes. There isn't a fixed kids' menu, but dishes can be adapted with friendlier portions and flavors for little ones."
+      }
+    },
+    {
+      "id": 8,
+      "orden": 7,
+      "categoria": "menu",
+      "pregunta": {
+        "es": "¿Tienen barra de coctelería?",
+        "en": "Is there a cocktail bar?"
+      },
+      "respuesta": {
+        "es": "Sí, y es parte del corazón de la experiencia. Hay gastrococtelería y también se pueden crear cócteles a tu gusto: solo cuéntanos tus sabores o destilados favoritos.",
+        "en": "Yes, and it's at the heart of the experience. There is gastrococtelería, and custom drinks can be created for you — just tell us your favorite flavors or spirits."
+      }
+    },
+    {
+      "id": 9,
+      "orden": 8,
+      "categoria": "visita",
+      "pregunta": {
+        "es": "¿Hay parqueo cerca?",
+        "en": "Is there parking nearby?"
+      },
+      "respuesta": {
+        "es": "Puedes dejar tu carro en la calle privada dentro del Parque Santa Rosa, justo frente al restaurante. También hay convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada.",
+        "en": "You can park on the private street inside Parque Santa Rosa, right in front of the restaurant. There's also an arrangement with a parking lot on Calle del Rubio, less than 100 meters from the entrance."
+      }
+    },
+    {
+      "id": 10,
+      "orden": 9,
+      "categoria": "visita",
+      "pregunta": {
+        "es": "¿Aceptan mascotas?",
+        "en": "Are pets allowed?"
+      },
+      "respuesta": {
+        "es": "Sí, es un lugar pet friendly. Tu mascota es bienvenida en el jardín y las áreas abiertas.",
+        "en": "Yes, it's a pet-friendly spot. Your pet is welcome in the garden and open areas."
+      }
+    },
+    {
+      "id": 11,
+      "orden": 10,
+      "categoria": "visita",
+      "pregunta": {
+        "es": "¿El jardín es al aire libre? ¿Qué pasa si llueve?",
+        "en": "Is the garden outdoors? What if it rains?"
+      },
+      "respuesta": {
+        "es": "El jardín es al aire libre, con chimeneas para los días frescos. No está techado, pero hay áreas interiores acogedoras para seguir disfrutando si llueve.",
+        "en": "The garden is outdoors, with fireplaces for cooler evenings. It isn't roofed, but there are cozy indoor areas so you can keep enjoying if it rains."
+      }
+    },
+    {
+      "id": 12,
+      "orden": 11,
+      "categoria": "visita",
+      "pregunta": {
+        "es": "¿Es accesible para personas con movilidad reducida?",
+        "en": "Is it accessible for people with reduced mobility?"
+      },
+      "respuesta": {
+        "es": "Sí, hay acceso para personas con movilidad reducida en la mayoría de las áreas. Por ahora no hay baños adaptados, pero el equipo te ayuda a encontrar la mejor solución durante tu visita.",
+        "en": "Yes, most areas are accessible for reduced mobility. There aren't adapted restrooms yet, but the team will help find the best solution during your visit."
+      }
+    },
+    {
+      "id": 13,
+      "orden": 12,
+      "categoria": "visita",
+      "pregunta": {
+        "es": "¿Ofrecen comida para llevar o a domicilio?",
+        "en": "Do you offer takeout or delivery?"
+      },
+      "respuesta": {
+        "es": "La propuesta está pensada para vivirse aquí, rodeado del jardín, así que no hay servicio para llevar ni entregas a domicilio.",
+        "en": "The experience is designed to be enjoyed here, surrounded by the garden, so there's no takeout or delivery service."
+      }
+    },
+    {
+      "id": 14,
+      "orden": 13,
+      "categoria": "pagos",
+      "pregunta": {
+        "es": "¿Aceptan tarjetas y moneda extranjera?",
+        "en": "Do you accept cards and foreign currency?"
+      },
+      "respuesta": {
+        "es": "Sí, se aceptan todas las tarjetas de crédito y débito, y también moneda extranjera con un tipo de cambio establecido por la dirección.",
+        "en": "Yes, all credit and debit cards are accepted, as well as foreign currency at an exchange rate set by management."
+      }
+    },
+    {
+      "id": 15,
+      "orden": 14,
+      "categoria": "pagos",
+      "pregunta": {
+        "es": "¿Puedo llevar mi propio vino?",
+        "en": "Can I bring my own wine?"
+      },
+      "respuesta": {
+        "es": "Sí, puedes traer tu vino favorito. Pregunta por el costo de descorche al reservar.",
+        "en": "Yes, you can bring your favorite bottle. Just ask about the corkage fee when you book."
+      }
+    },
+    {
+      "id": 16,
+      "orden": 15,
+      "categoria": "eventos",
+      "pregunta": {
+        "es": "¿Hacen eventos privados o bodas?",
+        "en": "Do you host private events or weddings?"
+      },
+      "respuesta": {
+        "es": "Sí. Se organizan celebraciones privadas, cumpleaños y bodas; puedes reservar áreas específicas o el espacio completo según tu evento. El jardín es ideal para momentos especiales.",
+        "en": "Yes. Private celebrations, birthdays, and weddings are welcome — you can reserve specific areas or the full space depending on your event. The garden is ideal for special moments."
+      }
+    },
+    {
+      "id": 17,
+      "orden": 16,
+      "categoria": "eventos",
+      "pregunta": {
+        "es": "¿Reciben grupos grandes?",
+        "en": "Can you accommodate large groups?"
+      },
+      "respuesta": {
+        "es": "Sí, con reserva previa. El espacio se adapta al número de personas para que todos disfruten cómodos en el ambiente que más les guste.",
+        "en": "Yes, with an advance reservation. The space adapts to your group size so everyone is comfortable in the setting they love most."
+      }
+    },
+    {
+      "id": 18,
+      "orden": 17,
+      "categoria": "contacto",
+      "pregunta": {
+        "es": "¿Cómo reservo o me pongo en contacto?",
+        "en": "How do I book or get in touch?"
+      },
+      "respuesta": {
+        "es": "Puedes reservar y escribir desde rosanta.rest o por WhatsApp. Cuéntanos la ocasión y te ayudamos a preparar tu mesa favorita.",
+        "en": "You can book and message through rosanta.rest or via WhatsApp. Tell us the occasion and we'll help set up your favorite table."
+      }
+    }
+  ],
+  "eventos": [],
+  "alergenos": {},
+  "etiquetas": {},
+  "giftcards": null
+}

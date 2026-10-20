@@ -1,0 +1,849 @@
+{
+  "generado": "2026-10-20T22:54:02.920Z",
+  "origen": "https://www.rosanta.rest",
+  "mapas": [
+    {
+      "indice": "/sitemap.xml",
+      "mapa": "/restaurants-menu-sitemap.xml",
+      "urls": 1
+    },
+    {
+      "indice": "/sitemap.xml",
+      "mapa": "/pages-sitemap.xml",
+      "urls": 15
+    },
+    {
+      "indice": "/es_es-sitemap.xml",
+      "mapa": "/es_es-restaurants-menu-sitemap.xml",
+      "urls": 1
+    },
+    {
+      "indice": "/es_es-sitemap.xml",
+      "mapa": "/es_es-pages-sitemap.xml",
+      "urls": 15
+    }
+  ],
+  "resumen": {
+    "total": 68,
+    "publicadas_200": 31,
+    "redirecciones": 14,
+    "no_existen": 21
+  },
+  "paginas_publicadas": [
+    "/",
+    "/encuesta",
+    "/es",
+    "/es/blank",
+    "/es/encuesta",
+    "/es/events",
+    "/es/events-1",
+    "/es/experience-details",
+    "/es/experiences",
+    "/es/full-menu",
+    "/es/gift-card",
+    "/es/gift-ideas",
+    "/es/loyalty",
+    "/es/política-de-privacidad",
+    "/es/preguntas-frecuentes",
+    "/es/reservas",
+    "/es/reservation-details",
+    "/es/términos-y-condiciones",
+    "/events",
+    "/events-1",
+    "/experience-details",
+    "/experiences",
+    "/full-menu",
+    "/gift-card",
+    "/gift-ideas",
+    "/loyalty",
+    "/política-de-privacidad",
+    "/preguntas-frecuentes",
+    "/reservas",
+    "/reservation-details",
+    "/términos-y-condiciones"
+  ],
+  "direcciones": [
+    {
+      "ruta": "/",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/algo-más-fuerte",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/algo-más-fuerte",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/bebidas-y-vinos",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/bebidas-y-vinos",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/beverages-and-wines",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/blank",
+      "estado": 301,
+      "destino": "/preguntas-frecuentes",
+      "estado_final": 200,
+      "ruta_final": "/preguntas-frecuentes",
+      "saltos": 1,
+      "origen": [
+        "conocida:redirecciones_wix",
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/blog",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/blog",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras"
+      ]
+    },
+    {
+      "ruta": "/brunch",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/brunch",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/cocktails",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/cócteles",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/cócteles",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/encuesta",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/encuesta",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/english-menu",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/algo-más-fuerte",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/algo-más-fuerte",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/es/bebidas-y-vinos",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/bebidas-y-vinos",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/es/beverages-and-wines",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/beverages-and-wines",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/blank",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/blank",
+      "saltos": 0,
+      "origen": [
+        "conocida:redirecciones_wix",
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/blog",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/blog",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras"
+      ]
+    },
+    {
+      "ruta": "/es/brunch",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/brunch",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/es/cocktails",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/cocktails",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/cócteles",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/cócteles",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/es/encuesta",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/encuesta",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/english-menu",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/english-menu",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/events",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/events",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/events-1",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/events-1",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/experience-details",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/experience-details",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/experiences",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/experiences",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/full-menu",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/full-menu",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/full-menu?menu=rosanta-menu",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/full-menu?menu=rosanta-menu",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras",
+        "sitemap:/es_es-restaurants-menu-sitemap.xml"
+      ]
+    },
+    {
+      "ruta": "/es/gift-card",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/gift-card",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/gift-ideas",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/gift-ideas",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/licores-y-digestivos",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/licores-y-digestivos",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/es/loyalty",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/loyalty",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/menu",
+      "estado": 301,
+      "destino": "/es/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/es/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:redirecciones_wix"
+      ]
+    },
+    {
+      "ruta": "/es/menu-completo",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/menu-completo",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/menú-español",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/menú-español",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/para-empezar",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/para-empezar",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/política-de-privacidad",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/política-de-privacidad",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/preguntas-frecuentes",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/preguntas-frecuentes",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/reservas",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/reservas",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/es/reservation-details",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/reservation-details",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras"
+      ]
+    },
+    {
+      "ruta": "/es/reservations",
+      "estado": 301,
+      "destino": "/es/reservas",
+      "estado_final": 200,
+      "ruta_final": "/es/reservas",
+      "saltos": 1,
+      "origen": [
+        "conocida:redirecciones_wix"
+      ]
+    },
+    {
+      "ruta": "/es/something-stronger",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/something-stronger",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/something-to-start-with",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/something-to-start-with",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/spirits-and-liqueurs",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/es/spirits-and-liqueurs",
+      "saltos": 0,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/es/términos-y-condiciones",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/es/términos-y-condiciones",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/es_es-pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/events",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/events",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/events-1",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/events-1",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/experience-details",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/experience-details",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/experiences",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/experiences",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/full-menu",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/full-menu?menu=rosanta-menu",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/full-menu?menu=rosanta-menu",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras",
+        "sitemap:/restaurants-menu-sitemap.xml"
+      ]
+    },
+    {
+      "ruta": "/gift-card",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/gift-card",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/gift-ideas",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/gift-ideas",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/licores-y-digestivos",
+      "estado": 404,
+      "destino": null,
+      "estado_final": 404,
+      "ruta_final": "/licores-y-digestivos",
+      "saltos": 0,
+      "origen": [
+        "conocida:candidatas_en_espanol_del_plan_301"
+      ]
+    },
+    {
+      "ruta": "/loyalty",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/loyalty",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/menu",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:redirecciones_wix"
+      ]
+    },
+    {
+      "ruta": "/menu-completo",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/menú-español",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/para-empezar",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/política-de-privacidad",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/política-de-privacidad",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/preguntas-frecuentes",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/preguntas-frecuentes",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/reservas",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/reservas",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    },
+    {
+      "ruta": "/reservation-details",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/reservation-details",
+      "saltos": 0,
+      "origen": [
+        "conocida:sistema_y_otras"
+      ]
+    },
+    {
+      "ruta": "/reservations",
+      "estado": 301,
+      "destino": "/reservas",
+      "estado_final": 200,
+      "ruta_final": "/reservas",
+      "saltos": 1,
+      "origen": [
+        "conocida:redirecciones_wix"
+      ]
+    },
+    {
+      "ruta": "/something-stronger",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/something-to-start-with",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/spirits-and-liqueurs",
+      "estado": 301,
+      "destino": "/full-menu",
+      "estado_final": 200,
+      "ruta_final": "/full-menu",
+      "saltos": 1,
+      "origen": [
+        "conocida:plan_301_menus"
+      ]
+    },
+    {
+      "ruta": "/términos-y-condiciones",
+      "estado": 200,
+      "destino": null,
+      "estado_final": 200,
+      "ruta_final": "/términos-y-condiciones",
+      "saltos": 0,
+      "origen": [
+        "sitemap:/pages-sitemap.xml",
+        "variante-idioma"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "fuente": "origin/claude/editor-componentes-html:editor/html/preguntas-frecuentes__faq__3de38d_83558239.html",
+  "i18n": {
+    "es": {
+      "title": "Preguntas",
+      "subtitle": "Todo lo que quieres saber antes de tu visita",
+      "expand": "Expandir todo",
+      "collapse": "Colapsar todo",
+      "search": "Buscar...",
+      "copy": "Copiar enlace",
+      "copied": "¡Copiado!",
+      "cta": "Reservaciones",
+      "ctaUrl": "https://www.rosanta.rest/reservas",
+      "noResults": "No se encontraron resultados.",
+      "footer": "© 2026 Rosanta · rosanta.rest"
+    },
+    "en": {
+      "title": "Questions",
+      "subtitle": "Everything you want to know before your visit",
+      "expand": "Expand all",
+      "collapse": "Collapse all",
+      "search": "Search...",
+      "copy": "Copy link",
+      "copied": "Copied!",
+      "cta": "Reservations",
+      "ctaUrl": "https://www.rosanta.rest/reservas",
+      "noResults": "No results found.",
+      "footer": "© 2026 Rosanta · rosanta.rest"
+    }
+  },
+  "cats": {
+    "general": {
+      "es": "General",
+      "en": "General"
+    },
+    "menu": {
+      "es": "Menú y dieta",
+      "en": "Menu & Diet"
+    },
+    "visita": {
+      "es": "Tu visita",
+      "en": "Your Visit"
+    },
+    "pagos": {
+      "es": "Pagos",
+      "en": "Payments"
+    },
+    "eventos": {
+      "es": "Eventos",
+      "en": "Events"
+    },
+    "contacto": {
+      "es": "Contacto",
+      "en": "Contact"
+    }
+  },
+  "faqs": [
+    {
+      "id": "que-es",
+      "cat": "general",
+      "q": {
+        "es": "¿Qué es Rosanta?",
+        "en": "What is Rosanta?"
+      },
+      "a": {
+        "es": "Un restaurante de gastrococtelería en Antigua Guatemala: cocina creativa de temporada maridada con coctelería moderna, en medio de un jardín. Cocina con carisma, ingredientes locales y sabores que se recuerdan.",
+        "en": "A gastrococtelería restaurant in Antigua Guatemala: creative seasonal cuisine paired with modern cocktails, set in a garden. Cooking with character, local ingredients, and flavors you'll remember."
+      }
+    },
+    {
+      "id": "ubicacion",
+      "cat": "general",
+      "q": {
+        "es": "¿Dónde está ubicado Rosanta?",
+        "en": "Where is Rosanta located?"
+      },
+      "a": {
+        "es": "Estamos en 1a Calle Oriente #15, dentro del Parque Santa Rosa, Antigua Guatemala. En Waze o Google Maps busca Rosanta Antigua Guatemala.",
+        "en": "We're at 1a Calle Oriente #15, inside Parque Santa Rosa, Antigua Guatemala. On Waze or Google Maps, search Rosanta Antigua Guatemala."
+      }
+    },
+    {
+      "id": "cocina",
+      "cat": "general",
+      "q": {
+        "es": "¿Qué tipo de cocina van a encontrar?",
+        "en": "What kind of cuisine do you serve?"
+      },
+      "a": {
+        "es": "Cocina de temporada con producto local y fresco, pensada para maridarse con la barra: el coctel llega a tu mesa de igual a igual con el plato. El menú cambia según la cosecha del huerto, así que siempre hay algo nuevo para probar.",
+        "en": "Seasonal cooking with local, fresh produce, made to pair with the bar: the cocktail comes to your table as an equal to the dish. The menu changes with the garden's harvest, so there's always something new to try."
+      }
+    },
+    {
+      "id": "reserva",
+      "cat": "general",
+      "q": {
+        "es": "¿Necesito reservar?",
+        "en": "Do I need a reservation?"
+      },
+      "a": {
+        "es": "Te recomendamos reservar para asegurar tu mesa, sobre todo en fines de semana y noches especiales. Puedes hacerlo desde rosanta.rest o por WhatsApp.",
+        "en": "A reservation is recommended to secure your table, especially on weekends and special nights. You can book through rosanta.rest or via WhatsApp."
+      }
+    },
+    {
+      "id": "vegetariano",
+      "cat": "menu",
+      "q": {
+        "es": "¿Hay opciones vegetarianas o veganas?",
+        "en": "Are there vegetarian or vegan options?"
+      },
+      "a": {
+        "es": "Sí. Además de lo que ves en el menú, siempre se pueden sugerir platos vegetarianos o veganos según la cosecha y el producto fresco del día. Avisa al reservar y te preparamos algo a tu gusto.",
+        "en": "Yes. Beyond what's on the menu, vegetarian or vegan dishes can always be suggested based on the day's harvest and fresh produce. Let us know when you book and we'll prepare something for you."
+      }
+    },
+    {
+      "id": "alergias",
+      "cat": "menu",
+      "q": {
+        "es": "¿Hay opciones sin gluten o para alergias?",
+        "en": "Are there gluten-free or allergy-friendly options?"
+      },
+      "a": {
+        "es": "Sí, hay opciones libres de gluten, lácteos y frutos secos. Solo avisa al reservar o al llegar para adaptar tu experiencia con cuidado.",
+        "en": "Yes — there are gluten-free, dairy-free, and nut-free options. Just let us know when you book or arrive so we can adapt your experience with care."
+      }
+    },
+    {
+      "id": "ninos",
+      "cat": "menu",
+      "q": {
+        "es": "¿Es un buen lugar para ir con niños?",
+        "en": "Is it a good place to bring kids?"
+      },
+      "a": {
+        "es": "Sí. No hay un menú infantil fijo, pero los platos se pueden adaptar con porciones y sabores más amigables para los más pequeños.",
+        "en": "Yes. There isn't a fixed kids' menu, but dishes can be adapted with friendlier portions and flavors for little ones."
+      }
+    },
+    {
+      "id": "barra",
+      "cat": "menu",
+      "q": {
+        "es": "¿Tienen barra de coctelería?",
+        "en": "Is there a cocktail bar?"
+      },
+      "a": {
+        "es": "Sí, y es parte del corazón de la experiencia. Hay gastrococtelería y también se pueden crear cócteles a tu gusto: solo cuéntanos tus sabores o destilados favoritos.",
+        "en": "Yes, and it's at the heart of the experience. There is gastrococtelería, and custom drinks can be created for you — just tell us your favorite flavors or spirits."
+      }
+    },
+    {
+      "id": "parqueo",
+      "cat": "visita",
+      "q": {
+        "es": "¿Hay parqueo cerca?",
+        "en": "Is there parking nearby?"
+      },
+      "a": {
+        "es": "Puedes dejar tu carro en la calle privada dentro del Parque Santa Rosa, justo frente al restaurante. También hay convenio con un parqueo en la Calle del Rubio, a menos de 100 metros de la entrada.",
+        "en": "You can park on the private street inside Parque Santa Rosa, right in front of the restaurant. There's also an arrangement with a parking lot on Calle del Rubio, less than 100 meters from the entrance."
+      }
+    },
+    {
+      "id": "mascotas",
+      "cat": "visita",
+      "q": {
+        "es": "¿Aceptan mascotas?",
+        "en": "Are pets allowed?"
+      },
+      "a": {
+        "es": "Sí, es un lugar pet friendly. Tu mascota es bienvenida en el jardín y las áreas abiertas.",
+        "en": "Yes, it's a pet-friendly spot. Your pet is welcome in the garden and open areas."
+      }
+    },
+    {
+      "id": "jardin",
+      "cat": "visita",
+      "q": {
+        "es": "¿El jardín es al aire libre? ¿Qué pasa si llueve?",
+        "en": "Is the garden outdoors? What if it rains?"
+      },
+      "a": {
+        "es": "El jardín es al aire libre, con chimeneas para los días frescos. No está techado, pero hay áreas interiores acogedoras para seguir disfrutando si llueve.",
+        "en": "The garden is outdoors, with fireplaces for cooler evenings. It isn't roofed, but there are cozy indoor areas so you can keep enjoying if it rains."
+      }
+    },
+    {
+      "id": "accesibilidad",
+      "cat": "visita",
+      "q": {
+        "es": "¿Es accesible para personas con movilidad reducida?",
+        "en": "Is it accessible for people with reduced mobility?"
+      },
+      "a": {
+        "es": "Sí, hay acceso para personas con movilidad reducida en la mayoría de las áreas. Por ahora no hay baños adaptados, pero el equipo te ayuda a encontrar la mejor solución durante tu visita.",
+        "en": "Yes, most areas are accessible for reduced mobility. There aren't adapted restrooms yet, but the team will help find the best solution during your visit."
+      }
+    },
+    {
+      "id": "llevar",
+      "cat": "visita",
+      "q": {
+        "es": "¿Ofrecen comida para llevar o a domicilio?",
+        "en": "Do you offer takeout or delivery?"
+      },
+      "a": {
+        "es": "La propuesta está pensada para vivirse aquí, rodeado del jardín, así que no hay servicio para llevar ni entregas a domicilio.",
+        "en": "The experience is designed to be enjoyed here, surrounded by the garden, so there's no takeout or delivery service."
+      }
+    },
+    {
+      "id": "pagos",
+      "cat": "pagos",
+      "q": {
+        "es": "¿Aceptan tarjetas y moneda extranjera?",
+        "en": "Do you accept cards and foreign currency?"
+      },
+      "a": {
+        "es": "Sí, se aceptan todas las tarjetas de crédito y débito, y también moneda extranjera con un tipo de cambio establecido por la dirección.",
+        "en": "Yes, all credit and debit cards are accepted, as well as foreign currency at an exchange rate set by management."
+      }
+    },
+    {
+      "id": "vino",
+      "cat": "pagos",
+      "q": {
+        "es": "¿Puedo llevar mi propio vino?",
+        "en": "Can I bring my own wine?"
+      },
+      "a": {
+        "es": "Sí, puedes traer tu vino favorito. Pregunta por el costo de descorche al reservar.",
+        "en": "Yes, you can bring your favorite bottle. Just ask about the corkage fee when you book."
+      }
+    },
+    {
+      "id": "eventos",
+      "cat": "eventos",
+      "q": {
+        "es": "¿Hacen eventos privados o bodas?",
+        "en": "Do you host private events or weddings?"
+      },
+      "a": {
+        "es": "Sí. Se organizan celebraciones privadas, cumpleaños y bodas; puedes reservar áreas específicas o el espacio completo según tu evento. El jardín es ideal para momentos especiales.",
+        "en": "Yes. Private celebrations, birthdays, and weddings are welcome — you can reserve specific areas or the full space depending on your event. The garden is ideal for special moments."
+      }
+    },
+    {
+      "id": "grupos",
+      "cat": "eventos",
+      "q": {
+        "es": "¿Reciben grupos grandes?",
+        "en": "Can you accommodate large groups?"
+      },
+      "a": {
+        "es": "Sí, con reserva previa. El espacio se adapta al número de personas para que todos disfruten cómodos en el ambiente que más les guste.",
+        "en": "Yes, with an advance reservation. The space adapts to your group size so everyone is comfortable in the setting they love most."
+      }
+    },
+    {
+      "id": "contacto",
+      "cat": "contacto",
+      "q": {
+        "es": "¿Cómo reservo o me pongo en contacto?",
+        "en": "How do I book or get in touch?"
+      },
+      "a": {
+        "es": "Puedes reservar y escribir desde rosanta.rest o por WhatsApp. Cuéntanos la ocasión y te ayudamos a preparar tu mesa favorita.",
+        "en": "You can book and message through rosanta.rest or via WhatsApp. Tell us the occasion and we'll help set up your favorite table."
+      }
+    }
+  ]
+}

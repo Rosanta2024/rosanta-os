@@ -1,0 +1,11 @@
+---
+// Imagen de Rosanta servida desde la copia (public/img), con el MISMO texto alternativo de Wix.
+import { imagenLocal } from '../lib/sitio.mjs';
+const { medio, alt = '', href = null, id = undefined, cargar = 'lazy' } = Astro.props;
+const im = imagenLocal(medio);
+---
+{im && (href ? (
+  <a id={id} class="imagen" href={href}><img src={im.archivo} alt={alt} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></a>
+) : (
+  <figure id={id} class="imagen"><img src={im.archivo} alt={alt} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></figure>
+))}

@@ -1,0 +1,92 @@
+[
+  {
+    "desde": "/beverages-and-wines",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/blank",
+    "hacia": "/preguntas-frecuentes",
+    "origen": "wix"
+  },
+  {
+    "desde": "/cocktails",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/english-menu",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/es/_files/ugd/3de38d_09439677a0a74caab0fbbb9562485334.pdf",
+    "hacia": "/_files/ugd/3de38d_09439677a0a74caab0fbbb9562485334.pdf",
+    "origen": "wix-archivo"
+  },
+  {
+    "desde": "/es/_files/ugd/3de38d_7f417b2d9c4645d4a39a0b166d7f7e9e.pdf",
+    "hacia": "/_files/ugd/3de38d_7f417b2d9c4645d4a39a0b166d7f7e9e.pdf",
+    "origen": "wix-archivo"
+  },
+  {
+    "desde": "/es/_files/ugd/3de38d_dde190a54ad14f0f872ff51c5fa26798.pdf",
+    "hacia": "/_files/ugd/3de38d_dde190a54ad14f0f872ff51c5fa26798.pdf",
+    "origen": "wix-archivo"
+  },
+  {
+    "desde": "/es/blank",
+    "hacia": "/es/preguntas-frecuentes",
+    "origen": "copia"
+  },
+  {
+    "desde": "/es/menu",
+    "hacia": "/es/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/es/reservations",
+    "hacia": "/es/reservas",
+    "origen": "wix"
+  },
+  {
+    "desde": "/menu",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/menu-completo",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/menú-español",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/para-empezar",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/reservations",
+    "hacia": "/reservas",
+    "origen": "wix"
+  },
+  {
+    "desde": "/something-stronger",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/something-to-start-with",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  },
+  {
+    "desde": "/spirits-and-liqueurs",
+    "hacia": "/full-menu",
+    "origen": "wix"
+  }
+]

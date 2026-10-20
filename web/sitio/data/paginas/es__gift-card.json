@@ -1,0 +1,175 @@
+{
+  "ruta": "/es/gift-card",
+  "idioma": "es",
+  "lang": "es",
+  "titulo": "Tarjeta de regalo | Rosanta",
+  "descripcion": null,
+  "canonical": "https://www.rosanta.rest/es/gift-card",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/gift-card"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/gift-card"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/gift-card"
+    }
+  ],
+  "og": {
+    "og:title": "Tarjeta de regalo | Rosanta",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest/es/gift-card",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Tarjeta de regalo | Rosanta",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [
+    "Tarjeta de regalo online"
+  ],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    },
+    {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": "Tarjeta de regalo online",
+      "description": "Una tarjeta de regalo siempre es bien recibida. Elige un monto y escribe un mensaje para que este regalo sea personal.",
+      "brand": {
+        "@type": "Thing",
+        "name": "Rosanta"
+      },
+      "offers": {
+        "@type": "AggregateOffer",
+        "url": "https://www.rosanta.rest/es/gift-card",
+        "lowPrice": 25,
+        "highPrice": 200,
+        "priceCurrency": "GTQ",
+        "availability": "http://schema.org/inStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Rosanta"
+        }
+      },
+      "image": {
+        "@type": "ImageObject",
+        "height": "600",
+        "width": "600",
+        "contentUrl": "https://static.wixstatic.com/media/e90a2a_c3de803545f340df9dd4aa88a72e0718~mv2.png",
+        "representativeOfPage": true
+      }
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVACIONES EVENTOS IDEAS PARA REGALAR PREGUNTAS FRECUENTES Política de Privacidad CONTACT LOCATION More Use tab to navigate through the menu items. Tarjeta de regalo online GTQ 25 Monto GTQ 25 GTQ 50 GTQ 100 GTQ 150 GTQ 200 Cantidad © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [
+    {
+      "medio": "e90a2a_c3de803545f340df9dd4aa88a72e0718~mv2.png",
+      "alt": ""
+    }
+  ],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-lwqhe8ot",
+      "fondo": null,
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "widget",
+          "id": "TPASection_lvbs5d58",
+          "html": "<div><div><div data-hook=\"tpa-components-provider\"><div data-hook=\"ProductPageAppDataHook.root\"><div data-hook=\"tpa-components-provider\"><div><div><div><div data-hook=\"ProductImageDataHook.image\"><img data-medio=\"e90a2a_c3de803545f340df9dd4aa88a72e0718~mv2.png\" alt=\"\" width=\"121\" height=\"81\"></div></div></div><div><div><h1 data-hook=\"Headline.headline\">Tarjeta de regalo online</h1></div><p data-hook=\"ProductPrice.productPrice\">GTQ 25</p>Monto<div><div data-hook=\"box-selection-option-wrapper\"><div data-hook=\"box-selection-option\"><span data-hook=\"icon\"></span><span data-hook=\"label\">GTQ 25</span></div></div><div data-hook=\"box-selection-option-wrapper\"><div data-hook=\"box-selection-option\"><span data-hook=\"icon\"></span><span data-hook=\"label\">GTQ 50</span></div></div><div data-hook=\"box-selection-option-wrapper\"><div data-hook=\"box-selection-option\"><span data-hook=\"icon\"></span><span data-hook=\"label\">GTQ 100</span></div></div><div data-hook=\"box-selection-option-wrapper\"><div data-hook=\"box-selection-option\"><span data-hook=\"icon\"></span><span data-hook=\"label\">GTQ 150</span></div></div><div data-hook=\"box-selection-option-wrapper\"><div data-hook=\"box-selection-option\"><span data-hook=\"icon\"></span><span data-hook=\"label\">GTQ 200</span></div></div></div>Cantidad<div><div><div data-hook=\"core-input-root\"></div></div></div></div></div></div></div></div></div></div>",
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "base": 980,
+            "x": 0,
+            "area": "1 / 1 / 2 / 2"
+          }
+        }
+      ]
+    }
+  ]
+}

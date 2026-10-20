@@ -1,0 +1,31 @@
+{
+  "_nota": "Direcciones que NO salen en los sitemaps de Wix pero que existen (o existieron) y hay que cuidar. Fuentes: estudio 2026-10-21 (1.1 y 2.3), Plan_301_Menus.md (15-ago-2026) y masterPage.js. El inventario las pide en inglés (raíz) y en español (/es/...).",
+  "redirecciones_wix": [
+    "/reservations",
+    "/menu",
+    "/blank"
+  ],
+  "plan_301_menus": [
+    "/menu-completo",
+    "/menú-español",
+    "/english-menu",
+    "/para-empezar",
+    "/something-to-start-with",
+    "/something-stronger",
+    "/cocktails",
+    "/beverages-and-wines",
+    "/spirits-and-liqueurs"
+  ],
+  "candidatas_en_espanol_del_plan_301": [
+    "/algo-más-fuerte",
+    "/cócteles",
+    "/bebidas-y-vinos",
+    "/licores-y-digestivos",
+    "/brunch"
+  ],
+  "sistema_y_otras": [
+    "/reservation-details",
+    "/blog",
+    "/full-menu?menu=rosanta-menu"
+  ]
+}

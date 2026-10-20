@@ -1,0 +1,345 @@
+---
+// Formulario de reservas + captura de carritos: el MISMO componente publicado hoy en Wix
+// (diseño, pasos, validación, calendario de 12 meses, códigos de país, confirmación), pero
+// dentro de la página en vez de un iframe. Cambios respecto de Wix:
+//  - la dirección de la API sale de API_BASE (config.mjs / PUBLIC_API_BASE); mismo contrato:
+//      GET  {API_BASE}/slots?date=&partySize=   POST {API_BASE}/reservar
+//  - el receptor de carritos sale de CARRITO_URL (sin token en el código; vacío = apagado);
+//  - la reserva y el carrito llevan el campo "fuente" (referido + utm + canal, ver /js/fuente.js);
+//  - el idioma lo da la página (/es → español), no el idioma del navegador.
+import { TEXTOS, PAISES } from '../lib/formulario-textos.mjs';
+import { API_BASE, CARRITO_URL, WHATSAPP } from '../config.mjs';
+
+const { idioma = 'en' } = Astro.props;
+const T = TEXTOS[idioma === 'es' ? 'es' : 'en'];
+const API = API_BASE.replace(/\/$/, '');
+---
+<div class="rsv" data-paridad="mejora" data-api={API}>
+  <div class="wrap">
+    <div id="formview">
+      <div class="title" id="t-title">{T.title}</div>
+      <div class="sub" id="t-sub">{T.sub}</div>
+      <form class="card" id="rsv-form" onsubmit="return false" novalidate>
+        <div class="row">
+          <div class="field">
+            <label id="l-party" for="party">{T.party}</label>
+            <select id="party" name="partySize">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option selected={n === 2}>{n}</option>)}
+            </select>
+          </div>
+          <div class="field">
+            <label id="l-date">{T.date}</label>
+            <div class="dpick">
+              <button type="button" id="dateBtn" class="date-btn ph" aria-haspopup="dialog" aria-expanded="false"><span id="dateBtnTxt">{T.choose}</span></button>
+              <input type="hidden" id="date" name="date" value="" />
+              <div class="cal" id="cal" hidden role="dialog">
+                <div class="cal-head">
+                  <button type="button" class="cal-nav" id="calPrev">&lsaquo;</button>
+                  <div class="cal-title" id="calTitle"></div>
+                  <button type="button" class="cal-nav" id="calNext">&rsaquo;</button>
+                </div>
+                <div class="cal-dow" id="calDow"></div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label id="l-time">{T.time}</label>
+          <div class="slots-wrap" id="slotsWrap">
+            <div class="slots" id="slots"><div class="slots-msg" id="slotsMsg">{T.pick}</div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label id="l-fn" for="fn">{T.fn}</label>
+            <input id="fn" name="firstName" autocomplete="given-name" />
+          </div>
+          <div class="field">
+            <label id="l-ln" for="ln">{T.ln}</label>
+            <input id="ln" name="lastName" autocomplete="family-name" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label id="l-ph" for="ph">{T.ph}</label>
+            <div class="phone">
+              <select id="cc" aria-label="Country code">
+                {PAISES.map((p) => <option value={p[1]} data-iso={p[0]} selected={p[0] === 'GT'}>{p[0]} {p[1]}</option>)}
+              </select>
+              <input id="ph" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="5555 5555" />
+            </div>
+            <div class="hint" id="h-ph">{T.hph}</div>
+          </div>
+          <div class="field">
+            <label id="l-em" for="em">{T.em}</label>
+            <input id="em" name="email" type="email" autocomplete="email" />
+          </div>
+        </div>
+        <div class="field">
+          <label id="l-al" for="al">{T.al}</label>
+          <input id="al" name="alergias" placeholder={T.alPh} />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label id="l-se" for="se">{T.se}</label>
+            <select id="se" name="sentarse">
+              <option value="">{T.nopref}</option>
+              <option value="Indoor">Indoor</option>
+              <option value="Pergola">Pergola</option>
+              <option value="Jardin">Garden</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="l-co" for="co">{T.co}</label>
+            <select id="co" name="conocio">
+              <option value="">—</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Google">Google</option>
+              <option value="Recomendacion">{T.friend}</option>
+              <option value="AI">ChatGPT / AI</option>
+              <option value="Otro">{T.other}</option>
+            </select>
+          </div>
+        </div>
+        <label class="optin"><input type="checkbox" id="optin" checked /><span id="l-optin">{T.optin}</span></label>
+        <button class="btn" id="send" type="button">{T.reserve}</button>
+        <div class="error" id="err" role="alert"></div>
+      </form>
+      <noscript>
+        <p class="sin-js">{idioma === 'es'
+          ? 'Para reservar en línea hace falta JavaScript. También puedes escribirnos por WhatsApp al +502 3082 6935 o llamar al +502 7768 8880.'
+          : 'Online booking needs JavaScript. You can also message us on WhatsApp at +502 3082 6935 or call +502 7768 8880.'}</p>
+      </noscript>
+    </div>
+
+    <div id="done">
+      <div class="dtitle" id="d-title">{T.dtitle}</div>
+      <div class="dcard">
+        <p id="d-p1">{T.dp1}</p>
+        <div class="divider"></div>
+        <div class="details">
+          <div class="dcell"><div class="k" id="k-date">{T.kdate}</div><div class="v" id="v-date">—</div></div>
+          <div class="dcell"><div class="k" id="k-time">{T.ktime}</div><div class="v" id="v-time">—</div></div>
+          <div class="dcell"><div class="k" id="k-guests">{T.kguests}</div><div class="v" id="v-guests">—</div></div>
+        </div>
+        <div class="note" id="d-note">{T.dnote}</div>
+        <a class="wa" id="d-wa" href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35zM12.04 21.5h-.01a9.4 9.4 0 01-4.79-1.31l-.34-.2-3.56.93.95-3.47-.22-.36a9.37 9.37 0 01-1.44-5.01c0-5.18 4.23-9.4 9.42-9.4a9.36 9.36 0 016.65 2.76 9.32 9.32 0 012.75 6.65c0 5.18-4.23 9.41-9.41 9.41zm8.01-17.42A11.28 11.28 0 0012.04 1C5.79 1 .71 6.07.71 12.31c0 1.99.52 3.94 1.51 5.65L.6 24l6.19-1.62a11.33 11.33 0 005.25 1.33h.01c6.24 0 11.32-5.07 11.33-11.31a11.24 11.24 0 00-3.32-8.02z"/></svg>
+          <span id="d-watext">{T.watext}</span>
+        </a>
+      </div>
+      <div class="closing" id="d-closing">
+        {T.closing}
+        <span class="sig">Rosanta · Antigua Guatemala</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ T, PAISES, API, CARRITO_URL }}>
+(function(){
+var root = document.querySelector('.rsv');
+if (!root) return;
+var $ = function(id){ return root.querySelector('#' + id); };
+var GT_OFFSET = -6;
+function txt(id, v){ var e = $(id); if (e) e.textContent = v; }
+function fuente(){ try { return window.RosantaFuente ? window.RosantaFuente.obtener() : null; } catch(e){ return null; } }
+
+// ---- calendario de fechas (12 meses; evita el date picker nativo) ----
+function gtNow(){ var now = new Date(); return new Date(now.getTime() + (GT_OFFSET*60 + now.getTimezoneOffset())*60000); }
+var dateEl = $('date');
+(function buildCalendar(){
+  var MESES_VISIBLES = 12;
+  var hoyGT = gtNow();
+  var HOY = { y: hoyGT.getFullYear(), m: hoyGT.getMonth(), d: hoyGT.getDate() };
+  var MIN_IDX = HOY.y*12 + HOY.m, MAX_IDX = MIN_IDX + MESES_VISIBLES - 1;
+  var btn = $('dateBtn'), btnTxt = $('dateBtnTxt'), cal = $('cal'), titulo = $('calTitle');
+  var prev = $('calPrev'), next = $('calNext'), grid = $('calGrid');
+  var vY = HOY.y, vM = HOY.m;
+  function iso(y, m, d){ return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+  var ISO_HOY = iso(HOY.y, HOY.m, HOY.d);
+  var manana = new Date(HOY.y, HOY.m, HOY.d + 1);
+  var ISO_MANANA = iso(manana.getFullYear(), manana.getMonth(), manana.getDate());
+  prev.title = T.prevM; prev.setAttribute('aria-label', T.prevM);
+  next.title = T.nextM; next.setAttribute('aria-label', T.nextM);
+  $('calDow').innerHTML = T.dow.map(function(x){ return '<div>' + x + '</div>'; }).join('');
+  function pintarBoton(){
+    var v = dateEl.value;
+    if (!v){ btnTxt.textContent = T.choose; btn.classList.add('ph'); return; }
+    btn.classList.remove('ph');
+    var p = v.split('-'); var y = Number(p[0]), m = Number(p[1]) - 1, d = Number(p[2]);
+    var etq = v === ISO_HOY ? T.hoy : (v === ISO_MANANA ? T.manana : T.dias[new Date(y, m, d).getDay()]);
+    btnTxt.textContent = etq + ' · ' + d + ' ' + T.meses[m] + (y !== HOY.y ? ' ' + y : '');
+  }
+  function render(){
+    titulo.textContent = T.mesesL[vM] + ' ' + vY;
+    prev.disabled = (vY*12 + vM) <= MIN_IDX;
+    next.disabled = (vY*12 + vM) >= MAX_IDX;
+    var huecos = new Date(vY, vM, 1).getDay(), dias = new Date(vY, vM + 1, 0).getDate(), h = '';
+    for (var i = 0; i < huecos; i++) h += '<div class="cal-day"></div>';
+    for (var d = 1; d <= dias; d++){
+      var pasado = (vY < HOY.y) || (vY === HOY.y && (vM < HOY.m || (vM === HOY.m && d < HOY.d)));
+      var v = iso(vY, vM, d), cls = 'cal-day';
+      if (pasado) cls += ' dis';
+      if (v === ISO_HOY) cls += ' today';
+      if (v === dateEl.value) cls += ' sel';
+      h += '<button type="button" class="' + cls + '"' + (pasado ? ' disabled' : ' data-v="' + v + '"') + '>' + d + '</button>';
+    }
+    grid.innerHTML = h;
+  }
+  function abrir(){ if (dateEl.value){ var p = dateEl.value.split('-'); vY = Number(p[0]); vM = Number(p[1]) - 1; } render(); cal.hidden = false; btn.setAttribute('aria-expanded','true'); }
+  function cerrar(){ cal.hidden = true; btn.setAttribute('aria-expanded','false'); }
+  btn.addEventListener('click', function(e){ e.stopPropagation(); if (cal.hidden) abrir(); else cerrar(); });
+  prev.addEventListener('click', function(){ if (vM === 0){ vM = 11; vY--; } else vM--; render(); });
+  next.addEventListener('click', function(){ if (vM === 11){ vM = 0; vY++; } else vM++; render(); });
+  grid.addEventListener('click', function(e){
+    var b = e.target.closest('.cal-day');
+    if (!b || !b.getAttribute('data-v')) return;
+    dateEl.value = b.getAttribute('data-v'); pintarBoton(); render(); cerrar();
+    dateEl.dispatchEvent(new Event('change'));
+  });
+  cal.addEventListener('click', function(e){ e.stopPropagation(); });
+  document.addEventListener('click', function(){ if (!cal.hidden) cerrar(); });
+  document.addEventListener('keydown', function(e){ if ((e.key === 'Escape' || e.key === 'Esc') && !cal.hidden) cerrar(); });
+  pintarBoton(); render();
+})();
+
+// ---- código de país: adivina por el idioma del navegador (como en Wix) ----
+(function(){
+  var sel = $('cc');
+  var lang = (navigator.language || '').toUpperCase();
+  var region = lang.indexOf('-') > -1 ? lang.split('-')[1] : '';
+  var idx = 0;
+  for (var i = 0; i < PAISES.length; i++){ if (PAISES[i][0] === region) { idx = i; break; } }
+  sel.selectedIndex = idx; sel.title = PAISES[idx][2];
+})();
+
+var selectedSlot = null;
+function fmtGT(iso){
+  var d = new Date(iso);
+  var gt = new Date(d.getTime() + (GT_OFFSET*60 + d.getTimezoneOffset())*60000);
+  var h = gt.getHours(), m = gt.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return h + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+}
+async function loadSlots(){
+  var date = dateEl.value, party = $('party').value, box = $('slots');
+  selectedSlot = null;
+  $('slotsWrap').classList.remove('bad');
+  if (!date){ box.innerHTML = '<div class="slots-msg">'+T.pick+'</div>'; return; }
+  box.innerHTML = '<div class="slots-msg">'+T.loading+'</div>';
+  try{
+    var r = await fetch(API+'/slots?date='+encodeURIComponent(date)+'&partySize='+encodeURIComponent(party));
+    var j = await r.json().catch(function(){ return {}; });
+    if (!r.ok || j.error || !Array.isArray(j.slots)){ box.innerHTML = '<div class="slots-msg">'+T.roto+'</div>'; return; }
+    var slots = j.slots;
+    if (!slots.length){ box.innerHTML = '<div class="slots-msg">'+T.none+'</div>'; return; }
+    box.innerHTML = '';
+    slots.forEach(function(s){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'slot'; b.textContent = fmtGT(s.startDate);
+      b.onclick = function(){
+        root.querySelectorAll('.slot').forEach(function(x){ x.classList.remove('sel'); });
+        b.classList.add('sel'); selectedSlot = s;
+        $('slotsWrap').classList.remove('bad'); $('err').style.display = 'none';
+      };
+      box.appendChild(b);
+    });
+  }catch(e){ box.innerHTML = '<div class="slots-msg">'+T.roto+'</div>'; }
+}
+dateEl.addEventListener('change', loadSlots);
+$('party').addEventListener('change', loadSlots);
+
+// ---- envío: el botón NUNCA se desactiva; valida al hacer clic y dice qué falta ----
+var REQ = ['fn','ph','em'];
+function limpiarMarcas(){ REQ.forEach(function(id){ $(id).classList.remove('bad'); }); $('slotsWrap').classList.remove('bad'); }
+function mostrarError(msg, focusEl){
+  var err = $('err'); err.textContent = msg; err.style.display = 'block';
+  if (focusEl) { try { focusEl.scrollIntoView({behavior:'smooth', block:'center'}); focusEl.focus(); } catch(e){} }
+}
+$('send').addEventListener('click', async function(){
+  var btn = $('send'), err = $('err');
+  err.style.display = 'none'; limpiarMarcas();
+  var primerFalta = null;
+  REQ.forEach(function(id){ var el = $(id); if (!el.value.trim()){ el.classList.add('bad'); if (!primerFalta) primerFalta = el; } });
+  if (primerFalta){ mostrarError(T.needFields, primerFalta); return; }
+  if (!selectedSlot){ var w = $('slotsWrap'); w.classList.add('bad'); mostrarError(T.needTime, w); return; }
+  btn.disabled = true; btn.classList.add('busy'); btn.textContent = T.sending;
+  var payload = {
+    firstName: $('fn').value.trim(),
+    lastName:  $('ln').value.trim(),
+    phone:     $('cc').value + ' ' + $('ph').value.trim(),
+    email:     $('em').value.trim(),
+    partySize: Number($('party').value),
+    startDate: selectedSlot.startDate,
+    alergias:  $('al').value.trim() || 'Ninguna',
+    sentarse:  $('se').value,
+    conocio:   $('co').value,
+    optin:     $('optin').checked ? 'SI' : 'NO',
+    idioma:    document.documentElement.lang || '',
+    fuente:    fuente()
+  };
+  try{
+    var r = await fetch(API+'/reservar', { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+    var j = await r.json();
+    if (j.ok){
+      $('formview').style.display = 'none';
+      txt('d-p1', (j.status === 'REQUESTED') ? T.dreq : T.dp1);
+      var parts = dateEl.value.split('-');
+      txt('v-date', Number(parts[2]) + ' ' + T.meses[Number(parts[1]) - 1]);
+      txt('v-time', fmtGT(selectedSlot.startDate));
+      txt('v-guests', payload.partySize);
+      if (window.carritoReservaCompletada) window.carritoReservaCompletada();
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'reserva_creada', party_size: payload.partySize, fuente_canal: payload.fuente && payload.fuente.canal });
+      $('done').classList.add('on');
+      root.scrollIntoView({ block: 'start' });
+    } else {
+      mostrarError(T.fail, null);
+      btn.disabled = false; btn.classList.remove('busy'); btn.textContent = T.reserve;
+    }
+  }catch(e){
+    mostrarError(T.fail, null);
+    btn.disabled = false; btn.classList.remove('busy'); btn.textContent = T.reserve;
+  }
+});
+
+// ============================================================
+// Captura de carritos abandonados (igual que en Wix). Se manda a CARRITO_URL
+// (receptor de la nube) a los 4 minutos sin actividad o al salir de la página.
+// ============================================================
+(function(){
+  if (!CARRITO_URL) return;
+  var TICKET_PROMEDIO = 259;
+  var CAMPOS = { nombre:'fn', email:'em', telefono:'ph' };
+  var carrito = { nombre:'', email:'', telefono:'', valor:0 };
+  var enviado = false, completada = false, timer = null;
+  function programar(){ clearTimeout(timer); timer = setTimeout(enviar, 4*60*1000); }
+  Object.keys(CAMPOS).forEach(function(k){
+    var el = $(CAMPOS[k]); if (!el) return;
+    el.addEventListener('input', function(){ carrito[k] = el.value.trim(); programar(); });
+  });
+  function telCompleto(){ var cc = $('cc'), ph = $('ph'); if (!ph || !ph.value.trim()) return ''; return ((cc && cc.value) ? cc.value + ' ' : '') + ph.value.trim(); }
+  var elPax = $('party');
+  function calcValor(){ carrito.valor = (parseInt(elPax && elPax.value, 10) || 0) * TICKET_PROMEDIO; }
+  if (elPax) { calcValor(); elPax.addEventListener('change', calcValor); }
+  function permiso(){ var el = $('optin'); return (el && el.checked) ? 'SI' : 'NO'; }
+  function listo(){ return !enviado && !completada && carrito.nombre && (carrito.telefono || carrito.email); }
+  function enviar(){
+    if (!listo()) return;
+    enviado = true;
+    var body = JSON.stringify({
+      nombre: carrito.nombre, email: carrito.email, telefono: telCompleto(), valor: carrito.valor,
+      consentimiento: permiso(), fecha: new Date().toISOString().slice(0,10),
+      idioma: document.documentElement.lang || '', fuente: fuente()
+    });
+    if (navigator.sendBeacon) navigator.sendBeacon(CARRITO_URL, new Blob([body], {type:'text/plain'}));
+    else fetch(CARRITO_URL, {method:'POST', mode:'no-cors', body: body});
+  }
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') enviar(); });
+  window.addEventListener('pagehide', enviar);
+  window.carritoReservaCompletada = function(){ completada = true; clearTimeout(timer); };
+})();
+})();
+</script>

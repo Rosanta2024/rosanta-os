@@ -1,0 +1,56 @@
+---
+// Encabezado de Wix: logo, selector EN | ES y el menú (con las mismas entradas y anclas).
+// En el teléfono el menú se abre con una casilla (CSS): funciona sin JavaScript.
+import { datos, hrefMenu, rutaOtroIdioma } from '../lib/sitio.mjs';
+
+const { pagina } = Astro.props;
+const idioma = pagina.idioma;
+const comun = datos().comun[idioma] || datos().comun.en;
+const buscar = (bloques, t) => {
+  for (const b of bloques) {
+    if (b.t === t) return b;
+    const h = b.hijos && buscar(b.hijos, t);
+    if (h) return h;
+  }
+  return null;
+};
+const logo = buscar(comun.encabezado, 'svg');
+const menu = buscar(comun.encabezado, 'menu');
+// Entradas: las que no tienen id propio son el submenú de la anterior (MENU → full-menu).
+const items = [];
+for (const it of menu?.items || []) {
+  if (it.texto === 'More' && !it.href) continue;
+  const e = { texto: it.texto, href: hrefMenu(it, idioma), externo: /^https?:/.test(it.href || ''), sub: [] };
+  if (!it.idli && items.length) items[items.length - 1].sub.push(e);
+  else items.push(e);
+}
+const inicio = idioma === 'es' ? '/es' : '/';
+const otra = rutaOtroIdioma(pagina);
+const enRuta = idioma === 'en' ? pagina.ruta : otra;
+const esRuta = idioma === 'es' ? pagina.ruta : otra;
+---
+<header class="encabezado" style={comun.fondo_encabezado ? `background:${comun.fondo_encabezado}` : undefined}>
+  <div class="encabezado-in">
+    <a class="logo" href={inicio} aria-label="Rosanta" set:html={logo?.svg || 'ROSANTA'} />
+    <nav class="idioma" data-paridad="ignorar" aria-label={idioma === 'es' ? 'Idioma' : 'Language'}>
+      <a href={enRuta} hreflang="en" lang="en" class:list={[{ activo: idioma === 'en' }]}>EN</a>
+      <a href={esRuta} hreflang="es" lang="es" class:list={[{ activo: idioma === 'es' }]}>ES</a>
+    </nav>
+    <input type="checkbox" id="menu-abrir" class="menu-abrir" aria-hidden="true" tabindex="-1" />
+    <label for="menu-abrir" class="menu-boton" aria-label={idioma === 'es' ? 'Menú' : 'Menu'}><span></span><span></span><span></span></label>
+    <nav class="menu" aria-label="Site">
+        <ul>
+          {items.map((it) => (
+            <li class:list={[{ 'con-sub': it.sub.length }]}>
+              <a href={it.href} {...(it.externo ? { target: '_blank', rel: 'noopener' } : {})}>{it.texto}</a>
+              {it.sub.length > 0 && (
+                <ul class="sub" data-paridad="ignorar">
+                  {it.sub.map((s) => <li><a href={s.href}>{s.texto}</a></li>)}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+    </nav>
+  </div>
+</header>

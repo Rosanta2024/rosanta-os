@@ -1,0 +1,35 @@
+---
+// Una página por cada dirección publicada en Wix (mismas rutas, incluidas /es/... y las que
+// llevan acento). El contenido sale de data/paginas/*.json (capturado de Wix).
+import Base from '../layouts/Base.astro';
+import Bloques from '../components/Bloques.astro';
+import { paginasDelSitio, datos, promoverH1 } from '../lib/sitio.mjs';
+
+export function getStaticPaths() {
+  return paginasDelSitio().map((p) => ({
+    params: { ruta: p.ruta === '/' ? undefined : p.ruta.slice(1) },
+    props: { pagina: p },
+  }));
+}
+
+const { pagina } = Astro.props;
+// Mejora mínima (data/mejoras-seo.json): si Wix no tiene H1, el primer título pasa a H1.
+const omitir = datos().mejoras.omitir_bloques || {};
+const ocultar = datos().mejoras.ocultar_bloques || {};
+const filtrar = (l) =>
+  l.filter((b) => !omitir[b.id]).map((b) => ({ ...b, ...(ocultar[b.id] ? { oculto: true } : {}), ...(b.hijos ? { hijos: filtrar(b.hijos) } : {}) }));
+let bloques = filtrar(pagina.bloques);
+if ((datos().mejoras.promover_h1?.rutas || []).includes(pagina.ruta) && !pagina.h1.length) {
+  bloques = structuredClone(bloques);
+  let hecho = false;
+  const recorrer = (l) => l.forEach((b) => {
+    if (hecho) return;
+    if (b.t === 'rico' && /<h[2-6][\s>]/.test(b.html)) { b.html = promoverH1(b.html); hecho = true; }
+    if (b.hijos) recorrer(b.hijos);
+  });
+  recorrer(bloques);
+}
+---
+<Base pagina={pagina}>
+  <Bloques bloques={bloques} pagina={pagina} />
+</Base>
