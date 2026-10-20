@@ -19,7 +19,7 @@ const { crearMotor } = require('./motor-bot');
 // Claves del bot: viven en Secret Manager (variables S_*), nunca en la base ni en el motor. El motor ve
 // un marcador ('$WHATSAPP_TOKEN') y el pedido de verdad lo reemplaza en un proceso aparte.
 const SECRETAS = ['WHATSAPP_TOKEN', 'IG_TOKEN', 'MESSENGER_TOKEN', 'ANTHROPIC_API_KEY', 'WIX_RESERVAS_SECRETO', 'VERIFY_TOKEN', 'WEBHOOK_SECRET'];
-const MARCADOR = /\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO)\b/g;
+const MARCADOR = /\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO|GMAIL_TOKEN)\b/g;
 
 /**
  * El pedido de verdad, sincrono (el bot espera como con UrlFetchApp), con las claves puestas en el proceso hijo.
@@ -28,7 +28,7 @@ const MARCADOR = /\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|W
  */
 function pedidoConClaves(url, opciones, claves) {
   const guion = 'let d="";process.stdin.on("data",c=>d+=c).on("end",async()=>{const o=JSON.parse(d);' +
-    'const R=s=>typeof s==="string"?s.replace(/\\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO)\\b/g,(m,k)=>process.env["S_"+k]||""):s;' +
+    'const R=s=>typeof s==="string"?s.replace(/\\$(WHATSAPP_TOKEN|IG_TOKEN|MESSENGER_TOKEN|ANTHROPIC_API_KEY|WIX_RESERVAS_SECRETO|GMAIL_TOKEN)\\b/g,(m,k)=>process.env["S_"+k]||""):s;' +
     'const h={};Object.keys(o.h||{}).forEach(k=>h[k]=R(o.h[k]));let body=R(o.b);' +
     'if(o.f){body=new FormData();Object.keys(o.f.campos).forEach(k=>body.append(k,R(o.f.campos[k])));body.append(o.f.campo,new Blob([Buffer.from(o.f.b64,"base64")],{type:o.f.mime}),o.f.nombre);delete h["content-type"];}' +
     'try{const r=await fetch(R(o.u),{method:o.m,headers:h,body,redirect:"follow"});const ct=r.headers.get("content-type")||"";' +
@@ -67,7 +67,8 @@ function crearRed(cfg) {
   const wix = cfg.wixOrigen;   // p.ej. https://www.rosanta.rest
   // La foto que sube la consola: Drive, compartida con enlace, por su id (enviarImagenPorCanal).
   const fotoDrive = (u) => /^https:\/\/drive\.google\.com\/uc\?export=download&id=[\w-]+$/.test(u);
-  const ok = (u) => /^https:\/\/(graph\.facebook\.com|graph\.instagram\.com|api\.anthropic\.com)\//.test(u) || (wix && u.indexOf(wix + '/_functions/') === 0) || fotoDrive(u);
+  const ok = (u) => /^https:\/\/(graph\.facebook\.com|graph\.instagram\.com|api\.anthropic\.com)\//.test(u) || (wix && u.indexOf(wix + '/_functions/') === 0) || fotoDrive(u) ||
+    (cfg.gmail && u.indexOf('https://gmail.googleapis.com/gmail/v1/users/me/') === 0);   // canal de correo (20-oct-2026)
   const red = (url, opciones) => {
     const u = String(url);
     if (!ok(u)) return respuesta(403, JSON.stringify({ error: 'El bot nuevo no llama a ' + u.slice(0, 60) }));
@@ -95,8 +96,9 @@ function foto(estado) {
 /** Guarda solo lo que cambio. Borrar = valor NULL. */
 async function guardarEstado(pool, antes, despues) {
   const cambios = [];
-  despues.props.forEach((v, k) => { if (SECRETAS.includes(k) || k === 'INTERRUPTOR_BOT') return; if (antes.props.get(k) !== v) cambios.push([k, 'prop', v, null]); });
-  antes.props.forEach((v, k) => { if (!SECRETAS.includes(k) && k !== 'INTERRUPTOR_BOT' && !despues.props.has(k)) cambios.push([k, 'prop', null, null]); });
+  const fija = (k) => SECRETAS.includes(k) || k.indexOf('INTERRUPTOR_') === 0;   // los interruptores solo los cambia su ruta
+  despues.props.forEach((v, k) => { if (fija(k)) return; if (antes.props.get(k) !== v) cambios.push([k, 'prop', v, null]); });
+  antes.props.forEach((v, k) => { if (!fija(k) && !despues.props.has(k)) cambios.push([k, 'prop', null, null]); });
   despues.cache.forEach((e, k) => { const a = antes.cache.get(k); if (!a || a.v !== e.v || a.vence !== e.vence) cambios.push([k, 'cache', e.v, new Date(e.vence)]); });
   antes.cache.forEach((e, k) => { if (!despues.cache.has(k)) cambios.push([k, 'cache', null, null]); });
   for (const c of cambios) {

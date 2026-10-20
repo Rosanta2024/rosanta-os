@@ -50,6 +50,8 @@ function crearAppBot(deps) {
 
   // ---------------- Modo en vivo (19-oct-2026): SOLO si el servidor arranco con MODO_BOT=vivo (deps.vivo). Si no, no existen.
   if (deps.vivo) montarVivo(app, deps, tarea);
+  // ---------------- Canal de correo (20-oct-2026): con MODO_CORREO=si (deps.canalCorreo). El interruptor decide apps | sombra | nube.
+  if (deps.canalCorreo) montarCorreo(app, deps, tarea);
 
   return app;
 }
@@ -111,6 +113,28 @@ function montarVivo(app, deps, tarea) {
     const r = await deps.pool.query(`SELECT id, to_char(recibido AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI:SS') AS recibido, objeto, modo, resultado, envios, ms, error
       FROM bot_eventos ORDER BY id DESC LIMIT 50`);
     res.json(r.rows);
+  }));
+}
+
+/** El canal de correo. deps: { canalCorreo, pool } */
+function montarCorreo(app, deps, tarea) {
+  // Lo pregunta el bot de Apps Script (@64) en cada vuelta: si la respuesta es 'nube', se hace a un lado.
+  // Sin clave a propósito: solo dice el modo (apps | sombra | nube), nada de clientes.
+  app.get('/correo/quien', async (req, res) => {
+    try { res.json({ modo: await deps.canalCorreo.modo() }); } catch (e) { res.status(500).json({ error: 'sin base' }); }
+  });
+  // Cada 5 minutos (Cloud Scheduler).
+  app.post('/tareas/correo-minuto', tarea(async (req, res) => {
+    const r = await deps.canalCorreo.minuto();
+    res.status(r.error ? 500 : 200).json(r);
+  }));
+  // El interruptor del correo: 'apps' (vuelta atrás), 'sombra' o 'nube'. 'nube' solo con el sí de Juanma.
+  app.post('/tareas/interruptor-correo', tarea(async (req, res) => {
+    const v = (req.body || {}).valor;
+    if (!require('./correo-canal').MODOS.includes(v)) return res.status(400).json({ error: "valor: 'apps', 'sombra' o 'nube'" });
+    await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ('INTERRUPTOR_CORREO', 'prop', $1)
+      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, actualizado = now()`, [v]);
+    res.json({ ok: true, interruptor: await deps.canalCorreo.modo() });
   }));
 }
 

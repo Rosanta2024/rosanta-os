@@ -66,7 +66,37 @@ async function prepararVivo(pool) {
       } });
   console.log('rosanta-bot-sombra: MODO EN VIVO preparado (interruptor en la base: ' + await vivo.interruptor() + ')');
   const refrescarIg = () => require('./vivo').refrescarTokenIg({ claves, guardarSecreto });
-  return { vivo, correo, pool, refrescarIg, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET };
+  return { vivo, correo, pool, refrescarIg, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET,
+    _paraCorreo: { espejo, leadsId, claves, wixOrigen: new URL(w.rows[0].valor).origin, correo } };
+}
+
+/**
+ * Canal de correo (20-oct-2026). Solo con MODO_CORREO=si; arranca en 'apps' (no hace nada) hasta que se mueva su interruptor.
+ * Con el bot en vivo usa su espejo, sus claves y su correo; sin él, solo puede correr en 'sombra' (lee, no escribe).
+ * Gmail: BOT_GMAIL = el secreto gmail-restaurante-oauth ({ client_id, client_secret, refresh_token }).
+ */
+async function prepararCorreo(pool, kb, vivo) {
+  const { crearCanalCorreo } = require('./correo-canal');
+  const { crearCorreo } = require('./correo-vivo');
+  const { LEADS_ID } = require('./servicio-bot');
+  if (!process.env.BOT_GMAIL) throw new Error('MODO_CORREO=si sin BOT_GMAIL (secreto gmail-restaurante-oauth).');
+  const gmail = JSON.parse(process.env.BOT_GMAIL);
+  const v = vivo && vivo._paraCorreo;
+  const correoGmail = v ? v.correo : crearCorreo({ pool, gmail });
+  const tokenGmail = v ? crearCorreo({ pool, gmail }).accessToken : correoGmail.accessToken;
+  const libroSombra = async () => {   // la copia de Rosanta Leads que guarda la sombra 2 (solo lectura)
+    const r = await pool.query('SELECT pestana, filas FROM hojas_copia_f2 WHERE libro = $1', [LEADS_ID]);
+    const libro = { Leads: [[]], Conversaciones: [[]], Salientes: [[]] };
+    r.rows.forEach((x) => { libro[x.pestana] = typeof x.filas === 'string' ? JSON.parse(x.filas) : x.filas; });
+    return libro;
+  };
+  const canalCorreo = crearCanalCorreo({ pool, kb, accessToken: tokenGmail, libroSombra, soloSombra: !v,
+    espejo: v ? v.espejo : { libro: {}, aplicar: async () => 0 }, leadsId: v ? v.leadsId : LEADS_ID,
+    wixOrigen: v ? v.wixOrigen : 'https://www.rosanta.rest',
+    claves: v ? v.claves : { ANTHROPIC_API_KEY: process.env.BOT_ANTHROPIC_KEY || process.env.ANTHROPIC_SOMBRA, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO },
+    correo: (m) => correoGmail.enviar(m) });
+  console.log('rosanta-bot-sombra: canal de correo preparado (interruptor: ' + await canalCorreo.modo() + ')');
+  return { canalCorreo, pool };
 }
 
 async function main() {
@@ -77,6 +107,7 @@ async function main() {
   const servicio = crearServicioBot({ pool, kb, claveModelo });
   const deps = { servicio, kb, claveTareas: process.env.CLAVE_TAREAS, version: process.env.K_REVISION || 'local', modeloEncendido: !!claveModelo };
   if (process.env.MODO_BOT === 'vivo') Object.assign(deps, await prepararVivo(pool));   // APAGADO: solo con el sí de Juanma
+  if (process.env.MODO_CORREO === 'si') Object.assign(deps, await prepararCorreo(pool, kb, deps.vivo ? deps : null));
   const app = crearAppBot(deps);
   const port = Number(process.env.PORT || 8080);
   app.listen(port, () => console.log('rosanta-bot-sombra escuchando en ' + port));

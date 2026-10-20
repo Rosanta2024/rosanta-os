@@ -105,6 +105,7 @@ function respuesta(code, cuerpo) {
  *   red(url, opciones)         hace el pedido de verdad (Meta, Wix, Claude); los envios se anotan igual
  *   correo(m)                  manda el correo de verdad (MailApp); se anota igual
  *   alCambiarHoja(op)          cada fila agregada/cambiada/borrada, para copiarla a la hoja real
+ *   gmail                      GmailApp de verdad (canal de correo en la nube, 20-oct-2026)
  */
 function crearMotor(op) {
   const o = op || {};
@@ -150,6 +151,8 @@ function crearMotor(op) {
   const fetch = (url, opciones) => {
     const u = String(url);
     const opt = opciones || {};
+    // @64: el bot pregunta quién atiende el correo. Dentro de la nube el código ES quien atiende: siempre sigue.
+    if (/\/correo\/quien$/.test(u)) return respuesta(200, { modo: 'apps' });
     if (u.indexOf('https://api.anthropic.com/') === 0) {
       const cuerpo = JSON.parse(opt.payload);
       claudePedidos.push({ cuando: actual(), cuerpo });
@@ -230,7 +233,7 @@ function crearMotor(op) {
       correos.push({ cuando: actual(), a: m.to, asunto: m.subject, cuerpo: m.body || m.htmlBody || '' });
       if (o.correo) o.correo(m);
     } },
-    GmailApp: {
+    GmailApp: o.gmail || {   // en el canal de correo de la nube: la API de Gmail (gmail-sincrono.js)
       search: () => [],
       createDraft: (a, asunto, cuerpo) => { correos.push({ cuando: actual(), a, asunto: '[borrador] ' + asunto, cuerpo }); if (o.correo) o.correo({ borrador: true, to: a, subject: asunto, body: cuerpo }); },
       sendEmail: (a, asunto, cuerpo) => { correos.push({ cuando: actual(), a, asunto, cuerpo }); }

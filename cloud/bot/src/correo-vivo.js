@@ -59,7 +59,7 @@ function crearCorreo(deps) {
     }
     return n;
   }
-  return { enviar, reintentar };
+  return { enviar, reintentar, accessToken };
 }
 
 module.exports = { crearCorreo, armarMime, base64url };
