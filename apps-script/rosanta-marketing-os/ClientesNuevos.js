@@ -121,7 +121,7 @@ function cnHistoriaCRM() {
       var v = datos[i][c]; if (!v) return null;
       var d = v instanceof Date ? v : new Date(v);
       return isNaN(d) ? null : d;
-    }).filter(String);
+    }).filter(function (d) { return d; });   // 20-oct-2026: era filter(String), y String(null) = "null" deja pasar la fecha vacia (contacto conocido salia como nuevo)
     if (!fechas.length) continue;
     var primera = fechas.reduce(function (a, b) { return a < b ? a : b; });
     cnClaves({ email: iE >= 0 ? datos[i][iE] : '', tel: iT >= 0 ? datos[i][iT] : '' }).forEach(function (k) {
