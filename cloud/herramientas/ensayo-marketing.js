@@ -63,6 +63,7 @@ const anota = (ok, txt) => { informe.push((ok ? 'OK    ' : 'FALLA ') + txt); con
     await S.spreadsheets.values.update({ spreadsheetId: MKT, range: "'PARAMETROS'!A" + fila1 + ':B' + fila1, valueInputOption: 'RAW', requestBody: { values: [['motor_marketing', m]] } });
   };
 
+  if (process.env.SOLO_C) { await pausa(60000); } else {   // SOLO_C: repetir solo la vuelta atras (cuota de Sheets)
   // (0) siembra
   const real = await C.leerLibro(S, REAL, (await S.spreadsheets.get({ spreadsheetId: REAL, fields: 'sheets.properties.title' })).data.sheets.map((s) => s.properties.title).filter((t) => MV.ESCRIBE.concat(MV.SOLO_LEE).includes(t)));
   let props = await titulos();
@@ -74,6 +75,8 @@ const anota = (ok, txt) => { informe.push((ok ? 'OK    ' : 'FALLA ') + txt); con
   const req1 = [];
   for (const p of Object.keys(real)) {
     const sid = props.find((x) => x.title === p).sheetId;
+    const ancho = Math.max(26, ...real[p].map((f) => f.length)), alto = Math.max(1000, real[p].length + 50);
+    req1.push({ updateSheetProperties: { properties: { sheetId: sid, gridProperties: { columnCount: ancho, rowCount: alto } }, fields: 'gridProperties(columnCount,rowCount)' } });
     req1.push({ updateCells: { range: { sheetId: sid }, fields: 'userEnteredValue' } });
     req1.push({ updateCells: { range: { sheetId: sid, startRowIndex: 0, startColumnIndex: 0 }, rows: real[p].map((f) => ({ values: f.map((x) => CC.celda(x, false)) })), fields: 'userEnteredValue,userEnteredFormat.numberFormat' } });
   }
@@ -134,10 +137,11 @@ const anota = (ok, txt) => { informe.push((ok ? 'OK    ' : 'FALLA ') + txt); con
   const dups = Object.keys(L).filter((p) => { const ks = L[p].slice(1).map(MV.llaveDe(p)).filter(Boolean); return ks.length !== new Set(ks).size; });
   anota(!dups.length || (dups.length === 1 && dups[0] === 'calendario_versiones' && false), '(B) sin llaves repetidas en la hoja' + (dups.length ? ': ' + dups.join(', ') : ''));
 
+  }
   // (C) vuelta atras
   await ponerModo('sheets');
   const t1 = Date.now();
-  do { await pausa(3000); g = await guardar(PAUTA, 'mktUpsert', ['calendario', { id: 'ensayo-c2', title: 'despues' }]); } while (g.estado === 200 && Date.now() - t1 < 60000);
+  do { await pausa(8000); g = await guardar(PAUTA, 'mktUpsert', ['calendario', { id: 'ensayo-c2', title: 'despues' }]); } while (g.estado === 200 && Date.now() - t1 < 90000);
   anota(g.estado === 409, '(C) vuelta atras en ' + Math.round((Date.now() - t1) / 1000) + ' s: el servidor deja de guardar');
   await cerrarPool(pool);
   const fallas = informe.filter((x) => x.startsWith('FALLA')).length;
