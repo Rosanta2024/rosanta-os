@@ -39,9 +39,31 @@ function correoApagar() {
   console.log('Correo apagado.');
 }
 
+/**
+ * 20-oct-2026 (día único del paso a la nube): antes de cada vuelta, el bot le pregunta a la nube quién atiende el correo.
+ * 'nube' → se hace a un lado (no lee, no contesta, no avisa). Cualquier otra respuesta, o si la nube no contesta:
+ * atiende como siempre. Volver atrás = poner el interruptor de la nube en 'apps' (un minuto, sin entrar al editor).
+ * Si la nube no contesta se usa la última respuesta (10 min); sin ninguna, atiende el bot: mejor dos que ninguno.
+ */
+var CORREO_QUIEN_URL = 'https://rosanta-bot-sombra-512086396641.northamerica-south1.run.app/correo/quien';
+function correoLoAtiendeLaNube_() {
+  var cache = CacheService.getScriptCache();
+  var modo = '';
+  try {
+    var r = UrlFetchApp.fetch(CORREO_QUIEN_URL, { muteHttpExceptions: true, followRedirects: true });
+    if (r.getResponseCode() === 200) {
+      modo = String((JSON.parse(r.getContentText() || '{}') || {}).modo || '');
+      cache.put('correo_quien', modo || 'apps', 600);
+    }
+  } catch (e) { Logger.log('correo_quien: ' + e); }
+  if (!modo) modo = cache.get('correo_quien') || 'apps';
+  return modo === 'nube';
+}
+
 function revisarCorreosClientes() {
   var desde = Number(PROPS.getProperty('CORREO_DESDE') || 0);
   if (!desde) return;
+  if (correoLoAtiendeLaNube_()) return;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return;
   try {

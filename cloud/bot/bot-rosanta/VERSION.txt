@@ -1,4 +1,4 @@
-@63 · 2026-10-19T12:58:00-06:00 · f14a2f3
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 63, "ningún correo de cliente sin respuesta
-y sin aviso; red cada hora; reservas pedidas por el restaurante"), verificada el 19-oct-2026 bajando la versión 63 aparte
-(12 de 12 archivos iguales). La hora es la de la publicación; la comparación de la sombra vale para los mensajes desde esa hora.
+@64 · 2026-10-20T07:45:00-06:00 · c16ede2
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 64, "el correo le pregunta a la nube quién
+atiende"), verificada el 20-oct-2026 bajando la versión 64 aparte (12 de 12 archivos iguales). La hora es la de la publicación;
+la comparación de la sombra vale para los mensajes desde esa hora.
