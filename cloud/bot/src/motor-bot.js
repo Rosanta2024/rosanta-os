@@ -22,7 +22,7 @@ const { execFileSync } = require('child_process');
 const DIR = path.join(__dirname, '..', 'bot-rosanta');
 const ZONA = 'America/Guatemala';
 // PruebaEscaladas.js es una herramienta del editor: se copia (para que la copia sea exacta) pero no se carga.
-const ARCHIVOS = ['Code.js', 'Botones.js', 'Humano.js', 'Reservas.js', 'Cancelar.js', 'Cambiar.js', 'Consultar.js', 'Correo.js', 'ResumenDiario.js'];
+const ARCHIVOS = ['Code.js', 'Botones.js', 'Humano.js', 'Reservas.js', 'Cancelar.js', 'Cambiar.js', 'Consultar.js', 'Correo.js', 'ResumenDiario.js', 'Manual.js'];
 const WIX_URL = 'https://wix.simulado/_functions/reservarBot';
 const SECRETO_WEBHOOK = 'sombra';
 

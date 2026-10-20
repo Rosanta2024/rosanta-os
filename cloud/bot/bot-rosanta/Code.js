@@ -47,6 +47,8 @@ function doGet(e) {
 //  doPost — recibe los mensajes de WhatsApp e Instagram
 // ============================================================
 function doPost(e) {
+  // Reservas pedidas por el restaurante (Manual.js, 19-oct-2026): con su propio secreto, antes de lo de Meta.
+  if (e && e.parameter && e.parameter.accion === 'reserva') return rvmWeb_(e);
   // --- Guardia del webhook ---
   const _secret = PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET');
   const _tokenOK = e && e.parameter && e.parameter.token === _secret;
