@@ -60,7 +60,12 @@ async function main() {
     pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, copia: pagos.copia, refrescar: () => pagos.refrescar(clienteSheets()) },
     // procesos de fondo (20-oct): la cuenta de restaurante@ (Gmail/Drive) y el permiso de escribir la Config
     cuentaGoogle: cuentaGoogle,
-    resenas: { sheets: clienteSheets, gbp: require('./resenas-nube').gbpDelEntorno(process.env) },
+    resenas: { sheets: clienteSheets, gbp: require('./resenas-nube').gbpDelEntorno(process.env),
+      // el modo en vivo de reseñas SOLO con RESENAS_VIVO=si (hoy, solo en el servicio de ENSAYO); publica en Google solo con RESENAS_PUBLICAR=si
+      vivo: process.env.RESENAS_VIVO === 'si' ? require('./resenas-vivo').crearResenasVivo({ pool, gbp: require('./resenas-nube').gbpDelEntorno(process.env),
+        urlPanel: process.env.RESENAS_URL_PANEL || '',
+        avisar: (asunto, cuerpo) => (cuentaGoogle() ? cuentaGoogle().gmailEnviar('restaurante@rosanta.rest', (process.env.AVISO_PREFIJO || '') + asunto, cuerpo)
+          : Promise.reject(new Error('sin cuenta de Google para avisar'))) }) : undefined },
     encuesta: {},
     // pauta_semanal (20-oct): los escritores de los lunes, con la cuenta de restaurante@ (Drive/Sheets) y la llave de Wix
     procPauta: cuentaGoogle() && { sheetsLectura: require('./proc-pauta').sheetsDeCuenta(cuentaGoogle()), drive: require('./proc-pauta').crearDrive(cuentaGoogle()),

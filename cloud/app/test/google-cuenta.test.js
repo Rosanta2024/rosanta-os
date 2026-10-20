@@ -79,3 +79,14 @@ test('Precarga con papelera y varias paginas (FelCorreo/BancoCorreo): una sola l
   assert.ok(!/includeSpamTrash/.test(g.pedidos[1].url));
   assert.strictEqual(pre2.lista.nextPageToken, 'p2', 'con una pagina la lista queda como la dio Gmail');
 });
+
+test('Mandar un aviso por Gmail: texto en UTF-8, al destinatario, por la API de envío', async () => {
+  const f = fetchFalso({ 'https://oauth2.googleapis.com/token': { j: { access_token: 'AT', expires_in: 3600 } },
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages/send': { j: { id: 'x' } } });
+  await crearCuenta({ credencial: CRED, fetch: f }).gmailEnviar('restaurante@rosanta.rest', 'Reseñas por aprobar: 2', 'Hay 2 reseñas.');
+  const p = f.pedidos.find((x) => /send$/.test(x.url));
+  const crudo = Buffer.from(JSON.parse(p.op.body).raw, 'base64url').toString();
+  assert.match(crudo, /^To: restaurante@rosanta\.rest/);
+  assert.match(crudo, /Subject: =\?UTF-8\?B\?/);
+  assert.strictEqual(Buffer.from(crudo.split('\r\n\r\n')[1], 'base64').toString(), 'Hay 2 reseñas.');
+});

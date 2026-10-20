@@ -51,6 +51,13 @@ function crearCuenta(opciones) {
       if (e.pageToken) p.pageToken = e.pageToken;
       return json(G + '/messages?' + new URLSearchParams(p));
     },
+    /** Manda un correo de texto desde la cuenta (gmail.send). Para los avisos al dueño. */
+    async gmailEnviar(para, asunto, cuerpo) {
+      const enc = (t) => '=?UTF-8?B?' + Buffer.from(String(t), 'utf8').toString('base64') + '?=';
+      const crudo = ['To: ' + para, 'Subject: ' + enc(asunto), 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '',
+        Buffer.from(String(cuerpo), 'utf8').toString('base64')].join('\r\n');
+      return json(G + '/messages/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: Buffer.from(crudo).toString('base64url') }) });
+    },
     /** Gmail.Users.Messages.get, formato completo (como el servicio avanzado de Apps Script). */
     gmailMensaje: (id) => json(G + '/messages/' + encodeURIComponent(id) + '?format=full'),
     /** Gmail.Users.Messages.Attachments.get: {data: base64url}. */
