@@ -22,6 +22,9 @@ test('Reglas: se cargan del archivo real de Apps Script (prompt con las prohibic
   assert.match(p, /NUNCA uses "nuestro"/);
   assert.match(p, /restaurante@rosanta\.rest/);
   assert.strictEqual(R.AUTO_MIN, 4);
+  assert.match(p, /NUNCA nombres a nadie del equipo/);
+  assert.match(p, /No inventes datos/);
+  assert.doesNotMatch(p, /Juanma/);
 });
 
 test('Borrador: 5 estrellas y texto limpio → se publicaria sola; usa el modelo y la clave dados', async () => {
@@ -46,12 +49,13 @@ test('Borrador: el caso del 28-jul (nota del modelo pegada) se corta; el de 3 bo
   assert.strictEqual(sinPunto.confiable, false);
 });
 
-test('Borrador: 3 estrellas siempre a aprobacion; si Claude falla, texto de respaldo (como Apps Script)', async () => {
+test('Borrador: 3 estrellas siempre a aprobacion; si Claude falla, texto de respaldo y a aprobacion (revisor de marca)', async () => {
   const r = await B.redactar({ estrellas: 3, cliente: 'Leo', resena: 'Lento' }, { clave: 'k', fetch: claudeFalso(LIMPIA) });
   assert.strictEqual(r.decision, 'aprobar');
   const f = await B.redactar({ estrellas: 5, cliente: 'Ana Ruiz', resena: '' }, { clave: 'k', fetch: claudeFalso('', 529) });
   assert.strictEqual(f.fallo, '529');
   assert.match(f.texto, /^Ana, gracias/);
+  assert.strictEqual(f.decision, 'aprobar');
   await assert.rejects(B.redactar({ estrellas: 5 }, { clave: '' }), (e) => e.status === 503);
 });
 

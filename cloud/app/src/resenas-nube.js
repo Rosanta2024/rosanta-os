@@ -7,6 +7,8 @@
  *   POST /tareas/resenas/leer-google    lee TODAS las reseñas de Google Business Profile (solo GET), las guarda
  *                                       en resenas_gbp_google y las compara con la copia de la hoja.
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
+ *   POST /tareas/resenas/procesar      EN VIVO (resenas-vivo.js, deps.vivo): solo con el interruptor 'resenas' en 'base'.
+ *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
  *
@@ -24,7 +26,9 @@
  *   if (deps.resenas) require('./resenas-nube').montarResenas(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.resenas));
    if (deps.encuesta) require('./encuesta-nube').montarEncuesta(app, Object.assign({ pool: deps.pool }, deps.encuesta));
  * y en server.js:
- *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env) }, encuesta: {},
+ *   const vivo = require('./resenas-vivo').crearResenasVivo({ pool, avisar: <alerta por correo de siempre>, urlPanel: <url>/clientes/resenas });
+ *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env), vivo }, encuesta: {},
+ *   y a crearServicioClientes2 (sombra2) pasarle resenasVivo: vivo.
  */
 const crypto = require('crypto');
 const { leerLibro } = require('./copia-hojas');
@@ -210,35 +214,47 @@ function crearLectorGbp(cfg, opciones) {
 
 /**
  * Lo que Google dice contra lo que dice la hoja. Lo que se alerta:
- *  - faltan_en_hoja: reseñas en Google con mas de 2 h que el bot de Apps Script no anoto (corre cada hora);
+ *  - sin_atender: reseñas SIN respuesta en Google, con mas de 2 h, que el bot de Apps Script no anoto (corre cada hora);
  *  - publicada_sin_respuesta: la hoja dice PUBLICADA_* y en Google no hay respuesta;
- *  - respuesta_distinta: las dos tienen respuesta pero el texto no coincide (p. ej. editada a mano en Google).
- * Lo que solo se informa: cuantas siguen sin responder en Google.
+ *  - respuesta_distinta: las dos tienen respuesta pero el texto no coincide y Google no la cambio despues.
+ * Lo que solo se informa:
+ *  - historicas: reseñas que no estan en la hoja pero ya tienen respuesta en Google (la hoja empieza en jul-2026;
+ *    primera corrida del 20-oct: 325, la mas nueva del 16-may-2026);
+ *  - editadas_en_google: la respuesta de Google es mas nueva que la anotacion de la hoja (se corrigio a mano en
+ *    Google, como Lukas y Sylvain el 31-ago-2026). Google es la verdad.
+ *  - sin_responder: cuantas siguen sin respuesta en Google.
  */
 function comparar(google, hoja, ahora) {
   const porId = new Map(hoja.map((h) => [h.review_id, h]));
-  const d = { faltan_en_hoja: [], publicada_sin_respuesta: [], respuesta_distinta: [] };
+  const d = { sin_atender: [], publicada_sin_respuesta: [], respuesta_distinta: [] };
+  const info = { historicas: 0, editadas_en_google: [] };
   let sinResponder = 0;
   google.forEach((g) => {
     if (!g.respuesta) sinResponder++;
     const h = porId.get(g.review_id);
     if (!h) {
+      if (g.respuesta) { info.historicas++; return; }
       const t = g.creada || g.actualizada;
-      if (!t || ahora - t.getTime() > 2 * UNA_HORA) d.faltan_en_hoja.push(g.review_id);
+      if (!t || ahora - t.getTime() > 2 * UNA_HORA) d.sin_atender.push(g.review_id);
       return;
     }
     const publicada = /^PUBLICADA/.test(h.estado || '');
     if (publicada && !g.respuesta) d.publicada_sin_respuesta.push(g.review_id);
-    else if (publicada && plano(h.respuesta) !== plano(g.respuesta)) d.respuesta_distinta.push(g.review_id);
+    else if (publicada && plano(h.respuesta) !== plano(g.respuesta)) {
+      const anotada = fecha(h.fecha_publicada) || fecha(h.fecha_detectada);
+      if (g.respuesta_fecha && anotada && g.respuesta_fecha.getTime() - anotada.getTime() > 12 * UNA_HORA) info.editadas_en_google.push(g.review_id);
+      else d.respuesta_distinta.push(g.review_id);
+    }
   });
-  const alertas = d.faltan_en_hoja.length + d.publicada_sin_respuesta.length + d.respuesta_distinta.length;
-  return { en_google: google.length, en_hoja: hoja.length, sin_responder: sinResponder, alertas, diferencias: d };
+  const alertas = d.sin_atender.length + d.publicada_sin_respuesta.length + d.respuesta_distinta.length;
+  return { en_google: google.length, en_hoja: hoja.length, sin_responder: sinResponder, alertas, diferencias: d,
+    historicas: info.historicas, editadas_en_google: info.editadas_en_google };
 }
 
 async function leerGoogle(deps) {
   const lector = deps.lectorGbp || crearLectorGbp(deps.gbp || gbpDelEntorno(process.env), { fetch: deps.fetch, ahora: deps.ahora });
   const g = await lector.resenas();
-  const hoja = (await deps.pool.query('SELECT review_id, estado, respuesta FROM resenas_gbp')).rows;
+  const hoja = (await deps.pool.query('SELECT review_id, estado, respuesta, fecha_detectada, fecha_publicada FROM resenas_gbp')).rows;
   const c = comparar(g.reviews, hoja, (deps.ahora || Date.now)());
   const resumen = Object.assign({ promedio: g.promedio, total_google: g.total }, c);
   await enTransaccion(deps.pool, async (q) => {
@@ -306,8 +322,25 @@ function montarResenas(app, deps) {
       res.status(e.status || 500).json({ ok: false, error: String(e.message || e) });
     }
   };
+  // Lo pregunta Apps Script al empezar cada activador (procesarResenas, publicarAprobadas): con 'base' no hace nada,
+  // porque manda la nube. Publico y sin datos: solo el modo. Sin tabla o sin fila = 'puente'.
+  let cacheModo = null;
+  app.get('/resenas/modo', async (req, res) => {
+    const t = Date.now();
+    if (!cacheModo || t - cacheModo.t > 30000) {
+      let v = 'puente';
+      try {
+        const r = await deps.pool.query('SELECT modo FROM interruptores WHERE modulo = $1', ['resenas']);
+        if (r.rows[0] && ['puente', 'base'].indexOf(r.rows[0].modo) !== -1) v = r.rows[0].modo;
+      } catch (e) { /* sin tabla: puente */ }
+      cacheModo = { t, v };
+    }
+    res.set('Cache-Control', 'no-store').json({ modo: cacheModo.v });
+  });
   app.post('/tareas/resenas/copiar-hojas', exigirTarea, responder(copiarHojas, false));
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
+  // En vivo (resenas-vivo.js): solo hace algo con el interruptor 'resenas' en 'base'.
+  if (deps.vivo) app.post('/tareas/resenas/procesar', exigirTarea, responder(() => deps.vivo.procesar(), true));
   app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));
 }
 

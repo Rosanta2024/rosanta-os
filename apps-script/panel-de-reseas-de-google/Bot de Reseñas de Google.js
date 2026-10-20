@@ -48,6 +48,7 @@ const MB_BASE  = 'https://mybusiness.googleapis.com/v4';
 // ===================== FUNCIÓN PRINCIPAL =====================
 // Esta es la que dispara el trigger programado (cada hora / cada mañana).
 function procesarResenas() {
+  if (mandaLaNube_()) { Logger.log('Manda la nube (interruptor resenas = base): no hago nada.'); return; }
   const sheet = getSheet_();
   const yaProcesadas = getProcesadasSet_(sheet);
 
@@ -96,6 +97,7 @@ function procesarResenas() {
 // Segundo trigger (p.ej. cada 30 min). Lee la hoja y publica las que
 // Juanma marcó como aprobadas (columna APROBAR = "SI").
 function publicarAprobadas() {
+  if (mandaLaNube_()) { Logger.log('Manda la nube (interruptor resenas = base): no hago nada.'); return; }
   const sheet = getSheet_();
   const data  = sheet.getDataRange().getValues();
   const head  = data[0];
@@ -171,8 +173,9 @@ function redactarRespuesta_(estrellas, nombre, textoResena) {
 
   if (res.getResponseCode() !== 200) {
     Logger.log('Fallo LLM: ' + res.getContentText());
-    // El fallback está escrito a mano, así que sí es publicable.
-    return { texto: respuestaFallback_(estrellas, nombre), confiable: true };
+    // El fallback va SIEMPRE a aprobación (revisor de marca, 21-oct-2026): sale en español aunque la reseña
+    // sea en inglés y no sabe saltarse nombres como "Traveler". Juanma lo ajusta en el panel antes de publicar.
+    return { texto: respuestaFallback_(estrellas, nombre), confiable: false };
   }
 
   const json  = JSON.parse(res.getContentText());
@@ -288,6 +291,9 @@ function construirPrompt_(estrellas, nombre, textoResena) {
 '- Menciona algo específico que el cliente comentó (un plato, el ambiente, el servicio).',
 '- Máximo 3 oraciones.',
 '- No hagas preguntas de seguimiento ni despedidas formales.',
+'- NUNCA nombres a nadie del equipo (ni al dueño, ni a meseros, ni al chef), aunque el cliente los nombre. Di "el equipo", "la cocina" o "la barra".',
+'- No inventes datos: ingredientes, origen, leña, fincas ni productores que el cliente no haya mencionado. Prohibido "de autor".',
+'- Los ejemplos muestran el tono, no se copian: cambia la apertura y el cierre en cada respuesta.',
 '',
 'ESTRUCTURA SEGÚN RATING:',
 '5 ESTRELLAS:',
@@ -421,6 +427,23 @@ function notificarPendientes_(sheet) {
 
   MailApp.sendEmail(CONFIG.OWNER_EMAIL,
     '🌿 Rosanta: ' + pendientes.length + ' reseña(s) para revisar', cuerpo);
+}
+
+// ===================== UN SOLO ESCRITOR (nube) =====================
+// Desde el dia del cambio, la nube lee, redacta y publica. Para que no lo hagan los dos, cada activador le pregunta
+// a la nube su interruptor 'resenas'. Con 'base' este proyecto no hace nada; volver atras es poner 'puente' en la
+// nube, sin tocar esto. Si la nube no contesta, se sigue como siempre: la nube revisa en Google si una reseña ya
+// tiene respuesta antes de publicar, asi que no se contesta dos veces.
+var NUBE_RESENAS_MODO_URL = 'https://rosanta-nube-in6p5o4kna-pv.a.run.app/resenas/modo';
+
+function mandaLaNube_() {
+  try {
+    var r = UrlFetchApp.fetch(NUBE_RESENAS_MODO_URL, { muteHttpExceptions: true, followRedirects: false });
+    if (r.getResponseCode() !== 200) return false;
+    return JSON.parse(r.getContentText()).modo === 'base';
+  } catch (e) {
+    return false;
+  }
 }
 
 // ===================== UTILES =====================
