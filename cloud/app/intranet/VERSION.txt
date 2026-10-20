@@ -1,1 +1,1 @@
-3fbd8be 2026-10-17 Accesos fase 1: Finanzas solo del dueño por rol; exportar el CRM solo el dueño
+a888df1 2026-10-19 Intranet: anularMovimientoPago verifica identidad primero; NUBE_SERVIDOR_ declarada (bateria de Juanma: 3 fallas)

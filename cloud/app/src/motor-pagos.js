@@ -21,7 +21,9 @@ function formatDate(d, tz, fmt) {
   const partes = {};
   new Intl.DateTimeFormat('en-GB', { timeZone: tz || ZONA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
     .formatToParts(d).forEach((p) => { partes[p.type] = p.value; });
-  return String(fmt).replace(/yyyy|MM|dd|HH|mm|ss/g, (k) => ({ yyyy: partes.year, MM: partes.month, dd: partes.day, HH: partes.hour, mm: partes.minute, ss: partes.second })[k]);
+  // lo que va entre comillas simples es texto tal cual, como en Apps Script ("yyyy-MM-dd'T'HH:mm:ss")
+  return String(fmt).split(/('[^']*')/).map((t) => (/^'.*'$/.test(t) ? t.slice(1, -1)
+    : t.replace(/yyyy|MM|dd|HH|mm|ss/g, (k) => ({ yyyy: partes.year, MM: partes.month, dd: partes.day, HH: partes.hour, mm: partes.minute, ss: partes.second })[k]))).join('');
 }
 
 /** Una pestaña en memoria con la forma de Sheet de Apps Script. editable: si acepta escrituras. */
@@ -110,6 +112,9 @@ function crearMotor(opciones) {
   const lista = Array.from(new Set((opciones.listas || ['LISTA.txt'])
     .map((l) => fs.readFileSync(path.join(DIR, l), 'utf8')).join('\n').split('\n').map((s) => s.trim()).filter(Boolean)));
   lista.forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'intranet/' + f }));
+  // El servidor nuevo: la cerradura de NubePagos.js (_pagSoloConsulta_) no lo frena a el. Va DESPUES de cargar
+  // los archivos: NubePagos.js la declara false (la intranet) y la pisaria (bateria de Juanma, 20-oct).
+  ctx.NUBE_SERVIDOR_ = true;
   // Los correos de SAT y del banco los sigue leyendo la intranet (vigia y pantallas de Apps Script):
   // el servidor no tiene Gmail. Sin esto, getPagosProveedores intentaba leerlos y fallaba en silencio.
   ['fecLeerSiToca_', 'bcoLeerSiToca_'].forEach((n) => { if (typeof ctx[n] === 'function') ctx[n] = () => null; });

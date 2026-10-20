@@ -79,6 +79,21 @@ function crearApp(deps) {
     res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaFotos());
   });
 
+  // Caja chica y Compras (modo en vivo de Caja, 18-oct-2026): las mismas pantallas de la intranet
+  app.get('/caja', (req, res) => { if (!deps.pantallaCaja) return res.status(404).send('No disponible.'); res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaCaja()); });
+  app.get('/compras', (req, res) => { if (!deps.pantallaCompras) return res.status(404).send('No disponible.'); res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaCompras()); });
+
+  /** Un cierre del dia que manda el lector de la intranet (motor_cierres = base). body: { fila: [...] } */
+  app.post('/tareas/cierre', exigirTarea, async (req, res, next) => {
+    try {
+      if (!deps.pagos || !deps.pagos.guardarCierre) return res.status(404).json({ error: 'No disponible.' });
+      const fila = req.body && req.body.fila;
+      if (!Array.isArray(fila)) return res.status(400).json({ error: 'Falta la fila del cierre.' });
+      const r = await deps.pagos.guardarCierre(fila);
+      res.json({ ok: true, fecha: r.fecha, nuevo: r.nuevo });
+    } catch (e) { if (e.status) return res.status(e.status).json({ error: e.message }); next(e); }
+  });
+
   /** google.script.run.<nombre>(AUTH, ...args) de la pantalla llega aca. */
   app.post('/api/llamar/:nombre', exigirUsuario, async (req, res, next) => {
     const nombre = req.params.nombre;
@@ -90,7 +105,7 @@ function crearApp(deps) {
       }
       if (!deps.pagos) return res.status(404).json({ error: 'No disponible.' });
       let r;
-      try { r = deps.pagos.llamar(req.usuario, nombre, args); } catch (e) { return res.status(e.status || 400).json({ error: String(e.message || e) }); }
+      try { r = await deps.pagos.llamar(req.usuario, nombre, args); } catch (e) { return res.status(e.status || 400).json({ error: String(e.message || e) }); }
       if (deps.anotarTiempo) deps.anotarTiempo({ accion: 'Pagos · ' + nombre, donde: 'servidor', ms: r.ms, quien: req.usuario.email }).catch(() => {});
       res.json({ resultado: r.resultado });
     } catch (e) { next(e); }
@@ -100,8 +115,12 @@ function crearApp(deps) {
   app.post('/tareas/refrescar-copia', exigirTarea, async (req, res, next) => {
     try {
       const t0 = Date.now();
-      const resumen = await deps.pagos.refrescar();
-      res.json({ ok: true, ms: Date.now() - t0, pestanas: resumen });
+      const r = await deps.pagos.refrescar();
+      // si la importacion encontro problemas (conflicto, fila sin ID, una que falta en la hoja), 409: el reloj avisa
+      const mal = r.importacion && r.importacion.problemas.length > 0;
+      const malCaja = (r.importacion_caja || []).some((x) => x.problemas && x.problemas.length);
+      res.status(mal || malCaja ? 409 : 200).json({ ok: !(mal || malCaja), ms: Date.now() - t0, modo: r.modo, en_vivo: r.en_vivo, interruptor: r.interruptor,
+        pestanas: r.pestanas, importacion: r.importacion, importacion_caja: r.importacion_caja, copia_hoja: r.copia_hoja });
     } catch (e) { next(e); }
   });
 
@@ -114,6 +133,30 @@ function crearApp(deps) {
     } catch (e) { next(e); }
   });
 
+  /**
+   * Conciliacion del cierre de mes (19-oct-2026). Cuerpo opcional {mes: 'AAAA-MM'}; sin mes, el que toca
+   * (del 28 en adelante el mes en curso, antes el anterior). Con una diferencia, 409: el reloj avisa por correo.
+   */
+  app.post('/tareas/conciliar-mes', exigirTarea, async (req, res, next) => {
+    try {
+      if (!deps.conciliarMes) return res.status(404).json({ error: 'No disponible.' });
+      const mes = req.body && req.body.mes;
+      if (mes !== undefined && !/^\d{4}-\d{2}$/.test(String(mes))) return res.status(400).json({ error: 'El mes va como AAAA-MM.' });
+      const r = await deps.conciliarMes(mes);
+      res.status(r.ok ? 200 : 409).json(r);
+    } catch (e) { next(e); }
+  });
+
+  /** Las conciliaciones de mes guardadas. Solo el dueño. */
+  app.get('/api/conciliaciones', exigirUsuario, async (req, res, next) => {
+    try {
+      if (U.normalizarRol(req.usuario.rol) !== 'dueno') return res.status(403).json({ error: 'Solo el dueño ve las conciliaciones.' });
+      const r = await deps.pool.query(`SELECT to_char(cuando AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, mes, ok, totales, diferencias, avisos
+        FROM conciliaciones ORDER BY id DESC LIMIT 24`);
+      res.json({ conciliaciones: r.rows });
+    } catch (e) { next(e); }
+  });
+
   /** Las fotos de las ultimas noches, para comparar con la intranet. Solo el dueño. */
   app.get('/api/fotos-pagos', exigirUsuario, async (req, res, next) => {
     try {
@@ -123,6 +166,9 @@ function crearApp(deps) {
       res.json({ fotos: r.rows });
     } catch (e) { next(e); }
   });
+
+  // la entrada del telefono (/intranet) y los iconos de Rosanta (/marca): de la sesion de la Fase 2, 19-oct
+  require('./entrada').montarEntrada(app);
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);

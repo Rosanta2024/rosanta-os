@@ -282,7 +282,10 @@ function _cieLeer_(dias, forzar) {
                  c.gastos_pos, JSON.stringify(c.documentos || []).slice(0, 45000), c.formato,
                  // el texto de Drive, solo si no cuadra: para ver por que (13-oct-2026)
                  c.cuadra ? '' : String(texto || '').slice(0, 20000)];
-      if (fila[c.fecha]) sh.getRange(fila[c.fecha], 1, 1, row.length).setValues([row]);
+      // motor_cierres = base (18-oct-2026, NubePagos.js): el cierre va al servidor nuevo, que lo guarda en
+      // la base y lo copia a esta misma pestaña. Con sheets, como siempre.
+      if (cierresMotor_() === 'base') nubeGuardarCierre_(row);
+      else if (fila[c.fecha]) sh.getRange(fila[c.fecha], 1, 1, row.length).setValues([row]);
       else { sh.appendRow(row); fila[c.fecha] = sh.getLastRow(); }
       rep.nuevos++;
     } catch (e) { rep.errores.push(mm.id + ': ' + String(e && e.message || e)); }

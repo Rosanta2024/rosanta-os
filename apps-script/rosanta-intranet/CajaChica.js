@@ -279,6 +279,8 @@ function cchSincronizarMaestro_(E) {
   if (viejas > 0) sh.getRange(5, 1, viejas, 8).clearContent();
   if (filas.length) {
     sh.getRange(5, 1, filas.length, 1).setNumberFormat('yyyy-mm-dd');
+    // el ID como texto (19-oct-2026): un ID de solo numeros ("08230445") Sheets lo volvia numero y perdia el cero
+    sh.getRange(5, 8, filas.length, 1).setNumberFormat('@');
     sh.getRange(5, 1, filas.length, 8).setValues(filas.map(function (r) {
       var p = r[0].split('-').map(Number);
       return [new Date(p[0], p[1] - 1, p[2], 12)].concat(r.slice(1));   // al mediodia: regla 10 de FinanzasDatos
@@ -359,6 +361,7 @@ function _cchEscribir_(filas) {
 
 /** Lo que Maco conto al cerrar la caja. */
 function registrarConteoCaja(auth, fecha, contado, nota) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cchQuien_(auth), E = cchEstado_(false);
   fecha = _cchFecha_(fecha, E);
   if (contado === '' || contado == null || isNaN(Number(contado)) || Number(contado) < 0) throw new Error('Escribí cuánto contaste.');
@@ -373,6 +376,7 @@ function registrarConteoCaja(auth, fecha, contado, nota) {
  * compra sin factura: se guarda en Pagos (la ve el food cost) como "Pagado de caja".
  */
 function registrarMovimientoCaja(auth, tipo, fecha, categoria, concepto, monto, referencia, proveedor) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cchQuien_(auth), E = cchEstado_(false);
   tipo = String(tipo || '').toUpperCase();
   if (CCH_TIPOS_.indexOf(tipo) === -1 || tipo === 'CONTEO') throw new Error('Movimiento desconocido: ' + tipo);
@@ -405,6 +409,7 @@ function registrarMovimientoCaja(auth, tipo, fecha, categoria, concepto, monto, 
 
 /** Paga una o varias facturas del mismo proveedor con el efectivo de la caja. Salen de Por pagar. */
 function pagarFacturaDeCaja(auth, llaves, fecha, monto, nota) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cchQuien_(auth), E = cchEstado_(false);
   fecha = _cchFecha_(fecha, E);
   // De la caja se pagan facturas de cocina y de barra: Maco las ve todas aca.
@@ -415,6 +420,7 @@ function pagarFacturaDeCaja(auth, llaves, fecha, monto, nota) {
 
 /** Anula un movimiento de la caja. Maco anula lo suyo; el dueño, cualquiera. */
 function anularMovimientoCaja(auth, id) {
+  _cajaSoloConsulta_();   // con motor_caja = base, se anota en el servidor nuevo (NubePagos.js)
   var Q = cchQuien_(auth);
   id = String(id || '').trim();
   if (!id) throw new Error('Falta el movimiento.');

@@ -130,6 +130,37 @@ header.app .quien { font-size: 0.85rem; opacity: 0.9; display: flex; align-items
     .sm-side { width: auto; flex-direction: row; overflow-x: auto; }
   }
 
+  /* CELULAR del Sistema de Marketing (19-oct-2026, pedido de Juanma con capturas del iPhone).
+     Mismo error que Finanzas el 22-sep: con .sm en height:auto el iframe de cada vista colapsa a
+     los 300x150 que trae el navegador, y Marketing OS quedaba en un recuadro chico con media pantalla
+     vacia. Ahora la pagina es una columna de alto fijo (cabecera + modulos + vista) y la vista se queda
+     con el resto, en escritorio y en telefono. Los modulos son una fila que se desliza, sin cortarse. */
+  body.sm-pagina { display: flex; flex-direction: column; height: 100vh; height: 100dvh; margin: 0; }
+  body.sm-pagina > header.app { flex: none; }
+  body.sm-pagina > .sm { flex: 1; min-height: 0; height: auto; }
+  /* .sm-main es un <main>: la regla general (max-width, margin auto y el padding del celular) lo
+     achicaba y dejaba franjas a los costados. Se anula, como en .sf-main. */
+  body.sm-pagina .sm-main { min-height: 0; width: 100%; max-width: none; margin: 0; padding: 0; }
+  @media (max-width: 700px) {
+    body.sm-pagina > .sm { flex-direction: column; }
+    body.sm-pagina .sm-side {
+      flex: none; width: auto; min-width: 0; flex-direction: row; gap: 0.3rem;
+      padding: 0.45rem 0.5rem; border-right: 0; border-bottom: 1px solid var(--linea);
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    body.sm-pagina .sm-side::-webkit-scrollbar { display: none; }
+    body.sm-pagina .sm-side .rotulo { display: none; }
+    body.sm-pagina .sm-side .sm-item { flex: none; width: auto; white-space: nowrap; padding: 0.55rem 0.85rem; }
+    body.sm-pagina .sm-main { flex: 1; }
+    /* la cabecera en una linea y chica, como la de Finanzas */
+    body.sm-pagina > header.app { flex-direction: row; text-align: left; padding: 0.6rem 0.8rem; gap: 0.5rem; }
+    body.sm-pagina > header.app .marca .sec { display: none; }
+    body.sm-pagina > header.app .marca .logo { height: 22px; }
+    body.sm-pagina > header.app .quien { font-size: 0.78rem; gap: 0.5rem; }
+    body.sm-pagina > header.app .quien > span { display: none; }
+    body.sm-pagina > header.app .volver { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+  }
+
 
   /* ===== Shell de Finanzas: pestañas arriba (22-sep-2026) =====
      Reemplaza al lateral .sm-side para este pilar. El lateral tenia dos

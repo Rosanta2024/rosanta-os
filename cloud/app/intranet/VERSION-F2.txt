@@ -1,1 +1,1 @@
-7e8ff9e 2026-10-17 Accesos fase 2: Eventos para el dueño y sala (sala corrige solo lo suyo); borrar en Marketing pasa por la papelera
+b667e73 2026-10-19 Merge remote-tracking branch 'origin/claude/intranet-movil' into claude/infallible-roentgen-5185e3

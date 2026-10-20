@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>
+  /* Dentro del Sistema de Marketing (iframe) la cabecera con el logo y los botones de volver ya la
+     pone el shell: aca no se repite (19-oct-2026). Suelta (?page=crm), la pagina queda igual. */
+  try { if (window.top !== window.self) document.documentElement.classList.add('embebido'); } catch (e) { document.documentElement.classList.add('embebido'); }
+  </script>
+  <style>.embebido body > header.app { display: none; }</style>
   <base target="_top">
   <?!= paletaCss_() ?>
   <?!= include('Estilos') ?>

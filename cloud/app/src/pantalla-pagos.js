@@ -35,26 +35,67 @@ function pfError() {
     extraer('ProfitHoyJs.html', 'window.PF_DONDE = function', '/* Hoy (13-oct-2026)');
 }
 
-/** google.script.run del navegador → fetch al servidor nuevo, con el enlace en la cabecera. */
+/**
+ * google.script.run del navegador → fetch al servidor nuevo, con el enlace en la cabecera.
+ *
+ * EL PUENTE (18-oct-2026, condicion de Juanma: "Leer cierres se usa a diario"): "Leer cierres" y leer la
+ * foto de un comprobante usan Gmail, Drive y Claude, asi que los corre la INTRANET. Dentro de la pestaña
+ * de la intranet (?dentro=1), esas dos llamadas se le pasan a la pagina que contiene esta pantalla (la
+ * intranet, en googleusercontent.com), que corre su funcion de siempre y devuelve el resultado. Solo
+ * esas dos, y solo si quien contiene esta pantalla es Google. Con motor_cierres = base, despues de leer
+ * los cierres se pide la caja al servidor, que ya tiene el cierre en la base.
+ */
 const TRADUCTOR = `
+(function () {
+  var PUENTE = { leerCierresCaja: 1, leerComprobanteCompra: 1 };
+  var anc = (location.ancestorOrigins && location.ancestorOrigins[0]) || (function () { try { return new URL(document.referrer).origin; } catch (e) { return ''; } })();
+  var padre = new URLSearchParams(location.search).get('dentro') === '1' && window.parent !== window &&
+    /^https:[/][/][a-z0-9-]+-script[.]googleusercontent[.]com$/.test(anc) ? anc : '';
+  var pendientes = {}, n = 0;
+  window.addEventListener('message', function (ev) {
+    if (!padre || ev.source !== window.parent || ev.origin !== padre || !ev.data || !ev.data.rosantaPuenteResp) return;
+    var x = ev.data.rosantaPuenteResp, p = pendientes[x.id];
+    if (!p) return;
+    delete pendientes[x.id];
+    if (x.ok) p.ok(x.resultado); else p.mal({ message: x.error || 'No se pudo completar.' });
+  });
+  window.ROSANTA_PUENTE = function (nombre, args, ok, mal) {
+    if (!PUENTE[nombre] || !padre) return false;
+    var id = ++n;
+    pendientes[id] = { ok: ok || function () {}, mal: mal || function () {} };
+    window.parent.postMessage({ rosantaPuente: { id: id, nombre: nombre, args: args } }, padre);
+    setTimeout(function () { if (pendientes[id]) { delete pendientes[id]; (mal || function () {})({ message: 'No llegó respuesta de la intranet.' }); } }, 180000);
+    return true;
+  };
+})();
 window.google = { script: { run: (function () {
+  function llamarServidor(nombre, args, ok, mal) {
+    fetch('/api/llamar/' + encodeURIComponent(nombre), { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-rosanta-u': window.AUTH || '' }, body: JSON.stringify(args) })
+      .then(function (r) { return r.json().catch(function () { return { error: 'sin respuesta' }; }).then(function (j) { return { r: r, j: j }; }); })
+      .then(function (x) { if (x.r.ok) { if (ok) ok(x.j.resultado); } else if (mal) mal({ message: x.j.error || ('Error ' + x.r.status) }); })
+      .catch(function (e) { if (mal) mal({ message: 'NetworkError: ' + (e && e.message || e) }); });
+  }
   function corredor(ok, mal) {
     return new Proxy({}, { get: function (_, nombre) {
       if (nombre === 'withSuccessHandler') return function (f) { return corredor(f, mal); };
       if (nombre === 'withFailureHandler') return function (f) { return corredor(ok, f); };
       return function () {
         var args = [].slice.call(arguments, 1);   // el primero es AUTH: va en la cabecera
-        fetch('/api/llamar/' + encodeURIComponent(nombre), { method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-rosanta-u': window.AUTH || '' }, body: JSON.stringify(args) })
-          .then(function (r) { return r.json().catch(function () { return { error: 'sin respuesta' }; }).then(function (j) { return { r: r, j: j }; }); })
-          .then(function (x) { if (x.r.ok) { if (ok) ok(x.j.resultado); } else if (mal) mal({ message: x.j.error || ('Error ' + x.r.status) }); })
-          .catch(function (e) { if (mal) mal({ message: 'NetworkError: ' + (e && e.message || e) }); });
+        // los cierres: con motor_cierres = base el servidor ya tiene el cierre leido; la caja se pide alla
+        var okP = nombre !== 'leerCierresCaja' ? ok : function (res) {
+          fetch('/salud').then(function (r) { return r.json(); }).then(function (s) {
+            if (!(s && s.pagos && s.pagos.en_vivo && s.pagos.en_vivo.cierres)) { if (ok) ok(res); return; }
+            llamarServidor('getCajaChica', [], function (caja) { caja.lectura_ahora = res && res.lectura_ahora; if (ok) ok(caja); }, function () { if (ok) ok(res); });
+          }).catch(function () { if (ok) ok(res); });
+        };
+        if (window.ROSANTA_PUENTE(nombre, args, okP, mal)) return;
+        llamarServidor(nombre, args, ok, mal);
       };
     } });
   }
   return corredor(null, null);
 })() } };`;
-
 function armar(opciones) {
   const o = opciones || {};
   const aviso = o.sombra
@@ -66,15 +107,54 @@ function armar(opciones) {
     '.nb-top{display:flex;align-items:baseline;gap:12px;padding:14px 16px;background:var(--superficie);border-bottom:1px solid var(--linea)}' +
     '.nb-top h1{font-family:var(--rosanta-font-title);font-size:1.3rem;margin:0}.nb-top small{color:var(--texto-suave)}' +
     'main{max-width:1100px;margin:0 auto;padding:16px}' +
-    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}</style>' +
+    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}' +
+    '.nb-dentro .nb-top{display:none}.nb-dentro main{padding:0}.nb-dentro body{background:transparent}</style>' +
     '</head><body><header class="nb-top"><h1>Pagos</h1><small>servidor nuevo · Querétaro</small></header><main>' + aviso +
     '<div id="pf-host"></div></main>' +
     leer('GuardadoEstado.html') +
     '<script>' + TRADUCTOR + '\nwindow.AUTH = new URLSearchParams(location.search).get("u") || "";\n' + pfError() + '</script>' +
     leer('ProfitPagosJs.html') +
-    '<script>PF_PAGOS(document.getElementById("pf-host"), window.AUTH);</script>' +
+    // ?modo=admin:banco (pestañas de Administracion) y ?dentro=1 (dentro del marco de la intranet:
+    // sin encabezado propio, y le avisa a la intranet su alto para que el marco crezca)
+    '<script>(function(){var q=new URLSearchParams(location.search),m=q.get("modo")||"";' +
+    'if(!/^admin:(banco|balance|iva|equipo)$/.test(m))m="";' +
+    'if(q.get("dentro")==="1"){document.documentElement.classList.add("nb-dentro");' +
+    'var alto=function(){try{parent.postMessage({rosantaAlto:document.documentElement.scrollHeight},"*")}catch(e){}};' +
+    'new ResizeObserver(alto).observe(document.body);setInterval(alto,1500);}' +
+    'PF_PAGOS(document.getElementById("pf-host"),window.AUTH,m||undefined);})();</script>' +
     '</body></html>';
 }
+
+/**
+ * Caja chica y Compras en el servidor nuevo (modo en vivo, 18-oct-2026): las MISMAS pantallas de la
+ * intranet (ProfitCajaJs.html, ProfitComprasJs.html, que usan funciones de ProfitPagosJs.html), con el
+ * mismo traductor y ?dentro=1 para verse dentro de la pestaña de la intranet. sombra: con el aviso lila.
+ */
+function armarProfit(titulo, parcial, funcion, clase, sombra) {
+  const aviso = sombra ? '<div class="nb-aviso"><b>Prueba en sombra.</b> Esta pantalla es la del servidor nuevo y por ahora <b>solo muestra</b>: ' +
+    'todo se sigue anotando en la intranet de siempre.</div>' : '';
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<title>' + titulo + ' · Rosanta</title>' + paleta() +
+    '<style>body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--rosanta-font-body)}' +
+    '.nb-top{display:flex;align-items:baseline;gap:12px;padding:14px 16px;background:var(--superficie);border-bottom:1px solid var(--linea)}' +
+    '.nb-top h1{font-family:var(--rosanta-font-title);font-size:1.3rem;margin:0}.nb-top small{color:var(--texto-suave)}' +
+    'main{max-width:1100px;margin:0 auto;padding:16px}' +
+    '.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.9rem}' +
+    '.nb-dentro .nb-top{display:none}.nb-dentro main{padding:0}.nb-dentro body{background:transparent}</style>' +
+    '</head><body><header class="nb-top"><h1>' + titulo + '</h1><small>servidor nuevo · Querétaro</small></header><main>' + aviso +
+    '<div class="pg"><h2>' + titulo + '</h2></div><div class="' + clase + '" id="pf-host"></div></main>' +
+    leer('GuardadoEstado.html') +
+    '<script>' + TRADUCTOR + '\nwindow.AUTH = new URLSearchParams(location.search).get("u") || "";\n' + pfError() + '</script>' +
+    leer('ProfitPagosJs.html') + leer(parcial) +
+    '<script>(function(){var q=new URLSearchParams(location.search);' +
+    'if(q.get("dentro")==="1"){document.documentElement.classList.add("nb-dentro");' +
+    'var alto=function(){try{parent.postMessage({rosantaAlto:document.documentElement.scrollHeight},"*")}catch(e){}};' +
+    'new ResizeObserver(alto).observe(document.body);setInterval(alto,1500);}' +
+    funcion + '(document.getElementById("pf-host"),window.AUTH);})();</script>' +
+    '</body></html>';
+}
+const armarCaja = (sombra) => armarProfit('Caja chica', 'ProfitCajaJs.html', 'PF_CAJA', 'cj-host', sombra);
+const armarCompras = (sombra) => armarProfit('Compras en efectivo', 'ProfitComprasJs.html', 'PF_COMPRAS', 'ce-host', sombra);
 
 /** /pagos/fotos: las fotos de cada noche, para que Juanma las compare con la intranet. */
 function armarFotos() {
@@ -100,4 +180,4 @@ function armarFotos() {
     '}).catch(function(){document.getElementById("f").innerHTML="<tr><td colspan=6>No se pudo leer. Probá de nuevo.</td></tr>"})</script></body></html>';
 }
 
-module.exports = { armar, armarFotos, paleta, pfError, TRADUCTOR };
+module.exports = { armar, armarCaja, armarCompras, armarFotos, paleta, pfError, TRADUCTOR };

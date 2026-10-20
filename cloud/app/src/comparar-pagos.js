@@ -12,6 +12,7 @@
  */
 const C = require('./copia-hojas');
 const { crearMotor, formatDate } = require('./motor-pagos');
+const IMP = require('./importar-pagos');
 
 const DUENO = { email: 'comparacion@servidor', rol: 'dueno', modulos: ['pagos'], nombre: 'Comparación automática' };
 const CAMPOS_CUADRE = ['n', 'facturado', 'pagado', 'pendiente', 'abonadas', 'de_mas', 'favor', 'por_confirmar'];
@@ -62,17 +63,35 @@ function celdasConError(libros) {
 }
 
 /**
- * comparar({ pool, sheets, librosCopia, copiaLeida, ahora }) → la foto (y la guarda).
+ * comparar({ pool, sheets, librosCopia, copiaLeida, ahora, enVivo }) → la foto (y la guarda).
  * librosCopia: lo que usa la pantalla en este momento.
  */
 async function comparar(o) {
   const hoy = formatDate(o.ahora || new Date(), 'America/Guatemala', 'yyyy-MM-dd');
-  const fresco = {};
-  for (const k of Object.keys(C.LIBROS)) fresco[C.LIBROS[k].id] = await C.leerLibro(o.sheets, C.LIBROS[k].id, C.LIBROS[k].pestanas);
+  const B = require('./base-vs-hoja');   // aca adentro: base-vs-hoja no depende de este archivo, pero conciliar.js si
+  const fresco = await B.leerFresco(o.sheets);
   const arma = (libros) => resumen(crearMotor({ libros, configId: C.LIBROS.config.id }).correr(DUENO, 'getPagosProveedores', []).resultado, hoy);
   const rCopia = arma(o.librosCopia);
   const rFresco = arma(fresco);
   const difs = diferencias(rCopia, rFresco);
+  // La base (opcion a, 17-oct): las mismas filas que la hoja, y Pagos armado desde la base = desde la hoja
+  const cfg = C.LIBROS.config.id, hojaPag = fresco[cfg].PAGOS_PROVEEDORES;
+  const matrizBase = await IMP.matrizDesdeBase(o.pool, hojaPag[0] || []);
+  const plan = IMP.planificar(hojaPag, matrizBase.slice(1).map((f, i) => ({ id: IMP.llave(f[(hojaPag[0] || []).indexOf('ID')]), celdas: C.codificar([f])[0], origen: 'hoja', orden: i })));
+  plan.nuevas.forEach((x) => difs.push('Base: falta el pago ' + x.id + ' que esta en la hoja'));
+  plan.actualizadas.forEach((x) => difs.push('Base: el pago ' + x.id + ' es distinto al de la hoja'));
+  plan.problemas.forEach((x) => difs.push('Base: ' + x));
+  const conBase = Object.assign({}, fresco, { [cfg]: Object.assign({}, fresco[cfg], { PAGOS_PROVEEDORES: matrizBase }) });
+  diferencias(arma(conBase), rFresco).forEach((d) => difs.push('Pagos desde la base: ' + d.replace('copia ', 'base ')));
+  // Caja, retiros y cierres (19-oct, compensa la sombra de 1 semana): base = hoja; y con Caja en vivo,
+  // 07_Caja_Chica del maestro = lo que dice la base (dias ya pasados: el vigia la regenera cada hora)
+  if (await B.hayVivas(o.pool)) {
+    (await B.compararVivas(o.pool, fresco)).forEach((d) => difs.push(d));
+    if (o.enVivo && o.enVivo.caja) {
+      const conVivas = await B.conLaBase(o.pool, fresco, true);
+      B.comparar07(B.filas07Esperadas(conVivas), B.filas07Hoja(fresco), hoy).forEach((d) => difs.push(d));
+    }
+  }
   const errores = celdasConError(fresco);
   const foto = {
     por_pagar_n: rFresco.por_pagar_n, por_pagar_q: rFresco.por_pagar_q, vence_hoy: rFresco.vence_hoy, cuadre: rFresco.cuadre,
