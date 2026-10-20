@@ -82,6 +82,8 @@ const REGLAS = {
   } },
   // 19-oct-2026 (Louise): un correo que el bot no resolvió nunca queda sin aviso a Juanma.
   avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: t.avisoJuanma, detalle: t.avisoJuanma ? '' : 'no le llegó a Juanma el aviso "Lead para atender"' }) },
+  // @65 (20-oct-2026): una foto sin texto por WhatsApp siempre le llega a Juanma ("📷 Foto de cliente").
+  avisa_foto: { clase: 'flujo', f: (t) => ({ ok: t.avisoFoto, detalle: t.avisoFoto ? '' : 'no le llegó a Juanma el aviso "Foto de cliente"' }) },
   no_avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: !t.avisoJuanma, detalle: t.avisoJuanma ? 'le avisó a Juanma sin necesidad' : '' }) },
   aviso_con_datos_evento: { clase: 'flujo', f: (t) => ({ ok: t.pipeline, detalle: t.pipeline ? '' : 'el aviso a Juanma no trae el bloque del evento' }) },
   no_rompe: { clase: 'flujo', f: (t) => {

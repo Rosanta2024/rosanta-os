@@ -2597,7 +2597,12 @@
      "foto": true,
      "texto": "",
      "reglas": [
-      "no_rompe"
+      "no_rompe",
+      "contesta",
+      "contiene:Recibimos tu foto",
+      "avisa_foto",
+      "foto_queda_registrada",
+      "no_nombra_a_juanma"
      ]
     },
     {
@@ -2658,10 +2663,9 @@
      "texto": "",
      "reglas": [
       "no_rompe",
-      {
-       "regla": "foto_queda_registrada",
-       "pendiente": true
-      }
+      "se_calla",
+      "foto_queda_registrada",
+      "avisa_foto"
      ]
     }
    ],
@@ -2716,14 +2720,8 @@
      "reglas": [
       "no_rompe",
       "no_pasa_a_juanma",
-      {
-       "regla": "contesta",
-       "pendiente": true
-      },
-      {
-       "regla": "foto_queda_registrada",
-       "pendiente": true
-      },
+      "contesta",
+      "foto_queda_registrada",
       "juez:no_finge_ver_foto"
      ],
      "foto": true
@@ -3916,6 +3914,73 @@
     }
    ],
    "nota": "Entre los dos mensajes pasan 7 días: el historial de 30 minutos ya venció y el bot solo tiene el teléfono para encontrar la reserva."
+  },
+  {
+   "grupo": "fotos",
+   "origen": "armado a mano 2026-10-20",
+   "estado": null,
+   "id": "FOT-06",
+   "canal": "whatsapp",
+   "perfil": "Grace Prueba",
+   "titulo": "WhatsApp: cliente en inglés manda una foto sin texto → contesta en inglés y avisa; una ráfaga de 3 fotos da una sola respuesta",
+   "eventos": [
+    {
+     "t": "2026-11-12T15:00:00-06:00",
+     "de": "cliente",
+     "texto": "Hi! Do you have vegetarian options?",
+     "grabado": {
+      "respuesta": "Hi! Yes, we always have vegetarian dishes on the seasonal menu.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Pregunta por opciones vegetarianas",
+      "email": "",
+      "nombre": "Grace Prueba"
+     }
+    },
+    {
+     "t": "2026-11-12T15:00:06-06:00",
+     "de": "bot",
+     "texto": "Hi! Yes, we always have vegetarian dishes on the seasonal menu."
+    },
+    {
+     "t": "2026-11-12T15:02:00-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      "contesta",
+      "contiene:We got your photo",
+      "idioma:en",
+      "avisa_foto",
+      "foto_queda_registrada",
+      "no_nombra_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-11-12T15:02:05-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      "se_calla",
+      "foto_queda_registrada"
+     ]
+    },
+    {
+     "t": "2026-11-12T15:02:09-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      "se_calla",
+      "foto_queda_registrada"
+     ]
+    }
+   ]
   }
  ]
 }

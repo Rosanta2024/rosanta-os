@@ -177,6 +177,7 @@ function correrCaso(caso, n, M, ctx) {
       humano: ult ? ult[9] === 'Sí' : null,
       idiomaCliente: (e.grabado && e.grabado.idioma) || R.idiomaDe(e.texto),
       avisoJuanma: correos.some((c) => /Lead para atender/.test(c.asunto || '')),
+      avisoFoto: correos.some((c) => /Foto de cliente/.test(c.asunto || '')),
       pipeline: correos.some((c) => /PARA COTIZAR|DATOS_PIPELINE/.test(c.cuerpo || '')),
       wix: wixLog.slice(n0.wix),
       conversacionRegistrada: motor.libros.leads.Conversaciones.slice(n0.conv).some((r) => String(r[2]) === id && r[4] === 'in'),
