@@ -296,14 +296,14 @@ El `doPost` de v2 y v3 tiene una sola rama, `if (e.parameter.hook === 'sonticket
 
 | Archivo de Wix | URL | Query |
 |---|---|---|
-| `Carritos_WIX_Snippet.html` | deployment **v18** | `?token=rosanta2026xy&hook=sontickets` |
-| `crmReservas.js` | deployment **v18** | `?token=rosanta2026xy&hook=reserva` |
+| `Carritos_WIX_Snippet.html` | deployment **v18** | `?token=<token retirado el 20-oct-2026>&hook=sontickets` |
+| `crmReservas.js` | deployment **v18** | `?token=<token retirado el 20-oct-2026>&hook=reserva` |
 
 Sus `updateTime` son del 30-jul y nadie los tocó después. **Riesgo real pero latente**: dos URLs vivas que aceptarían tráfico y lo tirarían si algún día alguien las copiara por error. Borrarlas es higiene barata, no urgencia.
 
 **Sobre el hook `sontickets`:** el `Code.js` v3 renombró el hook a `carrito` el 4-ago avisando que había que cambiar el snippet, y el snippet sigue mandando el nombre viejo. No importa: la rama de compatibilidad **está viva en el v18 desplegado** (`Code.js:198`: `hook === 'carrito' || hook === 'sontickets'`), y en todo el proyecto la palabra aparece dos veces, ese `if` y un comentario. `intakeCarrito` no la menciona: **cero acoplamiento aguas abajo**. Limpiarlo es higiene, no arreglo.
 
-**El endpoint está sano [V]:** un GET sin autenticar al `/exec` del v18 devuelve `{"error":"tab desconocida"}`, o sea que llega al código y lo ejecuta. `ANYONE_ANONYMOUS` intacto en el manifiesto del v18 y de HEAD. Y `var TOKEN = 'rosanta2026xy'` es idéntico en v2, v3, v18 y HEAD, y es el que manda Wix.
+**El endpoint está sano [V]:** un GET sin autenticar al `/exec` del v18 devuelve `{"error":"tab desconocida"}`, o sea que llega al código y lo ejecuta. `ANYONE_ANONYMOUS` intacto en el manifiesto del v18 y de HEAD. Y `var TOKEN = '<token retirado el 20-oct-2026>'` es idéntico en v2, v3, v18 y HEAD, y es el que manda Wix.
 
 ### 5.7 Los webhooks funcionan — y aquí hubo un error grave de este informe
 

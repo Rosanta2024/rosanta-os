@@ -106,14 +106,15 @@ function crearMotor(opciones) {
     Logger: { log: (...a) => console.log('[intranet]', ...a) },
     ScriptApp: { getService: () => ({ getUrl: () => '' }), getOAuthToken: () => { throw new Error('No disponible en el servidor nuevo.'); } },
     UrlFetchApp: { fetch: () => { throw new Error('No disponible en el servidor nuevo.'); } },
-    // El servidor nuevo: la cerradura de NubePagos.js (_pagSoloConsulta_) no lo frena a el
-    NUBE_SERVIDOR_: true,
     console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN, parseFloat, parseInt, Intl
   };
   vm.createContext(ctx);
   const lista = Array.from(new Set((opciones.listas || ['LISTA.txt'])
     .map((l) => fs.readFileSync(path.join(DIR, l), 'utf8')).join('\n').split('\n').map((s) => s.trim()).filter(Boolean)));
   lista.forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'intranet/' + f }));
+  // El servidor nuevo: la cerradura de NubePagos.js (_pagSoloConsulta_) no lo frena a el. Va DESPUES de cargar
+  // los archivos: NubePagos.js la declara false (la intranet) y la pisaria (bateria de Juanma, 20-oct).
+  ctx.NUBE_SERVIDOR_ = true;
   // Los correos de SAT y del banco los sigue leyendo la intranet (vigia y pantallas de Apps Script):
   // el servidor no tiene Gmail. Sin esto, getPagosProveedores intentaba leerlos y fallaba en silencio.
   ['fecLeerSiToca_', 'bcoLeerSiToca_'].forEach((n) => { if (typeof ctx[n] === 'function') ctx[n] = () => null; });

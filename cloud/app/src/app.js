@@ -133,6 +133,30 @@ function crearApp(deps) {
     } catch (e) { next(e); }
   });
 
+  /**
+   * Conciliacion del cierre de mes (19-oct-2026). Cuerpo opcional {mes: 'AAAA-MM'}; sin mes, el que toca
+   * (del 28 en adelante el mes en curso, antes el anterior). Con una diferencia, 409: el reloj avisa por correo.
+   */
+  app.post('/tareas/conciliar-mes', exigirTarea, async (req, res, next) => {
+    try {
+      if (!deps.conciliarMes) return res.status(404).json({ error: 'No disponible.' });
+      const mes = req.body && req.body.mes;
+      if (mes !== undefined && !/^\d{4}-\d{2}$/.test(String(mes))) return res.status(400).json({ error: 'El mes va como AAAA-MM.' });
+      const r = await deps.conciliarMes(mes);
+      res.status(r.ok ? 200 : 409).json(r);
+    } catch (e) { next(e); }
+  });
+
+  /** Las conciliaciones de mes guardadas. Solo el dueño. */
+  app.get('/api/conciliaciones', exigirUsuario, async (req, res, next) => {
+    try {
+      if (U.normalizarRol(req.usuario.rol) !== 'dueno') return res.status(403).json({ error: 'Solo el dueño ve las conciliaciones.' });
+      const r = await deps.pool.query(`SELECT to_char(cuando AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, mes, ok, totales, diferencias, avisos
+        FROM conciliaciones ORDER BY id DESC LIMIT 24`);
+      res.json({ conciliaciones: r.rows });
+    } catch (e) { next(e); }
+  });
+
   /** Las fotos de las ultimas noches, para comparar con la intranet. Solo el dueño. */
   app.get('/api/fotos-pagos', exigirUsuario, async (req, res, next) => {
     try {
@@ -142,6 +166,9 @@ function crearApp(deps) {
       res.json({ fotos: r.rows });
     } catch (e) { next(e); }
   });
+
+  // la entrada del telefono (/intranet) y los iconos de Rosanta (/marca): de la sesion de la Fase 2, 19-oct
+  require('./entrada').montarEntrada(app);
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);

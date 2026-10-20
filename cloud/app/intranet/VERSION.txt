@@ -1,1 +1,1 @@
-239c078 2026-10-18 Nube: puente de Leer cierres y foto del comprobante a la intranet (ensayo 21/21); arregla MED_RET_MODELO_ en Compras
+a888df1 2026-10-19 Intranet: anularMovimientoPago verifica identidad primero; NUBE_SERVIDOR_ declarada (bateria de Juanma: 3 fallas)

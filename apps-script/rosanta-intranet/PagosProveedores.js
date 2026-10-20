@@ -1337,6 +1337,7 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
 
 /** Anula un movimiento anotado por error. No se borra: el estatus pasa a "ANULADO: ...". */
 function anularMovimientoPago(auth, id) {
+  pagQuien_(auth);       // primero quien llama (bateria: toda funcion publica verifica identidad)
   _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
   return _pagAnularMovimiento_(auth, id);
 }
