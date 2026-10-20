@@ -70,7 +70,10 @@ async function main() {
     leerModoMarketing = async () => {
       if (Date.now() - cacheModo.t < 30000) return cacheModo.v;
       const L = await C.leerLibro(clienteSheets(), CONFIG, ['PARAMETROS']);
-      cacheModo = { t: Date.now(), v: interruptor(L.PARAMETROS, 'motor_marketing') };
+      // tres valores: sheets (o cualquier otra cosa) | sombra | base
+      const f = (L.PARAMETROS || []).find((r) => String(r[0] || '').trim().toLowerCase() === 'motor_marketing');
+      const v = f ? String(f[1] || '').trim().toLowerCase() : '';
+      cacheModo = { t: Date.now(), v: v === 'base' || v === 'sombra' ? v : 'sheets' };
       return cacheModo.v;
     };
   }

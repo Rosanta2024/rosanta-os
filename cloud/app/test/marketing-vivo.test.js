@@ -51,9 +51,13 @@ function baseFalsa() {
       t.set(a[0] + '|' + a[1], { pestana: a[0], llave: a[1], celdas: JSON.parse(a[2]), orden: prev ? prev.orden : a[3], origen: 'servidor', actualizado: reloj++, copiado_a_hoja: null, borrada: null }); return { rows: [] };
     }
     if (/^UPDATE filas_clientes SET borrada = now\(\), origen = 'servidor'/.test(sql)) { Object.assign(t.get(a[0] + '|' + a[1]), { borrada: reloj++, origen: 'servidor', actualizado: reloj++, copiado_a_hoja: null }); return { rows: [] }; }
+    if (/^INSERT INTO marketing_sombra/.test(sql)) { sombra.push({ fn: a[0], email: a[1], prediccion: JSON.parse(a[2]), resultado: JSON.parse(a[3]) }); return { rows: [] }; }
+    if (/^SELECT fn, prediccion, resultado FROM marketing_sombra/.test(sql)) return { rows: sombra.slice() };
+    if (/^SELECT llave, celdas, borrada FROM filas_clientes WHERE pestana = \$1$/.test(sql)) return { rows: de(a[0]).map((x) => ({ llave: x.llave, celdas: x.celdas, borrada: x.borrada })) };
     throw new Error('consulta no esperada: ' + sql);
   };
-  return { t, query, connect: async () => ({ query, release: () => {} }) };
+  const sombra = [];
+  return { t, sombra, query, connect: async () => ({ query, release: () => {} }) };
 }
 
 /** La hoja en memoria con el plan de copia de verdad (planLlaves) aplicado. */
@@ -203,7 +207,7 @@ test('/interno/marketing: clave de tareas, interruptor en base, la persona por s
   } finally { srv.close(); }
 });
 
-test('En la intranet (NUBE_SERVIDOR_ false): con motor_marketing = base, las 6 funciones mandan el pedido a la nube y no escriben; con sheets, escriben como siempre', () => {
+test('En la intranet (NUBE_SERVIDOR_ false): con base las 6 funciones mandan el pedido a la nube y no escriben; con sombra escriben y avisan; con sheets, como siempre', () => {
   const { crearMotor } = require('../src/motor-pagos');
   const libro = hojas();
   const m = crearMotor({ libros: { [MV.MKT_ID]: libro, CFG: { PARAMETROS: [['clave', 'valor']] } }, configId: 'CFG', editables: { [MV.MKT_ID]: MV.ESCRIBE }, listas: MV.LISTAS });
@@ -211,7 +215,7 @@ test('En la intranet (NUBE_SERVIDOR_ false): con motor_marketing = base, las 6 f
   const enviados = [];
   let modo = 'base';
   m.ctx.NUBE_SERVIDOR_ = false;
-  m.ctx._nubeInterruptor_ = (clave) => (clave === 'motor_marketing' ? modo : 'sheets');
+  m.ctx.marketingMotor_ = () => modo;
   m.ctx.PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => (k === 'NUBE_CLAVE_TAREAS' ? 'clave-t' : null) }) };
   m.ctx.UrlFetchApp = { fetch: (url, o) => { enviados.push({ url, h: o.headers, b: JSON.parse(o.payload) }); return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ resultado: { key: 'c7', updated: false } }) }; } };
   const correr = (fn, args) => { m.ctx.__x = () => m.ctx[fn].apply(null, args.concat(['tok'])); return m.correr(PAUTA, '__x', []).resultado; };
@@ -228,8 +232,47 @@ test('En la intranet (NUBE_SERVIDOR_ false): con motor_marketing = base, las 6 f
   assert.strictEqual(enviados.length, 6);
   m.ctx.UrlFetchApp = { fetch: () => ({ getResponseCode: () => 409, getContentText: () => '{"error":"Marketing todavía se guarda en la intranet"}' }) };
   assert.throws(() => correr('mktUpsert', ['calendario', { id: 'c8' }]), /todavía se guarda en la intranet/, 'un error de la nube llega tal cual a la pantalla');
+  // sombra: avisa a la nube (marketing-sombra) y escribe en la hoja como siempre; si la nube falla, guarda igual
+  modo = 'sombra';
+  const antes = enviados.length;
+  m.ctx.UrlFetchApp = { fetch: (url, o) => { enviados.push({ url, b: JSON.parse(o.payload) }); return { getResponseCode: () => 200, getContentText: () => '{"ok":true}' }; } };
+  assert.strictEqual(correr('mktUpsert', ['calendario', { id: 'c5', title: 'Sombra' }]).key, 'c5');
+  assert.match(enviados[antes].url, /\/interno\/marketing-sombra$/);
+  assert.ok(libro.calendario.some((f) => f[0] === 'c5'), 'con sombra la intranet escribe en la hoja');
+  m.ctx.UrlFetchApp = { fetch: () => { throw new Error('la nube no contesta'); } };
+  assert.strictEqual(correr('mktUpsert', ['calendario', { id: 'c6', title: 'Igual' }]).key, 'c6', 'la sombra nunca frena un guardado');
   modo = 'sheets';
   const r = correr('mktUpsert', ['calendario', { id: 'c8', title: 'Y' }]);
   assert.strictEqual(r.key, 'c8');
   assert.ok(libro.calendario.some((f) => f[0] === 'c8'), 'con sheets escribe en la hoja como siempre');
+});
+
+
+test('Sombra: la nube anota lo que haria (sin escribir); la intranet guarda; a la noche coincide. Si la hoja quedo distinta, se ve', async () => {
+  const { h, base, v } = armar();
+  await v.importar();
+  const antes = JSON.stringify([...base.t.values()]);
+  // 1) la intranet manda el pedido a la sombra ANTES de guardar...
+  const r1 = await v.ensayar(PAUTA, 'mktUpsert', ['calendario', { id: 'c3', date: '2026-11-07', title: 'Mercado', estado: 'Idea' }]);
+  assert.ok(r1.ok);
+  const r2 = await v.ensayar(PAUTA, 'psGuardarSupuesto', [{ afirmacion: 'x' }]);   // pauta no puede: queda como error anotado
+  const r3 = await v.ensayar(DUENO, 'mktDelete', ['calendario', 'c1']);
+  assert.ok(r2.ok && r3.ok);
+  assert.strictEqual(JSON.stringify([...base.t.values()]), antes, 'la sombra no escribio nada en la base');
+  assert.strictEqual(base.sombra.length, 3);
+  assert.deepStrictEqual(Object.keys(base.sombra[0].prediccion), ['calendario']);
+  assert.match(base.sombra[1].resultado.error, /dueño/);
+  // 2) ...y la intranet guarda en la hoja (aca, a mano, como lo haria su codigo)
+  h.calendario.push(['c3', d('2026-11-07'), 'Mercado', '', '', 'Idea', '', '', '', '', '', '', '', '', '', '']);
+  const fila1 = h.calendario.findIndex((f) => f[0] === 'c1');
+  const borrada = h.calendario.splice(fila1, 1)[0];
+  h.papelera = [['borrado_el', 'borrado_por', 'pestana', 'id', 'encabezados_json', 'fila_json'],
+    ['2026-10-20T15:00:00.000Z', 'Juanma', 'calendario', 'c1', JSON.stringify(CAL), JSON.stringify(borrada)]];
+  let c = await v.comparar('2026-10-01');
+  assert.deepStrictEqual(c.diferencias, [], c.diferencias.join(' | '));
+  assert.strictEqual(c.pedidos, 3); assert.strictEqual(c.avisos.length, 1);
+  // 3) control: si la hoja quedo distinta de lo que haria la nube, aparece
+  h.calendario.find((f) => f[0] === 'c3')[2] = 'Otro título';
+  c = await v.comparar('2026-10-01');
+  assert.strictEqual(c.diferencias.length, 1); assert.match(c.diferencias[0], /c3/);
 });

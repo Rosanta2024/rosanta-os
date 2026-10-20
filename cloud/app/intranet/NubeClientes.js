@@ -33,12 +33,38 @@ function _evSoloConsulta_() {
  * a Marketing OS antes de contestar. Asi hay un solo escritor. Volver atras = motor_marketing = sheets.
  * La clave de tareas vive en las Propiedades del script (NUBE_CLAVE_TAREAS), nunca en el codigo.
  */
-function marketingMotor_() { return _nubeInterruptor_('motor_marketing', 'mkt_motor_v1'); }
+/**
+ * motor_marketing tiene TRES valores (20-oct-2026): sheets (o vacio) | sombra | base. Con sombra la intranet guarda
+ * en la hoja como siempre y, antes, le manda el mismo pedido al servidor nuevo para que anote lo que haria (la
+ * comparacion de la noche lo cruza con la hoja). Si el servidor no contesta, se guarda igual: la sombra nunca frena.
+ * Se guarda 1 minuto, como _nubeInterruptor_.
+ */
+function marketingMotor_() {
+  var cache = CacheService.getScriptCache(), g = null;
+  try { g = cache.get('mkt_motor_v2'); } catch (e) { g = null; }
+  if (g === 'base' || g === 'sombra' || g === 'sheets') return g;
+  var m = 'sheets';
+  try {
+    var sh = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('PARAMETROS');
+    var v = sh ? sh.getDataRange().getValues() : [];
+    for (var i = 1; i < v.length; i++) {
+      if (String(v[i][0] || '').trim().toLowerCase() === 'motor_marketing') {
+        var x = String(v[i][1] || '').trim().toLowerCase();
+        m = (x === 'base' || x === 'sombra') ? x : 'sheets';
+        break;
+      }
+    }
+  } catch (e) { m = 'sheets'; }
+  try { cache.put('mkt_motor_v2', m, 60); } catch (e) { /* sin cache: se lee cada vez */ }
+  return m;
+}
 
 /** null = guardar aca como siempre; si no, { resultado } de lo que guardo el servidor nuevo. */
 function _mktDesvio_(nombre, args, auth) {
   if (typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_) return null;
-  if (marketingMotor_() !== 'base') return null;
+  var modo = marketingMotor_();
+  if (modo === 'sombra') { _mktSombra_(nombre, args, auth); return null; }
+  if (modo !== 'base') return null;
   var u = resolverUsuario_(auth);
   if (!u) throw new Error('Tu correo no está en la hoja USUARIOS.');
   var clave = PropertiesService.getScriptProperties().getProperty('NUBE_CLAVE_TAREAS');
@@ -49,4 +75,15 @@ function _mktDesvio_(nombre, args, auth) {
   try { j = JSON.parse(r.getContentText()); } catch (e) { j = {}; }
   if (r.getResponseCode() !== 200) throw new Error(j.error || ('El servidor nuevo no guardó (' + r.getResponseCode() + '). Probá de nuevo en un minuto.'));
   return { resultado: j.resultado };
+}
+
+/** La sombra: le cuenta el pedido al servidor nuevo y sigue. Cualquier falla se ignora (la intranet guarda igual). */
+function _mktSombra_(nombre, args, auth) {
+  try {
+    var u = resolverUsuario_(auth);
+    var clave = PropertiesService.getScriptProperties().getProperty('NUBE_CLAVE_TAREAS');
+    if (!u || !clave) return;
+    UrlFetchApp.fetch(NUBE_CLIENTES_URL_ + '/interno/marketing-sombra', { method: 'post', contentType: 'application/json',
+      headers: { 'x-rosanta-tarea': clave }, payload: JSON.stringify({ fn: nombre, args: args, email: u.email }), muteHttpExceptions: true });
+  } catch (e) { /* la sombra nunca frena un guardado */ }
 }

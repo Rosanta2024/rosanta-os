@@ -85,6 +85,13 @@ function crearAppVivo(deps) {
       const desde = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.desde || '')) ? req.query.desde : (deps.hoy ? deps.hoy() : new Date().toISOString().slice(0, 10));
       try {
         const r = await deps.crm.comparar(desde);
+        if (deps.marketing) {   // el mismo reloj de la noche compara tambien la sombra de Marketing
+          const mk = await deps.marketing.comparar(desde);
+          r.marketing = { pedidos: mk.pedidos };
+          r.diferencias = r.diferencias.concat(mk.diferencias.map((x) => 'Marketing · ' + x));
+          r.avisos = r.avisos.concat(mk.avisos.map((x) => 'Marketing · ' + x));
+          r.ok = r.ok && mk.ok;
+        }
         await deps.pool.query('INSERT INTO clientes_comparaciones (desde, recibidos, diferencias, avisos) VALUES ($1,$2,$3,$4)', [desde, r.recibidos, JSON.stringify(r.diferencias), JSON.stringify(r.avisos)]).catch((e) => console.error('Foto de la comparacion:', e.message));
         res.status(r.ok ? 200 : 409).json(Object.assign({ desde }, r));
       } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
@@ -97,14 +104,18 @@ function crearAppVivo(deps) {
      * (sesion de Google o su enlace); aca se busca en la tabla usuarios por correo y el codigo real vuelve a
      * revisar sus permisos. 409 si el interruptor no esta en base (un solo escritor).
      */
-    app.post('/interno/marketing', exigirTarea, async (req, res) => {
+    // /interno/marketing-sombra (motor_marketing = sombra): la intranet guarda igual; aca solo se anota lo que se haria
+    app.post(['/interno/marketing', '/interno/marketing-sombra'], exigirTarea, async (req, res) => {
       const b = req.body || {};
       try {
-        if (deps.leerModoMarketing && (await deps.leerModoMarketing()) !== 'base') return res.status(409).json({ error: 'Marketing todavía se guarda en la intranet (motor_marketing en sheets).' });
+        const modo = deps.leerModoMarketing ? await deps.leerModoMarketing() : 'sheets';
+        const ensayo = req.path === '/interno/marketing-sombra';
+        if (modo !== (ensayo ? 'sombra' : 'base')) return res.status(409).json({ error: ensayo ? 'Marketing no está en sombra (motor_marketing = ' + modo + ').' : 'Marketing todavía se guarda en la intranet (motor_marketing = ' + modo + ').' });
         const email = String(b.email || '').trim().toLowerCase();
         const u = email ? (await deps.pool.query('SELECT email, rol, modulos, puede_editar, nombre FROM usuarios WHERE lower(email) = $1', [email])).rows[0] : null;
         if (!u) return res.status(403).json({ error: 'Tu correo no está en la hoja USUARIOS.' });
-        res.json({ resultado: await deps.marketing.guardar(u, String(b.fn || ''), Array.isArray(b.args) ? b.args : []) });
+        const fn = String(b.fn || ''), args = Array.isArray(b.args) ? b.args : [];
+        res.json(ensayo ? await deps.marketing.ensayar(u, fn, args) : { resultado: await deps.marketing.guardar(u, fn, args) });
       } catch (e) { res.status(e.status || 400).json({ error: String(e.message || e) }); }
     });
     app.post('/tareas/importar-marketing', exigirTarea, async (req, res) => {
