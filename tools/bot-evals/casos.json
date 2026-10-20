@@ -2247,6 +2247,105 @@
    ]
   },
   {
+   "id": "HOR-04",
+   "grupo": "horarios",
+   "titulo": "Sábado 2:40 a. m.: \"¿están abiertos ahorita?\" — contesta que no y da el horario de hoy",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Pablo 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-14T02:40:00-06:00",
+     "de": "cliente",
+     "texto": "Hola, ¿están abiertos ahorita?",
+     "grabado": {
+      "respuesta": "¡Hola! 🌙 Ahorita estamos cerrados. Hoy sábado abrimos de 12:00 del mediodía a 10:00 de la noche. ¿Te ayudo a reservar una mesa para más tarde?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta de madrugada si están abiertos",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "no_pasa_a_juanma",
+      "no_promete_disponibilidad",
+      "no_crea_reserva",
+      "idioma:es",
+      "contiene:cerrado",
+      "juez:fiel_a_la_base"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "HOR-05",
+   "grupo": "horarios",
+   "titulo": "Martes 1:15 a. m., en inglés: \"are you open now?\" — cerrado, abre a las 5 p. m.",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Ethan 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-17T01:15:00-06:00",
+     "de": "cliente",
+     "texto": "Hey, are you open now?",
+     "grabado": {
+      "respuesta": "Hey! 🌙 We're closed right now. Today (Tuesday) we open from 5:00 pm to 9:00 pm. Want me to save you a table for tonight?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asks at 1am if they are open",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "no_pasa_a_juanma",
+      "no_promete_disponibilidad",
+      "idioma:en",
+      "contiene:closed",
+      "juez:fiel_a_la_base"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "HOR-06",
+   "grupo": "horarios",
+   "titulo": "Correo en inglés: horario del domingo; borrador + aviso a Juanma, nunca respuesta sola ni silencio",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "correo",
+   "perfil": "James Walker",
+   "correo": "james.walker@ejemplo.test",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-24T22:10:00-06:00",
+     "de": "cliente",
+     "texto": "Hello, what time do you open on Sundays? We would like to come for an early dinner on November 29. Best, James",
+     "grabado": {
+      "respuesta": "Hi James,\n\nOn Sundays we open at 3:00 pm, so an early dinner on November 29 works well. If you would like, send us the time and the number of people and we will set up your table.\n\nRosanta",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asks Sunday opening hours for an early dinner on Nov 29",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "avisa_a_juanma",
+      "se_calla",
+      "no_crea_reserva",
+      "no_rompe"
+     ]
+    }
+   ]
+  },
+  {
    "id": "MEN-01",
    "grupo": "menu_precios",
    "titulo": "Pide el menú",
@@ -2412,6 +2511,40 @@
    ]
   },
   {
+   "id": "MEN-04",
+   "grupo": "menu_precios",
+   "titulo": "Correo: pregunta si hay opciones vegetarianas; queda borrador y a Juanma le llega el aviso, no sale solo",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "correo",
+   "perfil": "Carmen Ortiz",
+   "correo": "carmen.ortiz@ejemplo.test",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-23T08:30:00-06:00",
+     "de": "cliente",
+     "texto": "Buenos días, el próximo fin de semana vamos a Antigua y queremos ir a cenar. ¿Tienen opciones vegetarianas en el menú? Una de nosotras no come carne. Gracias, Carmen",
+     "grabado": {
+      "respuesta": "Hola Carmen,\n\nSí, en la carta hay opciones vegetarianas y la cocina puede orientarte el día de tu visita. Aquí puedes ver la carta de temporada: https://www.rosanta.rest/men%C3%BA-espa%C3%B1ol\n\nSi quieres, te ayudamos a reservar: solo dinos fecha, hora y cuántas personas.\n\nRosanta",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta por opciones vegetarianas para cenar el fin de semana",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "avisa_a_juanma",
+      "se_calla",
+      "no_crea_reserva",
+      "no_cancela",
+      "no_rompe"
+     ]
+    }
+   ],
+   "nota": "Por correo \"se_calla\" = no sale nada solo: la respuesta queda como borrador que Juanma revisa (RES-12)."
+  },
+  {
    "id": "FOT-01",
    "grupo": "fotos",
    "titulo": "Manda una foto y escribe \"Quisiera esto\"",
@@ -2555,6 +2688,85 @@
        "pendiente": true
       }
      ]
+    }
+   ]
+  },
+  {
+   "id": "FOT-04",
+   "grupo": "fotos",
+   "titulo": "WhatsApp: foto de un plato con pie de foto (\"¿todavía tienen este plato?\")",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Marta 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-13T14:10:00-06:00",
+     "de": "cliente",
+     "texto": "¿Todavía tienen este plato? Lo vi en su Instagram",
+     "grabado": {
+      "respuesta": "¡Buena elección! Por aquí no alcanzo a ver la foto 🙈 ¿Me dices cómo se llama el plato o qué tenía? Así te confirmo si sigue en la carta.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Manda foto de un plato y pregunta si sigue en el menú",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "no_rompe",
+      "no_pasa_a_juanma",
+      {
+       "regla": "contesta",
+       "pendiente": true
+      },
+      {
+       "regla": "foto_queda_registrada",
+       "pendiente": true
+      },
+      "juez:no_finge_ver_foto"
+     ],
+     "foto": true
+    }
+   ],
+   "pregunta_para_juanma": "En WhatsApp, una foto con pie de foto hoy se ignora entera (ni el texto llega al bot ni queda en Conversaciones). ¿Debe contestar al menos el texto?"
+  },
+  {
+   "id": "FOT-05",
+   "grupo": "fotos",
+   "titulo": "Instagram: foto con texto; contesta el texto sin fingir que vio la foto",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "instagram",
+   "perfil": "Renata Paz",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-13T20:30:00-06:00",
+     "de": "cliente",
+     "texto": "Hola! se puede reservar esta mesa de la foto? la del balcón",
+     "grabado": {
+      "respuesta": "¡Hola! No alcanzo a ver la foto por aquí 🙈 Las mesas se asignan según disponibilidad el día de tu visita. ¿Para qué fecha y cuántas personas buscas? Te ayudo con la reserva.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Manda foto de una mesa del balcón y pregunta si se puede reservar",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "no_rompe",
+      "no_promete_disponibilidad",
+      "no_crea_reserva",
+      "no_pasa_a_juanma",
+      "idioma:es",
+      "juez:no_finge_ver_foto",
+      {
+       "regla": "foto_queda_registrada",
+       "pendiente": true
+      }
+     ],
+     "foto": true
     }
    ]
   },
@@ -2750,6 +2962,134 @@
      "de": "cliente",
      "texto": "Para 4 personas la reserva Rosa le saluda",
      "grabado": null,
+     "reglas": [
+      "se_calla"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JUA-05",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Pide hablar con una persona: pasa el chat con la frase sin nombre y después se calla",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Sofía 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-10T13:05:00-06:00",
+     "de": "cliente",
+     "texto": "Hola, ¿me pueden comunicar con una persona? Prefiero hablar con alguien del restaurante, no con un bot",
+     "grabado": {
+      "respuesta": "Claro que sí. Alguien del restaurante se pondrá en contacto contigo lo antes posible. Si quieres, adelántame qué necesitas.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Pide hablar con una persona del restaurante",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_nombra_a_juanma",
+      "sin_frases_prohibidas",
+      "no_pide_otro_canal",
+      "no_crea_reserva",
+      "idioma:es",
+      "contiene:Alguien del restaurante"
+     ]
+    },
+    {
+     "t": "2026-11-10T13:05:07-06:00",
+     "de": "bot",
+     "texto": "Claro que sí. Alguien del restaurante se pondrá en contacto contigo lo antes posible. Si quieres, adelántame qué necesitas."
+    },
+    {
+     "t": "2026-11-10T13:07:30-06:00",
+     "de": "cliente",
+     "texto": "Es por una factura de mi visita del sábado, me la hicieron sin NIT",
+     "grabado": {
+      "respuesta": "Gracias por contarme. Le paso el detalle de la factura al restaurante para que te la corrijan.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Factura del sábado sin NIT",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "se_calla"
+     ]
+    },
+    {
+     "t": "2026-11-10T13:12:00-06:00",
+     "de": "cliente",
+     "texto": "¿Hola?",
+     "grabado": {
+      "respuesta": "¡Hola! Aquí sigo. ¿En qué más te ayudo?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "se_calla"
+     ]
+    }
+   ],
+   "nota": "Los \"grabado\" de los mensajes 2 y 3 son lo que diría el modelo si lo dejaran: el código tiene que callarse igual mientras el chat espera a Juanma."
+  },
+  {
+   "id": "JUA-06",
+   "grupo": "juanma_tiene_el_chat",
+   "titulo": "Instagram, en inglés: pide una persona real; pasa el chat y no vuelve a contestar",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "instagram",
+   "perfil": "Chloe Martin",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-11T16:20:00-06:00",
+     "de": "cliente",
+     "texto": "Hi, can I talk to a real person please?",
+     "grabado": {
+      "respuesta": "Of course. Someone from the restaurant will get in touch with you as soon as possible. Feel free to tell me what you need in the meantime.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Asks to talk to a real person",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "pasa_a_juanma",
+      "no_nombra_a_juanma",
+      "sin_frases_prohibidas",
+      "no_pide_otro_canal",
+      "idioma:en"
+     ]
+    },
+    {
+     "t": "2026-11-11T16:20:06-06:00",
+     "de": "bot",
+     "texto": "Of course. Someone from the restaurant will get in touch with you as soon as possible. Feel free to tell me what you need in the meantime."
+    },
+    {
+     "t": "2026-11-11T16:24:00-06:00",
+     "de": "cliente",
+     "texto": "Hello??",
+     "grabado": {
+      "respuesta": "Hi! I'm still here. How can I help?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "",
+      "email": "",
+      "nombre": ""
+     },
      "reglas": [
       "se_calla"
      ]
@@ -3166,6 +3506,416 @@
      ]
     }
    ]
+  },
+  {
+   "id": "RES-14",
+   "grupo": "reservas",
+   "titulo": "Reserva nueva completa por WhatsApp: confirma el nombre del perfil, pide el correo y la crea en Wix",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Daniela 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-12T10:15:00-06:00",
+     "de": "cliente",
+     "texto": "Hola! Quiero reservar una mesa para el sábado 21 de noviembre a las 7:30 pm, somos 4",
+     "grabado": {
+      "respuesta": "¡Hola! Con gusto 🙌 ¿Pongo la reserva a nombre de Daniela? Y pásame tu *Correo:* para mandarte la confirmación.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar para 4 el sábado 21 de noviembre a las 19:30",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "opciones": [
+        "Sí, a mi nombre",
+        "Otro nombre"
+       ]
+      }
+     },
+     "reglas": [
+      "pide:correo",
+      "no_crea_reserva",
+      "no_confirma_sin_sistema",
+      "no_promete_disponibilidad",
+      "no_pasa_a_juanma",
+      "idioma:es"
+     ]
+    },
+    {
+     "t": "2026-11-12T10:15:06-06:00",
+     "de": "bot",
+     "texto": "¡Hola! Con gusto 🙌 ¿Pongo la reserva a nombre de Daniela? Y pásame tu *Correo:* para mandarte la confirmación."
+    },
+    {
+     "t": "2026-11-12T10:16:40-06:00",
+     "de": "cliente",
+     "texto": "Sí, a mi nombre: Daniela Ruiz. daniela.ruiz@ejemplo.test",
+     "grabado": {
+      "respuesta": "Dame un segundo que confirmo la mesa.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-11-21 19:30, 4 personas",
+      "email": "daniela.ruiz@ejemplo.test",
+      "nombre": "Daniela Ruiz"
+     },
+     "reglas": [
+      "crea_reserva",
+      "contiene:21 de noviembre",
+      "contiene:19:30",
+      "contiene:daniela.ruiz@ejemplo.test",
+      "no_pasa_a_juanma",
+      "idioma:es"
+     ]
+    }
+   ],
+   "nota": "En el segundo mensaje el modelo correcto solo escribe la línea de espera; el código la reemplaza con la confirmación real de Wix."
+  },
+  {
+   "id": "RES-15",
+   "grupo": "reservas",
+   "titulo": "Cambiar la hora de la reserva por WhatsApp: la mueve en Wix sin cancelar ni crear otra",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Andrés 20",
+   "wix": {
+    "cambiarBot": {
+     "ok": true,
+     "antes": {
+      "fecha": "2026-12-04",
+      "hora": "20:00",
+      "personas": 2,
+      "nombre": "Andrés Vega",
+      "email": "andres.vega@ejemplo.test"
+     },
+     "ahora": {
+      "fecha": "2026-12-04",
+      "hora": "18:30",
+      "personas": 2
+     },
+     "nombre": "Andrés Vega",
+     "email": "andres.vega@ejemplo.test",
+     "vieja_cancelada": true,
+     "modo": "modificada"
+    }
+   },
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-25T16:00:00-06:00",
+     "de": "cliente",
+     "texto": "Buenas tardes, tengo reserva para el viernes 4 de diciembre a las 8 pm para 2. ¿La puedo pasar a las 6:30 pm? Mismo día",
+     "grabado": {
+      "respuesta": "Dame un segundo que la muevo.",
+      "categoria": "reserva_cambiada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere mover su reserva del 4 de diciembre de 20:00 a 18:30",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "accion": "cambiar_reserva",
+       "tipo": "reserva",
+       "fecha_actual": "2026-12-04",
+       "hora_actual": "20:00",
+       "fecha": "",
+       "hora": "18:30",
+       "personas": ""
+      }
+     },
+     "reglas": [
+      "accion:reserva_cambiada",
+      "no_cancela",
+      "no_crea_reserva",
+      "no_pasa_a_juanma",
+      "contiene:18:30",
+      "contiene:4 de diciembre",
+      "contiene:andres.vega@ejemplo.test",
+      "idioma:es"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RES-16",
+   "grupo": "reservas",
+   "titulo": "Cancelar la reserva del sábado por WhatsApp: la cancela en Wix y lo dice con la fecha",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Lucía 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-18T09:40:00-06:00",
+     "de": "cliente",
+     "texto": "Buenos días, necesito cancelar mi reserva del sábado 28 de noviembre, ya no vamos a poder ir 😔",
+     "grabado": {
+      "respuesta": "Dame un segundo que la busco.",
+      "categoria": "reserva_cancelada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere cancelar su reserva del 28 de noviembre",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "accion": "cancelar_reserva",
+       "tipo": "reserva",
+       "fecha": "2026-11-28"
+      }
+     },
+     "reglas": [
+      "accion:cancelar_reserva",
+      "no_crea_reserva",
+      "no_pasa_a_juanma",
+      "contiene:28 de noviembre",
+      "contiene:cancelada",
+      "sin_frases_prohibidas",
+      "idioma:es"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RES-17",
+   "grupo": "reservas",
+   "titulo": "Instagram: saludo y reserva; sin teléfono el sistema lo pide y con él la crea en Wix",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "instagram",
+   "perfil": "Valeria Soto",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-16T18:20:00-06:00",
+     "de": "cliente",
+     "texto": "Hola!! 👋",
+     "grabado": {
+      "respuesta": "¡Hola! 👋 Bienvenida a Rosanta. ¿En qué te puedo ayudar?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "no_pasa_a_juanma",
+      "idioma:es"
+     ]
+    },
+    {
+     "t": "2026-11-16T18:20:05-06:00",
+     "de": "bot",
+     "texto": "¡Hola! 👋 Bienvenida a Rosanta. ¿En qué te puedo ayudar?"
+    },
+    {
+     "t": "2026-11-16T18:21:10-06:00",
+     "de": "cliente",
+     "texto": "Quiero reservar para el sábado 5 de diciembre a las 8 de la noche, somos 3",
+     "grabado": {
+      "respuesta": "¡Con gusto! ¿Pongo la reserva a nombre de Valeria? Y pásame tu *Correo:* para la confirmación.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Quiere reservar para 3 el 5 de diciembre a las 20:00",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "opciones": [
+        "Sí, a mi nombre",
+        "Otro nombre"
+       ]
+      }
+     },
+     "reglas": [
+      "pide:correo",
+      "no_crea_reserva",
+      "no_confirma_sin_sistema",
+      "no_promete_disponibilidad",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-11-16T18:21:16-06:00",
+     "de": "bot",
+     "texto": "¡Con gusto! ¿Pongo la reserva a nombre de Valeria? Y pásame tu *Correo:* para la confirmación."
+    },
+    {
+     "t": "2026-11-16T18:22:30-06:00",
+     "de": "cliente",
+     "texto": "Sí a mi nombre, valeria.soto@ejemplo.test",
+     "grabado": {
+      "respuesta": "Dame un segundo que confirmo la mesa.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-12-05 20:00, 3 personas",
+      "email": "valeria.soto@ejemplo.test",
+      "nombre": "Valeria Soto"
+     },
+     "reglas": [
+      "no_crea_reserva",
+      "pide:Tel[eé]fono",
+      "no_confirma_sin_sistema",
+      "no_pasa_a_juanma"
+     ]
+    },
+    {
+     "t": "2026-11-16T18:22:36-06:00",
+     "de": "bot",
+     "texto": "Para dejar tu mesa lista me falta:\n\n*Teléfono:*"
+    },
+    {
+     "t": "2026-11-16T18:23:20-06:00",
+     "de": "cliente",
+     "texto": "50255123456",
+     "grabado": {
+      "respuesta": "Dame un segundo que confirmo la mesa.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-12-05 20:00, 3 personas",
+      "email": "valeria.soto@ejemplo.test",
+      "nombre": "Valeria Soto",
+      "lead": {
+       "telefono": "50255123456"
+      }
+     },
+     "reglas": [
+      "crea_reserva",
+      "contiene:5 de diciembre",
+      "contiene:20:00",
+      "contiene:valeria.soto@ejemplo.test",
+      "no_pasa_a_juanma",
+      "idioma:es"
+     ]
+    }
+   ],
+   "nota": "Turno 3: el modelo marca crear_reserva sin teléfono (el prompt pide cinco datos, sin teléfono); en Instagram Wix lo exige y el código lo pide."
+  },
+  {
+   "id": "RES-18",
+   "grupo": "reservas",
+   "titulo": "Messenger, en inglés: saludo y reserva con todos los datos (teléfono incluido); la crea en Wix",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "messenger",
+   "perfil": "Tomás Herrera",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-19T12:05:00-06:00",
+     "de": "cliente",
+     "texto": "Hi there!",
+     "grabado": {
+      "respuesta": "Hey! 👋 Welcome to Rosanta. How can I help you?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Greeting",
+      "email": "",
+      "nombre": ""
+     },
+     "reglas": [
+      "contesta",
+      "no_pasa_a_juanma",
+      "idioma:en"
+     ]
+    },
+    {
+     "t": "2026-11-19T12:05:05-06:00",
+     "de": "bot",
+     "texto": "Hey! 👋 Welcome to Rosanta. How can I help you?"
+    },
+    {
+     "t": "2026-11-19T12:06:30-06:00",
+     "de": "cliente",
+     "texto": "I'd like to book a table for 2 on Friday December 11 at 7pm. Name: Tomás Herrera, email tomas.herrera@ejemplo.test, phone 50255234567",
+     "grabado": {
+      "respuesta": "Give me a second while I lock in your table.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Reserva creada en Wix: 2026-12-11 19:00, 2 personas",
+      "email": "tomas.herrera@ejemplo.test",
+      "nombre": "Tomás Herrera",
+      "lead": {
+       "telefono": "50255234567"
+      }
+     },
+     "reglas": [
+      "crea_reserva",
+      "idioma:en",
+      "contiene:11 December",
+      "contiene:tomas.herrera@ejemplo.test",
+      "no_pasa_a_juanma"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RES-19",
+   "grupo": "reservas",
+   "titulo": "Reserva y vuelve 7 días después (sin historial) a preguntar a qué hora era: la consulta sin tocarla",
+   "origen": "armado a mano 2026-10-20",
+   "canal": "whatsapp",
+   "perfil": "Gabriela 20",
+   "estado": null,
+   "eventos": [
+    {
+     "t": "2026-11-20T11:00:00-06:00",
+     "de": "cliente",
+     "texto": "Hola, quiero reservar para el sábado 12 de diciembre a la 1 pm, somos 6. A nombre de Gabriela Méndez, gabriela.mendez@ejemplo.test",
+     "grabado": {
+      "respuesta": "Dame un segundo que confirmo la mesa.",
+      "categoria": "reserva_creada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Reserva creada en Wix: 2026-12-12 13:00, 6 personas",
+      "email": "gabriela.mendez@ejemplo.test",
+      "nombre": "Gabriela Méndez"
+     },
+     "reglas": [
+      "crea_reserva",
+      "contiene:12 de diciembre"
+     ]
+    },
+    {
+     "t": "2026-11-20T11:00:08-06:00",
+     "de": "bot",
+     "texto": "Listo, Gabriela Méndez 🌿\n\n📅 sábado 12 de diciembre\n🕗 13:00\n👥 6\n\nTu mesa queda confirmada. Te llega el correo de confirmación a gabriela.mendez@ejemplo.test."
+    },
+    {
+     "t": "2026-11-27T19:45:00-06:00",
+     "de": "cliente",
+     "texto": "Hola de nuevo! ¿A qué hora era mi reserva? No me acuerdo si era a la 1 o a las 2",
+     "grabado": {
+      "respuesta": "Dame un segundo que la busco.",
+      "categoria": "reserva_consultada",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Pregunta a qué hora es su reserva",
+      "email": "",
+      "nombre": "",
+      "lead": {
+       "accion": "consultar_reserva",
+       "tipo": "reserva"
+      }
+     },
+     "reglas": [
+      "accion:consultar_reserva",
+      "no_crea_reserva",
+      "no_cancela",
+      "no_pasa_a_juanma",
+      "contiene:13:00",
+      "contiene:12 de diciembre",
+      "idioma:es"
+     ]
+    }
+   ],
+   "nota": "Entre los dos mensajes pasan 7 días: el historial de 30 minutos ya venció y el bot solo tiene el teléfono para encontrar la reserva."
   }
  ]
 }
