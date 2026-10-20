@@ -8,7 +8,7 @@ Desde el 17-oct-2026. Rama `claude/nube-fase2-mkt`. Diseño e inventario: `Rosan
 
 | Pieza | Dónde |
 |---|---|
-| Servicio | Cloud Run **`rosanta-nube-sombra2`**, Querétaro, `https://rosanta-nube-sombra2-512086396641.northamerica-south1.run.app`. Es aparte de `rosanta-nube` (Pagos): publicar uno no toca el otro. Misma cuenta de servicio `rosanta-nube@…`. Máximo 1 instancia; TZ=America/Guatemala |
+| Servicio | Cloud Run **`rosanta-nube-sombra2`**, Querétaro, `https://rosanta-nube-sombra2-512086396641.northamerica-south1.run.app`. Es aparte de `rosanta-nube` (Pagos): publicar uno no toca el otro. Misma cuenta de servicio `rosanta-nube@…`. Máximo 1 instancia; **1 GB de memoria** (19-oct: con CRM, chats, reseñas y encuesta la comparación pasa los 400 MB; con 512 MB se trababa y Cloud Run contestaba "Rate exceeded"); TZ=America/Guatemala |
 | Código | `app/src/server-sombra2.js` y `app/src/sombra2/`. No edita `app.js` ni `motor-pagos.js`: usa `crearMotor({ listas })` y `refrescarCopia/cargarCopia({ tabla })` |
 | Código de la intranet | Copias exactas en `app/intranet/`, listas `LISTA-CAJA.txt`, `LISTA-EVENTOS.txt` y `LISTA-VISTAS-F2.txt`. Versión en `VERSION-F2.txt` |
 | Tablas | `hojas_copia_f2` (copia propia de las hojas) y `caja_fotos` (foto de cada noche). Migración `010`; el rango 010–019 es de esta rama |

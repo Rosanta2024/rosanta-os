@@ -1,0 +1,106 @@
+/**
+ * Rutas de rosanta-bot-sombra (19-oct-2026). No hay pantallas aqui (van en Clientes, en la sombra 2) ni
+ * webhook de Meta: este servicio solo reproduce y compara. Todo, salvo /salud, pide la clave de tareas.
+ */
+const express = require('express');
+const crypto = require('crypto');
+
+function iguales(a, b) {
+  const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
+  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
+
+/** deps: { servicio, claveTareas, version, modeloEncendido } y, solo en vivo: { vivo, correo, pool, verifyToken, webhookSecret } */
+function crearAppBot(deps) {
+  const app = express();
+  app.use(express.json({ limit: '100kb' }));
+
+  app.get('/salud', (req, res) => res.json({ ok: true, servicio: 'rosanta-bot-sombra', revision: deps.version, modelo: !!deps.modeloEncendido }));
+
+  const tarea = (fn) => async (req, res) => {
+    if (!iguales(req.get('x-rosanta-tarea'), deps.claveTareas)) return res.status(403).json({ error: 'Clave de tarea invalida.' });
+    try { await fn(req, res); } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
+  };
+
+  // Reloj comparar-bot-noche: el dia anterior. 409 = la sombra se aparto del bot real o la copia esta vieja (llega la alerta).
+  app.post('/tareas/comparar-bot-noche', tarea(async (req, res) => {
+    const r = await deps.servicio.compararNoche();
+    const corto = { ok: r.ok, problemas: r.problemas,
+      grabado: { corrida: r.grabado.corrida, resumen: Object.assign({}, r.grabado.resumen, { diferencias: r.grabado.resumen.diferencias.length }) },
+      modelo: r.modelo && (r.modelo.error ? { error: r.modelo.error } : { corrida: r.modelo.corrida, costoUsd: r.modelo.costoUsd,
+        resumen: Object.assign({}, r.modelo.resumen, { diferencias: r.modelo.resumen.diferencias.length }) }) };
+    if (!r.ok) console.error('comparar-bot-noche: ' + r.problemas.join(' | '));
+    res.status(r.ok ? 200 : 409).json(corto);
+  }));
+
+  // A mano: { modo: 'grabado'|'modelo', desde, hasta (ISO), maxModelo }
+  app.post('/tareas/reproducir', tarea(async (req, res) => {
+    const b = req.body || {};
+    const r = await deps.servicio.reproducir({ modo: b.modo, desde: b.desde ? Date.parse(b.desde) : 0, hasta: b.hasta ? Date.parse(b.hasta) : 0,
+      maxModelo: Math.min(Number(b.maxModelo) || 40, 200) });
+    res.json({ corrida: r.corrida, modo: r.modo, version: r.version, costoUsd: r.costoUsd, errores: r.errores.slice(0, 20),
+      resumen: Object.assign({}, r.resumen, { diferencias: r.resumen.diferencias.slice(0, 50) }) });
+  }));
+
+  // ---------------- Modo en vivo (19-oct-2026): SOLO si el servidor arranco con MODO_BOT=vivo (deps.vivo). Si no, no existen.
+  if (deps.vivo) montarVivo(app, deps, tarea);
+
+  return app;
+}
+
+/** El webhook de Meta y las tareas del bot en vivo. deps: { vivo, correo, pool, verifyToken, webhookSecret } */
+function montarVivo(app, deps, tarea) {
+  // Verificacion del webhook (lo mismo que doGet del bot).
+  app.get('/webhook', (req, res) => {
+    const q = req.query || {};
+    if (q['hub.mode'] === 'subscribe' && iguales(q['hub.verify_token'], deps.verifyToken)) return res.type('text').send(String(q['hub.challenge'] || ''));
+    res.status(403).type('text').send('Forbidden');
+  });
+  // Un mensaje de Meta: se contesta 200 enseguida (como doPost) y se atiende en orden, uno a la vez.
+  app.post('/webhook', (req, res) => {
+    const cuerpo = req.body || {};
+    const conToken = iguales(req.query.token, deps.webhookSecret);
+    res.type('text').send('EVENT_RECEIVED');
+    // La misma guarda que doPost: WhatsApp e Instagram sin el token del webhook no se atienden ni se reenvian.
+    if (!conToken && (cuerpo.object === 'whatsapp_business_account' || cuerpo.object === 'instagram')) {
+      deps.pool.query("INSERT INTO bot_eventos (objeto, modo, resultado) VALUES ($1, 'sin_token', 'ignorado')", [cuerpo.object]).catch(() => {});
+      return;
+    }
+    deps.vivo.recibir(cuerpo, { token: req.query.token }).catch((e) => console.error('webhook:', e.message));
+  });
+  // Cada minuto: Salientes de la consola, "devolver al bot", chats que vuelven al bot y correos pendientes.
+  app.post('/tareas/bot-minuto', tarea(async (req, res) => {
+    const r = await deps.vivo.minuto();
+    const correos = deps.correo ? await deps.correo.reintentar() : 0;
+    res.status(r.error ? 500 : 200).json(Object.assign({ correosReintentados: correos }, r));
+  }));
+  // El interruptor: 'vivo' o 'puente'. SOLO con el sí de Juanma.
+  app.post('/tareas/interruptor-bot', tarea(async (req, res) => {
+    const v = (req.body || {}).valor;
+    if (v !== 'vivo' && v !== 'puente') return res.status(400).json({ error: "valor: 'vivo' o 'puente'" });
+    await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ('INTERRUPTOR_BOT', 'prop', $1)
+      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, actualizado = now()`, [v]);
+    res.json({ ok: true, interruptor: await deps.vivo.interruptor() });
+  }));
+  // Una sola vez, el dia del paso: las Propiedades del bot de Apps Script (sin claves) pasan a la base.
+  app.post('/tareas/importar-estado-bot', tarea(async (req, res) => {
+    const props = (req.body || {}).props || {};
+    const SECRETAS = require('./vivo').SECRETAS;
+    let n = 0, omitidas = 0;
+    for (const k of Object.keys(props)) {
+      if (SECRETAS.includes(k) || k === 'INTERRUPTOR_BOT' || /TOKEN|KEY|SECRET/i.test(k)) { omitidas++; continue; }
+      await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ($1, 'prop', $2)
+        ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, tipo = 'prop', actualizado = now()`, [k, String(props[k])]);
+      n++;
+    }
+    res.json({ ok: true, guardadas: n, clavesOmitidas: omitidas });
+  }));
+  // Para vigilar el paso: los ultimos mensajes y que paso con cada uno.
+  app.get('/tareas/bot-eventos', tarea(async (req, res) => {
+    const r = await deps.pool.query(`SELECT id, to_char(recibido AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI:SS') AS recibido, objeto, modo, resultado, envios, ms, error
+      FROM bot_eventos ORDER BY id DESC LIMIT 50`);
+    res.json(r.rows);
+  }));
+}
+
+module.exports = { crearAppBot, iguales };

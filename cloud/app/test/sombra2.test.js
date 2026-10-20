@@ -129,7 +129,7 @@ test('Clientes corre con el codigo real: eventos, CRM, ficha, reservas y carrito
 
 test('Clientes: la matriz de accesos de la base decide quien ve que (no los modulos de USUARIOS)', () => {
   const f2 = S.crearServicioF2({ query: async () => ({ rows: [] }) }, { permisos: MATRIZ });
-  assert.deepStrictEqual(f2.partes(DUENO), ['eventos', 'crm', 'reservas', 'carritos']);
+  assert.deepStrictEqual(f2.partes(DUENO), ['eventos', 'crm', 'reservas', 'carritos', 'consola', 'resenas'], 'el dueño ve tambien Bot y Reseñas (solo el dueño, 020)');
   assert.deepStrictEqual(f2.partes(SALA), ['eventos', 'crm', 'reservas'], 'sala: sin carritos');
   assert.deepStrictEqual(f2.partes(MKT_U), ['crm', 'reservas', 'carritos'], 'pauta: no ve el pipeline');
   assert.deepStrictEqual(f2.partes(CHEF), ['reservas'], 'cocina: solo reservas');

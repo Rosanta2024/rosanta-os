@@ -5,11 +5,13 @@ Sello de la bateria de la nube (17-oct-2026). Hermano de .claude/hooks/sellar-ba
     python3 cloud/herramientas/sellar-nube.py                       corre la bateria y, si da 0 fallas, sella rosanta-nube
     python3 cloud/herramientas/sellar-nube.py --servicio <nombre>   lo mismo para otro servicio de Cloud Run
     python3 cloud/herramientas/sellar-nube.py --huella              solo imprime la huella del codigo actual
+    python3 cloud/herramientas/sellar-nube.py --servicio rosanta-bot-sombra   corre la bateria de cloud/bot (19-oct-2026)
+    ... --carpeta bot                                               elegir a mano la carpeta cuya bateria se corre (app por defecto)
 
 A diferencia de la intranet (cuya bateria corre en el navegador y la lee Juanma), esta bateria
 corre aca mismo con Node: el conteo lo mide este script, nadie lo escribe a mano.
 
-El sello vale SOLO para el codigo que se probo: guarda la huella (sha256) de cloud/app (sin
+El sello vale SOLO para el codigo que se probo: guarda la huella (sha256) de cloud/app, cloud/bot (sin
 node_modules) y cloud/db. Si cambia un archivo, la huella cambia y el candado
 (.claude/hooks/candado-nube.py) no deja publicar hasta volver a sellar.
 """
@@ -28,7 +30,9 @@ def rutas(servicio='rosanta-nube'):
 
 
 SELLO, HISTORIAL = rutas()
-CARPETAS = ['app', 'db']
+CARPETAS = ['app', 'bot', 'db']   # bot: el bot en sombra (19-oct-2026); cualquier cambio vence todos los sellos
+# Que bateria corre cada servicio (carpeta con su package.json y test/); los demas, cloud/app.
+CARPETA_POR_SERVICIO = {'rosanta-bot-sombra': 'bot'}
 FUERA = {'node_modules', '.DS_Store', '__pycache__'}
 
 
@@ -63,12 +67,17 @@ def maximo_historico():
 
 def main():
     global SELLO, HISTORIAL
+    servicio = 'rosanta-nube'
     if '--servicio' in sys.argv:
-        SELLO, HISTORIAL = rutas(sys.argv[sys.argv.index('--servicio') + 1])
+        servicio = sys.argv[sys.argv.index('--servicio') + 1]
+        SELLO, HISTORIAL = rutas(servicio)
+    carpeta = sys.argv[sys.argv.index('--carpeta') + 1] if '--carpeta' in sys.argv else CARPETA_POR_SERVICIO.get(servicio, 'app')
+    if carpeta not in ('app', 'bot'):
+        raise SystemExit('Carpeta invalida: ' + carpeta)
     if '--huella' in sys.argv:
         print(huella())
         return 0
-    app = os.path.join(RAIZ, 'app')
+    app = os.path.join(RAIZ, carpeta)
     antes = huella()
     t0 = time.time()
     p = subprocess.run(['node', '--test', '--test-reporter=tap'] + sorted(
@@ -79,7 +88,7 @@ def main():
         m = re.search(r'^# ' + clave + r' (\d+)$', salida, re.M)
         return int(m.group(1)) if m else -1
     total, ok, fallas = n('tests'), n('pass'), n('fail')
-    print('Bateria de la nube: %d pruebas · %d OK · %d fallas · %.1f s' % (total, ok, fallas, time.time() - t0))
+    print('Bateria de la nube (cloud/%s): %d pruebas · %d OK · %d fallas · %.1f s' % (carpeta, total, ok, fallas, time.time() - t0))
     if total <= 0 or fallas != 0 or ok != total:
         print(salida[-3000:])
         print('NO se sella.')

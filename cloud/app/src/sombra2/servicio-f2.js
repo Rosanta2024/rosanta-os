@@ -51,6 +51,8 @@ const LIBROS_CLIENTES = {
   leads: { id: LEADS_ID, pestanas: ['Conversaciones', 'Fichas', 'Leads'] }
 };
 // Compatibilidad con la primera version (Eventos solo).
+// Hojas de las partes que suma src/clientes2/partes.js (reseñas y encuesta, 19-oct-2026).
+try { Object.assign(LIBROS_CLIENTES, require('../clientes2/partes').LIBROS || {}); } catch (e) { /* sin clientes2 */ }
 const LIBROS_EVENTOS = { marketing: LIBROS_CLIENTES.marketing };
 
 const MODULOS = {
