@@ -1,0 +1,1 @@
+7e72d81 2026-10-14 Pauta: posActualizarPauta lee ReporteFacturas del PosFile nuevo (S40, S41)
