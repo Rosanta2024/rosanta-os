@@ -34,7 +34,7 @@ function baseFalsa() {
     }
     if (/INSERT INTO resenas_gbp_google/.test(sql)) { t.resenas_gbp_google.set(p[0], { review_id: p[0], respuesta: p[6] }); return { rowCount: 1, rows: [] }; }
     if (/INSERT INTO resenas_corridas/.test(sql)) { t.corridas.push({ tarea: p[0], ok: p[1], resumen: JSON.parse(p[2]) }); return { rowCount: 1, rows: [] }; }
-    if (/SELECT review_id, estado, respuesta FROM resenas_gbp/.test(sql)) return { rows: Array.from(t.resenas_gbp.values()) };
+    if (/SELECT review_id, estado, respuesta, fecha_detectada, fecha_publicada FROM resenas_gbp/.test(sql)) return { rows: Array.from(t.resenas_gbp.values()) };
     throw new Error('consulta inesperada: ' + sql.slice(0, 60));
   };
   return { t, query: q, connect: async () => ({ query: q, release: () => {} }) };
@@ -127,19 +127,25 @@ test('Lector GBP: sin el secreto gbp-oauth contesta 503 y no llama a nadie', asy
   assert.deepStrictEqual(R.gbpDelEntorno({ GBP_OAUTH: 'no es json' }).oauth, null);
 });
 
-test('Comparar: alerta lo que falta en la hoja, lo publicado que no esta en Google y respuestas distintas', () => {
+test('Comparar: alerta lo no atendido, lo publicado que no esta en Google y respuestas distintas; informa historicas y editadas', () => {
   const ahora = Date.parse('2026-10-21T12:00:00Z');
   const google = [
-    { review_id: 'r1', respuesta: 'Mia,  gracias.' },                               // igual (espacios no cuentan)
-    { review_id: 'r2', respuesta: '' },                                             // pendiente en las dos: normal
-    { review_id: 'r3', respuesta: '' },                                             // la hoja dice publicada: alerta
-    { review_id: 'r4', respuesta: 'Editada a mano' },                               // distinta: alerta
-    { review_id: 'r5', respuesta: '', creada: new Date('2026-10-21T11:30:00Z') },   // nueva de hace 30 min: todavia no
-    { review_id: 'r6', respuesta: '', creada: new Date('2026-10-20T11:30:00Z') }];  // vieja y sin anotar: alerta
+    { review_id: 'r1', respuesta: 'Mia,  gracias.' },                                                          // igual (espacios no cuentan)
+    { review_id: 'r2', respuesta: '' },                                                                        // pendiente en las dos: normal
+    { review_id: 'r3', respuesta: '' },                                                                        // la hoja dice publicada: alerta
+    { review_id: 'r4', respuesta: 'Distinta', respuesta_fecha: new Date('2026-10-10T10:00:00Z') },             // distinta, misma fecha: alerta
+    { review_id: 'r7', respuesta: 'Corregida', respuesta_fecha: new Date('2026-08-31T10:00:00Z') },            // corregida despues en Google: info
+    { review_id: 'r5', respuesta: '', creada: new Date('2026-10-21T11:30:00Z') },                              // nueva de hace 30 min: todavia no
+    { review_id: 'r6', respuesta: '', creada: new Date('2026-10-20T11:30:00Z') },                              // vieja y sin atender: alerta
+    { review_id: 'r8', respuesta: 'Contestada en 2025', creada: new Date('2025-05-01T10:00:00Z') }];           // historica: info
   const hoja = [{ review_id: 'r1', estado: 'PUBLICADA_AUTO', respuesta: 'Mia, gracias.' }, { review_id: 'r2', estado: 'PENDIENTE_APROBAR', respuesta: 'b' },
-    { review_id: 'r3', estado: 'PUBLICADA_APROBADA', respuesta: 'x' }, { review_id: 'r4', estado: 'PUBLICADA_AUTO', respuesta: 'Otra' }];
+    { review_id: 'r3', estado: 'PUBLICADA_APROBADA', respuesta: 'x' },
+    { review_id: 'r4', estado: 'PUBLICADA_AUTO', respuesta: 'Otra', fecha_detectada: new Date('2026-10-10T09:00:00Z') },
+    { review_id: 'r7', estado: 'PUBLICADA_AUTO', respuesta: 'Con la nota del modelo', fecha_detectada: new Date('2026-08-28T10:00:00Z') }];
   const c = R.comparar(google, hoja, ahora);
-  assert.deepStrictEqual(c.diferencias, { faltan_en_hoja: ['r6'], publicada_sin_respuesta: ['r3'], respuesta_distinta: ['r4'] });
+  assert.deepStrictEqual(c.diferencias, { sin_atender: ['r6'], publicada_sin_respuesta: ['r3'], respuesta_distinta: ['r4'] });
+  assert.deepStrictEqual(c.editadas_en_google, ['r7']);
+  assert.strictEqual(c.historicas, 1);
   assert.strictEqual(c.alertas, 3);
   assert.strictEqual(c.sin_responder, 4);
 });
@@ -162,8 +168,8 @@ test('Rutas: sin clave de tarea 403; copiar 200; leer Google 409 cuando hay algo
     assert.strictEqual((await c.json()).resenas, 2);
     const l = await tarea(b, '/tareas/resenas/leer-google');
     const j = await l.json();
-    assert.strictEqual(l.status, 409);   // r9 esta en Google y no en la hoja
-    assert.deepStrictEqual(j.diferencias.faltan_en_hoja, ['r9']);
+    assert.strictEqual(l.status, 409);   // r9 esta en Google sin respuesta y no en la hoja
+    assert.deepStrictEqual(j.diferencias.sin_atender, ['r9']);
     assert.strictEqual(pool.t.resenas_gbp_google.size, 2);
     assert.strictEqual(pool.t.corridas.at(-1).ok, false);
   });
