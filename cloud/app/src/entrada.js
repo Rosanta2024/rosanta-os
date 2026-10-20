@@ -47,9 +47,12 @@ function paginaIntranet(query) {
   const propia = '/intranet' + (u ? '?u=' + encodeURIComponent(u) : '');
   if (query && query.instalar) {
     return cabeza('Rosanta') + '<body><main><img src="/marca/apple-touch-icon.png" alt="">' +
-      '<h1>Rosanta en tu teléfono</h1><ol><li>Tocá el botón <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li>' +
-      '<li>Elegí <b>Agregar a inicio</b>.</li><li>Dejá el nombre <b>Rosanta</b> y tocá <b>Agregar</b>.</li></ol>' +
-      '<a class="btn" href="' + destino + '">Abrir la intranet</a></main>' +
+      '<h1>Rosanta en tu teléfono</h1><p>Agregalo desde ESTA página, sin abrir la intranet antes:</p>' +
+      '<ol><li>Tocá el botón <b>Compartir</b> (el cuadro con la flecha hacia arriba).</li>' +
+      '<li>Elegí <b>Agregar a inicio</b>. Tiene que decir <b>Rosanta</b> y mostrar la O verde.</li><li>Tocá <b>Agregar</b>.</li></ol>' +
+      '<p>Después abrí el ícono nuevo: te lleva a la intranet.</p></main>' +
+      // A proposito SIN boton "Abrir la intranet" (20-oct-2026): Juanma lo toco antes de agregar y el acceso
+      // directo se guardo desde la pagina de Google (una "R" gris llamada "Rosanta Receta…").
       // el acceso directo guarda la direccion actual: sin "instalar", para que abra la intranet directo
       '<script>try{history.replaceState(null,"",' + JSON.stringify(propia) + ')}catch(e){}</script></body></html>';
   }
@@ -58,6 +61,10 @@ function paginaIntranet(query) {
 }
 
 function montarEntrada(app) {
+  // iOS a veces busca los iconos en la raiz, sin mirar la pagina (20-oct-2026)
+  const png = (archivo) => (req, res) => res.set('Cache-Control', 'public, max-age=86400').type('image/png').send(fs.readFileSync(path.join(DIR, archivo)));
+  app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], png('apple-touch-icon.png'));
+  app.get('/favicon.ico', png('favicon-32.png'));   // un PNG con nombre .ico: lo aceptan todos los navegadores de hoy
   app.get('/marca/manifest.webmanifest', (req, res) => res.set('Cache-Control', 'public, max-age=86400').type('application/manifest+json').send(JSON.stringify(MANIFIESTO)));
   app.get('/marca/:archivo', (req, res) => {
     if (ARCHIVOS.indexOf(req.params.archivo) === -1) return res.status(404).send('No existe.');

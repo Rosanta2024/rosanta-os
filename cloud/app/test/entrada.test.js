@@ -36,6 +36,7 @@ test('/intranet abre la intranet de siempre, con el mismo enlace; /intranet?inst
     assert.match(i, /Agregar a inicio/);
     assert.ok(i.includes('history.replaceState(null,"","/intranet?u=tok-juanma-123")'), 'el acceso directo guarda /intranet sin "instalar"');
     assert.ok(!/location\.replace/.test(i), 'la pagina de instalar no se va sola');
+    assert.ok(!i.includes(E.INTRANET_URL), 'ni ofrece abrir la intranet antes de agregar (si no, se guarda la de Google)');
   });
 });
 
@@ -48,3 +49,12 @@ test('Un enlace con forma rara no se pega en la pagina (control negativo)', asyn
   assert.strictEqual(E.enlaceLimpio('abc'), '', 'muy corto');
   assert.strictEqual(E.enlaceLimpio('tok-bueno-123'), 'tok-bueno-123');
 });
+
+test('Los iconos tambien en la raiz (iOS a veces los busca ahi)', async () => {
+  await servir(async (b) => {
+    for (const r of ['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png', '/favicon.ico']) {
+      const x = await fetch(b + r); assert.strictEqual(x.status, 200, r); assert.strictEqual(x.headers.get('content-type'), 'image/png', r);
+    }
+  });
+});
+
