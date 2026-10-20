@@ -52,6 +52,9 @@ function crearCrmVivo(pool, opciones) {
   /** Un aviso de Wix en modo base: { estado, json } para hooks-wix.js. */
   function atender(hook, cuerpo) {
     return enCola(async () => {
+      // un solo escritor: si el interruptor no dice base, el aviso lo escribe Apps Script (puente) y aca no
+      const i = await pool.query('SELECT modo FROM interruptores WHERE modulo = $1', ['hooks_' + hook]).catch(() => ({ rows: [] }));
+      if (!i.rows[0] || i.rows[0].modo !== 'base') return { estado: 409, json: { error: 'El interruptor hooks_' + hook + ' no está en base: lo escribe Apps Script.' } };
       const c = await pool.connect();
       let r;
       try {

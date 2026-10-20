@@ -26,6 +26,7 @@ function baseFalsa() {
   const t = new Map();
   let reloj = 1;
   const recibidos = [];
+  const interruptores = { hooks_carrito: 'base', hooks_reserva: 'base' };
   const filas = (p) => [...t.values()].filter((x) => x.pestana === p);
   const act = (x) => '2026-10-20 10:00:00.' + String(x.actualizado).padStart(6, '0') + '-06';
   const query = async (sql, a) => {
@@ -68,9 +69,10 @@ function baseFalsa() {
     if (/^UPDATE filas_clientes SET borrada = now\(\) WHERE pestana = 'crm'/.test(sql)) { t.get('crm|' + a[0]).borrada = reloj++; return { rows: [] }; }
     if (/^INSERT INTO filas_clientes_importaciones/.test(sql)) return { rows: [] };
     if (/^SELECT hook, cuerpo, recibido FROM hooks_wix_recibidos/.test(sql)) return { rows: recibidos };
+    if (/^SELECT modo FROM interruptores WHERE modulo = \$1/.test(sql)) return { rows: interruptores[a[0]] ? [{ modo: interruptores[a[0]] }] : [] };
     throw new Error('consulta no esperada: ' + sql);
   };
-  return { t, recibidos, query, connect: async () => ({ query, release: () => {} }) };
+  return { t, recibidos, interruptores, query, connect: async () => ({ query, release: () => {} }) };
 }
 
 /** Las hojas en memoria, con los planes de copia de verdad (planArriba / planCrm) aplicados a mano. */
@@ -237,4 +239,18 @@ test('/interno/aviso: solo con la clave de tareas, vuelve a limpiar el cuerpo y 
     assert.strictEqual(r.status, 200); assert.deepStrictEqual(await r.json(), { ok: true, id: 'r2' });
     assert.deepStrictEqual(atendidos, [['reserva', R]]);
   } finally { srv.close(); }
+});
+
+test('Un solo escritor: con el interruptor en puente (o sin fila), /interno/aviso no guarda nada (409)', async () => {
+  const { base, v, h } = armar();
+  await v.importar();
+  const antes = JSON.stringify([...base.t.values()].map((x) => x.celdas));
+  base.interruptores.hooks_reserva = 'puente';
+  const r = await v.atender('reserva', { id: 'r5', fecha: '2026-10-21', nombre: 'Eva', email: 'eva@gmail.com', telefono: '', personas: 2, gasto: 0, estado: 'CONFIRMED', optin: 'SI' });
+  assert.strictEqual(r.estado, 409);
+  delete base.interruptores.hooks_carrito;
+  assert.strictEqual((await v.atender('carrito', { nombre: 'Eva', email: 'eva@gmail.com', telefono: '', valor: 1, consentimiento: 'NO', fecha: '2026-10-20' })).estado, 409);
+  await esperar();
+  assert.strictEqual(JSON.stringify([...base.t.values()].map((x) => x.celdas)), antes);
+  assert.ok(!h.reservas.some((f) => f[0] === 'r5'));
 });
