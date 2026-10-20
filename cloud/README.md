@@ -69,6 +69,13 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - **`&nube=ensayo`** en la dirección de la intranet: solo el dueño ve en Pagos, Caja y Compras la pantalla del servidor de ENSAYO, para probar el puente en su Chrome con la intranet publicada. Quitar después del 1-nov.
 - **Orden en producción:** primero migraciones 005 y 006, DESPUÉS publicar el servidor (el refresco importa caja y cierres y necesita `filas_vivas`).
 
+## Pauta de los lunes (proceso, construido el 20-oct, SIN montar ni publicar)
+
+- `app/src/proc-pauta.js`, `POST /tareas/procesos/pauta`: corre el **código real** de `WixReservasPauta.js`, `PosPauta.js` y `ClientesNuevos.js` (copias en `app/mkt/`, `herramientas/traer-mkt.sh`; la prueba "El proceso de pauta usa los mismos archivos que Marketing OS" falla si se separan) e importa de la hoja las columnas del Google Ads Script, que sigue en Google Ads.
+- **Precarga por rondas:** lo que el código pide y no está precargado (una hoja, una carpeta de Drive, una llamada a Wix, la conversión de un xlsx) corta la corrida; Node lo trae y la vuelve a correr desde cero. Las llaves nunca entran al vm.
+- Interruptores (tabla `interruptores`, sin fila = `apps`): `pauta_wix`, `pauta_pos`, `pauta_clientes`, `pauta_ads_import`; modos `apps` | `sombra` (calcula y compara con la hoja: 409 si difiere) | `nube` (tabla `pauta_semanal` de la migración 007 + solo sus celdas en la hoja; apagar antes el activador de Apps Script de ese escritor). Cada corrida queda en `pauta_corridas`.
+- Ensayo: `node cloud/herramientas/ensayo-pauta.js` (lunes de octubre en sombra, no escribe; el xlsx del POS se convierte y se borra como hace PosPauta).
+
 ## Tareas
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.
