@@ -104,6 +104,7 @@ function handleWhatsApp(body) {
         // si no, la consola se queda ciega mientras un humano atiende.
         logMensaje('whatsapp', from, name, 'in', 'cliente', entrada.log);
         const pausado = botEnPausa(from);                // un humano está atendiendo este chat
+        if (entrada.sinTexto) { btFotoSinTexto_(phoneNumberId, from, name, pausado); return; }   // @65: foto sin texto
         if (pausado && !humPuedeReservar_(from)) return; // salvo reservas mientras espera a Juanma (Humano.js)
         if (!dentroDeLimite(from)) {
           logLead({ canal: 'whatsapp', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, from);
