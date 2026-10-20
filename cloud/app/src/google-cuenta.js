@@ -44,8 +44,13 @@ function crearCuenta(opciones) {
 
   return {
     accessToken,
-    /** Gmail.Users.Messages.list (solo ids). */
-    gmailListar: (q, max) => json(G + '/messages?' + new URLSearchParams({ q, maxResults: String(max || 60) })),
+    /** Gmail.Users.Messages.list (solo ids). extra: { includeSpamTrash, pageToken } como el servicio avanzado. */
+    gmailListar: (q, max, extra) => {
+      const e = extra || {}, p = { q, maxResults: String(max || 60) };
+      if (e.includeSpamTrash) p.includeSpamTrash = 'true';
+      if (e.pageToken) p.pageToken = e.pageToken;
+      return json(G + '/messages?' + new URLSearchParams(p));
+    },
     /** Gmail.Users.Messages.get, formato completo (como el servicio avanzado de Apps Script). */
     gmailMensaje: (id) => json(G + '/messages/' + encodeURIComponent(id) + '?format=full'),
     /** Gmail.Users.Messages.Attachments.get: {data: base64url}. */
@@ -74,10 +79,23 @@ function crearCuenta(opciones) {
 /**
  * Precarga los mensajes de una busqueda de Gmail, completos y con sus adjuntos (los que pide `quiereAdjunto`).
  * Devuelve { lista, mensajes: {id: msg}, adjuntos: {'id|attId': {data}} } para shimGmail().
+ * opciones: max (por pagina), quiereAdjunto(parte), incluirPapelera (includeSpamTrash, como FelCorreo y
+ * BancoCorreo), paginas (cuantas paginas seguir, como el do/while de la intranet; por defecto 1). Con varias
+ * paginas, la lista precargada queda en UNA sola (sin nextPageToken): el codigo real sale de su vuelta.
  */
 async function precargaGmail(cuenta, q, opciones) {
   const o = opciones || {};
-  const lista = await cuenta.gmailListar(q, o.max || 60);
+  let lista = null, tok = null, paginas = 0;
+  do {
+    const extra = {};
+    if (o.incluirPapelera) extra.includeSpamTrash = true;
+    if (tok) extra.pageToken = tok;
+    const l = Object.keys(extra).length ? await cuenta.gmailListar(q, o.max || 60, extra) : await cuenta.gmailListar(q, o.max || 60);
+    if (!lista) lista = Object.assign({}, l);
+    else lista.messages = (lista.messages || []).concat(l.messages || []);
+    tok = l && l.nextPageToken;
+  } while (tok && ++paginas < (o.paginas || 1));
+  if (lista && (o.paginas || 1) > 1) delete lista.nextPageToken;
   const mensajes = {}, adjuntos = {};
   for (const m of (lista.messages || [])) {
     const msg = await cuenta.gmailMensaje(m.id);
