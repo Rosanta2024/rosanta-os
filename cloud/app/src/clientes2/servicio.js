@@ -5,7 +5,7 @@
  *            getFicha = "lo que ya sabe el bot") sobre la copia de Rosanta Leads y del pipeline.
  *            Mandar, devolver al bot y mandar fotos responden 409: se siguen haciendo en la consola de siempre.
  *            botSombra: la comparacion de cada noche del bot en sombra (tablas bot_corridas y bot_turnos).
- *   resenas: el panel de reseñas REAL (panel-de-reseas-de-google). getDatosTripAdvisor tal cual; getDatosDashboard
+ *   resenas: el panel de reseñas REAL (panel-de-reseas-de-google; TripAdvisor se quito el 20-oct, decision de Juanma). getDatosDashboard
  *            sale de la hoja de control (el panel de siempre lo pide en vivo a Google Business, que el servidor
  *            no puede). Publicar, guardar y regenerar responden 409.
  *            encuesta: las respuestas de la encuesta (la encuesta no cambia: solo 5 estrellas van a Google).
@@ -20,9 +20,8 @@ const FUNCIONES = {
   consola: { lectura: ['getThreads', 'getMensajes', 'getFicha', 'botSombra', 'botSombraTurnos'],
     escritura: ['enviarMensaje', 'devolverAlBot', 'enviarImagen'],
     aviso: 'Prueba en sombra: desde aquí no se manda nada. Contesta desde la consola de siempre.' },
-  resenas: { lectura: ['getDatosDashboard', 'getDatosTripAdvisor', 'encuesta'],
-    escritura: ['publicarDesdePanel', 'editarRespuestaPublicada', 'guardarBorrador', 'regenerarBorrador', 'descartarBorrador',
-      'guardarBorradorTA', 'regenerarBorradorTA', 'marcarRespondidaTA', 'descartarTA'],
+  resenas: { lectura: ['getDatosDashboard', 'encuesta'],
+    escritura: ['publicarDesdePanel', 'editarRespuestaPublicada', 'guardarBorrador', 'regenerarBorrador', 'descartarBorrador'],
     aviso: 'Prueba en sombra: desde aquí no se publica ni se guarda nada. Usa el panel de reseñas de siempre.' }
 };
 
@@ -85,7 +84,7 @@ function crearServicioClientes2(deps) {
         cache.consola = crearMotorGas({ proyecto: 'consola-de-respuestas-rosanta', archivos: ['Code.js'], libros: c.libros, activo: LEADS_ID });
       }
       if (c.libros[GBP_ID]) {
-        cache.resenas = crearMotorGas({ proyecto: 'panel-de-reseas-de-google', archivos: ['Bot de Reseñas de Google.js', 'PanelServidor.js', 'TripAdvisor.js'],
+        cache.resenas = crearMotorGas({ proyecto: 'panel-de-reseas-de-google', archivos: ['Bot de Reseñas de Google.js', 'PanelServidor.js'],
           libros: c.libros, props: { SHEET_ID: GBP_ID } });
       }
     }
@@ -112,13 +111,7 @@ function crearServicioClientes2(deps) {
       return datosEncuesta(e['Encuesta 2026']);
     }
     if (!m.resenas) throw error(503, 'Todavía no hay copia de la hoja de reseñas (falta compartirla con el servidor como Lector).');
-    if (nombre === 'getDatosDashboard') return datosDesdeHoja(m.c.libros[GBP_ID]['Reseñas']);
-    // La hoja de control todavia no tiene pestaña TripAdvisor (la crea el lector de TripAdvisor la primera vez que corre):
-    // el codigo real la crearia; en la sombra se muestra vacia.
-    if (!m.c.libros[GBP_ID].TripAdvisor) {
-      return { reviews: [], configurada: false, ficha: 'https://www.tripadvisor.com/Restaurant_Review-g295366-d27893564-Reviews-Rosanta.html' };
-    }
-    return m.resenas.getDatosTripAdvisor();
+    return datosDesdeHoja(m.c.libros[GBP_ID]['Reseñas']);   // getDatosDashboard
   }
 
   async function botSombra() {

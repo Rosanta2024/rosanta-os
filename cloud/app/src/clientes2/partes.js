@@ -15,7 +15,7 @@ module.exports = {
   // Hojas que la copia de la sombra 2 tiene que traer para estas partes (Lector). Rosanta Leads y
   // la pestaña cotizaciones de Marketing OS ya estan en su copia.
   LIBROS: {
-    resenas: { id: GBP_ID, pestanas: ['Reseñas', 'TripAdvisor'] },
+    resenas: { id: GBP_ID, pestanas: ['Reseñas'] },
     encuesta: { id: ENCUESTA_ID, pestanas: ['Encuesta 2026'] }
   },
   GBP_ID, ENCUESTA_ID

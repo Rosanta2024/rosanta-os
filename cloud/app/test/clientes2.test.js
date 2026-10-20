@@ -25,9 +25,7 @@ function copiaDeMentira() {
     [GBP_ID]: {
       'Reseñas': [['Fecha detectada', 'ReviewId', 'Estrellas', 'Cliente', 'Reseña original', 'Respuesta (editable)', 'Estado', 'Aprobar (SI/NO)', 'Fecha publicada'],
         [d('2026-10-10T10:00:00-06:00'), 'r1', 5, 'Mia', 'Delicioso', 'Gracias Mia', 'PUBLICADA_AUTO', '', ''],
-        [d('2026-10-12T10:00:00-06:00'), 'r2', 3, 'Leo', 'Lento', 'Gracias por contarnos', 'PENDIENTE_APROBAR', 'NO', '']],
-      TripAdvisor: [['Fecha detectada', 'ReviewId', 'Estrellas', 'Cliente', 'Titulo', 'Reseña original', 'Respuesta sugerida', 'Estado', 'Respuesta en TripAdvisor', 'Fecha marcada', 'URL'],
-        [d('2026-10-01T10:00:00-06:00'), 't1', 4, 'Sam', 'Nice', 'Good', 'Thanks', 'PENDIENTE', '', '', '']]
+        [d('2026-10-12T10:00:00-06:00'), 'r2', 3, 'Leo', 'Lento', 'Gracias por contarnos', 'PENDIENTE_APROBAR', 'NO', '']]
     },
     [ENCUESTA_ID]: { 'Encuesta 2026': [['Fecha', 'Calificación', '¿Qué podríamos mejorar?'], [d('2026-10-01'), 5, ''], [d('2026-10-02'), 3, 'La música']] }
   } };
@@ -39,7 +37,7 @@ test('Clientes2: la consola y el panel de reseñas son copias exactas de sus pro
   const raiz = path.join(__dirname, '..', '..', '..', 'apps-script');
   if (!fs.existsSync(raiz)) return;
   [['consola-de-respuestas-rosanta', ['Code.js', 'Index.html']],
-    ['panel-de-reseas-de-google', ['Bot de Reseñas de Google.js', 'PanelServidor.js', 'TripAdvisor.js', 'Panel de Reseñas de Google.html']]].forEach(([p, fs2]) => fs2.forEach((f) =>
+    ['panel-de-reseas-de-google', ['Bot de Reseñas de Google.js', 'PanelServidor.js', 'Panel de Reseñas de Google.html']]].forEach(([p, fs2]) => fs2.forEach((f) =>
     assert.strictEqual(fs.readFileSync(path.join(DIR, p, f), 'utf8'), fs.readFileSync(path.join(raiz, p, f), 'utf8'), p + '/' + f + ' se separó: volver a copiarlo cuando ese proyecto publique')));
 });
 
@@ -80,7 +78,7 @@ test('Clientes2: sin permiso de la matriz no se lee nada (control negativo)', as
   assert.ok((await s.llamar({}, 'resenas', 'encuesta', [])).total === 2);
 });
 
-test('Clientes2: reseñas desde la hoja de control y TripAdvisor con el código real', async () => {
+test('Clientes2: reseñas desde la hoja de control (TripAdvisor ya no existe)', async () => {
   const s = servicio();
   const g = await s.llamar({}, 'resenas', 'getDatosDashboard', []);
   assert.strictEqual(g.total, 2);
@@ -89,14 +87,9 @@ test('Clientes2: reseñas desde la hoja de control y TripAdvisor con el código 
   const r2 = g.reviews.find((r) => r.id === 'r2');
   assert.strictEqual(r2.hasReply, false);
   assert.strictEqual(r2.borrador, 'Gracias por contarnos');
-  const ta = await s.llamar({}, 'resenas', 'getDatosTripAdvisor', []);
-  assert.strictEqual(ta.reviews.length, 1);
-  assert.strictEqual(ta.configurada, false);
   assert.deepStrictEqual(datosDesdeHoja(null).reviews, []);
-  // Sin pestaña TripAdvisor (la hoja real hoy no la tiene): vacio, sin error
-  const sinTA = copiaDeMentira(); delete sinTA.libros[GBP_ID].TripAdvisor;
-  const s2 = crearServicioClientes2({ pool, copia: () => sinTA, puede: () => true });
-  assert.deepStrictEqual((await s2.llamar({}, 'resenas', 'getDatosTripAdvisor', [])).reviews, []);
+  // TripAdvisor se quito (decision de Juanma, 20-oct): ya no es una funcion del servidor
+  await assert.rejects(s.llamar({}, 'resenas', 'getDatosTripAdvisor', []), (e) => e.status === 404);
 });
 
 test('Clientes2: encuesta (promedio y las de 5 estrellas que van a Google)', () => {
