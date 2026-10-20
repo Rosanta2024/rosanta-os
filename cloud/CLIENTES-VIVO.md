@@ -29,3 +29,10 @@ Los avisos de Wix los recibe rosanta-nube (`/hooks/carrito`, `/hooks/reserva`). 
 - **Hallazgo (no es de la nube):** en una misma corrida de CRMSync, si un contacto NUEVO entra por un carrito y también tiene una reserva, la reserva se salta (`loc.fila === -1`) y queda para la corrida siguiente. Así pasa hoy en Apps Script. La nube hace lo mismo a propósito, para que la comparación sea justa.
 - **El día del paso:** apagar el activador `alCambiarMarketingOS` de Marketing OS (a mano: Editor → Activadores). Si no, el CRM tiene dos escritores. Los dos llegan al mismo resultado, pero compiten entre sí.
 - **Volver atrás:** `hooks_carrito` y `hooks_reserva` en `puente` (fila de `interruptores`; se relee cada 30 s), y volver a encender el activador.
+
+## Fechas (decisión de Juanma del 20-oct, por el Estudio)
+- **Día único firme: miércoles 5-nov.** Pipeline (cotizaciones con anticipos), reservas, carritos, CRM y CAPI van ese día, porque tocan dinero.
+- El jueves 29-oct entra solo lo que no toca dinero ni el cierre, con 2 días de sombra limpia. Contenido y pauta de Marketing, solo si Juanma lo aprueba por la Central.
+- **Lunes 26-oct:** los relojes `importar-clientes` e `importar-crm-clientes` no corren a las 7, 8 y 9 (horario "6,10-23"). A las 10:30 vuelven a "6-23". Lo hace una tarea programada de la Mac (`relojes-clientes-lunes-26`). Si no corrió, ejecutar:
+  `gcloud scheduler jobs update http importar-clientes --schedule "2,17,32,47 6-23 * * *" --location us-central1`
+  `gcloud scheduler jobs update http importar-crm-clientes --schedule "10,25,40,55 6-23 * * *" --location us-central1`
