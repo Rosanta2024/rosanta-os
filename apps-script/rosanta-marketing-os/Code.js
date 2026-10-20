@@ -47,15 +47,36 @@
  * ⚠️ JAMÁS ejecutar setup(): borra el contenido de TODAS las pestañas
  *    (incluye carritos y reservas). Solo era para la instalación inicial.
  *
- * WEBHOOK DE CARRITOS (WIX):     <URL /exec>?token=rosanta2026xy&hook=carrito
- * WEBHOOK DE RESERVAS (Wix Velo): <URL /exec>?token=rosanta2026xy&hook=reserva
+ * WEBHOOK DE CARRITOS (WIX):     <URL /exec>?token=<llave carrito>&hook=carrito
+ * WEBHOOK DE RESERVAS (Wix Velo): <URL /exec>?token=<llave reserva>&hook=reserva
  *    Lo llama backend/crmReservas.js del sitio de Wix. Entra por intakeReserva(),
  *    que vive en CRMSync.gs, mismo proyecto.
  * META CAPI: Script Property META_CAPI_TOKEN (igual que v1).
  */
 
 var SHEET_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
-var TOKEN    = 'rosanta2026xy';
+/**
+ * Llaves (rotacion del 20-oct-2026, decision de Juanma). NINGUNA vive en el codigo: estan en
+ * Propiedades del script.
+ *   MKT_TOKEN_API      API general (doGet/doPost con body.token). Secreta.
+ *   MKT_TOKEN_RESERVA  hook=reserva (backend de Wix; desde el 3-nov tambien la nube). Secreta.
+ *   MKT_TOKEN_CARRITO  hook=carrito (snippet del Editor de Wix: es PUBLICA, solo anota carritos).
+ *   MKT_TOKEN_VIEJO    el token de antes: SOLO carrito y reserva, y solo hasta MKT_TOKEN_VIEJO_HASTA
+ *                      (AAAA-MM-DD, 2026-11-04). La API general ya no lo acepta.
+ * Las cargo una vez con ?hook=llaves (ver mktCargarLlaves_), que se retira despues.
+ */
+function mktLlave_(nombre) { return String(PropertiesService.getScriptProperties().getProperty(nombre) || ''); }
+
+function tokenOk_(t, cual) {
+  t = String(t || '');
+  if (!t) return false;
+  var nueva = mktLlave_({ api: 'MKT_TOKEN_API', reserva: 'MKT_TOKEN_RESERVA', carrito: 'MKT_TOKEN_CARRITO' }[cual]);
+  if (nueva && t === nueva) return true;
+  if (cual === 'api') return false;
+  var viejo = mktLlave_('MKT_TOKEN_VIEJO'), hasta = mktLlave_('MKT_TOKEN_VIEJO_HASTA');
+  var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  return !!viejo && !!hasta && hoy <= hasta && t === viejo;
+}
 var META_DATASET_ID = '1107259034759950'; // Rosanta Reservas
 
 var SCHEMA = {
@@ -180,7 +201,7 @@ function setup() {
 /** GET ?token=...&tab=calendario  -> filas como JSON */
 function doGet(e) {
   try {
-    if (e.parameter.token !== TOKEN) return json({error:'unauthorized'});
+    if (!tokenOk_(e.parameter.token, 'api')) return json({error:'unauthorized'});
     var tab = e.parameter.tab;
     if (!SCHEMA[tab]) return json({error:'tab desconocida'});
     return json({tab:tab, rows:readTab(tab)});
@@ -202,7 +223,7 @@ function doPost(e) {
     // --- Webhook de carritos ---
     // Lo llama el snippet del formulario de WIX (Carritos_WIX_Snippet.html).
     if (e.parameter.hook === 'carrito' || e.parameter.hook === 'sontickets') {
-      if (qToken !== TOKEN) return json({error:'unauthorized'});
+      if (!tokenOk_(qToken, 'carrito')) return json({error:'unauthorized'});
       return json(intakeCarrito(body));
     }
 
@@ -210,7 +231,7 @@ function doPost(e) {
     // Lo llama backend/crmReservas.js del sitio de Wix. intakeReserva() vive
     // en CRMSync.gs, mismo proyecto.
     if (e.parameter.hook === 'reserva') {
-      if (qToken !== TOKEN) return json({error:'unauthorized'});
+      if (!tokenOk_(qToken, 'reserva')) return json({error:'unauthorized'});
       return json(intakeReserva(body));
     }
     // --- Pipeline de Eventos (15-oct-2026) ---
@@ -218,6 +239,10 @@ function doPost(e) {
     // dentro del cuerpo, no en la URL. Ver Cotizaciones.gs.
     if (e.parameter.hook === 'cotizaciones') {
       return json(cotHook_(body));
+    }
+    // --- Carga unica de llaves (20-oct-2026): con COTIZ_TOKEN, solo si la propiedad esta vacia ---
+    if (e.parameter.hook === 'llaves') {
+      return json(mktCargarLlaves_(body));
     }
 
 // --- Hook desconocido: no morir en silencio ---
@@ -229,7 +254,7 @@ function doPost(e) {
 
     
     // --- API del sistema ---
-    if (body.token !== TOKEN) return json({error:'unauthorized'});
+    if (!tokenOk_(body.token, 'api')) return json({error:'unauthorized'});
     var tab = body.tab;
     if (!SCHEMA[tab]) return json({error:'tab desconocida'});
     var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -351,4 +376,23 @@ function replaceAll(tab, rows){
 }
 function json(obj){
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+/**
+ * Carga UNICA de las llaves (20-oct-2026). body = {token: COTIZ_TOKEN, llaves: {MKT_TOKEN_API: …, …}}.
+ * Solo escribe nombres de la lista y solo si la propiedad esta VACIA (no pisa nada). No devuelve
+ * valores. Se retira del codigo en cuanto las llaves estan cargadas.
+ */
+function mktCargarLlaves_(body) {
+  var ok = PropertiesService.getScriptProperties().getProperty('COTIZ_TOKEN');
+  if (!ok || !body || body.token !== ok) return { error: 'unauthorized' };
+  var permitidas = ['MKT_TOKEN_API', 'MKT_TOKEN_RESERVA', 'MKT_TOKEN_CARRITO', 'MKT_TOKEN_VIEJO', 'MKT_TOKEN_VIEJO_HASTA'];
+  var P = PropertiesService.getScriptProperties(), guardadas = [], ya = [];
+  Object.keys(body.llaves || {}).forEach(function (k) {
+    if (permitidas.indexOf(k) === -1) return;
+    var v = String(body.llaves[k] || '');
+    if (!v) return;
+    if (P.getProperty(k)) { ya.push(k); return; }
+    P.setProperty(k, v); guardadas.push(k);
+  });
+  return { ok: true, guardadas: guardadas, ya_estaban: ya };
 }
