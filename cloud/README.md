@@ -78,7 +78,8 @@ Rama `claude/nube-clientes-vivo`. Arranque `GOOGLE_ENTRYPOINT="node src/server-c
 | Pipeline (pantalla de Eventos) | `/clientes/eventos` · interruptor **`motor_eventos` en PARAMETROS** (la intranet tiene que cerrar su guardado) |
 | Revisión diaria de cotizaciones | `/hooks/cotizaciones`: la dirección definitiva de `cot.sh` |
 | Reservas, carritos y CRM | `/interno/aviso` (solo rosanta-nube, con `clave-tareas`): corre `Code.js` y `CRMSync.js` reales de Marketing OS y guarda en `filas_clientes` (012 + 014); copia a Marketing OS y a la CRM Maestra |
-| Relojes | `/tareas/importar` y `/tareas/importar-crm` cada 15 min; `/tareas/comparar-crm` cada noche (409 = diferencias → alerta) |
+| Relojes | `importar-clientes` (2,17,32,47) → `/tareas/importar`; `importar-crm-clientes` (10,25,40,55) → `/tareas/importar-crm`; `comparar-crm-noche` (23:45) → `/tareas/comparar-crm` (409 = diferencias → alerta). Los dos de importar corren de 6:00 a 6:59 y de 10:00 a 23:59, sin las 7, 8 y 9, por la ventana del lunes 26 (Pagos). Después de ese día se vuelve a `6-23` |
+| Dirección | `https://rosanta-clientes-512086396641.northamerica-south1.run.app` (publicado el 20-oct, rev 00001, en sombra: `motor_eventos` sheets, `hooks_*` puente) |
 
 - **Avisos de Wix:** los recibe **rosanta-nube** (`/hooks/carrito`, `/hooks/reserva`; `hooks-wix.js`, migración 013), con las llaves `wix-hook-carrito` y `wix-hook-reserva`. Interruptores `hooks_carrito` y `hooks_reserva` en la **tabla `interruptores`**: `puente` reenvía al `/exec` de Marketing OS; `base` se lo pasa a rosanta-clientes.
 - **Variables:** `MKT_VIVO_ID` (Marketing OS), `CLIENTES_VIVO_REAL=si`, `INTERRUPTOR_LIBRO` (Config), `CRM_VIVO=si`, `CRM_LIBRO` (CRM Maestra). Por Secret Manager: `DB_CLAVE`, `CLAVE_TAREAS`, `COTIZ_TOKEN_VIVO` y, con el sí de Juanma, `META_CAPI_TOKEN`.
