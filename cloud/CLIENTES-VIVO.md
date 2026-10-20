@@ -43,3 +43,12 @@ Los avisos de Wix los recibe rosanta-nube (`/hooks/carrito`, `/hooks/reserva`). 
 - **La hoja manda** al importar (cada 15 min, en el reloj `importar-crm-clientes`), salvo lo que el servidor todavía no copió. Siguen escribiendo en Apps Script: la captura de Meta de los lunes (`hechos_semana`, `pixel_semana`, `estados_semana`; aquí solo se leen), el Ads Script, WixReservasPauta, PosPauta, ClientesNuevos (`pauta_semanal`) y la skill de pauta (`aprendizajes`).
 - **Ensayo** (`cloud/herramientas/ensayo-marketing.js`): encendido en 29 s, guardados de 0.7 a 1.7 s, vuelta atrás en 9 s, base = hoja y sin llaves repetidas. Cuidado con la cuota de Sheets: la cuenta rosanta-nube@ la comparte con todos los servicios (para repetir solo la vuelta atrás, `SOLO_C=1`).
 - **El día del paso:** `NUBE_CLAVE_TAREAS` en las Propiedades de la intranet (ya la usa `nubeGuardarCierre_`); rosanta-nube@ como **Editor** de Marketing OS; `motor_marketing = base`. **Volver atrás:** `motor_marketing = sheets` (la intranet lo relee cada minuto; la nube, cada 30 s).
+
+## Marketing el jueves 29-oct (Juanma, 20-oct). Lo hace la sesión de Clientes
+`motor_marketing` tiene tres valores: `sheets` | `sombra` | `base`. Con **sombra**, la intranet guarda en la hoja como siempre y, antes, avisa a `/interno/marketing-sombra`. La nube corre el mismo código con las pestañas recién leídas y anota lo que haría en `marketing_sombra` (migración 016). `comparar-crm-noche` cruza esas anotaciones con la hoja. Si la nube falla, la intranet guarda igual.
+1. **Jueves 22:** el Estudio publica la intranet (NubeClientes.js de cf2c541; MarketingDatos.js y PautaSistema.js de b0382f7). La batería se corre en el Chrome de Juanma.
+2. **Viernes 23:** `NUBE_CLAVE_TAREAS` en las Propiedades de la intranet (en el guion del Estudio).
+3. **Martes 27, después de las 10:00:** PARAMETROS › `motor_marketing = sombra`.
+4. **27 y 28 a la noche:** `comparar-crm-noche` sin diferencias en Marketing, y con pedidos > 0. Ojo: si nadie guardó nada en Marketing, la sombra no probó nada.
+5. **Jueves 29:** con el sí de Juanma, rosanta-nube@ pasa a **Editor** de Marketing OS y se pone `motor_marketing = base`. Probar un cambio chico en el calendario desde la intranet y verlo en la hoja.
+**Volver atrás:** `motor_marketing = sheets` (o `sombra`). La intranet lo relee cada minuto y la nube cada 30 s. Lo guardado por la nube ya está en la hoja.
