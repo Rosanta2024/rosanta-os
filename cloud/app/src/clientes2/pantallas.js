@@ -56,8 +56,8 @@ function armarResenas() {
   if (h.split('<body>').length !== 2) throw new Error('Panel de Reseñas de Google.html cambio de forma: no encontre una sola vez <body>');
   return h.replace('</head>', () => '<script>' + traductor('resenas') + '</script></head>')
     .replace('<body>', () => '<body>' + barra('resenas', SUB_RESENAS, 'panel') +
-      '<div class="nb-aviso"><b>Prueba en sombra · reseñas.</b> Las de Google salen de la hoja de control que llena el bot de reseñas cada hora ' +
-      '(desde el 7-jul-2026): el promedio y el total son <b>de esas reseñas</b>, no el total de Google (ese lo muestra el panel de siempre). ' +
+      '<div class="nb-aviso"><b>Prueba en sombra · reseñas.</b> Todas las reseñas de Google, leídas cada hora por el servidor nuevo (solo lectura), ' +
+      'con el borrador que dejó el bot de reseñas. Mientras el servidor no haya leído Google, se muestra la hoja de control (desde el 7-jul-2026). ' +
       'Desde aquí <b>no se publica ni se guarda nada</b>.</div>');
 }
 
@@ -100,7 +100,7 @@ function armarBotSombra() {
 function armarEncuesta() {
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Encuesta · Rosanta</title>' +
     P.paleta() + ESTILO + '<script>' + traductor('resenas') + '</script></head><body>' + barra('resenas', SUB_RESENAS, 'encuesta') + '<main>' +
-    '<div class="nb-aviso" style="margin:0 0 10px"><b>Prueba en sombra · encuesta.</b> Solo muestra lo que ya está en la hoja; la encuesta no cambia.</div><h1>Encuesta de satisfacción</h1><p>Las respuestas del formulario de la encuesta (hoja Rosanta_Encuesta_Satisfaccion). La encuesta sigue igual: ' +
+    '<div class="nb-aviso" style="margin:0 0 10px"><b>Prueba en sombra · encuesta.</b> Muestra las respuestas guardadas en el servidor nuevo (o, si todavía no hay, la copia de la hoja). La encuesta no cambia.</div><h1>Encuesta de satisfacción</h1><p>Las respuestas del formulario de la encuesta (hoja Rosanta_Encuesta_Satisfaccion). La encuesta sigue igual: ' +
     'quien da 5 estrellas pasa a dejar su reseña en Google. <small>La encuesta de estrellas del sitio (rosanta.rest/encuesta, en Wix) no está aquí.</small></p>' +
     '<div class="tarjetas" id="k"></div><div class="envolver"><table><thead><tr><th>Fecha</th><th class="n">Estrellas</th><th>¿Qué podríamos mejorar?</th></tr></thead>' +
     '<tbody id="e"><tr><td colspan="3">Leyendo…</td></tr></tbody></table></div></main><script>' + ESC +

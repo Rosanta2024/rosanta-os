@@ -39,28 +39,56 @@ function doGet() {
 }
 
 // ---- Recibe la respuesta del formulario ----
+// Desde el 21-oct-2026 la base de la nube es el unico escritor de las respuestas y esta hoja queda como copia
+// (decision de Juanma del 20-oct). La pagina no cambia. Cada respuesta se le pasa a la nube, y la nube dice que
+// hacer segun su interruptor 'encuesta':
+//   modo 'puente' → la nube no guarda: la fila se escribe aca igual que siempre (A, B, C).
+//   modo 'base'   → la nube ya la guardo: aca se escribe la COPIA, con 'nube' en la columna D.
+//   sin respuesta → se escribe igual, con 'sin-nube' en D, y la copia de cada hora la sube a la base.
+// Asi nunca se pierde una respuesta y volver atras es poner el interruptor en 'puente' (sin tocar esto).
+var NUBE_ENCUESTA_URL = 'https://rosanta-nube-in6p5o4kna-pv.a.run.app/encuesta/respuesta';
+
 function enviarRespuesta(data) {
   // Anti-spam: si el honeypot trae algo, lo ignoramos en silencio.
   if (data && data.website) return { redirect: null };
 
   var rating = parseInt(data.rating, 10) || 0;
+  var feedback = data.feedback || '';
+  var nube = mandarALaNube_(rating, feedback);
+
   var ss = SpreadsheetApp.openById(CFG.SHEET_ID);
   var sheet = ss.getSheetByName(CFG.SHEET_NAME);
   if (!sheet) throw new Error('No se encontró la pestaña: ' + CFG.SHEET_NAME);
 
-  // Hoja "Encuesta 2026" — solo 3 columnas:
-  // A Fecha | B Calificación | C ¿Qué podríamos mejorar?
-  sheet.appendRow([
-    new Date(),            // A Fecha
-    rating,                // B Calificación
-    data.feedback || ''    // C ¿Qué podríamos mejorar?
-  ]);
+  // Hoja "Encuesta 2026": A Fecha | B Calificación | C ¿Qué podríamos mejorar? | D marca de la nube
+  var fila = [new Date(), rating, feedback];
+  if (nube && nube.modo === 'base') fila.push('nube');
+  else if (!nube) fila.push('sin-nube');
+  sheet.appendRow(fila);
 
   // Lógica de redirección (review gating actual)
   if (rating >= 5) {
     return { redirect: CFG.GOOGLE_REVIEW_URL };
   }
   return { redirect: null };
+}
+
+// Le pasa la respuesta a la nube. Devuelve {modo:'puente'|'base', ...} o null si no contesto bien.
+function mandarALaNube_(rating, feedback) {
+  try {
+    var r = UrlFetchApp.fetch(NUBE_ENCUESTA_URL, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ rating: rating, feedback: String(feedback || ''), via: 'exec' }),
+      muteHttpExceptions: true,
+      followRedirects: false
+    });
+    if (r.getResponseCode() !== 200) return null;
+    var j = JSON.parse(r.getContentText());
+    return (j && j.ok && (j.modo === 'puente' || j.modo === 'base')) ? j : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function prop_(key) {

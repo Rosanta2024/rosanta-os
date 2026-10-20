@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --crema:#F0EDE6; --verde:#456B50; --verde-medio:#4CAF7D;
+    --lila:#A89DC8; --negro:#1A1A1A; --blanco:#FFFFFF;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--crema); color:var(--negro);
+    font-family:'Lato',Arial,sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:520px; margin:0 auto; padding:28px 20px 60px}
+  .brand{text-align:center; margin-bottom:6px}
+  .brand h1{
+    font-family:'Playfair Display',Georgia,serif; letter-spacing:.18em;
+    font-weight:600; font-size:34px; margin:0; color:var(--verde);
+  }
+  .brand .slogan{font-style:italic; color:var(--verde); opacity:.8; margin-top:2px; font-size:14px}
+  .langbar{display:flex; justify-content:center; gap:8px; margin:14px 0 22px}
+  .langbar button{
+    border:1px solid var(--verde); background:transparent; color:var(--verde);
+    border-radius:999px; padding:4px 14px; font-size:13px; cursor:pointer;
+  }
+  .langbar button.active{background:var(--verde); color:var(--crema)}
+  .card{background:var(--blanco); border-radius:18px; padding:24px 20px; box-shadow:0 6px 24px rgba(69,107,80,.10)}
+  .intro{text-align:center; margin:0 0 20px; font-size:16px}
+  label{display:block; font-weight:700; margin:16px 0 6px; font-size:14px}
+  input,select,textarea{
+    width:100%; padding:12px 14px; border:1px solid #d8d3c8; border-radius:12px;
+    font-size:16px; font-family:inherit; background:#fcfbf8;
+  }
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--verde-medio)}
+  textarea{min-height:90px; resize:vertical}
+  .stars{display:flex; justify-content:center; gap:8px; margin:8px 0 4px}
+  .stars span{font-size:42px; cursor:pointer; color:#d8d3c8; transition:transform .1s, color .1s}
+  .stars span.on{color:#f2b705}
+  .stars span:active{transform:scale(1.15)}
+  .rating-label{text-align:center; min-height:20px; font-size:14px; color:var(--verde); font-weight:700}
+  .hidden{display:none}
+  .hp{position:absolute; left:-9999px; top:-9999px}
+  .btn{
+    width:100%; margin-top:24px; padding:15px; border:none; border-radius:14px;
+    background:var(--verde); color:var(--crema); font-size:17px; font-weight:700;
+    font-family:'Playfair Display',Georgia,serif; letter-spacing:.04em; cursor:pointer;
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .req{color:#c0392b}
+  .err{color:#c0392b; font-size:13px; margin-top:6px}
+  .thanks{text-align:center; padding:24px 8px}
+  .thanks h2{font-family:'Playfair Display',Georgia,serif; color:var(--verde)}
+  .blob{height:6px; width:60px; margin:18px auto 0; border-radius:999px; background:var(--lila)}
+  .spin{display:inline-block; width:18px; height:18px; border:3px solid rgba(240,237,230,.4); border-top-color:var(--crema); border-radius:50%; animation:s .8s linear infinite; vertical-align:middle}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>ROSANTA</h1>
+    <div class="slogan">Cocina con Carisma</div>
+  </div>
+
+  <div class="langbar">
+    <button id="btn-es" class="active" onclick="setLang('es')">Español</button>
+    <button id="btn-en" onclick="setLang('en')">English</button>
+  </div>
+
+  <div class="card" id="formCard">
+    <p class="intro" data-es="¿Qué tal estuvo tu visita? Tu opinión ayuda a que cada plato salga mejor."
+       data-en="How was your visit? Your feedback helps make every dish better.">¿Qué tal estuvo tu visita? Tu opinión ayuda a que cada plato salga mejor.</p>
+
+    <form id="surveyForm" autocomplete="on">
+      <!-- honeypot anti-spam -->
+      <input class="hp" type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+
+      <label data-es="¿Cómo calificarías tu experiencia?" data-en="How would you rate your experience?">¿Cómo calificarías tu experiencia? <span class="req">*</span></label>
+      <div class="stars" id="stars">
+        <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+      </div>
+      <div class="rating-label" id="ratingLabel"></div>
+
+      <!-- Feedback interno (1 a 4 estrellas) -->
+      <div id="feedbackBox" class="hidden">
+        <label data-es="Cuéntanos qué podemos mejorar" data-en="Tell us what we can improve">Cuéntanos qué podemos mejorar <span class="req">*</span></label>
+        <textarea id="feedback" data-es-ph="Tu sinceridad nos ayuda a crecer" data-en-ph="Your honesty helps us grow"></textarea>
+      </div>
+
+      <div class="err hidden" id="errBox"></div>
+
+      <button type="submit" class="btn" id="submitBtn"
+        data-es="Enviar" data-en="Submit">Enviar</button>
+    </form>
+  </div>
+
+  <!-- Gracias: feedback interno (1 a 4) -->
+  <div class="card thanks hidden" id="thanksInternal">
+    <h2 data-es="¡Gracias por tu sinceridad!" data-en="Thank you for your honesty!">¡Gracias por tu sinceridad!</h2>
+    <p data-es="Cada comentario llega directo al equipo y nos ayuda a hacerlo mejor la próxima vez que vengas."
+       data-en="Every comment goes straight to the team and helps us do better next time you visit.">Cada comentario llega directo al equipo y nos ayuda a hacerlo mejor la próxima vez que vengas.</p>
+    <div class="blob"></div>
+  </div>
+
+  <!-- Gracias: 5 estrellas, hacia Google -->
+  <div class="card thanks hidden" id="thanksGoogle">
+    <h2 data-es="¡Qué alegría!" data-en="So glad!">¡Qué alegría!</h2>
+    <p data-es="Si no se abrió solo, toca el botón para dejar tu reseña en Google. Gracias por el cariño."
+       data-en="If it didn't open on its own, tap the button to leave your Google review. Thank you.">Si no se abrió solo, toca el botón para dejar tu reseña en Google. Gracias por el cariño.</p>
+    <a id="googleLink" class="btn" target="_top" rel="noopener" href="#"
+       style="display:block;text-decoration:none;text-align:center"
+       data-es="Escribir mi reseña en Google" data-en="Write my Google review">Escribir mi reseña en Google</a>
+    <div class="blob"></div>
+  </div>
+</div>
+
+<!-- Enlace oculto para el salto automático en el gesto del usuario -->
+<a id="goNow" target="_top" rel="noopener" style="display:none"></a>
+
+<script>
+  var LANG='es', rating=0;
+
+  // URL directa de reseña de Rosanta en Google.
+  // Si algún día la cambias en "Propiedades del script" (GOOGLE_REVIEW_URL), cámbiala también aquí.
+  var GOOGLE_URL='https://g.page/r/CWMvHjpESP6vEAE/review';
+
+  function setLang(l){
+    LANG=l;
+    document.getElementById('btn-es').classList.toggle('active', l==='es');
+    document.getElementById('btn-en').classList.toggle('active', l==='en');
+    document.querySelectorAll('[data-es]').forEach(function(el){
+      var t=el.getAttribute('data-'+l); if(t!=null) el.textContent=t;
+    });
+    document.querySelectorAll('[data-es-ph]').forEach(function(el){
+      var t=el.getAttribute('data-'+l+'-ph'); if(t!=null) el.placeholder=t;
+    });
+    updateRatingLabel();
+  }
+
+  var LABELS={
+    es:['','Lo sentimos','Podemos mejorar','Vamos por buen camino','¡Casi perfecto!','¡Excelente!'],
+    en:['','We are sorry','We can do better','On the right track','Almost perfect!','Excellent!']
+  };
+  function updateRatingLabel(){
+    document.getElementById('ratingLabel').textContent = rating ? LABELS[LANG][rating] : '';
+  }
+
+  var stars=document.querySelectorAll('#stars span');
+  stars.forEach(function(s){
+    s.addEventListener('click', function(){
+      rating=parseInt(this.getAttribute('data-v'),10);
+      stars.forEach(function(x){ x.classList.toggle('on', parseInt(x.getAttribute('data-v'),10)<=rating); });
+      document.getElementById('feedbackBox').classList.toggle('hidden', rating>=5 || rating==0);
+      updateRatingLabel();
+    });
+  });
+
+  function showErr(msg){ var e=document.getElementById('errBox'); e.textContent=msg; e.classList.remove('hidden'); }
+  function hideErr(){ document.getElementById('errBox').classList.add('hidden'); }
+
+  document.getElementById('surveyForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    hideErr();
+    var feedback=document.getElementById('feedback').value.trim();
+    var msgs={es:{rate:'Por favor elige una calificación.',fb:'Cuéntanos qué podemos mejorar.'},
+              en:{rate:'Please choose a rating.',fb:'Please tell us what we can improve.'}};
+    if(!rating) return showErr(msgs[LANG].rate);
+    if(rating<5 && !feedback) return showErr(msgs[LANG].fb);
+
+    var payload={
+      rating: rating,
+      feedback: feedback,
+      lang: LANG,
+      website: document.getElementById('website').value  // honeypot
+    };
+
+    // ===== 5 ESTRELLAS: salto a Google DENTRO del toque (gesto vivo = el móvil no lo bloquea) =====
+    if (rating >= 5) {
+      var url = GOOGLE_URL || 'https://g.page/r/CWMvHjpESP6vEAE/review';
+      try { google.script.run.enviarRespuesta(payload); } catch (e) {}   // registra la fila en segundo plano
+      document.getElementById('formCard').classList.add('hidden');
+      document.getElementById('googleLink').href = url;                   // botón visible de respaldo
+      document.getElementById('thanksGoogle').classList.remove('hidden');
+      var go = document.getElementById('goNow');
+      go.href = url;
+      go.click();                                                        // salto automático confiable
+      return;
+    }
+
+    // ===== 1 a 4 ESTRELLAS: feedback interno (flujo async, como antes) =====
+    var btn=document.getElementById('submitBtn');
+    btn.disabled=true;
+    btn.innerHTML='<span class="spin"></span>';
+    google.script.run
+      .withSuccessHandler(function(){
+        document.getElementById('formCard').classList.add('hidden');
+        document.getElementById('thanksInternal').classList.remove('hidden');
+      })
+      .withFailureHandler(function(){
+        btn.disabled=false; btn.textContent = LANG==='es' ? 'Enviar' : 'Submit';
+        showErr(LANG==='es' ? 'Hubo un problema. Intenta de nuevo.' : 'Something went wrong. Please try again.');
+      })
+      .enviarRespuesta(payload);
+  });
+</script>
+</body>
+</html>
