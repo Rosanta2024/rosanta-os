@@ -41,6 +41,7 @@ async function pool() {
 async function preparar(idCopia, pidPrueba, telefono) {
   if (!idCopia || idCopia === LEADS_REAL) throw new Error('Falta el id de la COPIA de Rosanta Leads (nunca la real).');
   if (!/^\d{6,}$/.test(String(pidPrueba || ''))) throw new Error('Falta el phone_number_id del número de prueba.');
+  if (String(pidPrueba) === '1212674248587530') throw new Error('Ese es el número REAL de Rosanta (+502 3082 6935): el ensayo solo va con un número de prueba +1 555.');
   if (!/^\d{8,15}$/.test(String(telefono || ''))) throw new Error('Falta el teléfono de Juanma (solo dígitos, con 502).');
   for (const s of ['ensayo-verify-token', 'ensayo-webhook-secret']) {
     if (!existe(s)) { gcloud(['secrets', 'create', s, '--replication-policy=automatic', '--data-file=-'], crypto.randomBytes(24).toString('hex')); console.log('Creado ' + s); }

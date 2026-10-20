@@ -109,6 +109,14 @@ async function guardarEstado(pool, antes, despues) {
   return cambios.length;
 }
 
+/** ¿Todo el webhook viene del número de WhatsApp pid? (Instagram y Messenger: no.) */
+function esDelNumero(cuerpo, pid) {
+  if (!cuerpo || cuerpo.object !== 'whatsapp_business_account') return false;
+  const cambios = [];
+  (cuerpo.entry || []).forEach((e) => (e.changes || []).forEach((c) => cambios.push(c)));
+  return cambios.length > 0 && cambios.every((c) => String((c.value && c.value.metadata && c.value.metadata.phone_number_id) || '') === String(pid));
+}
+
 /** El modo de un módulo en la tabla interruptores (sin fila, o si la tabla no está: el modo seguro). */
 async function modoModulo(pool, modulo, seguro, validos) {
   try {
@@ -150,6 +158,13 @@ function crearBotVivo(deps) {
     return enFila(async () => {
       const t0 = Date.now();
       const objeto = cuerpo && cuerpo.object;
+      // ENSAYO (20-oct-2026): solo el número de prueba. Cualquier otro (el real, si algo quedó mal suscrito en Meta),
+      // Instagram o Messenger se ignora y se anota: ni se contesta ni se reenvía.
+      if (deps.soloNumero && !esDelNumero(cuerpo, deps.soloNumero)) {
+        await deps.pool.query('INSERT INTO bot_eventos (objeto, modo, resultado, error) VALUES ($1, $2, $3, $4)',
+          [objeto || '', 'ensayo', 'ignorado_otro_numero', 'no es el numero de prueba']);
+        return { modo: 'ensayo', resultado: 'ignorado_otro_numero', envios: 0, error: null };
+      }
       const modo = await interruptor(deps.pool);
       let resultado, envios = 0, err = null;
       if (modo !== 'vivo') {
@@ -235,4 +250,4 @@ async function refrescarTokenIg(deps) {
   return { ok: true, venceEnDias: j.expires_in ? Math.round(j.expires_in / 86400) : null };
 }
 
-module.exports = { refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, blob, cargarEstado, guardarEstado, foto, interruptor, modoModulo, SECRETAS };
+module.exports = { esDelNumero, refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, blob, cargarEstado, guardarEstado, foto, interruptor, modoModulo, SECRETAS };

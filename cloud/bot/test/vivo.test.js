@@ -301,3 +301,23 @@ test('Vivo: reservas pedidas por el restaurante (/reserva, Manual.js) con el sec
     assert.deepStrictEqual(await (await post('/tareas/resumen-bot', {}, { 'x-rosanta-tarea': 'k' })).json(), { omitido: 'puente' });
   } finally { srv.close(); }
 });
+
+test('Ensayo: solo el número de prueba; el real, Instagram y Messenger se ignoran (ni se contestan ni se reenvían)', async () => {
+  const { esDelNumero } = require('../src/vivo');
+  const pool = poolDeMentira(Object.assign({ INTERRUPTOR_BOT: 'vivo' }, PROPS_BOT));
+  const espejo = espejoDeMentira();
+  const m = pedidoDeMentira();
+  const reenviados = [];
+  const bot = crearBotVivo({ pool, espejo, leadsId: LEADS, soloNumero: 'pid-prueba', kb: async () => 'KB', claves: {}, wixOrigen: 'https://www.rosanta.rest',
+    pedido: m.pedido, correo: async () => {}, reenviar: async (c) => { reenviados.push(c); } });
+  const r = await bot.recibir(mensajeWa('hola'), { token: '$WEBHOOK_SECRET' });   // viene de 'pid' (otro número)
+  assert.strictEqual(r.resultado, 'ignorado_otro_numero');
+  assert.strictEqual(m.llamadas.length, 0, 'no llamó a Meta ni a Claude');
+  assert.strictEqual(reenviados.length, 0, 'tampoco se reenvía');
+  assert.strictEqual(pool.eventos[0][2], 'ignorado_otro_numero');
+  assert.strictEqual(esDelNumero({ object: 'instagram', entry: [] }, 'pid-prueba'), false);
+  assert.strictEqual(esDelNumero(mensajeWa('x'), 'pid'), true);
+  const json = JSON.stringify(mensajeWa('x')).replace('"phone_number_id":"pid"', '"phone_number_id":"pid-prueba"');
+  const r2 = await bot.recibir(JSON.parse(json), { token: '$WEBHOOK_SECRET' });
+  assert.notStrictEqual(r2.resultado, 'ignorado_otro_numero', 'el número de prueba sí se atiende');
+});

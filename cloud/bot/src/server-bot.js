@@ -8,6 +8,7 @@ const { GoogleAuth } = require('google-auth-library');
 const { crearPool } = require('./db');
 const { crearServicioBot, KB_DOC_ID } = require('./servicio-bot');
 const { crearAppBot } = require('./app-bot');
+const NUMERO_REAL = '1212674248587530';   // phone_number_id del WhatsApp real de Rosanta (+502 3082 6935): el ensayo nunca lo usa
 
 /** El texto de la base de conocimiento (Google Doc compartido con el servidor como Lector). Cache 10 min, como el bot. */
 function crearLectorKb() {
@@ -46,6 +47,13 @@ async function prepararVivo(pool) {
   if (!w.rows[0]) throw new Error('MODO_BOT=vivo sin el estado del bot importado (falta WIX_RESERVAS_URL en bot_estado).');
   const correo = crearCorreo({ pool, gmail: process.env.BOT_GMAIL ? JSON.parse(process.env.BOT_GMAIL) : null });
   const appsScript = process.env.BOT_APPS_SCRIPT_URL;   // la URL /exec del bot de siempre, con ?token=
+  // En el ENSAYO solo se atiende el número de prueba (nunca el real: si algo queda mal suscrito en Meta, se ignora).
+  let soloNumero = null;
+  if (appsScript === 'ensayo') {
+    const n = await pool.query("SELECT valor FROM bot_estado WHERE clave = 'WA_PHONE_NUMBER_ID' AND valor IS NOT NULL");
+    soloNumero = n.rows[0] && n.rows[0].valor;
+    if (!soloNumero || soloNumero === NUMERO_REAL) throw new Error('El ensayo necesita el phone_number_id del número de PRUEBA (nunca el real).');
+  }
   const claves = { WHATSAPP_TOKEN: process.env.BOT_WHATSAPP_TOKEN, IG_TOKEN: process.env.BOT_IG_TOKEN, MESSENGER_TOKEN: process.env.BOT_MESSENGER_TOKEN,
     ANTHROPIC_API_KEY: process.env.BOT_ANTHROPIC_KEY, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO };
   // Version nueva de un secreto (solo bot-ig-token: la cuenta del bot tiene secretVersionAdder solo ahi).
@@ -55,7 +63,7 @@ async function prepararVivo(pool) {
     await c.request({ url: 'https://secretmanager.googleapis.com/v1/projects/rosanta-apps-script/secrets/' + nombre + ':addVersion', method: 'POST',
       data: { payload: { data: Buffer.from(valor, 'utf8').toString('base64') } } });
   };
-  const vivo = crearBotVivo({ pool, espejo, leadsId, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin, claves,
+  const vivo = crearBotVivo({ pool, espejo, leadsId, soloNumero, kb: crearLectorKb(), wixOrigen: new URL(w.rows[0].valor).origin, claves,
     correo: (m) => correo.enviar(m),
     // En el ENSAYO (BOT_APPS_SCRIPT_URL=ensayo) la red de seguridad NO le pasa nada al bot real: solo queda anotado.
     reenviar: appsScript === 'ensayo'
