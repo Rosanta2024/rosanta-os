@@ -58,3 +58,24 @@ test('PDF a texto: sube convertido, exporta y BORRA el Doc aunque falle el expor
   assert.match(subida.op.headers['Content-Type'], /multipart\/related/);
   assert.match(subida.op.body.toString(), /application\/vnd\.google-apps\.document/);
 });
+
+test('Precarga con papelera y varias paginas (FelCorreo/BancoCorreo): una sola lista, sin nextPageToken', async () => {
+  const f = fetchFalso({ 'https://oauth2.googleapis.com/token': { j: { access_token: 'AT', expires_in: 3600 } },
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages?': (url) => ({ j: /pageToken=p2/.test(url)
+      ? { messages: [{ id: 'm2' }] } : { messages: [{ id: 'm1' }], nextPageToken: 'p2' } }),
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages/m1?': { j: { id: 'm1', payload: {} } },
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages/m2?': { j: { id: 'm2', payload: {} } } });
+  const pre = await precargaGmail(crearCuenta({ credencial: CRED, fetch: f }), 'from:sat', { max: 100, paginas: 5, incluirPapelera: true });
+  const listas = f.pedidos.filter((p) => /messages\?/.test(p.url));
+  assert.strictEqual(listas.length, 2);
+  assert.ok(listas.every((p) => /includeSpamTrash=true/.test(p.url) && /maxResults=100/.test(p.url)));
+  assert.deepStrictEqual(pre.lista, { messages: [{ id: 'm1' }, { id: 'm2' }] });
+  assert.deepStrictEqual(Object.keys(pre.mensajes), ['m1', 'm2']);
+  // sin opciones, igual que antes: una pagina y sin includeSpamTrash
+  const g = fetchFalso({ 'https://oauth2.googleapis.com/token': { j: { access_token: 'AT', expires_in: 3600 } },
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages?': { j: { messages: [], nextPageToken: 'p2' } } });
+  const pre2 = await precargaGmail(crearCuenta({ credencial: CRED, fetch: g }), 'x');
+  assert.strictEqual(g.pedidos.filter((p) => /messages\?/.test(p.url)).length, 1);
+  assert.ok(!/includeSpamTrash/.test(g.pedidos[1].url));
+  assert.strictEqual(pre2.lista.nextPageToken, 'p2', 'con una pagina la lista queda como la dio Gmail');
+});
