@@ -8,6 +8,7 @@
  *                                       en resenas_gbp_google y las compara con la copia de la hoja.
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
  *   POST /tareas/resenas/procesar      EN VIVO (resenas-vivo.js, deps.vivo): solo con el interruptor 'resenas' en 'base'.
+ *   POST /tareas/resenas/ensayo-procesar  SOLO en el ensayo (RESENAS_ENSAYO=si): procesar con reseñas falsas 'ENSAYO-...'.
  *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
@@ -341,6 +342,19 @@ function montarResenas(app, deps) {
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
   // En vivo (resenas-vivo.js): solo hace algo con el interruptor 'resenas' en 'base'.
   if (deps.vivo) app.post('/tareas/resenas/procesar', exigirTarea, responder(() => deps.vivo.procesar(), true));
+  // Solo en el ensayo (RESENAS_ENSAYO=si): procesar con reseñas FALSAS del cuerpo, que nunca salen de la base de ensayo.
+  // Cuerpo: { reviews: [{ review_id: 'ENSAYO-...', estrellas, cliente, resena }] } (hasta 5).
+  if (deps.vivo && deps.vivo.ensayo) {
+    app.post('/tareas/resenas/ensayo-procesar', exigirTarea, (req, res) => {
+      const lista = req.body && Array.isArray(req.body.reviews) ? req.body.reviews : null;
+      const malas = !lista || !lista.length || lista.length > 5 || lista.some((r) => !r || !/^ENSAYO-[A-Za-z0-9-]{1,40}$/.test(String(r.review_id)) ||
+        !(Number(r.estrellas) >= 1 && Number(r.estrellas) <= 5) || String(r.resena || '').length > 2000 || String(r.cliente || '').length > 80);
+      if (malas) return res.status(400).json({ ok: false, error: 'Hasta 5 reseñas, cada una con review_id ENSAYO-..., estrellas 1-5, cliente y resena.' });
+      const falsas = lista.map((r) => ({ review_id: String(r.review_id), estrellas: Number(r.estrellas), cliente: String(r.cliente || ''), resena: String(r.resena || ''),
+        creada: new Date(), actualizada: new Date(), respuesta: '', respuesta_fecha: null }));
+      return responder(() => deps.vivo.procesar(falsas), true)(req, res);
+    });
+  }
   app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));
 }
 
