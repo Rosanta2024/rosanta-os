@@ -23,11 +23,12 @@ echo "Sombra 2: $(echo "$F2" | wc -w | tr -d ' ') archivos · $(cat "$DESTINO/VE
 
 # Pipeline en vivo (19-oct-2026, rama claude/nube-clientes-vivo): LISTA-VIVO-CLIENTES.txt. Lo que empieza
 # con mktos/ viene de Marketing OS (apps-script/rosanta-marketing-os), lo demas de la intranet.
-for f in $(cat "$DESTINO/LISTA-VIVO-CLIENTES.txt"); do
+# LISTA-VIVO-CRM.txt (20-oct-2026): Code.js y CRMSync.js de Marketing OS, para los receptores de Wix en modo base.
+for f in $(cat "$DESTINO/LISTA-VIVO-CLIENTES.txt" "$DESTINO/LISTA-VIVO-CRM.txt"); do
   case "$f" in
     mktos/*) mkdir -p "$DESTINO/mktos"; cp "$RAIZ/apps-script/rosanta-marketing-os/${f#mktos/}" "$DESTINO/$f" ;;
     *) cp "$ORIGEN/$f" "$DESTINO/$f" ;;
   esac
 done
-echo "Pipeline en vivo: $(wc -l < "$DESTINO/LISTA-VIVO-CLIENTES.txt" | tr -d ' ') archivos"
+echo "Pipeline en vivo y CRM: $(cat "$DESTINO/LISTA-VIVO-CLIENTES.txt" "$DESTINO/LISTA-VIVO-CRM.txt" | wc -l | tr -d ' ') archivos"
 
