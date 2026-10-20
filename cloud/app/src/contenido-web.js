@@ -1,12 +1,16 @@
 /**
- * "Contenido web": lo que Juanma y el equipo cambian del sitio nuevo sin programar (20-oct-2026, AYUDANTE 4).
- * Estudio "Web propia sin Wix" §3.1. Tablas: migracion 053. Formato que lee el sitio: web/contenido/FORMATO.md.
+ * "Contenido web": lo que Juanma cambia del sitio nuevo sin programar (20-oct-2026, AYUDANTE 4; Adventures el 21-oct).
+ * Estudio "Web propia sin Wix" §3.1 y §3.9. Tablas: migraciones 053 y 055. Formato que lee el sitio: web/contenido/FORMATO.md.
  *
- * - Las tablas web_* son el BORRADOR. Vanessa y Dani (rol pauta) y el dueño lo editan.
+ * - Las tablas web_* (y web_experiencias) son el BORRADOR. Por ahora lo edita SOLO el dueño (Juanma, 21-oct: "por el
+ *   momento solo yo"); el codigo igual separa editar el borrador (ingresar) de publicar (publicar_web), por si despues
+ *   se suma alguien con una fila de la matriz.
  * - "Publicar" (solo el dueño) arma el contenido entero, lo guarda como version nueva y llama al gancho que
  *   reconstruye el sitio. El sitio lee siempre la ultima version publicada.
  * - "Volver a esta version" (solo el dueño) publica de nuevo una version vieja y deja el borrador igual a ella.
- * - Cambiar un PRECIO es del dueño (accion precio_venta de la matriz), aunque el texto lo edite cualquiera.
+ * - Cambiar un PRECIO es del dueño (accion precio_venta de la matriz).
+ * - Adventures: experiencias (contenido con version) y operadores aliados (datos legales, SIN version: volver atras no
+ *   les devuelve una licencia vieja). Una ficha solo sale si su operador esta activo con licencia y seguro vigentes.
  * - Cada cambio queda en web_bitacora. Nada se borra: retirar = activo false.
  *
  * Permisos (propuesta para la sesion C, ver permisos-web.js): parte 'web' (ver / ingresar = editar el
@@ -14,6 +18,7 @@
  */
 const crypto = require('crypto');
 const P = require('./permisos');
+const AV = require('./adventures');
 const { r2 } = require('./almacen-web');
 
 const FORMATO = 1;
@@ -45,7 +50,13 @@ const TIPOS = {
     crear: ['pregunta_en', 'pregunta_es', 'respuesta_en', 'respuesta_es'], campos: ['categoria', 'pregunta_en', 'pregunta_es', 'respuesta_en', 'respuesta_es', 'orden'] },
   eventos: { tabla: 'web_eventos', llave: 'id', activo: 'activo',
     crear: ['slug', 'titulo_en', 'titulo_es', 'inicio'], campos: ['titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'inicio', 'fin', 'precio_q', 'cupo', 'foto_id', 'enlace', 'orden'] },
-  fotos: { tabla: 'web_fotos', llave: 'id', activo: 'activa', sinCrear: true, campos: ['alt_es', 'alt_en'] }
+  fotos: { tabla: 'web_fotos', llave: 'id', activo: 'activa', sinCrear: true, campos: ['alt_es', 'alt_en'] },
+  experiencias: { tabla: 'web_experiencias', llave: 'id', activo: 'activa',
+    crear: ['slug', 'operador_id', 'titulo_es', 'titulo_en'], campos: ['operador_id', 'titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'duracion_en', 'duracion_es',
+      'incluye_en', 'incluye_es', 'punto_salida_en', 'punto_salida_es', 'temporada_en', 'temporada_es', 'dificultad', 'idiomas', 'precio_ref_q', 'foto_id', 'galeria', 'faq', 'orden'] },
+  operadores: { tabla: 'operadores_aliados', llave: 'id', estado: true, ordenLista: ['nombre', 'id'],
+    crear: ['nombre', 'codigo_referido'], campos: ['nombre', 'razon_social', 'contacto_nombre', 'contacto_telefono', 'contacto_email', 'contacto_emergencia', 'licencia_inguat',
+      'licencia_vence', 'seguro_aseguradora', 'seguro_poliza', 'seguro_vence', 'comision_tipo', 'comision_valor', 'acuerdo', 'requisitos', 'codigo_referido', 'nota'] }
 };
 const CAMPOS_PRECIO = ['precio_q'];
 
@@ -53,19 +64,69 @@ function error(status, msg) { const e = new Error(msg); e.status = status; retur
 
 // ------------------------------------------------------------------------------------------------ validar
 
+/**
+ * Preguntas de una ficha. Acepta la lista [{ pregunta:{es,en}, respuesta:{es,en} }] o, desde la pantalla, texto con
+ * una pregunta por linea: "Pregunta ES | Respuesta ES | Question EN | Answer EN".
+ */
+function limpiarFaq(v) {
+  let lista = v;
+  if (typeof v === 'string') {
+    lista = v.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+      const p = l.split('|').map((x) => x.trim());
+      if (p.length !== 4 || p.some((x) => !x)) throw error(400, 'Cada pregunta va en una línea: Pregunta ES | Respuesta ES | Question EN | Answer EN');
+      return { pregunta: { es: p[0], en: p[2] }, respuesta: { es: p[1], en: p[3] } };
+    });
+  }
+  if (!Array.isArray(lista) || lista.length > 15) throw error(400, 'Preguntas: hasta 15.');
+  return lista.map((q) => ({ pregunta: { es: String(q.pregunta.es || '').slice(0, 300), en: String(q.pregunta.en || '').slice(0, 300) },
+    respuesta: { es: String(q.respuesta.es || '').slice(0, 2000), en: String(q.respuesta.en || '').slice(0, 2000) } }));
+}
+
 const LARGO = { titulo_en: 120, titulo_es: 120, descripcion_en: 320, descripcion_es: 320, texto_en: 6000, texto_es: 6000, nota_en: 400, nota_es: 400,
-  nombre_en: 120, nombre_es: 120, pregunta_en: 300, pregunta_es: 300, respuesta_en: 3000, respuesta_es: 3000, alt_en: 200, alt_es: 200, categoria: 40 };
+  nombre_en: 120, nombre_es: 120, nombre: 120, razon_social: 160, contacto_nombre: 120, contacto_telefono: 30, contacto_emergencia: 200, licencia_inguat: 60,
+  seguro_aseguradora: 120, seguro_poliza: 80, acuerdo: 3000, nota: 1000, duracion_en: 80, duracion_es: 80, incluye_en: 2000, incluye_es: 2000,
+  punto_salida_en: 300, punto_salida_es: 300, temporada_en: 200, temporada_es: 200, pregunta_en: 300, pregunta_es: 300, respuesta_en: 3000, respuesta_es: 3000, alt_en: 200, alt_es: 200, categoria: 40 };
 
 /** Un valor que manda la pantalla → el valor para la base (o error 400 en cristiano). */
 function limpiarCampo(campo, v) {
   if (v === undefined) return undefined;
-  if (['foto_id', 'seccion_id', 'cupo'].indexOf(campo) !== -1) {
+  if (['foto_id', 'seccion_id', 'cupo', 'operador_id'].indexOf(campo) !== -1) {
     if (v === null || v === '') return null;
     const n = Number(v); if (!Number.isInteger(n) || n <= 0) throw error(400, campo + ': tiene que ser un número entero.');
     return n;
   }
   if (campo === 'orden') { const n = Number(v); if (!Number.isInteger(n)) throw error(400, 'El orden es un número entero.'); return n; }
-  if (campo === 'precio_q') {
+  if (campo === 'licencia_vence' || campo === 'seguro_vence') {
+    if (v === null || v === '') return null;
+    const s = String(v).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(new Date(s + 'T12:00:00Z'))) throw error(400, 'Fecha inválida (AAAA-MM-DD): ' + v);
+    return s;
+  }
+  if (campo === 'codigo_referido') {
+    const s = String(v || '').trim().toUpperCase();
+    if (!/^[A-Z0-9-]{3,20}$/.test(s)) throw error(400, 'El código de referido va en mayúsculas y números, de 3 a 20 (p. ej. ACAT-01).');
+    return s;
+  }
+  if (campo === 'comision_tipo') { if (['porcentaje', 'fijo', 'acuerdo'].indexOf(v) === -1) throw error(400, 'Comisión: porcentaje, fijo o acuerdo.'); return v; }
+  if (campo === 'dificultad') { if (!AV.DIFICULTAD[v]) throw error(400, 'Dificultad: ' + Object.keys(AV.DIFICULTAD).join(', ') + '.'); return v; }
+  if (campo === 'idiomas') {
+    const out = Array.from(new Set((Array.isArray(v) ? v : String(v || '').split(',')).map((x) => String(x).trim()).filter(Boolean)));
+    const mal = out.filter((x) => !AV.IDIOMAS[x]); if (mal.length) throw error(400, 'Idioma desconocido: ' + mal.join(', '));
+    return out;
+  }
+  if (campo === 'galeria') {
+    const out = (Array.isArray(v) ? v : String(v || '').split(',')).map((x) => String(x).trim()).filter(Boolean).map(Number);
+    if (out.some((n) => !Number.isInteger(n) || n <= 0) || out.length > 20) throw error(400, 'La galería son números de foto separados por coma (hasta 20).');
+    return out;
+  }
+  if (campo === 'requisitos') {
+    const o = typeof v === 'object' && v ? v : {};
+    return Object.fromEntries(AV.REQUISITOS.map((k) => [k, !!o[k]]));
+  }
+  if (campo === 'faq') return limpiarFaq(v);
+  if (campo === 'contacto_email') { const s = String(v || '').trim().toLowerCase(); if (s && !/^[^\s@<>]+@[^\s@<>]+\.[a-z]{2,}$/.test(s)) throw error(400, 'Correo inválido.'); return s; }
+  if (campo === 'comision_valor') { if (v === null || v === '') return null; const n = Number(v); if (!(n >= 0 && n <= 100000)) throw error(400, 'Comisión inválida.'); return r2(n); }
+  if (campo === 'precio_q' || campo === 'precio_ref_q') {
     if (v === null || v === '') return null;
     const n = Number(String(v).replace(/[Q,\s]/g, '')); if (!isFinite(n) || n < 0 || n > 100000) throw error(400, 'Precio inválido: ' + v);
     return r2(n);
@@ -115,11 +176,13 @@ const dosIdiomas = (f, base) => ({ es: f[base + '_es'] || '', en: f[base + '_en'
 const porOrden = (a, b) => (a.orden - b.orden) || (String(a.id || a.clave) < String(b.id || b.clave) ? -1 : 1);
 const usd = (q, tc) => (q == null || !tc ? null : Math.round(q / tc));
 
-/** Lee el borrador y arma el contenido con el formato del sitio (FORMATO.md). Solo lo activo. */
-async function armarContenido(al) {
-  const [paginas, bloques, fotos, secciones, platos, faq, eventos, ajustes] = await Promise.all([
+/** Lee el borrador y arma el contenido con el formato del sitio (FORMATO.md). Solo lo activo. hoy: AAAA-MM-DD (vigencias). */
+async function armarContenido(al, hoy) { return (await armar(al, hoy)).contenido; }
+
+async function armar(al, hoy) {
+  const [paginas, bloques, fotos, secciones, platos, faq, eventos, ajustes, experiencias, operadores] = await Promise.all([
     al.lista('web_paginas'), al.lista('web_bloques'), al.lista('web_fotos'), al.lista('web_menu_secciones'),
-    al.lista('web_menu_platos'), al.lista('web_faq'), al.lista('web_eventos'), al.lista('web_ajustes')]);
+    al.lista('web_menu_platos'), al.lista('web_faq'), al.lista('web_eventos'), al.lista('web_ajustes'), al.lista('web_experiencias'), al.lista('operadores_aliados')]);
   const aj = {}; ajustes.forEach((a) => { aj[a.clave] = a.valor; });
   const tc = Number(aj.tipo_cambio_usd && aj.tipo_cambio_usd.q_por_usd) || null;
   const fotoPorId = {}; fotos.forEach((f) => { fotoPorId[f.id] = f; });
@@ -151,8 +214,10 @@ async function armarContenido(al) {
     id: e.id, orden: e.orden, slug: e.slug, titulo: dosIdiomas(e, 'titulo'), descripcion: dosIdiomas(e, 'descripcion'),
     inicio: new Date(e.inicio).toISOString(), fin: e.fin ? new Date(e.fin).toISOString() : null,
     precio_q: e.precio_q == null ? null : Number(e.precio_q), precio_usd_ref: usd(e.precio_q, tc), cupo: e.cupo, foto: foto(e.foto_id), enlace: e.enlace }));
+  const adv = AV.armarExperiencias(experiencias, operadores, foto, tc, hoy);
+  out.adventures = { experiencias: adv.experiencias, dificultad: AV.DIFICULTAD, idiomas: AV.IDIOMAS };
   if (aj.giftcards) out.giftcards = aj.giftcards;
-  return out;
+  return { contenido: out, fuera: adv.fuera };
 }
 
 /** Lo que falta para publicar (textos sin traducir, fotos rotas). Lista vacia = se puede. */
@@ -172,6 +237,7 @@ function faltantes(c) {
   c.menu.forEach((s) => { par(s.nombre, 'Menú › ' + s.clave); s.platos.forEach((p) => par(p.nombre, 'Menú › ' + s.clave + ' › plato ' + p.id)); });
   c.faq.forEach((q) => { par(q.pregunta, 'Pregunta ' + q.id); par(q.respuesta, 'Pregunta ' + q.id + ' › respuesta'); });
   c.eventos.forEach((e) => par(e.titulo, 'Evento ' + e.slug));
+  ((c.adventures && c.adventures.experiencias) || []).forEach((x) => { par(x.titulo, 'Adventures › ' + x.slug); par(x.descripcion, 'Adventures › ' + x.slug + ' › descripción'); });
   return f;
 }
 
@@ -200,6 +266,7 @@ function crearContenidoWeb(deps) {
     if (!r.ok) throw error(403, r.motivo);
   };
   const quien = (u) => u.email;
+  const hoy = () => require('./giftcards').hoyGT(deps.ahora ? deps.ahora() : new Date());
   const anotar = (tx, u, accion, tabla, id, antes, despues) => tx.insertar('web_bitacora', { quien: quien(u), rol: rolDe(u), accion, tabla, registro_id: String(id), antes: antes || null, despues: despues || null });
 
   function tipo(nombre) { const t = TIPOS[nombre]; if (!t) throw error(404, 'No existe ' + nombre + '.'); return t; }
@@ -208,13 +275,15 @@ function crearContenidoWeb(deps) {
   async function borrador(u) {
     exigir(u, 'ver');
     const out = {};
-    for (const k of Object.keys(TIPOS)) out[k] = await al.lista(TIPOS[k].tabla, {}, { orden: TIPOS[k].llave === 'clave' ? ['orden', 'clave'] : ['orden', 'id'] });
+    for (const k of Object.keys(TIPOS)) out[k] = await al.lista(TIPOS[k].tabla, {}, { orden: TIPOS[k].ordenLista || (TIPOS[k].llave === 'clave' ? ['orden', 'clave'] : ['orden', 'id']) });
+    out.operadores = out.operadores.map((o) => Object.assign(o, { publicable: AV.operadorPublicable(o, hoy()) }));
+    out.requisitos = AV.REQUISITOS; out.idiomas = AV.IDIOMAS; out.dificultad = AV.DIFICULTAD;
     const aj = await al.lista('web_ajustes');
     out.ajustes = Object.fromEntries(aj.map((a) => [a.clave, a.valor]));
     out.alergenos = ALERGENOS; out.etiquetas = ETIQUETAS;
     const ult = await al.lista('web_versiones', {}, { orden: ['id DESC'], limite: 1 });
     out.ultima_version = ult[0] ? { id: ult[0].id, publicada: ult[0].publicada, publicada_por: ult[0].publicada_por, huella: ult[0].huella } : null;
-    out.cambios_sin_publicar = !ult[0] || huella(await armarContenido(al)) !== ult[0].huella;
+    out.cambios_sin_publicar = !ult[0] || huella(await armarContenido(al, hoy())) !== ult[0].huella;
     const pm = P.puede(M(), u, 'web', 'publicar_web'), pr = P.puede(M(), u, 'web', 'precio_venta');
     out.yo = { puede_editar: P.puede(M(), u, 'web', 'ingresar').ok, puede_publicar: pm.ok, puede_precios: pr.ok };
     return out;
@@ -230,6 +299,7 @@ function crearContenidoWeb(deps) {
     t.crear.forEach((c) => { if (fila[c] === undefined || fila[c] === null || fila[c] === '') throw error(400, 'Falta ' + c + '.'); });
     if (CAMPOS_PRECIO.some((c) => fila[c] !== undefined && fila[c] !== null)) exigir(u, 'precio_venta');
     fila.actualizado_por = quien(u);
+    if (nombre === 'operadores') fila.estado = 'pausado';   // se activa a mano, con licencia y seguro vigentes
     return al.transaccion(async (tx) => {
       await chequearReferencias(tx, fila);
       let nueva;
@@ -243,6 +313,8 @@ function crearContenidoWeb(deps) {
     if (fila.foto_id) { const f = await tx.uno('web_fotos', { id: fila.foto_id }); if (!f || !f.activa) throw error(400, 'Esa foto no existe o está retirada.'); }
     if (fila.seccion_id) { const s = await tx.uno('web_menu_secciones', { id: fila.seccion_id }); if (!s) throw error(400, 'Esa sección del menú no existe.'); }
     if (fila.pagina) { const p = await tx.uno('web_paginas', { clave: fila.pagina }); if (!p) throw error(400, 'Esa página no existe.'); }
+    if (fila.operador_id) { const o = await tx.uno('operadores_aliados', { id: fila.operador_id }); if (!o) throw error(400, 'Ese operador no existe.'); }
+    for (const id of fila.galeria || []) { const f = await tx.uno('web_fotos', { id }); if (!f || !f.activa) throw error(400, 'La foto ' + id + ' de la galería no existe.'); }
   }
 
   async function editar(u, nombre, llave, datos) {
@@ -269,12 +341,19 @@ function crearContenidoWeb(deps) {
   async function activar(u, nombre, llave, activo) {
     const t = tipo(nombre);
     exigir(u, 'ingresar');
-    if (nombre === 'paginas') exigir(u, 'publicar_web');
+    if (nombre === 'paginas' || nombre === 'operadores') exigir(u, 'publicar_web');
     const id = t.llave === 'id' ? Number(llave) : String(llave);
     return al.transaccion(async (tx) => {
       const antes = await tx.uno(t.tabla, { [t.llave]: id }, { bloquear: true });
       if (!antes) throw error(404, 'No existe.');
-      const cambios = { [t.activo]: !!activo };
+      let cambios;
+      if (t.estado) {
+        if (activo) {
+          const p = AV.operadorPublicable(Object.assign({}, antes, { estado: 'activo' }), hoy());
+          if (!p.ok) throw error(409, 'No se puede activar: ' + p.motivo + '.');
+        }
+        cambios = { estado: activo ? 'activo' : 'pausado' };
+      } else cambios = { [t.activo]: !!activo };
       if (t.tabla !== 'web_fotos') { cambios.actualizado = new Date().toISOString(); cambios.actualizado_por = quien(u); }
       const r = await tx.actualizar(t.tabla, id, cambios);
       await anotar(tx, u, activo ? 'reactivar' : 'retirar', t.tabla, id, r.antes, r.despues);
@@ -341,15 +420,15 @@ function crearContenidoWeb(deps) {
   /** Vista previa: el contenido del borrador con el mismo formato que el sitio, y lo que falta. */
   async function vistaPrevia(u) {
     exigir(u, 'ver');
-    const c = await armarContenido(al);
-    return { contenido: c, faltan: faltantes(c), huella: huella(c) };
+    const a = await armar(al, hoy());
+    return { contenido: a.contenido, faltan: faltantes(a.contenido), fuera: a.fuera.map((x) => 'Adventures › ' + x + ' (no sale en el sitio)'), huella: huella(a.contenido) };
   }
 
-  async function guardarVersion(u, contenido, nota, restauradaDe) {
+  async function guardarVersion(u, contenido, nota, restauradaDe, sistema) {
     const h = huella(contenido);
     const v = await al.transaccion(async (tx) => {
       const ult = await tx.lista('web_versiones', {}, { orden: ['id DESC'], limite: 1 });
-      if (ult[0] && ult[0].huella === h && !restauradaDe) throw error(409, 'No hay cambios desde la versión ' + ult[0].id + '.');
+      if (ult[0] && ult[0].huella === h && !restauradaDe && !sistema) throw error(409, 'No hay cambios desde la versión ' + ult[0].id + '.');
       const fila = await tx.insertar('web_versiones', { publicada_por: quien(u), nota: String(nota || '').slice(0, 300), formato: FORMATO, contenido, huella: h, restaurada_de: restauradaDe || null });
       await anotar(tx, u, restauradaDe ? 'volver_atras' : 'publicar', 'web_versiones', fila.id, restauradaDe ? { version: restauradaDe } : null, { version: fila.id, huella: h });
       return fila;
@@ -366,10 +445,18 @@ function crearContenidoWeb(deps) {
   /** Publicar: solo el dueño. Falla (400) si falta algo, con la lista. */
   async function publicar(u, nota) {
     exigir(u, 'publicar_web');
-    const c = await armarContenido(al);
+    const c = await armarContenido(al, hoy());
     const f = faltantes(c);
     if (f.length) { const e = error(400, 'Antes de publicar falta: ' + f.slice(0, 8).join(' · ') + (f.length > 8 ? ' (y ' + (f.length - 8) + ' más)' : '')); e.faltan = f; throw e; }
     return guardarVersion(u, c, nota, null);
+  }
+
+  /**
+   * Solo para tareas del servidor (sin ruta HTTP): publica un contenido ya armado, p. ej. la ultima version sin las
+   * fichas de un operador vencido (adventures.revisarVencimientos). No toca el borrador.
+   */
+  async function publicarAjusteSistema(contenido, nota) {
+    return guardarVersion({ email: 'sistema', rol: 'sistema' }, contenido, nota, null, true);
   }
 
   /** Volver a una version vieja: se publica de nuevo y el borrador queda igual a ella. Solo el dueño. */
@@ -421,6 +508,15 @@ function crearContenidoWeb(deps) {
       const x = faqEn[q.id];
       await actualizar('web_faq', 'id', q.id, x ? { activa: true, orden: x.orden, categoria: x.categoria, pregunta_es: x.pregunta.es, pregunta_en: x.pregunta.en, respuesta_es: x.respuesta.es, respuesta_en: x.respuesta.en } : { activa: false });
     }
+    const expEn = {}; ((c.adventures && c.adventures.experiencias) || []).forEach((x) => { expEn[x.id] = x; });
+    for (const e of await tx.lista('web_experiencias')) {
+      const x = expEn[e.id];
+      // si la ficha no estaba en esa version (retirada o con el operador vencido), queda retirada en el borrador
+      await actualizar('web_experiencias', 'id', e.id, x ? { activa: true, orden: x.orden, operador_id: x.operador.id, titulo_es: x.titulo.es, titulo_en: x.titulo.en,
+        descripcion_es: x.descripcion.es, descripcion_en: x.descripcion.en, duracion_es: x.duracion.es, duracion_en: x.duracion.en, incluye_es: x.incluye.es, incluye_en: x.incluye.en,
+        punto_salida_es: x.punto_salida.es, punto_salida_en: x.punto_salida.en, temporada_es: x.temporada.es, temporada_en: x.temporada.en, dificultad: x.dificultad,
+        idiomas: x.idiomas, precio_ref_q: x.precio_ref_q, foto_id: fid(x.foto), galeria: x.galeria.map(fid), faq: x.faq } : { activa: false });
+    }
     const evEn = {}; c.eventos.forEach((e) => { evEn[e.id] = e; });
     for (const e of await tx.lista('web_eventos')) {
       const x = evEn[e.id];
@@ -447,7 +543,7 @@ function crearContenidoWeb(deps) {
     return Object.assign({}, v.contenido, { version: v.id, publicada: new Date(v.publicada).toISOString(), huella: v.huella });
   }
 
-  return { borrador, crear, editar, activar, ajustar, subirFoto, vistaPrevia, publicar, volverA, versiones, bitacora, publicado };
+  return { borrador, crear, editar, activar, ajustar, subirFoto, vistaPrevia, publicar, publicarAjusteSistema, volverA, versiones, bitacora, publicado };
 }
 
 // ------------------------------------------------------------------------------------------------ sembrar

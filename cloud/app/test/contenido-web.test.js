@@ -35,7 +35,7 @@ const status = (n) => (e) => e.status === n;
 test('Sembrar el ejemplo y armarlo de nuevo da el mismo contenido (el formato va y vuelve)', async () => {
   const { almacen } = await sembrado();
   const c = await W.armarContenido(almacen);
-  const quitar = (x) => { const y = sinIds(x); ['version', 'publicada', 'huella', 'alergenos', 'etiquetas', 'giftcards'].forEach((k) => delete y[k]); return y; };
+  const quitar = (x) => { const y = sinIds(x); ['version', 'publicada', 'huella', 'alergenos', 'etiquetas', 'giftcards', 'adventures'].forEach((k) => delete y[k]); return y; };
   assert.deepStrictEqual(quitar(c), quitar(EJEMPLO));
   assert.strictEqual(c.menu[0].platos[0].precio_usd_ref, 11, 'Q85 / 7.7 ≈ US$11');
   assert.strictEqual(Object.keys(c.alergenos).length, 14);
@@ -43,23 +43,36 @@ test('Sembrar el ejemplo y armarlo de nuevo da el mismo contenido (el formato va
   assert.strictEqual(otra.sembrado, false, 'no siembra dos veces');
 });
 
-test('Permisos: Vanessa y Dani editan el borrador; publicar y volver atrás solo el dueño; sala no ve', async () => {
+test('Un solo rol (Juanma, 21-oct): solo el dueño edita y publica; pauta y sala no ven nada', async () => {
   const { C } = await sembrado();
-  const b = await C.borrador(vanessa);
-  assert.deepStrictEqual(b.yo, { puede_editar: true, puede_publicar: false, puede_precios: false });
+  const b = await C.borrador(juanma);
+  assert.deepStrictEqual(b.yo, { puede_editar: true, puede_publicar: true, puede_precios: true });
   const bloque = b.bloques.find((x) => x.clave === 'heroe.titulo');
-  await C.editar(vanessa, 'bloques', bloque.id, { texto_es: 'Título nuevo de Vanessa' });
-  await C.editar(dani, 'faq', b.faq[0].id, { respuesta_en: 'New answer by Dani.' });
-  await assert.rejects(C.publicar(vanessa), status(403));
-  await assert.rejects(C.publicar(dani), status(403));
-  await assert.rejects(C.volverA(dani, 1), status(403));
-  await assert.rejects(C.borrador(maco), status(403));
-  await assert.rejects(C.editar(maco, 'faq', b.faq[0].id, { respuesta_en: 'x' }), status(403));
-  await assert.rejects(C.crear(vanessa, 'paginas', { clave: 'nueva', ruta_en: '/nueva', ruta_es: '/es/nueva' }), status(403), 'crear paginas es del dueño');
+  for (const u of [vanessa, dani, maco]) {
+    await assert.rejects(C.borrador(u), status(403));
+    await assert.rejects(C.editar(u, 'bloques', bloque.id, { texto_es: 'x' }), status(403));
+    await assert.rejects(C.publicar(u), status(403));
+    await assert.rejects(C.volverA(u, 1), status(403));
+    await assert.rejects(C.crear(u, 'operadores', { nombre: 'x', codigo_referido: 'XXX' }), status(403));
+  }
+  await C.editar(juanma, 'bloques', bloque.id, { texto_es: 'Título nuevo' });
   const v = await C.publicar(juanma, 'primera');
   assert.strictEqual(v.version, 1);
-  assert.strictEqual((await C.publicado()).paginas.inicio.bloques['heroe.titulo'].es, 'Título nuevo de Vanessa');
-  assert.strictEqual((await C.borrador(juanma)).yo.puede_publicar, true);
+  assert.strictEqual((await C.publicado()).paginas.inicio.bloques['heroe.titulo'].es, 'Título nuevo');
+  assert.ok(!PW.FILAS.some((f) => f.parte === 'web' && f.rol !== 'dueno'), 'la propuesta para la sesión C no trae otro rol en web');
+  assert.doesNotMatch(PW.SQL_PROPUESTO, /'pauta', 'marketing', 'web'/);
+});
+
+test('Si mañana se suma alguien con una fila "ingresar", edita el borrador pero no publica ni cambia precios', async () => {
+  const M2 = { permisos: new Map(M.permisos), soloDueno: M.soloDueno };
+  M2.permisos.set('pauta|web', { rol: 'pauta', parte: 'web', nivel: 'ingresar', area: '*' });
+  const x = armar(); await W.sembrar(x.almacen, EJEMPLO, 'prueba');
+  const C2 = W.crearContenidoWeb({ almacen: x.almacen, matriz: M2, fotos: AD.fotosDoble(), reconstruir: AD.reconstruirDoble() });
+  const b = await C2.borrador(vanessa);
+  assert.deepStrictEqual(b.yo, { puede_editar: true, puede_publicar: false, puede_precios: false });
+  await C2.editar(vanessa, 'faq', b.faq[0].id, { respuesta_en: 'Draft' });
+  await assert.rejects(C2.publicar(vanessa), status(403));
+  await assert.rejects(C2.editar(vanessa, 'platos', b.platos[0].id, { precio_q: 99 }), (e) => e.status === 403 && /dueño/.test(e.message));
 });
 
 test('Sin las filas de la sesion C nadie puede nada (falla cerrada)', async () => {
@@ -69,16 +82,15 @@ test('Sin las filas de la sesion C nadie puede nada (falla cerrada)', async () =
   await assert.rejects(C.publicar(juanma), status(403));
 });
 
-test('El precio de un plato lo cambia solo el dueño; el texto lo cambia cualquiera del equipo web', async () => {
+test('Precios y tipo de cambio: los cambia el dueño (precio_venta)', async () => {
   const { C } = await sembrado();
   const plato = (await C.borrador(juanma)).platos[0];
-  await assert.rejects(C.editar(vanessa, 'platos', plato.id, { precio_q: 95 }), (e) => e.status === 403 && /dueño/.test(e.message));
-  await C.editar(vanessa, 'platos', plato.id, { precio_q: '85', descripcion_es: 'Otra descripción' });   // mismo precio: pasa
-  await assert.rejects(C.crear(vanessa, 'platos', { seccion_id: plato.seccion_id, nombre_es: 'N', nombre_en: 'N', precio_q: 50 }), status(403));
-  await C.crear(vanessa, 'platos', { seccion_id: plato.seccion_id, nombre_es: 'Sin precio', nombre_en: 'No price' });
+  await C.editar(juanma, 'platos', plato.id, { precio_q: '85', descripcion_es: 'Otra descripción' });
+  await C.crear(juanma, 'platos', { seccion_id: plato.seccion_id, nombre_es: 'Sin precio', nombre_en: 'No price' });
   const r = await C.editar(juanma, 'platos', plato.id, { precio_q: 'Q95.00' });
   assert.strictEqual(r.precio_q, 95);
   await assert.rejects(C.ajustar(vanessa, 'tipo_cambio_usd', { q_por_usd: 7.8 }), status(403));
+  await assert.rejects(C.ajustar(juanma, 'tipo_cambio_usd', { q_por_usd: 30 }), status(400));
   await C.ajustar(juanma, 'tipo_cambio_usd', { q_por_usd: '7.80' });
   assert.strictEqual((await C.vistaPrevia(juanma)).contenido.ajustes.tipo_cambio_usd, 7.8);
 });
@@ -86,14 +98,14 @@ test('El precio de un plato lo cambia solo el dueño; el texto lo cambia cualqui
 test('Validaciones: alérgenos de la lista, enlaces seguros, foto que exista', async () => {
   const { C } = await sembrado();
   const b = await C.borrador(juanma);
-  await assert.rejects(C.editar(vanessa, 'platos', b.platos[0].id, { alergenos: ['gluten', 'kriptonita'] }), (e) => e.status === 400 && /kriptonita/.test(e.message));
+  await assert.rejects(C.editar(juanma, 'platos', b.platos[0].id, { alergenos: ['gluten', 'kriptonita'] }), (e) => e.status === 400 && /kriptonita/.test(e.message));
   const boton = b.bloques.find((x) => x.tipo === 'enlace');
-  await assert.rejects(C.editar(vanessa, 'bloques', boton.id, { enlace: 'javascript:alert(1)' }), status(400));
-  await assert.rejects(C.editar(vanessa, 'bloques', boton.id, { enlace: '//otro.sitio' }), status(400));
-  await C.editar(vanessa, 'bloques', boton.id, { enlace: 'https://wa.me/50200000000' });
-  await assert.rejects(C.editar(vanessa, 'platos', b.platos[0].id, { foto_id: 999 }), status(400));
-  await assert.rejects(C.editar(vanessa, 'platos', 999, { nombre_es: 'x' }), status(404));
-  await assert.rejects(C.editar(vanessa, 'nada', 1, { x: 1 }), status(404));
+  await assert.rejects(C.editar(juanma, 'bloques', boton.id, { enlace: 'javascript:alert(1)' }), status(400));
+  await assert.rejects(C.editar(juanma, 'bloques', boton.id, { enlace: '//otro.sitio' }), status(400));
+  await C.editar(juanma, 'bloques', boton.id, { enlace: 'https://wa.me/50200000000' });
+  await assert.rejects(C.editar(juanma, 'platos', b.platos[0].id, { foto_id: 999 }), status(400));
+  await assert.rejects(C.editar(juanma, 'platos', 999, { nombre_es: 'x' }), status(404));
+  await assert.rejects(C.editar(juanma, 'nada', 1, { x: 1 }), status(404));
 });
 
 test('Versiones: cada publicación queda guardada; volver atrás publica la vieja y deja el borrador igual', async () => {
@@ -103,9 +115,9 @@ test('Versiones: cada publicación queda guardada; volver atrás publica la viej
   const faq = b.faq[0];
   const v1 = await C.publicar(juanma, 'v1');
   await assert.rejects(C.publicar(juanma, 'igual'), (e) => e.status === 409 && /No hay cambios/.test(e.message));
-  await C.editar(vanessa, 'bloques', titulo.id, { texto_es: 'Título de la v2', texto_en: 'V2 headline' });
-  await C.activar(vanessa, 'faq', faq.id, false);
-  await C.crear(vanessa, 'faq', { pregunta_es: '¿Nueva?', pregunta_en: 'New?', respuesta_es: 'Sí', respuesta_en: 'Yes' });
+  await C.editar(juanma, 'bloques', titulo.id, { texto_es: 'Título de la v2', texto_en: 'V2 headline' });
+  await C.activar(juanma, 'faq', faq.id, false);
+  await C.crear(juanma, 'faq', { pregunta_es: '¿Nueva?', pregunta_en: 'New?', respuesta_es: 'Sí', respuesta_en: 'Yes' });
   const v2 = await C.publicar(juanma, 'v2');
   let pub = await C.publicado();
   assert.strictEqual(pub.version, v2.version);
@@ -127,16 +139,15 @@ test('Versiones: cada publicación queda guardada; volver atrás publica la viej
   assert.strictEqual(reconstruir.pedidos.length, 3, 'cada publicación pide reconstruir el sitio');
   const bit = await almacen.lista('web_bitacora');
   assert.ok(bit.some((x) => x.accion === 'volver_atras' && x.tabla === 'web_faq'), 'la vuelta queda en la bitácora');
-  assert.ok(bit.some((x) => x.accion === 'editar' && x.quien === vanessa.email && x.antes.texto_es === 'Título de ejemplo'));
-  assert.ok(bit.filter((x) => x.accion === 'publicar').every((x) => x.quien === juanma.email));
+  assert.ok(bit.some((x) => x.accion === 'editar' && x.quien === juanma.email && x.antes.texto_es === 'Título de ejemplo'));
 });
 
 test('No se publica con textos sin traducir; el gancho caído no pierde la versión', async () => {
   const { C } = await sembrado({ falla: true });
   const b = await C.borrador(juanma);
-  await C.editar(vanessa, 'faq', b.faq[0].id, { respuesta_en: '' });
+  await C.editar(juanma, 'faq', b.faq[0].id, { respuesta_en: '' });
   await assert.rejects(C.publicar(juanma), (e) => e.status === 400 && e.faltan.some((f) => /falta el inglés/.test(f)));
-  await C.editar(vanessa, 'faq', b.faq[0].id, { respuesta_en: 'Answer' });
+  await C.editar(juanma, 'faq', b.faq[0].id, { respuesta_en: 'Answer' });
   const v = await C.publicar(juanma);
   assert.strictEqual(v.reconstruccion, 'error');
   assert.match(v.detalle, /gancho caido/);
@@ -164,19 +175,20 @@ function webp(ancho, alto) {
 test('Fotos: se reconoce el tipo y la medida, se guarda en el depósito (doble) y no se duplica', async () => {
   const { C, fotos } = armar();
   assert.deepStrictEqual(W.medidas(PNG, 'image/png'), { ancho: 1, alto: 1 });
-  const f = await C.subirFoto(vanessa, webp(800, 600), { alt_es: 'Cóctel', alt_en: 'Cocktail' });
+  const f = await C.subirFoto(juanma, webp(800, 600), { alt_es: 'Cóctel', alt_en: 'Cocktail' });
   assert.strictEqual(f.ancho, 800); assert.strictEqual(f.alto, 600); assert.strictEqual(f.tipo, 'image/webp');
   assert.match(f.url, /^https:\/\/fotos\.prueba\/web\/fotos\/\d{4}\/\d{2}\/[0-9a-f]{20}\.webp$/);
-  const otra = await C.subirFoto(dani, webp(800, 600));
+  const otra = await C.subirFoto(juanma, webp(800, 600));
   assert.strictEqual(otra.id, f.id, 'la misma foto dos veces es una sola');
-  const ch = await C.subirFoto(vanessa, PNG, { chicaDe: f.id });
+  const ch = await C.subirFoto(juanma, PNG, { chicaDe: f.id });
   assert.match(ch.url_chica, /-chica\.png$/);
   assert.strictEqual(Object.keys(fotos.guardadas).length, 2);
-  await assert.rejects(C.subirFoto(vanessa, Buffer.from('<svg onload=alert(1)>aaaaaaaaaaaaaaaa')), status(400));
+  await assert.rejects(C.subirFoto(juanma, Buffer.from('<svg onload=alert(1)>aaaaaaaaaaaaaaaa')), status(400));
   await assert.rejects(C.subirFoto(maco, PNG), status(403));
-  await C.editar(vanessa, 'fotos', f.id, { alt_en: 'A cocktail' });
-  await C.activar(vanessa, 'fotos', f.id, false);
-  await assert.rejects(C.crear(vanessa, 'fotos', {}), status(400));
+  await assert.rejects(C.subirFoto(vanessa, PNG), status(403));
+  await C.editar(juanma, 'fotos', f.id, { alt_en: 'A cocktail' });
+  await C.activar(juanma, 'fotos', f.id, false);
+  await assert.rejects(C.crear(juanma, 'fotos', {}), status(400));
 });
 
 test('Rutas: la pantalla, la API con el enlace, las fotos en binario y el contenido público', async () => {
@@ -187,14 +199,16 @@ test('Rutas: la pantalla, la API con el enlace, las fotos en binario y el conten
   app.use(crearRutasContenidoWeb({ contenido: C, identificar: async (t) => tokens[t] || null }));
   const srv = app.listen(0); const base = 'http://127.0.0.1:' + srv.address().port;
   try {
-    let r = await fetch(base + '/contenido-web?u=tok-vanessa');
+    let r = await fetch(base + '/contenido-web?u=tok-juanma');
     assert.strictEqual(r.status, 200); assert.match(await r.text(), /Contenido web/);
     r = await fetch(base + '/api/web/borrador'); assert.strictEqual(r.status, 401);
     r = await fetch(base + '/api/web/borrador', { headers: { 'x-rosanta-u': 'falso' } }); assert.strictEqual(r.status, 401);
     r = await fetch(base + '/api/web/borrador', { headers: { 'x-rosanta-u': 'tok-vanessa' } });
-    const b = await r.json(); assert.strictEqual(b.yo.puede_publicar, false);
+    assert.strictEqual(r.status, 403, 'pauta no ve el contenido web');
+    r = await fetch(base + '/api/web/borrador', { headers: { 'x-rosanta-u': 'tok-juanma' } });
+    const b = await r.json(); assert.strictEqual(b.yo.puede_publicar, true);
     const faq = b.faq[0];
-    r = await fetch(base + '/api/web/faq/' + faq.id, { method: 'PATCH', headers: { 'x-rosanta-u': 'tok-vanessa', 'Content-Type': 'application/json' }, body: JSON.stringify({ respuesta_es: 'Nueva respuesta' }) });
+    r = await fetch(base + '/api/web/faq/' + faq.id, { method: 'PATCH', headers: { 'x-rosanta-u': 'tok-juanma', 'Content-Type': 'application/json' }, body: JSON.stringify({ respuesta_es: 'Nueva respuesta' }) });
     assert.strictEqual(r.status, 200);
     r = await fetch(base + '/api/web/publicar', { method: 'POST', headers: { 'x-rosanta-u': 'tok-vanessa', 'Content-Type': 'application/json' }, body: '{}' });
     assert.strictEqual(r.status, 403);
@@ -205,9 +219,9 @@ test('Rutas: la pantalla, la API con el enlace, las fotos en binario y el conten
     assert.strictEqual(r.status, 200); assert.match(r.headers.get('cache-control'), /public/);
     const pub = await r.json(); assert.strictEqual(pub.formato, 1); assert.strictEqual(pub.faq[0].respuesta.es, 'Nueva respuesta');
     assert.ok(!JSON.stringify(pub).includes('@'), 'el contenido público no lleva correos de quien editó');
-    r = await fetch(base + '/api/web/fotos?ancho=800&alto=600', { method: 'POST', headers: { 'x-rosanta-u': 'tok-vanessa', 'Content-Type': 'image/webp' }, body: webp(800, 600) });
+    r = await fetch(base + '/api/web/fotos?ancho=800&alto=600', { method: 'POST', headers: { 'x-rosanta-u': 'tok-juanma', 'Content-Type': 'image/webp' }, body: webp(800, 600) });
     assert.strictEqual(r.status, 200); assert.strictEqual((await r.json()).ancho, 800);
-    r = await fetch(base + '/api/web/fotos', { method: 'POST', headers: { 'x-rosanta-u': 'tok-vanessa', 'Content-Type': 'application/json' }, body: '{}' });
+    r = await fetch(base + '/api/web/fotos', { method: 'POST', headers: { 'x-rosanta-u': 'tok-juanma', 'Content-Type': 'application/json' }, body: '{}' });
     assert.strictEqual(r.status, 400);
   } finally { srv.close(); }
 });

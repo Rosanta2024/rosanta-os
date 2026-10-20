@@ -2,7 +2,8 @@
  * Pantallas de la web nueva (AYUDANTE 4, 20-oct-2026). HTML y JS sin librerias, como las de la nube, con la
  * paleta de la intranet (PaletaServidor.js, via pantalla-pagos.paleta()).
  *
- *   /contenido-web?u=…              editar textos EN/ES, fotos, menu, FAQ y eventos; vista previa; publicar (dueño)
+ *   /contenido-web?u=…              (solo el dueño) textos EN/ES, fotos, menu, FAQ, eventos y Adventures (experiencias,
+ *                                   operadores aliados y consultas); vista previa; publicar
  *   /contenido-web/vista-previa?u=… como queda el borrador (por pagina, en ES o EN)
  *   /giftcards?u=…                  canje en sala y caja; emitir por deposito, anular y reporte (dueño)
  *   /gift-cards/comprar[?lang=en]   compra publica (el sitio Astro puede usar esta o la suya contra la misma API)
@@ -28,7 +29,7 @@ const BASE_CSS = 'body{margin:0;background:var(--fondo,#F2EEEB);color:var(--text
   '.aviso{background:var(--rosanta-lila-tint,#F2F0F8);border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:.92rem}' +
   '.mal{color:var(--mal,#b00020)}.ok{color:var(--ok,#2e7d32)}.chip{display:inline-block;font-size:.75rem;border-radius:99px;padding:2px 8px;background:var(--rosanta-verde-tint,#EEF4EF)}' +
   'nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}nav.tabs button.on{background:var(--rosanta-negro,#000);color:#fff;border-color:#000}' +
-  'table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--linea,#ddd);font-size:.9rem;vertical-align:top}.n{text-align:right;font-variant-numeric:tabular-nums}' +
+  'table{width:100%;border-collapse:collapse}@media(max-width:720px){table{display:block;overflow-x:auto}}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--linea,#ddd);font-size:.9rem;vertical-align:top}.n{text-align:right;font-variant-numeric:tabular-nums}' +
   '.fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}.fotos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#eee}' +
   '#msg{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:10px;display:none;max-width:90vw;z-index:9}';
 
@@ -54,7 +55,14 @@ var F={
  platos:[["seccion_id","Sección","seccion"],["nombre","Nombre","par"],["descripcion","Descripción","parlargo"],["precio_q","Precio (Q)","precio"],["alergenos","Alérgenos","alergenos"],["etiquetas","Etiquetas","etiquetas"],["foto_id","Foto","foto"],["orden","Orden","num"]],
  faq:[["categoria","Categoría","texto"],["pregunta","Pregunta","par"],["respuesta","Respuesta","parlargo"],["orden","Orden","num"]],
  eventos:[["titulo","Título","par"],["descripcion","Descripción","parlargo"],["inicio","Empieza","fecha"],["fin","Termina","fecha"],["precio_q","Precio (Q)","precio"],["cupo","Cupo","num"],["enlace","Enlace para reservar","texto"],["foto_id","Foto","foto"],["orden","Orden","num"]],
- fotos:[["alt","Descripción de la foto (para Google y lectores)","par"]]
+ fotos:[["alt","Descripción de la foto (para Google y lectores)","par"]],
+ experiencias:[["operador_id","Operador aliado","operador"],["titulo","Título","par"],["descripcion","Descripción","parlargo"],["duracion","Duración","par"],["incluye","Qué incluye (una cosa por línea)","parlargo"],
+  ["punto_salida","Punto de salida","par"],["temporada","Temporada","par"],["dificultad","Dificultad","dificultad"],["idiomas","Idiomas","idiomas"],["precio_ref_q","Precio de referencia por persona (Q)","precioref"],
+  ["foto_id","Foto principal","foto"],["galeria","Galería (números de foto, separados por coma)","texto"],["faq","Preguntas (una por línea: Pregunta ES | Respuesta ES | Question EN | Answer EN)","faq"],["orden","Orden","num"]],
+ operadores:[["nombre","Nombre (como sale en la ficha)","texto"],["razon_social","Razón social","texto"],["codigo_referido","Código de referido","texto"],["contacto_nombre","Contacto","texto"],["contacto_telefono","Teléfono","texto"],
+  ["contacto_email","Correo","texto"],["contacto_emergencia","Contacto de emergencia","texto"],["licencia_inguat","Licencia INGUAT (número)","texto"],["licencia_vence","Licencia vence","dia"],
+  ["seguro_aseguradora","Aseguradora","texto"],["seguro_poliza","Póliza","texto"],["seguro_vence","Seguro vence","dia"],["comision_tipo","Comisión","comtipo"],["comision_valor","Comisión: % o Q por persona","num"],
+  ["acuerdo","Acuerdo (quién cobra, cómo se pasan los leads)","largo"],["requisitos","Lo que ya entregó","requisitos"],["nota","Nota","largo"]]
 };
 function cargar(){return api("GET","/api/web/borrador").then(function(j){B=j;pintar()}).catch(function(e){document.getElementById("app").innerHTML="<div class=aviso>"+esc(e.message)+"</div>"})}
 function fechaLocal(x){if(!x)return"";var d=new Date(x);var g=new Date(d.getTime()-6*3600000);return g.toISOString().slice(0,16)}
@@ -68,15 +76,25 @@ function control(tipo,nombre,etq,f,dis){var v=f?f[nombre]:"";var d=dis?" disable
  if(tipo==="alergenos"||tipo==="etiquetas"){var dic=B[tipo];return "<label>"+etq+"</label><div class=fila data-lista="+nombre+">"+Object.keys(dic).map(function(k){return "<label style=\\"text-transform:none;font-size:.85rem;margin:0\\"><input type=checkbox value="+k+((v||[]).indexOf(k)>=0?" checked":"")+d+" style=\\"width:auto\\"> "+esc(dic[k].es)+"</label>"}).join("")+"</div>"}
  if(tipo==="precio"){var pd=dis||!B.yo.puede_precios;var usd=v!=null&&B.ajustes.tipo_cambio_usd?" ≈ US$"+Math.round(v/B.ajustes.tipo_cambio_usd.q_por_usd):"";
   return "<label>"+etq+(pd&&!dis?" · solo el dueño":"")+"</label><input data-c="+nombre+" inputmode=decimal value=\\""+(v==null?"":v)+"\\""+(pd?" disabled":"")+"><small>"+usd+"</small>"}
+ if(tipo==="operador"){return "<label>"+etq+"</label><select data-c="+nombre+d+">"+B.operadores.map(function(o){return "<option value="+o.id+(o.id===v?" selected":"")+">"+esc(o.nombre)+(o.publicable.ok?"":" (no sale: "+esc(o.publicable.motivo)+")")+"</option>"}).join("")+"</select>"}
+ if(tipo==="dificultad"){return "<label>"+etq+"</label><select data-c="+nombre+d+">"+Object.keys(B.dificultad).map(function(k){return "<option value="+k+(k===v?" selected":"")+">"+esc(B.dificultad[k].es)+"</option>"}).join("")+"</select>"}
+ if(tipo==="comtipo"){return "<label>"+etq+"</label><select data-c="+nombre+d+">"+["porcentaje","fijo","acuerdo"].map(function(k){return "<option"+(k===v?" selected":"")+">"+k+"</option>"}).join("")+"</select>"}
+ if(tipo==="idiomas"){return "<label>"+etq+"</label><div class=fila data-lista="+nombre+">"+Object.keys(B.idiomas).map(function(k){return "<label style=\\"text-transform:none;font-size:.85rem;margin:0\\"><input type=checkbox value="+k+((v||[]).indexOf(k)>=0?" checked":"")+d+" style=\\"width:auto\\"> "+esc(B.idiomas[k].es)+"</label>"}).join("")+"</div>"}
+ if(tipo==="requisitos"){var rq=v||{};return "<label>"+etq+"</label><div class=fila data-obj="+nombre+">"+B.requisitos.map(function(k){return "<label style=\\"text-transform:none;font-size:.85rem;margin:0\\"><input type=checkbox value="+k+(rq[k]?" checked":"")+d+" style=\\"width:auto\\"> "+esc(k.replace(/_/g," "))+"</label>"}).join("")+"</div>"}
+ if(tipo==="faq"){var tx=(v||[]).map(function(q){return [q.pregunta.es,q.respuesta.es,q.pregunta.en,q.respuesta.en].join(" | ")}).join("\\n");return "<label>"+etq+"</label><textarea data-c="+nombre+d+">"+esc(tx)+"</textarea>"}
+ if(tipo==="largo")return "<label>"+etq+"</label><textarea data-c="+nombre+d+">"+esc(v==null?"":v)+"</textarea>";
+ if(tipo==="dia")return "<label>"+etq+"</label><input type=date data-c="+nombre+" value=\\""+esc(v?String(v).slice(0,10):"")+"\\""+d+">";
+ if(tipo==="precioref")return "<label>"+etq+"</label><input data-c="+nombre+" inputmode=decimal value=\\""+(v==null?"":v)+"\\""+d+">";
  if(tipo==="fecha")return "<label>"+etq+" (hora de Guatemala)</label><input type=datetime-local data-c="+nombre+" value=\\""+fechaLocal(v)+"\\""+d+">";
  if(tipo==="num")return "<label>"+etq+"</label><input data-c="+nombre+" inputmode=numeric value=\\""+(v==null?"":v)+"\\""+d+">";
  return "<label>"+etq+"</label><input data-c="+nombre+" value=\\""+esc(v==null?"":v)+"\\""+d+">"}
 function fotoUrl(id){var f=B.fotos.filter(function(x){return x.id===id})[0];return f&&(f.url_chica||f.url)}
 function leer(caja){var o={};caja.querySelectorAll("[data-c]").forEach(function(el){if(el.disabled)return;o[el.getAttribute("data-c")]=el.value});
+ caja.querySelectorAll("[data-obj]").forEach(function(el){var c={};el.querySelectorAll("input").forEach(function(x){c[x.value]=x.checked});o[el.getAttribute("data-obj")]=c});
  caja.querySelectorAll("[data-lista]").forEach(function(el){var c=[];el.querySelectorAll("input:checked").forEach(function(x){c.push(x.value)});if(!el.querySelector("input:disabled"))o[el.getAttribute("data-lista")]=c});return o}
 function tarjeta(tipo,f,llave,activo,titulo,campos){var dis=!B.yo.puede_editar;var cs=(campos||F[tipo]).filter(function(c){return !(tipo==="bloques"&&((c[0]==="enlace"&&f.tipo!=="enlace")||(c[0]==="foto_id"&&f.tipo!=="foto")||(c[0]==="texto"&&f.tipo==="foto")))});
  return "<div class=\\"tarjeta"+(activo?"":" retirado")+"\\" data-tipo="+tipo+" data-llave=\\""+esc(llave)+"\\"><div class=fila style=\\"margin:0\\"><b>"+esc(titulo)+"</b>"+(activo?"":" <span class=chip>retirado</span>")+"</div>"+
- cs.map(function(c){return control(c[2],c[0],c[1],f,dis)}).join("")+(dis?"":"<div class=fila><button class=pri data-acc=guardar>Guardar</button><button data-acc="+(activo?"retirar":"reactivar")+">"+(activo?"Retirar":"Volver a mostrar")+"</button></div>")+"</div>"}
+ cs.map(function(c){return control(c[2],c[0],c[1],f,dis)}).join("")+(dis?"":"<div class=fila><button class=pri data-acc=guardar>Guardar</button><button data-acc="+(activo?"retirar":"reactivar")+">"+(tipo==="operadores"?(activo?"Pausar":"Activar"):(activo?"Retirar":"Volver a mostrar"))+"</button></div>")+"</div>"}
 function nuevo(tipo,campos,titulo){if(!B.yo.puede_editar)return"";return "<details class=tarjeta><summary><b>+ "+esc(titulo)+"</b></summary><div data-nuevo="+tipo+">"+campos+"<div class=fila><button class=pri data-acc=crear>Agregar</button></div></div></details>"}
 function pintar(){var a=document.getElementById("app");var y=B.yo;
  document.getElementById("estado").innerHTML=(B.ultima_version?"Publicado: versión "+B.ultima_version.id:"Nada publicado todavía")+(B.cambios_sin_publicar?" · <b>hay cambios sin publicar</b>":" · al día");
@@ -99,12 +117,28 @@ function pintar(){var a=document.getElementById("app");var y=B.yo;
  if(TAB==="fotos"){if(y.puede_editar)h+="<div class=tarjeta><b>Subir fotos</b><p><small>Se achican solas antes de subir (1600 px y 600 px, WebP). Escribí la descripción después.</small></p><input type=file id=archivos accept=\\"image/*\\" multiple></div>";
   h+="<div class=fotos>"+B.fotos.map(function(f){return "<div>"+"<img loading=lazy src=\\""+esc(f.url_chica||f.url)+"\\" alt=\\""+esc(f.alt_es)+"\\"><small>#"+f.id+" · "+f.ancho+"×"+f.alto+"</small></div>"}).join("")+"</div><h3>Descripciones</h3>";
   B.fotos.forEach(function(f){h+=tarjeta("fotos",f,f.id,f.activa,"Foto #"+f.id)})}
+ if(TAB==="adventures"){if(!B.operadores.length)h+="<div class=aviso>Primero carga un operador aliado (pestaña Operadores).</div>";
+  B.experiencias.forEach(function(e){var op=B.operadores.filter(function(o){return o.id===e.operador_id})[0];h+=tarjeta("experiencias",e,e.id,e.activa,e.titulo_es+(op&&!op.publicable.ok?" · NO SALE: "+op.publicable.motivo:""))});
+  if(B.operadores.length)h+=nuevo("experiencias","<label>Dirección (p. ej. acatenango-dos-dias)</label><input data-c=slug>"+control("operador","operador_id","Operador aliado",{operador_id:B.operadores[0].id})+control("par","titulo","Título",null),"Agregar una experiencia")}
+ if(TAB==="operadores"){h+="<div class=aviso>Ningún operador sale en el sitio sin licencia de INGUAT y seguro vigentes. 30 días antes de que venzan te llega un aviso; si vencen, sus fichas salen solas del sitio.</div>";
+  B.operadores.forEach(function(o){h+=tarjeta("operadores",o,o.id,o.estado==="activo",o.nombre+" · "+o.estado+(o.publicable.ok?"":" · "+o.publicable.motivo))});
+  h+=nuevo("operadores","<label>Nombre</label><input data-c=nombre><label>Código de referido (p. ej. ACAT-01)</label><input data-c=codigo_referido>","Agregar un operador aliado")}
+ if(TAB==="consultas"){h+="<div class=tarjeta><b>Por operador</b><div id=resOp>Leyendo…</div></div><div class=tarjeta><b>Consultas de Adventures</b><div id=leads>Leyendo…</div></div>"}
  if(TAB==="versiones"){h+="<div class=tarjeta><b>Versiones publicadas</b><div id=vers>Leyendo…</div></div><div class=tarjeta><b>Quién cambió qué</b><div id=bit>Leyendo…</div></div>";
-  if(y.puede_precios)h+="<div class=tarjeta><b>Tipo de cambio de referencia (Q por US$)</b><div class=fila><input id=tc style=\\"width:120px\\" value=\\""+(B.ajustes.tipo_cambio_usd?B.ajustes.tipo_cambio_usd.q_por_usd:"")+"\\"><button data-acc=tc>Guardar</button></div></div>"}
+  if(y.puede_precios){var gc=B.ajustes.giftcards||{montos_q:[300,500],usd_fijos:{}};
+   h+="<div class=tarjeta><b>Tipo de cambio de referencia (Q por US$)</b><div class=fila><input id=tc style=\\"width:120px\\" value=\\""+(B.ajustes.tipo_cambio_usd?B.ajustes.tipo_cambio_usd.q_por_usd:"")+"\\"><button data-acc=tc>Guardar</button></div></div>"+
+   "<div class=tarjeta><b>Gift cards: precio fijo en US$ (vacío = se calcula con el tipo de cambio)</b><div class=fila>"+(gc.montos_q||[300,500]).map(function(q){return "<label style=\\"margin:0\\">Q"+q+"</label><input data-usd="+q+" style=\\"width:90px\\" value=\\""+((gc.usd_fijos||{})[q]||"")+"\\">"}).join("")+"<button data-acc=usd>Guardar</button></div></div>"}}
  a.innerHTML=h;
  var sp=document.getElementById("selPag");if(sp)sp.onchange=function(){PAG=sp.value;pintar()};
  var ar=document.getElementById("archivos");if(ar)ar.onchange=function(){subir([].slice.call(ar.files))};
- if(TAB==="versiones")verVersiones()}
+ if(TAB==="versiones")verVersiones();if(TAB==="consultas")verLeads()}
+var EST=["nuevo","pasado_al_operador","confirmado","vendido","perdido"];
+function q2(n){return n==null?"":"Q"+Number(n).toLocaleString("es-GT")}
+function verLeads(){api("GET","/api/adventures/operadores").then(function(v){document.getElementById("resOp").innerHTML="<table><tr><th>Operador</th><th>Código</th><th class=n>Consultas</th><th class=n>Vendidas</th><th class=n>Comisión</th><th class=n>Cenas</th></tr>"+v.map(function(o){return "<tr><td>"+esc(o.nombre)+"</td><td>"+esc(o.codigo_referido)+"</td><td class=n>"+o.leads+"</td><td class=n>"+o.vendidos+"</td><td class=n>"+q2(o.comision_q)+"</td><td class=n>"+o.cenas+"</td></tr>"}).join("")+"</table>"}).catch(function(e){msg(e.message,1)});
+ api("GET","/api/adventures/leads").then(function(v){var exp={};B.experiencias.forEach(function(e){exp[e.id]=e.titulo_es});
+  document.getElementById("leads").innerHTML=v.length?v.map(function(l){return "<div class=tarjeta data-lead="+l.id+"><b>"+esc(l.nombre)+"</b> · "+esc(exp[l.experiencia_id]||"")+" · "+esc(l.codigo_referido)+"<br><small>"+esc(new Date(l.creado).toLocaleString("es-GT"))+" · "+esc(l.email)+" "+esc(l.telefono||"")+" · "+(l.personas||"?")+" pers. · "+esc(l.fecha_deseada||"sin fecha")+(l.combinar_cena?" · cena "+esc(l.cena_fecha)+" "+esc(l.cena_hora)+" ("+esc(l.cena_estado)+")":"")+"</small><p>"+esc(l.mensaje)+"</p>"+
+  "<div class=dos><div><label>Estado</label><select data-l=estado>"+EST.map(function(e){return "<option"+(e===l.estado?" selected":"")+">"+e+"</option>"}).join("")+"</select></div><div><label>Venta del operador (Q)</label><input data-l=venta_q value=\\""+(l.venta_q==null?"":l.venta_q)+"\\"></div></div>"+
+  "<label>Comisión para Rosanta (Q) — vacío = se calcula con el acuerdo</label><input data-l=comision_q value=\\""+(l.comision_q==null?"":l.comision_q)+"\\"><div class=fila><button class=pri data-acc=lead>Guardar</button></div></div>"}).join(""):"Todavía no hay consultas."}).catch(function(e){msg(e.message,1)})}
 function verVersiones(){api("GET","/api/web/versiones").then(function(v){document.getElementById("vers").innerHTML=v.length?"<table><tr><th>#</th><th>Cuándo</th><th>Quién</th><th>Nota</th><th>Sitio</th><th></th></tr>"+v.map(function(x){return "<tr><td>"+x.id+"</td><td>"+esc(new Date(x.publicada).toLocaleString("es-GT"))+"</td><td>"+esc(x.publicada_por)+"</td><td>"+esc(x.nota)+(x.restaurada_de?" <span class=chip>vuelta a #"+x.restaurada_de+"</span>":"")+"</td><td>"+esc(x.reconstruccion)+"</td><td>"+(B.yo.puede_publicar&&B.ultima_version&&x.id!==B.ultima_version.id?"<button data-volver="+x.id+">Volver a esta</button>":"")+"</td></tr>"}).join("")+"</table>":"Todavía no se publicó nada."}).catch(function(e){msg(e.message,1)});
  api("GET","/api/web/bitacora?limite=60").then(function(v){document.getElementById("bit").innerHTML="<table><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Dónde</th></tr>"+v.map(function(x){return "<tr><td>"+esc(new Date(x.cuando).toLocaleString("es-GT"))+"</td><td>"+esc(x.quien)+"</td><td>"+esc(x.accion)+"</td><td>"+esc(x.tabla.replace("web_",""))+" "+esc(x.registro_id)+"</td></tr>"}).join("")+"</table>"}).catch(function(){})}
 function achicar(file,lado){return createImageBitmap(file).then(function(img){var k=Math.min(1,lado/Math.max(img.width,img.height));var c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
@@ -116,6 +150,10 @@ document.addEventListener("click",function(ev){var t=ev.target;
  if(t.matches("nav.tabs button")){TAB=t.getAttribute("data-tab");document.querySelectorAll("nav.tabs button").forEach(function(b){b.classList.toggle("on",b===t)});pintar();return}
  var vol=t.getAttribute("data-volver");if(vol){if(!confirm("¿Volver el sitio a la versión "+vol+"? El borrador también queda como esa versión."))return;api("POST","/api/web/versiones/"+vol+"/volver",{}).then(function(r){msg("Listo: versión "+r.version+" publicada");cargar()}).catch(function(e){msg(e.message,1)});return}
  var acc=t.getAttribute("data-acc");if(!acc)return;
+ if(acc==="lead"){var cj=t.closest("[data-lead]"),o={};cj.querySelectorAll("[data-l]").forEach(function(x){if(x.value!==""||x.getAttribute("data-l")==="estado")o[x.getAttribute("data-l")]=x.value});
+  api("PATCH","/api/adventures/leads/"+cj.getAttribute("data-lead"),o).then(function(){msg("Guardado ✓");verLeads()}).catch(function(e){msg(e.message,1)});return}
+ if(acc==="usd"){var gc=Object.assign({montos_q:[300,500],minimo_q:200,maximo_q:5000,vigencia_meses:12},B.ajustes.giftcards||{});gc.usd_fijos={};document.querySelectorAll("[data-usd]").forEach(function(x){if(x.value)gc.usd_fijos[x.getAttribute("data-usd")]=Number(x.value)});
+  api("POST","/api/web/ajustes/giftcards",gc).then(function(){msg("Guardado");cargar()}).catch(function(e){msg(e.message,1)});return}
  if(acc==="tc"){api("POST","/api/web/ajustes/tipo_cambio_usd",{q_por_usd:document.getElementById("tc").value}).then(function(){msg("Guardado");cargar()}).catch(function(e){msg(e.message,1)});return}
  if(acc==="crear"){var n=t.closest("[data-nuevo]");api("POST","/api/web/"+n.getAttribute("data-nuevo"),leer(n)).then(function(){msg("Agregado");cargar()}).catch(function(e){msg(e.message,1)});return}
  var c=t.closest("[data-tipo]");var ruta="/api/web/"+c.getAttribute("data-tipo")+"/"+encodeURIComponent(c.getAttribute("data-llave"));
@@ -130,7 +168,7 @@ cargar();`;
 function contenidoWeb() {
   return pagina('Contenido web',
     '<header class="top"><h1>Contenido web</h1><small id="estado">…</small><span class="esp"></span><button id="bVista">Vista previa</button><button id="bPub" class="pri" style="display:none">Publicar</button></header>' +
-    '<main><nav class="tabs"><button class="on" data-tab="textos">Textos</button><button data-tab="menu">Menú</button><button data-tab="faq">Preguntas</button><button data-tab="eventos">Eventos</button><button data-tab="fotos">Fotos</button><button data-tab="versiones">Versiones</button></nav><div id="app">Leyendo…</div></main>',
+    '<main><nav class="tabs"><button class="on" data-tab="textos">Textos</button><button data-tab="menu">Menú</button><button data-tab="faq">Preguntas</button><button data-tab="eventos">Eventos</button><button data-tab="fotos">Fotos</button><button data-tab="adventures">Adventures</button><button data-tab="operadores">Operadores</button><button data-tab="consultas">Consultas</button><button data-tab="versiones">Versiones</button></nav><div id="app">Leyendo…</div></main>',
     CONTENIDO_JS);
 }
 
@@ -143,13 +181,15 @@ function q(n){return n==null?"":"Q"+Number(n).toLocaleString("es-GT")}
 function img(f){return f?"<img src=\\""+esc(f.url_chica)+"\\" alt=\\""+esc(t(f.alt))+"\\" style=\\"max-width:100%;border-radius:12px\\">":""}
 function pintar(){var a=document.getElementById("app");var h="";
  if(C.faltan.length)h+="<div class=aviso><b>Antes de publicar falta:</b><ul>"+C.faltan.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ul></div>";
- var c=C.contenido,ks=Object.keys(c.paginas);if(!PG)PG=ks[0];
+ if(C.fuera&&C.fuera.length)h+="<div class=aviso>"+C.fuera.map(esc).join("<br>")+"</div>";
+ var c=C.contenido,ks=Object.keys(c.paginas);if(c.adventures&&c.adventures.experiencias.length&&ks.indexOf("adventures")<0)ks.push("adventures");if(!PG)PG=ks[0];
  h+="<div class=fila style=\\"margin:0 0 12px\\">"+ks.map(function(k){return "<button "+(k===PG?"class=on ":"")+"data-p=\\""+esc(k)+"\\">"+esc(k)+"</button>"}).join("")+"<span class=esp></span><button data-l=es"+(L==="es"?" class=pri":"")+">ES</button><button data-l=en"+(L==="en"?" class=pri":"")+">EN</button></div>";
- var p=c.paginas[PG];
+ var p=c.paginas[PG]||null;
  if(p){h+="<div class=tarjeta><small>"+esc(p.ruta[L])+"</small><h1 style=\\"font-family:var(--rosanta-font-title)\\">"+esc(t(p.seo.titulo))+"</h1><p><small>"+esc(t(p.seo.descripcion))+"</small></p></div>";
   Object.keys(p.bloques).forEach(function(k){var b=p.bloques[k];h+="<div class=tarjeta><small>"+esc(k)+"</small>"+(b.tipo==="foto"?img(b.foto):b.tipo==="enlace"?"<p><a class=btn href=\\"#\\">"+esc(t(b))+"</a> <small>→ "+esc(b.enlace)+"</small></p>":"<p style=\\"white-space:pre-wrap\\">"+esc(t(b))+"</p>")+"</div>"})}
  if(PG==="menu"||/menu/.test(PG))c.menu.forEach(function(s){h+="<div class=tarjeta><h2>"+esc(t(s.nombre))+"</h2><p><small>"+esc(t(s.nota))+"</small></p>"+s.platos.map(function(x){return "<p><b>"+esc(t(x.nombre))+"</b> "+q(x.precio_q)+(x.precio_usd_ref?" <small>≈ US$"+x.precio_usd_ref+"</small>":"")+"<br><small>"+esc(t(x.descripcion))+(x.alergenos.length?" · "+x.alergenos.map(function(k){return esc(c.alergenos[k][L])}).join(", "):"")+"</small></p>"}).join("")+"</div>"});
  if(/faq|pregunta/.test(PG))c.faq.forEach(function(f){h+="<div class=tarjeta><b>"+esc(t(f.pregunta))+"</b><p style=\\"white-space:pre-wrap\\">"+esc(t(f.respuesta))+"</p></div>"});
+ if(PG==="adventures")c.adventures.experiencias.forEach(function(x){h+="<div class=tarjeta><h3>"+esc(t(x.titulo))+"</h3><small>"+esc(t(x.duracion))+" · "+esc(t(x.dificultad_texto))+" · "+(x.precio_ref_q!=null?q(x.precio_ref_q):"")+" · "+esc(x.operador.nombre)+"</small>"+img(x.foto)+"<p style=\\"white-space:pre-wrap\\">"+esc(t(x.descripcion))+"</p><p><small><i>"+esc(t(x.aviso_legal))+"</i></small></p></div>"});
  if(/event/.test(PG))c.eventos.forEach(function(e){h+="<div class=tarjeta><h3>"+esc(t(e.titulo))+"</h3><small>"+esc(new Date(e.inicio).toLocaleString(L==="en"?"en-US":"es-GT",{timeZone:"America/Guatemala"}))+" · "+q(e.precio_q)+"</small>"+img(e.foto)+"<p>"+esc(t(e.descripcion))+"</p></div>"});
  a.innerHTML=h}
 document.addEventListener("click",function(e){var p=e.target.getAttribute("data-p"),l=e.target.getAttribute("data-l");if(p){PG=p;pintar()}if(l){L=l;pintar()}});
@@ -209,11 +249,14 @@ function canjeGiftcards() {
 
 const COMPRA_JS = ESC_JS + `
 var EN=new URLSearchParams(location.search).get("lang")==="en";var P=null,VAL=null;
-var TX=EN?{t:"Rosanta gift card",m:"Choose an amount",o:"Other amount",de:"Your details",n:"Your name",e:"Your email",tel:"Phone (optional)",para:"Who is it for?",pn:"Their name",pe:"Their email (empty = we send it to you to print)",msj:"Message",f:"Send on (empty = right away)",mon:"Pay in",b:"Continue to payment",no:"Online payment is not available yet. Write to us on WhatsApp and we will sell it to you by bank transfer.",min:"From Q"}
- :{t:"Gift card Rosanta",m:"Elegí un monto",o:"Otro monto",de:"Tus datos",n:"Tu nombre",e:"Tu correo",tel:"Teléfono (opcional)",para:"¿Para quién es?",pn:"Su nombre",pe:"Su correo (vacío = te la mandamos a vos para imprimir)",msj:"Mensaje",f:"Enviar el (vacío = apenas se pague)",mon:"Pagar en",b:"Ir a pagar",no:"Todavía no se puede pagar en línea. Escribinos por WhatsApp y te la vendemos por depósito.",min:"Desde Q"};
+var TX=EN?{t:"Rosanta gift card",m:"Choose an amount",o:"Other amount",de:"Your details",n:"Your name",e:"Your email",tel:"Phone (optional)",para:"Who is it for?",pn:"Their name",pe:"Their email (empty = we send it to you to print)",msj:"Message",f:"Send on (empty = right away)",mon:"Pay in",b:"Continue to payment",no:"Online purchase is not available yet. Write to us and we will sell it to you by bank transfer.",min:"From Q",esc:"Write to us",libre:"other amount from Q"}
+ :{t:"Gift card Rosanta",m:"Elige un monto",o:"Otro monto",de:"Tus datos",n:"Tu nombre",e:"Tu correo",tel:"Teléfono (opcional)",para:"¿Para quién es?",pn:"Su nombre",pe:"Su correo (vacío = te la mandamos a ti para imprimir)",msj:"Mensaje",f:"Enviar el (vacío = apenas se pague)",mon:"Pagar en",b:"Ir a pagar",no:"La compra en línea todavía no está disponible. Escríbenos y te la vendemos por depósito.",min:"Desde Q",esc:"Escríbenos",libre:"otro monto desde Q"};
 function el(id){return document.getElementById(id)}
 function pintar(){var h="<h1 style=\\"font-family:var(--rosanta-font-title)\\">"+TX.t+"</h1>";
- if(!P.cobro_en_linea){el("app").innerHTML=h+"<div class=aviso>"+TX.no+"</div>";return}
+ if(!P.cobro_en_linea){var k=P.contacto||{},bt=[];
+  if(k.whatsapp)bt.push("<a class=\\"btn pri\\" href=\\"https://wa.me/"+esc(String(k.whatsapp).replace(/[^0-9]/g,""))+"\\">WhatsApp</a>");
+  if(k.correo)bt.push("<a class=btn href=\\"mailto:"+esc(k.correo)+"?subject=Gift%20card\\">"+esc(k.correo)+"</a>");
+  el("app").innerHTML=h+"<div class=tarjeta><p>"+P.montos.map(function(m){return "Q"+m.q+" <small>≈ US$"+m.usd+"</small>"}).join(" · ")+" · "+TX.libre+P.minimo_q+"</p><div class=aviso>"+TX.no+"</div><div class=fila><b>"+TX.esc+":</b> "+bt.join(" ")+"</div></div>";return}
  h+="<div class=tarjeta><label>"+TX.m+"</label><div class=fila>"+P.montos.map(function(m){return "<button data-v="+m.q+">Q"+m.q+" <small>≈ US$"+m.usd+"</small></button>"}).join("")+"</div><label>"+TX.o+" ("+TX.min+P.minimo_q+")</label><input id=libre inputmode=numeric></div>"+
  "<div class=tarjeta><label>"+TX.de+"</label><div class=dos><input id=cn placeholder=\\""+TX.n+"\\"><input id=ce type=email placeholder=\\""+TX.e+"\\"></div><input id=ct placeholder=\\""+TX.tel+"\\" style=\\"margin-top:8px\\"></div>"+
  "<div class=tarjeta><label>"+TX.para+"</label><div class=dos><input id=dn placeholder=\\""+TX.pn+"\\"><input id=de type=email placeholder=\\""+TX.pe+"\\"></div><label>"+TX.msj+"</label><textarea id=msj maxlength=300></textarea><label>"+TX.f+"</label><input id=fe type=date>"+

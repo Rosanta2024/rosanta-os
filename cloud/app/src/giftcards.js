@@ -1,12 +1,13 @@
 /**
  * Gift cards de Rosanta (AYUDANTE 4, 20-oct-2026). Estudio "Web propia sin Wix" §3.5 y §8. Tablas: migracion 054.
  *
- * Compra en el sitio → pedido → checkout de Recurrente → webhook (firma verificada, idempotente) → la tarjeta
- * se crea con un codigo RSNT-XXXX-XXXX, el pago queda en pagos_en_linea y sale el aviso (correo del AYUDANTE 2).
+ * Compra en el sitio → pedido → cobro en la PASARELA (pasarela.js: ninguna | recurrente | bac | neonet; por defecto
+ * ninguna = no se cobra en linea) → webhook (firma verificada, idempotente) → la tarjeta se crea con un codigo
+ * RSNT-XXXX-XXXX, el pago queda en pagos_en_linea y sale el aviso (correo del AYUDANTE 2).
  * Canje en la intranet (sala y caja): buscar el codigo, ver saldo y vigencia, descontar (parcial). Cada
  * movimiento queda en gift_cards_movimientos y el saldo NUNCA baja de cero (lo cuida el codigo, y la base con
- * CHECK). Mientras Recurrente no apruebe la cuenta, el dueño puede emitir una tarjeta vendida por deposito
- * (como hoy) para que el canje y el reporte ya funcionen.
+ * CHECK). Sin pasarela, el dueño emite la tarjeta vendida por deposito (como hoy): el canje y el reporte funcionan igual.
+ * Permisos (21-oct, "por el momento solo yo"): canjear, sala y dueño; emitir, anular y aceptar vencidas, solo el dueño.
  *
  * Las tarjetas valen en QUETZALES. Si el comprador paga en US$, se cobra la referencia en dolares y el tipo
  * de cambio queda en el pedido y en pagos_en_linea.
@@ -123,8 +124,8 @@ function tarjetaSvg(t, idioma) {
 // ---------------------------------------------------------------- servicio
 
 /**
- * crearGiftcards({ almacen, matriz, recurrente, avisos, fel, ahora, urls })
- *   urls: { exito, cancelar } a donde vuelve el comprador (paginas del sitio).
+ * crearGiftcards({ almacen, matriz, pasarela, avisos, fel, ahora, urls, contacto })
+ *   pasarela: la de pasarela.js (o un doble). urls: { exito, cancelar }. contacto: { correo, whatsapp } para "escríbenos".
  */
 function crearGiftcards(deps) {
   const al = deps.almacen;
@@ -142,19 +143,23 @@ function crearGiftcards(deps) {
   async function precios() {
     const { a, tc } = await ajustes();
     return { montos: a.montos_q.map((q) => ({ q, usd: cotizar(q, 'USD', a, tc).monto_cobro })), minimo_q: a.minimo_q, maximo_q: a.maximo_q,
-      tipo_cambio: tc, vigencia_meses: a.vigencia_meses, cobro_en_linea: !!(deps.recurrente && deps.recurrente.encendido) };
+      tipo_cambio: tc, vigencia_meses: a.vigencia_meses, cobro_en_linea: enLinea(), contacto: deps.contacto || {} };
   }
 
-  /** El sitio manda el formulario; se guarda el pedido y se devuelve el checkout de Recurrente. */
+  const enLinea = () => !!(deps.pasarela && deps.pasarela.encendido && deps.pasarela.capacidades && deps.pasarela.capacidades.cobro);
+  const noDisponible = (en) => error(503, en ? 'Online purchase is not available yet. Write to us and we will sell it to you by bank transfer.'
+    : 'La compra en línea todavía no está disponible. Escríbenos y te la vendemos por depósito.');
+
+  /** El sitio manda el formulario; se guarda el pedido y se devuelve la direccion de pago de la pasarela. */
   async function crearPedido(d) {
     const x = d || {};
-    if (!deps.recurrente || !deps.recurrente.encendido) throw error(503, 'Todavía no se cobra en línea. Escribinos por WhatsApp y te la vendemos por depósito.');
+    if (!enLinea()) throw noDisponible(x.idioma === 'en');
     if (x.sitio_web) throw error(400, 'No se pudo.');   // campo trampa para robots
     const { a, tc } = await ajustes();
     const c = cotizar(x.valor_q, x.moneda || 'GTQ', a, tc);
     const comprador = x.comprador || {}, dest = x.destinatario || {};
     const ped = {
-      ref: 'gc_' + crypto.randomBytes(12).toString('hex'),
+      ref: 'gc_' + crypto.randomBytes(12).toString('hex'), proveedor: deps.pasarela.proveedor,
       valor_q: c.valor_q, moneda_cobro: c.moneda, monto_cobro: c.monto_cobro, tipo_cambio: c.tipo_cambio,
       comprador_nombre: limpio(comprador.nombre, 120), comprador_email: limpio(comprador.email, 200).toLowerCase(), comprador_telefono: limpio(comprador.telefono, 30) || null,
       destinatario_nombre: limpio(dest.nombre, 120), destinatario_email: limpio(dest.email, 200).toLowerCase() || null,
@@ -175,19 +180,17 @@ function crearGiftcards(deps) {
     const nombre = (ped.idioma === 'en' ? 'Rosanta gift card Q' : 'Gift card Rosanta Q') + c.valor_q;
     let ch;
     try {
-      ch = await deps.recurrente.crearCheckout({
-        items: [{ name: nombre, currency: c.moneda, amount_in_cents: centavos(c.monto_cobro), quantity: 1, tax_category: 'service', available_installments: [] }],
-        success_url: (deps.urls && deps.urls.exito) || 'https://rosanta.rest/gift-cards/gracias',
-        cancel_url: (deps.urls && deps.urls.cancelar) || 'https://rosanta.rest/gift-cards',
-        metadata: { pedido_ref: ped.ref, concepto: 'gift_card' },
-        expires_at: new Date(ahora().getTime() + 2 * 3600 * 1000).toISOString()
-      });
+      ch = await deps.pasarela.crearCobro({ concepto: 'gift_card', referencia: ped.ref, descripcion: nombre, moneda: c.moneda, monto: c.monto_cobro,
+        url_exito: (deps.urls && deps.urls.exito) || 'https://rosanta.rest/gift-cards/gracias',
+        url_cancelar: (deps.urls && deps.urls.cancelar) || 'https://rosanta.rest/gift-cards',
+        vence: new Date(ahora().getTime() + 2 * 3600 * 1000).toISOString() });
     } catch (e) {
-      await al.actualizar('gift_cards_pedidos', fila.id, { estado: 'fallido', nota: 'checkout: ' + String(e.message).slice(0, 200), actualizado: ahora().toISOString() });
-      throw error(e.status === 422 ? 422 : 502, 'No se pudo abrir el pago. Probá de nuevo en un momento.');
+      await al.actualizar('gift_cards_pedidos', fila.id, { estado: 'fallido', nota: 'cobro: ' + String(e.message).slice(0, 200), actualizado: ahora().toISOString() });
+      if (e.status === 503) throw noDisponible(ped.idioma === 'en');
+      throw error(e.status === 422 ? 422 : 502, ped.idioma === 'en' ? 'We could not open the payment. Please try again in a moment.' : 'No se pudo abrir el pago. Prueba de nuevo en un momento.');
     }
-    await al.actualizar('gift_cards_pedidos', fila.id, { checkout_id: ch.id, actualizado: ahora().toISOString() });
-    return { ref: ped.ref, checkout_url: ch.checkout_url, cobro: { moneda: c.moneda, monto: c.monto_cobro } };
+    await al.actualizar('gift_cards_pedidos', fila.id, { cobro_id: ch.id, actualizado: ahora().toISOString() });
+    return { ref: ped.ref, checkout_url: ch.url, cobro: { moneda: c.moneda, monto: c.monto_cobro } };
   }
 
   /** Inserta la tarjeta con un codigo nuevo (se fija antes que no exista; el UNIQUE de la base es la ultima guardia). */
@@ -203,60 +206,65 @@ function crearGiftcards(deps) {
   // ---------------------------------------------------------------- webhook
 
   /**
-   * El webhook de Recurrente. cuerpo: Buffer con el cuerpo CRUDO; cab: cabeceras en minuscula.
+   * El webhook de la pasarela. cuerpo: Buffer con el cuerpo CRUDO; cab: cabeceras en minuscula.
    * Devuelve { status, resultado }: 401 firma mala (no se guarda nada), 200 procesado o repetido,
    * 500 si algo fallo adentro (no queda nada escrito y Recurrente reintenta).
    */
   async function procesarWebhook(cuerpo, cab) {
-    const v = deps.recurrente.verificarFirma(cuerpo, cab || {});
+    const pas = deps.pasarela;
+    if (!pas || !pas.encendido) return { status: 404, resultado: 'sin pasarela' };
+    const v = pas.verificarWebhook(cuerpo, cab || {});
     if (!v.ok) return { status: 401, resultado: 'firma rechazada: ' + v.motivo };
     let ev;
     try { ev = JSON.parse(cuerpo.toString('utf8')); } catch (e) { return { status: 400, resultado: 'cuerpo no es JSON' }; }
-    const tipo = String(ev.event_type || ev.type || '');
+    const e = pas.interpretarEvento(ev);
+    const tipo = String(e.evento || e.tipo);
     const despues = [];
     let resultado;
     try {
       resultado = await al.transaccion(async (tx) => {
         // Primero se mira (en Postgres un INSERT que choca aborta la transaccion); el UNIQUE es la ultima guardia.
-        if (await tx.uno('pagos_webhooks', { proveedor: 'recurrente', evento_id: v.eventoId })) return 'ya_procesado';
-        await tx.insertar('pagos_webhooks', { evento_id: v.eventoId, tipo, cuerpo: ev });
+        if (await tx.uno('pagos_webhooks', { proveedor: pas.proveedor, evento_id: v.eventoId })) return 'ya_procesado';
+        await tx.insertar('pagos_webhooks', { proveedor: pas.proveedor, evento_id: v.eventoId, tipo, cuerpo: ev });
         let r;
-        if (tipo === 'intent.succeeded' || tipo === 'payment_intent.succeeded') r = await pagoExitoso(tx, ev, despues);
-        else if (tipo === 'intent.failed' || tipo === 'payment_intent.failed') r = await pagoFallido(tx, ev);
-        else if (tipo === 'refund.create') r = await reembolso(tx, ev);
+        if (e.tipo === 'pago_exitoso') r = await pagoExitoso(tx, e, ev, despues);
+        else if (e.tipo === 'pago_fallido') r = await pagoFallido(tx, e);
+        else if (e.tipo === 'reembolso') r = await reembolso(tx, e, ev);
         else r = 'ignorado: ' + tipo;
-        const w = await tx.uno('pagos_webhooks', { evento_id: v.eventoId });
+        const w = await tx.uno('pagos_webhooks', { proveedor: pas.proveedor, evento_id: v.eventoId });
         await tx.actualizar('pagos_webhooks', w.id, { procesado: ahora().toISOString(), resultado: r });
         return r;
       });
-    } catch (e) {
-      console.error('[giftcards] webhook', v.eventoId, e.message);
-      return { status: 500, resultado: 'error: ' + e.message };
+    } catch (err) {
+      console.error('[giftcards] webhook', v.eventoId, err.message);
+      return { status: 500, resultado: 'error: ' + err.message };
     }
     // Despues de guardar: aviso y FEL. Si fallan, la tarjeta ya existe y se reintenta con la tarea de avisos.
     for (const f of despues) { try { await f(); } catch (e) { console.error('[giftcards] despues del webhook', e.message); } }
     return { status: 200, resultado };
   }
 
-  async function pagoExitoso(tx, ev, despues) {
-    const ch = ev.checkout || {};
-    const ref = ch.metadata && ch.metadata.pedido_ref;
-    const ped = (ref && await tx.uno('gift_cards_pedidos', { ref }, { bloquear: true })) || (ch.id && await tx.uno('gift_cards_pedidos', { checkout_id: ch.id }, { bloquear: true }));
-    if (!ped) return 'ignorado: el checkout no es de una gift card';
-    const intentId = String(ev.id || '');
+  /** El pedido de un evento: por la referencia que viaja en el cobro, o por el id del cobro. */
+  async function pedidoDe(tx, e) {
+    const prov = deps.pasarela.proveedor;
+    return (e.referencia && await tx.uno('gift_cards_pedidos', { ref: e.referencia }, { bloquear: true })) ||
+      (e.cobro_id && await tx.uno('gift_cards_pedidos', { proveedor: prov, cobro_id: e.cobro_id }, { bloquear: true })) || null;
+  }
+
+  async function pagoExitoso(tx, e, ev, despues) {
+    const prov = deps.pasarela.proveedor;
+    const ped = await pedidoDe(tx, e);
+    if (!ped) return 'ignorado: el cobro no es de una gift card';
+    const intentId = String(e.pago_id || '');
     if (!/^[\w-]{3,80}$/.test(intentId)) throw new Error('El evento no trae el id del pago.');
-    if (await tx.uno('pagos_en_linea', { proveedor: 'recurrente', tipo: 'cobro', proveedor_id: intentId })) return 'ya_procesado';
+    if (await tx.uno('pagos_en_linea', { proveedor: prov, tipo: 'cobro', proveedor_id: intentId })) return 'ya_procesado';
     if (ped.estado === 'pagado') return 'ya_procesado';
-    const det = ev.details || {};
-    const moneda = String(ev.currency || ch.currency || '').toUpperCase();
-    const bruto = r2((Number(ev.amount_in_cents) || 0) / 100);
-    const comision = r2((Number(det.fee) || 0) / 100);
-    const otros = r2(((Number(det.tax_invoicing_fee) || 0) + (Number(det.vat_withheld) || 0)) / 100);
+    const moneda = e.moneda, bruto = r2(e.bruto), comision = r2(e.comision || 0), otros = r2(e.otros || 0);
     const tcambio = moneda === 'USD' ? Number(ped.tipo_cambio) || null : null;
     const pago = await tx.insertar('pagos_en_linea', {
-      tipo: 'cobro', proveedor_id: intentId, checkout_id: ch.id || null, fecha: ev.created_at || ahora().toISOString(), moneda: moneda === 'USD' ? 'USD' : 'GTQ',
+      proveedor: prov, tipo: 'cobro', proveedor_id: intentId, cobro_id: e.cobro_id || null, fecha: e.fecha || ahora().toISOString(), moneda: moneda === 'USD' ? 'USD' : 'GTQ',
       bruto, comision, otros_cargos: otros, neto: r2(bruto - comision - otros), tipo_cambio: tcambio, bruto_q: r2(tcambio ? bruto * tcambio : bruto),
-      concepto: 'gift_card', concepto_id: null, estado: 'pagado', fel_url: ev.tax_invoice_url || null, crudo: ev
+      concepto: 'gift_card', concepto_id: null, estado: 'pagado', fel_url: e.fel_url || null, crudo: ev
     });
     // Lo cobrado tiene que ser lo del pedido. Si no, se guarda el pago (la plata entro) pero NO se crea la tarjeta.
     if (moneda !== ped.moneda_cobro || centavos(bruto) !== centavos(ped.monto_cobro)) {
@@ -284,29 +292,28 @@ function crearGiftcards(deps) {
     return 'creada ' + t2.codigo;
   }
 
-  async function pagoFallido(tx, ev) {
-    const ch = ev.checkout || {};
-    const ref = ch.metadata && ch.metadata.pedido_ref;
-    const ped = (ref && await tx.uno('gift_cards_pedidos', { ref }, { bloquear: true })) || (ch.id && await tx.uno('gift_cards_pedidos', { checkout_id: ch.id }, { bloquear: true }));
-    if (!ped) return 'ignorado: el checkout no es de una gift card';
+  async function pagoFallido(tx, e) {
+    const ped = await pedidoDe(tx, e);
+    if (!ped) return 'ignorado: el cobro no es de una gift card';
     if (ped.estado !== 'pendiente') return 'sin cambio: el pedido está ' + ped.estado;
-    await tx.actualizar('gift_cards_pedidos', ped.id, { estado: 'fallido', nota: 'Recurrente: ' + limpio((ev.details || {}).failure_reason, 200), actualizado: ahora().toISOString() });
+    await tx.actualizar('gift_cards_pedidos', ped.id, { estado: 'fallido', nota: deps.pasarela.proveedor + ': ' + limpio(e.motivo, 200), actualizado: ahora().toISOString() });
     return 'pedido ' + ped.id + ' fallido';
   }
 
-  async function reembolso(tx, ev) {
-    const rf = ev.refund || {}, it = ev.intentable || {};
-    if (['failed', 'voided'].indexOf(rf.status) !== -1) return 'ignorado: reembolso ' + rf.status;
-    const intentId = it.id || it.intent_id || it.payment_intent_id;
-    const cobro = intentId && await tx.uno('pagos_en_linea', { proveedor: 'recurrente', tipo: 'cobro', proveedor_id: String(intentId) }, { bloquear: true });
+  async function reembolso(tx, e, ev) {
+    const prov = deps.pasarela.proveedor;
+    const rf = e.reembolso || {};
+    if (['failed', 'voided'].indexOf(rf.estado) !== -1) return 'ignorado: reembolso ' + rf.estado;
+    const intentId = rf.pago_id;
+    const cobro = intentId && await tx.uno('pagos_en_linea', { proveedor: prov, tipo: 'cobro', proveedor_id: String(intentId) }, { bloquear: true });
     if (!cobro) return 'revisar: reembolso de un pago que no está en la base (' + (intentId || 'sin id') + ')';
     if (!rf.id) throw new Error('El reembolso no trae id.');
-    if (await tx.uno('pagos_en_linea', { proveedor: 'recurrente', tipo: 'reembolso', proveedor_id: String(rf.id) })) return 'ya_procesado';
-    const alCliente = r2((Number(rf.customer_refunded_amount_in_cents) || 0) / 100);
-    const deLaCuenta = r2((Number(rf.account_refunded_amount_in_cents) || 0) / 100);
+    if (await tx.uno('pagos_en_linea', { proveedor: prov, tipo: 'reembolso', proveedor_id: String(rf.id) })) return 'ya_procesado';
+    const alCliente = r2(rf.al_cliente || 0);
+    const deLaCuenta = r2(rf.de_la_cuenta || 0);
     const tc = cobro.tipo_cambio ? Number(cobro.tipo_cambio) : null;
-    await tx.insertar('pagos_en_linea', { tipo: 'reembolso', proveedor_id: String(rf.id), checkout_id: cobro.checkout_id, pago_original_id: cobro.id,
-      fecha: rf.created_at || ahora().toISOString(), moneda: cobro.moneda, bruto: alCliente, comision: 0, otros_cargos: 0, neto: deLaCuenta,
+    await tx.insertar('pagos_en_linea', { proveedor: prov, tipo: 'reembolso', proveedor_id: String(rf.id), cobro_id: cobro.cobro_id, pago_original_id: cobro.id,
+      fecha: e.fecha || ahora().toISOString(), moneda: cobro.moneda, bruto: alCliente, comision: 0, otros_cargos: 0, neto: deLaCuenta,
       tipo_cambio: tc, bruto_q: r2(tc ? alCliente * tc : alCliente), concepto: cobro.concepto, concepto_id: cobro.concepto_id, estado: 'reembolso', fel_estado: 'no_aplica', crudo: ev });
     const total = centavos(alCliente) >= centavos(cobro.bruto);
     await tx.actualizar('pagos_en_linea', cobro.id, { estado: total ? 'reembolsado' : 'reembolso_parcial', actualizado: ahora().toISOString() });
@@ -316,7 +323,7 @@ function crearGiftcards(deps) {
       if (t && t.estado !== 'anulada') {
         const usada = r2(t.monto - t.saldo) > 0;
         if (t.saldo > 0) await tx.insertar('gift_cards_movimientos', { gift_card_id: t.id, tipo: 'anulacion', monto: t.saldo, saldo_antes: t.saldo, saldo_despues: 0,
-          quien: 'webhook', rol: 'sistema', donde: 'sistema', referencia: String(rf.id), pago_id: cobro.id, nota: 'Reembolso en Recurrente' });
+          quien: 'webhook', rol: 'sistema', donde: 'sistema', referencia: String(rf.id), pago_id: cobro.id, nota: 'Reembolso en ' + prov });
         await tx.actualizar('gift_cards', t.id, { saldo: 0, estado: 'anulada' });
         nota = usada ? ' · REVISAR: la tarjeta ya tenía canjes' : ' · tarjeta anulada';
       }
@@ -431,7 +438,7 @@ function crearGiftcards(deps) {
     });
   }
 
-  /** Anular una tarjeta (solo el dueño). Si se pago en linea, el reembolso se hace en el panel de Recurrente. */
+  /** Anular una tarjeta (solo el dueño). Si se pago en linea, el reembolso se hace en el panel de la pasarela. */
   async function anular(u, codigoTxt, nota) {
     exigir(u, 'anular_giftcard');
     const codigo = normalizarCodigo(codigoTxt);

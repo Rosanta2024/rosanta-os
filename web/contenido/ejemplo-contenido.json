@@ -3,49 +3,430 @@
   "version": 7,
   "publicada": "2026-11-05T18:30:00.000Z",
   "huella": "ejemplo-sin-huella-real",
-  "ajustes": { "tipo_cambio_usd": 7.7 },
+  "ajustes": {
+    "tipo_cambio_usd": 7.7
+  },
   "paginas": {
     "inicio": {
       "orden": 0,
-      "ruta": { "en": "/", "es": "/es" },
+      "ruta": {
+        "en": "/",
+        "es": "/es"
+      },
       "seo": {
-        "titulo": { "es": "Rosanta · Cocina con Carisma en Antigua Guatemala", "en": "Rosanta · Cooking with Charisma in Antigua Guatemala" },
-        "descripcion": { "es": "Texto de ejemplo para la descripción.", "en": "Sample description text." },
-        "foto": { "id": 1, "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp", "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp", "ancho": 1600, "alto": 1067, "alt": { "es": "Mesa en la pérgola", "en": "Table under the pergola" } }
+        "titulo": {
+          "es": "Rosanta · Cocina con Carisma en Antigua Guatemala",
+          "en": "Rosanta · Cooking with Charisma in Antigua Guatemala"
+        },
+        "descripcion": {
+          "es": "Texto de ejemplo para la descripción.",
+          "en": "Sample description text."
+        },
+        "foto": {
+          "id": 1,
+          "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp",
+          "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp",
+          "ancho": 1600,
+          "alto": 1067,
+          "alt": {
+            "es": "Mesa en la pérgola",
+            "en": "Table under the pergola"
+          }
+        }
       },
       "bloques": {
-        "heroe.titulo": { "id": 1, "tipo": "texto", "orden": 0, "es": "Título de ejemplo", "en": "Sample headline" },
-        "heroe.boton": { "id": 2, "tipo": "enlace", "orden": 1, "es": "Reservar", "en": "Book a table", "enlace": "/reservas" },
-        "heroe.foto": { "id": 3, "tipo": "foto", "orden": 2, "es": "", "en": "", "foto": { "id": 1, "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp", "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp", "ancho": 1600, "alto": 1067, "alt": { "es": "Mesa en la pérgola", "en": "Table under the pergola" } } },
-        "honest.parrafo": { "id": 4, "tipo": "parrafo", "orden": 3, "es": "Párrafo de ejemplo.\nSegunda línea.", "en": "Sample paragraph.\nSecond line." }
+        "heroe.titulo": {
+          "id": 1,
+          "tipo": "texto",
+          "orden": 0,
+          "es": "Título de ejemplo",
+          "en": "Sample headline"
+        },
+        "heroe.boton": {
+          "id": 2,
+          "tipo": "enlace",
+          "orden": 1,
+          "es": "Reservar",
+          "en": "Book a table",
+          "enlace": "/reservas"
+        },
+        "heroe.foto": {
+          "id": 3,
+          "tipo": "foto",
+          "orden": 2,
+          "es": "",
+          "en": "",
+          "foto": {
+            "id": 1,
+            "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp",
+            "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp",
+            "ancho": 1600,
+            "alto": 1067,
+            "alt": {
+              "es": "Mesa en la pérgola",
+              "en": "Table under the pergola"
+            }
+          }
+        },
+        "honest.parrafo": {
+          "id": 4,
+          "tipo": "parrafo",
+          "orden": 3,
+          "es": "Párrafo de ejemplo.\nSegunda línea.",
+          "en": "Sample paragraph.\nSecond line."
+        }
       }
     },
     "menu": {
       "orden": 1,
-      "ruta": { "en": "/full-menu", "es": "/es/full-menu" },
-      "seo": { "titulo": { "es": "Menú", "en": "Menu" }, "descripcion": { "es": "Ejemplo.", "en": "Sample." }, "foto": null },
+      "ruta": {
+        "en": "/full-menu",
+        "es": "/es/full-menu"
+      },
+      "seo": {
+        "titulo": {
+          "es": "Menú",
+          "en": "Menu"
+        },
+        "descripcion": {
+          "es": "Ejemplo.",
+          "en": "Sample."
+        },
+        "foto": null
+      },
       "bloques": {}
     }
   },
   "menu": [
     {
-      "id": 1, "clave": "entradas", "orden": 0,
-      "nombre": { "es": "Entradas", "en": "Starters" },
-      "nota": { "es": "", "en": "" },
+      "id": 1,
+      "clave": "entradas",
+      "orden": 0,
+      "nombre": {
+        "es": "Entradas",
+        "en": "Starters"
+      },
+      "nota": {
+        "es": "",
+        "en": ""
+      },
       "platos": [
-        { "id": 1, "orden": 0, "nombre": { "es": "Plato de ejemplo", "en": "Sample dish" }, "descripcion": { "es": "Descripción de ejemplo.", "en": "Sample description." },
-          "precio_q": 85, "precio_usd_ref": 11, "alergenos": ["gluten", "lacteos"], "etiquetas": ["vegetariano"], "foto": null }
+        {
+          "id": 1,
+          "orden": 0,
+          "nombre": {
+            "es": "Plato de ejemplo",
+            "en": "Sample dish"
+          },
+          "descripcion": {
+            "es": "Descripción de ejemplo.",
+            "en": "Sample description."
+          },
+          "precio_q": 85,
+          "precio_usd_ref": 11,
+          "alergenos": [
+            "gluten",
+            "lacteos"
+          ],
+          "etiquetas": [
+            "vegetariano"
+          ],
+          "foto": null
+        }
       ]
     }
   ],
   "faq": [
-    { "id": 1, "orden": 0, "categoria": "reservas", "pregunta": { "es": "¿Pregunta de ejemplo?", "en": "Sample question?" }, "respuesta": { "es": "Respuesta de ejemplo.", "en": "Sample answer." } }
+    {
+      "id": 1,
+      "orden": 0,
+      "categoria": "reservas",
+      "pregunta": {
+        "es": "¿Pregunta de ejemplo?",
+        "en": "Sample question?"
+      },
+      "respuesta": {
+        "es": "Respuesta de ejemplo.",
+        "en": "Sample answer."
+      }
+    }
   ],
   "eventos": [
-    { "id": 1, "orden": 0, "slug": "cena-de-ejemplo", "titulo": { "es": "Cena de ejemplo", "en": "Sample dinner" }, "descripcion": { "es": "Ejemplo.", "en": "Sample." },
-      "inicio": "2026-12-12T01:30:00.000Z", "fin": null, "precio_q": 450, "precio_usd_ref": 58, "cupo": 30, "foto": null, "enlace": "/reservas" }
+    {
+      "id": 1,
+      "orden": 0,
+      "slug": "cena-de-ejemplo",
+      "titulo": {
+        "es": "Cena de ejemplo",
+        "en": "Sample dinner"
+      },
+      "descripcion": {
+        "es": "Ejemplo.",
+        "en": "Sample."
+      },
+      "inicio": "2026-12-12T01:30:00.000Z",
+      "fin": null,
+      "precio_q": 450,
+      "precio_usd_ref": 58,
+      "cupo": 30,
+      "foto": null,
+      "enlace": "/reservas"
+    }
   ],
-  "alergenos": { "gluten": { "es": "Gluten", "en": "Gluten" }, "lacteos": { "es": "Lácteos", "en": "Dairy" } },
-  "etiquetas": { "vegetariano": { "es": "Vegetariano", "en": "Vegetarian" } },
-  "giftcards": { "montos_q": [300, 500], "minimo_q": 200, "maximo_q": 5000, "vigencia_meses": 12, "usd_fijos": {} }
+  "adventures": {
+    "experiencias": [
+      {
+        "id": 1,
+        "orden": 0,
+        "slug": "volcan-de-ejemplo",
+        "ruta": {
+          "en": "/adventures/volcan-de-ejemplo",
+          "es": "/es/adventures/volcan-de-ejemplo"
+        },
+        "titulo": {
+          "es": "Volcán de ejemplo",
+          "en": "Sample volcano hike"
+        },
+        "descripcion": {
+          "es": "Descripción de ejemplo.",
+          "en": "Sample description."
+        },
+        "duracion": {
+          "es": "2 días",
+          "en": "2 days"
+        },
+        "incluye": {
+          "es": "Guía certificado\nTransporte",
+          "en": "Certified guide\nTransport"
+        },
+        "punto_salida": {
+          "es": "Antigua Guatemala",
+          "en": "Antigua Guatemala"
+        },
+        "temporada": {
+          "es": "Todo el año",
+          "en": "All year"
+        },
+        "dificultad": "dificil",
+        "dificultad_texto": {
+          "es": "Difícil",
+          "en": "Challenging"
+        },
+        "idiomas": [
+          "es",
+          "en"
+        ],
+        "precio_ref_q": 600,
+        "precio_usd_ref": 78,
+        "foto": null,
+        "galeria": [],
+        "faq": [
+          {
+            "pregunta": {
+              "es": "¿Pregunta de ejemplo?",
+              "en": "Sample question?"
+            },
+            "respuesta": {
+              "es": "Respuesta.",
+              "en": "Answer."
+            }
+          }
+        ],
+        "operador": {
+          "id": 1,
+          "nombre": "Operador de Ejemplo S.A.",
+          "licencia_inguat": "INGUAT-0000",
+          "codigo_referido": "EJEM-01"
+        },
+        "aviso_legal": {
+          "es": "Esta actividad la organiza y opera Operador de Ejemplo S.A., empresa independiente registrada en INGUAT con el n.º INGUAT-0000. Rosanta solo la recomienda y no es responsable de su ejecución, seguridad ni cobro. Condiciones, seguros y cancelación: las del operador.",
+          "en": "This activity is organized and operated by Operador de Ejemplo S.A., an independent company, registered with INGUAT under no. INGUAT-0000. Rosanta only recommends it and is not responsible for its operation, safety or payment. Terms, insurance and cancellation are those of the operator."
+        },
+        "schema": {
+          "es": [
+            {
+              "@context": "https://schema.org",
+              "@type": "TouristTrip",
+              "@id": "https://rosanta.rest/es/adventures/volcan-de-ejemplo#trip",
+              "url": "https://rosanta.rest/es/adventures/volcan-de-ejemplo",
+              "name": "Volcán de ejemplo",
+              "description": "Descripción de ejemplo.",
+              "inLanguage": "es",
+              "availableLanguage": [
+                "Spanish",
+                "English"
+              ],
+              "provider": {
+                "@type": "Organization",
+                "name": "Operador de Ejemplo S.A."
+              },
+              "disambiguatingDescription": "Esta actividad la organiza y opera Operador de Ejemplo S.A., empresa independiente registrada en INGUAT con el n.º INGUAT-0000. Rosanta solo la recomienda y no es responsable de su ejecución, seguridad ni cobro. Condiciones, seguros y cancelación: las del operador.",
+              "additionalProperty": [
+                {
+                  "@type": "PropertyValue",
+                  "name": "Duración",
+                  "value": "2 días"
+                }
+              ],
+              "itinerary": {
+                "@type": "Place",
+                "name": "Antigua Guatemala"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "600.00",
+                "priceCurrency": "GTQ",
+                "url": "https://rosanta.rest/es/adventures/volcan-de-ejemplo",
+                "description": "Precio de referencia por persona; lo confirma el operador.",
+                "offeredBy": {
+                  "@type": "Organization",
+                  "name": "Operador de Ejemplo S.A."
+                }
+              }
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "¿Pregunta de ejemplo?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Respuesta."
+                  }
+                }
+              ]
+            }
+          ],
+          "en": [
+            {
+              "@context": "https://schema.org",
+              "@type": "TouristTrip",
+              "@id": "https://rosanta.rest/adventures/volcan-de-ejemplo#trip",
+              "url": "https://rosanta.rest/adventures/volcan-de-ejemplo",
+              "name": "Sample volcano hike",
+              "description": "Sample description.",
+              "inLanguage": "en",
+              "availableLanguage": [
+                "Spanish",
+                "English"
+              ],
+              "provider": {
+                "@type": "Organization",
+                "name": "Operador de Ejemplo S.A."
+              },
+              "disambiguatingDescription": "This activity is organized and operated by Operador de Ejemplo S.A., an independent company, registered with INGUAT under no. INGUAT-0000. Rosanta only recommends it and is not responsible for its operation, safety or payment. Terms, insurance and cancellation are those of the operator.",
+              "additionalProperty": [
+                {
+                  "@type": "PropertyValue",
+                  "name": "Duration",
+                  "value": "2 days"
+                }
+              ],
+              "itinerary": {
+                "@type": "Place",
+                "name": "Antigua Guatemala"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "600.00",
+                "priceCurrency": "GTQ",
+                "url": "https://rosanta.rest/adventures/volcan-de-ejemplo",
+                "description": "Reference price per person; confirmed by the operator.",
+                "offeredBy": {
+                  "@type": "Organization",
+                  "name": "Operador de Ejemplo S.A."
+                }
+              }
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "Sample question?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Answer."
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "dificultad": {
+      "facil": {
+        "es": "Fácil",
+        "en": "Easy"
+      },
+      "moderada": {
+        "es": "Moderada",
+        "en": "Moderate"
+      },
+      "dificil": {
+        "es": "Difícil",
+        "en": "Challenging"
+      },
+      "muy_dificil": {
+        "es": "Muy difícil",
+        "en": "Very challenging"
+      }
+    },
+    "idiomas": {
+      "es": {
+        "es": "Español",
+        "en": "Spanish"
+      },
+      "en": {
+        "es": "Inglés",
+        "en": "English"
+      },
+      "fr": {
+        "es": "Francés",
+        "en": "French"
+      },
+      "de": {
+        "es": "Alemán",
+        "en": "German"
+      },
+      "it": {
+        "es": "Italiano",
+        "en": "Italian"
+      },
+      "pt": {
+        "es": "Portugués",
+        "en": "Portuguese"
+      }
+    }
+  },
+  "alergenos": {
+    "gluten": {
+      "es": "Gluten",
+      "en": "Gluten"
+    },
+    "lacteos": {
+      "es": "Lácteos",
+      "en": "Dairy"
+    }
+  },
+  "etiquetas": {
+    "vegetariano": {
+      "es": "Vegetariano",
+      "en": "Vegetarian"
+    }
+  },
+  "giftcards": {
+    "montos_q": [
+      300,
+      500
+    ],
+    "minimo_q": 200,
+    "maximo_q": 5000,
+    "vigencia_meses": 12,
+    "usd_fijos": {}
+  }
 }

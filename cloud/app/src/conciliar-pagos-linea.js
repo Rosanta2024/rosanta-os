@@ -6,10 +6,10 @@
  * 1. Reporte de gift cards del mes (para el DRE, el maestro y el contador):
  *      saldo al inicio + vendido − canjeado − anulado − vencido = saldo al cierre  (el saldo vivo es un PASIVO)
  *    Se arma con los movimientos, y se comprueba contra el saldo guardado de cada tarjeta.
- * 2. Liquidaciones de Recurrente: cada deposito tiene que ser igual a la suma de los netos de los pagos que
- *    incluye (cobros menos reembolsos), y tiene que aparecer en el banco del maestro (BI o BAC).
- *    Recurrente NO dice que pagos van en cada retiro (pregunta para Recurrente): mientras tanto se proponen
- *    los pagos mas viejos sin liquidar cuya suma da exacto el deposito.
+ * 2. Liquidaciones de la pasarela (la que este en PASARELA; hoy ninguna): cada deposito tiene que ser igual a la
+ *    suma de los netos de los pagos que incluye (cobros menos reembolsos), y tiene que aparecer en el banco del
+ *    maestro (BI o BAC). Recurrente NO dice que pagos van en cada retiro (pregunta abierta): mientras tanto se
+ *    proponen los pagos mas viejos sin liquidar cuya suma da exacto el deposito.
  * 3. FEL: cuantos cobros siguen sin FEL (la emite Rosanta; el contador decide cuando para las gift cards).
  */
 const { r2 } = require('./almacen-web');
@@ -101,12 +101,18 @@ function proponerAsignacion(liq, pagosSinLiquidar) {
   return null;
 }
 
+// Como se ve cada pasarela en la descripcion del banco. Las de BAC y NeoNet son SUPUESTOS: se ajustan con el primer
+// deposito real (pregunta para el banco).
+const PATRON_BANCO = { recurrente: /RECURRENTE/i, bac: /CREDOMATIC|BAC.*(COMERCIO|AFILIAD|LIQUID)/i, neonet: /NEONET|VISANET/i };
+
 /**
- * Movimientos del banco que parecen depositos de Recurrente, desde los libros del maestro (la misma copia que
- * usa conciliar.js): 03_Banco_Industrial y 04_Banco_BAC, con "RECURRENTE" en la descripcion.
+ * Movimientos del banco que parecen depositos de la pasarela, desde los libros del maestro (la misma copia que
+ * usa conciliar.js): 03_Banco_Industrial y 04_Banco_BAC.
  * → [{ banco, fecha: 'AAAA-MM-DD', monto, descripcion, ref }]
  */
-function depositosRecurrenteDelMaestro(libroMaestro) {
+function depositosPasarelaDelMaestro(libroMaestro, proveedor) {
+  const patron = PATRON_BANCO[proveedor || 'recurrente'];
+  if (!patron) return [];
   const out = [];
   [['03_Banco_Industrial', 'BI'], ['04_Banco_BAC', 'BAC']].forEach(([pest, banco]) => {
     const M = libroMaestro && libroMaestro[pest];
@@ -118,19 +124,20 @@ function depositosRecurrenteDelMaestro(libroMaestro) {
     M.slice(iH + 1).forEach((f) => {
       const desc = String(f[iD] || '');
       const monto = Number(f[iC]) || 0;
-      if (!/RECURRENTE/i.test(desc) || monto <= 0) return;
+      if (!patron.test(desc) || monto <= 0) return;
       const fecha = f[iF] instanceof Date ? formatDate(f[iF], ZONA, 'yyyy-MM-dd') : String(f[iF]).slice(0, 10);
       out.push({ banco, fecha, monto: r2(monto), descripcion: desc, ref: banco + '|' + fecha + '|' + (iR >= 0 ? f[iR] : '') + '|' + r2(monto) });
     });
   });
   return out;
 }
+const depositosRecurrenteDelMaestro = (libro) => depositosPasarelaDelMaestro(libro, 'recurrente');
 
 const difDias = (a, b) => Math.round((new Date(a + 'T12:00:00Z') - new Date(b + 'T12:00:00Z')) / 86400000);
 
 /**
  * conciliarPagosLinea({ almacen, mes, depositos, guardar }) → { mes, ok, totales, diferencias, avisos }
- *   depositos: los del banco (depositosRecurrenteDelMaestro). Sin depositos, no se cruza con el banco (aviso).
+ *   depositos: los del banco (depositosPasarelaDelMaestro). Sin depositos, no se cruza con el banco (aviso).
  *   guardar: si true, asigna los pagos propuestos y anota el estado de cada liquidacion.
  */
 async function conciliarPagosLinea(o) {
@@ -177,10 +184,10 @@ async function conciliarPagosLinea(o) {
         if (o.guardar) for (const id of ids) await al.actualizar('pagos_en_linea', id, { liquidacion_id: liq.id, actualizado: new Date().toISOString() });
         const asignados = pagos.map((p) => (ids.indexOf(p.id) !== -1 ? Object.assign({}, p, { liquidacion_id: liq.id }) : p));
         c = cuadrarLiquidacion(liq, asignados);
-        avisos.push('Liquidación ' + liq.referencia + ': se le asignaron ' + ids.length + ' pago(s) por fecha y monto (Recurrente no dice cuáles van).');
+        avisos.push('Liquidación ' + liq.referencia + ': se le asignaron ' + ids.length + ' pago(s) por fecha y monto (la pasarela no dice cuáles van).');
       }
     }
-    if (!c.ok) difs.push('Liquidación ' + liq.referencia + ' (' + liq.fecha + '): Recurrente depositó ' + liq.moneda + ' ' + liq.monto + ' y los pagos suman ' + c.suma + ' (diferencia ' + c.diferencia + ').');
+    if (!c.ok) difs.push('Liquidación ' + liq.referencia + ' (' + liq.fecha + '): la pasarela depositó ' + liq.moneda + ' ' + liq.monto + ' y los pagos suman ' + c.suma + ' (diferencia ' + c.diferencia + ').');
     let banco = null;
     if (o.depositos) {
       banco = o.depositos.find((d) => Math.abs(d.monto - Number(liq.monto)) < 0.005 && Math.abs(difDias(d.fecha, liq.fecha)) <= 3 && !bancoUsado.has(d));
@@ -191,12 +198,12 @@ async function conciliarPagosLinea(o) {
       banco: banco ? banco.banco : liq.banco, banco_referencia: banco ? banco.ref : liq.banco_referencia, conciliada: new Date().toISOString() });
     detalle.push({ referencia: liq.referencia, fecha: liq.fecha, moneda: liq.moneda, monto: Number(liq.monto), suma_pagos: c.suma, diferencia: c.diferencia, banco: banco ? banco.ref : null });
   }
-  if (o.depositos) o.depositos.filter((d) => d.fecha.slice(0, 7) === mes && !bancoUsado.has(d)).forEach((d) => difs.push('Depósito de Recurrente en ' + d.banco + ' del ' + d.fecha + ' por ' + d.monto + ' sin liquidación en la base.'));
+  if (o.depositos) o.depositos.filter((d) => d.fecha.slice(0, 7) === mes && !bancoUsado.has(d)).forEach((d) => difs.push('Depósito de la pasarela en ' + d.banco + ' del ' + d.fecha + ' por ' + d.monto + ' sin liquidación en la base.'));
   else avisos.push('No se cruzó con el banco (no llegaron los movimientos del maestro).');
   const cobradoSinLiquidar = pagos.filter((p) => !p.liquidacion_id && !usados.has(p.id) && p.tipo === 'cobro' && new Date(p.fecha) < new Date(hasta) && new Date(p.fecha) < new Date(Date.now() - 4 * 86400000));
-  if (cobradoSinLiquidar.length) avisos.push(cobradoSinLiquidar.length + ' cobro(s) de hace más de 4 días sin liquidación (Recurrente acredita en 24 h hábiles).');
+  if (cobradoSinLiquidar.length) avisos.push(cobradoSinLiquidar.length + ' cobro(s) de hace más de 4 días sin liquidación.');
 
   return { mes, ok: difs.length === 0, totales: { giftcards: gc, pagos: tot, liquidaciones: detalle }, diferencias: difs, avisos };
 }
 
-module.exports = { conciliarPagosLinea, reporteGiftcards, cuadrarLiquidacion, proponerAsignacion, depositosRecurrenteDelMaestro, limitesMes };
+module.exports = { conciliarPagosLinea, reporteGiftcards, cuadrarLiquidacion, proponerAsignacion, depositosRecurrenteDelMaestro, depositosPasarelaDelMaestro, PATRON_BANCO, limitesMes };

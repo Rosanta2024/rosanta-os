@@ -6,6 +6,7 @@ const PW = require('../src/permisos-web');
 const A = require('../src/almacen-web');
 const G = require('../src/giftcards');
 const R = require('../src/recurrente');
+const PA = require('../src/pasarela');
 const AD = require('../src/adaptadores-web');
 const { crearRutasGiftcards, guardarCuerpoCrudo } = require('../src/rutas-web');
 
@@ -16,15 +17,16 @@ const maco = { email: 'maco@prueba.test', rol: 'sala', nombre: 'Maco' };
 const otraSala = { email: 'sala2@prueba.test', rol: 'sala', nombre: 'Sala 2' };
 const jeffry = { email: 'chef@prueba.test', rol: 'chef', nombre: 'Jeffry' };
 const vanessa = { email: 'vanessa@prueba.test', rol: 'pauta', nombre: 'Vanessa' };
+const CONTACTO = { correo: 'giftcards@prueba.test', whatsapp: '+502 0000 0000' };
 const status = (n) => (e) => e.status === n;
 const HOY = new Date('2026-11-10T16:00:00Z');   // 10-nov, 10:00 en Guatemala
 
 function armar(o) {
   const op = o || {};
   const almacen = A.crearAlmacenMemoria({ ahora: () => op.ahora || HOY });
-  const recurrente = op.recurrente || R.recurrenteDoble({ ahoraS: Math.floor((op.ahora || HOY).getTime() / 1000) });
+  const recurrente = op.pasarela || R.recurrenteDoble({ ahoraS: Math.floor((op.ahora || HOY).getTime() / 1000) });
   const avisos = AD.avisosDoble(op.avisos), fel = AD.felDoble();
-  const S = G.crearGiftcards({ almacen, matriz: M, recurrente, avisos, fel, ahora: () => op.ahora || HOY, azar: op.azar });
+  const S = G.crearGiftcards({ almacen, matriz: M, pasarela: recurrente, avisos, fel, ahora: () => op.ahora || HOY, azar: op.azar, contacto: CONTACTO });
   return { almacen, recurrente, avisos, fel, S };
 }
 const emitir = (S, valor) => S.emitirManual(juanma, { valor_q: valor || 300, referencia: 'BI depósito 123', comprador_nombre: 'Comprador Prueba', destinatario_nombre: 'Destino Prueba' });
@@ -141,7 +143,7 @@ test('Deshacer un canje: el suyo sí, el ajeno solo el dueño, y una sola vez', 
 test('Vencida: sala no la acepta, el dueño sí; anular es del dueño', async () => {
   const x = armar();
   const t = await emitir(x.S, 300);
-  const despues = G.crearGiftcards({ almacen: x.almacen, matriz: M, recurrente: x.recurrente, avisos: x.avisos, ahora: () => new Date('2027-11-11T16:00:00Z') });
+  const despues = G.crearGiftcards({ almacen: x.almacen, matriz: M, pasarela: x.recurrente, avisos: x.avisos, ahora: () => new Date('2027-11-11T16:00:00Z') });
   const v = await despues.buscar(maco, t.codigo);
   assert.strictEqual(v.estado, 'vencida'); assert.strictEqual(v.se_puede_canjear, false);
   await assert.rejects(despues.canjear(maco, t.codigo, 50, { donde: 'sala', referencia: 'Mesa 1' }), (e) => e.status === 409 && /venció/.test(e.message));
@@ -161,7 +163,7 @@ test('La tarea de vencer deja un movimiento de vencimiento con el saldo', async 
   const x = armar();
   const t = await emitir(x.S, 300);
   await x.S.canjear(maco, t.codigo, 100, { donde: 'sala', referencia: 'Mesa 1' });
-  const despues = G.crearGiftcards({ almacen: x.almacen, matriz: M, recurrente: x.recurrente, avisos: x.avisos, ahora: () => new Date('2027-11-11T16:00:00Z') });
+  const despues = G.crearGiftcards({ almacen: x.almacen, matriz: M, pasarela: x.recurrente, avisos: x.avisos, ahora: () => new Date('2027-11-11T16:00:00Z') });
   assert.deepStrictEqual(await despues.vencer(), { vencidas: 1, saldo_vencido: 200 });
   const v = await despues.buscar(juanma, t.codigo);
   assert.deepStrictEqual([v.estado, v.saldo, v.movimientos.pop().tipo], ['vencida', 0, 'vencimiento']);
@@ -176,7 +178,7 @@ test('Permisos del canje: sala y dueño sí; cocina y pauta no; emitir solo el d
   await assert.rejects(emitir(Object.assign({}, S, { emitirManual: (u, d) => S.emitirManual(maco, d) })), status(403));
   await assert.rejects(S.emitirManual(juanma, { valor_q: 300, comprador_nombre: 'a', destinatario_nombre: 'b' }), (e) => /depósito/.test(e.message));
   assert.ok((await S.buscar(maco, t.codigo)).se_puede_canjear);
-  const G0 = G.crearGiftcards({ almacen: A.crearAlmacenMemoria(), matriz: P.cargarDeMigracion(), recurrente: R.recurrenteDoble(), avisos: AD.avisosDoble() });
+  const G0 = G.crearGiftcards({ almacen: A.crearAlmacenMemoria(), matriz: P.cargarDeMigracion(), pasarela: R.recurrenteDoble(), avisos: AD.avisosDoble() });
   await assert.rejects(G0.buscar(juanma, t.codigo), status(403), 'sin las filas de la sesión C, nadie');
 });
 
@@ -188,18 +190,17 @@ test('Compra: el pedido abre el checkout de Recurrente con el monto en centavos 
   assert.match(p.checkout_url, /^https:\/\/app\.recurrente\.com\//);
   const ch = recurrente.checkouts[0];
   assert.deepStrictEqual([ch.items[0].currency, ch.items[0].amount_in_cents, ch.items[0].quantity], ['USD', 3900, 1]);
-  assert.deepStrictEqual(Object.keys(ch.metadata).sort(), ['concepto', 'pedido_ref']);
+  assert.deepStrictEqual(Object.keys(ch.metadata).sort(), ['concepto', 'referencia']);
   assert.ok(!JSON.stringify(ch).includes('@'), 'el checkout no lleva correos');
   const ped = (await almacen.lista('gift_cards_pedidos'))[0];
-  assert.deepStrictEqual([ped.estado, ped.checkout_id, ped.valor_q, ped.monto_cobro, ped.tipo_cambio], ['pendiente', ch.id, 300, 39, 7.7]);
+  assert.deepStrictEqual([ped.estado, ped.proveedor, ped.cobro_id, ped.valor_q, ped.monto_cobro, ped.tipo_cambio], ['pendiente', 'recurrente', ch.id, 300, 39, 7.7]);
   await assert.rejects(pedir(S, { comprador: { nombre: 'x', email: 'no-es-correo' } }), status(400));
   await assert.rejects(pedir(S, { destinatario: { nombre: '' } }), status(400));
   await assert.rejects(pedir(S, { valor_q: 100 }), status(400));
   await assert.rejects(pedir(S, { sitio_web: 'http://spam' }), status(400), 'el campo trampa frena robots');
   await assert.rejects(pedir(S, { enviar_el: '2026-11-01' }), status(400), 'no se envía en el pasado');
-  const apagado = G.crearGiftcards({ almacen, matriz: M, recurrente: R.crearRecurrente({}), avisos: AD.avisosDoble() });
-  await assert.rejects(pedir(apagado), (e) => e.status === 503 && /WhatsApp/.test(e.message), 'sin llaves no se cobra');
-  assert.strictEqual((await apagado.precios()).cobro_en_linea, false);
+  const sinLlaves = G.crearGiftcards({ almacen, matriz: M, pasarela: PA.crearPasarela({ PASARELA: 'recurrente' }), avisos: AD.avisosDoble() });
+  await assert.rejects(pedir(sinLlaves), (e) => e.status === 503 && /Escríbenos/.test(e.message), 'Recurrente sin llaves no cobra');
 });
 
 test('Webhook: el pago crea la tarjeta, el pago en línea y el aviso; repetido no duplica', async () => {
@@ -328,7 +329,7 @@ test('Aviso: con fecha futura queda programado y sale con la tarea; si el correo
   assert.strictEqual((await x.S.procesarWebhook(w.cuerpo, w.cab)).status, 200, 'si el correo falla, la tarjeta igual queda');
   assert.strictEqual((await x.almacen.lista('gift_cards'))[1].aviso_estado, 'error');
   const avisos = AD.avisosDoble();
-  const el20 = G.crearGiftcards({ almacen: x.almacen, matriz: M, recurrente: x.recurrente, avisos, ahora: () => new Date('2026-11-20T15:00:00Z') });
+  const el20 = G.crearGiftcards({ almacen: x.almacen, matriz: M, pasarela: x.recurrente, avisos, ahora: () => new Date('2026-11-20T15:00:00Z') });
   assert.deepStrictEqual(await el20.enviarAvisosPendientes(), { enviados: 2, errores: 0, programados: 0 });
   assert.strictEqual(avisos.enviados.length, 2);
   assert.deepStrictEqual(await el20.enviarAvisosPendientes(), { enviados: 0, errores: 0, programados: 0 }, 'no se manda dos veces');
@@ -340,22 +341,28 @@ test('Imagen de la tarjeta: escapa lo que escribió el comprador', () => {
   assert.match(svg, /RSNT-ABCD-2345/); assert.match(svg, /Q300/); assert.match(svg, /Vence el 2027-11-10/);
 });
 
-test('Recurrente real: apagado sin llaves, solo la llamada permitida, sk_live frenada', async () => {
+test('Recurrente detrás de la interfaz: sin llaves no sale, solo las llamadas permitidas, sk_live frenada', async () => {
   const llamadas = [];
-  const fetchFalso = async (u, o) => { llamadas.push({ u, o }); return { ok: true, status: 201, json: async () => ({ id: 'ch_1', checkout_url: 'https://app.recurrente.com/x' }) }; };
-  const apagado = R.crearRecurrente({ fetch: fetchFalso });
-  assert.strictEqual(apagado.modo, 'apagado');
-  await assert.rejects(apagado.crearCheckout({}), status(503));
+  const fetchFalso = async (u, o) => { llamadas.push({ u, o }); return { ok: true, status: 201, json: async () => ({ id: 'ch_1', checkout_url: 'https://app.recurrente.com/x', status: 'pending' }) }; };
+  const cobro = { concepto: 'gift_card', referencia: 'gc_x', descripcion: 'Gift card', moneda: 'GTQ', monto: 300, url_exito: 'https://x.test/ok', url_cancelar: 'https://x.test/no' };
+  const sinLlaves = R.crearRecurrente({ fetch: fetchFalso });
+  assert.strictEqual(sinLlaves.modo, 'apagado');
+  await assert.rejects(sinLlaves.crearCobro(cobro), status(503));
   const prueba = R.crearRecurrente({ secretKey: 'sk_test_x', publicKey: 'pk_test_x', fetch: fetchFalso });
-  const ch = await prueba.crearCheckout({ items: [] });
-  assert.strictEqual(ch.id, 'ch_1');
+  assert.deepStrictEqual(await prueba.crearCobro(cobro), { id: 'ch_1', url: 'https://app.recurrente.com/x' });
   assert.strictEqual(llamadas[0].u, 'https://app.recurrente.com/api/checkouts');
   assert.strictEqual(llamadas[0].o.headers['X-SECRET-KEY'], 'sk_test_x');
+  const body = JSON.parse(llamadas[0].o.body);
+  assert.deepStrictEqual([body.items[0].amount_in_cents, body.items[0].currency, body.metadata.referencia], [30000, 'GTQ', 'gc_x']);
+  await prueba.reembolsar({ pago_id: 'in_1', monto: 50 });
+  assert.strictEqual(llamadas[1].u, 'https://app.recurrente.com/api/refunds');
+  assert.deepStrictEqual(JSON.parse(llamadas[1].o.body), { intent_id: 'in_1', amount_in_cents: 5000 });
+  assert.ok(llamadas[1].o.headers['Idempotency-Key']);
+  await assert.rejects(prueba.preautorizar({}), status(501), 'Recurrente no documenta preautorizar');
   const vivo = R.crearRecurrente({ secretKey: 'sk_live_x', fetch: fetchFalso });
-  await assert.rejects(vivo.crearCheckout({}), (e) => e.status === 503 && /RECURRENTE_VIVO/.test(e.message));
-  assert.strictEqual(llamadas.length, 1, 'ni apagado ni vivo-sin-permiso salen a la red');
-  assert.strictEqual(R.recurrenteDesdeEntorno({}).modo, 'apagado');
-  assert.strictEqual(prueba.verificarFirma(Buffer.from('{}'), {}).ok, false, 'sin secreto de webhook no pasa nada');
+  await assert.rejects(vivo.crearCobro(cobro), (e) => e.status === 503 && /RECURRENTE_VIVO/.test(e.message));
+  assert.strictEqual(llamadas.length, 2, 'ni sin llaves ni vivo-sin-permiso salen a la red');
+  assert.strictEqual(prueba.verificarWebhook(Buffer.from('{}'), {}).ok, false, 'sin secreto de webhook no pasa nada');
 });
 
 // ---------------------------------------------------------------- rutas
@@ -365,10 +372,10 @@ test('Rutas: webhook con cuerpo crudo (json global con verify, o raw), canje con
   const tokens = { 'tok-maco': maco, 'tok-juanma': juanma };
   const app = express();
   app.use(express.json({ limit: '200kb', verify: guardarCuerpoCrudo }));
-  app.use(crearRutasGiftcards({ giftcards: x.S, almacen: x.almacen, matriz: M, claveTareas: 'clave-prueba', identificar: async (t) => tokens[t] || null }));
+  app.use(crearRutasGiftcards({ giftcards: x.S, pasarela: x.recurrente, almacen: x.almacen, matriz: M, claveTareas: 'clave-prueba', identificar: async (t) => tokens[t] || null }));
   const sinVerify = express();
   sinVerify.use(express.json());   // json global SIN verify: el webhook no puede verificar y no procesa
-  sinVerify.use(crearRutasGiftcards({ giftcards: x.S, almacen: x.almacen, matriz: M, claveTareas: 'k' }));
+  sinVerify.use(crearRutasGiftcards({ giftcards: x.S, pasarela: x.recurrente, almacen: x.almacen, matriz: M, claveTareas: 'k' }));
   const srv = app.listen(0), srv2 = sinVerify.listen(0);
   const b = 'http://127.0.0.1:' + srv.address().port, b2 = 'http://127.0.0.1:' + srv2.address().port;
   try {
@@ -378,11 +385,13 @@ test('Rutas: webhook con cuerpo crudo (json global con verify, o raw), canje con
     assert.strictEqual(r.status, 200);
     const ev = eventoPago(x.recurrente.checkouts[0], 30000);
     const w = firmado(ev, { id: 'mr' });
-    r = await fetch(b2 + '/api/giftcards/webhook/recurrente', { method: 'POST', headers: w.cab, body: w.cuerpo });
+    r = await fetch(b2 + '/api/pagos/webhook/recurrente', { method: 'POST', headers: w.cab, body: w.cuerpo });
     assert.strictEqual(r.status, 500, 'sin cuerpo crudo no se procesa');
-    r = await fetch(b + '/api/giftcards/webhook/recurrente', { method: 'POST', headers: Object.assign({}, w.cab, { 'svix-signature': 'v1,AAAA' }), body: w.cuerpo });
+    r = await fetch(b + '/api/pagos/webhook/recurrente', { method: 'POST', headers: Object.assign({}, w.cab, { 'svix-signature': 'v1,AAAA' }), body: w.cuerpo });
     assert.strictEqual(r.status, 401);
-    r = await fetch(b + '/api/giftcards/webhook/recurrente', { method: 'POST', headers: w.cab, body: w.cuerpo });
+    r = await fetch(b + '/api/pagos/webhook/bac', { method: 'POST', headers: w.cab, body: w.cuerpo });
+    assert.strictEqual(r.status, 404, 'solo responde el webhook de la pasarela elegida');
+    r = await fetch(b + '/api/pagos/webhook/recurrente', { method: 'POST', headers: w.cab, body: w.cuerpo });
     const j = await r.json();
     assert.strictEqual(r.status, 200); assert.match(j.resultado, /^creada RSNT-/);
     const codigo = j.resultado.slice(7);

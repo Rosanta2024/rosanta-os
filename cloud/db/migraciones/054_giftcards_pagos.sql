@@ -1,20 +1,21 @@
--- 054 · Gift cards y pagos en linea con Recurrente (20-oct-2026, rama claude/web-contenido-giftcards, AYUDANTE 4).
+-- 054 · Gift cards y pagos en linea (20-oct-2026, ajustada el 21-oct: pasarela intercambiable; rama claude/web-contenido-giftcards, AYUDANTE 4).
 -- Rango 050-059 "Web y reservas". La aplica el Estudio con migrar.js: primero rosanta_ensayo, despues rosanta
 -- con respaldo. Solo aditiva: tablas nuevas. No toca ninguna tabla existente. Va despues de la 053.
 --
 -- Estudio "Web propia sin Wix" §3.5 y §8.3. El patron es el de Pagos: una fila por movimiento que nunca se
--- borra. Lo que cambia de estado (el saldo de la tarjeta, el estado de un pago) se cambia con UPDATE y el
+-- borra. La pasarela no esta decidida (Recurrente, BAC o NeoNet: PASARELA en el servidor, ver cloud/app/src/pasarela.js);
+-- cada fila dice de que proveedor es. Lo que cambia de estado (el saldo de la tarjeta, el estado de un pago) se cambia con UPDATE y el
 -- movimiento que lo explica queda en su tabla de movimientos.
 --
 -- Dinero: numeric(12,2), en la moneda de la fila. Las gift cards valen en QUETZALES (lo que se canjea en el
 -- restaurante); si el comprador paga en US$, el cobro y su tipo de cambio quedan en pagos_en_linea.
 
--- Liquidaciones: cada deposito de Recurrente a la cuenta de CORSAGA (24 h habiles). Se cruza con el banco
+-- Liquidaciones: cada deposito de la pasarela a la cuenta de CORSAGA. Se cruza con el banco
 -- del maestro (BI o BAC) y con la suma de los pagos netos que incluye (conciliar-pagos-linea.js).
 CREATE TABLE pagos_liquidaciones (
   id               bigserial PRIMARY KEY,
-  proveedor        text NOT NULL DEFAULT 'recurrente' CHECK (proveedor IN ('recurrente')),
-  referencia       text NOT NULL,                  -- id del retiro/transferencia de Recurrente
+  proveedor        text NOT NULL CHECK (proveedor IN ('recurrente', 'bac', 'neonet')),
+  referencia       text NOT NULL,                  -- id del retiro o deposito en la pasarela
   fecha            date NOT NULL,                  -- dia en que llego al banco
   monto            numeric(12,2) NOT NULL CHECK (monto > 0),
   moneda           text NOT NULL CHECK (moneda IN ('GTQ', 'USD')),
@@ -29,29 +30,29 @@ CREATE TABLE pagos_liquidaciones (
 );
 
 -- Cada cobro, reembolso o contracargo en linea. Un reembolso es una fila NUEVA (tipo reembolso) que apunta al
--- cobro; el cobro cambia de estado. Se llena con el webhook y se compara cada noche con la API de Recurrente.
+-- cobro; el cobro cambia de estado. Se llena con el webhook de la pasarela.
 CREATE TABLE pagos_en_linea (
   id               bigserial PRIMARY KEY,
-  proveedor        text NOT NULL DEFAULT 'recurrente' CHECK (proveedor IN ('recurrente')),
+  proveedor        text NOT NULL CHECK (proveedor IN ('recurrente', 'bac', 'neonet')),
   tipo             text NOT NULL DEFAULT 'cobro' CHECK (tipo IN ('cobro', 'reembolso', 'contracargo')),
-  proveedor_id     text NOT NULL,                  -- cobro: id del intent (in_...); reembolso: id del reembolso
-  checkout_id      text,                           -- ch_...
+  proveedor_id     text NOT NULL,                  -- cobro: id del pago en la pasarela; reembolso: id del reembolso
+  cobro_id         text,                           -- el checkout o enlace de pago (Recurrente: ch_...)
   pago_original_id bigint REFERENCES pagos_en_linea(id),   -- reembolso o contracargo: el cobro
   fecha            timestamptz NOT NULL,
   moneda           text NOT NULL CHECK (moneda IN ('GTQ', 'USD')),
   bruto            numeric(12,2) NOT NULL CHECK (bruto >= 0),
-  comision         numeric(12,2) NOT NULL DEFAULT 0 CHECK (comision >= 0),   -- details.fee
-  otros_cargos     numeric(12,2) NOT NULL DEFAULT 0 CHECK (otros_cargos >= 0), -- tax_invoicing_fee, IVA retenido
+  comision         numeric(12,2) NOT NULL DEFAULT 0 CHECK (comision >= 0),   -- la comision de la pasarela
+  otros_cargos     numeric(12,2) NOT NULL DEFAULT 0 CHECK (otros_cargos >= 0), -- otros cargos (p. ej. FEL de la pasarela, IVA retenido)
   neto             numeric(12,2) NOT NULL,         -- bruto - comision - otros_cargos (reembolso: lo que se desconto)
   tipo_cambio      numeric(10,4) CHECK (tipo_cambio IS NULL OR tipo_cambio > 0),   -- Q por US$, si moneda = USD
   bruto_q          numeric(12,2) NOT NULL,         -- el bruto en quetzales (= bruto si GTQ)
   concepto         text NOT NULL CHECK (concepto IN ('gift_card', 'anticipo_evento', 'experiencia', 'garantia')),
   concepto_id      text,                           -- gift card: el codigo; evento: la cotizacion; reserva: su id
   estado           text NOT NULL CHECK (estado IN ('pagado', 'reembolsado', 'reembolso_parcial', 'contracargo', 'reembolso')),
-  fel_serie        text,                           -- FEL que emite Rosanta con su certificador (o la de Recurrente: ver notas)
+  fel_serie        text,                           -- FEL que emite Rosanta con su certificador
   fel_numero       text,
   fel_fecha        date,
-  fel_url          text,                           -- tax_invoice_url de Recurrente, si la manda
+  fel_url          text,                           -- la factura que mande la pasarela, si manda una
   fel_estado       text NOT NULL DEFAULT 'pendiente' CHECK (fel_estado IN ('pendiente', 'no_aplica', 'emitida', 'error')),
   liquidacion_id   bigint REFERENCES pagos_liquidaciones(id),
   crudo            jsonb NOT NULL,                 -- el evento tal cual (sin la tarjeta: Recurrente no la manda)
@@ -63,14 +64,14 @@ CREATE INDEX pagos_en_linea_fecha ON pagos_en_linea (fecha);
 CREATE INDEX pagos_en_linea_liquidacion ON pagos_en_linea (liquidacion_id);
 CREATE INDEX pagos_en_linea_concepto ON pagos_en_linea (concepto, concepto_id);
 
--- Webhooks recibidos CON FIRMA VALIDA (los de firma mala no se guardan: si no, un tercero podria "gastar" el
+-- Webhooks de la pasarela recibidos CON FIRMA VALIDA (los de firma mala no se guardan: si no, un tercero podria "gastar" el
 -- id de un evento real antes de que llegue). La llave es el id del mensaje (svix-id), que no cambia entre
 -- reintentos: el mismo evento dos veces se procesa una sola vez.
 CREATE TABLE pagos_webhooks (
   id               bigserial PRIMARY KEY,
-  proveedor        text NOT NULL DEFAULT 'recurrente',
-  evento_id        text NOT NULL,
-  tipo             text NOT NULL,                  -- intent.succeeded, intent.failed, refund.create...
+  proveedor        text NOT NULL CHECK (proveedor IN ('recurrente', 'bac', 'neonet')),
+  evento_id        text NOT NULL,                  -- el id del mensaje (Recurrente: svix-id)
+  tipo             text NOT NULL,                  -- el tipo de evento del proveedor
   recibido         timestamptz NOT NULL DEFAULT now(),
   procesado        timestamptz,
   resultado        text,                           -- creada RSNT-..., ignorado, ya_procesado, error: ...
@@ -78,12 +79,13 @@ CREATE TABLE pagos_webhooks (
   UNIQUE (proveedor, evento_id)
 );
 
--- Pedido de gift card: lo que el comprador lleno en el sitio, mientras paga. El checkout de Recurrente lleva
--- solo el id del pedido en metadata (no datos personales).
+-- Pedido de gift card: lo que el comprador lleno en el sitio, mientras paga. El cobro en la pasarela lleva solo la
+-- referencia del pedido (no datos personales).
 CREATE TABLE gift_cards_pedidos (
   id               bigserial PRIMARY KEY,
-  ref              text NOT NULL UNIQUE,           -- aleatorio, va en la metadata del checkout
-  checkout_id      text UNIQUE,
+  ref              text NOT NULL UNIQUE,           -- aleatorio, va en el cobro como referencia
+  proveedor        text NOT NULL CHECK (proveedor IN ('recurrente', 'bac', 'neonet')),
+  cobro_id         text,
   valor_q          numeric(12,2) NOT NULL CHECK (valor_q >= 200),   -- lo que vale la tarjeta (minimo Q200)
   moneda_cobro     text NOT NULL CHECK (moneda_cobro IN ('GTQ', 'USD')),
   monto_cobro      numeric(12,2) NOT NULL CHECK (monto_cobro > 0),  -- lo que se cobra en esa moneda
@@ -100,7 +102,8 @@ CREATE TABLE gift_cards_pedidos (
   estado           text NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'pagado', 'fallido', 'vencido', 'revisar')),
   nota             text NOT NULL DEFAULT '',
   creado           timestamptz NOT NULL DEFAULT now(),
-  actualizado      timestamptz NOT NULL DEFAULT now()
+  actualizado      timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (proveedor, cobro_id)
 );
 
 CREATE TABLE gift_cards (

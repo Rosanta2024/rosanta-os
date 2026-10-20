@@ -34,7 +34,7 @@ test('Reporte mensual de gift cards: vendido, canjeado, anulado, vencido y saldo
 
 async function conPagos() {
   const al = A.crearAlmacenMemoria();
-  const pago = (id, fecha, bruto, comision, tipo, moneda) => al.insertar('pagos_en_linea', { tipo: tipo || 'cobro', proveedor_id: 'in_' + id, fecha, moneda: moneda || 'GTQ',
+  const pago = (id, fecha, bruto, comision, tipo, moneda) => al.insertar('pagos_en_linea', { proveedor: 'recurrente', tipo: tipo || 'cobro', proveedor_id: 'in_' + id, fecha, moneda: moneda || 'GTQ',
     bruto, comision, neto: A.r2(bruto - comision), bruto_q: bruto, concepto: 'gift_card', concepto_id: 'RSNT-AAAA-2222', estado: tipo === 'reembolso' ? 'reembolso' : 'pagado', crudo: {} });
   await pago(1, '2026-11-02T15:00:00Z', 300, 15.5);    // neto 284.50
   await pago(2, '2026-11-02T18:00:00Z', 500, 24.5);    // neto 475.50
@@ -44,8 +44,8 @@ async function conPagos() {
 
 test('Liquidación: se asignan los pagos por fecha y monto, cuadra con el banco del maestro, y se guarda', async () => {
   const al = await conPagos();
-  await al.insertar('pagos_liquidaciones', { referencia: 'wd_1', fecha: '2026-11-03', monto: 760, moneda: 'GTQ' });
-  await al.insertar('pagos_liquidaciones', { referencia: 'wd_2', fecha: '2026-11-06', monto: 284.5, moneda: 'GTQ' });
+  await al.insertar('pagos_liquidaciones', { proveedor: 'recurrente', referencia: 'wd_1', fecha: '2026-11-03', monto: 760, moneda: 'GTQ' });
+  await al.insertar('pagos_liquidaciones', { proveedor: 'recurrente', referencia: 'wd_2', fecha: '2026-11-06', monto: 284.5, moneda: 'GTQ' });
   const depositos = [{ banco: 'BI', fecha: '2026-11-04', monto: 760, ref: 'BI|2026-11-04|1|760' }, { banco: 'BI', fecha: '2026-11-06', monto: 284.5, ref: 'BI|2026-11-06|2|284.5' }];
   const r = await K.conciliarPagosLinea({ almacen: al, mes: '2026-11', depositos, guardar: true });
   assert.deepStrictEqual(r.diferencias, []);
@@ -61,7 +61,7 @@ test('Liquidación: se asignan los pagos por fecha y monto, cuadra con el banco 
 
 test('Liquidación que no cuadra, depósito que no está en el banco y depósito sin liquidación', async () => {
   const al = await conPagos();
-  await al.insertar('pagos_liquidaciones', { referencia: 'wd_9', fecha: '2026-11-03', monto: 750, moneda: 'GTQ' });
+  await al.insertar('pagos_liquidaciones', { proveedor: 'recurrente', referencia: 'wd_9', fecha: '2026-11-03', monto: 750, moneda: 'GTQ' });
   const r = await K.conciliarPagosLinea({ almacen: al, mes: '2026-11', depositos: [{ banco: 'BAC', fecha: '2026-11-20', monto: 99, ref: 'x' }], guardar: true });
   assert.strictEqual(r.ok, false);
   assert.ok(r.diferencias.some((d) => /wd_9.*pagos suman 0/.test(d)), 'ningún corte de pagos da 750');
@@ -69,11 +69,11 @@ test('Liquidación que no cuadra, depósito que no está en el banco y depósito
   assert.ok(r.diferencias.some((d) => /BAC del 2026-11-20 por 99 sin liquidación/.test(d)));
   assert.strictEqual((await al.lista('pagos_liquidaciones'))[0].estado, 'diferencia');
   // con pagos asignados a mano y un reembolso que resta
-  const l = await al.insertar('pagos_liquidaciones', { referencia: 'wd_10', fecha: '2026-11-07', monto: 475.5, moneda: 'GTQ' });
+  const l = await al.insertar('pagos_liquidaciones', { proveedor: 'recurrente', referencia: 'wd_10', fecha: '2026-11-07', monto: 475.5, moneda: 'GTQ' });
   const pagos = await al.lista('pagos_en_linea');
   await al.actualizar('pagos_en_linea', pagos[0].id, { liquidacion_id: l.id });
   await al.actualizar('pagos_en_linea', pagos[1].id, { liquidacion_id: l.id });
-  const re = await al.insertar('pagos_en_linea', { tipo: 'reembolso', proveedor_id: 're_1', fecha: '2026-11-06T15:00:00Z', moneda: 'GTQ', bruto: 284.5, neto: 284.5, bruto_q: 284.5, concepto: 'gift_card', estado: 'reembolso', liquidacion_id: l.id, crudo: {} });
+  const re = await al.insertar('pagos_en_linea', { proveedor: 'recurrente', tipo: 'reembolso', proveedor_id: 're_1', fecha: '2026-11-06T15:00:00Z', moneda: 'GTQ', bruto: 284.5, neto: 284.5, bruto_q: 284.5, concepto: 'gift_card', estado: 'reembolso', liquidacion_id: l.id, crudo: {} });
   assert.ok(re.id);
   const c = K.cuadrarLiquidacion(l, await al.lista('pagos_en_linea'));
   assert.deepStrictEqual([c.ok, c.suma, c.n], [true, 475.5, 3]);

@@ -17,8 +17,8 @@ function columnas(sql) {
   return out;
 }
 
-test('Las migraciones 053 y 054 existen, son solo aditivas y la app no puede borrar', () => {
-  for (const f of ['053_contenido_web.sql', '054_giftcards_pagos.sql']) {
+test('Las migraciones 053, 054 y 055 existen, son solo aditivas y la app no puede borrar', () => {
+  for (const f of ['053_contenido_web.sql', '054_giftcards_pagos.sql', '055_adventures.sql']) {
     const s = sinComentarios(leer(f));
     assert.doesNotMatch(s, /\b(DROP|ALTER|TRUNCATE|DELETE)\b/i, f + ' trae una sentencia que no es aditiva');
     assert.doesNotMatch(s, /GRANT[^;]*\bDELETE\b/i, f + ' le da DELETE a la app');
@@ -31,19 +31,18 @@ test('Las migraciones 053 y 054 existen, son solo aditivas y la app no puede bor
   assert.match(s53, /GRANT SELECT, INSERT ON web_versiones, web_bitacora TO app;/);
 });
 
-test('Ninguna otra migracion usa los numeros 053-054 ni los nombres de tabla nuevos', () => {
-  const otras = fs.readdirSync(DIR).filter((f) => !/^05[34]_/.test(f));
-  assert.ok(!otras.some((f) => /^05[34]_/.test(f)));
-  const nuevas = Object.keys(columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql')));
+test('Ninguna otra migracion usa los numeros 053-055 ni los nombres de tabla nuevos', () => {
+  const otras = fs.readdirSync(DIR).filter((f) => !/^05[345]_/.test(f));
+  const nuevas = Object.keys(columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql')));
   for (const f of otras) {
     const s = sinComentarios(leer(f));
     nuevas.forEach((t) => assert.doesNotMatch(s, new RegExp('CREATE TABLE ' + t + '\\b'), f + ' ya crea ' + t));
   }
-  assert.strictEqual(fs.readdirSync(DIR).filter((f) => /^05[34]_/.test(f)).length, 2);
+  assert.strictEqual(fs.readdirSync(DIR).filter((f) => /^05[345]_/.test(f)).length, 3);
 });
 
 test('El almacen usa exactamente las tablas y columnas de las migraciones', () => {
-  const cols = columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql'));
+  const cols = columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql'));
   assert.deepStrictEqual(Object.keys(A.TABLAS).sort(), Object.keys(cols).sort());
   for (const t of Object.keys(A.TABLAS)) assert.deepStrictEqual(A.TABLAS[t].cols.slice().sort(), cols[t].slice().sort(), t);
 });

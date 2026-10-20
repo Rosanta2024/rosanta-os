@@ -1,7 +1,7 @@
 /**
  * Almacen de la web (contenido, gift cards y pagos en linea), 20-oct-2026, AYUDANTE 4.
  *
- * Una sola forma de leer y escribir las tablas de las migraciones 053 y 054, con dos motores:
+ * Una sola forma de leer y escribir las tablas de las migraciones 053, 054 y 055, con dos motores:
  *   - crearAlmacenPg(pool): la base de verdad (pg.Pool). SQL con parametros; los nombres de tabla y columna
  *     salen SOLO de TABLAS (abajo), nunca de lo que manda el navegador.
  *   - crearAlmacenMemoria(): lo mismo en memoria, para las pruebas. Repite las reglas que importan de la base
@@ -18,7 +18,7 @@
  */
 
 // Columnas que la app escribe o lee, por tabla. La prueba "almacen = migraciones" compara esto con los
-// CREATE TABLE de 053 y 054: si alguien cambia una sin la otra, falla.
+// CREATE TABLE de 053, 054 y 055: si alguien cambia una sin la otra, falla.
 const TABLAS = {
   web_ajustes: { llave: 'clave', cols: ['clave', 'valor', 'actualizado', 'actualizado_por'], json: ['valor'] },
   web_fotos: { llave: 'id', cols: ['id', 'ruta', 'url', 'url_chica', 'ancho', 'alto', 'bytes', 'tipo', 'huella', 'alt_es', 'alt_en', 'activa', 'subida', 'subida_por'], unicos: [['ruta'], ['huella']] },
@@ -32,11 +32,21 @@ const TABLAS = {
   web_bitacora: { llave: 'id', cols: ['id', 'cuando', 'quien', 'rol', 'accion', 'tabla', 'registro_id', 'antes', 'despues'], json: ['antes', 'despues'], soloAgregar: [] },
 
   pagos_liquidaciones: { llave: 'id', cols: ['id', 'proveedor', 'referencia', 'fecha', 'monto', 'moneda', 'banco', 'banco_referencia', 'estado', 'diferencia', 'conciliada', 'nota', 'creada'], unicos: [['proveedor', 'referencia']], num: ['monto', 'diferencia'] },
-  pagos_en_linea: { llave: 'id', cols: ['id', 'proveedor', 'tipo', 'proveedor_id', 'checkout_id', 'pago_original_id', 'fecha', 'moneda', 'bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q', 'concepto', 'concepto_id', 'estado', 'fel_serie', 'fel_numero', 'fel_fecha', 'fel_url', 'fel_estado', 'liquidacion_id', 'crudo', 'creado', 'actualizado'], unicos: [['proveedor', 'tipo', 'proveedor_id']], json: ['crudo'], num: ['bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q'] },
+  pagos_en_linea: { llave: 'id', cols: ['id', 'proveedor', 'tipo', 'proveedor_id', 'cobro_id', 'pago_original_id', 'fecha', 'moneda', 'bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q', 'concepto', 'concepto_id', 'estado', 'fel_serie', 'fel_numero', 'fel_fecha', 'fel_url', 'fel_estado', 'liquidacion_id', 'crudo', 'creado', 'actualizado'], unicos: [['proveedor', 'tipo', 'proveedor_id']], json: ['crudo'], num: ['bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q'] },
   pagos_webhooks: { llave: 'id', cols: ['id', 'proveedor', 'evento_id', 'tipo', 'recibido', 'procesado', 'resultado', 'cuerpo'], unicos: [['proveedor', 'evento_id']], json: ['cuerpo'], soloAgregar: ['procesado', 'resultado'] },
-  gift_cards_pedidos: { llave: 'id', cols: ['id', 'ref', 'checkout_id', 'valor_q', 'moneda_cobro', 'monto_cobro', 'tipo_cambio', 'comprador_nombre', 'comprador_email', 'comprador_telefono', 'destinatario_nombre', 'destinatario_email', 'mensaje', 'enviar_el', 'idioma', 'origen_trafico', 'estado', 'nota', 'creado', 'actualizado'], unicos: [['ref'], ['checkout_id']], json: ['origen_trafico'], num: ['valor_q', 'monto_cobro', 'tipo_cambio'] },
+  gift_cards_pedidos: { llave: 'id', cols: ['id', 'ref', 'proveedor', 'cobro_id', 'valor_q', 'moneda_cobro', 'monto_cobro', 'tipo_cambio', 'comprador_nombre', 'comprador_email', 'comprador_telefono', 'destinatario_nombre', 'destinatario_email', 'mensaje', 'enviar_el', 'idioma', 'origen_trafico', 'estado', 'nota', 'creado', 'actualizado'], unicos: [['ref'], ['proveedor', 'cobro_id']], json: ['origen_trafico'], num: ['valor_q', 'monto_cobro', 'tipo_cambio'] },
   gift_cards: { llave: 'id', cols: ['id', 'codigo', 'monto', 'moneda', 'saldo', 'estado', 'emitida', 'vence', 'comprador_nombre', 'comprador_email', 'comprador_telefono', 'destinatario_nombre', 'destinatario_email', 'mensaje', 'idioma', 'enviar_el', 'aviso_estado', 'aviso_enviado', 'aviso_detalle', 'origen', 'pedido_id', 'pago_id', 'creada_por'], unicos: [['codigo']], num: ['monto', 'saldo'] },
-  gift_cards_movimientos: { llave: 'id', cols: ['id', 'gift_card_id', 'cuando', 'tipo', 'monto', 'saldo_antes', 'saldo_despues', 'quien', 'rol', 'donde', 'referencia', 'movimiento_ref', 'pago_id', 'nota'], num: ['monto', 'saldo_antes', 'saldo_despues'], soloAgregar: [] }
+  gift_cards_movimientos: { llave: 'id', cols: ['id', 'gift_card_id', 'cuando', 'tipo', 'monto', 'saldo_antes', 'saldo_despues', 'quien', 'rol', 'donde', 'referencia', 'movimiento_ref', 'pago_id', 'nota'], num: ['monto', 'saldo_antes', 'saldo_despues'], soloAgregar: [] },
+
+  operadores_aliados: { llave: 'id', cols: ['id', 'nombre', 'razon_social', 'contacto_nombre', 'contacto_telefono', 'contacto_email', 'contacto_emergencia', 'licencia_inguat', 'licencia_vence',
+    'seguro_aseguradora', 'seguro_poliza', 'seguro_vence', 'comision_tipo', 'comision_valor', 'acuerdo', 'requisitos', 'codigo_referido', 'estado', 'aviso_vencimiento', 'nota', 'actualizado', 'actualizado_por'],
+    unicos: [['codigo_referido']], json: ['requisitos'], num: ['comision_valor'] },
+  web_experiencias: { llave: 'id', cols: ['id', 'slug', 'operador_id', 'titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'duracion_en', 'duracion_es', 'incluye_en', 'incluye_es',
+    'punto_salida_en', 'punto_salida_es', 'temporada_en', 'temporada_es', 'dificultad', 'idiomas', 'precio_ref_q', 'foto_id', 'galeria', 'faq', 'orden', 'activa', 'actualizado', 'actualizado_por'],
+    unicos: [['slug']], json: ['faq'], num: ['precio_ref_q'] },
+  leads_adventures: { llave: 'id', cols: ['id', 'creado', 'experiencia_id', 'operador_id', 'codigo_referido', 'nombre', 'email', 'telefono', 'idioma', 'fecha_deseada', 'personas', 'mensaje',
+    'combinar_cena', 'cena_fecha', 'cena_hora', 'cena_personas', 'cena_reserva_id', 'cena_estado', 'pipeline_id', 'estado', 'venta_q', 'comision_q', 'comision_registrada', 'ganchos',
+    'origen_trafico', 'nota', 'actualizado'], json: ['ganchos', 'origen_trafico'], num: ['venta_q', 'comision_q'] }
 };
 
 // Las reglas CHECK de la base que protegen dinero, repetidas para el almacen en memoria.
@@ -55,7 +65,9 @@ const CHEQUEOS = {
     return null;
   },
   gift_cards_pedidos: (f) => (f.valor_q >= 200 ? null : 'gift_cards_pedidos_valor_q_check'),
-  web_menu_platos: (f) => (f.precio_q == null || f.precio_q >= 0 ? null : 'web_menu_platos_precio_q_check')
+  web_menu_platos: (f) => (f.precio_q == null || f.precio_q >= 0 ? null : 'web_menu_platos_precio_q_check'),
+  operadores_aliados: (f) => (/^[A-Z0-9-]{3,20}$/.test(f.codigo_referido) ? null : 'operadores_aliados_codigo_referido_check'),
+  leads_adventures: (f) => (!f.combinar_cena || (f.cena_fecha && f.cena_hora) ? null : 'leads_adventures_check')
 };
 
 function errorBase(code, constraint) {
@@ -157,7 +169,9 @@ function crearAlmacenPg(pool) {
 const DEFECTOS = {
   activa: true, activo: true, orden: 0, alt_es: '', alt_en: '', titulo_en: '', titulo_es: '', descripcion_en: '', descripcion_es: '',
   texto_en: '', texto_es: '', nota_en: '', nota_es: '', tipo: undefined, alergenos: [], etiquetas: [], categoria: 'general', nota: '',
-  mensaje: '', idioma: 'es', referencia: '', origen_trafico: {}, comision: 0, otros_cargos: 0, proveedor: 'recurrente'
+  mensaje: '', idioma: 'es', referencia: '', origen_trafico: {}, comision: 0, otros_cargos: 0, galeria: [], faq: [], idiomas: [], requisitos: {}, ganchos: {},
+  razon_social: '', contacto_nombre: '', contacto_telefono: '', contacto_email: '', contacto_emergencia: '', licencia_inguat: '', seguro_aseguradora: '', seguro_poliza: '',
+  acuerdo: '', duracion_en: '', duracion_es: '', incluye_en: '', incluye_es: '', punto_salida_en: '', punto_salida_es: '', temporada_en: '', temporada_es: ''
 };
 const DEFECTOS_POR_TABLA = {
   web_bloques: { tipo: 'texto' },
@@ -165,11 +179,15 @@ const DEFECTOS_POR_TABLA = {
   gift_cards: { moneda: 'GTQ', estado: 'activa', aviso_estado: 'pendiente' },
   gift_cards_pedidos: { estado: 'pendiente' },
   pagos_en_linea: { tipo: 'cobro', fel_estado: 'pendiente' },
-  pagos_liquidaciones: { estado: 'sin_conciliar' }
+  pagos_liquidaciones: { estado: 'sin_conciliar' },
+  operadores_aliados: { estado: 'pausado', comision_tipo: 'porcentaje' },
+  web_experiencias: { dificultad: 'moderada' },
+  leads_adventures: { estado: 'nuevo', idioma: 'en', combinar_cena: false }
 };
 const FECHA_AHORA = { web_ajustes: 'actualizado', web_fotos: 'subida', web_paginas: 'actualizado', web_bloques: 'actualizado', web_menu_secciones: 'actualizado',
   web_menu_platos: 'actualizado', web_faq: 'actualizado', web_eventos: 'actualizado', web_versiones: 'publicada', web_bitacora: 'cuando',
-  pagos_liquidaciones: 'creada', pagos_en_linea: 'creado', pagos_webhooks: 'recibido', gift_cards_pedidos: 'creado', gift_cards: 'emitida', gift_cards_movimientos: 'cuando' };
+  pagos_liquidaciones: 'creada', pagos_en_linea: 'creado', pagos_webhooks: 'recibido', gift_cards_pedidos: 'creado', gift_cards: 'emitida', gift_cards_movimientos: 'cuando',
+  operadores_aliados: 'actualizado', web_experiencias: 'actualizado', leads_adventures: 'creado' };
 
 const copiar = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 
@@ -202,7 +220,7 @@ function crearAlmacenMemoria(opciones) {
       if (s.llave === 'id') nueva.id = ++seq[tabla];
       const fc = FECHA_AHORA[tabla]; if (fc && !(fc in f)) nueva[fc] = ahora().toISOString();
       if (tabla === 'pagos_en_linea' && !('actualizado' in f)) nueva.actualizado = nueva.creado;
-      if (tabla === 'gift_cards_pedidos' && !('actualizado' in f)) nueva.actualizado = nueva.creado;
+      if ((tabla === 'gift_cards_pedidos' || tabla === 'leads_adventures') && !('actualizado' in f)) nueva.actualizado = nueva.creado;
       if (nueva[s.llave] === null || nueva[s.llave] === undefined) throw errorBase('23502', tabla + '_' + s.llave);
       if (s.llave !== 'id' && datos[tabla].some((x) => x[s.llave] === nueva[s.llave])) throw errorBase('23505', tabla + '_pkey');
       chequear(tabla, nueva, null);

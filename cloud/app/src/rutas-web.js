@@ -1,12 +1,15 @@
 /**
- * Rutas de la web nueva (AYUDANTE 4, 20-oct-2026): "Contenido web", gift cards y pagos en linea.
- * Dos fabricas de express.Router; NO tocan server.js ni app.js. Para enchufarlas (lo hace el Estudio):
+ * Rutas de la web nueva (AYUDANTE 4, 20-oct-2026; 21-oct: pasarela intercambiable y Adventures): "Contenido web",
+ * gift cards, pagos en linea y Adventures. Tres fabricas de express.Router; NO tocan server.js ni app.js. Para
+ * enchufarlas (lo hace el Estudio):
  *
  *   const W = require('./rutas-web');
  *   // en app.js, el json de siempre guardando el cuerpo crudo (lo necesita la firma del webhook):
  *   app.use(express.json({ limit: '200kb', verify: W.guardarCuerpoCrudo }));
  *   app.use(W.crearRutasContenidoWeb({ contenido, pool }));
- *   app.use(W.crearRutasGiftcards({ giftcards, pool, matriz, almacen, claveTareas, leerDepositos }));
+ *   const pasarela = require('./pasarela').crearPasarela(process.env);   // PASARELA=ninguna por defecto
+ *   app.use(W.crearRutasGiftcards({ giftcards, pasarela, pool, matriz, almacen, claveTareas, leerDepositos }));
+ *   app.use(W.crearRutasAdventures({ adventures, pool, claveTareas }));
  *
  * El webhook acepta tambien el cuerpo crudo de express.raw (si el router se monta ANTES del json global).
  * Sin cuerpo crudo contesta 500 y no procesa: nunca se verifica una firma contra un JSON re-armado.
@@ -121,7 +124,10 @@ function crearRutasGiftcards(deps) {
   const exigirFinanzas = (req) => { const p = P.puede(M(), req.usuario, 'finanzas', 'ver'); if (!p.ok) { const e = new Error('El reporte lo ve el dueño.'); e.status = 403; throw e; } };
 
   // El webhook va PRIMERO: con cuerpo crudo (express.raw aca, o req.cuerpoCrudo del json global).
-  r.post('/api/giftcards/webhook/recurrente', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
+  // /api/pagos/webhook/<proveedor>: solo responde el de la pasarela elegida (PASARELA); con "ninguna", 404.
+  r.post('/api/pagos/webhook/:proveedor', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
+    const pas = deps.pasarela;
+    if (!pas || !pas.encendido || req.params.proveedor !== pas.proveedor) return res.status(404).json({ error: 'No disponible.' });
     const cuerpo = Buffer.isBuffer(req.body) ? req.body : req.cuerpoCrudo;
     if (!Buffer.isBuffer(cuerpo)) {
       console.error('[giftcards] webhook sin cuerpo crudo: falta express.json({ verify: guardarCuerpoCrudo }) en app.js');
@@ -165,7 +171,9 @@ function crearRutasGiftcards(deps) {
       const e = new Error('Falta la referencia, la fecha (AAAA-MM-DD), el monto o la moneda (GTQ/USD).'); e.status = 400; throw e;
     }
     try {
-      return await deps.almacen.insertar('pagos_liquidaciones', { referencia: String(b.referencia).slice(0, 80), fecha: b.fecha, monto: Math.round(monto * 100) / 100, moneda: b.moneda, nota: String(b.nota || '').slice(0, 300) });
+      const prov = deps.pasarela && deps.pasarela.proveedor;
+      if (!prov || prov === 'ninguna') { const x = new Error('No hay pasarela elegida: no hay liquidaciones que cargar.'); x.status = 409; throw x; }
+      return await deps.almacen.insertar('pagos_liquidaciones', { proveedor: prov, referencia: String(b.referencia).slice(0, 80), fecha: b.fecha, monto: Math.round(monto * 100) / 100, moneda: b.moneda, nota: String(b.nota || '').slice(0, 300) });
     } catch (e) { if (e.code === '23505') { const x = new Error('Esa liquidación ya está cargada.'); x.status = 409; throw x; } throw e; }
   }));
 
@@ -184,4 +192,24 @@ function crearRutasGiftcards(deps) {
   return r;
 }
 
-module.exports = { crearRutasContenidoWeb, crearRutasGiftcards, guardarCuerpoCrudo };
+// ------------------------------------------------------------------------------------------------ Adventures
+
+function crearRutasAdventures(deps) {
+  const r = express.Router();
+  const AV = deps.adventures;
+  const exigirUsuario = identificador(deps);
+  const exigirTarea = (req, res, next) => (iguales(req.get('x-rosanta-tarea'), deps.claveTareas) ? next() : res.status(403).json({ error: 'Clave de tarea invalida.' }));
+  r.use(['/api/adventures', '/tareas/adventures-vencimientos'], express.json({ limit: '50kb' }));
+
+  // Publico: el formulario de consulta de cada ficha (sin cobro)
+  r.post('/api/adventures/consulta', freno(6, 10 * 60 * 1000), responder((req) => AV.consulta(req.body)));
+  // Dueño: las consultas, su estado y la comision; y el resumen por operador
+  r.get('/api/adventures/leads', exigirUsuario, responder((req) => AV.leads(req.usuario, req.query)));
+  r.patch('/api/adventures/leads/:id', exigirUsuario, responder((req) => AV.actualizarLead(req.usuario, req.params.id, req.body)));
+  r.get('/api/adventures/operadores', exigirUsuario, responder((req) => AV.resumenOperadores(req.usuario)));
+  // Tarea diaria: aviso a 30 dias y pausa automatica si vence la licencia o el seguro
+  r.post('/tareas/adventures-vencimientos', exigirTarea, responder(() => AV.revisarVencimientos()));
+  return r;
+}
+
+module.exports = { crearRutasContenidoWeb, crearRutasGiftcards, crearRutasAdventures, guardarCuerpoCrudo };
