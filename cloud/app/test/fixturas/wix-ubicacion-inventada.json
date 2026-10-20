@@ -1,0 +1,75 @@
+{
+  "_nota": "INVENTADA el 20-oct-2026 para probar el traductor. NO es la configuracion real de Rosanta (llega el 23-oct con wix-api-key). Ids, mesas y horarios son ficticios.",
+  "id": "93076d06-553f-46eb-a43c-fa007db98226",
+  "revision": "57",
+  "location": { "id": "0f0f0f0f-0000-4000-8000-000000000001", "name": "Rosanta (prueba)" },
+  "configuration": {
+    "onlineReservations": {
+      "approval": { "mode": "MANUAL_FOR_LARGE_PARTIES", "manualForLargePartiesOptions": { "partySizeThreshold": 8, "considerTablesForManualApproval": false } },
+      "seatPacing": { "number": 24, "enabled": true },
+      "partyPacing": { "number": 4, "enabled": true },
+      "partiesSize": { "min": 1, "max": 10 },
+      "partySize": { "min": 1, "max": 10 },
+      "minimumReservationNotice": { "number": 30, "unit": "MINUTES" },
+      "maximumReservationNotice": { "number": 365, "unit": "DAYS" },
+      "defaultTurnoverTime": 120,
+      "turnoverTimeRules": [
+        { "seatsMin": 1, "seatsMax": 2, "minutes": 90 },
+        { "seatsMin": 7, "seatsMax": 15, "minutes": 150 }
+      ],
+      "turnoverRules": [],
+      "businessSchedule": {
+        "periods": [
+          { "openDay": "TUESDAY", "openTime": "12:00", "closeDay": "TUESDAY", "closeTime": "21:00" },
+          { "openDay": "WEDNESDAY", "openTime": "12:00", "closeDay": "WEDNESDAY", "closeTime": "21:00" },
+          { "openDay": "THURSDAY", "openTime": "12:00", "closeDay": "THURSDAY", "closeTime": "21:00" },
+          { "openDay": "FRIDAY", "openTime": "12:00", "closeDay": "SATURDAY", "closeTime": "00:30" },
+          { "openDay": "SATURDAY", "openTime": "12:00", "closeDay": "SATURDAY", "closeTime": "22:00" },
+          { "openDay": "SUNDAY", "openTime": "12:00", "closeDay": "SUNDAY", "closeTime": "20:00" }
+        ],
+        "specialHourPeriod": [
+          { "startDate": "2026-12-24T00:00:00", "endDate": "2026-12-25T00:00:00", "isClosed": true, "comment": "Evento privado (inventado)" },
+          { "startDate": "2026-11-02T12:00:00-06:00", "endDate": "2026-11-02T20:00:00-06:00", "isClosed": false, "comment": "Abierto lunes festivo (inventado)" }
+        ]
+      },
+      "showPhoneNumber": true,
+      "onlineReservationsEnabled": true,
+      "pauseSettings": { "standardReservations": {} },
+      "timeSlotInterval": 15
+    },
+    "reservationForm": {
+      "customFieldDefinitions": [
+        { "id": "aaaaaaaa-0000-4000-8000-0000000000a1", "name": "¿Alguna alergia alimentaria?", "required": true },
+        { "id": "aaaaaaaa-0000-4000-8000-0000000000a2", "name": "¿Dónde prefieres sentarte?", "required": false },
+        { "id": "aaaaaaaa-0000-4000-8000-0000000000a3", "name": "¿Cómo nos conociste?", "required": false },
+        { "id": "88cadd96-c92b-40c4-8ef2-d0d2ad67acb5", "name": "Acepta contacto", "required": false },
+        { "id": "bf07b3fc-04f2-4851-9a91-0ec9575ab099", "name": "Consumo total de la mesa (Q)", "required": false }
+      ],
+      "lastNameRequired": false,
+      "emailRequired": true
+    },
+    "tableManagement": {
+      "mode": "ON",
+      "tableDefinitions": [
+        { "id": "70000000-0000-4000-8000-000000000001", "name": "Interior1", "seatsMin": 1, "seatsMax": 2, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000002", "name": "Interior2", "seatsMin": 1, "seatsMax": 2, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000003", "name": "Interior3", "seatsMin": 2, "seatsMax": 4, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000004", "name": "Pergola1", "seatsMin": 2, "seatsMax": 4, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000005", "name": "Pergola2", "seatsMin": 2, "seatsMax": 4, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000006", "name": "Pergola3", "seatsMin": 4, "seatsMax": 6, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000007", "name": "Jardín 1", "seatsMin": 4, "seatsMax": 8, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000008", "name": "Jardín 2", "seatsMin": 4, "seatsMax": 8, "isActive": true },
+        { "id": "70000000-0000-4000-8000-000000000009", "name": "Barra", "seatsMin": 1, "seatsMax": 2, "isActive": false }
+      ],
+      "deletedTableDefinitions": [
+        { "id": "70000000-0000-4000-8000-0000000000ff", "name": "Fogata1", "seatsMin": 2, "seatsMax": 6, "isActive": false }
+      ],
+      "tableCombinations": [
+        { "id": "7c000000-0000-4000-8000-000000000001", "tableIds": ["70000000-0000-4000-8000-000000000004", "70000000-0000-4000-8000-000000000005"], "seatsMin": 5, "seatsMax": 8, "isActive": true },
+        { "id": "7c000000-0000-4000-8000-000000000002", "tableIds": ["70000000-0000-4000-8000-000000000007", "70000000-0000-4000-8000-000000000008"], "seatsMin": 9, "seatsMax": 15, "isActive": true },
+        { "id": "7c000000-0000-4000-8000-000000000003", "tableIds": ["70000000-0000-4000-8000-000000000006", "70000000-0000-4000-8000-0000000000ee"], "seatsMin": 6, "seatsMax": 10, "isActive": true }
+      ]
+    },
+    "paymentPolicy": { "paymentPolicyType": "UNKNOWN_PAYMENT_POLICY" }
+  }
+}
