@@ -1,1 +1,1 @@
-d022bac 2026-10-19 Nube: compensacion de la sombra corta (base = hoja de caja/cierres/07 cada noche, conciliacion de mes) y ?nube=ensayo del dueño
+a888df1 2026-10-19 Intranet: anularMovimientoPago verifica identidad primero; NUBE_SERVIDOR_ declarada (bateria de Juanma: 3 fallas)

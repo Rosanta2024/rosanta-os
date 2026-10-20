@@ -13,10 +13,10 @@
  * Volver atras = poner motor_pagos = sheets.
  */
 /**
- * true SOLO en el servidor nuevo, que lo pone antes de cargar estos archivos. Aca se declara sin valor:
- * en Apps Script queda undefined, y un `var` sin valor no pisa el true del servidor.
+ * true SOLO en el servidor nuevo. Aca vale false (la intranet); el servidor lo pone en true DESPUES de cargar
+ * estos archivos (cloud/app/src/motor-pagos.js). Con valor, para que la bateria lo vea definido.
  */
-var NUBE_SERVIDOR_;
+var NUBE_SERVIDOR_ = false;
 var NUBE_PAGOS_URL_ = 'https://rosanta-nube-512086396641.northamerica-south1.run.app/pagos';
 /** El servidor de ENSAYO (se borra despues del paso a vivo): solo para ?nube=ensayo del dueño. */
 var NUBE_ENSAYO_URL_ = 'https://rosanta-nube-ensayo-512086396641.northamerica-south1.run.app';
