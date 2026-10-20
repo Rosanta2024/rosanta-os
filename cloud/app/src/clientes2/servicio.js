@@ -104,18 +104,59 @@ function crearServicioClientes2(deps) {
     if (!F.lectura.includes(nombre)) throw error(404, 'Esa función no está disponible en el servidor nuevo.');
     if (nombre === 'botSombra') return botSombra();
     if (nombre === 'botSombraTurnos') return botSombraTurnos(Number(a[0]) || 0);
+    if (nombre === 'getDatosDashboard') { const desdeBase = await dashboardDesdeBase(); if (desdeBase) return desdeBase; }
     const m = motores();
     if (parte === 'consola') {
       if (!m.consola) throw error(503, 'Todavía no hay copia de Rosanta Leads.');
       return m.consola[nombre].apply(null, a.slice(0, 3));
     }
     if (nombre === 'encuesta') {
+      const desdeBase = await encuestaDesdeBase();
+      if (desdeBase) return desdeBase;
       const e = m.c.libros[ENCUESTA_ID];
       if (!e) throw error(503, 'Todavía no hay copia de la encuesta (falta compartir la hoja con el servidor como Lector).');
       return datosEncuesta(e['Encuesta 2026']);
     }
     if (!m.resenas) throw error(503, 'Todavía no hay copia de la hoja de reseñas (falta compartirla con el servidor como Lector).');
     return datosDesdeHoja(m.c.libros[GBP_ID]['Reseñas']);   // getDatosDashboard
+  }
+
+  /**
+   * Reseñas desde la base (migracion 040): TODAS las de Google (lector de cada hora) con el borrador y el estado de
+   * resenas_gbp. Promedio y total, los de Google en la ultima lectura. Sin tablas o sin lectura todavia: null
+   * (se sigue mostrando la copia de la hoja).
+   */
+  async function dashboardDesdeBase() {
+    let g, c;
+    try {
+      g = await deps.pool.query(`SELECT g.review_id, g.estrellas, g.cliente, g.resena, coalesce(g.creada, g.actualizada) AS t, g.respuesta,
+        b.respuesta AS borrador, b.estado FROM resenas_gbp_google g LEFT JOIN resenas_gbp b ON b.review_id = g.review_id
+        ORDER BY coalesce(g.creada, g.actualizada) DESC NULLS LAST`);
+      c = await deps.pool.query("SELECT resumen FROM resenas_corridas WHERE tarea = 'leer-google' ORDER BY id DESC LIMIT 1");
+    } catch (e) { return null; }
+    if (!g.rows.length) return null;
+    const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const reviews = g.rows.map((x) => {
+      if (dist[x.estrellas] !== undefined) dist[x.estrellas]++;
+      const resp = x.respuesta || '';
+      return { id: x.review_id, stars: Number(x.estrellas) || 0, name: x.cliente || 'Anónimo', comment: x.resena || '',
+        time: x.t instanceof Date ? x.t.toISOString() : String(x.t || ''), hasReply: !!resp, reply: resp,
+        borrador: resp ? '' : (x.borrador || ''), estado: x.estado || '' };
+    });
+    const r = (c.rows[0] && c.rows[0].resumen) || {};
+    const suma = reviews.reduce((a, x) => a + x.stars, 0);
+    return { average: Number(r.promedio) || (reviews.length ? Math.round(suma / reviews.length * 100) / 100 : 0), total: Number(r.total_google) || reviews.length,
+      fetched: reviews.length, dist, reviews, fuente: 'base' };
+  }
+
+  /** La encuesta desde la base (encuesta_respuestas). Sin tabla o vacia: null (se usa la copia de la hoja). */
+  async function encuestaDesdeBase() {
+    let r;
+    try { r = await deps.pool.query('SELECT fecha, calificacion, mejorar FROM encuesta_respuestas ORDER BY fecha, id'); } catch (e) { return null; }
+    if (!r.rows.length) return null;
+    const out = datosEncuesta([['Fecha', 'Calificación', 'Mejorar']].concat(r.rows.map((x) => [x.fecha, x.calificacion, x.mejorar])));
+    out.fuente = 'base';
+    return out;
   }
 
   async function botSombra() {

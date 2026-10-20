@@ -123,3 +123,26 @@ test('Clientes2: con reseñas en vivo y el interruptor en base, el panel publica
   await assert.rejects(sp.llamar({}, 'resenas', 'publicarDesdePanel', ['r2', 'x']), (e) => e.status === 409);
   await assert.rejects(sb.llamar({}, 'consola', 'enviarMensaje', ['whatsapp', '1', 'hola']), (e) => e.status === 409);   // el bot no cambia
 });
+
+test('Clientes2: con la base llena, reseñas (todas las de Google + borradores) y encuesta salen de la base', async () => {
+  const poolBase = { query: async (sql) => {
+    if (/FROM resenas_gbp_google g/.test(sql)) return { rows: [
+      { review_id: 'g1', estrellas: 5, cliente: 'Ana', resena: 'Rico', t: new Date('2026-10-20T10:00:00Z'), respuesta: 'Ana, gracias.', borrador: null, estado: null },
+      { review_id: 'g2', estrellas: 2, cliente: 'Leo', resena: 'Lento', t: new Date('2026-10-19T10:00:00Z'), respuesta: '', borrador: 'Leo, lo sentimos.', estado: 'PENDIENTE_APROBAR' }] };
+    if (/tarea = 'leer-google'/.test(sql)) return { rows: [{ resumen: { promedio: 4.8, total_google: 451 } }] };
+    if (/FROM encuesta_respuestas/.test(sql)) return { rows: [{ fecha: new Date('2026-10-01'), calificacion: 5, mejorar: '' }, { fecha: new Date('2026-10-02'), calificacion: 2, mejorar: 'Música' }] };
+    return { rows: [] };
+  } };
+  const s = crearServicioClientes2({ pool: poolBase, copia: copiaDeMentira, puede: () => true });
+  const d = await s.llamar({}, 'resenas', 'getDatosDashboard', []);
+  assert.strictEqual(d.fuente, 'base');
+  assert.strictEqual(d.total, 451);
+  assert.strictEqual(d.average, 4.8);
+  assert.strictEqual(d.reviews.length, 2);
+  assert.strictEqual(d.reviews[1].borrador, 'Leo, lo sentimos.');
+  assert.strictEqual(d.reviews[0].hasReply, true);
+  const e = await s.llamar({}, 'resenas', 'encuesta', []);
+  assert.strictEqual(e.fuente, 'base');
+  assert.strictEqual(e.total, 2);
+  assert.strictEqual(e.respuestas[0].comentario, 'Música');
+});
