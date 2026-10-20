@@ -1,1 +1,1 @@
-78d24e8 2026-10-20 Merge remote-tracking branch 'origin/main' into claude/nube-clientes-vivo
+b0382f7 2026-10-20 Marketing en vivo: las 6 funciones de guardar de la intranet se desvian a rosanta-clientes con motor_marketing = base (NubeClientes.js); el servidor corre el codigo real sobre la base y copia a Marketing OS antes de contestar. Migracion 015. Pipeline apunta a rosanta-clientes.
