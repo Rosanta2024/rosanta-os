@@ -1,4 +1,4 @@
-@64 · 2026-10-20T07:45:00-06:00 · c16ede2
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 64, "el correo le pregunta a la nube quién
-atiende"), verificada el 20-oct-2026 bajando la versión 64 aparte (12 de 12 archivos iguales). La hora es la de la publicación;
-la comparación de la sombra vale para los mensajes desde esa hora.
+@65 · 2026-10-20T08:05:00-06:00 · a40311d
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 65, "las fotos de WhatsApp ya no se
+pierden"), verificada el 20-oct-2026 bajando la versión 65 aparte (12 de 12 archivos iguales). La hora es la de la
+publicación; la comparación de la sombra vale para los mensajes desde esa hora.
