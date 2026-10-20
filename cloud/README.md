@@ -62,6 +62,12 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - **Intranet sin publicar:** `NubePagos.js` (cajaMotor_, cierresMotor_, `_cajaSoloConsulta_`, getCajaDestino, nubeGuardarCierre_), cerraduras en las 8 funciones de guardar de Caja y Compras, `CosteoVista.html` monta `/caja` y `/compras` en un marco, `CierresDiarios.js` manda el cierre al servidor con base, `Vigia.js` regenera 07_Caja_Chica cada hora con Caja en base (antes la reescribía abrir la pantalla). El día del paso: `NUBE_CLAVE_TAREAS` en las Propiedades del script (el valor del secreto `clave-tareas`).
 - **Ensayo** (`cloud/herramientas/ensayo-caja.js`, sobre la copia): **37/37**. Combinaciones Pagos en base + Caja en sheets (la intranet escribe con el código real y el servidor importa) y todo en base; gastos de caja chica, conteo, compra en efectivo con su retiro, anular lo propio, lo ajeno negado, mes cerrado solo el dueño, un cierre del día (repetido no se duplica), vuelta atrás de cada interruptor (~9–10 s) y la intranet escribiendo otra vez; en cada paso base = hoja en las 4 pestañas. Guardados 0.12–0.46 s. El de Pagos se repitió después del cambio: 19/19.
 
+## Procesos en la nube: "Leer cierres" (construido el 20-oct, SIN montar)
+
+- `app/src/proc-cierres.js`: `POST /tareas/procesos/cierres` (clave de tareas; cuerpo opcional `{dias, forzar}`, 20 días por defecto como el vigía). Corre el `_cieLeer_` REAL con Gmail y Drive precargados (`google-cuenta.js`), en dos pasadas (solo convierte los PDF que la intranet de verdad leería).
+- Interruptor `PARAMETROS › proc_cierres`: `apps` (o vacío) no hace nada; `sombra` compara con CIERRES_DIARIOS de la base sin escribir (409 si algo no coincide; no compara LEIDO ni TEXTO_SI_NO_CUADRA); `nube` guarda con `guardarCierre` (solo con `motor_cierres = base`, si no 409). Comensales: la función real sobre la copia de reservas de la sombra 2 (`hojas_copia_f2`); sin copia, el valor que ya tiene la base.
+- La foto del comprobante (`leerComprobanteNube`, interruptor `proc_comprobante = apps | nube`) queda preparada y probada, pero `leerComprobanteCompra` sigue en `SOLO_INTRANET`.
+
 ## Paso a vivo de Pagos + Caja + cierres (plan acelerado, 19-oct)
 
 - **Guion completo:** `~/My Drive/Rosanta OS/00_Admin/Apps_Script_e_IA/2026-10-19_Guion_Paso_a_Vivo_Pagos_Caja.md`. Fecha propuesta: lunes 26-oct 7:30–9:30. Nada en vivo sin el sí de Juanma.
