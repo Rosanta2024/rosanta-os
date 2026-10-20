@@ -182,7 +182,7 @@ function redactarRespuesta_(estrellas, nombre, textoResena) {
   const crudo = (json.content && json.content[0] && json.content[0].text || '').trim();
   const limpio = sanearRespuesta_(crudo, nombre);
 
-  if (respuestaPublicable_(limpio)) return { texto: limpio, confiable: true };
+  if (respuestaPublicable_(limpio) && resenaEnEspanolOIngles_(textoResena)) return { texto: limpio, confiable: true };
 
   // No se descarta el texto: se manda a aprobación con lo que se pudo salvar,
   // para que Juanma lo edite en vez de perder la respuesta.
@@ -248,11 +248,46 @@ function sanearRespuesta_(texto, nombre) {
   return t;
 }
 
+// Lo que el revisor de marca no deja salir solo (ensayos del 20/21-oct-2026): copias de los ejemplos del prompt,
+// relleno, el nombre del dueño y otros idiomas. Si aparece, la respuesta NO se publica sola: va a aprobación.
+// Se compara sin mayúsculas ni acentos.
+const BLOQUEOS = [
+  /algo especial/, /cada momento/, /\bcada (plato|detalle|bocado|mesa|visita)\b/, /\bevery (glass|dish|plate|detail|moment)\b/,
+  /memorable/, /inolvidable/, /exactamente lo que buscabas/,
+  /que alegria leer esto/, /(carino|dedicacion) recibe/, /esperamos (verte |te |los )?(pronto|de regreso)/, /esperamos (pronto|de regreso)/,
+  /looking forward to having you/, /real care/,
+  /\bnuestr[oa]s?\b/, /\bours?\b/, /\bjuanma\b/,
+  /\b(grazie|piacere|rivederti|il team|molto|merci|nous|vous|danke|wir|obrigad[oa])\b/
+];
+
+function sinAcentos_(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function respuestaConFrasesBloqueadas_(texto) {
+  const t = sinAcentos_(texto);
+  for (let i = 0; i < BLOQUEOS.length; i++) if (BLOQUEOS[i].test(t)) return String(BLOQUEOS[i]);
+  return '';
+}
+
+// ¿La reseña está en español o en inglés? Las de otro idioma nunca se publican solas (el modelo las contestó en
+// su idioma 2 de 2 veces aunque la regla pide inglés). Sin texto, o muy corta: sí.
+const PALABRAS_ES_EN = /\b(de|la|el|que|y|en|muy|con|por|para|los|las|una|un|todo|comida|servicio|excelente|rico|buen[oa]?|lugar|the|and|was|is|very|great|food|with|for|of|to|we|it|but|good|place|service|amazing|delicious)\b/;
+const PALABRAS_OTRAS = /\b(il|della|dei|molto|grazie|buonissim[oa]|avec|nous|merci|und|der|sehr|lecker|wir|nicht|muito|obrigad[oa]|nao|voce)\b/;
+function resenaEnEspanolOIngles_(texto) {
+  const t = sinAcentos_(texto);
+  if (PALABRAS_OTRAS.test(t)) return false;
+  const palabras = t.split(/\s+/).filter(Boolean);
+  if (palabras.length < 4) return true;
+  return PALABRAS_ES_EN.test(t);
+}
+
 // ¿Esto se puede publicar en la ficha pública sin que nadie lo mire antes?
 function respuestaPublicable_(texto) {
   const t = String(texto || '').trim();
   if (!t) return false;
   if (t.length < RESP_MIN_CHARS || t.length > RESP_MAX_CHARS) return false;
+  if (respuestaConFrasesBloqueadas_(t)) return false;
 
   // Si sigue quedando algún marcador dentro, no se publica.
   for (let i = 0; i < MARCADORES_META.length; i++) {

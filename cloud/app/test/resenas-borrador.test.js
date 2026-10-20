@@ -14,7 +14,7 @@ function claudeFalso(texto, status) {
   f.pedidos = pedidos;
   return f;
 }
-const LIMPIA = 'Mia, qué alegría leer esto. El lomito es de las recetas con más cariño en la cocina. Te esperamos pronto.';
+const LIMPIA = 'Mia, gracias por contarlo. Qué gusto que el lomito te haya dejado ganas de volver. La próxima mesa ya te espera.';
 
 test('Reglas: se cargan del archivo real de Apps Script (prompt con las prohibiciones de siempre)', () => {
   const R = B.cargarReglas();
@@ -99,4 +99,38 @@ test('Sombra: con el tope del mes alcanzado no llama a Claude', async () => {
   const r = await N.borradoresSombra({ pool: baseBorradores([{ review_id: 'a', estrellas: 5, estado: 'PUBLICADA_AUTO' }], 2.5), claveClaude: 'k', fetch: f }, 5);
   assert.strictEqual(r.redactadas, 0);
   assert.strictEqual(f.pedidos.length, 0);
+});
+
+test('Bloqueo con codigo (revisor de marca): frases copiadas, relleno, el nombre del dueño y otros idiomas van a aprobacion', async () => {
+  const R = B.cargarReglas();
+  const bloqueadas = [
+    'Laura, el lomito tiene algo especial en la cocina. El equipo se alegra de saberlo. Pronto te vemos de regreso.',
+    'Lauren, so glad you came. The bar team puts real care into every glass. See you soon.',
+    'Ana, gracias por venir a nuestro restaurante y por tus palabras. Vuelve pronto.',
+    'Ana, Juanma y el equipo se alegran de leerte. Gracias por venir. Vuelve pronto.',
+    'Marco, il risotto ha fatto centro. Il team in sala si prende cura di ogni tavolo. Sarà un piacere rivederti presto.',
+    'Claire, merci pour ce beau message. Nous sommes ravis. À bientôt.',
+    'Sofía, gracias por tu visita y por dejarnos esta calificación. Esperamos verte pronto de regreso.',
+    'Laura, el lomito es uno de los platos que más dedicación recibe en la cocina. Gracias por venir. Vuelve pronto.',
+    'Laura, fue una noche memorable para el equipo. Gracias por venir. Vuelve pronto.'];
+  bloqueadas.forEach((t) => assert.strictEqual(R.respuestaPublicable_(t), false, t));
+  ['Ana, el risotto y la terraza al atardecer, qué buena combinación. Vuelve cuando quieras.',
+    'Glad the cocktails stood out during your visit. The note about the music is helpful. Feel free to share more at restaurante@rosanta.rest.'
+  ].forEach((t) => assert.strictEqual(R.respuestaPublicable_(t), true, t));
+  const r = await B.redactar({ estrellas: 5, cliente: 'Marco', resena: 'Cena bellissima' }, { clave: 'k', fetch: claudeFalso(bloqueadas[4]) });
+  assert.strictEqual(r.decision, 'aprobar');
+});
+
+test('Idioma de la reseña: solo español o inglés se publican solas', async () => {
+  const R = B.cargarReglas();
+  assert.strictEqual(R.resenaEnEspanolOIngles_('Cena bellissima, il risotto era perfetto e il servizio gentile.'), false);
+  assert.strictEqual(R.resenaEnEspanolOIngles_('Sehr leckeres Essen und tolle Atmosphäre, wir kommen wieder.'), false);
+  assert.strictEqual(R.resenaEnEspanolOIngles_('Très bon repas, merci beaucoup.'), false);
+  assert.strictEqual(R.resenaEnEspanolOIngles_('La comida muy rica y el servicio excelente, tres veces hemos venido.'), true);
+  assert.strictEqual(R.resenaEnEspanolOIngles_('Great cocktails but the music was a bit loud.'), true);
+  assert.strictEqual(R.resenaEnEspanolOIngles_(''), true);
+  // Respuesta limpia en ingles a una reseña en italiano: igual va a aprobacion
+  const r = await B.redactar({ estrellas: 5, cliente: 'Marco', resena: 'Cena bellissima, il risotto era perfetto e il servizio gentile.' },
+    { clave: 'k', fetch: claudeFalso('Marco, the risotto clearly made the night. Thanks for writing. Come back when you are in Antigua again.') });
+  assert.strictEqual(r.decision, 'aprobar');
 });
