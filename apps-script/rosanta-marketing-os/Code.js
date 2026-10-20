@@ -63,7 +63,9 @@ var SHEET_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
  *   MKT_TOKEN_CARRITO  hook=carrito (snippet del Editor de Wix: es PUBLICA, solo anota carritos).
  *   MKT_TOKEN_VIEJO    el token de antes: SOLO carrito y reserva, y solo hasta MKT_TOKEN_VIEJO_HASTA
  *                      (AAAA-MM-DD, 2026-11-04). La API general ya no lo acepta.
- * Las cargo una vez con ?hook=llaves (ver mktCargarLlaves_), que se retira despues.
+ * Se cargaron una vez el 20-oct-2026 (hook de carga unica, ya retirado). Copia local, fuera del repo:
+ * ~/.rosanta-secretos/mkt-api-token, wix-hook-reserva y wix-hook-carrito (los dos ultimos, tambien
+ * en Secret Manager para la nube).
  */
 function mktLlave_(nombre) { return String(PropertiesService.getScriptProperties().getProperty(nombre) || ''); }
 
@@ -240,10 +242,6 @@ function doPost(e) {
     if (e.parameter.hook === 'cotizaciones') {
       return json(cotHook_(body));
     }
-    // --- Carga unica de llaves (20-oct-2026): con COTIZ_TOKEN, solo si la propiedad esta vacia ---
-    if (e.parameter.hook === 'llaves') {
-      return json(mktCargarLlaves_(body));
-    }
 
 // --- Hook desconocido: no morir en silencio ---
     if (e.parameter.hook) {
@@ -376,23 +374,4 @@ function replaceAll(tab, rows){
 }
 function json(obj){
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-/**
- * Carga UNICA de las llaves (20-oct-2026). body = {token: COTIZ_TOKEN, llaves: {MKT_TOKEN_API: …, …}}.
- * Solo escribe nombres de la lista y solo si la propiedad esta VACIA (no pisa nada). No devuelve
- * valores. Se retira del codigo en cuanto las llaves estan cargadas.
- */
-function mktCargarLlaves_(body) {
-  var ok = PropertiesService.getScriptProperties().getProperty('COTIZ_TOKEN');
-  if (!ok || !body || body.token !== ok) return { error: 'unauthorized' };
-  var permitidas = ['MKT_TOKEN_API', 'MKT_TOKEN_RESERVA', 'MKT_TOKEN_CARRITO', 'MKT_TOKEN_VIEJO', 'MKT_TOKEN_VIEJO_HASTA'];
-  var P = PropertiesService.getScriptProperties(), guardadas = [], ya = [];
-  Object.keys(body.llaves || {}).forEach(function (k) {
-    if (permitidas.indexOf(k) === -1) return;
-    var v = String(body.llaves[k] || '');
-    if (!v) return;
-    if (P.getProperty(k)) { ya.push(k); return; }
-    P.setProperty(k, v); guardadas.push(k);
-  });
-  return { ok: true, guardadas: guardadas, ya_estaban: ya };
 }
