@@ -25,9 +25,7 @@ function copiaDeMentira() {
     [GBP_ID]: {
       'Reseñas': [['Fecha detectada', 'ReviewId', 'Estrellas', 'Cliente', 'Reseña original', 'Respuesta (editable)', 'Estado', 'Aprobar (SI/NO)', 'Fecha publicada'],
         [d('2026-10-10T10:00:00-06:00'), 'r1', 5, 'Mia', 'Delicioso', 'Gracias Mia', 'PUBLICADA_AUTO', '', ''],
-        [d('2026-10-12T10:00:00-06:00'), 'r2', 3, 'Leo', 'Lento', 'Gracias por contarnos', 'PENDIENTE_APROBAR', 'NO', '']],
-      TripAdvisor: [['Fecha detectada', 'ReviewId', 'Estrellas', 'Cliente', 'Titulo', 'Reseña original', 'Respuesta sugerida', 'Estado', 'Respuesta en TripAdvisor', 'Fecha marcada', 'URL'],
-        [d('2026-10-01T10:00:00-06:00'), 't1', 4, 'Sam', 'Nice', 'Good', 'Thanks', 'PENDIENTE', '', '', '']]
+        [d('2026-10-12T10:00:00-06:00'), 'r2', 3, 'Leo', 'Lento', 'Gracias por contarnos', 'PENDIENTE_APROBAR', 'NO', '']]
     },
     [ENCUESTA_ID]: { 'Encuesta 2026': [['Fecha', 'Calificación', '¿Qué podríamos mejorar?'], [d('2026-10-01'), 5, ''], [d('2026-10-02'), 3, 'La música']] }
   } };
@@ -39,7 +37,7 @@ test('Clientes2: la consola y el panel de reseñas son copias exactas de sus pro
   const raiz = path.join(__dirname, '..', '..', '..', 'apps-script');
   if (!fs.existsSync(raiz)) return;
   [['consola-de-respuestas-rosanta', ['Code.js', 'Index.html']],
-    ['panel-de-reseas-de-google', ['Bot de Reseñas de Google.js', 'PanelServidor.js', 'TripAdvisor.js', 'Panel de Reseñas de Google.html']]].forEach(([p, fs2]) => fs2.forEach((f) =>
+    ['panel-de-reseas-de-google', ['Bot de Reseñas de Google.js', 'PanelServidor.js', 'Panel de Reseñas de Google.html']]].forEach(([p, fs2]) => fs2.forEach((f) =>
     assert.strictEqual(fs.readFileSync(path.join(DIR, p, f), 'utf8'), fs.readFileSync(path.join(raiz, p, f), 'utf8'), p + '/' + f + ' se separó: volver a copiarlo cuando ese proyecto publique')));
 });
 
@@ -80,7 +78,7 @@ test('Clientes2: sin permiso de la matriz no se lee nada (control negativo)', as
   assert.ok((await s.llamar({}, 'resenas', 'encuesta', [])).total === 2);
 });
 
-test('Clientes2: reseñas desde la hoja de control y TripAdvisor con el código real', async () => {
+test('Clientes2: reseñas desde la hoja de control (TripAdvisor ya no existe)', async () => {
   const s = servicio();
   const g = await s.llamar({}, 'resenas', 'getDatosDashboard', []);
   assert.strictEqual(g.total, 2);
@@ -89,14 +87,9 @@ test('Clientes2: reseñas desde la hoja de control y TripAdvisor con el código 
   const r2 = g.reviews.find((r) => r.id === 'r2');
   assert.strictEqual(r2.hasReply, false);
   assert.strictEqual(r2.borrador, 'Gracias por contarnos');
-  const ta = await s.llamar({}, 'resenas', 'getDatosTripAdvisor', []);
-  assert.strictEqual(ta.reviews.length, 1);
-  assert.strictEqual(ta.configurada, false);
   assert.deepStrictEqual(datosDesdeHoja(null).reviews, []);
-  // Sin pestaña TripAdvisor (la hoja real hoy no la tiene): vacio, sin error
-  const sinTA = copiaDeMentira(); delete sinTA.libros[GBP_ID].TripAdvisor;
-  const s2 = crearServicioClientes2({ pool, copia: () => sinTA, puede: () => true });
-  assert.deepStrictEqual((await s2.llamar({}, 'resenas', 'getDatosTripAdvisor', [])).reviews, []);
+  // TripAdvisor se quito (decision de Juanma, 20-oct): ya no es una funcion del servidor
+  await assert.rejects(s.llamar({}, 'resenas', 'getDatosTripAdvisor', []), (e) => e.status === 404);
 });
 
 test('Clientes2: encuesta (promedio y las de 5 estrellas que van a Google)', () => {
@@ -118,4 +111,38 @@ test('Clientes2: las pantallas avisan que es sombra y llaman solo a funciones cl
       llamadas(h).filter((n) => /^(get|bot|enc|pub|edit|guard|regen|desc|marc|envi|devol)/.test(n)).forEach((n) => assert.ok(ok.includes(n), parte + ': ' + n + ' sin clasificar'));
     });
   }
+});
+
+test('Clientes2: con reseñas en vivo y el interruptor en base, el panel publica por resenas-vivo; en puente sigue 409', async () => {
+  const llamadas = [];
+  const vivo = (modo) => ({ modo: async () => modo, publicarDesdePanel: async (id, t) => { llamadas.push([id, t]); return { ok: true, estado: 'PUBLICADA_APROBADA' }; } });
+  const sb = crearServicioClientes2({ pool, copia: copiaDeMentira, puede: () => true, resenasVivo: vivo('base') });
+  assert.strictEqual((await sb.llamar({}, 'resenas', 'publicarDesdePanel', ['r2', 'Leo, lo sentimos.'])).estado, 'PUBLICADA_APROBADA');
+  assert.deepStrictEqual(llamadas, [['r2', 'Leo, lo sentimos.']]);
+  const sp = crearServicioClientes2({ pool, copia: copiaDeMentira, puede: () => true, resenasVivo: vivo('puente') });
+  await assert.rejects(sp.llamar({}, 'resenas', 'publicarDesdePanel', ['r2', 'x']), (e) => e.status === 409);
+  await assert.rejects(sb.llamar({}, 'consola', 'enviarMensaje', ['whatsapp', '1', 'hola']), (e) => e.status === 409);   // el bot no cambia
+});
+
+test('Clientes2: con la base llena, reseñas (todas las de Google + borradores) y encuesta salen de la base', async () => {
+  const poolBase = { query: async (sql) => {
+    if (/FROM resenas_gbp_google g/.test(sql)) return { rows: [
+      { review_id: 'g1', estrellas: 5, cliente: 'Ana', resena: 'Rico', t: new Date('2026-10-20T10:00:00Z'), respuesta: 'Ana, gracias.', borrador: null, estado: null },
+      { review_id: 'g2', estrellas: 2, cliente: 'Leo', resena: 'Lento', t: new Date('2026-10-19T10:00:00Z'), respuesta: '', borrador: 'Leo, lo sentimos.', estado: 'PENDIENTE_APROBAR' }] };
+    if (/tarea = 'leer-google'/.test(sql)) return { rows: [{ resumen: { promedio: 4.8, total_google: 451 } }] };
+    if (/FROM encuesta_respuestas/.test(sql)) return { rows: [{ fecha: new Date('2026-10-01'), calificacion: 5, mejorar: '' }, { fecha: new Date('2026-10-02'), calificacion: 2, mejorar: 'Música' }] };
+    return { rows: [] };
+  } };
+  const s = crearServicioClientes2({ pool: poolBase, copia: copiaDeMentira, puede: () => true });
+  const d = await s.llamar({}, 'resenas', 'getDatosDashboard', []);
+  assert.strictEqual(d.fuente, 'base');
+  assert.strictEqual(d.total, 451);
+  assert.strictEqual(d.average, 4.8);
+  assert.strictEqual(d.reviews.length, 2);
+  assert.strictEqual(d.reviews[1].borrador, 'Leo, lo sentimos.');
+  assert.strictEqual(d.reviews[0].hasReply, true);
+  const e = await s.llamar({}, 'resenas', 'encuesta', []);
+  assert.strictEqual(e.fuente, 'base');
+  assert.strictEqual(e.total, 2);
+  assert.strictEqual(e.respuestas[0].comentario, 'Música');
 });
