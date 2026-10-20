@@ -2687,10 +2687,11 @@
      "texto": "",
      "reglas": [
       "no_rompe",
-      {
-       "regla": "foto_queda_registrada",
-       "pendiente": true
-      }
+      "contesta",
+      "contiene:Recibimos tu foto",
+      "avisa_foto",
+      "foto_queda_registrada",
+      "no_nombra_a_juanma"
      ]
     }
    ]
@@ -2759,10 +2760,7 @@
       "no_pasa_a_juanma",
       "idioma:es",
       "juez:no_finge_ver_foto",
-      {
-       "regla": "foto_queda_registrada",
-       "pendiente": true
-      }
+      "foto_queda_registrada"
      ],
      "foto": true
     }
@@ -3978,6 +3976,51 @@
       "no_rompe",
       "se_calla",
       "foto_queda_registrada"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "FOT-07",
+   "grupo": "fotos",
+   "origen": "armado a mano 2026-10-20",
+   "estado": null,
+   "canal": "messenger",
+   "perfil": "Tom Prueba",
+   "titulo": "Messenger: cliente en inglés manda una foto sin texto → contesta en inglés, anota y avisa",
+   "eventos": [
+    {
+     "t": "2026-11-13T16:00:00-06:00",
+     "de": "cliente",
+     "texto": "Hello, are you open on Sundays?",
+     "grabado": {
+      "respuesta": "Hi! Yes, we're open on Sundays.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Pregunta si abren los domingos",
+      "email": "",
+      "nombre": "Tom Prueba"
+     }
+    },
+    {
+     "t": "2026-11-13T16:00:06-06:00",
+     "de": "bot",
+     "texto": "Hi! Yes, we're open on Sundays."
+    },
+    {
+     "t": "2026-11-13T16:03:00-06:00",
+     "de": "cliente",
+     "foto": true,
+     "texto": "",
+     "reglas": [
+      "no_rompe",
+      "contesta",
+      "contiene:We got your photo",
+      "idioma:en",
+      "avisa_foto",
+      "foto_queda_registrada",
+      "no_nombra_a_juanma"
      ]
     }
    ]
