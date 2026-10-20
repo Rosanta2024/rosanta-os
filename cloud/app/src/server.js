@@ -60,6 +60,8 @@ async function main() {
     pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, copia: pagos.copia, refrescar: () => pagos.refrescar(clienteSheets()) },
     // procesos de fondo (20-oct): la cuenta de restaurante@ (Gmail/Drive) y el permiso de escribir la Config
     cuentaGoogle: cuentaGoogle,
+    resenas: { sheets: clienteSheets, gbp: require('./resenas-nube').gbpDelEntorno(process.env) },
+    encuesta: {},
     // pauta_semanal (20-oct): los escritores de los lunes, con la cuenta de restaurante@ (Drive/Sheets) y la llave de Wix
     procPauta: cuentaGoogle() && { sheetsLectura: require('./proc-pauta').sheetsDeCuenta(cuentaGoogle()), drive: require('./proc-pauta').crearDrive(cuentaGoogle()),
       sheetsEscritura: sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)),

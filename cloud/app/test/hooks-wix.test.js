@@ -150,3 +150,16 @@ test('Si el /exec falla o tarda, Wix recibe 502 (crmReservas solo lo registra) y
     assert.strictEqual((await fetch(b + '/hooks/reserva?token=' + LLAVE_R, { method: 'POST', body: JSON.stringify(RESERVA) })).status, 502, 'un error del /exec no se disfraza de exito');
   });
 });
+
+test('enBaseHttp: le pasa el aviso a rosanta-clientes con la clave de tareas; si no contesta, 502', async () => {
+  let visto = null;
+  const f = H.enBaseHttp({ url: 'https://clientes.falso/', clave: 'clave-t', fetch: async (u, o) => { visto = { u, h: o.headers, b: JSON.parse(o.body) }; return { status: 200, text: async () => '{"ok":true,"id":"r2"}' }; } });
+  const r = await f('reserva', RESERVA);
+  assert.deepStrictEqual([r.estado, r.json], [200, { ok: true, id: 'r2' }]);
+  assert.strictEqual(visto.u, 'https://clientes.falso/interno/aviso');
+  assert.strictEqual(visto.h['x-rosanta-tarea'], 'clave-t');
+  assert.deepStrictEqual(visto.b, { hook: 'reserva', cuerpo: RESERVA });
+  assert.strictEqual((await H.enBaseHttp({ url: 'x', clave: 'c', fetch: async () => { throw new Error('caido'); } })('carrito', CARRITO)).estado, 502);
+  assert.strictEqual((await H.enBaseHttp({ url: 'x', clave: 'c', fetch: async () => ({ status: 500, text: async () => 'boom' }) })('carrito', CARRITO)).estado, 502);
+  assert.strictEqual((await H.enBaseHttp({ url: 'x', clave: 'c', fetch: async () => ({ status: 400, text: async () => '{"error":"reserva sin id ni contacto"}' }) })('reserva', RESERVA)).estado, 400);
+});

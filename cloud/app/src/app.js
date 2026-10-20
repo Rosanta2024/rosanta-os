@@ -176,6 +176,9 @@ function crearApp(deps) {
   require('./proc-fel-banco').montarProcesos(app, { pool: deps.pool, claveTareas: deps.claveTareas, cuentaGoogle: deps.cuentaGoogle, sheetsEscritura: deps.sheetsEscritura });
   require('./proc-cierres').montar(app, { pool: deps.pool, pagos: deps.pagos, cuenta: deps.cuentaGoogle ? deps.cuentaGoogle() : null, claveTareas: deps.claveTareas });
   if (deps.procPauta) require('./proc-pauta').montarPauta(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.procPauta));
+  // reseñas de Google y encuesta (equipo "Nube: reseñas y encuesta", 20-oct): interruptores 'resenas' y 'encuesta' en la tabla
+  if (deps.resenas) require('./resenas-nube').montarResenas(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.resenas));
+  if (deps.encuesta) require('./encuesta-nube').montarEncuesta(app, Object.assign({ pool: deps.pool }, deps.encuesta));
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);
