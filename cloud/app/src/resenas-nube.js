@@ -9,6 +9,7 @@
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
  *   POST /tareas/resenas/procesar      EN VIVO (resenas-vivo.js, deps.vivo): solo con el interruptor 'resenas' en 'base'.
  *   POST /tareas/resenas/ensayo-procesar  SOLO en el ensayo (RESENAS_ENSAYO=si): procesar con reseñas falsas 'ENSAYO-...'.
+ *   POST /tareas/resenas/ensayo-aprobar   SOLO en el ensayo: el "Aprobar y publicar" del panel para una reseña ENSAYO-....
  *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
@@ -353,6 +354,12 @@ function montarResenas(app, deps) {
       const falsas = lista.map((r) => ({ review_id: String(r.review_id), estrellas: Number(r.estrellas), cliente: String(r.cliente || ''), resena: String(r.resena || ''),
         creada: new Date(), actualizada: new Date(), respuesta: '', respuesta_fecha: null }));
       return responder(() => deps.vivo.procesar(falsas), true)(req, res);
+    });
+    // El "Aprobar y publicar" del panel (la MISMA funcion publicarDesdePanel), para una reseña falsa del ensayo.
+    app.post('/tareas/resenas/ensayo-aprobar', exigirTarea, async (req, res) => {
+      const b = req.body || {};
+      if (!/^ENSAYO-[A-Za-z0-9-]{1,40}$/.test(String(b.review_id)) || typeof b.texto !== 'string') return res.status(400).json({ ok: false, error: 'review_id ENSAYO-... y texto.' });
+      try { res.json(await deps.vivo.publicarDesdePanel(b.review_id, b.texto)); } catch (e) { res.status(e.status || 500).json({ ok: false, error: String(e.message || e) }); }
     });
   }
   app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));
