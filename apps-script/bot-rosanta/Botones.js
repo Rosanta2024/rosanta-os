@@ -53,6 +53,7 @@ var BT_TXT = {
     promesaYa: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
     promesaManana: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
     promesaHoy: 'Alguien del restaurante se pondrá en contacto contigo lo antes posible.',
+    fotoRecibida: 'Recibimos tu foto. Alguien del restaurante la revisa lo antes posible.',   // @65 (Juanma, 20-oct-2026)
     pruebaOk: 'Modo prueba de botones activado para este chat.'
   },
   en: {
@@ -72,6 +73,7 @@ var BT_TXT = {
     promesaYa: 'Someone from the restaurant will get in touch with you as soon as possible.',
     promesaManana: 'Someone from the restaurant will get in touch with you as soon as possible.',
     promesaHoy: 'Someone from the restaurant will get in touch with you as soon as possible.',
+    fotoRecibida: 'We got your photo. Someone from the restaurant will review it as soon as possible.',
     pruebaOk: 'Button test mode is on for this chat.'
   }
 };
@@ -261,6 +263,13 @@ function btLeerBoton_(id, tituloRecibido) {
 function btEntradaWhatsApp_(msg) {
   if (!msg) return null;
   if (msg.type === 'text' && msg.text) return { texto: msg.text.body, log: msg.text.body, boton: null };
+  // @65 (20-oct-2026, Juanma): las fotos ya no se pierden. Con texto: se contesta el texto, sabiendo que vino una foto.
+  // Sin texto: se anota, a Juanma le llega el aviso y al cliente se le dice que la revisamos (btFotoSinTexto_).
+  if (msg.type === 'image' && msg.image) {
+    var cap = String(msg.image.caption || '').trim();
+    if (cap) return { texto: cap + '\n\n' + BT_FOTO_NOTA, log: '📷 [Foto] ' + cap, boton: null, foto: true };
+    return { texto: '', log: '📷 [Foto sin texto]', boton: null, foto: true, sinTexto: true };
+  }
   if (msg.type === 'interactive' && msg.interactive) {
     var r = msg.interactive.button_reply || msg.interactive.list_reply;
     if (!r) return null;
@@ -268,6 +277,32 @@ function btEntradaWhatsApp_(msg) {
     return b ? { texto: b.texto, log: '🔘 ' + b.titulo, boton: b } : null;
   }
   return null;
+}
+
+var BT_FOTO_NOTA = '[Nota del sistema: el cliente mandó una foto junto con este mensaje. No puedes verla: contesta el texto y no digas qué hay en la foto.]';
+var BT_FOTO_MIN = 10;   // una ráfaga de fotos sin texto: una sola respuesta y un solo aviso cada 10 minutos
+
+/** Foto sin texto por WhatsApp: respuesta corta al cliente (si el chat no está en manos de Juanma), registro y aviso. */
+function btFotoSinTexto_(pid, from, nombre, pausado) {
+  var cache = CacheService.getScriptCache(), clave = 'foto_' + from;
+  if (cache.get(clave)) return;
+  cache.put(clave, '1', BT_FOTO_MIN * 60);
+  var l = btIdiomaHistoria_(from), t = BT_TXT[l];
+  if (!pausado) {
+    btEnviar_('whatsapp', from, t.fotoRecibida, null, pid);
+    logMensaje('whatsapp', from, nombre, 'out', 'bot', t.fotoRecibida);
+  }
+  logLead({ canal: 'whatsapp', idioma: l, nombre: nombre || '', telefono: from, tipo: 'consulta', urgencia: 'tibio',
+    resumen: 'Mandó una foto sin texto', accion: 'escalar_humano', requiere_humano: true }, '📷 [Foto sin texto]', from, pausado ? '' : t.fotoRecibida);
+  var consola = PROPS.getProperty('CONSOLE_URL') || ('https://docs.google.com/spreadsheets/d/' + CONFIG.SHEET_ID + '/edit');
+  var texto = '📷 Foto de cliente (WhatsApp)\n' + (nombre || 'Cliente') + ' · ' + from + '\n' +
+    (pausado ? 'El chat ya está en tus manos: al cliente no se le contestó.' : 'Al cliente se le dijo que la revisamos.') + '\n👉 ' + consola;
+  try { MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: '📷 Foto de cliente (WhatsApp) — ' + (nombre || from), body: texto }); }
+  catch (e) { Logger.log('btFotoSinTexto_ correo: ' + e); }
+  try {
+    var owner = PROPS.getProperty('OWNER_WA');
+    if (owner && pid) sendWhatsApp(pid, owner, texto);
+  } catch (e) { Logger.log('btFotoSinTexto_ WhatsApp: ' + e); }
 }
 
 /** Instagram y Messenger: el quick reply trae su payload además del texto. */
