@@ -95,3 +95,20 @@ test('Vivo: sin RESENAS_PUBLICAR=si es en seco: decide y anota, pero no le escri
   assert.deepStrictEqual(r.habria_publicado.map((x) => x.review_id), ['a']);
   assert.strictEqual(pool.t.get('b').estado, 'PENDIENTE_APROBAR');
 });
+
+test('Ensayo: reseñas falsas recorren borrador → aprobar → "habria publicado", sin tocar Google; nunca con publicar de verdad', async () => {
+  const f = falsos([]);
+  f.publicador.una = async () => { throw new Error('no deberia consultar Google por una falsa'); };
+  const pool = base('base');
+  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', ensayo: true, gbp: { oauth: {}, cuenta: '1', ubicacion: '2' } }, f));
+  const r = await v.procesar([g('ENSAYO-5', 5), g('ENSAYO-2', 2)]);
+  assert.strictEqual(r.en_seco, true);
+  assert.deepStrictEqual(r.habria_publicado.map((x) => x.review_id), ['ENSAYO-5']);
+  assert.strictEqual(pool.t.get('ENSAYO-2').estado, 'PENDIENTE_APROBAR');
+  const p = await v.publicarDesdePanel('ENSAYO-2', 'CENSAYO-2, lo sentimos. Escríbenos a restaurante@rosanta.rest.');
+  assert.deepStrictEqual([p.estado, p.en_seco], ['PUBLICADA_APROBADA', true]);
+  assert.strictEqual(f.publicadas.length, 0);
+  const sinEnsayo = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k' }, falsos([])));
+  await assert.rejects(sinEnsayo.procesar([g('ENSAYO-1', 5)]), (e) => e.status === 403);
+  assert.throws(() => V.crearResenasVivo(Object.assign({ pool, ensayo: true, publicarDeVerdad: true }, falsos([]))), /no pueden ir juntos/);
+});

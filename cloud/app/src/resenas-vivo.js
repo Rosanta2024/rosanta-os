@@ -70,7 +70,13 @@ function crearResenasVivo(deps) {
   const deVerdad = deps.publicarDeVerdad !== undefined ? deps.publicarDeVerdad : process.env.RESENAS_PUBLICAR === 'si';
   const enSeco = [];
   const pubReal = deps.publicador || crearPublicadorGbp(cfg, { fetch: deps.fetch, lector });
-  const pub = deVerdad ? pubReal : { una: pubReal.una, publicar: async (f, id, texto) => { const t = validarTexto(texto); enSeco.push({ review_id: id, texto: t }); return t; } };
+  // Ensayo (RESENAS_ENSAYO=si, solo en rosanta-nube-ensayo): procesar acepta reseñas FALSAS (id 'ENSAYO-...') que se
+  // suman a las de Google SOLO en memoria y en la base de ensayo. Nunca junto con publicar de verdad.
+  const ensayo = deps.ensayo !== undefined ? deps.ensayo : process.env.RESENAS_ENSAYO === 'si';
+  if (ensayo && deVerdad) throw new Error('RESENAS_ENSAYO y RESENAS_PUBLICAR no pueden ir juntos.');
+  const esFalsa = (id) => /^ENSAYO-/.test(String(id));
+  const unaSegura = async (f, id) => (esFalsa(id) ? {} : pubReal.una(f, id));
+  const pub = deVerdad ? pubReal : { una: unaSegura, publicar: async (f, id, texto) => { const t = validarTexto(texto); enSeco.push({ review_id: id, texto: t }); return t; } };
   const Bo = deps.borrador || B;
   const clave = () => (deps.claveClaude !== undefined ? deps.claveClaude : process.env.ANTHROPIC_RESENAS);
 
@@ -91,9 +97,13 @@ function crearResenasVivo(deps) {
   }
 
   /** El activador de cada hora. */
-  async function procesar() {
+  async function procesar(falsas) {
     if ((await modo()) !== 'base') return { modo: 'puente', nuevas: 0, alertas: 0 };
     const g = await lector.resenas();
+    if (falsas && falsas.length) {
+      if (!ensayo) throw error(403, 'Las reseñas de prueba solo existen en el ensayo.');
+      g.reviews = g.reviews.concat(falsas);
+    }
     const ya = new Set((await deps.pool.query('SELECT review_id FROM resenas_gbp')).rows.map((x) => x.review_id));
     enSeco.length = 0;
     const out = { modo: 'base', en_seco: !deVerdad, nuevas: 0, auto: 0, para_aprobar: [], ya_tenian: 0, errores: [] };
@@ -138,7 +148,7 @@ function crearResenasVivo(deps) {
     const f = await fila(reviewId);
     const t = await pub.publicar(await fichaActual(), f.review_id, texto);
     await guardarFila(Object.assign({}, f, { respuesta: t, estado: 'PUBLICADA_APROBADA', aprobar: 'SI', fecha_publicada: new Date() }));
-    return { ok: true, estado: 'PUBLICADA_APROBADA', texto: t };
+    return { ok: true, estado: 'PUBLICADA_APROBADA', texto: t, en_seco: !deVerdad };
   }
   async function editarRespuestaPublicada(reviewId, texto) {
     await exigirBase();
@@ -146,7 +156,7 @@ function crearResenasVivo(deps) {
     const f = await fila(reviewId);
     const t = await pub.publicar(await fichaActual(), f.review_id, texto);
     await guardarFila(Object.assign({}, f, { respuesta: t, estado: 'PUBLICADA_EDITADA', aprobar: 'SI', fecha_publicada: new Date() }));
-    return { ok: true, estado: 'PUBLICADA_EDITADA', texto: t };
+    return { ok: true, estado: 'PUBLICADA_EDITADA', texto: t, en_seco: !deVerdad };
   }
   async function guardarBorrador(reviewId, texto) {
     await exigirBase();
@@ -177,7 +187,7 @@ function crearResenasVivo(deps) {
     return (ficha = (await lector.resenas()).ficha);
   }
 
-  return { modo, enSeco: () => !deVerdad, procesar, publicarDesdePanel, editarRespuestaPublicada, guardarBorrador, regenerarBorrador, descartarBorrador };
+  return { modo, enSeco: () => !deVerdad, ensayo, procesar, publicarDesdePanel, editarRespuestaPublicada, guardarBorrador, regenerarBorrador, descartarBorrador };
 }
 
 function asuntoPendientes(n) { return 'Rosanta: ' + n + ' reseña(s) para revisar'; }
