@@ -58,7 +58,7 @@ async function main() {
   // Marketing (contenido y pauta), con MARKETING_VIVO=si: interruptor PARAMETROS › motor_marketing (30 s de cache)
   let marketing = null, leerModoMarketing = null;
   if (process.env.MARKETING_VIVO === 'si') {
-    const CONFIG = process.env.INTERRUPTOR_LIBRO;
+    const CONFIG = LIBRO_INT;   // Config (PARAMETROS y METAS); en ensayo, la hoja de ensayo
     const existentes = async (id, ps) => { const m = await clienteSheets().spreadsheets.get({ spreadsheetId: id, fields: 'sheets.properties.title' }); const t = m.data.sheets.map((x) => x.properties.title); return ps.filter((p) => t.includes(p)); };
     marketing = crearMarketingVivo(pool, {
       configId: CONFIG,
