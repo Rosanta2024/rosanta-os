@@ -97,6 +97,9 @@ function crearAppVivo(deps) {
       } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
     });
   }
+  // Rutas para rosanta-web (la web propia sin Wix): crm-reserva, capi y pipeline-adventure (web.js)
+  if (deps.crm) require('./web').montarWeb(app, exigirTarea, { pool: deps.pool, crm: deps.crm, vivo: deps.vivo, capiReserva: deps.capiReserva, hoy: deps.hoy });
+
   if (deps.marketing) {
     /**
      * Las 6 funciones de guardar de Marketing, que la intranet manda aca con motor_marketing = base

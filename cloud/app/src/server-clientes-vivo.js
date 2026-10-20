@@ -78,7 +78,8 @@ async function main() {
     };
   }
   const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date());
-  const app = crearAppVivo({ pool, vivo, crm, marketing, leerModoMarketing, hoy, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
+  const capiReserva = require('./vivo-clientes/web').crearCapiReserva({ token: process.env.META_CAPI_TOKEN || '' });
+  const app = crearAppVivo({ pool, vivo, crm, marketing, leerModoMarketing, hoy, capiReserva, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
     claveHook: process.env.COTIZ_TOKEN_VIVO, version: process.env.K_REVISION || 'local' });
   app.listen(Number(process.env.PORT || 8080), () => console.log('clientes-vivo escuchando'));
 }
