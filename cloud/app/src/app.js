@@ -175,6 +175,7 @@ function crearApp(deps) {
   // en PARAMETROS (proc_fel, proc_banco, proc_cierres = apps | sombra | nube); sin la cuenta de Google, avisan.
   require('./proc-fel-banco').montarProcesos(app, { pool: deps.pool, claveTareas: deps.claveTareas, cuentaGoogle: deps.cuentaGoogle, sheetsEscritura: deps.sheetsEscritura });
   require('./proc-cierres').montar(app, { pool: deps.pool, pagos: deps.pagos, cuenta: deps.cuentaGoogle ? deps.cuentaGoogle() : null, claveTareas: deps.claveTareas });
+  if (deps.procPauta) require('./proc-pauta').montarPauta(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.procPauta));
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);

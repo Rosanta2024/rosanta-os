@@ -60,6 +60,10 @@ async function main() {
     pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, copia: pagos.copia, refrescar: () => pagos.refrescar(clienteSheets()) },
     // procesos de fondo (20-oct): la cuenta de restaurante@ (Gmail/Drive) y el permiso de escribir la Config
     cuentaGoogle: cuentaGoogle,
+    // pauta_semanal (20-oct): los escritores de los lunes, con la cuenta de restaurante@ (Drive/Sheets) y la llave de Wix
+    procPauta: cuentaGoogle() && { sheetsLectura: require('./proc-pauta').sheetsDeCuenta(cuentaGoogle()), drive: require('./proc-pauta').crearDrive(cuentaGoogle()),
+      sheetsEscritura: sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)),
+      env: { WIX_API_KEY: process.env.WIX_API_KEY, WIX_SITE_ID: process.env.WIX_SITE_ID } },
     sheetsEscritura: process.env.MODO_PAGOS === 'vivo' ? () => sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)) : null,
     pantallaPagos: () => (pagos.estado().modo === 'vivo' ? htmlVivo : htmlSombra),
     pantallaCaja: () => (pagos.estado().en_vivo.caja ? htmlCajaVivo : htmlCajaSombra),
