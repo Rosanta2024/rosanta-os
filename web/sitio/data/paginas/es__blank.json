@@ -1,0 +1,117 @@
+{
+  "ruta": "/es/blank",
+  "idioma": "es",
+  "lang": "es",
+  "titulo": "Cotizaciones | Rosanta",
+  "descripcion": null,
+  "canonical": "https://www.rosanta.rest/es/blank",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/blank"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/blank"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/blank"
+    }
+  ],
+  "og": {
+    "og:title": "Cotizaciones | Rosanta",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest/es/blank",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Cotizaciones | Rosanta",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVACIONES EVENTOS IDEAS PARA REGALAR PREGUNTAS FRECUENTES Política de Privacidad CONTACT LOCATION More Use tab to navigate through the menu items. © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [],
+  "bloques": []
+}

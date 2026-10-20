@@ -1,0 +1,310 @@
+{
+  "identicas": 20,
+  "esperadas": 11,
+  "revisar": 0,
+  "filas": [
+    {
+      "ruta": "/",
+      "esperadas": [
+        "schema: un solo Restaurant y un solo WebSite (Wix: 2 Restaurant, 2 WebSite)",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 3394,
+        "copia": 3394
+      }
+    },
+    {
+      "ruta": "/encuesta",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 118,
+        "copia": 118
+      }
+    },
+    {
+      "ruta": "/es",
+      "esperadas": [
+        "schema: un solo Restaurant (Wix: 2 Restaurant, 1 WebSite)",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 3443,
+        "copia": 3443
+      }
+    },
+    {
+      "ruta": "/es/blank",
+      "esperadas": [
+        "301 → /es/preguntas-frecuentes (data/mejoras-seo.json: Direcciones que en la copia responden 301 (una a una) en vez de 200)"
+      ],
+      "revisar": []
+    },
+    {
+      "ruta": "/es/encuesta",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 153,
+        "copia": 153
+      }
+    },
+    {
+      "ruta": "/es/events",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 247,
+        "copia": 247
+      }
+    },
+    {
+      "ruta": "/es/events-1",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 473,
+        "copia": 473
+      }
+    },
+    {
+      "ruta": "/es/experience-details",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 190,
+        "copia": 190
+      }
+    },
+    {
+      "ruta": "/es/experiences",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 253,
+        "copia": 253
+      }
+    },
+    {
+      "ruta": "/es/full-menu",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 13644,
+        "copia": 13644
+      }
+    },
+    {
+      "ruta": "/es/gift-card",
+      "esperadas": [
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 238,
+        "copia": 238
+      }
+    },
+    {
+      "ruta": "/es/gift-ideas",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 1934,
+        "copia": 1934
+      }
+    },
+    {
+      "ruta": "/es/loyalty",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 201,
+        "copia": 201
+      }
+    },
+    {
+      "ruta": "/es/política-de-privacidad",
+      "esperadas": [
+        "H1 AGREGADO (el del componente, antes dentro del iframe): «Política de Privacidad»",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 153,
+        "copia": 153
+      }
+    },
+    {
+      "ruta": "/es/preguntas-frecuentes",
+      "esperadas": [
+        "H1 AGREGADO (el del componente, antes dentro del iframe): «Preguntas»",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 153,
+        "copia": 153
+      }
+    },
+    {
+      "ruta": "/es/reservas",
+      "esperadas": [
+        "2 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 288,
+        "copia": 288
+      }
+    },
+    {
+      "ruta": "/es/reservation-details",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 153,
+        "copia": 153
+      }
+    },
+    {
+      "ruta": "/es/términos-y-condiciones",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 2504,
+        "copia": 2504
+      }
+    },
+    {
+      "ruta": "/events",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 212,
+        "copia": 212
+      }
+    },
+    {
+      "ruta": "/events-1",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 410,
+        "copia": 410
+      }
+    },
+    {
+      "ruta": "/experience-details",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 169,
+        "copia": 169
+      }
+    },
+    {
+      "ruta": "/experiences",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 215,
+        "copia": 215
+      }
+    },
+    {
+      "ruta": "/full-menu",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 12788,
+        "copia": 12788
+      }
+    },
+    {
+      "ruta": "/gift-card",
+      "esperadas": [
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 204,
+        "copia": 204
+      }
+    },
+    {
+      "ruta": "/gift-ideas",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 1736,
+        "copia": 1736
+      }
+    },
+    {
+      "ruta": "/loyalty",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 152,
+        "copia": 152
+      }
+    },
+    {
+      "ruta": "/política-de-privacidad",
+      "esperadas": [
+        "H1 AGREGADO (el del componente, antes dentro del iframe): «Privacy Policy»",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 118,
+        "copia": 118
+      }
+    },
+    {
+      "ruta": "/preguntas-frecuentes",
+      "esperadas": [
+        "H1 AGREGADO (el del componente, antes dentro del iframe): «Questions»",
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 118,
+        "copia": 118
+      }
+    },
+    {
+      "ruta": "/reservas",
+      "esperadas": [
+        "2 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [],
+      "caracteres": {
+        "wix": 249,
+        "copia": 249
+      }
+    },
+    {
+      "ruta": "/reservation-details",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 118,
+        "copia": 118
+      }
+    },
+    {
+      "ruta": "/términos-y-condiciones",
+      "esperadas": [],
+      "revisar": [],
+      "caracteres": {
+        "wix": 2469,
+        "copia": 2469
+      }
+    }
+  ]
+}

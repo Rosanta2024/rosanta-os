@@ -1,0 +1,216 @@
+{
+  "ruta": "/events",
+  "idioma": "en",
+  "lang": "en",
+  "titulo": "COTIZACIONES | Rosanta",
+  "descripcion": null,
+  "canonical": "https://www.rosanta.rest/events",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/events"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/events"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/events"
+    }
+  ],
+  "og": {
+    "og:title": "COTIZACIONES | Rosanta",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest/events",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "COTIZACIONES | Rosanta",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVATIONS EVENTS GIFT IDEAS FAQ Privacy Policy CONTACT LOCATION More Use tab to navigate through the menu items. COTIZACIONES OPCIONES DE MENÚ MENU DEGUSTACIÓN MENÚ EVENTOS ESPECIALES BOQUITAS & BARRA LIBRE © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-lsz9414i",
+      "fondo": "rgb(78, 109, 90)",
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "svg",
+          "id": "comp-lsz9hyqw",
+          "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"2.08 0 1854.44 1047.17\" viewBox=\"0 0 1856.52 1048.17\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"ugc\" role=\"presentation\" aria-hidden=\"true\" aria-label=\"\">\n    <g>\n        <path d=\"m1622.09 860.28-19.18-547.43s203.13 147.32 114.77 249.08c-88.36 101.76 42.83 195.84-95.59 298.35Z\" fill=\"#57a77f\"></path>\n        <path d=\"m1535.53 662.62-547.74 4.61s152.67-199.14 252.04-108.1c99.37 91.04 196.91-37.61 295.7 103.49Z\" fill=\"#57a77f\"></path>\n        <path d=\"M1856.52 520.66s-142.1-2.76-141.89 200.48\" fill=\"#57a77f\"></path>\n        <path d=\"M1609.26 99.8s-249.66 198.68-306.53 493.57\" stroke=\"#57a77f\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n        <path d=\"M1082.11 325.04c14.41 71.39-265.17-194.21-166.2-233.42C1014.88 52.4 956.92 0 956.92 0s65.16 58.99 148.61 22.01c160.49-71.11 145.99 81.76 115.86 127.51-13.09 19.87-179.66-24.55-139.28 175.51Z\" fill=\"#aeaae2\"></path>\n        <path d=\"M1572.81 1044.21s67.89-288.27-45.87-440.56C1413.18 451.36 1069.67 335 1069.67 335\" stroke=\"#aeaae2\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n        <path d=\"M1571.23 1047.17 2.08 1044.21s261.85-326.98 718.93-153.22c356.29 135.44 610.28-96.89 850.22 156.18Z\" stroke=\"#57a77f\" fill=\"none\" stroke-miterlimit=\"10\" stroke-width=\"2\"></path>\n    </g>\n</svg>",
+          "href": null,
+          "etiqueta": null,
+          "pos": {
+            "w": 844,
+            "top": 31,
+            "abajo": 10,
+            "base": 980,
+            "x": 113,
+            "area": "1 / 1 / 7 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lsz94156",
+          "html": "<div><h2 class=\"font_0\" style=\"font-size:79px;text-align:center\"><span style=\"font-size:79px\"><span style=\"color:#FFFFFF\">COTIZACIONES</span></span></h2></div>",
+          "pos": {
+            "w": 980,
+            "top": 87,
+            "abajo": 7,
+            "base": 980,
+            "x": 0,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lsz9415e",
+          "html": "<div><p class=\"font_7\" style=\"font-size:18px;line-height:1.3em;text-align:center\">OPCIONES DE MENÚ</p></div>",
+          "pos": {
+            "w": 629,
+            "top": 0,
+            "abajo": 42,
+            "base": 980,
+            "x": 175,
+            "area": "2 / 1 / 3 / 2"
+          }
+        },
+        {
+          "t": "boton",
+          "id": "comp-lsz9415h",
+          "texto": "MENU DEGUSTACIÓN",
+          "href": "/_files/ugd/3de38d_7f417b2d9c4645d4a39a0b166d7f7e9e.pdf",
+          "ancla": null,
+          "nueva": true,
+          "pos": {
+            "w": 308,
+            "top": 0,
+            "abajo": 31,
+            "base": 980,
+            "x": 357,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "boton",
+          "id": "comp-lwk3tw02",
+          "texto": "MENÚ EVENTOS ESPECIALES",
+          "href": "/_files/ugd/3de38d_09439677a0a74caab0fbbb9562485334.pdf",
+          "ancla": null,
+          "nueva": true,
+          "pos": {
+            "w": 308,
+            "top": 0,
+            "abajo": 32,
+            "base": 980,
+            "x": 357,
+            "area": "4 / 1 / 5 / 2"
+          }
+        },
+        {
+          "t": "boton",
+          "id": "comp-lwk4bcwf",
+          "texto": "BOQUITAS & BARRA LIBRE",
+          "href": "/_files/ugd/3de38d_dde190a54ad14f0f872ff51c5fa26798.pdf",
+          "ancla": null,
+          "nueva": true,
+          "pos": {
+            "w": 308,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 357,
+            "area": "5 / 1 / 6 / 2"
+          }
+        }
+      ]
+    }
+  ]
+}

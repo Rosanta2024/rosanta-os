@@ -1,0 +1,37 @@
+---
+// Política de privacidad: en Wix es un componente HTML (iframe). Aquí, el mismo texto en HTML
+// visible, en el idioma de la página y con el otro a un clic.
+import { datos } from '../lib/sitio.mjs';
+const { idioma = 'en' } = Astro.props;
+const p = datos().privacidad;
+const otro = idioma === 'es' ? 'en' : 'es';
+---
+<div class="priv-r" data-paridad="mejora">
+  {[idioma, otro].map((lang) => (
+    <div class="priv-idioma" lang={lang} data-lang={lang} hidden={lang !== idioma}>
+      <div class="hero">
+        {lang === idioma ? <h1>{p.i18n[lang].title}</h1> : <p class="h1">{p.i18n[lang].title}</p>}
+        <p>{p.i18n[lang].subtitle}</p>
+      </div>
+      <div class="toolbar">
+        <div class="lang-toggle">
+          <button type="button" data-ver="es" class:list={[{ active: lang === 'es' }]}>ES</button>
+          <button type="button" data-ver="en" class:list={[{ active: lang === 'en' }]}>EN</button>
+        </div>
+      </div>
+      <div class="doc">
+        <p class="intro">{p.i18n[lang].intro}</p>
+        {p.sections.map((s) => (
+          <section class="sec">
+            <h2>{s.h[lang]}</h2>
+            <Fragment set:html={s.body[lang]} />
+          </section>
+        ))}
+      </div>
+      <p class="priv-pie">{p.i18n[lang].footer}</p>
+    </div>
+  ))}
+</div>
+<script is:inline>
+(function(){var r=document.querySelector('.priv-r');if(!r)return;r.addEventListener('click',function(e){var b=e.target.closest('button[data-ver]');if(!b)return;r.querySelectorAll('.priv-idioma').forEach(function(x){x.hidden=x.dataset.lang!==b.dataset.ver;});});})();
+</script>

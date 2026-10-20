@@ -1,0 +1,188 @@
+[
+  {
+    "ruta": "/",
+    "clave": "inicio",
+    "titulo": "Rosanta | Farm to Table in Antigua Guatemala",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/encuesta",
+    "clave": "encuesta",
+    "titulo": "Encuesta | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/es",
+    "clave": "es",
+    "titulo": "Rosanta | Restaurante Farm to Table en Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/blank",
+    "clave": "es__blank",
+    "titulo": "Cotizaciones | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/encuesta",
+    "clave": "es__encuesta",
+    "titulo": "Encuesta | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/events",
+    "clave": "es__events",
+    "titulo": "COTIZACIONES | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/events-1",
+    "clave": "es__events-1",
+    "titulo": "Rosanta | Eventos y Celebraciones en Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/experience-details",
+    "clave": "es__experience-details",
+    "titulo": "Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/experiences",
+    "clave": "es__experiences",
+    "titulo": "Experiencias | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/full-menu",
+    "clave": "es__full-menu",
+    "titulo": "MENÚ ROSANTA · ANTIGUA GUATEMALA | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/gift-card",
+    "clave": "es__gift-card",
+    "titulo": "Tarjeta de regalo | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/gift-ideas",
+    "clave": "es__gift-ideas",
+    "titulo": "Rosanta | Tarjeta de Regalo | Restaurante en Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/loyalty",
+    "clave": "es__loyalty",
+    "titulo": "Fidelización | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/política-de-privacidad",
+    "clave": "es__política-de-privacidad",
+    "titulo": "Política de Privacidad | Rosanta · Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/preguntas-frecuentes",
+    "clave": "es__preguntas-frecuentes",
+    "titulo": "Rosanta | Frequently Asked Questions | Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/reservas",
+    "clave": "es__reservas",
+    "titulo": "Reservaciones | Rosanta · Antigua Guatemala",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/reservation-details",
+    "clave": "es__reservation-details",
+    "titulo": "Reservation Details | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/es/términos-y-condiciones",
+    "clave": "es__términos-y-condiciones",
+    "titulo": "Términos y Condiciones | Rosanta",
+    "idioma": "es"
+  },
+  {
+    "ruta": "/events",
+    "clave": "events",
+    "titulo": "COTIZACIONES | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/events-1",
+    "clave": "events-1",
+    "titulo": "Rosanta | Private Events & Celebrations in Antigua Guatemala",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/experience-details",
+    "clave": "experience-details",
+    "titulo": "Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/experiences",
+    "clave": "experiences",
+    "titulo": "Experiencias | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/full-menu",
+    "clave": "full-menu",
+    "titulo": "ROSANTA MENU · ANTIGUA GUATEMALA | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/gift-card",
+    "clave": "gift-card",
+    "titulo": "Tarjeta de regalo | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/gift-ideas",
+    "clave": "gift-ideas",
+    "titulo": "Rosanta | Gift Cards in Antigua Guatemala | Garden Restaurant",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/loyalty",
+    "clave": "loyalty",
+    "titulo": "Fidelización | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/política-de-privacidad",
+    "clave": "política-de-privacidad",
+    "titulo": "Privacy Policy | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/preguntas-frecuentes",
+    "clave": "preguntas-frecuentes",
+    "titulo": "Rosanta | Frequently Asked Questions | Antigua Guatemala",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/reservas",
+    "clave": "reservas",
+    "titulo": "RESERVATIONS | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/reservation-details",
+    "clave": "reservation-details",
+    "titulo": "Reservation Details | Rosanta",
+    "idioma": "en"
+  },
+  {
+    "ruta": "/términos-y-condiciones",
+    "clave": "términos-y-condiciones",
+    "titulo": "Términos y Condiciones | Rosanta",
+    "idioma": "en"
+  }
+]

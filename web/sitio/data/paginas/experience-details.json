@@ -1,0 +1,133 @@
+{
+  "ruta": "/experience-details",
+  "idioma": "en",
+  "lang": "en",
+  "titulo": "Rosanta",
+  "descripcion": null,
+  "canonical": null,
+  "robots": "true",
+  "hreflang": [],
+  "og": {
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image"
+  },
+  "h1": [],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.rosanta.rest/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Experiencias",
+          "item": "https://www.rosanta.rest/experiences"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Detalles de la experiencia",
+          "item": "https://www.rosanta.rest/experience-details"
+        }
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVATIONS EVENTS GIFT IDEAS FAQ Privacy Policy CONTACT LOCATION More Use tab to navigate through the menu items. The experience you are looking for does not exist. © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": null,
+  "imagenes": [],
+  "bloques": [
+    {
+      "t": "widget",
+      "id": "TPAMultiSection_mhz0ubgt",
+      "html": "<div><div><div data-hook=\"tpa-components-provider\"><div>The experience you are looking for does not exist.</div></div></div></div>",
+      "pos": {
+        "top": 0,
+        "ml": 0,
+        "estirar": true,
+        "area": "1 / 1 / 2 / 2"
+      }
+    }
+  ]
+}

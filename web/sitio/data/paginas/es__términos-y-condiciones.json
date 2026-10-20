@@ -1,0 +1,303 @@
+{
+  "ruta": "/es/términos-y-condiciones",
+  "idioma": "es",
+  "lang": "es",
+  "titulo": "Términos y Condiciones | Rosanta",
+  "descripcion": "En Rosanta, fusionamos la creatividad culinaria y la mixología moderna en una experiencia memorable. Nuestra pasión por los ingredientes locales y la sostenibilidad crea platos y cócteles excepcionales en un ambiente acogedor. ¡Bienvenido a un oasis gastronómico en armonía con la naturaleza!",
+  "canonical": "https://www.rosanta.rest/es/t%C3%A9rminos-y-condiciones",
+  "robots": null,
+  "hreflang": [
+    {
+      "hreflang": "en-us",
+      "href": "https://www.rosanta.rest/t%C3%A9rminos-y-condiciones"
+    },
+    {
+      "hreflang": "es-es",
+      "href": "https://www.rosanta.rest/es/t%C3%A9rminos-y-condiciones"
+    },
+    {
+      "hreflang": "x-default",
+      "href": "https://www.rosanta.rest/t%C3%A9rminos-y-condiciones"
+    }
+  ],
+  "og": {
+    "og:title": "Términos y Condiciones | Rosanta",
+    "og:description": "En Rosanta, fusionamos la creatividad culinaria y la mixología moderna en una experiencia memorable. Nuestra pasión por los ingredientes locales y la sostenibilidad crea platos y cócteles excepcionales en un ambiente acogedor. ¡Bienvenido a un oasis gastronómico en armonía con la naturaleza!",
+    "og:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg",
+    "og:image:width": "2500",
+    "og:image:height": "1330",
+    "og:url": "https://www.rosanta.rest/es/t%C3%A9rminos-y-condiciones",
+    "og:site_name": "Rosanta",
+    "og:type": "website",
+    "twitter:card": "summary_large_image",
+    "twitter:title": "Términos y Condiciones | Rosanta",
+    "twitter:description": "En Rosanta, fusionamos la creatividad culinaria y la mixología moderna en una experiencia memorable. Nuestra pasión por los ingredientes locales y la sostenibilidad crea platos y cócteles excepcionales en un ambiente acogedor. ¡Bienvenido a un oasis gastronómico en armonía con la naturaleza!",
+    "twitter:image": "https://static.wixstatic.com/media/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/3de38d_79caaf07dba148f6aef59d3aefd535d3%7Emv2.jpg"
+  },
+  "h1": [
+    "TÉRMINOS Y CONDICIONES"
+  ],
+  "jsonld": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Rosanta",
+      "image": "https://www.rosanta.rest/og-image.jpg",
+      "url": "https://www.rosanta.rest",
+      "telephone": "+50277688880",
+      "email": "restaurante@rosanta.rest",
+      "priceRange": "$$$",
+      "servesCuisine": [
+        "Farm to Table",
+        "Sustainable",
+        "Contemporary",
+        "Latin American"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "1a Calle Oriente 15",
+        "addressLocality": "Antigua Guatemala",
+        "addressRegion": "Sacatepéquez",
+        "postalCode": "03001",
+        "addressCountry": "GT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 14.56091,
+        "longitude": -90.72917
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Monday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Tuesday",
+          "opens": "17:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Wednesday",
+            "Thursday"
+          ],
+          "opens": "12:00",
+          "closes": "21:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "12:00",
+          "closes": "22:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "15:00",
+          "closes": "20:00"
+        }
+      ],
+      "acceptsReservations": "True",
+      "hasMenu": "https://www.rosanta.rest/full-menu",
+      "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
+      "sameAs": [
+        "https://www.facebook.com/rosanta.rest/",
+        "https://www.instagram.com/rosanta.rest/"
+      ]
+    }
+  ],
+  "texto_visible": "top of page ROSANTA HONEST COOKING MENU GALLERY RESERVACIONES EVENTOS IDEAS PARA REGALAR PREGUNTAS FRECUENTES Política de Privacidad CONTACT LOCATION More Use tab to navigate through the menu items. TÉRMINOS Y CONDICIONES Aviso legal Las explicaciones e información proporcionadas en esta página son solo explicaciones e información generales y a grandes rasgos sobre cómo redactar tu propio documento de Términos y Condiciones. No debes considerar este artículo como asesoramiento legal o recomendaciones sobre lo que realmente debes hacer, porque no podemos saber de antemano cuáles son los términos específicos que deseas establecer entre tu negocio y tus clientes y visitantes. Te recomendamos que busques asesoramiento legal para entender y elaborar tus propios Términos y Condiciones. Términos y Condiciones: fundamentos Dicho esto, los Términos y Condiciones («T&C») son un conjunto de términos legalmente vinculantes definidos por ti, como propietario de este sitio web. Los T&C establecen los límites legales que rigen las actividades de los visitantes del sitio web, o tus clientes, mientras visitan o participan en este sitio web. Los T&C tienen como finalidad establecer la relación legal entre los visitantes del sitio y tú como propietario de dicho sitio. Los T&C deben definirse según las necesidades específicas y la naturaleza de cada sitio web. Por ejemplo, un sitio web que ofrece productos a los clientes en operaciones de comercio electrónico, requiere T&C diferentes a los T&C de un sitio web que únicamente proporciona información (como un blog, página de inicio, etc.). Los T&C te confieren, como propietario del sitio web, la capacidad de protegerte de una responsabilidad jurídica, pero esto puede diferir de una jurisdicción a otra, así que asegúrate de recibir asesoramiento legal local si estás tratando de protegerte de la responsabilidad jurídica. Qué debe incluirse en el documento de Términos y Condiciones En general, los T&C suelen abordar este tipo de cuestiones: quién está autorizado a utilizar el sitio web, los posibles métodos de pago, una declaración de que el propietario del sitio web puede cambiar su oferta en el futuro, los tipos de garantías que el propietario del sitio web ofrece a sus clientes, una referencia a cuestiones de propiedad intelectual o derechos de autor (en caso de ser relevante), el derecho del propietario del sitio web a suspender o cancelar la cuenta de un miembro y mucho más. Para obtener más información, lee nuestro artículo Cómo crear una política de Términos y Condiciones. © 2026 Rosanta. bottom of page",
+  "fondo_pagina": null,
+  "og_imagen_medio": "3de38d_79caaf07dba148f6aef59d3aefd535d3~mv2.jpg",
+  "imagenes": [
+    {
+      "medio": "c837a6_3150cf2587214221978d85eeac6f0dd5~mv2.jpg",
+      "alt": ""
+    }
+  ],
+  "bloques": [
+    {
+      "t": "seccion",
+      "id": "comp-lgv2q4w9",
+      "fondo": null,
+      "fondoImg": null,
+      "alto": null,
+      "hijos": [
+        {
+          "t": "columnas",
+          "id": "comp-lcn8udg2",
+          "fondo": null,
+          "fondoImg": null,
+          "alto": null,
+          "hijos": [
+            {
+              "t": "columna",
+              "id": "comp-lcn8udi3",
+              "fondo": "rgb(190,226,208)",
+              "fondoImg": {
+                "medio": "c837a6_3150cf2587214221978d85eeac6f0dd5~mv2.jpg",
+                "alt": "",
+                "w": 48,
+                "h": 32,
+                "modo": "fill"
+              },
+              "alto": null,
+              "hijos": [
+                {
+                  "t": "rico",
+                  "id": "comp-lcn8udib1",
+                  "html": "<div><h1 class=\"font_2\" style=\"font-size:35px\"><span style=\"color:rgb(78,109,91)\">TÉRMINOS Y CONDICIONES</span></h1></div>",
+                  "pos": {
+                    "w": 821,
+                    "top": 75,
+                    "abajo": 10,
+                    "base": 980,
+                    "x": 20,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                },
+                {
+                  "t": "svg",
+                  "id": "comp-lcn8udie1",
+                  "svg": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"20.1 20 159.8 160\" viewBox=\"20.1 20 159.8 160\" height=\"200\" width=\"200\" xmlns=\"http://www.w3.org/2000/svg\" data-type=\"color\" role=\"presentation\" aria-hidden=\"true\" aria-label=\"\"><defs><style>#comp-lcn8udie1 svg [data-color=&quot;1&quot;] {fill: #4E6D5B;}</style></defs>\n    <g>\n        <path fill=\"#191818\" d=\"M145.2 20v101.9L44.7 21.4 20.1 46l99.3 99.3H21V180h158.9V20h-34.7z\" data-color=\"1\"></path>\n    </g>\n</svg>",
+                  "href": null,
+                  "etiqueta": null,
+                  "pos": {
+                    "w": 29,
+                    "top": 90,
+                    "abajo": 10,
+                    "base": 980,
+                    "x": 846,
+                    "area": "1 / 1 / 2 / 2"
+                  }
+                }
+              ],
+              "pos": {
+                "w": 980
+              }
+            }
+          ],
+          "pos": {
+            "w": 980,
+            "top": 0,
+            "abajo": 58,
+            "base": 980,
+            "x": 0,
+            "area": "1 / 1 / 2 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5l",
+          "html": "<div><h6 class=\"font_6\" style=\"font-size:20px\"><span style=\"color:rgb(190,226,208)\"><span style=\"font-size:20px\">Aviso legal</span></span></h6></div>",
+          "pos": {
+            "w": 604,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 25,
+            "area": "2 / 1 / 3 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5m2",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px\">Las explicaciones e información proporcionadas en esta página son solo explicaciones e información generales y a grandes rasgos sobre cómo redactar tu propio documento de Términos y Condiciones. No debes considerar este artículo como asesoramiento legal o recomendaciones sobre lo que realmente debes hacer, porque no podemos saber de antemano cuáles son los términos específicos que deseas establecer entre tu negocio y tus clientes y visitantes. Te recomendamos que busques asesoramiento legal para entender y elaborar tus propios Términos y Condiciones.</p></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 35,
+            "base": 980,
+            "x": 26,
+            "area": "3 / 1 / 4 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5o",
+          "html": "<div><h2 class=\"font_6\" style=\"font-size:20px\"><span style=\"font-size:20px\">Términos y Condiciones: fundamentos</span></h2></div>",
+          "pos": {
+            "w": 604,
+            "top": 0,
+            "abajo": 4,
+            "base": 980,
+            "x": 25,
+            "area": "4 / 1 / 5 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5p2",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px\">Dicho esto, los Términos y Condiciones («T&amp;C») son un conjunto de términos legalmente vinculantes definidos por ti, como propietario de este sitio web. Los T&amp;C establecen los límites legales que rigen las actividades de los visitantes del sitio web, o tus clientes, mientras visitan o participan en este sitio web. Los T&amp;C tienen como finalidad establecer la relación legal entre los visitantes del sitio y tú como propietario de dicho sitio.</p></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 26,
+            "area": "5 / 1 / 6 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5r",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px\">Los T&amp;C deben definirse según las necesidades específicas y la naturaleza de cada sitio web. Por ejemplo, un sitio web que ofrece productos a los clientes en operaciones de comercio electrónico, requiere T&amp;C diferentes a los T&amp;C de un sitio web que únicamente proporciona información (como un blog, página de inicio, etc.).</p></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 26,
+            "area": "6 / 1 / 7 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5s1",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px\">Los T&amp;C te confieren, como propietario del sitio web, la capacidad de protegerte de una responsabilidad jurídica, pero esto puede diferir de una jurisdicción a otra, así que asegúrate de recibir asesoramiento legal local si estás tratando de protegerte de la responsabilidad jurídica.</p></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 30,
+            "base": 980,
+            "x": 26,
+            "area": "7 / 1 / 8 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5u",
+          "html": "<div><h2 class=\"font_6\" style=\"font-size:20px\"><span style=\"font-size:20px\">Qué debe incluirse en el documento de Términos y Condiciones</span></h2></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 25,
+            "area": "8 / 1 / 9 / 2"
+          }
+        },
+        {
+          "t": "rico",
+          "id": "comp-lcn86q5v1",
+          "html": "<div><p class=\"font_8\" style=\"font-size:16px\">En general, los T&amp;C suelen abordar este tipo de cuestiones: quién está autorizado a utilizar el sitio web, los posibles métodos de pago, una declaración de que el propietario del sitio web puede cambiar su oferta en el futuro, los tipos de garantías que el propietario del sitio web ofrece a sus clientes, una referencia a cuestiones de propiedad intelectual o derechos de autor (en caso de ser relevante), el derecho del propietario del sitio web a suspender o cancelar la cuenta de un miembro y mucho más. </p>\n\n<p class=\"vacio\"> </p>\n\n<p class=\"font_8\" style=\"font-size:16px\">Para obtener más información, lee nuestro artículo <span style=\"text-decoration:underline\"><a href=\"https://support.wix.com/es/article/crear-una-pol%C3%ADtica-de-t%C3%A9rminos-y-condiciones\" target=\"_blank\" rel=\"noopener\">Cómo crear una política de Términos y Condiciones</a></span>.</p></div>",
+          "pos": {
+            "w": 781,
+            "top": 0,
+            "abajo": 10,
+            "base": 980,
+            "x": 26,
+            "area": "9 / 1 / 10 / 2"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+---
+// Preguntas frecuentes: en Wix viven en un iframe (sin JavaScript se leen ~280 caracteres).
+// Aquí van en HTML visible: las 18 preguntas del componente publicado, por categoría, en el
+// idioma de la página y con el otro idioma a un clic (igual que el botón ES | EN de hoy).
+// Cada pregunta es un <details>: se abre sin JavaScript y su texto está en el HTML.
+import { datos } from '../lib/sitio.mjs';
+const { idioma = 'en' } = Astro.props;
+const faq = datos().faq;
+const otro = idioma === 'es' ? 'en' : 'es';
+const porCat = (lang) =>
+  Object.entries(faq.cats)
+    .map(([k, c]) => ({ k, nombre: c[lang], items: faq.faqs.filter((f) => f.cat === k) }))
+    .filter((c) => c.items.length);
+const reservas = idioma === 'es' ? '/es/reservas' : '/reservas';
+---
+<div class="faq-r" data-paridad="mejora">
+  {[idioma, otro].map((lang) => (
+    <div class="faq-idioma" lang={lang} data-lang={lang} hidden={lang !== idioma}>
+      <div class="hero">
+        {lang === idioma ? <h1>{faq.i18n[lang].title}</h1> : <p class="h1">{faq.i18n[lang].title}</p>}
+        <p>{faq.i18n[lang].subtitle}</p>
+      </div>
+      <div class="toolbar">
+        <div class="controls">
+          <button type="button" class="js-solo" data-accion="abrir">{faq.i18n[lang].expand}</button>
+          <button type="button" class="js-solo" data-accion="cerrar">{faq.i18n[lang].collapse}</button>
+          <div class="lang-toggle">
+            <button type="button" data-ver="es" class:list={[{ active: lang === 'es' }]}>ES</button>
+            <button type="button" data-ver="en" class:list={[{ active: lang === 'en' }]}>EN</button>
+          </div>
+        </div>
+      </div>
+      <div class="layout">
+        {porCat(lang).map((c) => (
+          <section class="cat-block" id={lang === idioma ? `cat-${c.k}` : undefined}>
+            <h2>{c.nombre}</h2>
+            {c.items.map((f) => (
+              <details class="item" id={lang === idioma ? f.id : undefined}>
+                <summary class="q"><span class="q-text">{f.q[lang]}</span></summary>
+                <div class="a"><div class="a-inner" set:html={f.a[lang]} /></div>
+              </details>
+            ))}
+          </section>
+        ))}
+        <div class="cta"><a href={reservas}>{faq.i18n[lang].cta}</a></div>
+      </div>
+      <p class="faq-pie">{faq.i18n[lang].footer}</p>
+    </div>
+  ))}
+</div>
+<script is:inline>
+(function(){
+  var r=document.querySelector('.faq-r'); if(!r) return;
+  r.querySelectorAll('.js-solo').forEach(function(b){b.style.display='inline-block';});
+  r.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    var bloque=b.closest('.faq-idioma');
+    if(b.dataset.accion){ bloque.querySelectorAll('details').forEach(function(d){d.open=b.dataset.accion==='abrir';}); }
+    if(b.dataset.ver){ r.querySelectorAll('.faq-idioma').forEach(function(x){x.hidden=x.dataset.lang!==b.dataset.ver;}); }
+  });
+  if(location.hash){ var d=document.getElementById(location.hash.slice(1)); if(d&&d.tagName==='DETAILS'){d.open=true;} }
+})();
+</script>
