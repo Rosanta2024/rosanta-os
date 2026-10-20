@@ -169,6 +169,8 @@ function crearApp(deps) {
 
   // la entrada del telefono (/intranet) y los iconos de Rosanta (/marca): de la sesion de la Fase 2, 19-oct
   require('./entrada').montarEntrada(app);
+  // los receptores de Wix (reserva y carrito), con su interruptor puente | base: de la Fase 2, 20-oct
+  require('./hooks-wix').montarHooks(app, { pool: deps.pool });
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);
