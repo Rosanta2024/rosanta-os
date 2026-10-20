@@ -105,6 +105,7 @@ test('Ensayo: reseñas falsas recorren borrador → aprobar → "habria publicad
   assert.strictEqual(r.en_seco, true);
   assert.deepStrictEqual(r.habria_publicado.map((x) => x.review_id), ['ENSAYO-5']);
   assert.strictEqual(pool.t.get('ENSAYO-2').estado, 'PENDIENTE_APROBAR');
+  assert.deepStrictEqual(r.para_aprobar.map((x) => x.review_id), ['ENSAYO-2']);
   const p = await v.publicarDesdePanel('ENSAYO-2', 'CENSAYO-2, lo sentimos. Escríbenos a restaurante@rosanta.rest.');
   assert.deepStrictEqual([p.estado, p.en_seco], ['PUBLICADA_APROBADA', true]);
   assert.strictEqual(f.publicadas.length, 0);

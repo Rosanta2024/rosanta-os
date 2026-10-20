@@ -123,7 +123,7 @@ function crearResenasVivo(deps) {
           out.auto++;
         } else {
           await guardarFila(Object.assign({}, r, { respuesta: red.texto, estado: 'PENDIENTE_APROBAR', aprobar: 'NO' }));
-          out.para_aprobar.push({ estrellas: r.estrellas, cliente: r.cliente, resena: r.resena, borrador: red.texto });
+          out.para_aprobar.push({ review_id: r.review_id, estrellas: r.estrellas, cliente: r.cliente, resena: r.resena, borrador: red.texto });
         }
       } catch (e) { out.errores.push(r.review_id + ': ' + String(e.message || e).slice(0, 150)); }
     }
@@ -131,7 +131,7 @@ function crearResenasVivo(deps) {
     out.alertas = out.errores.length;
     if (!deVerdad) out.habria_publicado = enSeco.slice();
     await deps.pool.query('INSERT INTO resenas_corridas (tarea, ok, resumen) VALUES ($1,$2,$3)',
-      ['procesar', out.alertas === 0, JSON.stringify(Object.assign({}, out, { para_aprobar: out.para_aprobar.length }))]);
+      ['procesar', out.alertas === 0, JSON.stringify(Object.assign({}, out, { para_aprobar: out.para_aprobar.map((x) => x.review_id) }))]);
     return out;
   }
 
