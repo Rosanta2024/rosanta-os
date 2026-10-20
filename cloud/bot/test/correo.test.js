@@ -19,9 +19,8 @@ function poolDeMentira(inicial) {
     estado, sombra,
     query: async (sql, p) => {
       if (/SELECT clave, tipo, valor, vence FROM bot_estado/.test(sql)) return { rows: Array.from(estado.values()).filter((x) => x.valor !== null) };
-      if (/WHERE clave = 'INTERRUPTOR_CORREO'/.test(sql)) { const x = estado.get('INTERRUPTOR_CORREO'); return { rows: x ? [x] : [] }; }
+      if (/FROM interruptores WHERE modulo/.test(sql)) { const x = estado.get(p[0] === 'bot' ? 'INTERRUPTOR_BOT' : 'INTERRUPTOR_CORREO'); return { rows: x ? [{ modo: x.valor }] : [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor, vence/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: p[1], valor: p[2], vence: p[3] }); return { rows: [] }; }
-      if (/VALUES \('INTERRUPTOR_CORREO', 'prop', \$1\)/.test(sql)) { estado.set('INTERRUPTOR_CORREO', { clave: 'INTERRUPTOR_CORREO', tipo: 'prop', valor: p[0] }); return { rows: [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor, actualizado\) VALUES \(\$1, 'prop'/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: 'prop', valor: p[1] }); return { rows: [] }; }
       if (/INSERT INTO bot_correo_sombra/.test(sql)) { sombra.push({ tipo: p[0], hilo: p[1], mensaje: p[2], para: p[3], asunto: p[4], cuerpo: p[5] }); return { rows: [] }; }
       throw new Error('consulta no prevista: ' + sql.slice(0, 80));
@@ -151,7 +150,7 @@ test('Gmail: texto del HTML cuando no hay parte plana, y los borradores se recon
   assert.strictEqual(g.registro[0].tipo, 'respuesta');
 });
 
-test('Correo: sin el bot en vivo, "nube" no corre; /correo/quien dice el modo sin clave y el interruptor pide la clave', async () => {
+test('Correo: sin el bot en vivo, "nube" no corre; /correo/quien dice el modo sin clave; las tareas piden la clave', async () => {
   const pool = poolDeMentira(Object.assign({}, PROPS_BOT, { INTERRUPTOR_CORREO: 'nube', CORREO_DESDE: '1' }));
   const m = mundo();
   const c = crearCanalCorreo({ pool, espejo: espejoDeMentira(), leadsId: LEADS, kb: async () => 'KB', claves: {}, wixOrigen: WIX, soloSombra: true,
@@ -165,9 +164,17 @@ test('Correo: sin el bot en vivo, "nube" no corre; /correo/quien dice el modo si
   const base = 'http://127.0.0.1:' + srv.address().port;
   try {
     assert.deepStrictEqual(await (await fetch(base + '/correo/quien')).json(), { modo: 'nube' });
-    assert.strictEqual((await fetch(base + '/tareas/interruptor-correo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"valor":"apps"}' })).status, 403);
-    const ok = await fetch(base + '/tareas/interruptor-correo', { method: 'POST', headers: { 'content-type': 'application/json', 'x-rosanta-tarea': 'clave' }, body: '{"valor":"apps"}' });
-    assert.strictEqual(ok.status, 200);
-    assert.strictEqual(pool.estado.get('INTERRUPTOR_CORREO').valor, 'apps');
+    assert.strictEqual((await fetch(base + '/tareas/interruptor-correo', { method: 'POST', headers: { 'content-type': 'application/json', 'x-rosanta-tarea': 'clave' }, body: '{"valor":"apps"}' })).status, 404,
+      'el interruptor lo cambia el guion del día único en la tabla interruptores, no el servidor');
+    assert.strictEqual((await fetch(base + '/tareas/correo-minuto', { method: 'POST' })).status, 403);
   } finally { srv.close(); }
+});
+
+test('Interruptores: sin fila o sin la tabla, el modo seguro (puente / apps)', async () => {
+  const { interruptor } = require('../src/vivo');
+  const sinTabla = { query: async () => { throw new Error('relation "interruptores" does not exist'); } };
+  assert.strictEqual(await interruptor(sinTabla), 'puente');
+  assert.strictEqual(await modoCorreo(sinTabla), 'apps');
+  const raro = { query: async () => ({ rows: [{ modo: 'cualquiera' }] }) };
+  assert.strictEqual(await modoCorreo(raro), 'apps');
 });

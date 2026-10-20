@@ -3,7 +3,8 @@
  *
  * Dos llaves para encenderlo (las dos):
  *   1. La variable MODO_BOT=vivo en el servicio. Sin ella no existe la ruta /webhook (404), como hoy.
- *   2. El interruptor en la base (bot_estado › INTERRUPTOR_BOT): 'puente' (por defecto) le reenvía cada
+ *   2. El interruptor en la base (tabla interruptores, módulo 'bot'; migración 013 de la Fase 2, la misma tabla para
+ *      todos los módulos del día único; se cambia con la cuenta de migraciones): 'puente' (sin fila) le reenvía cada
  *      mensaje al bot de Apps Script tal cual, sin tocarlo; 'vivo' lo atiende el servidor nuevo.
  * Así Meta se puede apuntar al servidor nuevo con el interruptor en 'puente' (todo sigue igual) y el cambio
  * y la vuelta atrás son una sola fila (segundos), sin entrar a Meta.
@@ -108,10 +109,15 @@ async function guardarEstado(pool, antes, despues) {
   return cambios.length;
 }
 
-async function interruptor(pool) {
-  const r = await pool.query("SELECT valor FROM bot_estado WHERE clave = 'INTERRUPTOR_BOT'");
-  return r.rows[0] && r.rows[0].valor === 'vivo' ? 'vivo' : 'puente';
+/** El modo de un módulo en la tabla interruptores (sin fila, o si la tabla no está: el modo seguro). */
+async function modoModulo(pool, modulo, seguro, validos) {
+  try {
+    const r = await pool.query('SELECT modo FROM interruptores WHERE modulo = $1', [modulo]);
+    const v = r.rows[0] && r.rows[0].modo;
+    return validos.includes(v) ? v : seguro;
+  } catch (e) { return seguro; }
 }
+function interruptor(pool) { return modoModulo(pool, 'bot', 'puente', ['puente', 'vivo']); }
 
 /**
  * crearBotVivo({ pool, espejo, leadsId, kb, claves, wixOrigen, correo, reenviar })
@@ -206,4 +212,4 @@ async function refrescarTokenIg(deps) {
   return { ok: true, venceEnDias: j.expires_in ? Math.round(j.expires_in / 86400) : null };
 }
 
-module.exports = { refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, blob, cargarEstado, guardarEstado, foto, interruptor, SECRETAS };
+module.exports = { refrescarTokenIg, crearBotVivo, crearRed, pedidoConClaves, blob, cargarEstado, guardarEstado, foto, interruptor, modoModulo, SECRETAS };

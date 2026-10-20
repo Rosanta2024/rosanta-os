@@ -2,7 +2,7 @@
  * Canal de correo del bot en la nube (20-oct-2026). Corre Correo.js tal cual (revisarCorreosClientes, con la red de
  * cada hora) cada 5 minutos, con Gmail de verdad por la API.
  *
- * Interruptor en la base (bot_estado › INTERRUPTOR_CORREO), un minuto para ir y volver:
+ * Interruptor en la base (tabla interruptores, módulo 'bot_correo'; la cambia el guion del día único), un minuto para ir y volver:
  *   'apps'   (por defecto) la nube no hace nada; atiende el bot de Apps Script, como hoy.
  *   'sombra' la nube LEE Gmail y piensa la respuesta (Claude y la consulta a Wix de verdad), pero no manda, no deja
  *            borradores, no avisa, no escribe hojas ni cambia reservas: anota lo que habría hecho en bot_correo_sombra
@@ -10,17 +10,13 @@
  *   'nube'   la nube atiende el correo (y el bot de Apps Script, desde la @64, se hace a un lado al leer este interruptor).
  */
 const { crearMotor } = require('./motor-bot');
-const { crearRed, cargarEstado, guardarEstado, foto } = require('./vivo');
+const { crearRed, cargarEstado, guardarEstado, foto, modoModulo } = require('./vivo');
 const { crearGmailSincrono } = require('./gmail-sincrono');
 
 const LLAVES_CORREO = ['CORREO_DESDE', 'CORREO_VISTOS', 'CORREO_AVISADOS', 'CORREO_FALLAS', 'CORREO_RED_ULTIMA', 'CORREO_RED_AVISADOS', 'CORREO_NO_CLIENTE'];
 const MODOS = ['apps', 'sombra', 'nube'];
 
-async function modoCorreo(pool) {
-  const r = await pool.query("SELECT valor FROM bot_estado WHERE clave = 'INTERRUPTOR_CORREO'");
-  const v = r.rows[0] && r.rows[0].valor;
-  return MODOS.includes(v) ? v : 'apps';
-}
+function modoCorreo(pool) { return modoModulo(pool, 'bot_correo', 'apps', MODOS); }
 
 function respuesta(code, cuerpo) {
   const t = typeof cuerpo === 'string' ? cuerpo : JSON.stringify(cuerpo);

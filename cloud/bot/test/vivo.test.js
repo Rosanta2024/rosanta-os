@@ -20,7 +20,7 @@ function poolDeMentira(inicial) {
     estado, eventos, correos,
     query: async (sql, p) => {
       if (/SELECT clave, tipo, valor, vence FROM bot_estado/.test(sql)) return { rows: Array.from(estado.values()).filter((x) => x.valor !== null) };
-      if (/SELECT valor FROM bot_estado WHERE clave = 'INTERRUPTOR_BOT'/.test(sql)) { const x = estado.get('INTERRUPTOR_BOT'); return { rows: x ? [x] : [] }; }
+      if (/FROM interruptores WHERE modulo/.test(sql)) { const x = estado.get(p[0] === 'bot' ? 'INTERRUPTOR_BOT' : 'INTERRUPTOR_CORREO'); return { rows: x ? [{ modo: x.valor }] : [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor, vence/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: p[1], valor: p[2], vence: p[3] }); return { rows: [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor\) VALUES \('INTERRUPTOR_BOT'/.test(sql)) { estado.set('INTERRUPTOR_BOT', { clave: 'INTERRUPTOR_BOT', tipo: 'prop', valor: p[0] }); return { rows: [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor\) VALUES \(\$1, 'prop'/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: 'prop', valor: p[1] }); return { rows: [] }; }
@@ -200,9 +200,8 @@ test('Vivo: el webhook verifica como el bot, ignora WhatsApp sin token y el inte
     await fetch(base + '/webhook?token=' + TOKEN, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(mensajeWa('hola')) });
     await new Promise((r) => setTimeout(r, 100));
     assert.strictEqual(x.reenviados.length, 1, 'con token y en puente: al bot de siempre');
-    assert.strictEqual((await fetch(base + '/tareas/interruptor-bot', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"valor":"vivo"}' })).status, 403);
-    const r = await fetch(base + '/tareas/interruptor-bot', { method: 'POST', headers: { 'content-type': 'application/json', 'x-rosanta-tarea': 'k' }, body: '{"valor":"vivo"}' });
-    assert.strictEqual((await r.json()).interruptor, 'vivo');
+    // El interruptor ya no se cambia por el servidor (tabla interruptores, guion del día único): la ruta no existe.
+    assert.strictEqual((await fetch(base + '/tareas/interruptor-bot', { method: 'POST', headers: { 'content-type': 'application/json', 'x-rosanta-tarea': 'k' }, body: '{"valor":"vivo"}' })).status, 404);
     const imp = await (await fetch(base + '/tareas/importar-estado-bot', { method: 'POST', headers: { 'content-type': 'application/json', 'x-rosanta-tarea': 'k' },
       body: JSON.stringify({ props: { OWNER_WA: '502', WHATSAPP_TOKEN: 'no', IG_TOKEN: 'no', ANTHROPIC_API_KEY: 'no', hum_502: '{"estado":"esperando"}' } }) })).json();
     assert.deepStrictEqual(imp, { ok: true, guardadas: 2, clavesOmitidas: 3 });

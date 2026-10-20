@@ -6,7 +6,7 @@
  *   node cloud/herramientas/ensayo-bot.js preparar <idCopiaLeads> <phoneNumberIdPrueba> <telefonoJuanma>
  *       crea los secretos ensayo-verify-token y ensayo-webhook-secret (valores al azar; no se imprimen),
  *       le da a rosanta-bot-sombra@ lectura de los secretos del ensayo, carga las Propiedades del bot de
- *       prueba en bot_estado de la base rosanta_ensayo y pone el interruptor en 'vivo' (solo en ensayo)
+ *       prueba en bot_estado de la base rosanta_ensayo y pone el interruptor 'bot' en 'vivo' (tabla interruptores, solo en ensayo)
  *   node cloud/herramientas/ensayo-bot.js publicar <idCopiaLeads>     imprime el gcloud run deploy del ensayo
  *   node cloud/herramientas/ensayo-bot.js webhook                     imprime la URL y el token de verificación para Meta
  *   node cloud/herramientas/ensayo-bot.js eventos                     lo que pasó con cada mensaje (bot_eventos del ensayo)
@@ -56,9 +56,20 @@ async function preparar(idCopia, pidPrueba, telefono) {
     for (const k of Object.keys(props)) {
       await p.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ($1, 'prop', $2) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, tipo = 'prop', actualizado = now()`, [k, props[k]]);
     }
-    await p.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ('INTERRUPTOR_BOT', 'prop', 'vivo') ON CONFLICT (clave) DO UPDATE SET valor = 'vivo', actualizado = now()`);
-    console.log('Base ' + BASE + ': ' + Object.keys(props).length + ' propiedades del bot de prueba + interruptor en vivo (SOLO en el ensayo).');
+    console.log('Base ' + BASE + ': ' + Object.keys(props).length + ' propiedades del bot de prueba.');
   } finally { await cerrarPool(p); }
+  await ponerInterruptor('vivo');
+}
+
+/** El interruptor 'bot' en la tabla interruptores (migración 013), SOLO en la base del ensayo. app solo lee esa tabla: va con la cuenta raíz. */
+async function ponerInterruptor(modo) {
+  const auth = new OAuth2Client();
+  auth.setCredentials({ access_token: gcloud(['auth', 'print-access-token']) });
+  const root = await crearPool({ usuario: 'postgres', clave: gcloud(['secrets', 'versions', 'access', 'latest', '--secret', 'db-postgres-root']), base: BASE, auth });
+  try {
+    await root.query(`INSERT INTO interruptores (modulo, modo, por) VALUES ('bot', $1, 'ensayo-bot.js') ON CONFLICT (modulo) DO UPDATE SET modo = EXCLUDED.modo, cambiado = now(), por = EXCLUDED.por`, [modo]);
+    console.log('Base ' + BASE + ': interruptor bot = ' + modo + ' (SOLO en el ensayo).');
+  } finally { await cerrarPool(root); }
 }
 
 function publicar(idCopia) {
@@ -90,13 +101,13 @@ async function eventos() {
 }
 
 function borrar() {
-  console.log(['# Al terminar el ensayo (lo de la base de ensayo son solo filas de las tablas bot_* de ese día):',
+  console.log(['# Al terminar el ensayo (lo de la base de ensayo son solo filas de las tablas bot_* de ese día; el interruptor queda en puente con: node cloud/herramientas/ensayo-bot.js puente):',
     'gcloud run services delete ' + SERVICIO + ' --region northamerica-south1',
     'gcloud secrets delete ensayo-verify-token && gcloud secrets delete ensayo-webhook-secret && gcloud secrets delete ensayo-wa-token && gcloud secrets delete ensayo-wix-secreto',
     '# Juanma: borrar la app de prueba en developers.facebook.com y mandar a la papelera la copia "ENSAYO Rosanta Leads".'].join('\n'));
 }
 
 const [cmd, a, b, c] = process.argv.slice(2);
-const fn = { preparar: () => preparar(a, b, c), publicar: () => publicar(a), webhook, eventos, borrar }[cmd];
+const fn = { preparar: () => preparar(a, b, c), publicar: () => publicar(a), webhook, eventos, borrar, puente: () => ponerInterruptor('puente') }[cmd];
 if (!fn) { console.log('Uso: preparar <idCopiaLeads> <phoneNumberIdPrueba> <telefonoJuanma> | publicar <idCopiaLeads> | webhook | eventos | borrar'); process.exit(1); }
 Promise.resolve(fn()).catch((e) => { console.error('ERROR: ' + e.message); process.exit(1); });

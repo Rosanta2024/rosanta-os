@@ -82,21 +82,14 @@ function montarVivo(app, deps, tarea) {
     const correos = deps.correo ? await deps.correo.reintentar() : 0;
     res.status(r.error ? 500 : 200).json(Object.assign({ correosReintentados: correos }, r));
   }));
-  // El interruptor: 'vivo' o 'puente'. SOLO con el sí de Juanma.
-  app.post('/tareas/interruptor-bot', tarea(async (req, res) => {
-    const v = (req.body || {}).valor;
-    if (v !== 'vivo' && v !== 'puente') return res.status(400).json({ error: "valor: 'vivo' o 'puente'" });
-    await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ('INTERRUPTOR_BOT', 'prop', $1)
-      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, actualizado = now()`, [v]);
-    res.json({ ok: true, interruptor: await deps.vivo.interruptor() });
-  }));
+  // El interruptor 'bot' (puente | vivo) vive en la tabla interruptores y lo cambia el guion del día único (cuenta de migraciones).
   // Una sola vez, el dia del paso: las Propiedades del bot de Apps Script (sin claves) pasan a la base.
   app.post('/tareas/importar-estado-bot', tarea(async (req, res) => {
     const props = (req.body || {}).props || {};
     const SECRETAS = require('./vivo').SECRETAS;
     let n = 0, omitidas = 0;
     for (const k of Object.keys(props)) {
-      if (SECRETAS.includes(k) || k === 'INTERRUPTOR_BOT' || /TOKEN|KEY|SECRET/i.test(k)) { omitidas++; continue; }
+      if (SECRETAS.includes(k) || /^INTERRUPTOR_/.test(k) || /TOKEN|KEY|SECRET/i.test(k)) { omitidas++; continue; }
       await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ($1, 'prop', $2)
         ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, tipo = 'prop', actualizado = now()`, [k, String(props[k])]);
       n++;
@@ -128,14 +121,7 @@ function montarCorreo(app, deps, tarea) {
     const r = await deps.canalCorreo.minuto();
     res.status(r.error ? 500 : 200).json(r);
   }));
-  // El interruptor del correo: 'apps' (vuelta atrás), 'sombra' o 'nube'. 'nube' solo con el sí de Juanma.
-  app.post('/tareas/interruptor-correo', tarea(async (req, res) => {
-    const v = (req.body || {}).valor;
-    if (!require('./correo-canal').MODOS.includes(v)) return res.status(400).json({ error: "valor: 'apps', 'sombra' o 'nube'" });
-    await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ('INTERRUPTOR_CORREO', 'prop', $1)
-      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, actualizado = now()`, [v]);
-    res.json({ ok: true, interruptor: await deps.canalCorreo.modo() });
-  }));
+  // El interruptor 'bot_correo' (apps | sombra | nube) vive en la tabla interruptores: lo cambia el guion del día único.
 }
 
 module.exports = { crearAppBot, iguales };
