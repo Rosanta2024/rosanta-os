@@ -294,6 +294,7 @@ function construirPrompt_(estrellas, nombre, textoResena) {
 '- NUNCA nombres a nadie del equipo (ni al dueño, ni a meseros, ni al chef), aunque el cliente los nombre. Di "el equipo", "la cocina" o "la barra".',
 '- No inventes datos: ingredientes, origen, leña, fincas ni productores que el cliente no haya mencionado. Prohibido "de autor".',
 '- Los ejemplos muestran el tono, no se copian: cambia la apertura y el cierre en cada respuesta.',
+'- Prohibido repetir estas frases de los ejemplos o parecidas: "qué alegría leer esto", "Te esperamos pronto de regreso", "every glass", "puts real care", "Looking forward to having you back". Tampoco relleno como "algo especial" o "cada momento".',
 '',
 'ESTRUCTURA SEGÚN RATING:',
 '5 ESTRELLAS:',
