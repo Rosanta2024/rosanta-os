@@ -245,8 +245,8 @@ function doPost(e) {
 
 // --- Hook desconocido: no morir en silencio ---
     if (e.parameter.hook) {
-      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook +
-                 ' · body: ' + JSON.stringify(body).slice(0,300));
+      // Sin el cuerpo: puede traer llaves (20-oct-2026 se coló el COTIZ_TOKEN en Cloud Logging).
+      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook + ' · campos: ' + Object.keys(body || {}).join(', '));
       return json({error:'hook desconocido', hook:e.parameter.hook});
     }
 
