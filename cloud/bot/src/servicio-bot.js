@@ -16,6 +16,8 @@ const path = require('path');
 const { armarChats, crearAnonimizador } = require('./conversaciones');
 const { reproducirChat, resumir, compararTurno } = require('./reproductor');
 
+// Tope de mensajes al modelo en la comparación de cada noche (Central, 20-oct-2026: el espacio "Sombra nube" tiene US$10/mes).
+const MAX_MODELO_NOCHE = Number(process.env.MAX_MODELO_NOCHE || 15);
 const LEADS_ID = '1CxXcoLP9Fo523QJVLvNDuf_zqiLxWmrUDHLCzVoujrc';   // Rosanta Leads
 const KB_DOC_ID = '1a85WPjmr5e_Lybc8Mzw1YH38cBWsGc5mSgK00cmeY6I';   // base de conocimiento del bot (Google Doc)
 const COPIA_VIEJA_MS = 2 * 3600 * 1000;
@@ -132,7 +134,7 @@ function crearServicioBot(deps) {
     if (graves.length) problemas.push(graves.length + ' mensajes en que la sombra no hizo lo mismo que el bot real (modo grabado).');
     let m = null;
     if (deps.claveModelo) {
-      try { m = await reproducir({ modo: 'modelo', desde, hasta, maxModelo: 40 }); } catch (e) { m = { error: e.message }; }
+      try { m = await reproducir({ modo: 'modelo', desde, hasta, maxModelo: MAX_MODELO_NOCHE }); } catch (e) { m = { error: e.message }; }
       if (m.error) problemas.push('El modo con el modelo no corrio: ' + m.error);
       else if (m.resumen.modeloFallas) problemas.push('Claude no contesto ' + m.resumen.modeloFallas + ' veces (' + m.resumen.modeloError + '): revisar la clave anthropic-sombra.');
     }
