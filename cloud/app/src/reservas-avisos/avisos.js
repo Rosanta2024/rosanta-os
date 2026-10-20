@@ -326,7 +326,8 @@ function crearAvisos(deps) {
    * EL GANCHO DEL MOTOR: avisos(reserva, evento). reserva = ganchos.vista() del motor (o, en grupo_grande, los datos
    * que mando el bot). Devuelve la lista de lo que hizo con cada aviso.
    */
-  async function alEvento(r, evento) {
+  async function alEvento(r, evento, extra) {
+    const antesMotor = extra && extra.antes;   // el motor ya manda como estaba antes; el historial queda de respaldo
     if (modo === 'apagado' || !r) return [];
     if ((await modoMotor()) !== 'base') return [{ evento, omitido: 'wix_manda' }];
     const aj = await ajustes();
@@ -346,16 +347,16 @@ function crearAvisos(deps) {
       case 'aprobada': await sumar('aprobada'); break;
       case 'rechazada': await sumar('rechazada', { contexto: { motivo: r.motivo_rechazo || '' } }); break;
       case 'cambiada': {
-        const h = await delHistorial(r.id, 'cambiada');
-        const a = h && h.cambio && h.cambio.antes;
+        const h = antesMotor ? null : await delHistorial(r.id, 'cambiada');
+        const a = antesMotor ? { inicio: antesMotor.inicio, personas: antesMotor.personas } : (h && h.cambio && h.cambio.antes);
         await sumar('cambio', { distinto: new Date(r.inicio).toISOString() + '/' + r.personas,
           contexto: a ? { antes: { inicio: a.inicio, personas: a.personas }, inicio: new Date(r.inicio).toISOString() } : { inicio: new Date(r.inicio).toISOString() } });
         break;
       }
       case 'cancelada': {
-        const h = await delHistorial(r.id, 'estado');
+        const h = r.cancelada_por ? null : await delHistorial(r.id, 'estado');
         await sumar('cancelacion');
-        await sumar('equipo_cancelada', { contexto: { motivo: r.motivo_cancelacion || '', quien_cancela: quienCancelo(h && h.quien) } });
+        await sumar('equipo_cancelada', { contexto: { motivo: r.motivo_cancelacion || '', quien_cancela: quienCancelo(r.cancelada_por || (h && h.quien)) } });
         break;
       }
       case 'termino':
@@ -429,8 +430,8 @@ function crearAvisos(deps) {
   }
 
   /** El gancho para el motor: nunca lanza (el motor igual lo protege) y deja rastro de los errores. */
-  async function gancho(r, evento) {
-    try { return await alEvento(r, evento); } catch (e) { registrar('avisos · ' + evento + ': ' + String((e && e.message) || e)); throw e; }
+  async function gancho(r, evento, extra) {
+    try { return await alEvento(r, evento, extra); } catch (e) { registrar('avisos · ' + evento + ': ' + String((e && e.message) || e)); throw e; }
   }
 
   return { modo, gancho, alEvento, programar, procesar, procesarPendientes, relojRecordatorios, relojResenas, deResend, ajustes, olvidar,

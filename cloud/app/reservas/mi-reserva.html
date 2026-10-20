@@ -45,7 +45,7 @@
 <script>
 (function () {
   'use strict';
-  // Habla con el MOTOR (Ayudante 1): __API__/mi/<codigo> y __API__/slots. El enlace firmado es el codigo.
+  // Habla con el MOTOR (Ayudante 1): __API__/mi/<codigo> y __API__/mi/<codigo>/franjas (sin contar la propia reserva). El enlace firmado es el codigo.
   var API = '__API__';
   var TXT = {
     en: { titulo: 'My booking', hola: 'Hi', fecha: 'Date', hora: 'Time', personas: 'Guests', cambiar: 'Change date, time or guests',
@@ -159,7 +159,7 @@
     if (b.id === 'buscar') {
       elegida = ''; $('guardar').disabled = true;
       $('horas').innerHTML = '<span class="nota">' + esc(t('buscando')) + '</span>';
-      pedir('GET', '/slots?date=' + encodeURIComponent($('nFecha').value) + '&partySize=' + encodeURIComponent($('nPersonas').value)).then(function (j) {
+      pedir('GET', '/mi/' + encodeURIComponent(codigo) + '/franjas?fecha=' + encodeURIComponent($('nFecha').value) + '&personas=' + encodeURIComponent($('nPersonas').value)).then(function (j) {
         horasLibres((j.slots || []).map(function (s) { return horaGT(s.startDate); }));
       }).catch(function () { $('horas').innerHTML = '<span class="nota">' + esc(t('error')) + '</span>'; });
       return;

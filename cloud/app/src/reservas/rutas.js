@@ -14,12 +14,13 @@
  *     → el bot pone WIX_RESERVAS_URL = https://<nube>/api/reservas/bot/reservaBot y deriva las demas como hoy.
  *   Mi reserva (enlace firmado; la pantalla es del AYUDANTE 2):
  *     GET  /mi/:codigo        POST /mi/:codigo/cancelar      POST /mi/:codigo/cambiar { fecha, hora, personas }
+ *     GET  /mi/:codigo/franjas?fecha=&personas=   (como /slots, pero SIN contar la propia reserva como ocupada)
  *   Equipo (enlace de siempre: ?u= o cabecera x-rosanta-u; permisos de la parte 'reservas'):
  *     GET  /equipo/estado                      GET  /equipo/dia?fecha=
  *     GET  /equipo/franjas?fecha=&personas=    GET  /equipo/reservas/:id
  *     POST /equipo/reservas  (alta por telefono o walk-in)
  *     POST /equipo/reservas/:id/estado { estado: llego|termino|no_vino|cancelada|confirmada (aprobar)|rechazada, motivo? }
- *     POST /equipo/reservas/:id/cambiar { fecha?, hora?, personas?, mesa_ids?, nota_equipo?, forzar? }
+ *     POST /equipo/reservas/:id/cambiar { fecha?, hora?, personas?, mesa_ids?, nota_equipo?, alergias?, forzar? }
  *     POST /equipo/reservas/:id/consumo { consumo_q }
  *     GET  /equipo/cierres     POST /equipo/cierres { fecha, hasta_fecha?, motivo }     POST /equipo/cierres/:id/reabrir
  *
@@ -161,6 +162,16 @@ function crearRutasReservas(deps) {
   r.get('/mi/:codigo', async (req, res, next) => {
     try { const x = await deCodigo(req, res); if (x) res.set('Cache-Control', 'no-store').json({ ok: true, reserva: publica(x) }); } catch (e) { next(e); }
   });
+  r.get('/mi/:codigo/franjas', async (req, res, next) => {
+    try {
+      const x = await deCodigo(req, res); if (!x) return;
+      const fecha = String(req.query.fecha || C.diaGt(x.inicio));
+      const personas = Math.max(1, Number(req.query.personas) || x.personas);
+      if (!C.fechaValida(fecha)) return res.status(400).json({ ok: false, motivo: 'FECHA_INVALIDA' });
+      const s = await motor.slotsWeb(fecha, personas, x.id);
+      res.set('Cache-Control', 'no-store').json({ slots: s.slots });
+    } catch (e) { next(e); }
+  });
   r.post('/mi/:codigo/cancelar', async (req, res, next) => {
     try {
       const x = await deCodigo(req, res); if (!x) return;
@@ -286,6 +297,7 @@ function crearRutasReservas(deps) {
       if (d.personas) cambio.personas = Number(d.personas);
       if (Array.isArray(d.mesa_ids)) cambio.mesa_ids = d.mesa_ids.map(String);
       if (d.nota_equipo != null) cambio.nota_equipo = String(d.nota_equipo);
+      if (d.alergias != null) cambio.alergias = String(d.alergias);
       const out = await motor.cambiar(actual.id, cambio, { canal: 'equipo', quien: yo(req), forzar: d.forzar === true });
       res.status(out.ok ? 200 : 409).json(out.ok ? { ok: true, reserva: G.vista(out.reserva) } : { ok: false, motivo: out.motivo,
         detalle: out.franja && out.franja.motivo });

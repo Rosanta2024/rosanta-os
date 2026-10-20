@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { baseLista, sentencias } = require('./reservas-base');
-const { crearAppWeb, ganchoInterno } = require('../src/server-web');
+const { crearAppWeb, ganchoInterno, avisoJuanma } = require('../src/server-web');
 const { crearAlmacenMemoria } = require('../src/almacen-web');
 const P = require('../src/permisos');
 
@@ -60,11 +60,24 @@ test('rosanta-web: salud, reservas con text/plain y CORS, cobros en pausa, 404 p
   assert.deepStrictEqual(s.red, []);   // nada salio a la red
 });
 
-test('los ganchos internos sin NUBE_URL no salen a la red; con NUBE_URL llevan la clave de tareas', async () => {
+test('los ganchos internos van a rosanta-clientes (CLIENTES_URL) con la clave de tareas; sin ella no salen', async () => {
   const pedidos = [];
   const f = async (url, o) => { pedidos.push({ url, clave: o.headers['x-rosanta-tarea'] }); return { ok: true, status: 200, json: async () => ({ id: 'x' }) }; };
   assert.deepStrictEqual(await ganchoInterno({}, '/interno/web/crm-reserva', f)({ id: 1 }), { estado: 'sin_gancho' });
   assert.strictEqual(pedidos.length, 0);
-  await ganchoInterno({ NUBE_URL: 'https://nube.prueba/', CLAVE_TAREAS: 'k' }, '/interno/web/crm-reserva', f)({ id: 1 });
-  assert.deepStrictEqual(pedidos, [{ url: 'https://nube.prueba/interno/web/crm-reserva', clave: 'k' }]);
+  await ganchoInterno({ NUBE_URL: 'https://nube.prueba/' }, '/interno/web/crm-reserva', f)({ id: 1 });
+  assert.strictEqual(pedidos.length, 0);   // rosanta-nube no conoce la web
+  await ganchoInterno({ CLIENTES_URL: 'https://clientes.prueba/', CLAVE_TAREAS: 'k' }, '/interno/web/crm-reserva', f)({ id: 1 });
+  assert.deepStrictEqual(pedidos, [{ url: 'https://clientes.prueba/interno/web/crm-reserva', clave: 'k' }]);
+});
+
+test('el aviso a Juanma sale por el correo de los avisos, solo a restaurante@, y no sale con los avisos apagados', async () => {
+  const enviados = [];
+  const correo = { enviar: async (m) => { enviados.push(m); return { id: 'r1' }; } };
+  assert.deepStrictEqual(await avisoJuanma({ modo: 'apagado', correo })({ asunto: 'x', texto: 'y' }), { estado: 'apagado' });
+  assert.strictEqual(enviados.length, 0);
+  const r = await avisoJuanma({ modo: 'sombra', correo })({ asunto: 'Consulta de Adventures', texto: 'Acatenango <2 personas>' });
+  assert.deepStrictEqual(r, { estado: 'enviado', id: 'r1' });
+  assert.deepStrictEqual(enviados[0].to, ['restaurante@rosanta.rest']);
+  assert.match(enviados[0].html, /&lt;2 personas&gt;/);
 });

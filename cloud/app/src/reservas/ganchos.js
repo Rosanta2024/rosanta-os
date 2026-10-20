@@ -2,7 +2,8 @@
  * Motor de reservas · lo que se le pasa a los ganchos (20-oct-2026). Puro.
  *
  * Los ganchos son adaptadores INYECTADOS (nada de red aqui):
- *   avisos(reserva, evento)  correos y WhatsApp (AYUDANTE 2). evento: creada | pendiente | aprobada | rechazada | cambiada |
+ *   avisos(reserva, evento, { antes })  correos (antes = la vista de la reserva ANTES del cambio o del cambio de estado, o null)
+ *                            correos y WhatsApp (AYUDANTE 2). evento: creada | pendiente | aprobada | rechazada | cambiada |
  *                            cancelada | llego | termino | no_vino | consumo | grupo_grande
  *   crm(payload)             el MISMO cuerpo que manda hoy crmReservas.js de Wix (para que Fase 2 lo reciba igual)
  *   capi(evento)             Meta CAPI (NewReservation), con event_id = id de la reserva (deduplica con el pixel)
@@ -53,7 +54,7 @@ function vista(r) {
     nombre: r.nombre || '', apellido: r.apellido || '', email: r.email || '', telefono: r.telefono || '', llave_crm: r.llave_crm || null,
     idioma: r.idioma || 'es', optin: r.optin == null ? null : !!r.optin, alergias: r.alergias || '', sentarse: r.sentarse || '',
     conocio: r.conocio || '', nota_equipo: r.nota_equipo || '', consumo_q: r.consumo_q == null ? null : Number(r.consumo_q),
-    motivo_cancelacion: r.motivo_cancelacion || null, motivo_rechazo: r.motivo_rechazo || null, version: r.version || 1
+    motivo_cancelacion: r.motivo_cancelacion || null, cancelada_por: r.cancelada_por || null, motivo_rechazo: r.motivo_rechazo || null, version: r.version || 1
   };
 }
 

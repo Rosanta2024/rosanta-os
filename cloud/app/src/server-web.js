@@ -12,24 +12,37 @@
  *   AVISOS_MODO apagado|sombra|vivo · RESEND_API_KEY · RESEND_WEBHOOK_SECRETO · WHATSAPP_* (apagado por defecto)
  *   PASARELA ninguna (por defecto; cobros en pausa) · WEB_FOTOS_BUCKET · SITIO_RECONSTRUIR_URL/_CLAVE
  *   CONTACTO_CORREO · CONTACTO_WHATSAPP ("Escribenos" de las gift cards)
- *   NUBE_URL: rosanta-nube / rosanta-clientes para las tareas internas (CRM, CAPI, pipeline, aviso a Juanma),
- *             con la cabecera x-rosanta-tarea = CLAVE_TAREAS. Sin NUBE_URL, esos ganchos solo dejan rastro.
+ *   CLIENTES_URL: rosanta-clientes (Fase 2) para las tareas internas: CRM de la reserva, CAPI y lead de Adventures al
+ *             pipeline, con la cabecera x-rosanta-tarea = CLAVE_TAREAS. Sin CLIENTES_URL, esos ganchos solo dejan rastro.
+ *             rosanta-nube NO conoce la web (decision del Estudio, 21-oct).
+ *   El aviso a Juanma (consultas de Adventures) sale de aca por Resend, a restaurante@rosanta.rest (AVISOS_MODO != apagado).
  *
  * El orden importa: los routers que leen el cuerpo crudo o text/plain (motor, avisos con su webhook, gift cards con
  * el webhook de la pasarela) se montan ANTES del express.json global.
  */
 const express = require('express');
 
-/** Un gancho que pide una tarea interna a la nube. Nunca lanza: el motor y los servicios ya lo protegen. */
+/** Un gancho que pide una tarea interna a rosanta-clientes (Fase 2). El motor y los servicios lo protegen si falla. */
 function ganchoInterno(env, ruta, fetchImpl) {
   const f = fetchImpl || (typeof fetch === 'function' ? fetch : null);
   return async function (cuerpo) {
-    if (!env.NUBE_URL || !f) { console.log('[web] gancho ' + ruta + ' sin NUBE_URL: no se envio'); return { estado: 'sin_gancho' }; }
-    const r = await f(String(env.NUBE_URL).replace(/\/+$/, '') + ruta, {
+    if (!env.CLIENTES_URL || !f) { console.log('[web] gancho ' + ruta + ' sin CLIENTES_URL: no se envio'); return { estado: 'sin_gancho' }; }
+    const r = await f(String(env.CLIENTES_URL).replace(/\/+$/, '') + ruta, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-tarea': env.CLAVE_TAREAS || '' }, body: JSON.stringify(cuerpo)
     });
-    if (!r.ok) throw new Error('La nube contesto ' + r.status + ' en ' + ruta);
+    if (!r.ok) throw new Error('rosanta-clientes contesto ' + r.status + ' en ' + ruta);
     return r.json().catch(() => ({}));
+  };
+}
+
+/** El aviso a Juanma por correo (Resend, el mismo canal de los avisos; en sombra va igual a restaurante@). */
+function avisoJuanma(canales) {
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>]/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[x]));
+  return async function ({ asunto, texto }) {
+    if (!canales || canales.modo === 'apagado' || !canales.correo) { console.log('[web] aviso a Juanma (avisos apagados): ' + asunto); return { estado: 'apagado' }; }
+    const r = await canales.correo.enviar({ to: ['restaurante@rosanta.rest'], asunto: String(asunto || 'Aviso de la web'), texto: String(texto || ''),
+      html: '<pre style="font-family:inherit;white-space:pre-wrap">' + esc(texto) + '</pre>', etiquetas: [{ name: 'tipo', value: 'aviso_juanma' }] });
+    return { estado: 'enviado', id: r.id };
   };
 }
 
@@ -39,6 +52,8 @@ function ganchoInterno(env, ruta, fetchImpl) {
  *   sale  { id, estado } | { id: null, motivo }
  */
 async function cenaAdventures(motor, c) {
+  // Validar ANTES de armar la fecha: el lector de fechas de JavaScript acepta basura ("malTx") como el anio 2000.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(c.fecha)) || !/^\d{2}:\d{2}$/.test(String(c.hora))) return { id: null, motivo: 'fecha_invalida' };
   const inicio = new Date(String(c.fecha) + 'T' + String(c.hora) + ':00-06:00');
   if (isNaN(inicio.getTime())) return { id: null, motivo: 'fecha_invalida' };
   const r = await motor.crear({ origen: 'web', canal: 'adventures', inicio, personas: Number(c.personas), nombre: c.nombre,
@@ -73,7 +88,8 @@ function crearAppWeb(deps) {
   app.get('/salud', (req, res) => res.json({ ok: true, servicio: 'rosanta-web' }));
 
   // ---- Reservas y avisos (ANTES del json global: el motor lee text/plain y el webhook de Resend el cuerpo crudo)
-  const avisos = crearAvisos({ pool, canales: deps.canales || canalesDesdeEntorno(env, deps.fetch),
+  const canales = deps.canales || canalesDesdeEntorno(env, deps.fetch);
+  const avisos = crearAvisos({ pool, canales,
     secretoEnlace: env.RESERVAS_ENLACE_SECRETO, baseEnlace: env.MI_RESERVA_BASE || 'https://www.rosanta.rest/r/',
     basePanel: env.PANEL_BASE || 'https://www.rosanta.rest/reservas/panel' });
   const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho,
@@ -94,7 +110,7 @@ function crearAppWeb(deps) {
     contacto: { correo: env.CONTACTO_CORREO || 'restaurante@rosanta.rest', whatsapp: env.CONTACTO_WHATSAPP || '' } });
   const adventures = crearAdventures({ almacen, matriz, contenido, ganchos: {
     pipeline: ganchoInterno(env, '/interno/web/pipeline-adventure', deps.fetch),
-    avisarJuanma: ganchoInterno(env, '/interno/web/aviso-juanma', deps.fetch),
+    avisarJuanma: avisoJuanma(canales),
     crearReserva: (c) => cenaAdventures(rutasReservas.motor, c)
   } });
   app.use(W.crearRutasGiftcards({ giftcards, pasarela, pool, matriz, almacen, claveTareas: env.CLAVE_TAREAS }));
@@ -120,4 +136,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch((e) => { console.error('ERROR: ' + e.message); process.exit(1); });
-module.exports = { crearAppWeb, ganchoInterno, cenaAdventures };
+module.exports = { crearAppWeb, ganchoInterno, cenaAdventures, avisoJuanma };

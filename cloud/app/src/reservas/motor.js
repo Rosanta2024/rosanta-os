@@ -70,15 +70,16 @@ function crearMotor(deps) {
 
   // ---------------------------------------------------------------- ganchos (despues del COMMIT)
 
-  function disparar(reserva, evento, que) {
+  function disparar(reserva, evento, que, antes) {
     const v = G.vista(reserva);
+    const extra = { antes: antes ? G.vista(antes) : null };
     const tareas = [];
     const correr = (nombre, fn) => {
       if (!fn) return;
       const p = Promise.resolve().then(fn).catch((e) => registrar('reservas · gancho ' + nombre + ' (' + evento + ', ' + v.id + '): ' + String((e && e.message) || e)));
       tareas.push(p);
     };
-    if (ganchos.avisos && (!que || que.avisos !== false)) correr('avisos', () => ganchos.avisos(v, evento));
+    if (ganchos.avisos && (!que || que.avisos !== false)) correr('avisos', () => ganchos.avisos(v, evento, extra));
     if (ganchos.crm && (!que || que.crm !== false)) correr('crm', () => ganchos.crm(G.payloadCrm(reserva)));
     if (ganchos.capi && que && que.capi) correr('capi', () => ganchos.capi(G.payloadCapi(reserva, 'NewReservation')));
     if (ganchos.espejoWix && reserva.origen !== 'wix') {
@@ -95,9 +96,9 @@ function crearMotor(deps) {
 
   // ---------------------------------------------------------------- lectura
 
-  async function slotsWeb(fecha, personas) {
+  async function slotsWeb(fecha, personas, excluirId) {
     const [cfg, reservas] = await Promise.all([config(), reservasDelDia(null, fecha)]);
-    return D.slotsWeb({ config: cfg, fecha, personas, reservas, ahora: reloj() });
+    return D.slotsWeb({ config: cfg, fecha, personas, reservas, ahora: reloj(), excluirId: excluirId || null });
   }
 
   /** Franjas del bot desde `inicio` (mismo dia). */
@@ -251,13 +252,14 @@ function crearMotor(deps) {
       }
       if (cambio.nota) upd.nota_equipo = ((vieja.nota_equipo ? vieja.nota_equipo + ' | ' : '') + String(cambio.nota)).slice(0, 2000);
       if (cambio.nota_equipo != null) upd.nota_equipo = String(cambio.nota_equipo).slice(0, 2000);
+      if (cambio.alergias != null && String(cambio.alergias) !== String(vieja.alergias || '')) upd.alergias = String(cambio.alergias).slice(0, 1000);
       if (!Object.keys(upd).length) return { ok: false, motivo: 'SIN_CAMBIOS', antes: vieja };
       const nueva = await A.actualizar(c, vieja.id, upd, ahora);
-      const pick = (x) => ({ inicio: new Date(x.inicio).toISOString(), personas: x.personas, mesa_ids: x.mesa_ids, nota_equipo: x.nota_equipo });
+      const pick = (x) => ({ inicio: new Date(x.inicio).toISOString(), personas: x.personas, mesa_ids: x.mesa_ids, nota_equipo: x.nota_equipo, alergias: x.alergias || '' });
       await A.anotar(c, vieja.id, o.quien || o.canal || 'bot', mueve ? 'cambiada' : 'nota', { antes: pick(vieja), despues: pick(nueva) }, ahora);
       return { ok: true, reserva: nueva, antes: vieja, mueve };
     });
-    if (r.ok) disparar(r.reserva, r.mueve ? 'cambiada' : 'nota', { avisos: r.mueve, crm: r.mueve });
+    if (r.ok) disparar(r.reserva, r.mueve ? 'cambiada' : 'nota', { avisos: r.mueve, crm: r.mueve }, r.antes);
     return r;
   }
 
@@ -290,7 +292,7 @@ function crearMotor(deps) {
       await A.anotar(c, vieja.id, o.quien || 'sistema', 'estado', { antes: { estado: vieja.estado }, despues: { estado: nuevo, motivo: o.motivo || null } }, ahora);
       return { ok: true, reserva: nueva, antes: vieja };
     });
-    if (r.ok && !r.igual) disparar(r.reserva, EVENTO_DE_ESTADO[nuevo] || nuevo, { capi: nuevo === 'confirmada' && r.antes.estado === 'pendiente' });
+    if (r.ok && !r.igual) disparar(r.reserva, EVENTO_DE_ESTADO[nuevo] || nuevo, { capi: nuevo === 'confirmada' && r.antes.estado === 'pendiente' }, r.antes);
     return r;
   }
 
