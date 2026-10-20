@@ -171,6 +171,10 @@ function crearApp(deps) {
   require('./entrada').montarEntrada(app);
   // los receptores de Wix (reserva y carrito), con su interruptor puente | base: de la Fase 2, 20-oct
   require('./hooks-wix').montarHooks(app, { pool: deps.pool });
+  // procesos de fondo en la nube (20-oct): FEL y banco por correo, y "Leer cierres". Cada uno con su interruptor
+  // en PARAMETROS (proc_fel, proc_banco, proc_cierres = apps | sombra | nube); sin la cuenta de Google, avisan.
+  require('./proc-fel-banco').montarProcesos(app, { pool: deps.pool, claveTareas: deps.claveTareas, cuentaGoogle: deps.cuentaGoogle, sheetsEscritura: deps.sheetsEscritura });
+  require('./proc-cierres').montar(app, { pool: deps.pool, pagos: deps.pagos, cuenta: deps.cuentaGoogle ? deps.cuentaGoogle() : null, claveTareas: deps.claveTareas });
 
   app.use((err, req, res, next) => {  // eslint-disable-line no-unused-vars
     console.error(err);

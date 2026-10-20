@@ -1,1 +1,1 @@
-f205636 2026-10-20 NUBE_SERVIDOR_ = false en la intranet (la bateria la ve definida); el servidor la pone en true despues de cargar los archivos
+80e19a3 2026-10-20 Intranet: proc_fel/proc_banco/proc_cierres = nube hacen a un lado la lectura del correo (un solo escritor); Leer cierres le pide al servidor (sin publicar)

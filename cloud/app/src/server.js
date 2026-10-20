@@ -36,6 +36,14 @@ function clienteSheets() {
   return sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] }) }, LECTURA_CON_REINTENTOS));
 }
 
+/** La cuenta de restaurante@ (secreto gmail-restaurante-oauth → GMAIL_OAUTH), una sola por servidor. Sin el secreto, null. */
+let cuentaUnica = null;
+function cuentaGoogle() {
+  if (!process.env.GMAIL_OAUTH) return null;
+  if (!cuentaUnica) cuentaUnica = require('./google-cuenta').crearCuenta({ credencial: process.env.GMAIL_OAUTH });
+  return cuentaUnica;
+}
+
 async function main() {
   if (process.env.TZ !== 'America/Guatemala') throw new Error('El servidor tiene que correr con TZ=America/Guatemala (fechas del maestro).');
   const pool = await crearPool();
@@ -49,7 +57,10 @@ async function main() {
   const htmlFotos = pantalla.armarFotos();
   const app = crearApp({
     pool,
-    pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, refrescar: () => pagos.refrescar(clienteSheets()) },
+    pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, copia: pagos.copia, refrescar: () => pagos.refrescar(clienteSheets()) },
+    // procesos de fondo (20-oct): la cuenta de restaurante@ (Gmail/Drive) y el permiso de escribir la Config
+    cuentaGoogle: cuentaGoogle,
+    sheetsEscritura: process.env.MODO_PAGOS === 'vivo' ? () => sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)) : null,
     pantallaPagos: () => (pagos.estado().modo === 'vivo' ? htmlVivo : htmlSombra),
     pantallaCaja: () => (pagos.estado().en_vivo.caja ? htmlCajaVivo : htmlCajaSombra),
     pantallaCompras: () => (pagos.estado().en_vivo.caja ? htmlComprasVivo : htmlComprasSombra),
