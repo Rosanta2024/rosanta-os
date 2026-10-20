@@ -40,10 +40,12 @@ test('ninguna 301 va a la portada y no hay cadenas', () => {
   }
 });
 
-test('firebase.json: /api/** va a Cloud Run rosanta-nube en northamerica-south1', () => {
+test('firebase.json: /api/** y /r/** van a Cloud Run rosanta-web en northamerica-south1', () => {
   const h = JSON.parse(readFileSync(path.join(RAIZ, 'firebase.json'), 'utf8')).hosting;
   const api = h.rewrites.find((r) => r.source === '/api/**');
-  assert.deepEqual(api.run, { serviceId: 'rosanta-nube', region: 'northamerica-south1' });
+  assert.deepEqual(api.run, { serviceId: 'rosanta-web', region: 'northamerica-south1' });
+  const mi = h.rewrites.find((r) => r.source === '/r/**');
+  assert.deepEqual(mi.run, { serviceId: 'rosanta-web', region: 'northamerica-south1' });
   assert.equal(h.public, 'dist');
   assert.equal(h.cleanUrls, true);
   assert.equal(h.trailingSlash, false);

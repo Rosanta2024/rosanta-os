@@ -10,7 +10,7 @@ export const SITIO = 'https://www.rosanta.rest';
  *   GET  {API_BASE}/slots?date=YYYY-MM-DD&partySize=N  → { slots: [{ startDate }] }
  *   POST {API_BASE}/reservar  (text/plain, JSON)        → { ok, status }
  * Hoy: Wix (https://www.rosanta.rest/_functions). Desde el 13-nov: la API de la nube con el MISMO
- * contrato (por ejemplo /api/reservas, que Firebase desvía a Cloud Run rosanta-nube).
+ * contrato (por ejemplo /api/reservas, que Firebase desvía a Cloud Run rosanta-web).
  * OJO: el 17-nov, al mover el DNS, www.rosanta.rest/_functions deja de ser Wix. Antes de esa fecha
  * hay que construir con PUBLIC_API_BASE apuntando a la nube.
  */

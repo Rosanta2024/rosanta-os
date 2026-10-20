@@ -2,7 +2,8 @@
 // - public: dist/ (lo que genera Astro)
 // - cleanUrls: /reservas sirve dist/reservas.html; trailingSlash false: /reservas/ → 301 /reservas
 // - redirects: las 301 una a una de data/redirecciones.json (nunca todo a la portada)
-// - rewrites: /api/** → Cloud Run rosanta-nube (northamerica-south1)
+// - rewrites: /api/** y /r/** ("Mi reserva") → Cloud Run rosanta-web (northamerica-south1), el servicio propio de la web
+//   (decision del Estudio, 21-oct: lo que da a internet no comparte servicio con Pagos y Caja de rosanta-nube)
 // - headers: caché larga para imágenes, fuentes y _astro; corta para HTML, sitemaps y llms.txt
 
 export function firebaseJson(redirecciones) {
@@ -19,7 +20,8 @@ export function firebaseJson(redirecciones) {
       ignore: ['firebase.json', '**/.*', '**/node_modules/**'],
       redirects,
       rewrites: [
-        { source: '/api/**', run: { serviceId: 'rosanta-nube', region: 'northamerica-south1' } },
+        { source: '/api/**', run: { serviceId: 'rosanta-web', region: 'northamerica-south1' } },
+        { source: '/r/**', run: { serviceId: 'rosanta-web', region: 'northamerica-south1' } },
       ],
       headers: [
         { source: '**', headers: [

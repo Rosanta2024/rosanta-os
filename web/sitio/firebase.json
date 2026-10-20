@@ -109,7 +109,14 @@
       {
         "source": "/api/**",
         "run": {
-          "serviceId": "rosanta-nube",
+          "serviceId": "rosanta-web",
+          "region": "northamerica-south1"
+        }
+      },
+      {
+        "source": "/r/**",
+        "run": {
+          "serviceId": "rosanta-web",
           "region": "northamerica-south1"
         }
       }
