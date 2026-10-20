@@ -238,3 +238,15 @@ test('Sheets: las lecturas reintentan 429 y 5xx; las escrituras SOLO 429 (un 5xx
   assert.match(s, /ESCRITURA_CON_REINTENTOS = REINTENTOS\(\[\[429, 429\]\]\)/);
   assert.match(s, /spreadsheets'\] \}\) \}, ESCRITURA_CON_REINTENTOS\)/, 'el cliente que escribe usa la regla de escritura');
 });
+
+test('proc_fel/proc_banco/proc_cierres = nube: la intranet NO lee el correo (un solo escritor); el servidor si', () => {
+  const M = motorCaja({ motor_pagos: 'sheets', proc_fel: 'nube', proc_banco: 'nube', proc_cierres: 'sombra' }, false);
+  let gmail = 0;
+  M.ctx.Gmail = { Users: { Messages: { list: () => { gmail++; return { messages: [] }; } } } };
+  assert.strictEqual(JSON.stringify(M.ctx.fecLeer_(3)), JSON.stringify({ correos: 0, nuevos: 0, repetidos: 0, errores: [], en_la_nube: true }));
+  assert.strictEqual(M.ctx.bcoLeer_(3).en_la_nube, true);
+  assert.strictEqual(gmail, 0, 'no toco Gmail');
+  assert.strictEqual(M.ctx.procEnNube_('proc_cierres'), false, 'sombra: la intranet sigue leyendo');
+  const S = motorCaja({ motor_pagos: 'sheets', proc_fel: 'nube' }, true);
+  assert.strictEqual(S.ctx.procEnNube_('proc_fel'), false, 'en el servidor nuevo no aplica');
+});

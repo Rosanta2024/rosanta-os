@@ -233,6 +233,11 @@ function _cieBytes_(data) {
 }
 
 function cieLeer_(dias, forzar) {
+  // proc_cierres = nube (20-oct-2026): los lee el servidor nuevo. El boton y el vigia le piden que lea ahora.
+  if (procEnNube_('proc_cierres')) {
+    var n = nubeProceso_('cierres');
+    return { correos: n.leidos || 0, nuevos: n.nuevos || n.guardados || 0, repetidos: n.repetidos || 0, errores: n.errores || [], en_la_nube: true, cuando: new Date().toISOString() };
+  }
   // UNA LECTURA A LA VEZ (14-oct-2026, auditoria): el vigia de las 10:00 y "Leer cierres" podian
   // correr juntos y agregar la misma fecha dos veces. No es un ScriptLock a proposito: convertir
   // los PDF tarda minutos y bloquearia los guardados de Pagos, que usan ese candado.

@@ -91,6 +91,7 @@ function _bcoHoja_() {
  * en Guatemala: el aviso sale en el momento de la operacion.
  */
 function bcoLeer_(dias) {
+  if (procEnNube_('proc_banco')) return { correos: 0, nuevos: 0, repetidos: 0, errores: [], en_la_nube: true };   // lo lee el servidor nuevo (NubePagos.js)
   dias = dias || BCO_DIAS_;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { correos: 0, nuevos: 0, repetidos: 0, errores: ['otra lectura en curso'] };

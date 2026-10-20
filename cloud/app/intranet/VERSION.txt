@@ -1,1 +1,1 @@
-a888df1 2026-10-19 Intranet: anularMovimientoPago verifica identidad primero; NUBE_SERVIDOR_ declarada (bateria de Juanma: 3 fallas)
+f205636 2026-10-20 NUBE_SERVIDOR_ = false en la intranet (la bateria la ve definida); el servidor la pone en true despues de cargar los archivos

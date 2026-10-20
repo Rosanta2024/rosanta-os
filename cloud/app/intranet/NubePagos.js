@@ -129,3 +129,36 @@ function nubeGuardarCierre_(fila) {
   return JSON.parse(r.getContentText());
 }
 
+
+/**
+ * LOS PROCESOS DE FONDO EN LA NUBE (20-oct-2026, plan del dia unico). PARAMETROS › proc_cierres, proc_fel,
+ * proc_banco = apps (o vacio) | sombra | nube. Con "nube", el servidor nuevo lee el correo y guarda; aca la
+ * lectura se hace a un lado para que haya UN SOLO ESCRITOR. Con "sombra" la nube solo mira y compara: aca sigue
+ * todo igual. En el servidor nuevo (que corre este mismo codigo) no aplica.
+ */
+function procEnNube_(clave) {
+  if (NUBE_SERVIDOR_) return false;
+  var cache = CacheService.getScriptCache(), k = 'proc_modo_' + clave, g = null;
+  try { g = cache.get(k); } catch (e) { g = null; }
+  if (g === null) {
+    g = 'apps';
+    try {
+      var v = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('PARAMETROS').getDataRange().getValues();
+      for (var i = 1; i < v.length; i++) if (String(v[i][0] || '').trim().toLowerCase() === clave) { g = String(v[i][1] || '').trim().toLowerCase() || 'apps'; break; }
+    } catch (e) { g = 'apps'; }
+    try { cache.put(k, g, 60); } catch (e) { /* sin cache: se lee cada vez */ }
+  }
+  return g === 'nube';
+}
+
+/** Pedirle al servidor nuevo que corra un proceso ahora (el boton "Leer cierres" con proc_cierres = nube). */
+function nubeProceso_(nombre) {
+  var clave = PropertiesService.getScriptProperties().getProperty('NUBE_CLAVE_TAREAS');
+  if (!clave) throw new Error('Falta NUBE_CLAVE_TAREAS en las Propiedades del script.');
+  var r = UrlFetchApp.fetch(NUBE_PAGOS_URL_.replace(/\/pagos$/, '/tareas/procesos/' + nombre), { method: 'post', contentType: 'application/json',
+    headers: { 'x-rosanta-tarea': clave }, payload: '{}', muteHttpExceptions: true });
+  var j = {};
+  try { j = JSON.parse(r.getContentText()); } catch (e) { j = {}; }
+  if (r.getResponseCode() !== 200) throw new Error('El servidor nuevo no pudo leer (' + r.getResponseCode() + '): ' + String(j.error || r.getContentText()).slice(0, 200));
+  return j;
+}

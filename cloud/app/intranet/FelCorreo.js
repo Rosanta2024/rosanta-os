@@ -106,6 +106,7 @@ function _fecHoja_() {
  * leido se salta; una factura ya anotada (SAT a veces avisa dos veces) tambien.
  */
 function fecLeer_(dias) {
+  if (procEnNube_('proc_fel')) return { correos: 0, nuevos: 0, repetidos: 0, errores: [], en_la_nube: true };   // lo lee el servidor nuevo (NubePagos.js)
   dias = dias || FEC_DIAS_;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { correos: 0, nuevos: 0, repetidos: 0, errores: ['otra lectura en curso'] };
