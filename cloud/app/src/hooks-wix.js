@@ -12,7 +12,7 @@
  *   hooks_carrito / hooks_reserva = 'puente' (por defecto, y si la tabla o la fila no existen)
  *     → reenvia el cuerpo LIMPIO al /exec viejo de Marketing OS (con la misma llave) y devuelve su respuesta.
  *       Asi Juanma puede cambiar las URLs de Wix durante la sombra sin que cambie nada.
- *   'base' → lo atiende deps.enBase(hook, cuerpo) (CRMSync en la base; se monta cuando este listo).
+ *   'base' → lo atiende rosanta-clientes (enBaseHttp: CRMSync en la base, con el codigo real de Marketing OS).
  *       Mientras no haya enBase, 'base' se comporta como 'puente'. Volver atras = poner 'puente'.
  * Cada pedido aceptado se guarda en hooks_wix_recibidos (si la tabla existe): sirve para comparar
  * cada noche y para reproducir lo historico.
@@ -98,6 +98,8 @@ function montarHooks(app, deps) {
   const fetchFn = deps.fetch || fetch;
   const execUrl = deps.execUrl || EXEC_URL;
   const tokens = deps.tokens || tokensDelEntorno(process.env);
+  // CLIENTES_URL (la direccion de rosanta-clientes) + CLAVE_TAREAS: sin las dos, 'base' sigue en puente
+  const enBase = deps.enBase || (process.env.CLIENTES_URL && process.env.CLAVE_TAREAS ? enBaseHttp({ url: process.env.CLIENTES_URL, clave: process.env.CLAVE_TAREAS }) : null);
   const lim = Object.assign({ carritoIp: 10, carritoTotal: 60, reservaTotal: 120 }, deps.limites || {});
   const limites = { carritoIp: crearLimite(lim.carritoIp, ahora), carritoTotal: crearLimite(lim.carritoTotal, ahora), reservaTotal: crearLimite(lim.reservaTotal, ahora) };
   const cache = {};
@@ -154,8 +156,8 @@ function montarHooks(app, deps) {
         if (l.error) return res.status(400).json({ error: l.error });
         const t0 = ahora();
         const m = await modo(hook);
-        const r = (m === 'base' && deps.enBase) ? await deps.enBase(hook, l.cuerpo) : await puente(hook, l.cuerpo, String(req.query.token));
-        await guardar(hook, l.cuerpo, m === 'base' && deps.enBase ? 'base' : 'puente', r.estado, ahora() - t0, r.texto || JSON.stringify(r.json));
+        const r = (m === 'base' && enBase) ? await enBase(hook, l.cuerpo) : await puente(hook, l.cuerpo, String(req.query.token));
+        await guardar(hook, l.cuerpo, m === 'base' && enBase ? 'base' : 'puente', r.estado, ahora() - t0, r.texto || JSON.stringify(r.json));
         res.status(r.estado).json(r.json);
       } catch (e) { next(e); }
     }];
@@ -168,6 +170,28 @@ function montarHooks(app, deps) {
 }
 
 /**
+ * En base, el aviso lo atiende rosanta-clientes (CRMSync en la base): POST /interno/aviso con la clave de
+ * tareas. Si no contesta, a Wix le llega 502 y queda guardado en hooks_wix_recibidos (no se reenvia solo al
+ * /exec: con el interruptor en base, Apps Script ya no es el escritor). Volver atras = interruptor en puente.
+ */
+function enBaseHttp(o) {
+  const f = o.fetch || fetch;
+  return async (hook, cuerpo) => {
+    const ctl = new AbortController();
+    const tope = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const r = await f(o.url.replace(/\/$/, '') + '/interno/aviso', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rosanta-tarea': o.clave },
+        body: JSON.stringify({ hook, cuerpo }), signal: ctl.signal });
+      const t = await r.text();
+      let j; try { j = JSON.parse(t); } catch (e) { j = { error: 'respuesta no JSON de rosanta-clientes' }; }
+      return { estado: r.status === 200 ? 200 : r.status === 400 ? 400 : 502, json: j, texto: t };
+    } catch (e) {
+      return { estado: 502, json: { error: 'rosanta-clientes no contesto' }, texto: String(e && e.message || e) };
+    } finally { clearTimeout(tope); }
+  };
+}
+
+/**
  * Llaves desde el entorno. En Cloud Run salen de Secret Manager (las crea el Estudio; los valores no pasan
  * por el chat): --set-secrets HOOK_TOKENS_CARRITO=wix-hook-carrito:latest,HOOK_TOKENS_RESERVA=wix-hook-reserva:latest
  * Sin llave, ese receptor contesta 401 a todo.
@@ -177,4 +201,4 @@ function tokensDelEntorno(env) {
   return { carrito: lista(env.HOOK_TOKENS_CARRITO), reserva: lista(env.HOOK_TOKENS_RESERVA) };
 }
 
-module.exports = { montarHooks, limpiarCarrito, limpiarReserva, tokensDelEntorno, EXEC_URL };
+module.exports = { montarHooks, limpiarCarrito, limpiarReserva, tokensDelEntorno, enBaseHttp, EXEC_URL };
