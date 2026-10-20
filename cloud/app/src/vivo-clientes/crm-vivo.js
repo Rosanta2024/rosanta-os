@@ -18,6 +18,7 @@ const C = require('../copia-hojas');
 const IMP = require('../importar-pagos');
 const MC = require('./motor-crm');
 const CC = require('./copiar-clientes');
+const LB = require('./libro-base');
 
 const CRM_COLS = ['first_name', 'telefono', 'email', 'idioma', 'fuente', 'segmento', 'ultima_reserva', 'gasto_gtq', 'opt_in', 'notas', 'fecha_alta', 'ultimo_intento'];
 const MKT_COLS = {
@@ -147,16 +148,8 @@ function crearCrmVivo(pool, opciones) {
         for (const p of ['reservas', 'carritos']) {
           const M = mkt[p] || [];
           if (M[0]) encabezados[p] = M[0].map(String);
-          const r = await c.query('SELECT llave AS id, celdas, origen, orden FROM filas_clientes WHERE pestana = $1 AND borrada IS NULL FOR UPDATE', [p]);
-          const plan = IMP.planificar(M.length ? M : [['id']], r.rows, { llave: 'id', hojaManda: true });
-          for (const x of plan.reordenar) await c.query('UPDATE filas_clientes SET orden = $3 WHERE pestana = $1 AND llave = $2', [p, x.id, x.orden]);
-          for (const x of plan.actualizadas) {
-            await c.query(`UPDATE filas_clientes SET celdas = $3, orden = $4, origen = 'hoja', actualizado = now(), copiado_a_hoja = now() WHERE pestana = $1 AND llave = $2`, [p, x.id, JSON.stringify(x.celdas), x.orden]);
-          }
-          for (const x of plan.nuevas) {
-            await c.query(`INSERT INTO filas_clientes (pestana, llave, celdas, orden, origen, copiado_a_hoja) VALUES ($1,$2,$3,$4,'hoja',now())`, [p, x.id, JSON.stringify(x.celdas), x.orden]);
-          }
-          out.push({ pestana: p, filas_hoja: plan.filas_hoja, nuevas: plan.nuevas.length, actualizadas: plan.actualizadas.length, problemas: plan.problemas });
+          // espejo (20-oct-2026): una fila que sale de la hoja (limpieza a papelera, CerrarMesas…) queda `borrada` en la base
+          out.push(await LB.importarEspejo(c, p, M.length ? M : [['id']], (f) => IMP.llave(f[0])));
         }
         out.push(await importarCrm(c, crm || []));
         for (const x of out) {

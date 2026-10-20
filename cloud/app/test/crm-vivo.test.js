@@ -58,6 +58,15 @@ function baseFalsa() {
     if (/^INSERT INTO filas_clientes \(pestana, llave, celdas, orden, origen, copiado_a_hoja\) VALUES \(\$1/.test(sql)) {
       t.set(a[0] + '|' + a[1], { pestana: a[0], llave: a[1], celdas: JSON.parse(a[2]), origen: 'hoja', orden: a[3], actualizado: reloj++, copiado_a_hoja: reloj++, borrada: null }); return { rows: [] };
     }
+    if (/^SELECT llave, celdas, borrada, copiado_a_hoja FROM filas_clientes WHERE pestana = \$1 FOR UPDATE/.test(sql)) return { rows: filas(a[0]).map((x) => ({ llave: x.llave, celdas: x.celdas, borrada: x.borrada, copiado_a_hoja: x.copiado_a_hoja })) };
+    if (/^UPDATE filas_clientes SET orden = \$3 WHERE pestana = \$1 AND llave = \$2$/.test(sql)) { t.get(a[0] + '|' + a[1]).orden = a[2]; return { rows: [] }; }
+    if (/^UPDATE filas_clientes SET celdas = \$3, orden = \$4, origen = 'hoja', actualizado = now\(\), copiado_a_hoja = now\(\), borrada = NULL WHERE pestana = \$1/.test(sql)) {
+      Object.assign(t.get(a[0] + '|' + a[1]), { celdas: JSON.parse(a[2]), orden: a[3], origen: 'hoja', actualizado: reloj++, copiado_a_hoja: reloj++, borrada: null }); return { rows: [] };
+    }
+    if (/^UPDATE filas_clientes SET borrada = now\(\) WHERE pestana = \$1 AND llave = \$2$/.test(sql)) { t.get(a[0] + '|' + a[1]).borrada = reloj++; return { rows: [] }; }
+    if (/^INSERT INTO filas_clientes \(pestana, llave, celdas, orden, origen, copiado_a_hoja\) VALUES \(\$1,\$2,\$3,\$4,'hoja',now\(\)\)/.test(sql)) {
+      t.set(a[0] + '|' + a[1], { pestana: a[0], llave: a[1], celdas: JSON.parse(a[2]), origen: 'hoja', orden: a[3], actualizado: reloj++, copiado_a_hoja: reloj++, borrada: null }); return { rows: [] };
+    }
     if (/^SELECT llave, celdas, borrada FROM filas_clientes WHERE pestana = 'crm' FOR UPDATE/.test(sql)) return { rows: filas('crm').map((x) => ({ llave: x.llave, celdas: x.celdas, borrada: x.borrada })) };
     if (/^INSERT INTO filas_clientes \(pestana, llave, celdas, orden, origen, copiado_a_hoja\) VALUES \('crm'/.test(sql)) {
       t.set('crm|' + a[0], { pestana: 'crm', llave: a[0], celdas: JSON.parse(a[1]), origen: 'hoja', orden: a[2], actualizado: reloj++, copiado_a_hoja: reloj++, borrada: null }); return { rows: [] };
@@ -253,4 +262,16 @@ test('Un solo escritor: con el interruptor en puente (o sin fila), /interno/avis
   await esperar();
   assert.strictEqual(JSON.stringify([...base.t.values()].map((x) => x.celdas)), antes);
   assert.ok(!h.reservas.some((f) => f[0] === 'r5'));
+});
+
+
+test('Una reserva que sale de la hoja (limpieza a papelera) queda borrada en la base, no como problema eterno', async () => {
+  const { h, base, v } = armar();
+  await v.importar();
+  h.reservas.splice(1, 1);   // r1 se mueve a la papelera
+  const imp = await v.importar();
+  const r = imp.find((x) => x.pestana === 'reservas');
+  assert.strictEqual(r.borradas, 1); assert.deepStrictEqual(r.problemas, []);
+  assert.ok(base.t.get('reservas|r1').borrada);
+  assert.deepStrictEqual((await v.importar()).find((x) => x.pestana === 'reservas').borradas, 0, 'una sola vez');
 });
