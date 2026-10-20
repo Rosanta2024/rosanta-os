@@ -173,8 +173,9 @@ function redactarRespuesta_(estrellas, nombre, textoResena) {
 
   if (res.getResponseCode() !== 200) {
     Logger.log('Fallo LLM: ' + res.getContentText());
-    // El fallback está escrito a mano, así que sí es publicable.
-    return { texto: respuestaFallback_(estrellas, nombre), confiable: true };
+    // El fallback va SIEMPRE a aprobación (revisor de marca, 21-oct-2026): sale en español aunque la reseña
+    // sea en inglés y no sabe saltarse nombres como "Traveler". Juanma lo ajusta en el panel antes de publicar.
+    return { texto: respuestaFallback_(estrellas, nombre), confiable: false };
   }
 
   const json  = JSON.parse(res.getContentText());
@@ -290,6 +291,9 @@ function construirPrompt_(estrellas, nombre, textoResena) {
 '- Menciona algo específico que el cliente comentó (un plato, el ambiente, el servicio).',
 '- Máximo 3 oraciones.',
 '- No hagas preguntas de seguimiento ni despedidas formales.',
+'- NUNCA nombres a nadie del equipo (ni al dueño, ni a meseros, ni al chef), aunque el cliente los nombre. Di "el equipo", "la cocina" o "la barra".',
+'- No inventes datos: ingredientes, origen, leña, fincas ni productores que el cliente no haya mencionado. Prohibido "de autor".',
+'- Los ejemplos muestran el tono, no se copian: cambia la apertura y el cierre en cada respuesta.',
 '',
 'ESTRUCTURA SEGÚN RATING:',
 '5 ESTRELLAS:',

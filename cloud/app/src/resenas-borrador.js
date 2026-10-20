@@ -51,9 +51,9 @@ async function redactar(resena, opciones) {
   });
   let red, uso = { entrada: 0, salida: 0 }, fallo = '';
   if (!r.ok) {
-    // Como Apps Script: el texto de respaldo esta escrito a mano y se considera publicable.
+    // Como Apps Script desde el 21-oct (revisor de marca): el texto de respaldo va siempre a aprobacion.
     fallo = String(r.status);
-    red = { texto: R.respuestaFallback_(estrellas, nombre), confiable: true };
+    red = { texto: R.respuestaFallback_(estrellas, nombre), confiable: false };
   } else {
     const j = await r.json();
     uso = { entrada: (j.usage && j.usage.input_tokens) || 0, salida: (j.usage && j.usage.output_tokens) || 0 };

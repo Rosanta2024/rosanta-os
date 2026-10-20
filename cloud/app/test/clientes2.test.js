@@ -112,3 +112,14 @@ test('Clientes2: las pantallas avisan que es sombra y llaman solo a funciones cl
     });
   }
 });
+
+test('Clientes2: con reseñas en vivo y el interruptor en base, el panel publica por resenas-vivo; en puente sigue 409', async () => {
+  const llamadas = [];
+  const vivo = (modo) => ({ modo: async () => modo, publicarDesdePanel: async (id, t) => { llamadas.push([id, t]); return { ok: true, estado: 'PUBLICADA_APROBADA' }; } });
+  const sb = crearServicioClientes2({ pool, copia: copiaDeMentira, puede: () => true, resenasVivo: vivo('base') });
+  assert.strictEqual((await sb.llamar({}, 'resenas', 'publicarDesdePanel', ['r2', 'Leo, lo sentimos.'])).estado, 'PUBLICADA_APROBADA');
+  assert.deepStrictEqual(llamadas, [['r2', 'Leo, lo sentimos.']]);
+  const sp = crearServicioClientes2({ pool, copia: copiaDeMentira, puede: () => true, resenasVivo: vivo('puente') });
+  await assert.rejects(sp.llamar({}, 'resenas', 'publicarDesdePanel', ['r2', 'x']), (e) => e.status === 409);
+  await assert.rejects(sb.llamar({}, 'consola', 'enviarMensaje', ['whatsapp', '1', 'hola']), (e) => e.status === 409);   // el bot no cambia
+});

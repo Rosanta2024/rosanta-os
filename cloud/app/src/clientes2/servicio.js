@@ -95,9 +95,13 @@ function crearServicioClientes2(deps) {
     const F = FUNCIONES[parte];
     if (!F) throw error(404, 'Esa parte no existe.');
     if (!deps.puede(usuario, parte)) throw error(403, 'Tu cuenta no tiene esta parte de Clientes.');
-    if (F.escritura.includes(nombre)) throw error(409, F.aviso);
-    if (!F.lectura.includes(nombre)) throw error(404, 'Esa función no está disponible en el servidor nuevo.');
     const a = Array.isArray(args) ? args : [];
+    if (F.escritura.includes(nombre)) {
+      // Reseñas con el interruptor en 'base' (resenas-vivo.js): el panel publica de verdad. Si no, solo muestra.
+      if (parte === 'resenas' && deps.resenasVivo && (await deps.resenasVivo.modo()) === 'base') return deps.resenasVivo[nombre](a[0], a[1]);
+      throw error(409, F.aviso);
+    }
+    if (!F.lectura.includes(nombre)) throw error(404, 'Esa función no está disponible en el servidor nuevo.');
     if (nombre === 'botSombra') return botSombra();
     if (nombre === 'botSombraTurnos') return botSombraTurnos(Number(a[0]) || 0);
     const m = motores();

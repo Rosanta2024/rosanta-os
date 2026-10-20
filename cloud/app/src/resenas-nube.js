@@ -7,6 +7,7 @@
  *   POST /tareas/resenas/leer-google    lee TODAS las reseñas de Google Business Profile (solo GET), las guarda
  *                                       en resenas_gbp_google y las compara con la copia de la hoja.
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
+ *   POST /tareas/resenas/procesar      EN VIVO (resenas-vivo.js, deps.vivo): solo con el interruptor 'resenas' en 'base'.
  *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
@@ -25,7 +26,9 @@
  *   if (deps.resenas) require('./resenas-nube').montarResenas(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.resenas));
    if (deps.encuesta) require('./encuesta-nube').montarEncuesta(app, Object.assign({ pool: deps.pool }, deps.encuesta));
  * y en server.js:
- *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env) }, encuesta: {},
+ *   const vivo = require('./resenas-vivo').crearResenasVivo({ pool, avisar: <alerta por correo de siempre>, urlPanel: <url>/clientes/resenas });
+ *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env), vivo }, encuesta: {},
+ *   y a crearServicioClientes2 (sombra2) pasarle resenasVivo: vivo.
  */
 const crypto = require('crypto');
 const { leerLibro } = require('./copia-hojas');
@@ -324,6 +327,8 @@ function montarResenas(app, deps) {
   });
   app.post('/tareas/resenas/copiar-hojas', exigirTarea, responder(copiarHojas, false));
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
+  // En vivo (resenas-vivo.js): solo hace algo con el interruptor 'resenas' en 'base'.
+  if (deps.vivo) app.post('/tareas/resenas/procesar', exigirTarea, responder(() => deps.vivo.procesar(), true));
   app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));
 }
 
