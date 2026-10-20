@@ -28,7 +28,7 @@ function cargarReglas(archivo) {
   const codigo = fs.readFileSync(archivo || ARCHIVO, 'utf8');
   const ctx = { PropertiesService: { getScriptProperties: () => ({ getProperty: () => null }) }, Logger: { log: () => {} } };
   vm.createContext(ctx);
-  vm.runInContext(codigo + '\n;this.__r = { construirPrompt_, sanearRespuesta_, respuestaPublicable_, respuestaFallback_, AUTO_MIN: CONFIG.AUTO_MIN };', ctx, { filename: 'Bot de Reseñas de Google.js' });
+  vm.runInContext(codigo + '\n;this.__r = { construirPrompt_, sanearRespuesta_, respuestaPublicable_, resenaEnEspanolOIngles_, respuestaFallback_, AUTO_MIN: CONFIG.AUTO_MIN };', ctx, { filename: 'Bot de Reseñas de Google.js' });
   const r = ctx.__r;
   if (!archivo) reglas = r;
   return r;
@@ -59,7 +59,7 @@ async function redactar(resena, opciones) {
     uso = { entrada: (j.usage && j.usage.input_tokens) || 0, salida: (j.usage && j.usage.output_tokens) || 0 };
     const crudo = String((j.content && j.content[0] && j.content[0].text) || '').trim();
     const limpio = R.sanearRespuesta_(crudo, nombre);
-    red = R.respuestaPublicable_(limpio) ? { texto: limpio, confiable: true } : { texto: limpio || R.respuestaFallback_(estrellas, nombre), confiable: false };
+    red = R.respuestaPublicable_(limpio) && R.resenaEnEspanolOIngles_(texto) ? { texto: limpio, confiable: true } : { texto: limpio || R.respuestaFallback_(estrellas, nombre), confiable: false };
   }
   const decision = estrellas >= R.AUTO_MIN && red.confiable ? 'publicar_sola' : 'aprobar';
   const costo = (uso.entrada * PRECIO.entrada + uso.salida * PRECIO.salida) / 1e6;
