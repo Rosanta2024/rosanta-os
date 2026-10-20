@@ -24,6 +24,7 @@ test('Reglas: se cargan del archivo real de Apps Script (prompt con las prohibic
   assert.strictEqual(R.AUTO_MIN, 4);
   assert.match(p, /NUNCA nombres a nadie del equipo/);
   assert.match(p, /No inventes datos/);
+  assert.match(p, /Prohibido repetir estas frases/);
   assert.doesNotMatch(p, /Juanma/);
 });
 
