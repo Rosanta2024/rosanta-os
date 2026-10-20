@@ -64,7 +64,13 @@ function crearPublicadorGbp(cfg, opciones) {
 function crearResenasVivo(deps) {
   const cfg = deps.gbp || gbpDelEntorno(process.env);
   const lector = deps.lector || crearLectorGbp(cfg, { fetch: deps.fetch });
-  const pub = deps.publicador || crearPublicadorGbp(cfg, { fetch: deps.fetch, lector });
+  // Publicar de verdad en Google solo con RESENAS_PUBLICAR=si (o deps.publicarDeVerdad). Si no, "en seco": hace
+  // todo igual (lee, redacta, decide, anota en la base) pero en vez del PUT a Google anota lo que habria publicado.
+  // Asi se ensaya en rosanta-nube-ensayo sin tocar la ficha publica.
+  const deVerdad = deps.publicarDeVerdad !== undefined ? deps.publicarDeVerdad : process.env.RESENAS_PUBLICAR === 'si';
+  const enSeco = [];
+  const pubReal = deps.publicador || crearPublicadorGbp(cfg, { fetch: deps.fetch, lector });
+  const pub = deVerdad ? pubReal : { una: pubReal.una, publicar: async (f, id, texto) => { const t = validarTexto(texto); enSeco.push({ review_id: id, texto: t }); return t; } };
   const Bo = deps.borrador || B;
   const clave = () => (deps.claveClaude !== undefined ? deps.claveClaude : process.env.ANTHROPIC_RESENAS);
 
@@ -89,7 +95,8 @@ function crearResenasVivo(deps) {
     if ((await modo()) !== 'base') return { modo: 'puente', nuevas: 0, alertas: 0 };
     const g = await lector.resenas();
     const ya = new Set((await deps.pool.query('SELECT review_id FROM resenas_gbp')).rows.map((x) => x.review_id));
-    const out = { modo: 'base', nuevas: 0, auto: 0, para_aprobar: [], ya_tenian: 0, errores: [] };
+    enSeco.length = 0;
+    const out = { modo: 'base', en_seco: !deVerdad, nuevas: 0, auto: 0, para_aprobar: [], ya_tenian: 0, errores: [] };
     for (const r of g.reviews) {
       if (ya.has(r.review_id)) continue;
       out.nuevas++;
@@ -112,6 +119,7 @@ function crearResenasVivo(deps) {
     }
     if (out.para_aprobar.length && deps.avisar) await deps.avisar(asuntoPendientes(out.para_aprobar.length), cuerpoPendientes(out.para_aprobar, deps.urlPanel)).catch(() => {});
     out.alertas = out.errores.length;
+    if (!deVerdad) out.habria_publicado = enSeco.slice();
     await deps.pool.query('INSERT INTO resenas_corridas (tarea, ok, resumen) VALUES ($1,$2,$3)',
       ['procesar', out.alertas === 0, JSON.stringify(Object.assign({}, out, { para_aprobar: out.para_aprobar.length }))]);
     return out;
@@ -169,7 +177,7 @@ function crearResenasVivo(deps) {
     return (ficha = (await lector.resenas()).ficha);
   }
 
-  return { modo, procesar, publicarDesdePanel, editarRespuestaPublicada, guardarBorrador, regenerarBorrador, descartarBorrador };
+  return { modo, enSeco: () => !deVerdad, procesar, publicarDesdePanel, editarRespuestaPublicada, guardarBorrador, regenerarBorrador, descartarBorrador };
 }
 
 function asuntoPendientes(n) { return 'Rosanta: ' + n + ' reseña(s) para revisar'; }

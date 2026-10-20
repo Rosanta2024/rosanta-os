@@ -32,7 +32,7 @@ test('Vivo: con el interruptor en puente (o sin fila) no lee ni publica nada', a
   for (const modo of [null, 'puente']) {
     const f = falsos([g('a', 5)]);
     const pool = base(modo);
-    const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k' }, f));
+    const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', publicarDeVerdad: true }, f));
     assert.strictEqual((await v.procesar()).modo, 'puente');
     assert.strictEqual(f.publicadas.length, 0);
     await assert.rejects(v.publicarDesdePanel('a', 'hola'), (e) => e.status === 409);
@@ -43,7 +43,7 @@ test('Vivo: 4-5 se publican solas, 1-3 a aprobacion con correo, las ya respondid
   const f = falsos([g('a', 5), g('b', 2), g('c', 4, 'ya tenia'), g('d', 5), g('viejo', 5)], { yaRespondida: 'd' });
   const pool = base('base', [{ review_id: 'viejo', estado: 'PUBLICADA_AUTO' }]);
   const avisos = [];
-  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', avisar: async (a, c) => avisos.push({ a, c }), urlPanel: 'https://panel' }, f));
+  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', publicarDeVerdad: true, avisar: async (a, c) => avisos.push({ a, c }), urlPanel: 'https://panel' }, f));
   const r = await v.procesar();
   assert.strictEqual(r.nuevas, 4);
   assert.strictEqual(r.auto, 1);
@@ -61,7 +61,7 @@ test('Vivo: 4-5 se publican solas, 1-3 a aprobacion con correo, las ya respondid
 test('Vivo: si Google falla al publicar, la fila no queda diciendo que se publico', async () => {
   const f = falsos([g('a', 5)], { falla: true });
   const pool = base('base');
-  const r = await V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k' }, f)).procesar();
+  const r = await V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', publicarDeVerdad: true }, f)).procesar();
   assert.strictEqual(r.errores.length, 1);
   assert.strictEqual(pool.t.has('a'), false);
   assert.strictEqual(pool.corridas.at(-1).ok, false);
@@ -70,7 +70,7 @@ test('Vivo: si Google falla al publicar, la fila no queda diciendo que se public
 test('Vivo: el panel publica, guarda, regenera y descarta sobre la base', async () => {
   const f = falsos([]);
   const pool = base('base', [{ review_id: 'b', estrellas: 2, cliente: 'Leo', resena: 'x', respuesta: 'borrador', estado: 'PENDIENTE_APROBAR' }]);
-  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', gbp: { oauth: {}, cuenta: '1', ubicacion: '2' } }, f));
+  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k', publicarDeVerdad: true, gbp: { oauth: {}, cuenta: '1', ubicacion: '2' } }, f));
   assert.strictEqual((await v.guardarBorrador('b', 'Otro texto.')).estado, 'PENDIENTE_APROBAR');
   assert.strictEqual(pool.t.get('b').respuesta, 'Otro texto.');
   assert.strictEqual((await v.regenerarBorrador('b')).texto, 'Lo sentimos.');
@@ -82,4 +82,16 @@ test('Vivo: el panel publica, guarda, regenera y descarta sobre la base', async 
   await assert.rejects(v.publicarDesdePanel('b', '   '), (e) => e.status === 400);
   await assert.rejects(v.publicarDesdePanel('zzz', 'hola'), (e) => e.status === 404);
   assert.throws(() => V.validarTexto('x'.repeat(4001)), /tope de Google/);
+});
+
+test('Vivo: sin RESENAS_PUBLICAR=si es en seco: decide y anota, pero no le escribe a Google', async () => {
+  const f = falsos([g('a', 5), g('b', 1)]);
+  const pool = base('base');
+  const v = V.crearResenasVivo(Object.assign({ pool, claveClaude: 'k' }, f));
+  assert.strictEqual(v.enSeco(), true);
+  const r = await v.procesar();
+  assert.strictEqual(r.en_seco, true);
+  assert.strictEqual(f.publicadas.length, 0);
+  assert.deepStrictEqual(r.habria_publicado.map((x) => x.review_id), ['a']);
+  assert.strictEqual(pool.t.get('b').estado, 'PENDIENTE_APROBAR');
 });
