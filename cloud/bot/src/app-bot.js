@@ -134,6 +134,13 @@ function montarCorreo(app, deps, tarea) {
     const r = await deps.canalCorreo.minuto();
     res.status(r.error ? 500 : 200).json(r);
   }));
+  // Cada noche: lo que anotó la sombra contra lo que hizo el bot de Apps Script en Gmail. 409 = diferencia grave o error (llega la alerta).
+  app.post('/tareas/comparar-correo-noche', tarea(async (req, res) => {
+    const r = await deps.canalCorreo.comparar();
+    if (!r.ok) console.error('comparar-correo-noche: ' + r.distintas.filter((d) => d.grave).map((d) => d.id + ' ' + d.comparado)
+      .concat(r.errores.map((e) => e.id + ' error ' + e.error)).join(' | '));
+    res.status(r.ok ? 200 : 409).json(r);
+  }));
   // El interruptor 'bot_correo' (apps | sombra | nube) vive en la tabla interruptores: lo cambia el guion del día único.
 }
 

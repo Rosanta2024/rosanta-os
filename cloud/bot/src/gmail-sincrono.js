@@ -8,7 +8,7 @@
  * quedan en registro[] para compararlos con lo que hizo el bot de Apps Script.
  *
  * Lo que Correo.js usa: GmailApp.search(q, start, max) → hilos con getId() y getMessages(); cada mensaje con getId,
- * getFrom, getSubject, getPlainBody, getDate, isDraft, reply(cuerpo, {name}), createDraftReply(cuerpo);
+ * getFrom, getTo, getSubject, getPlainBody, getDate, isDraft, reply(cuerpo, {name}), createDraftReply(cuerpo);
  * GmailApp.createDraft(to, asunto, cuerpo, {name}) y GmailApp.sendEmail(to, asunto, cuerpo, {name}).
  */
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me/';
@@ -65,6 +65,7 @@ function crearGmailSincrono(deps) {
     return {
       getId: () => m.id,
       getFrom: () => encab(m, 'From'),
+      getTo: () => encab(m, 'To'),
       getSubject: () => asunto,
       getPlainBody: () => textoPlano(m.payload),
       getDate: () => new Date(Number(m.internalDate)),
@@ -80,16 +81,24 @@ function crearGmailSincrono(deps) {
     };
   }
 
+  const hilo = (id) => {
+    let msgs = null;   // se bajan solo si el bot los pide
+    return { getId: () => id, getMessages: () => {
+      if (!msgs) msgs = (llamar('threads/' + id + '?format=full').messages || []).map((m) => mensaje(m, id));
+      return msgs;
+    } };
+  };
+
   return {
     search: (q, inicio, max) => {
       const lista = llamar('threads?q=' + encodeURIComponent(q) + '&maxResults=' + Math.min(Number(max) || 20, 100)).threads || [];
-      return lista.slice(Number(inicio) || 0).map((t) => {
-        let msgs = null;   // se bajan solo si el bot los pide
-        return { getId: () => t.id, getMessages: () => {
-          if (!msgs) msgs = (llamar('threads/' + t.id + '?format=full').messages || []).map((m) => mensaje(m, t.id));
-          return msgs;
-        } };
-      });
+      return lista.slice(Number(inicio) || 0).map((t) => hilo(t.id));
+    },
+    // Solo lectura (la comparación de la noche, 20-oct-2026). Como en Apps Script: null si el hilo ya no existe.
+    getThreadById: (id) => {
+      const h = hilo(String(id));
+      try { h.getMessages(); } catch (e) { if (/Gmail 404/.test(e.message)) return null; throw e; }
+      return h;
     },
     createDraft: (para, asunto, cuerpo, op) => salir('borrador', { para, asunto, cuerpo },
       () => llamar('drafts', 'post', { message: { raw: b64url(mime({ para, asunto, cuerpo, nombre: op && op.name })) } })),

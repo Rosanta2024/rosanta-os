@@ -12,6 +12,7 @@
 const { crearMotor } = require('./motor-bot');
 const { crearRed, cargarEstado, guardarEstado, foto, modoModulo } = require('./vivo');
 const { crearGmailSincrono } = require('./gmail-sincrono');
+const { compararCorreoNoche } = require('./correo-comparar');
 
 const LLAVES_CORREO = ['CORREO_DESDE', 'CORREO_VISTOS', 'CORREO_AVISADOS', 'CORREO_FALLAS', 'CORREO_RED_ULTIMA', 'CORREO_RED_AVISADOS', 'CORREO_NO_CLIENTE'];
 const MODOS = ['apps', 'sombra', 'nube'];
@@ -112,7 +113,14 @@ function crearCanalCorreo(deps) {
     return { modo, salieron: gmail.registro.length, avisos: correos.length, cambiosHoja: ops.length, error: error ? String(error.message) : null };
   }
 
-  return { minuto, modo: () => modoCorreo(deps.pool) };
+  /** La comparación de la noche (correo-comparar): Gmail con la misma red y el mismo token, solo lectura. */
+  async function comparar(ahora) {
+    deps.claves.GMAIL_TOKEN = await deps.accessToken();
+    const gmail = crearGmailSincrono({ pedido: red, escribir: false });
+    return compararCorreoNoche({ pool: deps.pool, gmail, ahora });
+  }
+
+  return { minuto, comparar, modo: () => modoCorreo(deps.pool) };
 }
 
 module.exports = { crearCanalCorreo, modoCorreo, redSombra, LLAVES_CORREO, MODOS };
