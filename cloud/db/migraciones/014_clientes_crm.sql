@@ -10,3 +10,17 @@ ALTER TABLE filas_clientes DROP CONSTRAINT filas_clientes_pestana_check;
 ALTER TABLE filas_clientes ADD CONSTRAINT filas_clientes_pestana_check
   CHECK (pestana IN ('cotizaciones', 'revisiones', 'reservas', 'carritos', 'crm'));
 ALTER TABLE filas_clientes ADD COLUMN borrada timestamptz;
+
+-- La foto de cada noche de la sombra de reservas, carritos y CRM (rosanta-clientes /tareas/comparar-crm).
+CREATE TABLE clientes_comparaciones (
+  id           bigserial PRIMARY KEY,
+  cuando       timestamptz NOT NULL DEFAULT now(),
+  desde        date NOT NULL,
+  recibidos    integer NOT NULL,
+  diferencias  jsonb NOT NULL,      -- [] si todo coincide (sin datos personales)
+  avisos       jsonb NOT NULL
+);
+GRANT SELECT, INSERT ON clientes_comparaciones TO app;
+GRANT USAGE ON SEQUENCE clientes_comparaciones_id_seq TO app;
+-- crm-vivo lee lo que recibio rosanta-nube (013)
+GRANT SELECT ON hooks_wix_recibidos TO app;

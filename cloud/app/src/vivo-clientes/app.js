@@ -3,11 +3,17 @@
  * rosanta-nube-clientes-ensayo (base rosanta_ensayo + una hoja de ensayo); el dia del paso, con el si de
  * Juanma, se monta en el servicio de Clientes.
  *
- * deps: { pool, vivo (crearServicioVivo), pantallaEventos(o), claveTareas, claveHook, version }
+ * deps: { pool, vivo (crearServicioVivo), pantallaEventos(o), claveTareas, claveHook, version,
+ *         crm (crearCrmVivo, opcional: reservas, carritos y CRM en la base), hoy() → 'AAAA-MM-DD' }
+ *
+ * Desde el 20-oct-2026 es la app del servicio DEFINITIVO rosanta-clientes (acordado con el Estudio): la
+ * pantalla de Eventos, /hooks/cotizaciones (la direccion de cot.sh) y, por /interno/aviso, los avisos de
+ * Wix que rosanta-nube le pasa cuando su interruptor esta en base.
  */
 const express = require('express');
 const crypto = require('crypto');
 const U = require('../usuarios');
+const HW = require('../hooks-wix');
 
 function iguales(a, b) {
   const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
@@ -25,7 +31,7 @@ function crearAppVivo(deps) {
   }).catch(next);
   const exigirTarea = (req, res, next) => (iguales(req.get('x-rosanta-tarea'), deps.claveTareas) ? next() : res.status(403).json({ error: 'Clave de tarea invalida.' }));
 
-  app.get('/salud', (req, res) => res.json({ ok: true, version: deps.version || '', servicio: 'clientes-vivo', vivo: deps.vivo.estado() }));
+  app.get('/salud', (req, res) => res.json({ ok: true, version: deps.version || '', servicio: 'clientes', vivo: deps.vivo.estado(), crm: deps.crm ? deps.crm.estado() : null }));
 
   app.get('/clientes/eventos', async (req, res, next) => {
     try {
@@ -57,6 +63,27 @@ function crearAppVivo(deps) {
   app.post('/tareas/copiar', exigirTarea, async (req, res) => {
     try { res.json(Object.assign({ ok: true }, await deps.vivo.copiarPendientes())); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
   });
+  if (deps.crm) {
+    /** Un aviso de Wix que rosanta-nube recibio con el interruptor en base. Se vuelve a limpiar aca. */
+    app.post('/interno/aviso', exigirTarea, async (req, res) => {
+      const b = req.body || {};
+      const limpio = b.hook === 'carrito' ? HW.limpiarCarrito(b.cuerpo) : b.hook === 'reserva' ? HW.limpiarReserva(b.cuerpo) : { error: 'aviso desconocido' };
+      if (limpio.error) return res.status(400).json({ error: limpio.error });
+      try { const r = await deps.crm.atender(b.hook, limpio.cuerpo); res.status(r.estado).json(r.json); } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+    });
+    app.post('/tareas/importar-crm', exigirTarea, async (req, res) => {
+      try { res.json({ ok: true, pestanas: await deps.crm.importar() }); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    });
+    /** La sombra de cada noche: 409 si hay diferencias (el reloj falla y llega la alerta de siempre). */
+    app.post('/tareas/comparar-crm', exigirTarea, async (req, res) => {
+      const desde = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.desde || '')) ? req.query.desde : (deps.hoy ? deps.hoy() : new Date().toISOString().slice(0, 10));
+      try {
+        const r = await deps.crm.comparar(desde);
+        await deps.pool.query('INSERT INTO clientes_comparaciones (desde, recibidos, diferencias, avisos) VALUES ($1,$2,$3,$4)', [desde, r.recibidos, JSON.stringify(r.diferencias), JSON.stringify(r.avisos)]).catch((e) => console.error('Foto de la comparacion:', e.message));
+        res.status(r.ok ? 200 : 409).json(Object.assign({ desde }, r));
+      } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    });
+  }
   return app;
 }
 

@@ -193,3 +193,48 @@ test('Sombra: avisos recibidos que estan en la hoja y CRM igual = 0 diferencias;
   assert.match(c.diferencias.join(' '), /r9/); assert.match(c.diferencias.join(' '), /Q518/); assert.match(c.diferencias.join(' '), /agregaría/);
   assert.ok(!/beto@gmail/.test(c.diferencias.join(' ')), 'sin datos personales en el informe');
 });
+
+test('CAPI: el servidor arma el mismo evento que sendToCAPI de Code.js (comparado con el codigo real)', async () => {
+  const vm = require('vm');
+  const crypto = require('crypto');
+  const CAPI = require('../src/vivo-clientes/capi');
+  let enviado = null;
+  const ctx = {
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (k === 'META_CAPI_TOKEN' ? 'tok' : null) }) },
+    Utilities: { DigestAlgorithm: { SHA_256: 1 }, Charset: { UTF_8: 1 }, computeDigest: (a, s) => [...crypto.createHash('sha256').update(String(s), 'utf8').digest()].map((b) => (b > 127 ? b - 256 : b)) },
+    UrlFetchApp: { fetch: (url, o) => { enviado = { url, payload: JSON.parse(o.payload) }; return { getResponseCode: () => 200 }; } },
+    SpreadsheetApp: {}, LockService: {}, Logger: { log: () => {} }, ContentService: {}, console, JSON, Math, Date, String, Number, Object, Array, encodeURIComponent
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(DIR, 'mktos', 'Code.js'), 'utf8'), ctx);
+  assert.strictEqual(ctx.sendToCAPI('carla@gmail.com', '+502 4444-1111', 518), 'enviado');
+  const real = enviado.payload;
+  const nube = CAPI.evento('carla@gmail.com', '+502 4444-1111', 518, real.data[0].event_time);
+  assert.deepStrictEqual(nube, real);
+  assert.match(enviado.url, new RegExp('/' + CAPI.DATASET + '/events\\?access_token='));
+  let llamado = null;
+  const enviar = CAPI.crearCapi({ token: 'tok', fetch: async (u, o) => { llamado = { u, b: JSON.parse(o.body) }; return { status: 200 }; }, ahora: () => 1e12 });
+  assert.strictEqual(await enviar({ email: 'carla@gmail.com', tel: '', valor: 518 }), 'enviado');
+  assert.strictEqual(llamado.b.data[0].event_time, 1e9);
+  assert.strictEqual(await CAPI.crearCapi({ token: '' })({ email: 'x' }), 'omitido (sin META_CAPI_TOKEN)');
+});
+
+test('/interno/aviso: solo con la clave de tareas, vuelve a limpiar el cuerpo y pasa a crm.atender', async () => {
+  const { crearAppVivo } = require('../src/vivo-clientes/app');
+  const atendidos = [];
+  const crm = { atender: async (h, c) => { atendidos.push([h, c]); return { estado: 200, json: { ok: true, id: 'r2' } }; }, estado: () => ({}) };
+  const app = crearAppVivo({ pool: {}, vivo: { estado: () => ({}) }, crm, claveTareas: 'clave-de-tareas-larga' });
+  const srv = app.listen(0); const b = 'http://127.0.0.1:' + srv.address().port;
+  try {
+    const post = (cuerpo, clave) => fetch(b + '/interno/aviso', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, clave ? { 'x-rosanta-tarea': clave } : {}), body: JSON.stringify(cuerpo) });
+    const R = { id: 'r2', fecha: '2026-10-21', nombre: 'Beto', email: 'beto@gmail.com', telefono: '', personas: 4, gasto: 0, estado: 'CONFIRMED', optin: 'SI' };
+    assert.strictEqual((await post({ hook: 'reserva', cuerpo: R })).status, 403);
+    assert.strictEqual((await post({ hook: 'reserva', cuerpo: R }, 'otra')).status, 403);
+    assert.strictEqual((await post({ hook: 'reserva', cuerpo: Object.assign({ tab: 'usuarios' }, R) }, 'clave-de-tareas-larga')).status, 400);
+    assert.strictEqual((await post({ hook: 'borrar', cuerpo: R }, 'clave-de-tareas-larga')).status, 400);
+    assert.strictEqual(atendidos.length, 0);
+    const r = await post({ hook: 'reserva', cuerpo: R }, 'clave-de-tareas-larga');
+    assert.strictEqual(r.status, 200); assert.deepStrictEqual(await r.json(), { ok: true, id: 'r2' });
+    assert.deepStrictEqual(atendidos, [['reserva', R]]);
+  } finally { srv.close(); }
+});

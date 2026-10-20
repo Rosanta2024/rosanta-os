@@ -1,5 +1,7 @@
 /**
- * Arranque del pipeline EN VIVO en Cloud Run (19-oct-2026). Hoy: solo el servicio de ENSAYO
+ * Arranque de Clientes EN VIVO en Cloud Run (19-oct-2026). Desde el 20-oct es tambien el arranque del servicio
+ * DEFINITIVO rosanta-clientes (pipeline + /hooks/cotizaciones + reservas, carritos y CRM con CRM_VIVO=si;
+ * variables CRM_LIBRO y, por Secret Manager con el si de Juanma, META_CAPI_TOKEN). Hoy: solo el servicio de ENSAYO
  * rosanta-nube-clientes-ensayo (base rosanta_ensayo, hoja de ensayo). Punto de entrada aparte:
  * GOOGLE_ENTRYPOINT="node src/server-clientes-vivo.js".
  *
@@ -14,8 +16,13 @@ const { crearPool } = require('./db');
 const { crearServicioVivo, interruptor } = require('./vivo-clientes/servicio');
 const { crearAppVivo } = require('./vivo-clientes/app');
 const { armarEventosVivo } = require('./vivo-clientes/pantalla');
+const { crearCrmVivo } = require('./vivo-clientes/crm-vivo');
+const CC = require('./vivo-clientes/copiar-clientes');
+const { crearCapi } = require('./vivo-clientes/capi');
 
 const MKT = process.env.MKT_VIVO_ID;
+// Reservas, carritos y CRM (20-oct-2026): CRM_LIBRO = la CRM Maestra (o una de ensayo); CRM_VIVO=si los monta.
+const CRM_LIBRO = process.env.CRM_LIBRO || '1VHg2GkmhGcVkxw0JZe1cBZzXOrsjzIk570yh7CyYwvM';
 const LIBRO_INT = process.env.INTERRUPTOR_LIBRO || MKT;
 const REAL = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
 
@@ -38,7 +45,17 @@ async function main() {
     leerInterruptor: async () => { const L = await C.leerLibro(clienteSheets(), LIBRO_INT, ['PARAMETROS']); return interruptor(L.PARAMETROS); }
   });
   await vivo.cargar().catch((e) => console.error('No cargo:', e.message));
-  const app = crearAppVivo({ pool, vivo, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
+  let crm = null;
+  if (process.env.CRM_VIVO === 'si') {
+    crm = crearCrmVivo(pool, {
+      leerMkt: (pestanas) => C.leerLibro(clienteSheets(), MKT, pestanas),
+      leerCrm: async () => { const p = await CC.pestanaCrm(clienteSheets(), CRM_LIBRO); return (await C.leerLibro(clienteSheets(), CRM_LIBRO, [p.title]))[p.title]; },
+      copiar: (pestana, filas) => CC.copiar(clienteSheetsEscritura(), pestana === 'crm' ? CRM_LIBRO : MKT, filas, { pestana, llave: 'id' }),
+      capi: crearCapi({ token: process.env.META_CAPI_TOKEN || '' })
+    });
+  }
+  const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date());
+  const app = crearAppVivo({ pool, vivo, crm, hoy, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
     claveHook: process.env.COTIZ_TOKEN_VIVO, version: process.env.K_REVISION || 'local' });
   app.listen(Number(process.env.PORT || 8080), () => console.log('clientes-vivo escuchando'));
 }

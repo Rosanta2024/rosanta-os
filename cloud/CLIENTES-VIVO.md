@@ -21,3 +21,11 @@ Servicio `rosanta-nube-clientes-ensayo`, base `rosanta_ensayo`, hoja "ENSAYO Cli
 4. `motor_eventos = base` en PARAMETROS, importar, y crear `~/.rosanta-secretos/cotizaciones-nube` en la Mac.
 **Volver atrás:** `motor_eventos = sheets` y borrar ese archivo (~7 s).
 Después del paso: borrar el servicio de ensayo, la hoja de ensayo (papelera) y las filas de ensayo de `rosanta_ensayo`.
+
+## Reservas, carritos y CRM (20-oct-2026, SIN encender)
+Los avisos de Wix los recibe rosanta-nube (`/hooks/carrito`, `/hooks/reserva`). Con el interruptor `hooks_*` en **base** (tabla `interruptores`), rosanta-clientes corre el **código real** de Marketing OS (`Code.js`: `intakeCarrito`; `CRMSync.js`: `intakeReserva` y `sincronizarCRM`) sobre la base y deja el resultado en `filas_clientes` (`reservas`, `carritos` y `crm`; migración 014). Después lo copia a las hojas como lo haría `setValues`: fechas como fecha, el teléfono de reservas como número, lo nuevo arriba en reservas y carritos, y el CRM buscado por correo o teléfono, con el teléfono como texto. El CAPI (AddToCart) lo manda el servidor con `META_CAPI_TOKEN`.
+- **La hoja manda** en estas tres pestañas, salvo lo que el servidor todavía no copió. Hasta después del 5-nov siguen escribiendo CerrarMesasNoShow y ConsumoPendiente, y la gente edita el CRM. Una fila que desaparece del CRM se marca `borrada`, no se borra.
+- **Sombra** (`/tareas/comparar-crm`, cada noche): (1) cada reserva y cada carrito que llegó por el receptor está en la hoja; (2) `sincronizarCRM` corrido por la nube sobre lo importado no cambia nada (es decir, el CRM de Apps Script = el de la nube). Responde 409 si hay diferencias. La foto queda en `clientes_comparaciones`.
+- **Hallazgo (no es de la nube):** en una misma corrida de CRMSync, si un contacto NUEVO entra por un carrito y también tiene una reserva, la reserva se salta (`loc.fila === -1`) y queda para la corrida siguiente. Así pasa hoy en Apps Script. La nube hace lo mismo a propósito, para que la comparación sea justa.
+- **El día del paso:** apagar el activador `alCambiarMarketingOS` de Marketing OS (a mano: Editor → Activadores). Si no, el CRM tiene dos escritores. Los dos llegan al mismo resultado, pero compiten entre sí.
+- **Volver atrás:** `hooks_carrito` y `hooks_reserva` en `puente` (fila de `interruptores`; se relee cada 30 s), y volver a encender el activador.

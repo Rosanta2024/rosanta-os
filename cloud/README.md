@@ -69,6 +69,22 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - **`&nube=ensayo`** en la dirección de la intranet: solo el dueño ve en Pagos, Caja y Compras la pantalla del servidor de ENSAYO, para probar el puente en su Chrome con la intranet publicada. Quitar después del 1-nov.
 - **Orden en producción:** primero migraciones 005 y 006, DESPUÉS publicar el servidor (el refresco importa caja y cierres y necesita `filas_vivas`).
 
+## Clientes: servicio `rosanta-clientes` (definitivo; acordado el 20-oct-2026)
+
+Rama `claude/nube-clientes-vivo`. Arranque `GOOGLE_ENTRYPOINT="node src/server-clientes-vivo.js"`. La misma base `rosanta`, la misma cuenta `rosanta-nube@…` y el mismo acceso (tablas `usuarios` y `permisos`, el `?u=` de siempre), **max 1 instancia**, y un sello propio: `sellar-nube.py --servicio rosanta-clientes`.
+
+| Qué | Dónde |
+|---|---|
+| Pipeline (pantalla de Eventos) | `/clientes/eventos` · interruptor **`motor_eventos` en PARAMETROS** (la intranet tiene que cerrar su guardado) |
+| Revisión diaria de cotizaciones | `/hooks/cotizaciones`: la dirección definitiva de `cot.sh` |
+| Reservas, carritos y CRM | `/interno/aviso` (solo rosanta-nube, con `clave-tareas`): corre `Code.js` y `CRMSync.js` reales de Marketing OS y guarda en `filas_clientes` (012 + 014); copia a Marketing OS y a la CRM Maestra |
+| Relojes | `/tareas/importar` y `/tareas/importar-crm` cada 15 min; `/tareas/comparar-crm` cada noche (409 = diferencias → alerta) |
+
+- **Avisos de Wix:** los recibe **rosanta-nube** (`/hooks/carrito`, `/hooks/reserva`; `hooks-wix.js`, migración 013), con las llaves `wix-hook-carrito` y `wix-hook-reserva`. Interruptores `hooks_carrito` y `hooks_reserva` en la **tabla `interruptores`**: `puente` reenvía al `/exec` de Marketing OS; `base` se lo pasa a rosanta-clientes.
+- **Variables:** `MKT_VIVO_ID` (Marketing OS), `CLIENTES_VIVO_REAL=si`, `INTERRUPTOR_LIBRO` (Config), `CRM_VIVO=si`, `CRM_LIBRO` (CRM Maestra). Por Secret Manager: `DB_CLAVE`, `CLAVE_TAREAS`, `COTIZ_TOKEN_VIVO` y, con el sí de Juanma, `META_CAPI_TOKEN`.
+- **En sombra** basta con que la cuenta sea Lectora de Marketing OS y de la CRM Maestra. Para escribir (`base`) tiene que ser **Editora** de las dos (con el sí de Juanma).
+- Paso a vivo y vuelta atrás: `CLIENTES-VIVO.md`.
+
 ## Tareas
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.
