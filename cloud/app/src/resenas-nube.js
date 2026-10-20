@@ -7,6 +7,8 @@
  *   POST /tareas/resenas/leer-google    lee TODAS las reseñas de Google Business Profile (solo GET), las guarda
  *                                       en resenas_gbp_google y las compara con la copia de la hoja.
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
+ *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
+ *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
  *
  * Un solo escritor: hasta el dia unico (5-nov) escribe Apps Script (las hojas). Aca nada publica en Google ni
  * escribe en las hojas: el cliente de Google de este archivo solo hace GET (gbpGet lo hace cumplir).
@@ -247,6 +249,46 @@ async function leerGoogle(deps) {
   return resumen;
 }
 
+// ---- Borradores en sombra --------------------------------------------------------------------------------
+
+const TOPE_MES_USD = 2;   // la parte de reseñas dentro del tope de US$10/mes del espacio "Sombra nube"
+
+/**
+ * Redacta en sombra las reseñas que Apps Script ya atendio y que todavia no tienen borrador de la nube
+ * (las mas nuevas primero, hasta `cuantas` por corrida y sin pasar el tope del mes). Que la decision cambie en una
+ * de 4-5 estrellas es normal (el modelo a veces escribe sucio y a veces no) y solo se informa. Alerta si Claude
+ * fallo, o si la nube publicaria sola una de 1-3 estrellas (romperia la regla; no deberia pasar nunca).
+ */
+async function borradoresSombra(deps, cuantas) {
+  const B = deps.borrador || require('./resenas-borrador');
+  const clave = deps.claveClaude !== undefined ? deps.claveClaude : process.env.ANTHROPIC_SOMBRA;
+  const gastado = Number((await deps.pool.query(
+    "SELECT coalesce(sum(costo_usd), 0)::float AS usd FROM resenas_borradores WHERE cuando >= date_trunc('month', now() AT TIME ZONE 'America/Guatemala') AT TIME ZONE 'America/Guatemala'")).rows[0].usd) || 0;
+  if (gastado >= TOPE_MES_USD) return { redactadas: 0, gastado_mes: gastado, tope: TOPE_MES_USD, alertas: 0, aviso: 'Tope del mes alcanzado: no se redacto nada.' };
+  const pend = (await deps.pool.query(`SELECT g.review_id, g.estrellas, g.cliente, g.resena, g.estado FROM resenas_gbp g
+    LEFT JOIN resenas_borradores b ON b.review_id = g.review_id
+    WHERE b.review_id IS NULL AND g.estado IN ('PUBLICADA_AUTO', 'PENDIENTE_APROBAR', 'PUBLICADA_APROBADA', 'NO_RESPONDER')
+    ORDER BY g.fecha_detectada DESC NULLS LAST LIMIT $1`, [Math.max(1, Math.min(20, cuantas || 5))])).rows;
+  const out = { redactadas: 0, iguales: 0, mas_estricta: [], publicaria_sola: [], regla_rota: [], fallos: 0, costo: 0, gastado_mes: gastado, tope: TOPE_MES_USD };
+  for (const r of pend) {
+    if (gastado + out.costo >= TOPE_MES_USD) break;
+    const red = await B.redactar(r, { clave, fetch: deps.fetch, modelo: deps.modeloClaude });
+    const hoja = B.decisionDeHoja(r.estado);
+    await deps.pool.query(`INSERT INTO resenas_borradores (review_id, modo, modelo, estrellas, texto, confiable, decision, decision_hoja, fallo, tokens_in, tokens_out, costo_usd)
+      VALUES ($1,'sombra',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (review_id) DO NOTHING`,
+    [r.review_id, deps.modeloClaude || B.MODELO, r.estrellas, red.texto, red.confiable, red.decision, hoja, red.fallo || '', red.uso.entrada, red.uso.salida, red.costo]);
+    out.redactadas++; out.costo += red.costo; if (red.fallo) out.fallos++;
+    if (red.decision === hoja) out.iguales++;
+    else if (red.decision === 'publicar_sola') out.publicaria_sola.push(r.review_id);
+    else out.mas_estricta.push(r.review_id);
+    if (red.decision === 'publicar_sola' && Number(r.estrellas) < 4) out.regla_rota.push(r.review_id);
+  }
+  out.costo = Math.round(out.costo * 100000) / 100000;
+  out.alertas = out.regla_rota.length + out.fallos;
+  await deps.pool.query('INSERT INTO resenas_corridas (tarea, ok, resumen) VALUES ($1,$2,$3)', ['borradores-sombra', out.alertas === 0, JSON.stringify(out)]);
+  return out;
+}
+
 // ---- Rutas ------------------------------------------------------------------------------------------------
 
 function montarResenas(app, deps) {
@@ -261,6 +303,7 @@ function montarResenas(app, deps) {
   };
   app.post('/tareas/resenas/copiar-hojas', exigirTarea, responder(copiarHojas, false));
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
+  app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));
 }
 
-module.exports = { montarResenas, filasResenas, filasEncuesta, copiarHojas, crearLectorGbp, comparar, leerGoogle, gbpDelEntorno, GBP_ID, ENCUESTA_ID };
+module.exports = { montarResenas, borradoresSombra, filasResenas, filasEncuesta, copiarHojas, crearLectorGbp, comparar, leerGoogle, gbpDelEntorno, GBP_ID, ENCUESTA_ID };
