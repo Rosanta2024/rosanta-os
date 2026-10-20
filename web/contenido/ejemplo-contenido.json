@@ -1,0 +1,51 @@
+{
+  "formato": 1,
+  "version": 7,
+  "publicada": "2026-11-05T18:30:00.000Z",
+  "huella": "ejemplo-sin-huella-real",
+  "ajustes": { "tipo_cambio_usd": 7.7 },
+  "paginas": {
+    "inicio": {
+      "orden": 0,
+      "ruta": { "en": "/", "es": "/es" },
+      "seo": {
+        "titulo": { "es": "Rosanta · Cocina con Carisma en Antigua Guatemala", "en": "Rosanta · Cooking with Charisma in Antigua Guatemala" },
+        "descripcion": { "es": "Texto de ejemplo para la descripción.", "en": "Sample description text." },
+        "foto": { "id": 1, "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp", "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp", "ancho": 1600, "alto": 1067, "alt": { "es": "Mesa en la pérgola", "en": "Table under the pergola" } }
+      },
+      "bloques": {
+        "heroe.titulo": { "id": 1, "tipo": "texto", "orden": 0, "es": "Título de ejemplo", "en": "Sample headline" },
+        "heroe.boton": { "id": 2, "tipo": "enlace", "orden": 1, "es": "Reservar", "en": "Book a table", "enlace": "/reservas" },
+        "heroe.foto": { "id": 3, "tipo": "foto", "orden": 2, "es": "", "en": "", "foto": { "id": 1, "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp", "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp", "ancho": 1600, "alto": 1067, "alt": { "es": "Mesa en la pérgola", "en": "Table under the pergola" } } },
+        "honest.parrafo": { "id": 4, "tipo": "parrafo", "orden": 3, "es": "Párrafo de ejemplo.\nSegunda línea.", "en": "Sample paragraph.\nSecond line." }
+      }
+    },
+    "menu": {
+      "orden": 1,
+      "ruta": { "en": "/full-menu", "es": "/es/full-menu" },
+      "seo": { "titulo": { "es": "Menú", "en": "Menu" }, "descripcion": { "es": "Ejemplo.", "en": "Sample." }, "foto": null },
+      "bloques": {}
+    }
+  },
+  "menu": [
+    {
+      "id": 1, "clave": "entradas", "orden": 0,
+      "nombre": { "es": "Entradas", "en": "Starters" },
+      "nota": { "es": "", "en": "" },
+      "platos": [
+        { "id": 1, "orden": 0, "nombre": { "es": "Plato de ejemplo", "en": "Sample dish" }, "descripcion": { "es": "Descripción de ejemplo.", "en": "Sample description." },
+          "precio_q": 85, "precio_usd_ref": 11, "alergenos": ["gluten", "lacteos"], "etiquetas": ["vegetariano"], "foto": null }
+      ]
+    }
+  ],
+  "faq": [
+    { "id": 1, "orden": 0, "categoria": "reservas", "pregunta": { "es": "¿Pregunta de ejemplo?", "en": "Sample question?" }, "respuesta": { "es": "Respuesta de ejemplo.", "en": "Sample answer." } }
+  ],
+  "eventos": [
+    { "id": 1, "orden": 0, "slug": "cena-de-ejemplo", "titulo": { "es": "Cena de ejemplo", "en": "Sample dinner" }, "descripcion": { "es": "Ejemplo.", "en": "Sample." },
+      "inicio": "2026-12-12T01:30:00.000Z", "fin": null, "precio_q": 450, "precio_usd_ref": 58, "cupo": 30, "foto": null, "enlace": "/reservas" }
+  ],
+  "alergenos": { "gluten": { "es": "Gluten", "en": "Gluten" }, "lacteos": { "es": "Lácteos", "en": "Dairy" } },
+  "etiquetas": { "vegetariano": { "es": "Vegetariano", "en": "Vegetarian" } },
+  "giftcards": { "montos_q": [300, 500], "minimo_q": 200, "maximo_q": 5000, "vigencia_meses": 12, "usd_fijos": {} }
+}
