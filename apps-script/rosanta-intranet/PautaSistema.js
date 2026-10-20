@@ -964,6 +964,7 @@ function psCapturaLunes() {
 }
 
 function psGuardarRegla(id, valor, auth) {
+  var _nube = _mktDesvio_('psGuardarRegla', [id, valor], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   var u = requiereSoloMarketing_(auth);
   if (!psEsDueno_(u)) throw new Error('Las reglas las cambia solo el dueño. Proponé el cambio en la bitácora.');
   var base = PS_REGLAS_BASE.filter(function (r) { return r[0] === id; })[0];
@@ -974,6 +975,7 @@ function psGuardarRegla(id, valor, auth) {
 }
 
 function psGuardarSupuesto(row, auth) {
+  var _nube = _mktDesvio_('psGuardarSupuesto', [row], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   var u = requiereSoloMarketing_(auth);
   if (!psEsDueno_(u)) throw new Error('Los supuestos los cambia solo el dueño.');
   row = row || {};
@@ -1016,6 +1018,7 @@ function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar, lectura, lect
 }
 
 function psGuardarPrueba(row, auth) {
+  var _nube = _mktDesvio_('psGuardarPrueba', [row], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   var u = requiereSoloMarketing_(auth);
   row = row || {};
   var todas = psLeer_('bitacora_pruebas');

@@ -19,6 +19,7 @@ const { armarEventosVivo } = require('./vivo-clientes/pantalla');
 const { crearCrmVivo } = require('./vivo-clientes/crm-vivo');
 const CC = require('./vivo-clientes/copiar-clientes');
 const { crearCapi } = require('./vivo-clientes/capi');
+const { crearMarketingVivo, copiarMarketing } = require('./vivo-clientes/marketing-vivo');
 
 const MKT = process.env.MKT_VIVO_ID;
 // Reservas, carritos y CRM (20-oct-2026): CRM_LIBRO = la CRM Maestra (o una de ensayo); CRM_VIVO=si los monta.
@@ -54,8 +55,27 @@ async function main() {
       capi: crearCapi({ token: process.env.META_CAPI_TOKEN || '' })
     });
   }
+  // Marketing (contenido y pauta), con MARKETING_VIVO=si: interruptor PARAMETROS › motor_marketing (30 s de cache)
+  let marketing = null, leerModoMarketing = null;
+  if (process.env.MARKETING_VIVO === 'si') {
+    const CONFIG = process.env.INTERRUPTOR_LIBRO;
+    const existentes = async (id, ps) => { const m = await clienteSheets().spreadsheets.get({ spreadsheetId: id, fields: 'sheets.properties.title' }); const t = m.data.sheets.map((x) => x.properties.title); return ps.filter((p) => t.includes(p)); };
+    marketing = crearMarketingVivo(pool, {
+      configId: CONFIG,
+      leerMkt: async (ps) => C.leerLibro(clienteSheets(), MKT, await existentes(MKT, ps)),
+      leerConfig: async () => C.leerLibro(clienteSheets(), CONFIG, await existentes(CONFIG, ['PARAMETROS', 'METAS'])),
+      copiar: (pestana, cambios, bajas, enc) => copiarMarketing(clienteSheetsEscritura(), MKT, pestana, cambios, bajas, enc)
+    });
+    let cacheModo = { t: 0, v: 'sheets' };
+    leerModoMarketing = async () => {
+      if (Date.now() - cacheModo.t < 30000) return cacheModo.v;
+      const L = await C.leerLibro(clienteSheets(), CONFIG, ['PARAMETROS']);
+      cacheModo = { t: Date.now(), v: interruptor(L.PARAMETROS, 'motor_marketing') };
+      return cacheModo.v;
+    };
+  }
   const hoy = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date());
-  const app = crearAppVivo({ pool, vivo, crm, hoy, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
+  const app = crearAppVivo({ pool, vivo, crm, marketing, leerModoMarketing, hoy, pantallaEventos: armarEventosVivo, claveTareas: process.env.CLAVE_TAREAS,
     claveHook: process.env.COTIZ_TOKEN_VIVO, version: process.env.K_REVISION || 'local' });
   app.listen(Number(process.env.PORT || 8080), () => console.log('clientes-vivo escuchando'));
 }

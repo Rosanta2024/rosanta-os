@@ -4,7 +4,8 @@
  * Juanma, se monta en el servicio de Clientes.
  *
  * deps: { pool, vivo (crearServicioVivo), pantallaEventos(o), claveTareas, claveHook, version,
- *         crm (crearCrmVivo, opcional: reservas, carritos y CRM en la base), hoy() → 'AAAA-MM-DD' }
+ *         crm (crearCrmVivo, opcional: reservas, carritos y CRM en la base), hoy() → 'AAAA-MM-DD',
+ *         marketing (crearMarketingVivo, opcional), leerModoMarketing() → 'base'|'sheets' }
  *
  * Desde el 20-oct-2026 es la app del servicio DEFINITIVO rosanta-clientes (acordado con el Estudio): la
  * pantalla de Eventos, /hooks/cotizaciones (la direccion de cot.sh) y, por /interno/aviso, los avisos de
@@ -72,7 +73,12 @@ function crearAppVivo(deps) {
       try { const r = await deps.crm.atender(b.hook, limpio.cuerpo); res.status(r.estado).json(r.json); } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
     });
     app.post('/tareas/importar-crm', exigirTarea, async (req, res) => {
-      try { res.json({ ok: true, pestanas: await deps.crm.importar() }); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+      // el mismo reloj trae tambien las pestañas de Marketing (si esta montado): un reloj menos
+      try {
+        const pestanas = await deps.crm.importar();
+        if (deps.marketing) pestanas.push(...await deps.marketing.importar());
+        res.json({ ok: true, pestanas });
+      } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
     });
     /** La sombra de cada noche: 409 si hay diferencias (el reloj falla y llega la alerta de siempre). */
     app.post('/tareas/comparar-crm', exigirTarea, async (req, res) => {
@@ -82,6 +88,27 @@ function crearAppVivo(deps) {
         await deps.pool.query('INSERT INTO clientes_comparaciones (desde, recibidos, diferencias, avisos) VALUES ($1,$2,$3,$4)', [desde, r.recibidos, JSON.stringify(r.diferencias), JSON.stringify(r.avisos)]).catch((e) => console.error('Foto de la comparacion:', e.message));
         res.status(r.ok ? 200 : 409).json(Object.assign({ desde }, r));
       } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    });
+  }
+  if (deps.marketing) {
+    /**
+     * Las 6 funciones de guardar de Marketing, que la intranet manda aca con motor_marketing = base
+     * (NubeClientes.js › _mktDesvio_). Cuerpo { fn, args, email }: la intranet ya identifico a la persona
+     * (sesion de Google o su enlace); aca se busca en la tabla usuarios por correo y el codigo real vuelve a
+     * revisar sus permisos. 409 si el interruptor no esta en base (un solo escritor).
+     */
+    app.post('/interno/marketing', exigirTarea, async (req, res) => {
+      const b = req.body || {};
+      try {
+        if (deps.leerModoMarketing && (await deps.leerModoMarketing()) !== 'base') return res.status(409).json({ error: 'Marketing todavía se guarda en la intranet (motor_marketing en sheets).' });
+        const email = String(b.email || '').trim().toLowerCase();
+        const u = email ? (await deps.pool.query('SELECT email, rol, modulos, puede_editar, nombre FROM usuarios WHERE lower(email) = $1', [email])).rows[0] : null;
+        if (!u) return res.status(403).json({ error: 'Tu correo no está en la hoja USUARIOS.' });
+        res.json({ resultado: await deps.marketing.guardar(u, String(b.fn || ''), Array.isArray(b.args) ? b.args : []) });
+      } catch (e) { res.status(e.status || 400).json({ error: String(e.message || e) }); }
+    });
+    app.post('/tareas/importar-marketing', exigirTarea, async (req, res) => {
+      try { res.json({ ok: true, pestanas: await deps.marketing.importar() }); } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
     });
   }
   return app;
