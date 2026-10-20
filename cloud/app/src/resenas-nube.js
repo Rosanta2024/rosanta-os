@@ -22,8 +22,9 @@
  *
  * Montaje en app.js (antes del manejador de errores), igual que entrada.js y hooks-wix.js:
  *   if (deps.resenas) require('./resenas-nube').montarResenas(app, Object.assign({ pool: deps.pool, claveTareas: deps.claveTareas }, deps.resenas));
+   if (deps.encuesta) require('./encuesta-nube').montarEncuesta(app, Object.assign({ pool: deps.pool }, deps.encuesta));
  * y en server.js:
- *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env) },
+ *   resenas: { sheets: clienteSheets, gbp: gbpDelEntorno(process.env) }, encuesta: {},
  */
 const crypto = require('crypto');
 const { leerLibro } = require('./copia-hojas');
@@ -69,13 +70,17 @@ function filasResenas(matriz) {
   return Array.from(porId.values());
 }
 
-/** "Encuesta 2026" (A Fecha | B Calificacion | C Que mejorar) → filas con huella estable para no duplicar. */
+/**
+ * "Encuesta 2026" (A Fecha | B Calificacion | C Que mejorar | D marca) → filas con huella estable para no duplicar.
+ * D = 'nube': es la copia de una respuesta que ya guardo la nube (encuesta-nube.js), no se vuelve a subir.
+ * D = 'sin-nube' o vacia: la escribio Apps Script (modo puente, o la nube no contesto) y se sube.
+ */
 function filasEncuesta(matriz) {
   if (!matriz || matriz.length < 2) return [];
   const vistas = new Map(), out = [];
   matriz.slice(1).forEach((f, i) => {
     const d = fecha(f[0]), cal = Number(f[1]) || 0, mejorar = txt(f[2]);
-    if (!d || !cal) return;   // filas vacias o rotas: se saltan (la comparacion las cuenta)
+    if (!d || !cal || txt(f[3]).trim() === 'nube') return;   // filas vacias o rotas: se saltan (la comparacion las cuenta)
     const base = d.toISOString() + '|' + cal + '|' + mejorar;
     const n = (vistas.get(base) || 0) + 1;   // dos respuestas identicas en el mismo segundo: las dos cuentan
     vistas.set(base, n);
