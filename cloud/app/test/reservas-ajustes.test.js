@@ -60,6 +60,8 @@ test('la cena combinada de Adventures crea la reserva en el motor (contrato del 
   const ok = await cenaAdventures(motor, { fecha: '2026-11-04', hora: '19:00', personas: 2, nombre: 'Aventurera', email: 'a@ejemplo.test',
     telefono: '55551234', idioma: 'en', codigo: 'OP-01', nota: 'después del Acatenango' });
   assert.ok(ok.id);
+  assert.strictEqual(ok.estado, undefined);   // adventures.js pone su propio "estado"
+  assert.strictEqual(ok.pendiente, false);
   const r = await motor.porId(ok.id);
   assert.strictEqual(r.canal, 'adventures');
   assert.match(r.nota_equipo, /Adventures OP-01/);

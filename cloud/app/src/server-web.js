@@ -38,7 +38,15 @@ function ganchoInterno(env, ruta, fetchImpl) {
 /** El aviso a Juanma por correo (Resend, el mismo canal de los avisos; en sombra va igual a restaurante@). */
 function avisoJuanma(canales) {
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>]/g, (x) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[x]));
-  return async function ({ asunto, texto }) {
+  return async function ({ asunto, texto, lead }) {
+    if (!texto && lead) {
+      const l = lead;
+      texto = ['Consulta de Rosanta Adventures', '', 'Experiencia: ' + (l.titulo || l.experiencia) + ' (operador: ' + l.operador + ', código ' + l.codigo_referido + ')',
+        'Quién: ' + l.nombre + ' · ' + l.email + (l.telefono ? ' · ' + l.telefono : '') + ' · idioma ' + l.idioma,
+        'Fecha: ' + (l.fecha || 'sin fecha') + ' · personas: ' + (l.personas || '?'),
+        l.cena ? 'Cena en Rosanta: ' + l.cena.fecha + ' ' + l.cena.hora + ' para ' + l.cena.personas : 'Sin cena combinada',
+        '', 'Mensaje: ' + (l.mensaje || '(sin mensaje)')].join('\n');
+    }
     if (!canales || canales.modo === 'apagado' || !canales.correo) { console.log('[web] aviso a Juanma (avisos apagados): ' + asunto); return { estado: 'apagado' }; }
     const r = await canales.correo.enviar({ to: ['restaurante@rosanta.rest'], asunto: String(asunto || 'Aviso de la web'), texto: String(texto || ''),
       html: '<pre style="font-family:inherit;white-space:pre-wrap">' + esc(texto) + '</pre>', etiquetas: [{ name: 'tipo', value: 'aviso_juanma' }] });
@@ -49,7 +57,7 @@ function avisoJuanma(canales) {
 /**
  * La cena combinada de Adventures → el motor. Contrato del AYUDANTE 4:
  *   entra { fecha 'AAAA-MM-DD', hora 'HH:MM', personas, nombre, email, telefono, idioma, codigo, nota }
- *   sale  { id, estado } | { id: null, motivo }
+ *   sale  { id, pendiente } | { id: null, motivo }
  */
 async function cenaAdventures(motor, c) {
   // Validar ANTES de armar la fecha: el lector de fechas de JavaScript acepta basura ("malTx") como el anio 2000.
@@ -59,7 +67,8 @@ async function cenaAdventures(motor, c) {
   const r = await motor.crear({ origen: 'web', canal: 'adventures', inicio, personas: Number(c.personas), nombre: c.nombre,
     email: c.email, telefono: c.telefono, idioma: c.idioma, nota_equipo: ('Adventures ' + (c.codigo || '') + ' ' + (c.nota || '')).trim() },
   { canal: 'web', quien: 'adventures', duplicados: 'web' });
-  return r.ok ? { id: r.reserva.id, estado: r.reserva.estado } : { id: null, motivo: r.motivo };
+  // Sin la llave "estado": adventures.js envuelve la respuesta en { estado: 'ok', ... } y la leeria como error.
+  return r.ok ? { id: r.reserva.id, pendiente: r.reserva.estado === 'pendiente' } : { id: null, motivo: r.motivo };
 }
 
 /**

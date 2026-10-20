@@ -81,3 +81,12 @@ test('el aviso a Juanma sale por el correo de los avisos, solo a restaurante@, y
   assert.deepStrictEqual(enviados[0].to, ['restaurante@rosanta.rest']);
   assert.match(enviados[0].html, /&lt;2 personas&gt;/);
 });
+
+test('el aviso a Juanma arma el texto desde el lead de Adventures', async () => {
+  const enviados = [];
+  const correo = { enviar: async (m) => { enviados.push(m); return { id: 'r2' }; } };
+  await avisoJuanma({ modo: 'vivo', correo })({ asunto: 'Adventures: consulta', lead: { titulo: 'Acatenango', operador: 'Aliado', codigo_referido: 'OP-01',
+    nombre: 'Ana', email: 'a@ejemplo.test', telefono: null, idioma: 'en', fecha: '2026-12-01', personas: 2, mensaje: 'hola', cena: { fecha: '2026-12-02', hora: '19:00', personas: 2 } } });
+  assert.match(enviados[0].texto, /Acatenango \(operador: Aliado, código OP-01\)/);
+  assert.match(enviados[0].texto, /Cena en Rosanta: 2026-12-02 19:00 para 2/);
+});
