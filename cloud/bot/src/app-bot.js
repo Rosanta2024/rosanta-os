@@ -10,7 +10,7 @@ function iguales(a, b) {
   return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
 }
 
-/** deps: { servicio, claveTareas, version, modeloEncendido } y, solo en vivo: { vivo, correo, pool, verifyToken, webhookSecret } */
+/** deps: { servicio, claveTareas, version, modeloEncendido } y, solo en vivo: { vivo, correo, pool, verifyToken, webhookSecret, secretoReservas } */
 function crearAppBot(deps) {
   const app = express();
   app.use(express.json({ limit: '100kb' }));
@@ -96,6 +96,19 @@ function montarVivo(app, deps, tarea) {
     }
     res.json({ ok: true, guardadas: n, clavesOmitidas: omitidas });
   }));
+  // Cada noche, 21:30 (reloj, solo en vivo): el resumen de lo que hizo el bot.
+  app.post('/tareas/resumen-bot', tarea(async (req, res) => {
+    const r = await deps.vivo.resumen();
+    res.status(r.error ? 500 : 200).json(r);
+  }));
+  // Reservas pedidas por el restaurante (scripts/reserva-bot.js): el mismo secreto que el ?accion=reserva del bot (WIX_RESERVAS_SECRETO).
+  app.post('/reserva', async (req, res) => {
+    const b = req.body || {};
+    if (!iguales(b.secreto, deps.secretoReservas)) return res.status(403).json({ ok: false, motivo: 'SECRETO_INVALIDO' });
+    const p = Object.assign({}, b);
+    delete p.secreto;
+    try { res.json(await deps.vivo.reserva(p)); } catch (e) { console.error('reserva:', e.message); res.status(500).json({ ok: false, motivo: 'excepcion' }); }
+  });
   // Una vez por semana (reloj, solo en vivo): renovar el token de Instagram y guardarlo en Secret Manager.
   app.post('/tareas/refrescar-token-ig', tarea(async (req, res) => {
     const r = await deps.refrescarIg();

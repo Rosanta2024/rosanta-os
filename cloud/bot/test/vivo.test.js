@@ -268,3 +268,36 @@ test('Vivo: el token de Instagram se renueva, se guarda como versión nueva del 
   assert.strictEqual(mal.ok, false);
   assert.match(mal.error, /HTTP 400: Session has expired/);
 });
+
+test('Vivo: reservas pedidas por el restaurante (/reserva, Manual.js) con el secreto de Wix, y el resumen solo en vivo', async () => {
+  const pool = poolDeMentira(Object.assign({ WIX_RESERVAS_SECRETO: 'no-se-usa' }, PROPS_BOT, { WIX_RESERVAS_URL: 'https://www.rosanta.rest/_functions/reservaBot' }));
+  const espejo = espejoDeMentira();
+  const llamadas = [];
+  const pedido = (url, op) => {
+    llamadas.push({ url, op });
+    if (/cambiarBot$/.test(url)) {
+      const p = JSON.parse(op.payload);
+      return { c: 200, t: JSON.stringify({ ok: true, modo: 'nota', vieja_cancelada: true, antes: { fecha: '2026-12-05', hora: '18:00', personas: 3 },
+        ahora: { fecha: '2026-12-05', hora: '18:00', personas: 3, id: p.id }, nota: p.nota, nombre: 'Ana Prueba', email: 'ana@ejemplo.test' }) };
+    }
+    return { c: 200, t: '{"messages":[{"id":"x"}]}' };
+  };
+  const bot = crearBotVivo({ pool, espejo, leadsId: LEADS, kb: async () => 'KB', claves: { WIX_RESERVAS_SECRETO: 'sec-wix' }, wixOrigen: 'https://www.rosanta.rest',
+    pedido, correo: async () => {}, reenviar: async () => {} });
+  const app = crearAppBot({ servicio: {}, claveTareas: 'k', version: 't', vivo: bot, correo: null, pool, verifyToken: 'vt', webhookSecret: TOKEN, secretoReservas: 'sec-wix' });
+  const srv = app.listen(0);
+  const base = 'http://127.0.0.1:' + srv.address().port;
+  const post = (ruta, cuerpo, h) => fetch(base + ruta, { method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, h || {}), body: JSON.stringify(cuerpo) });
+  try {
+    const mal = await post('/reserva', { secreto: 'otro', accion: 'cambiar', id: 'r1', nota: 'x' });
+    assert.strictEqual(mal.status, 403);
+    assert.strictEqual(llamadas.length, 0);
+    const r = await (await post('/reserva', { secreto: 'sec-wix', accion: 'cambiar', id: 'r1', nota: 'Mesa adentro', quien: 'Central' })).json();
+    assert.strictEqual(r.ok, true);
+    assert.match(r.registro, /NOTA agregada por el restaurante \(Central\)/);
+    const wix = llamadas.find((l) => /cambiarBot$/.test(l.url));
+    assert.strictEqual(JSON.parse(wix.op.payload).secreto, '$WIX_RESERVAS_SECRETO', 'el motor ve el marcador, no la clave');
+    assert.ok(espejo.aplicadas.some((op) => op.hoja === 'Leads'), 'queda en Leads como lo deja el bot');
+    assert.deepStrictEqual(await (await post('/tareas/resumen-bot', {}, { 'x-rosanta-tarea': 'k' })).json(), { omitido: 'puente' });
+  } finally { srv.close(); }
+});

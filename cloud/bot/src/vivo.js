@@ -192,7 +192,30 @@ function crearBotVivo(deps) {
     });
   }
 
-  return { recibir, minuto, interruptor: () => interruptor(deps.pool) };
+  /** Cada noche (reloj, solo en vivo): el resumen de lo que hizo el bot (ResumenDiario.js tal cual). */
+  function resumen() {
+    return enFila(async () => {
+      if (await interruptor(deps.pool) !== 'vivo') return { omitido: 'puente' };
+      await deps.espejo.cargar(['Leads']);
+      const r = await correr((m) => m.ctx.resumenDiarioBot());
+      return { correos: r.motor.correos.length, error: r.error ? String(r.error.message) : null };
+    });
+  }
+
+  /**
+   * Reservas pedidas por el restaurante (Manual.js tal cual, 20-oct-2026): lo mismo que ?accion=reserva del bot de
+   * Apps Script, con el mismo registro. No depende del interruptor: es una herramienta del restaurante, no un mensaje de cliente.
+   */
+  function reserva(pedido) {
+    return enFila(async () => {
+      let salida = null;
+      const r = await correr((m) => { salida = m.ctx.rvManual(pedido); });
+      if (r.error) throw r.error;
+      return salida;
+    });
+  }
+
+  return { recibir, minuto, resumen, reserva, interruptor: () => interruptor(deps.pool) };
 }
 
 /**
