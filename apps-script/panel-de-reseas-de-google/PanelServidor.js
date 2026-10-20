@@ -219,6 +219,7 @@ function guardarBorrador(reviewId, texto) {
 // Se escribe en la hoja DESPUÉS de que Google confirme: si la API falla, la
 // fila no queda mintiendo que ya se publicó.
 function publicarDesdePanel(reviewId, texto) {
+  if (mandaLaNube_()) throw new Error('Desde hoy las reseñas se publican desde el panel de la intranet nueva (Clientes › Reseñas).');
   var t = validarTexto_(texto);
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -278,6 +279,7 @@ function descartarBorrador(reviewId) {
 // razonamiento del modelo pegado al texto bueno. Los dos se corrigieron a mano
 // entrando a Google Business; esto evita ese rodeo la próxima vez.
 function editarRespuestaPublicada(reviewId, texto) {
+  if (mandaLaNube_()) throw new Error('Desde hoy las reseñas se publican desde el panel de la intranet nueva (Clientes › Reseñas).');
   var t = validarTexto_(texto);
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);

@@ -7,6 +7,7 @@
  *   POST /tareas/resenas/leer-google    lee TODAS las reseñas de Google Business Profile (solo GET), las guarda
  *                                       en resenas_gbp_google y las compara con la copia de la hoja.
  *                                       409 si hay algo que mirar (el reloj lo marca y avisa, como comparar-pagos).
+ *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
  *
@@ -306,6 +307,21 @@ function montarResenas(app, deps) {
       res.status(e.status || 500).json({ ok: false, error: String(e.message || e) });
     }
   };
+  // Lo pregunta Apps Script al empezar cada activador (procesarResenas, publicarAprobadas): con 'base' no hace nada,
+  // porque manda la nube. Publico y sin datos: solo el modo. Sin tabla o sin fila = 'puente'.
+  let cacheModo = null;
+  app.get('/resenas/modo', async (req, res) => {
+    const t = Date.now();
+    if (!cacheModo || t - cacheModo.t > 30000) {
+      let v = 'puente';
+      try {
+        const r = await deps.pool.query('SELECT modo FROM interruptores WHERE modulo = $1', ['resenas']);
+        if (r.rows[0] && ['puente', 'base'].indexOf(r.rows[0].modo) !== -1) v = r.rows[0].modo;
+      } catch (e) { /* sin tabla: puente */ }
+      cacheModo = { t, v };
+    }
+    res.set('Cache-Control', 'no-store').json({ modo: cacheModo.v });
+  });
   app.post('/tareas/resenas/copiar-hojas', exigirTarea, responder(copiarHojas, false));
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
   app.post('/tareas/resenas/borradores-sombra', exigirTarea, (req, res) => responder((d) => borradoresSombra(d, Number(req.query.cuantas) || 5), true)(req, res));

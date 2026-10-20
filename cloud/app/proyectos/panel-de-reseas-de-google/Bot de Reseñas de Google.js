@@ -48,6 +48,7 @@ const MB_BASE  = 'https://mybusiness.googleapis.com/v4';
 // ===================== FUNCIÓN PRINCIPAL =====================
 // Esta es la que dispara el trigger programado (cada hora / cada mañana).
 function procesarResenas() {
+  if (mandaLaNube_()) { Logger.log('Manda la nube (interruptor resenas = base): no hago nada.'); return; }
   const sheet = getSheet_();
   const yaProcesadas = getProcesadasSet_(sheet);
 
@@ -96,6 +97,7 @@ function procesarResenas() {
 // Segundo trigger (p.ej. cada 30 min). Lee la hoja y publica las que
 // Juanma marcó como aprobadas (columna APROBAR = "SI").
 function publicarAprobadas() {
+  if (mandaLaNube_()) { Logger.log('Manda la nube (interruptor resenas = base): no hago nada.'); return; }
   const sheet = getSheet_();
   const data  = sheet.getDataRange().getValues();
   const head  = data[0];
@@ -421,6 +423,23 @@ function notificarPendientes_(sheet) {
 
   MailApp.sendEmail(CONFIG.OWNER_EMAIL,
     '🌿 Rosanta: ' + pendientes.length + ' reseña(s) para revisar', cuerpo);
+}
+
+// ===================== UN SOLO ESCRITOR (nube) =====================
+// Desde el dia del cambio, la nube lee, redacta y publica. Para que no lo hagan los dos, cada activador le pregunta
+// a la nube su interruptor 'resenas'. Con 'base' este proyecto no hace nada; volver atras es poner 'puente' en la
+// nube, sin tocar esto. Si la nube no contesta, se sigue como siempre: la nube revisa en Google si una reseña ya
+// tiene respuesta antes de publicar, asi que no se contesta dos veces.
+var NUBE_RESENAS_MODO_URL = 'https://rosanta-nube-in6p5o4kna-pv.a.run.app/resenas/modo';
+
+function mandaLaNube_() {
+  try {
+    var r = UrlFetchApp.fetch(NUBE_RESENAS_MODO_URL, { muteHttpExceptions: true, followRedirects: false });
+    if (r.getResponseCode() !== 200) return false;
+    return JSON.parse(r.getContentText()).modo === 'base';
+  } catch (e) {
+    return false;
+  }
 }
 
 // ===================== UTILES =====================

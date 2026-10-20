@@ -177,3 +177,21 @@ test('Migracion 040: solo tablas nuevas, sin TripAdvisor, y app no borra', () =>
   assert.doesNotMatch(sinComentarios, /GRANT[^;]*DELETE/i);
   ['resenas_gbp', 'resenas_gbp_google', 'encuesta_respuestas', 'resenas_corridas'].forEach((t) => assert.match(sinComentarios, new RegExp('CREATE TABLE ' + t + ' ')));
 });
+
+test('Modo: /resenas/modo dice puente sin tabla o sin fila, y base cuando el interruptor lo dice', async () => {
+  for (const [filas, esperado] of [[null, 'puente'], [[], 'puente'], [[{ modo: 'base' }], 'base'], [[{ modo: 'cualquiera' }], 'puente']]) {
+    const pool = { query: async () => { if (filas === null) throw new Error('sin tabla'); return { rows: filas }; } };
+    await servir({ pool }, async (b) => assert.deepStrictEqual(await (await fetch(b + '/resenas/modo')).json(), { modo: esperado }));
+  }
+});
+
+test('Apps Script: los activadores y el panel viejo le preguntan a la nube antes de leer o publicar', () => {
+  const dir = path.join(__dirname, '..', 'proyectos', 'panel-de-reseas-de-google');
+  const bot = fs.readFileSync(path.join(dir, 'Bot de Reseñas de Google.js'), 'utf8');
+  const panel = fs.readFileSync(path.join(dir, 'PanelServidor.js'), 'utf8');
+  assert.match(bot, /function procesarResenas\(\) \{\n\s+if \(mandaLaNube_\(\)\)/);
+  assert.match(bot, /function publicarAprobadas\(\) \{\n\s+if \(mandaLaNube_\(\)\)/);
+  assert.match(panel, /function publicarDesdePanel\(reviewId, texto\) \{\n\s+if \(mandaLaNube_\(\)\)/);
+  assert.match(panel, /function editarRespuestaPublicada\(reviewId, texto\) \{\n\s+if \(mandaLaNube_\(\)\)/);
+  assert.match(bot, /NUBE_RESENAS_MODO_URL = 'https:\/\/rosanta-nube-[a-z0-9-]+\.a\.run\.app\/resenas\/modo'/);
+});
