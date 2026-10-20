@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Reservas · Rosanta</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/marca/favicon-32.png">
+<!--PALETA-->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--texto);font-family:var(--rosanta-font-body);-webkit-text-size-adjust:100%}
+  header.top{position:sticky;top:0;z-index:5;background:var(--superficie);border-bottom:1px solid var(--linea);padding:10px 16px 0}
+  .fila{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  h1{font-family:var(--rosanta-font-title);font-size:1.25rem;margin:0 auto 0 0}
+  button,.btn{font:inherit;min-height:44px;padding:8px 14px;border-radius:var(--rosanta-radius-pill,999px);border:1px solid var(--linea-2);background:var(--superficie);color:var(--texto);cursor:pointer}
+  button.pri{background:var(--rosanta-verde);border-color:var(--rosanta-verde);color:var(--rosanta-blanco);font-weight:700}
+  button.mal{border-color:var(--mal-linea);color:var(--mal)}
+  button.chico{min-height:36px;padding:4px 12px;font-size:.9rem}
+  button:disabled{opacity:.45;cursor:default}
+  input,select,textarea{font:inherit;min-height:44px;padding:8px 10px;border:1px solid var(--linea-2);border-radius:10px;background:var(--superficie);color:var(--texto);width:100%}
+  textarea{min-height:70px}
+  label{display:block;font-size:.8rem;color:var(--texto-suave);margin:10px 0 4px}
+  nav.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:8px}
+  nav.tabs button{border:none;border-radius:0;background:none;border-bottom:3px solid transparent;color:var(--texto-suave);white-space:nowrap}
+  nav.tabs button.on{border-bottom-color:var(--rosanta-verde);color:var(--texto);font-weight:700}
+  main{max-width:900px;margin:0 auto;padding:12px 16px 80px}
+  .resumen{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+  .chip{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--panel);font-size:.85rem}
+  .aviso{border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:.92rem}
+  .aviso.lila{background:var(--rosanta-lila-tint)}
+  .aviso.alerta{background:var(--alerta-tint);border:1px solid var(--alerta-linea)}
+  .aviso.mal{background:var(--mal-tint);border:1px solid var(--mal-linea)}
+  .tarjeta{background:var(--superficie);border:1px solid var(--linea);border-radius:var(--rosanta-radius-card,14px);padding:12px 14px;margin-bottom:10px}
+  .tarjeta.apagada{opacity:.6}
+  .cab{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .hora{font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+  .nombre{font-weight:700}
+  .suave{color:var(--texto-suave);font-size:.88rem}
+  .estado{margin-left:auto;font-size:.8rem;padding:3px 10px;border-radius:999px;font-family:var(--rosanta-font-label);text-transform:uppercase;letter-spacing:.04em}
+  .e-pendiente{background:var(--alerta-tint);color:var(--alerta)}
+  .e-confirmada{background:var(--rosanta-verde-tint);color:var(--rosanta-verde)}
+  .e-llego{background:var(--ok-tint);color:var(--ok)}
+  .e-termino{background:var(--panel);color:var(--texto-2)}
+  .e-no_vino,.e-cancelada,.e-rechazada{background:var(--mal-tint);color:var(--mal)}
+  .alergia{margin-top:6px;padding:6px 10px;border-radius:10px;background:var(--mal-tint);color:var(--mal);font-weight:700}
+  .notas{margin-top:6px;white-space:pre-wrap}
+  .acciones{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .editar{margin-top:10px;border-top:1px dashed var(--linea-2);padding-top:6px}
+  .mesas{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+  .mesa{border:1px solid var(--linea-2);border-radius:12px;padding:10px;background:var(--superficie);min-height:76px;text-align:left}
+  .mesa b{display:block}
+  .mesa.ocupada{background:var(--rosanta-verde-tint);border-color:var(--rosanta-verde)}
+  .mesa.ocupada.e-pendiente{background:var(--alerta-tint);border-color:var(--alerta-linea)}
+  .mesa.ocupada.e-llego{background:var(--ok-tint);border-color:var(--ok)}
+  h2{font-family:var(--rosanta-font-label);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--texto-suave);margin:18px 0 8px}
+  .dia{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border-radius:12px;margin-bottom:8px}
+  .dia .n{margin-left:auto;font-variant-numeric:tabular-nums}
+  dialog{border:none;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--superficie);color:var(--texto)}
+  dialog::backdrop{background:rgba(0,0,0,.35)}
+  dialog form{padding:16px}
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .horarios{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .horarios button.on{background:var(--rosanta-verde);color:var(--rosanta-blanco);border-color:var(--rosanta-verde)}
+  .flotante{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--rosanta-negro);color:var(--rosanta-blanco);padding:10px 16px;border-radius:999px;font-size:.9rem;display:none;z-index:20;max-width:calc(100vw - 32px)}
+  @media (min-width:700px){.tarjeta{padding:14px 18px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="fila">
+    <h1>Reservas</h1>
+    <button class="chico" id="ant" aria-label="Día anterior">‹</button>
+    <input type="date" id="fecha" style="width:auto;min-height:36px">
+    <button class="chico" id="sig" aria-label="Día siguiente">›</button>
+    <button class="chico" id="hoy">Hoy</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-v="dia" class="on">Día</button>
+    <button data-v="plano">Plano de mesas</button>
+    <button data-v="semana">Semana</button>
+    <button data-v="cierres">Fechas cerradas</button>
+  </nav>
+</header>
+<main id="main"><p class="suave">Cargando…</p></main>
+<div class="flotante" id="flotante" role="status"></div>
+
+<dialog id="alta">
+  <form method="dialog" id="altaForm">
+    <div class="fila"><h1 id="altaTitulo">Reserva por teléfono</h1><button type="button" class="chico" id="altaCerrar">Cerrar</button></div>
+    <div id="altaTel">
+      <div class="dos">
+        <div><label for="aFecha">Fecha</label><input type="date" id="aFecha" required></div>
+        <div><label for="aPersonas">Personas</label><input type="number" id="aPersonas" min="1" max="40" value="2" required inputmode="numeric"></div>
+      </div>
+      <label>Hora</label>
+      <div class="fila"><input type="time" id="aHora" step="900" style="width:auto"><button type="button" class="chico" id="aVer">Ver horarios libres</button></div>
+      <div class="horarios" id="aHorarios"></div>
+    </div>
+    <div id="altaWalk" hidden>
+      <div class="dos">
+        <div><label for="wPersonas">Personas</label><input type="number" id="wPersonas" min="1" max="40" value="2" inputmode="numeric"></div>
+        <div><label for="wHora">Hora (vacío = ahora)</label><input type="time" id="wHora" step="300"></div>
+      </div>
+    </div>
+    <label for="aNombre">Nombre</label><input id="aNombre" autocomplete="off">
+    <div class="dos">
+      <div><label for="aTel">Teléfono (8 dígitos = Guatemala; si no, con el código del país)</label><input id="aTel" type="tel" inputmode="tel" autocomplete="off"></div>
+      <div><label for="aIdioma">Idioma del cliente</label><select id="aIdioma"><option value="en">Inglés</option><option value="es">Español</option></select></div>
+    </div>
+    <label for="aEmail">Correo (para la confirmación)</label><input id="aEmail" type="email" autocomplete="off">
+    <label for="aMesa">Mesa (opcional)</label><select id="aMesa"><option value="">Que la elija el sistema</option></select>
+    <label for="aAlergias">Alergias</label><input id="aAlergias" autocomplete="off">
+    <label for="aNotas">Nota para el equipo</label><textarea id="aNotas"></textarea>
+    <div id="aError" class="aviso mal" hidden></div>
+    <div class="acciones"><button type="button" class="pri" id="aGuardar">Guardar reserva</button></div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+  // Habla con el MOTOR (Ayudante 1): __API__/equipo/*. Lo de avisos y la semana: /reservas/panel/api/*.
+  var AUTH = new URLSearchParams(location.search).get('u') || '';
+  var API = '__API__/equipo', PANEL = '/reservas/panel/api';
+  var ESTADO_TXT = { pendiente: 'Por aprobar', confirmada: 'Confirmada', llego: 'Llegó', termino: 'Terminó', no_vino: 'No vino', cancelada: 'Cancelada', rechazada: 'Rechazada' };
+  var ORIGEN_TXT = { web: 'web', bot_whatsapp: 'bot WhatsApp', bot_instagram: 'bot Instagram', bot_messenger: 'bot Messenger', bot_correo: 'bot correo', bot: 'bot', restaurante: 'restaurante', telefono: 'teléfono', sala: 'walk-in', evento: 'evento', wix: 'Wix' };
+  var PLANTILLA_TXT = { confirmacion: 'confirmación', pendiente: 'solicitud recibida', aprobada: 'aprobada', rechazada: 'rechazo', cambio: 'cambio', cancelacion: 'cancelación', recordatorio_24h: 'recordatorio 24 h', recordatorio_dia: 'recordatorio del día', resena: 'reseña' };
+  var ENVIO_TXT = { programado: 'en cola', enviado: 'enviado', entregado: 'entregado ✓', rebotado: 'rebotó ✗', fallo: 'falló ✗', anulado: 'anulado', omitido: 'no salió (falta un dato)' };
+  var MOTIVO_TXT = { MOTOR_EN_WIX: 'Las reservas todavía las maneja Wix: aquí solo se mira.', sin_disponibilidad: 'No hay lugar a esa hora.', TRANSICION_INVALIDA: 'Ese cambio de estado no se puede.', MESA_OCUPADA: 'Esa mesa ya la tomó otra reserva.', NO_VIGENTE: 'La reserva ya no está vigente.', SIN_CAMBIOS: 'No hubo cambios.' };
+  var vista = 'dia', yo = null, datos = null, avisos = [], editando = null, modoAlta = 'tel', horaPlano = '';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function hoyGT() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date()); }
+  function ahoraGT() { return new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date()); }
+  function diaGT(iso) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date(iso)); }
+  function sumarDias(f, n) { var d = new Date(f + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function fechaBonita(f) { var s = new Intl.DateTimeFormat('es-GT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(f + 'T12:00:00Z')); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function q(n) { return 'Q' + Number(n || 0).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function aviso(t) { var f = $('flotante'); f.textContent = t; f.style.display = 'block'; clearTimeout(aviso.t); aviso.t = setTimeout(function () { f.style.display = 'none'; }, 4000); }
+  function editable() { return !!(yo && yo.puede.ingresar && datos && datos.motor_reservas === 'base'); }
+
+  function pedir(metodo, ruta, cuerpo) {
+    return fetch(ruta, { method: metodo, headers: { 'Content-Type': 'application/json', 'x-rosanta-u': AUTH }, body: cuerpo ? JSON.stringify(cuerpo) : undefined })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok || j.ok === false) { var e = new Error(j.error || j.mensaje || MOTIVO_TXT[j.motivo] || j.motivo || ('Error ' + r.status)); e.datos = j; e.status = r.status; throw e; }
+          return j;
+        });
+      });
+  }
+
+  // ---------------------------------------------------------------- cargar
+  function cargar() {
+    var f = $('fecha').value;
+    var p;
+    if (vista === 'semana') p = pedir('GET', PANEL + '/semana?desde=' + f).then(function (j) { datos = Object.assign({ motor_reservas: datos && datos.motor_reservas }, j); });
+    else if (vista === 'cierres') p = pedir('GET', API + '/cierres').then(function (j) { datos = Object.assign({ motor_reservas: datos && datos.motor_reservas }, j); });
+    else p = Promise.all([pedir('GET', API + '/dia?fecha=' + f), pedir('GET', PANEL + '/avisos?fecha=' + f).catch(function () { return { avisos: [] }; })])
+      .then(function (x) { datos = x[0]; avisos = x[1].avisos || []; });
+    return p.then(pintar).catch(function (e) { $('main').innerHTML = '<div class="aviso mal">' + esc(e.message) + '</div>'; });
+  }
+
+  function cabecera() {
+    var h = '';
+    if (yo && yo.motor_reservas !== 'base') h += '<div class="aviso alerta"><b>Las reservas todavía las maneja Wix.</b> Este panel solo mira: los cambios se hacen en Wix hasta que se haga el cambio.</div>';
+    if (yo && yo.avisos === 'sombra') h += '<div class="aviso lila"><b>Avisos en sombra.</b> Los correos al cliente salen solo a restaurante@ para revisarlos.</div>';
+    if (yo && yo.avisos === 'apagado') h += '<div class="aviso lila">Los avisos a clientes están apagados.</div>';
+    if (yo && !yo.puede.ingresar) h += '<div class="aviso lila">Tu cuenta solo ve las reservas.</div>';
+    return h;
+  }
+
+  function pintar() {
+    if (vista === 'semana') return pintarSemana();
+    if (vista === 'cierres') return pintarCierres();
+    var d = datos, h = '';
+    var vivas = d.reservas.filter(function (r) { return r.estado !== 'cancelada' && r.estado !== 'rechazada'; });
+    var alerg = vivas.filter(function (r) { return r.alergias; }).length;
+    h += '<p class="suave" style="margin:0 0 6px">' + esc(fechaBonita(d.fecha)) + '</p>';
+    h += '<div class="resumen"><span class="chip">' + d.resumen.reservas + ' reservas</span><span class="chip">' + d.resumen.personas + ' personas</span>' +
+      (d.resumen.pendientes ? '<span class="chip e-pendiente">' + d.resumen.pendientes + ' por aprobar</span>' : '') + (alerg ? '<span class="chip e-no_vino">' + alerg + ' con alergias</span>' : '') + '</div>';
+    h += cabecera();
+    if (editable()) h += '<div class="acciones" style="margin:0 0 12px"><button class="pri" data-alta="tel">+ Reserva por teléfono</button><button data-alta="walk">+ Walk-in</button></div>';
+    if (vista === 'plano') h += pintarPlano(d);
+    else if (!d.reservas.length) h += '<p class="suave">No hay reservas este día.</p>';
+    else h += d.reservas.map(tarjeta).join('');
+    $('main').innerHTML = h;
+  }
+
+  function avisosDe(id) {
+    var xs = avisos.filter(function (a) { return a.reserva_id === id && !a.para_equipo; });
+    if (!xs.length) return '';
+    return '<div class="suave" style="margin-top:6px">Avisos: ' + xs.map(function (a) {
+      return esc(PLANTILLA_TXT[a.plantilla] || a.plantilla) + ' por ' + esc(a.canal) + ' ' + esc(ENVIO_TXT[a.estado] || a.estado) + (a.error && a.estado === 'omitido' ? ' (' + esc(a.error) + ')' : '');
+    }).join(' · ') + '</div>';
+  }
+
+  function botones(r) {
+    if (!editable()) return '';
+    var b = [];
+    var B = function (est, txt, cls) { b.push('<button class="chico ' + (cls || '') + '" data-estado="' + est + '" data-id="' + esc(r.id) + '">' + txt + '</button>'); };
+    if (r.estado === 'pendiente') { B('confirmada', 'Aprobar', 'pri'); B('rechazada', 'Rechazar', 'mal'); B('cancelada', 'Cancelar', 'mal'); }
+    if (r.estado === 'confirmada') { B('llego', 'Llegó', 'pri'); B('no_vino', 'No vino'); B('cancelada', 'Cancelar', 'mal'); }
+    if (r.estado === 'llego') { B('termino', 'Terminó', 'pri'); B('confirmada', 'Deshacer Llegó'); }
+    if (r.estado === 'no_vino') { B('llego', 'Sí llegó'); }
+    if (r.estado === 'termino') { B('llego', 'Deshacer Terminó'); }
+    if (r.estado !== 'cancelada' && r.estado !== 'rechazada') b.push('<button class="chico" data-editar="' + esc(r.id) + '">Nota, mesa y consumo</button>');
+    return '<div class="acciones">' + b.join('') + '</div>';
+  }
+
+  function formEditar(r) {
+    var mesas = datos.mesas || [];
+    return '<div class="editar" data-form="' + esc(r.id) + '">' +
+      '<label>Mesa</label><div class="fila">' + mesas.map(function (m) {
+        var on = r.mesa_ids.indexOf(String(m.id)) !== -1;
+        return '<label style="display:flex;align-items:center;gap:4px;margin:0 8px 0 0;color:var(--texto)"><input type="checkbox" style="width:auto;min-height:0" value="' + esc(m.id) + '"' + (on ? ' checked' : '') + '>' + esc(m.nombre || m.id) + '</label>';
+      }).join('') + '</div>' +
+      '<label>Nota para el equipo</label><textarea data-c="nota_equipo">' + esc(r.nota_equipo) + '</textarea>' +
+      '<label>Consumo total de la mesa (Q)</label><input data-c="consumo_q" inputmode="decimal" value="' + (r.consumo_q == null ? '' : esc(r.consumo_q)) + '">' +
+      '<div class="acciones"><button class="chico pri" data-guardar="' + esc(r.id) + '">Guardar</button><button class="chico" data-editar="">Cerrar</button></div></div>';
+  }
+
+  function tarjeta(r) {
+    var apagada = ['cancelada', 'rechazada', 'no_vino'].indexOf(r.estado) !== -1;
+    var mesa = (r.mesas || []).join(' + ');
+    var nombre = [r.nombre, r.apellido].filter(Boolean).join(' ');
+    var contacto = [r.telefono ? '<a href="tel:' + esc(String(r.telefono).replace(/[^0-9+]/g, '')) + '">' + esc(r.telefono) + '</a>' : '', r.email ? esc(r.email) : ''].filter(Boolean).join(' · ');
+    return '<article class="tarjeta' + (apagada ? ' apagada' : '') + '" id="r-' + esc(r.id) + '">' +
+      '<div class="cab"><span class="hora">' + esc(r.hora) + '</span><span class="nombre">' + esc(nombre || '(sin nombre)') + '</span>' +
+      '<span>' + esc(r.personas) + ' pers.</span><span class="estado e-' + esc(r.estado) + '">' + esc(ESTADO_TXT[r.estado] || r.estado) + '</span></div>' +
+      '<div class="suave">' + (mesa ? 'Mesa <b>' + esc(mesa) + '</b> · ' : 'Sin mesa · ') + esc(ORIGEN_TXT[r.origen] || r.origen) + ' · ' + (r.idioma === 'es' ? 'ES' : 'EN') +
+      (r.sentarse ? ' · prefiere ' + esc(r.sentarse) : '') + '</div>' +
+      (contacto ? '<div class="suave">' + contacto + '</div>' : '') +
+      (r.alergias ? '<div class="alergia">Alergias: ' + esc(r.alergias) + '</div>' : '') +
+      (r.nota_equipo ? '<div class="notas">' + esc(r.nota_equipo) + '</div>' : '') +
+      (r.consumo_q != null ? '<div class="suave" style="margin-top:4px">Consumo: <b>' + q(r.consumo_q) + '</b></div>' : '') +
+      avisosDe(r.id) + botones(r) + (editando === r.id ? formEditar(r) : '') + '</article>';
+  }
+
+  function minutos(hm) { var p = String(hm).split(':'); return (+p[0]) * 60 + (+p[1]); }
+  function pintarPlano(d) {
+    if (!horaPlano) horaPlano = d.fecha === hoyGT() ? ahoraGT() : ((d.reservas[0] && d.reservas[0].hora) || '19:00');
+    var t = minutos(horaPlano);
+    var activas = d.reservas.filter(function (r) { return ['pendiente', 'confirmada', 'llego'].indexOf(r.estado) !== -1; });
+    var enMesa = function (m) {
+      return activas.filter(function (r) { var a = minutos(r.hora); return r.mesa_ids.indexOf(String(m.id)) !== -1 && t >= a - 30 && t < a + (r.duracion_min || 120); })[0];
+    };
+    var zonas = {};
+    (d.mesas || []).forEach(function (m) { var z = m.zona || 'Mesas'; (zonas[z] = zonas[z] || []).push(m); });
+    var h = '<div class="fila" style="margin-bottom:8px"><label for="horaPlano" style="margin:0">A las</label><input type="time" id="horaPlano" step="900" value="' + esc(horaPlano) + '" style="width:auto">' +
+      '<span class="suave">verde = reservada · amarillo = por aprobar · se cuenta desde 30 min antes</span></div>';
+    if (!d.mesas || !d.mesas.length) h += '<p class="suave">El motor todavía no tiene mesas cargadas (se copian de Wix).</p>';
+    Object.keys(zonas).sort().forEach(function (z) {
+      h += '<h2>' + esc(z) + '</h2><div class="mesas">' + zonas[z].map(function (m) {
+        var r = enMesa(m);
+        return '<button class="mesa' + (r ? ' ocupada e-' + esc(r.estado) : '') + '"' + (r ? ' data-ir="' + esc(r.id) + '"' : '') + '><b>' + esc(m.nombre || m.id) + '</b>' +
+          '<span class="suave">' + esc(m.capacidad_min) + '–' + esc(m.capacidad_max) + ' pers.</span>' +
+          (r ? '<div>' + esc(r.hora) + ' · ' + esc(String(r.nombre || '').split(' ')[0]) + ' · ' + esc(r.personas) + '</div>' : '<div class="suave">libre</div>') + '</button>';
+      }).join('') + '</div>';
+    });
+    var sinMesa = activas.filter(function (r) { return !r.mesa_ids.length; });
+    if (sinMesa.length) h += '<h2>Sin mesa asignada</h2>' + sinMesa.map(tarjeta).join('');
+    return h;
+  }
+
+  function pintarSemana() {
+    var h = cabecera() + '<h2>7 días desde ' + esc(fechaBonita(datos.desde)) + '</h2>';
+    h += datos.dias.map(function (x) {
+      return '<button class="dia" data-dia="' + esc(x.fecha) + '"><span>' + esc(fechaBonita(x.fecha)) + '</span>' +
+        (x.cerrado ? '<span class="chip e-pendiente">Cerrado</span>' : '') + (x.pendientes ? '<span class="chip e-pendiente">' + x.pendientes + ' por aprobar</span>' : '') +
+        (x.alergias ? '<span class="chip e-no_vino">' + x.alergias + ' alergias</span>' : '') +
+        '<span class="n"><b>' + x.reservas + '</b> res. · ' + x.personas + ' pers.</span></button>';
+    }).join('');
+    $('main').innerHTML = h;
+  }
+
+  function pintarCierres() {
+    var h = cabecera() + '<h2>Fechas cerradas a reservas</h2>';
+    if (yo && yo.puede.ingresar) {
+      h += '<div class="tarjeta"><div class="dos"><div><label for="cFecha">Desde</label><input type="date" id="cFecha" min="' + hoyGT() + '"></div>' +
+        '<div><label for="cHasta">Hasta (opcional)</label><input type="date" id="cHasta" min="' + hoyGT() + '"></div></div>' +
+        '<label for="cMotivo">Motivo</label><input id="cMotivo" placeholder="Evento privado, feriado…">' +
+        '<div class="acciones"><button class="pri" id="cBloquear">Cerrar esas fechas</button></div>' +
+        '<p class="suave">Cerrar una fecha no cancela las reservas que ya tiene: hay que avisarles una por una.</p></div>';
+    }
+    var cs = datos.cierres || [];
+    if (!cs.length) h += '<p class="suave">No hay fechas cerradas.</p>';
+    h += cs.map(function (c) {
+      var a = diaGT(c.desde), b = diaGT(new Date(new Date(c.hasta).getTime() - 1).toISOString());
+      return '<div class="tarjeta"><div class="cab"><b>' + esc(fechaBonita(a)) + (b !== a ? ' → ' + esc(fechaBonita(b)) : '') + '</b>' +
+        '<span class="suave">' + esc(c.motivo || (c.cerrado === false ? 'horario especial' : '')) + '</span>' +
+        (yo && yo.puede.ingresar ? '<button class="chico mal" style="margin-left:auto" data-abrir="' + esc(c.id) + '">Volver a abrir</button>' : '') + '</div></div>';
+    }).join('');
+    $('main').innerHTML = h;
+  }
+
+  // ---------------------------------------------------------------- acciones
+  var PREGUNTA = { rechazada: '¿Rechazar esta solicitud? Al cliente le llega el aviso de que no hay mesa.', cancelada: '¿Cancelar esta reserva? Al cliente le llega el aviso de cancelación.', no_vino: '¿Marcar que no vino?' };
+  function cambiarEstado(id, estado, boton) {
+    var motivo = '';
+    if (PREGUNTA[estado] && !confirm(PREGUNTA[estado])) return;
+    if (estado === 'rechazada' || estado === 'cancelada') motivo = prompt('Motivo (opcional; en un rechazo lo lee el cliente):') || '';
+    boton.disabled = true;
+    pedir('POST', API + '/reservas/' + encodeURIComponent(id) + '/estado', { estado: estado, motivo: motivo }).then(function () { aviso('Listo: ' + (ESTADO_TXT[estado] || estado)); return cargar(); })
+      .catch(function (e) { boton.disabled = false; aviso(e.message); });
+  }
+
+  function guardarEdicion(id, boton) {
+    var caja = document.querySelector('[data-form="' + CSS.escape(id) + '"]');
+    var r = datos.reservas.filter(function (x) { return x.id === id; })[0];
+    var mesas = [].slice.call(caja.querySelectorAll('input[type=checkbox]:checked')).map(function (x) { return x.value; });
+    var nota = caja.querySelector('[data-c=nota_equipo]').value, consumo = caja.querySelector('[data-c=consumo_q]').value.trim();
+    var pasos = [];
+    var cambio = {};
+    if (nota !== (r.nota_equipo || '')) cambio.nota_equipo = nota;
+    if (mesas.join('|') !== r.mesa_ids.join('|')) cambio.mesa_ids = mesas;
+    if (Object.keys(cambio).length) pasos.push(function () { return pedir('POST', API + '/reservas/' + encodeURIComponent(id) + '/cambiar', cambio); });
+    if (consumo !== '' && Number(consumo.replace(/[^0-9.]/g, '')) !== r.consumo_q) pasos.push(function () { return pedir('POST', API + '/reservas/' + encodeURIComponent(id) + '/consumo', { consumo_q: consumo }); });
+    if (!pasos.length) { editando = null; return pintar(); }
+    boton.disabled = true;
+    pasos.reduce(function (p, f) { return p.then(f); }, Promise.resolve()).then(function () { editando = null; aviso('Guardado'); return cargar(); })
+      .catch(function (e) { boton.disabled = false; aviso(e.message); });
+  }
+
+  function marcarTab(v) { [].forEach.call($('tabs').children, function (x) { x.classList.toggle('on', x.getAttribute('data-v') === v); }); }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button');
+    if (!b) return;
+    if (b.parentNode && b.parentNode.id === 'tabs') {
+      vista = b.getAttribute('data-v'); marcarTab(vista);
+      $('main').innerHTML = '<p class="suave">Cargando…</p>';
+      return cargar();
+    }
+    if (b.hasAttribute('data-estado')) return cambiarEstado(b.getAttribute('data-id'), b.getAttribute('data-estado'), b);
+    if (b.hasAttribute('data-editar')) { editando = b.getAttribute('data-editar') || null; return pintar(); }
+    if (b.hasAttribute('data-guardar')) return guardarEdicion(b.getAttribute('data-guardar'), b);
+    if (b.hasAttribute('data-alta')) return abrirAlta(b.getAttribute('data-alta'));
+    if (b.hasAttribute('data-dia')) { $('fecha').value = b.getAttribute('data-dia'); vista = 'dia'; marcarTab('dia'); return cargar(); }
+    if (b.hasAttribute('data-ir')) {
+      vista = 'dia'; marcarTab('dia');
+      pintar(); var t = $('r-' + b.getAttribute('data-ir')); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); return;
+    }
+    if (b.id === 'cBloquear') {
+      var f = $('cFecha').value, hasta = $('cHasta').value, m = $('cMotivo').value.trim();
+      if (!f || !m) return aviso('Falta la fecha o el motivo.');
+      b.disabled = true;
+      return pedir('POST', API + '/cierres', { fecha: f, hasta_fecha: hasta || undefined, motivo: m }).then(function (j) {
+        var n = (j.afectadas || []).length;
+        aviso(n ? 'Cerrado. Ojo: ya hay ' + n + ' reservas en esas fechas.' : 'Fechas cerradas.'); return cargar();
+      }).catch(function (e) { b.disabled = false; aviso(e.message); });
+    }
+    if (b.hasAttribute('data-abrir')) {
+      if (!confirm('¿Volver a abrir esas fechas a reservas?')) return;
+      return pedir('POST', API + '/cierres/' + encodeURIComponent(b.getAttribute('data-abrir')) + '/reabrir').then(function () { aviso('Fechas abiertas.'); return cargar(); }).catch(function (e) { aviso(e.message); });
+    }
+  });
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id === 'horaPlano') { horaPlano = ev.target.value; pintar(); }
+  });
+
+  // ---------------------------------------------------------------- alta rápida (teléfono o walk-in)
+  function abrirAlta(modo) {
+    modoAlta = modo;
+    $('altaTitulo').textContent = modo === 'walk' ? 'Walk-in (llegó sin reserva)' : 'Reserva por teléfono';
+    $('altaTel').hidden = modo === 'walk'; $('altaWalk').hidden = modo !== 'walk';
+    $('aFecha').value = $('fecha').value || hoyGT(); $('wHora').value = '';
+    $('aHorarios').innerHTML = ''; $('aError').hidden = true;
+    ['aNombre', 'aTel', 'aEmail', 'aAlergias', 'aNotas', 'aHora'].forEach(function (k) { $(k).value = ''; });
+    var sel = $('aMesa');
+    sel.innerHTML = '<option value="">' + (modo === 'walk' ? 'Elegir mesa' : 'Que la elija el sistema') + '</option>' +
+      ((datos && datos.mesas) || []).map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.nombre || m.id) + ' (' + esc(m.capacidad_min) + '–' + esc(m.capacidad_max) + ')</option>'; }).join('');
+    $('alta').showModal();
+  }
+  $('altaCerrar').onclick = function () { $('alta').close(); };
+  $('aVer').onclick = function () {
+    var f = $('aFecha').value, p = $('aPersonas').value;
+    if (!f || !p) return;
+    $('aHorarios').innerHTML = '<span class="suave">Buscando…</span>';
+    pedir('GET', API + '/franjas?fecha=' + f + '&personas=' + p).then(function (j) {
+      var hs = (j.franjas || []).filter(function (x) { return x.estado === 'AVAILABLE'; });
+      $('aHorarios').innerHTML = hs.length ? hs.map(function (x) { return '<button type="button" class="chico" data-h="' + esc(x.hora) + '">' + esc(x.hora) + '</button>'; }).join('') : '<span class="suave">No hay horarios libres para ese grupo.</span>';
+    }).catch(function (e) { $('aHorarios').innerHTML = '<span class="suave">' + esc(e.message) + '</span>'; });
+  };
+  $('aHorarios').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-h]'); if (!b) return;
+    $('aHora').value = b.getAttribute('data-h');
+    [].forEach.call($('aHorarios').children, function (x) { x.classList.toggle('on', x === b); });
+  });
+  function guardarAlta(forzar) {
+    var walk = modoAlta === 'walk';
+    var cuerpo = { walk_in: walk, personas: Number(walk ? $('wPersonas').value : $('aPersonas').value),
+      nombre: $('aNombre').value.trim(), telefono: $('aTel').value.trim(), email: $('aEmail').value.trim(), idioma: $('aIdioma').value,
+      alergias: $('aAlergias').value.trim(), nota_equipo: $('aNotas').value.trim(), mesa_ids: $('aMesa').value ? [$('aMesa').value] : null, forzar: !!forzar };
+    if (!walk) { cuerpo.fecha = $('aFecha').value; cuerpo.hora = $('aHora').value; }
+    else if ($('wHora').value) { cuerpo.fecha = $('fecha').value; cuerpo.hora = $('wHora').value; }
+    $('aGuardar').disabled = true; $('aError').hidden = true;
+    pedir('POST', API + '/reservas', cuerpo).then(function () {
+      $('alta').close(); aviso(walk ? 'Walk-in anotado' : 'Reserva guardada'); return cargar();
+    }).catch(function (e) {
+      var alt = (e.datos && e.datos.alternativas) || [];
+      $('aError').innerHTML = esc(e.message) + (alt.length ? '<br>Horarios cerca: ' + alt.map(esc).join(', ') : '') +
+        (e.status === 409 && e.datos && e.datos.motivo === 'sin_disponibilidad' && yo.puede.corregir ? '<div class="acciones"><button type="button" class="chico mal" id="aForzar">Guardar igual (sobrecupo)</button></div>' : '');
+      $('aError').hidden = false;
+      var fz = $('aForzar'); if (fz) fz.onclick = function () { if (confirm('¿Guardar aunque el sistema diga que no hay lugar?')) guardarAlta(true); };
+    }).then(function () { $('aGuardar').disabled = false; });
+  }
+  $('aGuardar').onclick = function () { guardarAlta(false); };
+
+  // ---------------------------------------------------------------- arranque
+  var inicial = new URLSearchParams(location.search).get('fecha');
+  $('fecha').value = /^\d{4}-\d{2}-\d{2}$/.test(inicial || '') ? inicial : hoyGT();
+  $('fecha').onchange = function () { horaPlano = ''; cargar(); };
+  $('ant').onclick = function () { $('fecha').value = sumarDias($('fecha').value, vista === 'semana' ? -7 : -1); horaPlano = ''; cargar(); };
+  $('sig').onclick = function () { $('fecha').value = sumarDias($('fecha').value, vista === 'semana' ? 7 : 1); horaPlano = ''; cargar(); };
+  $('hoy').onclick = function () { $('fecha').value = hoyGT(); horaPlano = ''; cargar(); };
+  pedir('GET', PANEL + '/yo').then(function (j) { yo = j; return cargar(); })
+    .catch(function (e) { $('main').innerHTML = '<div class="aviso mal">' + esc(e.message) + '</div>'; });
+  // cada minuto, si nadie está escribiendo
+  setInterval(function () { if (yo && !editando && !$('alta').open && document.visibilityState === 'visible' && vista !== 'cierres') cargar(); }, 60000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>Rosanta</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/marca/favicon-32.png">
+<!--PALETA-->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--rosanta-crema);color:var(--texto);font-family:var(--rosanta-font-body);-webkit-text-size-adjust:100%}
+  header{background:var(--rosanta-verde);color:var(--rosanta-crema);padding:18px 16px;display:flex;align-items:center}
+  header .marca{font-weight:700;letter-spacing:.25em;font-size:1.05rem}
+  header button{margin-left:auto;background:none;border:1px solid var(--rosanta-crema);color:var(--rosanta-crema);border-radius:999px;min-height:36px;padding:4px 12px;font:inherit;cursor:pointer}
+  main{max-width:520px;margin:0 auto;padding:20px 16px 48px}
+  h1{font-family:var(--rosanta-font-title);font-size:1.6rem;margin:6px 0 16px;color:var(--rosanta-verde)}
+  .caja{background:var(--superficie);border-radius:var(--rosanta-radius-card,16px);padding:18px;margin-bottom:16px}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+  dt{color:var(--texto-suave)}
+  dd{margin:0;font-weight:700}
+  .estado{display:inline-block;margin-bottom:12px;padding:4px 12px;border-radius:999px;font-size:.85rem;background:var(--rosanta-verde-tint);color:var(--rosanta-verde)}
+  .estado.mal{background:var(--mal-tint);color:var(--mal)}
+  .estado.alerta{background:var(--alerta-tint);color:var(--alerta)}
+  label{display:block;font-size:.85rem;color:var(--texto-suave);margin:12px 0 4px}
+  input,select{font:inherit;width:100%;min-height:48px;padding:8px 12px;border:1px solid var(--linea-2);border-radius:12px;background:var(--superficie);color:var(--texto)}
+  button.btn{font:inherit;width:100%;min-height:50px;margin-top:14px;border-radius:999px;border:1px solid var(--rosanta-verde);background:var(--rosanta-verde);color:var(--rosanta-blanco);font-weight:700;cursor:pointer}
+  button.btn.sec{background:var(--superficie);color:var(--rosanta-verde)}
+  button.btn.mal{background:var(--superficie);color:var(--mal);border-color:var(--mal-linea)}
+  button:disabled{opacity:.5;cursor:default}
+  .horas{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .horas button{font:inherit;min-height:44px;min-width:76px;border-radius:999px;border:1px solid var(--linea-2);background:var(--superficie);color:var(--texto);cursor:pointer}
+  .horas button.on{background:var(--rosanta-verde);border-color:var(--rosanta-verde);color:var(--rosanta-blanco)}
+  .nota{color:var(--texto-suave);font-size:.92rem;line-height:1.5}
+  .msg{border-radius:12px;padding:12px 14px;margin-bottom:16px;background:var(--rosanta-verde-tint)}
+  .msg.mal{background:var(--mal-tint);color:var(--mal)}
+  footer{text-align:center;color:var(--texto-suave);font-size:.8rem;padding:0 16px 32px}
+</style>
+</head>
+<body>
+<header><span class="marca">ROSANTA</span><button id="idioma" type="button">ES</button></header>
+<main id="main"><p class="nota" id="cargando">…</p></main>
+<footer>Rosanta · Antigua Guatemala · 14° N · 91° W</footer>
+<script>
+(function () {
+  'use strict';
+  // Habla con el MOTOR (Ayudante 1): __API__/mi/<codigo> y __API__/slots. El enlace firmado es el codigo.
+  var API = '__API__';
+  var TXT = {
+    en: { titulo: 'My booking', hola: 'Hi', fecha: 'Date', hora: 'Time', personas: 'Guests', cambiar: 'Change date, time or guests',
+      cancelar: 'Cancel my booking', seguro: 'Cancel this booking? The table goes to someone else.', si: 'Yes, cancel',
+      no: 'Keep it', buscar: 'See available times', guardar: 'Save the change', volver: 'Back',
+      sinHoras: 'No tables for that date and group. Try another date, or message us on WhatsApp.', buscando: 'Looking…',
+      listoCambio: 'Done. Your booking is updated and we sent you an email with the details.',
+      listoCancel: 'Your booking is cancelled. Nothing is pending on your side.',
+      politica: 'Please cancel at least 24 hours ahead. We hold the table for 20 minutes after your booking time.',
+      menos24: 'Your booking is less than 24 hours away. You can still cancel here: thanks for letting us know.',
+      noValido: 'This link is not valid. If you got it in an email from Rosanta, message us on WhatsApp and we will help you.',
+      fueraPlazo: 'This booking can no longer be changed online. Message us on WhatsApp and we will sort it out.',
+      grupo: 'For more than {n} guests, message us on WhatsApp.', reservar: 'Book again', error: 'Something went wrong. Try again.',
+      cerca: 'Times close by:',
+      motivos: { YA_PASO: 'This booking already passed.', NO_VIGENTE: 'This booking can no longer be changed.', FECHA_EN_PASADO: 'Pick a date and time that hasn\'t passed.',
+        FECHA_INVALIDA: 'Pick a date and a time.', PERSONAS_INVALIDO: 'For more than {n} guests, message us on WhatsApp.', sin_disponibilidad: 'That time is no longer available.',
+        MOTOR_EN_WIX: 'Changes can\'t be made here yet. Message us on WhatsApp.', ENLACE_INVALIDO: 'This link is not valid.' },
+      estados: { pendiente: 'Waiting for confirmation', confirmada: 'Confirmed', llego: 'You are here', termino: 'Visit finished', no_vino: 'Missed', cancelada: 'Cancelled', rechazada: 'Not available' },
+      reservarUrl: 'https://www.rosanta.rest/reservas', otro: 'ES', loc: 'en-US' },
+    es: { titulo: 'Mi reserva', hola: 'Hola', fecha: 'Fecha', hora: 'Hora', personas: 'Personas', cambiar: 'Cambiar fecha, hora o personas',
+      cancelar: 'Cancelar mi reserva', seguro: '¿Cancelar esta reserva? La mesa se la damos a alguien más.', si: 'Sí, cancelar',
+      no: 'No, la mantengo', buscar: 'Ver horarios libres', guardar: 'Guardar el cambio', volver: 'Volver',
+      sinHoras: 'No hay mesa para esa fecha y ese grupo. Prueba otra fecha o escríbenos por WhatsApp.', buscando: 'Buscando…',
+      listoCambio: 'Listo. Tu reserva quedó actualizada y te mandamos un correo con los datos.',
+      listoCancel: 'Tu reserva quedó cancelada. No queda nada pendiente de tu parte.',
+      politica: 'Si necesitas cancelar, hazlo con al menos 24 horas de anticipación. Guardamos la mesa 20 minutos después de la hora de tu reserva.',
+      menos24: 'Faltan menos de 24 horas para tu reserva. Igual puedes cancelarla aquí: gracias por avisarnos.',
+      noValido: 'Este enlace no es válido. Si te llegó en un correo de Rosanta, escríbenos por WhatsApp y te ayudamos.',
+      fueraPlazo: 'Esta reserva ya no se puede cambiar en línea. Escríbenos por WhatsApp y se resuelve.',
+      grupo: 'Para más de {n} personas, escríbenos por WhatsApp.', reservar: 'Reservar de nuevo', error: 'Algo salió mal. Intenta de nuevo.',
+      cerca: 'Horarios cerca:',
+      motivos: { YA_PASO: 'Esta reserva ya pasó.', NO_VIGENTE: 'Esta reserva ya no se puede cambiar.', FECHA_EN_PASADO: 'Elige una fecha y hora que no hayan pasado.',
+        FECHA_INVALIDA: 'Elige fecha y hora.', PERSONAS_INVALIDO: 'Para más de {n} personas, escríbenos por WhatsApp.', sin_disponibilidad: 'Esa hora ya no está disponible.',
+        MOTOR_EN_WIX: 'Todavía no se puede cambiar aquí. Escríbenos por WhatsApp.', ENLACE_INVALIDO: 'Este enlace no es válido.' },
+      estados: { pendiente: 'Esperando confirmación', confirmada: 'Confirmada', llego: 'Ya estás aquí', termino: 'Visita terminada', no_vino: 'No llegaste', cancelada: 'Cancelada', rechazada: 'Sin mesa' },
+      reservarUrl: 'https://www.rosanta.rest/reservas', otro: 'EN', loc: 'es-GT' }
+  };
+  var DE_WIX = { REQUESTED: 'pendiente', RESERVED: 'confirmada', SEATED: 'llego', FINISHED: 'termino', NO_SHOW: 'no_vino', CANCELED: 'cancelada', DECLINED: 'rechazada' };
+  var MAX = 10;
+  var lang = /^es\b/i.test(navigator.language || '') ? 'es' : 'en';
+  var pedido = new URLSearchParams(location.search).get('lang');
+  var codigo = decodeURIComponent(location.pathname.replace(/\/+$/, '').split('/').pop() || '');
+  var R = null, msg = null, modo = 'ver', elegida = '';
+  var $ = function (id) { return document.getElementById(id); };
+  function t(k) { return TXT[lang][k]; }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function hora12(h) { if (lang === 'es') return h; var p = h.split(':'), n = +p[0]; return ((n % 12) || 12) + ':' + p[1] + ' ' + (n < 12 ? 'am' : 'pm'); }
+  function hoyGT() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guatemala' }).format(new Date()); }
+  function horaGT(iso) { return new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Guatemala', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso)); }
+  function inicioMs(f, h) { return new Date(f + 'T' + h + ':00-06:00').getTime(); }
+  function fechaTexto(f) { var s = new Intl.DateTimeFormat(TXT[lang].loc, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(f + 'T12:00:00Z')); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function motivo(j) { var m = (j && j.motivo) || ''; return (t('motivos')[m] || t('error')).replace('{n}', (j && j.max) || MAX); }
+  function pedir(metodo, ruta, cuerpo) {
+    return fetch(API + ruta, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.ok === false) { var e = new Error(motivo(j)); e.status = r.status; e.datos = j; throw e; } return j; }); });
+  }
+  function poner(res) { R = res; R.estado = DE_WIX[res.estado] || String(res.estado || '').toLowerCase(); }
+
+  function pintar() {
+    document.documentElement.lang = lang;
+    document.title = t('titulo') + ' · Rosanta';
+    $('idioma').textContent = t('otro');
+    var m = $('main');
+    if (!R) { m.innerHTML = '<h1>' + esc(t('titulo')) + '</h1><div class="msg mal">' + esc(t('noValido')) + '</div>'; return; }
+    var cls = R.estado === 'pendiente' ? 'alerta' : (['cancelada', 'rechazada', 'no_vino'].indexOf(R.estado) !== -1 ? 'mal' : '');
+    var vigente = R.estado === 'pendiente' || R.estado === 'confirmada';
+    var falta = inicioMs(R.fecha, R.hora) - Date.now();
+    var h = '<h1>' + esc(t('titulo')) + '</h1>';
+    if (msg) h += '<div class="msg' + (msg.mal ? ' mal' : '') + '">' + esc(msg.k ? t(msg.k) : msg.texto) + '</div>';
+    h += '<div class="caja">' + (R.nombre ? '<p style="margin:0 0 10px">' + esc(t('hola')) + ' ' + esc(String(R.nombre).split(' ')[0]) + ',</p>' : '') +
+      '<span class="estado ' + cls + '">' + esc(t('estados')[R.estado] || R.estado) + '</span>' +
+      '<dl><dt>' + esc(t('fecha')) + '</dt><dd>' + esc(fechaTexto(R.fecha)) + '</dd>' +
+      '<dt>' + esc(t('hora')) + '</dt><dd>' + esc(hora12(R.hora)) + '</dd>' +
+      '<dt>' + esc(t('personas')) + '</dt><dd>' + esc(R.personas) + '</dd></dl>' +
+      (vigente ? '<p class="nota" style="margin:14px 0 0">' + esc(falta < 24 * 3600000 && falta > 0 ? t('menos24') : t('politica')) + '</p>' : '') + '</div>';
+    if (modo === 'cambiar' && R.se_puede_cambiar) {
+      var n = Math.max(MAX, R.personas);
+      h += '<div class="caja"><label for="nFecha">' + esc(t('fecha')) + '</label><input type="date" id="nFecha" min="' + hoyGT() + '" value="' + esc(R.fecha) + '">' +
+        '<label for="nPersonas">' + esc(t('personas')) + '</label><select id="nPersonas">' +
+        Array.from({ length: n }, function (_, i) { return '<option' + (i + 1 === R.personas ? ' selected' : '') + '>' + (i + 1) + '</option>'; }).join('') + '</select>' +
+        '<p class="nota">' + esc(t('grupo').replace('{n}', MAX)) + '</p>' +
+        '<button class="btn sec" id="buscar" type="button">' + esc(t('buscar')) + '</button>' +
+        '<div id="horas" class="horas" aria-live="polite"></div>' +
+        '<button class="btn" id="guardar" type="button" disabled>' + esc(t('guardar')) + '</button>' +
+        '<button class="btn sec" id="volver" type="button">' + esc(t('volver')) + '</button></div>';
+    } else if (modo === 'cancelar' && R.se_puede_cambiar) {
+      h += '<div class="caja"><p style="margin:0">' + esc(t('seguro')) + '</p>' +
+        '<button class="btn mal" id="siCancelar" type="button">' + esc(t('si')) + '</button>' +
+        '<button class="btn sec" id="volver" type="button">' + esc(t('no')) + '</button></div>';
+    } else if (R.se_puede_cambiar) {
+      h += '<button class="btn" id="aCambiar" type="button">' + esc(t('cambiar')) + '</button>';
+      h += '<button class="btn mal" id="aCancelar" type="button">' + esc(t('cancelar')) + '</button>';
+    } else if (vigente) {
+      h += '<p class="nota">' + esc(t('fueraPlazo')) + '</p>';
+    } else {
+      h += '<a class="btn" style="display:block;text-align:center;line-height:50px;text-decoration:none" href="' + t('reservarUrl') + '">' + esc(t('reservar')) + '</a>';
+    }
+    m.innerHTML = h;
+  }
+
+  function horasLibres(lista) {
+    $('horas').innerHTML = lista.length ? lista.map(function (x) { return '<button type="button" data-h="' + esc(x) + '">' + esc(hora12(x)) + '</button>'; }).join('') : '<span class="nota">' + esc(t('sinHoras')) + '</span>';
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    if (b.id === 'idioma') { lang = lang === 'es' ? 'en' : 'es'; return pintar(); }
+    if (b.id === 'aCambiar') { modo = 'cambiar'; msg = null; elegida = ''; return pintar(); }
+    if (b.id === 'aCancelar') { modo = 'cancelar'; msg = null; return pintar(); }
+    if (b.id === 'volver') { modo = 'ver'; return pintar(); }
+    if (b.id === 'buscar') {
+      elegida = ''; $('guardar').disabled = true;
+      $('horas').innerHTML = '<span class="nota">' + esc(t('buscando')) + '</span>';
+      pedir('GET', '/slots?date=' + encodeURIComponent($('nFecha').value) + '&partySize=' + encodeURIComponent($('nPersonas').value)).then(function (j) {
+        horasLibres((j.slots || []).map(function (s) { return horaGT(s.startDate); }));
+      }).catch(function () { $('horas').innerHTML = '<span class="nota">' + esc(t('error')) + '</span>'; });
+      return;
+    }
+    if (b.hasAttribute('data-h')) {
+      elegida = b.getAttribute('data-h');
+      [].forEach.call($('horas').children, function (x) { x.classList.toggle('on', x === b); });
+      $('guardar').disabled = false; return;
+    }
+    if (b.id === 'guardar') {
+      b.disabled = true;
+      pedir('POST', '/mi/' + encodeURIComponent(codigo) + '/cambiar', { fecha: $('nFecha').value, hora: elegida, personas: Number($('nPersonas').value) })
+        .then(function (j) { poner(j.reserva); modo = 'ver'; msg = { k: 'listoCambio' }; pintar(); })
+        .catch(function (e) {
+          var alt = (e.datos && e.datos.alternativas) || [];
+          if (alt.length) { horasLibres(alt); b.disabled = true; return; }
+          msg = { texto: e.message, mal: true }; modo = 'ver'; pintar();
+        });
+      return;
+    }
+    if (b.id === 'siCancelar') {
+      b.disabled = true;
+      pedir('POST', '/mi/' + encodeURIComponent(codigo) + '/cancelar').then(function (j) { poner(j.reserva); modo = 'ver'; msg = { k: 'listoCancel' }; pintar(); })
+        .catch(function (e) { msg = { texto: e.message, mal: true }; modo = 'ver'; pintar(); });
+    }
+  });
+
+  pedir('GET', '/mi/' + encodeURIComponent(codigo)).then(function (j) {
+    poner(j.reserva);
+    lang = pedido ? (pedido === 'es' ? 'es' : 'en') : (R.idioma === 'es' ? 'es' : 'en');
+    pintar();
+  }).catch(function () { R = null; if (pedido) lang = pedido === 'es' ? 'es' : 'en'; pintar(); });
+})();
+</script>
+</body>
+</html>
