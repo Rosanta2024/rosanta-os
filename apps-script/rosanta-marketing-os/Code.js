@@ -77,7 +77,10 @@ function tokenOk_(t, cual) {
   if (cual === 'api') return false;
   var viejo = mktLlave_('MKT_TOKEN_VIEJO'), hasta = mktLlave_('MKT_TOKEN_VIEJO_HASTA');
   var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
-  return !!viejo && !!hasta && hoy <= hasta && t === viejo;
+  var ok = !!viejo && !!hasta && hoy <= hasta && t === viejo;
+  // Para cerrar el viejo con pruebas (31-oct-2026): cada uso queda en el registro, SIN el valor.
+  if (ok) Logger.log('TOKEN VIEJO USADO: hook=' + cual);
+  return ok;
 }
 var META_DATASET_ID = '1107259034759950'; // Rosanta Reservas
 
