@@ -1,0 +1,1 @@
+b667e73 2026-10-19 Merge remote-tracking branch 'origin/claude/intranet-movil' into claude/infallible-roentgen-5185e3

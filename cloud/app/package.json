@@ -1,0 +1,22 @@
+{
+  "name": "rosanta-nube",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Servidor de Rosanta en Google Cloud (Fase 0 de la migracion, 17-oct-2026)",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@google-cloud/cloud-sql-connector": "^1.4.0",
+    "@googleapis/sheets": "^9.0.0",
+    "express": "^4.21.0",
+    "google-auth-library": "^11.3.1",
+    "pg": "^8.13.0"
+  }
+}

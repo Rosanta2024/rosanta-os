@@ -166,6 +166,8 @@ function rvDatos(lead, canal, contactoId) {
   };
   // En WhatsApp el numero del remitente ES el telefono. En IG/Messenger no.
   if (canal === 'whatsapp' && !d.telefono) d.telefono = String(contactoId || '').replace(/\D/g, '');
+  // Por correo, la direccion de quien escribe identifica la reserva, como el numero en WhatsApp (19-oct-2026, Louise).
+  if (canal === 'correo' && !d.email && /@/.test(String(contactoId || ''))) d.email = String(contactoId).trim().toLowerCase();
   if (canal === 'correo' && !d.telefono) d.telefono = RV_TEL_CORREO;
 
   d.faltan = [];

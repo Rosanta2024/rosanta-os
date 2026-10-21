@@ -1,0 +1,1 @@
+7daba41 2026-10-21 Pagos @215: anular pagos del banco y de COMPRAS_2026 en las últimas 3 facturas pagadas del proveedor

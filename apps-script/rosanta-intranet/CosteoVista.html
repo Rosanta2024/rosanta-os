@@ -277,6 +277,7 @@ window.PROFIT_AREA_INI = <?!= JSON.stringify(rol === 'sala' ? 'BARRA' : 'COCINA'
    de verdad los revisa el servidor en cada llamada. */
 window.PROFIT_ROL = <?!= JSON.stringify(rol || '') ?>;
 window.PROFIT_Q_INI = <?!= JSON.stringify(buscarIni || '') ?>;
+window.NUBE_PRUEBA = <?!= JSON.stringify(nubeIni || '') ?>;   // 'ensayo': solo el dueño, ver NubePagos.js
 window.PROFIT_ABRIR_INI = <?!= JSON.stringify(abrirIni || '') ?>;
 /* Pinta un area en su pestaña, una sola vez (asi conserva la semana elegida y lo que se
    estaba escribiendo). Sin iframe: el cuerpo del reporte se copia del <template> y cada
@@ -308,28 +309,76 @@ function montarArea(v){
     titulo: v === 'cocina' ? 'Cocina: la semana' : 'Barra: la semana' }, host);
 }
 
+/* PAGOS EN EL SERVIDOR NUEVO (18-oct-2026, NubePagos.js): con PARAMETROS › motor_pagos = base, la
+   pestaña muestra la pantalla de Pagos del servidor nuevo (la misma, con el mismo enlace) en un marco
+   que crece con su contenido. Con sheets, o si no se puede preguntar, la de siempre. */
+function pagosOServidorNuevo(sec, modo){
+  sec.innerHTML = '<div class="pg-vacio">Leyendo las facturas y los pagos…</div>';
+  var deSiempre = function(){ sec.innerHTML = ''; window.PF_PAGOS(sec, AUTH, modo); };
+  google.script.run.withSuccessHandler(function(d){
+    if(!d || !d.base){ deSiempre(); return; }
+    var f = document.createElement('iframe');
+    f.src = d.url; f.title = 'Pagos'; f.style.cssText = 'width:100%;border:0;min-height:900px;display:block';
+    sec.innerHTML = ''; sec.appendChild(f);
+    window.addEventListener('message', function(ev){
+      if(ev.source === f.contentWindow && ev.data && ev.data.rosantaAlto) f.style.height = Math.max(600, ev.data.rosantaAlto + 40) + 'px';
+    });
+  }).withFailureHandler(deSiempre).getPagosDestino(AUTH, modo || '', window.NUBE_PRUEBA || '');
+}
+/* Caja chica y Compras en el servidor nuevo (18-oct-2026, NubePagos.js): con motor_caja = base (y Pagos en base),
+   la pestaña muestra la del servidor nuevo en un marco; si no, la de siempre (deSiempre). */
+function cajaOServidorNuevo(sec, cual, deSiempre){
+  sec.innerHTML = '<div class="pg-vacio">Leyendo…</div>';
+  google.script.run.withSuccessHandler(function(d){
+    if(!d || !d.base){ deSiempre(); return; }
+    var f = document.createElement('iframe');
+    f.src = d.url; f.title = cual === 'compras' ? 'Compras en efectivo' : 'Caja chica'; f.style.cssText = 'width:100%;border:0;min-height:900px;display:block';
+    sec.innerHTML = ''; sec.appendChild(f);
+    var origen = d.url.match(/^https:\/\/[^\/]+/)[0];
+    window.addEventListener('message', function(ev){
+      if(ev.source !== f.contentWindow || ev.origin !== origen || !ev.data) return;
+      if(ev.data.rosantaAlto) f.style.height = Math.max(600, ev.data.rosantaAlto + 40) + 'px';
+      if(ev.data.rosantaPuente) cajaPuente_(ev.source, origen, ev.data.rosantaPuente);
+    });
+  }).withFailureHandler(deSiempre).getCajaDestino(AUTH, cual, window.NUBE_PRUEBA || '');
+}
+/* EL PUENTE (18-oct-2026): "Leer cierres" y leer la foto de un comprobante usan Gmail, Drive y Claude, asi
+   que los sigue corriendo la intranet aunque la pantalla sea la del servidor nuevo. La pantalla nueva pide
+   y aca se corre la funcion de siempre (con motor_cierres = base, el cierre leido va al servidor nuevo).
+   Solo estas dos: cualquier otro nombre se rechaza. */
+function cajaPuente_(win, origen, p){
+  var responder = function(ok, x){ win.postMessage({ rosantaPuenteResp: ok ? { id: p.id, ok: true, resultado: x } : { id: p.id, ok: false, error: (x && x.message) || String(x) } }, origen); };
+  var run = google.script.run.withSuccessHandler(function(r){ responder(true, r); }).withFailureHandler(function(e){ responder(false, e); });
+  if(p.nombre === 'leerCierresCaja') run.leerCierresCaja(AUTH);
+  else if(p.nombre === 'leerComprobanteCompra') run.leerComprobanteCompra(AUTH, (p.args || [])[0]);
+  else responder(false, { message: 'La intranet no corre ' + p.nombre + ' desde la pantalla nueva.' });
+}
 /* Pagos a proveedores (p213, 29-sep-2026): se pinta la primera vez que se abre. */
 function montarPagos(){
   var sec = document.getElementById('v-pagos');
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
-  window.PF_PAGOS(sec, AUTH);
+  pagosOServidorNuevo(sec, '');
 }
 /* Caja chica y Administración (13-oct-2026): pestañas de la barra lateral, se pintan una vez. */
 function montarCaja(){
   var sec = document.getElementById('v-caja');
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
-  sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
-  window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+  cajaOServidorNuevo(sec, 'caja', function(){
+    sec.innerHTML = '<div class="pg"><h2>Caja chica</h2></div><div class="cj-host"></div>';
+    window.PF_CAJA(sec.querySelector('.cj-host'), AUTH);
+  });
 }
 /* Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js) */
 function montarCompras(){
   var sec = document.getElementById('v-compras');
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
-  sec.innerHTML = '<div class="pg"><h2>Compras en efectivo</h2></div><div class="ce-host"></div>';
-  window.PF_COMPRAS(sec.querySelector('.ce-host'), AUTH);
+  cajaOServidorNuevo(sec, 'compras', function(){
+    sec.innerHTML = '<div class="pg"><h2>Compras en efectivo</h2></div><div class="ce-host"></div>';
+    window.PF_COMPRAS(sec.querySelector('.ce-host'), AUTH);
+  });
 }
 function montarHoy(){
   var sec = document.getElementById('v-hoy');
@@ -341,7 +390,7 @@ function montarAdm(v){
   var sec = document.getElementById('v-' + v);
   if(!sec || sec.dataset.listo) return;
   sec.dataset.listo = '1';
-  window.PF_PAGOS(sec, AUTH, 'admin:' + v.slice(4));   // adm-banco -> admin:banco
+  pagosOServidorNuevo(sec, 'admin:' + v.slice(4));   // adm-banco -> admin:banco
 }
 
 function iniciarApp(){

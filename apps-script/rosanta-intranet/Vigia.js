@@ -469,6 +469,10 @@ function vigiaCadaHora() {
   if (hora === 8 || hora === 14) { try { Logger.log(rlatRevisar_()); } catch (eL) { Logger.log('Latido reservas: ' + eL); procMarcar_('reservasWeb', eL); } }
   // Latido de canales del bot (16-oct-2026): Instagram calló 11 días (26-sep → 7-oct) sin que nadie lo notara
   if (hora === 9) { try { Logger.log(clatRevisar_()); } catch (eK) { Logger.log('Latido canales: ' + eK); procMarcar_('canales', eK); } }
+  // Caja en el servidor nuevo (motor_caja = base, 18-oct-2026): nadie abre la Caja chica de aca, y era abrirla lo
+  // que reescribia 07_Caja_Chica del maestro (de ahi sale el DRE). Ahora la regenera el vigia cada hora,
+  // desde CAJA_CHICA, que el servidor nuevo mantiene al dia.
+  if (cajaMotor_() === 'base') { try { cchEstado_(true); procMarcar_('cajaMaestro'); } catch (eC) { Logger.log('07_Caja_Chica: ' + eC); procMarcar_('cajaMaestro', eC); } }
   // Informe mensual del embudo de eventos (16-oct-2026): el dia 3, de 9:00 a 12:00, una vez por mes
   if (hora >= 9 && hora <= 12) { try { Logger.log(evmCadaHora_(hoy)); } catch (eE) { Logger.log('Informe de eventos: ' + eE); procMarcar_('eventosMes', eE); } }
   if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }

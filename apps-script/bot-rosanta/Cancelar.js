@@ -52,6 +52,8 @@ function rvCancelar(result, canal, contactoId) {
     idioma:   String(result.lead.idioma || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es'
   };
   if (canal === 'whatsapp' && !d.telefono) d.telefono = String(contactoId || '').replace(/\D/g, '');
+  // Por correo, la direccion de quien escribe identifica la reserva, como el numero en WhatsApp (19-oct-2026, Louise).
+  if (canal === 'correo' && !d.email && /@/.test(String(contactoId || ''))) d.email = String(contactoId).trim().toLowerCase();
 
   // Sin ninguna llave de identidad no se busca nada.
   if (!d.telefono && !d.email) {
@@ -207,9 +209,9 @@ function rvCorreoCliente(d, caso) {
       cuerpo = (en ? 'Hi ' : 'Hola ') + (nombre || (en ? 'there' : '')) + ',\n\n' +
         (en
           ? 'Your table is confirmed:\n\nDate: ' + fecha + '\nTime: ' + d.hora + '\nGuests: ' + d.personas +
-            '\n\nSee you in the garden.\n\nTo change or cancel it, just reply to this email.'
+            '\n\nSee you at Rosanta.\n\nTo change or cancel it, just reply to this email.'
           : 'Tu mesa queda confirmada:\n\nFecha: ' + fecha + '\nHora: ' + d.hora + '\nPersonas: ' + d.personas +
-            '\n\nTe esperamos en el jardín.\n\nPara cambiarla o cancelarla, responde a este correo.');
+            '\n\nTe esperamos en Rosanta.\n\nPara cambiarla o cancelarla, responde a este correo.');
     }
   }
 

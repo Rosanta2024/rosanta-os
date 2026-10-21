@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+/* Dentro del Sistema de Marketing (iframe) la barra de arriba ya la pone el shell: aca no se repite
+   "← Panel principal" (19-oct-2026, capturas del iPhone de Juanma). Suelta, la pagina queda igual. */
+try { if (window.top !== window.self) document.documentElement.classList.add('embebido'); } catch (e) { document.documentElement.classList.add('embebido'); }
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Marketing · Rosanta</title>
@@ -51,6 +56,16 @@ select,input,textarea{border:1.5px solid var(--borde);border-radius:8px;padding:
 select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cobre)}
 /* CELULAR (15-oct-2026): 16 px en los campos (el iPhone no agranda la pagina), botones de 44 px
    y los titulos de tarjeta con boton al lado pasan a dos lineas en vez de apretarse. */
+/* Embebido en el Sistema de Marketing: sin el boton de volver (lo tiene el shell). En el celular,
+   tampoco la cabecera verde: una sola barra arriba (19-oct-2026). */
+.embebido header .volver-panel{display:none}
+@media(max-width:700px){
+  .embebido body > header{display:none}
+  nav{padding:0 6px;gap:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:5}
+  nav::-webkit-scrollbar{display:none}
+  nav button{padding:12px 10px;font-size:13px}
+  main{padding:12px}
+}
 @media(max-width:640px){
   select,input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea{font-size:16px}
   .btn{min-height:44px}

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<?!= paletaCss_() ?>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Pipeline de Eventos</title>
+<style>
+/* Layout: arriba lo de hoy (revisión, toques, vencimientos); en medio el embudo por etapas; abajo los números del embudo y las reglas. */
+:root{
+  --bg:var(--fondo); --surface:var(--superficie); --fg:var(--texto); --muted:var(--texto-suave); --line:var(--linea);
+  --brand:var(--rosanta-verde); --accent:var(--rosanta-verde-medio); --spark:var(--rosanta-lila); --sub:var(--lila-texto);
+  --warn:var(--alerta); --crit:var(--mal); --crit-tint:var(--mal-tint); --warn-tint:var(--alerta-tint);
+  --display:var(--rosanta-font-title); --body:var(--rosanta-font-body);
+}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 64px}
+h1{font-family:var(--display);font-weight:600;color:var(--brand);font-size:clamp(28px,5vw,40px);margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:500;color:var(--brand);font-size:22px;margin:0 0 4px;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin:0 0 8px}
+.lede{color:var(--muted);margin:6px 0 0;max-width:68ch}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:700}
+section{margin-top:36px}
+.meta{font-size:13px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.status{font-size:13px;color:var(--muted);margin-top:8px}
+.band{margin-top:16px;padding:10px 14px;border-radius:8px;font-size:14px}
+.band.crit{background:var(--crit-tint);color:var(--crit);font-weight:700}
+.band.ok{background:var(--ok-tint);color:var(--ok)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px 28px;margin-top:20px;padding-block:18px;border-block:1px solid var(--line)}
+.stat b{display:block;font-family:var(--display);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.p-ok{color:var(--ok)} .p-warn{color:var(--warn)} .p-crit{color:var(--crit)} .p-mute{color:var(--muted)} .p-key{color:var(--sub)}
+/* Lista de trabajo del día */
+.list{display:flex;flex-direction:column;margin-top:10px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 28px;align-items:start;padding-block:16px;border-bottom:1px solid var(--line)}
+.row > div{min-width:0;overflow-wrap:anywhere}
+.row .meta{line-height:1.45;margin-top:2px}
+.row .lbl{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);font-weight:700;margin-bottom:4px}
+.row .pp{margin-top:8px;padding:6px 10px;border-left:3px solid var(--accent);background:var(--bg);border-radius:4px;font-size:14px}
+.row .pdf{font-size:12px;color:var(--muted);margin-top:4px}
+.row:first-child{border-top:1px solid var(--line)}
+.who{font-weight:700}
+.empty{color:var(--muted);padding-block:14px;border-block:1px solid var(--line)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;padding-top:10px;border-top:1px dashed var(--line)}
+button,select,input,textarea{font:inherit;font-size:13px}
+button{background:transparent;color:var(--brand);border:1px solid var(--brand);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{background:var(--brand);color:var(--bg)}
+button.primary{background:var(--brand);color:var(--bg)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input,textarea{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.inline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;grid-column:1/-1;padding:10px 0 2px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.hist{font-size:13px;color:var(--muted);margin:6px 0 0;padding-left:18px}
+/* Franja de vencimientos */
+.strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:var(--warn-tint);color:var(--warn);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}
+.chip.crit{background:var(--crit-tint);color:var(--crit)}
+/* Embudo */
+.board-scroll{overflow-x:auto;margin-top:12px;padding-bottom:6px}
+.board{display:grid;grid-template-columns:repeat(7,minmax(160px,1fr));gap:10px;min-width:1180px}
+.col-mas{font-size:12px;color:var(--muted)}
+.col{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col-head{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.col-head b{font-family:var(--display);font-size:16px;color:var(--brand);font-weight:600}
+.col-head span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.conv{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:.04em}
+.card{text-align:left;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.card:hover{background:var(--bg);color:var(--fg);border-color:var(--brand)}
+.card .c-name{font-weight:700;font-size:13px}
+.card .c-sub{font-size:12px;color:var(--muted)}
+.card .c-next{font-size:12px}
+.card.late{border-left:3px solid var(--crit)}
+.card.sel{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.card[draggable="true"]{cursor:grab}
+.card.dragging{opacity:.45}
+/* Cotizar (17-oct-2026): el botón va al lado de la tarjeta, no adentro (un botón dentro de otro no es HTML válido). */
+.card-w{position:relative;display:flex;flex-direction:column}
+.card-w .card.con-cot{padding-bottom:38px}
+.card-w .c-cot{position:absolute;right:8px;bottom:8px;font-size:12px;padding:2px 10px}
+@media (max-width:640px){.card-w .card.con-cot{padding-bottom:60px}}
+.card .c-lista{align-self:flex-start;margin-top:2px;font-size:11px;padding:1px 8px}
+.card .c-faltan{font-size:11px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--brand);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:20}
+[data-drop].drop-over{outline:2px dashed var(--accent);outline-offset:2px}
+.side [data-drop]{min-height:44px;border-radius:8px}
+.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:16px}
+/* Números */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:12px}
+.bar{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) auto;gap:8px;align-items:center;font-size:13px;padding-block:4px}
+.bar i{display:block;height:8px;border-radius:4px;background:var(--accent)}
+.bar i.lost{background:var(--spark)}
+.bar .t{background:var(--line);border-radius:4px;overflow:hidden}
+table.rules{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+.rules th,.rules td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.rules th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)}
+.scroll{overflow-x:auto;margin-top:10px}
+.note{font-size:13px;color:var(--muted);margin-top:10px;max-width:72ch}
+.mes-cab{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between}
+.mes-cab select{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}
+.mes-reco{margin-top:16px;padding:12px 16px;border-left:4px solid var(--accent);background:var(--surface);border-radius:4px;max-width:80ch}
+.mes-falta{margin-top:12px;font-size:13px;color:var(--warn);max-width:80ch}
+.mes-lista{font-size:13px;color:var(--muted);margin-top:6px}
+.head-row{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;justify-content:space-between}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 18px;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+.form input,.form select,.form textarea{font-size:14px;padding:6px 8px;width:100%;box-sizing:border-box}
+.form .check{flex-direction:row;align-items:center;gap:8px}
+.form .check input{width:auto}
+.form .full{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.form .hint{font-size:13px;color:var(--muted);font-weight:400}
+.form .err{color:var(--crit);font-weight:700}
+#detail:empty{display:none}
+#detail{margin-top:14px;padding:4px 16px 12px;border:1px solid var(--brand);border-radius:10px;background:var(--surface)}
+@media (max-width:640px){input,select,textarea{font-size:16px!important} button{min-height:44px}}
+@media (max-width:720px){.row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <? if (rolSinAcento_(usuario.rol) === 'sala') { ?><a class="eyebrow" style="display:inline-block;margin-bottom:.4rem" href="<?= urlBase ?><?!= authToken ? '?u=' + authToken : '' ?>">← Panel principal</a><? } ?>
+  <div class="eyebrow">Rosanta · Eventos y cotizaciones</div>
+  <h1>Pipeline de Eventos</h1>
+  <p class="lede">Cada cotización vive en una etapa del embudo, de la consulta a la reserva. Los toques son un dato dentro de cada etapa. La revisión del correo es diaria, de lunes a sábado.</p>
+  <div class="status" id="status">Conectando con la base…</div>
+  <div id="rev-band" class="band" hidden></div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-open">–</b><span>abiertas · <span id="s-amount">–</span></span></div>
+    <div class="stat"><b id="s-today">–</b><span>pendientes para hoy</span></div>
+    <div class="stat"><b id="s-week">–</b><span>vencen en 7 días</span></div>
+    <div class="stat"><b id="s-won">–</b><span>ganadas</span></div>
+    <div class="stat"><b id="s-rate">–</b><span>tasa de cierre</span></div>
+  </div>
+
+  <section>
+    <h2>Vence esta semana</h2>
+    <p class="meta">Cotizaciones abiertas cuya vigencia termina en los próximos 7 días. El vencimiento solo cambia con una versión nueva del PDF.</p>
+    <div class="strip" id="week"></div>
+  </section>
+
+  <section>
+    <div class="head-row"><h2>Hoy</h2><button class="primary" data-act="nueva" id="btn-nueva">Nueva consulta o cotización</button></div>
+    <p class="meta">Lo que toca hoy o está atrasado: responder consultas, toques del día, resúmenes de visita y recordatorios del depósito. Juanma envía todo.</p>
+    <form id="form-nueva" class="form" hidden></form>
+    <div class="list" id="due"></div>
+  </section>
+
+  <section>
+    <h2>El embudo</h2>
+    <p class="meta">Cantidad y monto por etapa. Entre etapas, qué porcentaje de las que llegaron a una pasó a la siguiente. Arrastra una tarjeta a otra columna para cambiarla de etapa; en el celular, tócala y usa "Mover a…". Ganada, Perdida y En pausa piden su dato antes de guardar. Cuando el evento ya pasó, la ganada sale en Hoy para marcarla Realizado: así Ganada solo guarda los eventos por venir.</p>
+    <div class="board-scroll"><div class="board" id="board"></div></div>
+    <div id="detail"></div>
+    <div class="side">
+      <div><h3>En pausa</h3><div id="paused" class="list" data-drop="pausa"></div></div>
+      <div><h3>Perdidas</h3><div id="lost" class="list" data-drop="perdida"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cómo va el embudo</h2>
+    <div class="metrics">
+      <div><h3>Motivos de pérdida</h3><div id="m-motivos"></div></div>
+      <div><h3>Cierre por canal</h3><div id="m-canal"></div><p class="note" id="m-canal-note"></p></div>
+      <div><h3>Tiempo de respuesta</h3><div id="m-resp"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="mes-cab"><div><h2>El mes</h2><p class="meta">El informe mensual del embudo, con el mes anterior al lado. El día 3 llega por correo el del mes que terminó. Una ganada cuenta en el mes de su depósito y una perdida, en el mes en que se cerró.</p></div>
+      <label class="meta" for="mes-sel">Mes <select id="mes-sel"></select></label></div>
+    <div id="mes-falta" class="mes-falta" hidden></div>
+    <div class="stats" id="mes-stats"></div>
+    <div class="metrics" id="mes-det"></div>
+    <div class="mes-reco" id="mes-reco" hidden></div>
+    <p class="status" id="mes-status">Cargando el informe…</p>
+  </section>
+
+  <section>
+    <h2>Las reglas</h2>
+    <p class="meta">Distancia al evento medida desde la fecha de referencia de cada etapa. Contestar una pregunta del cliente en menos de 24 h no cuenta como toque.</p>
+    <div class="scroll">
+      <table class="rules">
+        <thead><tr><th>Etapa · distancia</th><th>Vigencia del PDF</th><th>Toque 1</th><th>Toque 2</th><th>Toque 3</th><th>Toque 4</th></tr></thead>
+        <tbody>
+          <tr><td colspan="6"><b>Cotizada</b> · el reloj arranca con el envío; los toques caen en jueves salvo eventos a menos de 30 días</td></tr>
+          <tr><td>Menos de 30 días</td><td>10 días</td><td>+2 días</td><td>+4 días</td><td>+7 días</td><td>día antes de vencer</td></tr>
+          <tr><td>1 a 3 meses</td><td>30 días</td><td>1 semana</td><td>2 semanas</td><td>3 semanas</td><td>jueves antes de vencer</td></tr>
+          <tr><td>3 a 6 meses</td><td>8 semanas</td><td>1 semana</td><td>2 semanas</td><td>4 semanas</td><td>7 semanas</td></tr>
+          <tr><td>Más de 6 meses</td><td>3 meses</td><td>2 semanas</td><td>1 mes</td><td>2 meses</td><td>jueves antes de vencer</td></tr>
+          <tr><td colspan="6"><b>En conversación</b> · el reloj arranca con el último mensaje del cliente; la vigencia no se alarga</td></tr>
+          <tr><td>Menos de 30 días</td><td>la del PDF</td><td>+1 día</td><td>+3 días</td><td>+5 días</td><td>día antes de vencer</td></tr>
+          <tr><td>1 a 3 meses</td><td>la del PDF</td><td>+3 días</td><td>1 semana</td><td>2 semanas</td><td>jueves antes de vencer</td></tr>
+          <tr><td>3 a 6 meses</td><td>la del PDF</td><td>1 semana</td><td>2 semanas</td><td>4 semanas</td><td>7 semanas</td></tr>
+          <tr><td>Más de 6 meses</td><td>la del PDF</td><td>1 semana</td><td>3 semanas</td><td>6 semanas</td><td>jueves antes de vencer</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">En conversación: (1) cerrar lo pendiente y proponer un paso con fecha, (2) algo nuevo de valor, (3) facilitar la decisión, (4) último aviso con la fecha de vencimiento y cómo apartar con el 50%. Consulta: responder y cotizar en menos de 24 h. Visita o degustación: un correo en menos de 24 h con el resumen y el siguiente paso. Reservada: dos recordatorios del depósito (+2 y +5 días) con instrucciones de pago claras. Cuentas clave: un toque extra el día del cierre y se cierran una semana después. Si otro cliente pide la misma fecha, se avisa con honestidad.</p>
+  </section>
+</div>
+
+<script>
+const DAY = 864e5;
+const ETAPAS = [
+  {id:"consulta", n:"Consulta"}, {id:"cotizada", n:"Cotizada"}, {id:"conversacion", n:"En conversación"},
+  {id:"visita", n:"Visita o degustación"}, {id:"reservada", n:"Reservada"}, {id:"ganada", n:"Ganada"},
+  {id:"realizada", n:"Realizado"}
+];
+// Realizado (16-oct-2026): el evento ya se hizo. Cierra la ganada para que no se acumulen tarjetas.
+// Cuenta como ganada en todos los números; la columna muestra solo las últimas.
+const REALIZADAS_VISIBLES = 6;
+const ganadaOk = e => e === "ganada" || e === "realizada";
+const ORDEN = ETAPAS.map(e => e.id);
+const NOMBRE = Object.fromEntries([...ETAPAS.map(e => [e.id, e.n]), ["perdida","Perdida"], ["pausa","En pausa"], ["porenviar","Por enviar"]]);
+const CANALES = [["instagram","Instagram"],["web","Web"],["bot","Bot WhatsApp/IG"],["whatsapp","WhatsApp directo"],["correo","Correo"],["planner","Planner"],["referido","Referido"],["tripadvisor","TripAdvisor"],["otro","Otro"]];
+const CANAL = Object.fromEntries(CANALES);
+const MOTIVOS = ["sin respuesta","precio","fecha","eligió otro lugar","canceló el evento","pasó a reserva de mesa"];
+const TOQUE_CONV = ["Toque 1 · cerrar lo pendiente y proponer un paso con fecha","Toque 2 · algo nuevo de valor","Toque 3 · facilitar la decisión","Toque 4 · último aviso con el vencimiento"];
+let ROWS = [], REV = null, col = null, revCol = null, openForm = null, selId = null;
+
+const parse = s => { if(!s) return null; const [y,m,d] = String(s).slice(0,10).split("-").map(Number); if(!y||!m||!d) return null; return new Date(y, m-1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const add = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const today = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const days = (a,b) => Math.round((b - a) / DAY);
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+const fmt = d => d ? `${d.getDate()}-${MESES[d.getMonth()]}-${d.getFullYear()}` : "–";
+const fmtShort = d => d ? `${DIAS[d.getDay()]} ${d.getDate()}-${MESES[d.getMonth()]}` : "–";
+const money = n => (typeof n === "number" && isFinite(n)) ? "Q" + n.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0}) : "–";
+const moneyK = n => n >= 1000 ? "Q" + (n/1000).toLocaleString("en-US",{maximumFractionDigits:1}) + "k" : money(n);
+const thuOnOrBefore = d => add(d, -((d.getDay() - 4 + 7) % 7));
+const thuAfter = d => add(d, ((4 - d.getDay() + 7) % 7) || 7);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dedupe = arr => [...new Set(arr.map(iso))].map(parse).sort((a,b) => a-b);
+
+// Etapa de una fila. Las filas viejas solo traen "estado".
+function etapaDe(r){
+  if (r.etapa) return r.etapa;
+  return {porenviar:"porenviar", ganada:"ganada", realizada:"realizada", perdida:"perdida", pausa:"pausa"}[r.estado] || "cotizada";
+}
+const abierta = e => !["ganada","realizada","perdida","pausa"].includes(e);
+const idx = e => ORDEN.indexOf(e === "porenviar" ? "cotizada" : e);
+function alcanzada(r){ // la etapa más avanzada a la que llegó
+  return Math.max(idx(etapaDe(r)), idx(r.etapa_max || "consulta"));
+}
+
+// Tramo y vigencia sugerida según la distancia al evento.
+function tier(ref, ev){
+  const d = days(ref, ev);
+  if (d < 30) return {k:0, name:"Menos de 30 días", vig: d < 10 ? Math.max(1, d-3) : 10, d};
+  if (d <= 90) return {k:1, name:"1 a 3 meses", vig:30, d};
+  if (d <= 180) return {k:2, name:"3 a 6 meses", vig:56, d};
+  return {k:3, name:"Más de 6 meses", vig:90, d};
+}
+function venceSugerido(base, ev){ return (base && ev) ? add(base, tier(base, ev).vig) : null; }
+
+// Calendario de toques de "Cotizada" (procedimiento del 8-oct).
+function schedCotizada(r){
+  const ref = parse(r.ref || r.fecha_envio), ev = parse(r.fecha_evento), vence = parse(r.vence);
+  if (!ref || !ev || !vence) return null;
+  const t = tier(ref, ev), thursday = t.k > 0;
+  const offs = [[2,4,7],[7,14,21],[7,14,28],[14,30,60]][t.k];
+  const snap = d => { if (!thursday) return d; let x = thuOnOrBefore(d); if (x <= ref) x = thuAfter(ref); return x; };
+  let aviso = thursday ? thuOnOrBefore(add(vence,-1)) : add(vence,-1);
+  if (aviso <= ref) aviso = add(ref, 1);
+  let dates = offs.map(o => snap(add(ref,o))).filter(d => d < aviso);
+  if (t.d < 10) dates = [0.25,0.5,0.75].map(f => add(ref, Math.max(1, Math.round(days(ref, vence)*f)))).filter(d => d < aviso);
+  dates = dedupe(dates); dates.push(aviso);
+  const labels = dates.map((d,i) => i === dates.length-1 ? "Toque 4 · último aviso" : "Toque " + (i+1));
+  if (r.clave) { dates.push(vence); labels.push("Toque extra · cuenta clave"); }
+  return {t, ref, ev, vence, dates, labels, cierre: r.clave ? add(vence,7) : vence};
+}
+
+// Calendario de "En conversación": arranca con el último mensaje del cliente; la vigencia no cambia.
+function schedConversacion(r){
+  const ref = parse(r.ultimo_cliente || r.ref), ev = parse(r.fecha_evento), vence = parse(r.vence);
+  if (!ref || !ev || !vence) return null;
+  const t = tier(ref, ev);
+  const offs = [[1,3,5],[3,7,14],[7,14,28],[7,21,42]][t.k];
+  let last = [add(vence,-1), thuOnOrBefore(add(vence,-1)), add(ref,49), thuOnOrBefore(add(vence,-1))][t.k];
+  if (last >= vence) last = add(vence,-1);
+  if (last <= ref) last = add(ref,1);
+  const dates = dedupe(offs.map(o => add(ref,o)).filter(d => d < last)); dates.push(last);
+  const labels = dates.map((d,i) => i === dates.length-1 ? TOQUE_CONV[3] : TOQUE_CONV[i]);
+  if (r.clave) { dates.push(vence); labels.push("Toque extra · cuenta clave"); }
+  return {t, ref, ev, vence, dates, labels, cierre: r.clave ? add(vence,7) : vence};
+}
+
+// Qué toca con cada fila: la acción siguiente, su fecha y un aviso.
+function derive(r){
+  const e = etapaDe(r), hoy = today(), toques = Number(r.toques || 0);
+  const ev = parse(r.fecha_evento), vence = parse(r.vence);
+  const out = {e, ev, vence};
+  const pp = r.proximo_paso && parse(r.proximo_paso.fecha) ? {fecha: parse(r.proximo_paso.fecha), texto: r.proximo_paso.texto} : null;
+  if (e === "realizada") return {...out, flag:"Realizado" + (ev ? " · " + fmt(ev) : ""), cls:"p-mute"};
+  if (e === "ganada") {
+    if (ev && ev < hoy) return {...out, flag:"Evento pasado · marcar realizado", cls:"p-warn", next: add(ev,1), label:"Marcar realizado", late: add(ev,1) < hoy};
+    return {...out, flag:"Ganada" + (r.deposito_fecha ? " · depósito " + fmt(parse(r.deposito_fecha)) : ""), cls:"p-ok"};
+  }
+  if (e === "perdida") return {...out, flag:"Perdida · " + (r.motivo || "sin motivo"), cls:"p-mute"};
+  if (e === "pausa") { const h = parse(r.pausa_hasta); return {...out, flag: h ? "En pausa hasta " + fmt(h) : "En pausa sin fecha", cls:"p-mute", next: h, label:"Retomar", late: h && h < hoy}; }
+  if (ev && ev < hoy) return {...out, flag:"Evento pasado · cerrar", cls:"p-crit", next: hoy, label:"Cerrar la fila", late:true};
+  const falta = [!ev && "fecha del evento", !vence && e !== "consulta" && "vence"].filter(Boolean);
+  if (falta.length) return {...out, flag:"Falta " + falta.join(" y "), cls:"p-crit", next: pp && pp.fecha <= hoy ? pp.fecha : hoy, label: pp ? pp.texto + " · y completar datos" : "Completar datos", late:true};
+  let s = null, next = null, label = null;
+  if (e === "consulta") {
+    const c = parse(r.fecha_consulta) || hoy;
+    next = add(c,1); label = "Responder y cotizar (menos de 24 h)";
+  } else if (e === "porenviar") {
+    return {...out, flag:"Por enviar · generada, falta que salga", cls:"p-warn", next: hoy, label:"Enviar la cotización", late:false};
+  } else if (e === "cotizada" || e === "conversacion") {
+    s = e === "cotizada" ? schedCotizada(r) : schedConversacion(r);
+    next = s.dates[toques] || null; label = s.labels[toques] || null;
+    if (pp && (!next || pp.fecha < next)) { const late = pp.fecha < hoy; return {...out, s, next: pp.fecha, label: pp.texto, flag: NOMBRE[e] + (toques ? " · " + toques + " toques" : ""), cls: late ? "p-crit" : "p-ok", late}; }
+    if (!next) {
+      if (hoy >= s.cierre) return {...out, s, flag:"Venció · marcar perdida", cls:"p-crit", next: hoy, label:"Marcar perdida", late:true};
+      return {...out, s, flag:"Toques completos · cierra " + fmt(s.cierre), cls:"p-warn", next: s.cierre, label:"Cierre", waiting:true};
+    }
+  } else if (e === "visita") {
+    const v = parse(r.fecha_visita);
+    if (!v) { next = hoy; label = "Anotar la fecha de la visita"; }
+    else if (v > hoy) { next = v; label = "Visita o degustación"; }
+    else if (!toques) { next = add(v,1); label = "Resumen de la visita y siguiente paso (menos de 24 h)"; }
+    else { next = pp ? pp.fecha : add(v,7); label = pp ? pp.texto : "Siguiente paso acordado"; }
+  } else if (e === "reservada") {
+    const d0 = parse(r.etapa_desde) || hoy;
+    const rec = [add(d0,2), add(d0,5)].map(d => vence && d >= vence ? add(vence,-1) : d);
+    if (pp && pp.fecha >= hoy) { next = pp.fecha; label = pp.texto; }
+    else if (toques < 2) { next = rec[toques]; label = "Recordatorio " + (toques+1) + " de 2 · depósito del 50%"; }
+    else { next = hoy; label = "Sin depósito tras 2 recordatorios · llamar"; }
+  }
+  if (pp && (!next || pp.fecha < next) && e !== "visita") { next = pp.fecha; label = pp.texto; }
+  const late = next && next < hoy;
+  const flag = NOMBRE[e] + (toques ? " · " + toques + " toque" + (toques>1?"s":"") : "");
+  return {...out, s, next, label, flag, cls: late ? "p-crit" : "p-ok", late};
+}
+
+function detailHTML(r, d){
+  const usd = r.monto_usd ? ` · US$${Number(r.monto_usd).toLocaleString("en-US",{maximumFractionDigits:0})}` : "";
+  const id = esc(r.id), e = d.e;
+  const who = `<div><span class="lbl">Cliente</span><div class="who">${esc(r.cliente)} ${r.clave ? '<span class="pill p-key">cuenta clave</span>' : ""}</div>
+    <div class="meta">${esc(r.evento || "")}${r.pax ? " · " + esc(r.pax) + " pax" : ""} · ${(r.idioma||"es").toUpperCase()}${r.contacto ? " · " + esc(r.contacto) : ""}</div>
+    <div class="meta">Canal: ${esc(CANAL[r.canal] || "sin dato")}${r.fecha_consulta ? " · consulta " + fmt(parse(r.fecha_consulta)) : ""}${r.ultimo_cliente ? " · último mensaje del cliente " + fmt(parse(r.ultimo_cliente)) : ""}</div>
+    ${r.notas ? `<div class="meta">${esc(r.notas)}</div>` : ""}
+    ${(r.historial||[]).length ? `<details><summary>Historial (${r.historial.length})</summary><ul class="hist">${r.historial.map(h=>`<li>${esc(h.fecha)} · ${esc(h.texto)}</li>`).join("")}</ul></details>` : ""}</div>`;
+  const ev = `<div class="meta"><span class="lbl">Evento y monto</span><div>Evento <strong class="num">${d.ev ? fmt(d.ev) : "sin fecha"}</strong></div>
+    <div class="num">${money(Number(r.monto_q))}${usd}</div>${r.opciones ? `<div>${esc(r.opciones)}</div>` : ""}
+    <div>Vence <strong class="num">${d.vence ? fmt(d.vence) : "sin fecha"}</strong></div>${r.pdf ? `<div class="pdf">${esc(r.pdf)}</div>` : ""}</div>`;
+  const nx = `<div><span class="lbl">Qué sigue</span><span class="pill ${d.cls}">${esc(d.flag)}</span>
+    ${d.next && !d.waiting ? `<div style="margin-top:6px">${esc(d.label || "")}: <strong>${fmtShort(d.next)}</strong>${d.late ? " · atrasado" : ""}</div>` : ""}
+    ${d.s ? `<div class="meta">${esc(d.s.t.name)} · ${Number(r.toques||0)} de ${d.s.dates.length} toques</div>` : ""}
+    ${r.proximo_paso && r.proximo_paso.texto ? `<div class="pp"><b>Próximo paso:</b> ${esc(r.proximo_paso.texto)} · ${r.proximo_paso.fecha ? fmt(parse(r.proximo_paso.fecha)) : '<span class="p-crit">sin fecha: no lo toma nadie</span>'}</div>` : ""}</div>`;
+  let acts = `<button data-act="form-editar" data-id="${id}">Editar</button>`;
+  if (e === "porenviar") acts = `<button data-act="form-enviada" data-id="${id}" class="primary">Enviada</button>` + acts;
+  if (abierta(e) && e !== "porenviar") {
+    if (d.next && !d.waiting && ["cotizada","conversacion","reservada"].includes(e) || (e === "visita" && parse(r.fecha_visita) && parse(r.fecha_visita) <= today() && !Number(r.toques||0)))
+      acts = `<button data-act="toque" data-id="${id}" class="primary">Toque enviado</button>` + acts;
+    acts += `<button data-act="escribio" data-id="${id}">Cliente escribió</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
+  }
+  if (abierta(e)) acts += `<button data-act="form-ganada" data-id="${id}">Ganada</button><button data-act="form-perdida" data-id="${id}">Perdida</button><button data-act="form-pausa" data-id="${id}">Pausa</button>`;
+  else if (e === "ganada") acts += `<button data-act="realizada" data-id="${id}" class="primary">Realizado</button><button data-act="reabrir" data-id="${id}">Reabrir</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
+  else if (e === "realizada") acts += `<button data-act="volver-ganada" data-id="${id}">Volver a Ganada</button>`;
+  else acts += `<button data-act="reabrir" data-id="${id}">Reabrir</button><button data-act="form-etapa" data-id="${id}">Mover a…</button>`;
+  let form = "";
+  if (openForm && openForm.id === r.id) {
+    const k = openForm.kind;
+    if (k === "perdida") form = `<div class="inline"><label for="f-motivo">Motivo</label><select id="f-motivo">${MOTIVOS.map(m=>`<option>${m}</option>`).join("")}</select><button class="primary" data-act="perdida" data-id="${id}">Marcar perdida</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "ganada") form = `<div class="inline"><label for="f-dep">Depósito del 50% recibido el</label><input type="date" id="f-dep" value="${iso(today())}"><label for="f-mon">monto Q</label><input type="number" step="0.01" id="f-mon" style="width:120px"><button class="primary" data-act="ganada" data-id="${id}">Marcar ganada</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "enviada") form = `<div class="inline"><label for="f-env">Enviada el</label><input type="date" id="f-env" value="${iso(today())}"><button class="primary" data-act="enviada" data-id="${id}">Arrancar recordatorios</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "pausa") form = `<div class="inline"><label for="f-pausa">Retomar el</label><input type="date" id="f-pausa" value="${iso(add(today(),14))}"><button class="primary" data-act="pausa" data-id="${id}">Poner en pausa</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "etapa") form = `<div class="inline"><label for="f-etapa">Pasar a</label><select id="f-etapa">${["consulta","porenviar","cotizada","conversacion","visita","reservada","ganada","perdida","pausa"].map(x=>`<option value="${x}" ${x===(openForm.pre||e)?"selected":""}>${NOMBRE[x]}</option>`).join("")}</select><label for="f-visita">fecha de visita (si aplica)</label><input type="date" id="f-visita" value="${esc(r.fecha_visita||"")}"><button class="primary" data-act="etapa" data-id="${id}">Mover</button><button data-act="cancel">Cancelar</button></div>`;
+    if (k === "editar") form = `<form class="form" id="form-editar" style="grid-column:1/-1">${formFields(r)}<div class="full"><button type="submit" class="primary">Guardar</button><button type="button" data-act="cancel">Cancelar</button><span class="hint" id="e-hint"></span></div></form>`;
+  }
+  return `<div class="row">${who}${ev}${nx}<div class="actions">${acts}</div>${form}</div>`;
+}
+
+// Campos del formulario (nuevo y editar). Fecha del evento y vence son obligatorios.
+function formFields(r){
+  r = r || {};
+  const v = k => esc(r[k] ?? "");
+  const enviada = r.id && !["consulta","porenviar"].includes(etapaDe(r));
+  return `<label for="x-cliente">Cliente o pareja<input id="x-cliente" value="${v("cliente")}" required></label>
+    <label for="x-contacto">Contacto (nombre · correo)<input id="x-contacto" value="${v("contacto")}"></label>
+    <label for="x-evento">Tipo de evento<input id="x-evento" value="${v("evento")}" required></label>
+    <label for="x-canal">Canal de origen<select id="x-canal"><option value="">Elegir…</option>${CANALES.map(([k,n])=>`<option value="${k}" ${r.canal===k?"selected":""}>${n}</option>`).join("")}</select></label>
+    <label for="x-consulta">Fecha de la consulta<input type="date" id="x-consulta" value="${v("fecha_consulta") || (r.id ? "" : iso(today()))}"></label>
+    <label for="x-fecha">Fecha del evento *<input type="date" id="x-fecha" value="${v("fecha_evento")}" required></label>
+    <label for="x-pax">Personas<input type="number" id="x-pax" value="${v("pax")}"></label>
+    <label for="x-monto">Monto opción principal (Q)<input type="number" step="0.01" id="x-monto" value="${v("monto_q")}"></label>
+    <label for="x-usd">Monto en US$ (si es extranjero)<input type="number" step="0.01" id="x-usd" value="${v("monto_usd")}"></label>
+    <label for="x-vence">Vence (fecha del PDF) *<input type="date" id="x-vence" value="${v("vence")}" data-orig="${v("vence")}"></label>
+    <label for="x-pdf">Archivo PDF<input id="x-pdf" value="${v("pdf")}"></label>
+    <label for="x-idioma">Idioma<select id="x-idioma"><option value="es" ${r.idioma!=="en"?"selected":""}>Español</option><option value="en" ${r.idioma==="en"?"selected":""}>Inglés</option></select></label>
+    ${r.id ? "" : `<label for="x-etapa">Etapa<select id="x-etapa"><option value="consulta">Consulta (aún sin cotizar)</option><option value="porenviar">Por enviar (PDF en borrador)</option><option value="cotizada">Cotizada (enviada hoy)</option></select></label>`}
+    <label for="x-pp">Próximo paso<input id="x-pp" value="${esc(r.proximo_paso?.texto || "")}" placeholder="Ej.: llamada para ver la degustación"></label>
+    <label for="x-ppf">Fecha del próximo paso (si la dejas vacía, es hoy)<input type="date" id="x-ppf" value="${esc(r.proximo_paso?.fecha || "")}"></label>
+    <label class="check" for="x-clave"><input type="checkbox" id="x-clave" ${r.clave?"checked":""}> Cuenta clave (planner o canal que trae más eventos)</label>
+    ${enviada ? `<label class="check" for="x-nuevopdf"><input type="checkbox" id="x-nuevopdf"> Hay una versión nueva del PDF (necesario para cambiar el vencimiento)</label>` : ""}
+    <div class="full"><span class="hint" id="x-sug"></span><button type="button" data-act="usar-sug">Usar la vigencia sugerida</button></div>`;
+}
+function sugerencia(){
+  const ev = parse(document.getElementById("x-fecha")?.value), hint = document.getElementById("x-sug");
+  if (!hint) return null;
+  const base = today(), s = venceSugerido(base, ev);
+  hint.textContent = s ? `Vigencia sugerida si sale hoy (${tier(base, ev).name}): ${fmt(s)}.` : "Pon la fecha del evento para calcular la vigencia.";
+  return s;
+}
+function leerForm(r){
+  const v = id => (document.getElementById(id)?.value || "").trim();
+  const num = id => v(id) === "" ? null : Number(v(id));
+  const err = [];
+  if (!v("x-cliente")) err.push("el cliente");
+  if (!v("x-evento")) err.push("el tipo de evento");
+  if (!v("x-fecha")) err.push("la fecha del evento");
+  const etapa = r ? etapaDe(r) : v("x-etapa");
+  if (!v("x-vence") && etapa !== "consulta") err.push("la fecha de vencimiento");
+  const venceIn = document.getElementById("x-vence");
+  if (r && venceIn && venceIn.dataset.orig && venceIn.value !== venceIn.dataset.orig && document.getElementById("x-nuevopdf") && !document.getElementById("x-nuevopdf").checked)
+    err.push("marcar que hay una versión nueva del PDF (el vencimiento solo cambia con un PDF nuevo)");
+  const data = {cliente:v("x-cliente"), contacto:v("x-contacto")||null, evento:v("x-evento"), canal:v("x-canal")||null,
+    fecha_consulta:v("x-consulta")||null, fecha_evento:v("x-fecha")||null, pax:num("x-pax"), monto_q:num("x-monto"), monto_usd:num("x-usd"),
+    vence:v("x-vence")||null, pdf:v("x-pdf")||null, idioma:v("x-idioma")||"es", clave:document.getElementById("x-clave").checked,
+    proximo_paso: v("x-pp") ? {texto:v("x-pp"), fecha:v("x-ppf")||iso(today())} : null};
+  return {err, data, etapa};
+}
+
+// Cotizar (17-oct-2026): la intranet no corre el cotizador (es una skill de Claude). El botón copia
+// "cotiza <id>" para pegarlo en Claude, en la carpeta Eventos_y_Cotizaciones. lista_cotizar y faltan
+// los escribe la revisión diaria (sin columna propia: viajan en extra_json).
+const ETAPAS_COTIZAR = ["consulta","cotizada","conversacion","visita"];
+const listaCotizar = r => r.lista_cotizar === true || r.lista_cotizar === "true";
+function cardHTML(x){
+  const r = x.r, d = x.d, cot = ETAPAS_COTIZAR.includes(d.e), lista = cot && listaCotizar(r);
+  const faltan = cot && !lista && String(r.faltan || "").trim();
+  const card = `<button class="card ${d.late?"late":""} ${selId===r.id?"sel":""} ${cot?"con-cot":""}" data-act="sel" data-id="${esc(r.id)}" draggable="true">
+    <span class="c-name">${esc(r.cliente)}${r.clave ? " ·  clave" : ""}</span>
+    <span class="c-sub num">${d.ev ? fmtShort(d.ev) + " " + d.ev.getFullYear() : "sin fecha"} · ${moneyK(Number(r.monto_q)||0)}${d.e==="porenviar"?" · por enviar":""}</span>
+    ${d.next ? `<span class="c-next ${d.late?"p-crit":""}">${esc((d.label||"").split(" · ")[0])} ${fmtShort(d.next)}</span>` : `<span class="c-next p-mute">${esc(d.flag)}</span>`}
+    ${lista ? `<span class="pill p-ok c-lista">Lista para cotizar</span>` : ""}
+    ${faltan ? `<span class="c-faltan">Faltan: ${esc(faltan)}</span>` : ""}
+  </button>`;
+  if (!cot) return card;
+  return `<div class="card-w">${card}<button type="button" class="c-cot ${lista?"primary":""}" data-act="cotizar" data-id="${esc(r.id)}" title="Copia: cotiza ${esc(r.id)}">Cotizar</button></div>`;
+}
+// Copiar dentro del iframe de Apps Script: primero la API del portapapeles; si el iframe no la
+// deja, un textarea con execCommand("copy"); si tampoco, se muestra la frase para copiarla a mano.
+async function copiarTexto(t){
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(t); return true; } } catch(_) {}
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, t.length);
+    const ok = document.execCommand("copy"); document.body.removeChild(ta);
+    if (ok) return true;
+  } catch(_) {}
+  return false;
+}
+let toastT = null;
+function avisoCorto(txt){
+  let n = document.getElementById("toast");
+  if (!n) { n = document.createElement("div"); n.id = "toast"; n.className = "toast"; n.setAttribute("role", "status"); document.body.appendChild(n); }
+  n.textContent = txt; n.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { n.hidden = true; }, 3500);
+}
+async function cotizar(id){
+  const frase = "cotiza " + id;
+  if (await copiarTexto(frase)) avisoCorto("Copiado. Pégalo en Claude, en la carpeta Eventos y cotizaciones.");
+  else window.prompt("Copia esta frase y pégala en Claude, en la carpeta Eventos y cotizaciones:", frase);
+}
+
+function render(){
+  const hoy = today(), all = ROWS.map(r => ({r, d: derive(r)}));
+  const open = all.filter(x => abierta(x.d.e));
+  // Hoy: todo lo abierto (y pausas que se retoman) con acción hasta hoy.
+  const due = all.filter(x => (abierta(x.d.e) || x.d.e === "pausa" || x.d.e === "ganada") && x.d.next && !x.d.waiting && x.d.next <= hoy).sort((a,b) => a.d.next - b.d.next);
+  document.getElementById("due").innerHTML = due.length ? due.map(x => detailHTML(x.r, x.d)).join("") : `<div class="empty">Nada pendiente para hoy.</div>`;
+  // Vence esta semana
+  const wk = open.filter(x => x.d.vence && x.d.vence >= hoy && x.d.vence <= add(hoy,7)).sort((a,b) => a.d.vence - b.d.vence);
+  document.getElementById("week").innerHTML = wk.length ? wk.map(x => `<span class="chip ${days(hoy,x.d.vence)<=2?"crit":""}">${esc(x.r.cliente)} · ${fmtShort(x.d.vence)} · ${moneyK(Number(x.r.monto_q)||0)}</span>`).join("") : `<span class="meta">Ninguna vence en los próximos 7 días.</span>`;
+  // Embudo
+  const reached = i => all.filter(x => alcanzada(x.r) >= i && x.d.e !== "pausa").length;
+  document.getElementById("board").innerHTML = ETAPAS.map((et, i) => {
+    let items = all.filter(x => (x.d.e === et.id || (et.id === "cotizada" && x.d.e === "porenviar")));
+    if (et.id === "realizada") items.sort((a,b) => (b.d.ev||0) - (a.d.ev||0));       // la más reciente arriba
+    else if (et.id === "ganada") items.sort((a,b) => (a.d.ev||Infinity) - (b.d.ev||Infinity));
+    else items.sort((a,b) => (a.d.next||Infinity) - (b.d.next||Infinity));
+    const q = items.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0);
+    const conv = i > 0 && et.id !== "realizada" && reached(i-1) ? Math.round(reached(i) / reached(i-1) * 100) + "% desde " + ETAPAS[i-1].n.toLowerCase() : "";
+    const vis = et.id === "realizada" ? items.slice(0, REALIZADAS_VISIBLES) : items;
+    const mas = items.length > vis.length ? `<span class="col-mas">y ${items.length - vis.length} más · cuentan en ganadas y en El mes</span>` : "";
+    return `<div class="col" data-drop="${et.id}"><div class="col-head"><b>${et.n}</b><span>${items.length} · ${moneyK(q)}</span>${conv ? `<span class="conv">${conv}</span>` : ""}</div>${vis.map(cardHTML).join("") || '<span class="meta">Vacía</span>'}${mas}</div>`;
+  }).join("");
+  const sel = all.find(x => x.r.id === selId);
+  document.getElementById("detail").innerHTML = sel && !due.includes(sel) ? detailHTML(sel.r, sel.d) : "";
+  const paused = all.filter(x => x.d.e === "pausa"), lost = all.filter(x => x.d.e === "perdida");
+  document.getElementById("paused").innerHTML = paused.length ? paused.map(cardHTML).join("") : `<div class="meta">Nada en pausa.</div>`;
+  document.getElementById("lost").innerHTML = lost.length ? lost.sort((a,b)=>String(b.r.actualizado||"").localeCompare(String(a.r.actualizado||""))).map(cardHTML).join("") : `<div class="meta">Ninguna.</div>`;
+  // Números
+  const won = all.filter(x => ganadaOk(x.d.e));
+  document.getElementById("s-open").textContent = open.length;
+  document.getElementById("s-amount").textContent = moneyK(open.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0));
+  document.getElementById("s-today").textContent = due.length;
+  document.getElementById("s-week").textContent = wk.length;
+  document.getElementById("s-won").textContent = won.length + " · " + moneyK(won.reduce((a,x) => a + (Number(x.r.monto_q)||0), 0));
+  document.getElementById("s-rate").textContent = (won.length + lost.length) ? Math.round(won.length / (won.length + lost.length) * 100) + "%" : "–";
+  const bars = (pairs, cls) => { const max = Math.max(1, ...pairs.map(p => p[1])); return pairs.map(([n,v,t]) => `<div class="bar"><span>${esc(n)}</span><span class="t"><i class="${cls||""}" style="width:${Math.round(v/max*100)}%"></i></span><span class="num">${esc(t ?? v)}</span></div>`).join(""); };
+  const mot = {}; lost.forEach(x => { const m = x.r.motivo || "sin motivo"; mot[m] = (mot[m]||0) + 1; });
+  document.getElementById("m-motivos").innerHTML = lost.length ? bars(Object.entries(mot).sort((a,b)=>b[1]-a[1]), "lost") : `<div class="meta">Sin pérdidas.</div>`;
+  const cn = {}; all.forEach(x => { if (!ganadaOk(x.d.e) && x.d.e !== "perdida") return; const c = CANAL[x.r.canal] || "Sin dato"; cn[c] = cn[c] || {g:0,t:0}; cn[c].t++; if (ganadaOk(x.d.e)) cn[c].g++; });
+  const cpairs = Object.entries(cn).sort((a,b)=>b[1].t-a[1].t).map(([c,o]) => [c, Math.round(o.g/o.t*100), `${o.g} de ${o.t}`]);
+  document.getElementById("m-canal").innerHTML = cpairs.length ? bars(cpairs) : `<div class="meta">Sin cerradas todavía.</div>`;
+  document.getElementById("m-canal-note").textContent = "Ganadas entre las cerradas (ganadas más perdidas) de cada canal.";
+  const resp = all.map(x => x.r.respuesta_horas).filter(h => typeof h === "number" && isFinite(h)).sort((a,b)=>a-b);
+  const med = resp.length ? resp[Math.floor(resp.length/2)] : null;
+  const fast = resp.filter(h => h <= 24).length;
+  document.getElementById("m-resp").innerHTML = resp.length ? `<div class="stat"><b class="num">${med < 48 ? Math.round(med) + " h" : Math.round(med/24) + " días"}</b><span>mediana entre la consulta y la primera respuesta (${resp.length} con dato)</span></div><div class="meta" style="margin-top:8px">${fast} de ${resp.length} respondidas en menos de 24 h.</div>` : `<div class="meta">Sin datos de consulta todavía.</div>`;
+  renderRev();
+}
+
+// Franja de la revisión diaria: avisa si hoy (lun a sáb, después de las 8:00) no corrió.
+function renderRev(){
+  const band = document.getElementById("rev-band"), now = new Date(), hoy = iso(today());
+  if (!revCol) { band.hidden = true; return; }
+  if (REV && REV.id === hoy) {
+    band.className = "band ok"; band.hidden = false;
+    band.textContent = `Revisión de hoy, ${REV.hora || ""}: ${REV.resumen || ""}`;
+  } else if (now.getDay() !== 0 && now.getHours() >= 8) {
+    band.className = "band crit"; band.hidden = false;
+    band.textContent = "La revisión del correo de hoy no corrió" + (REV ? ` (la última fue el ${fmt(parse(REV.id))})` : "") + ". Pídele a Claude que la corra o revisa las tareas programadas.";
+  } else band.hidden = true;
+}
+
+async function save(id, patch, texto){
+  const r = ROWS.find(x => x.id === id); if (!r) return;
+  const hist = [...(r.historial || []), {fecha: iso(today()), texto}];
+  if (patch.etapa) {
+    patch.etapa_desde = patch.etapa_desde || iso(today());
+    if (idx(patch.etapa) > idx(r.etapa_max || "consulta")) patch.etapa_max = patch.etapa;
+    patch.estado = {porenviar:"porenviar", ganada:"ganada", realizada:"realizada", perdida:"perdida", pausa:"pausa"}[patch.etapa] || "abierta";
+  }
+  try { await escribir([{op:"update", id, data:{...patch, historial: hist}, if_version: r.version}]); openForm = null; }
+  catch(e){ document.getElementById("status").textContent = "No se pudo guardar: " + (e && e.message || e); }
+  render();
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id, r = ROWS.find(x => x.id === id);
+  if (act === "cotizar") { e.preventDefault(); e.stopPropagation(); return cotizar(id); }   // no abre la tarjeta
+  if (act === "cancel") { openForm = null; return render(); }
+  if (act === "nueva") return toggleNueva();
+  if (act === "usar-sug") { const s = sugerencia(); if (s) document.getElementById("x-vence").value = iso(s); return; }
+  if (act === "sel") { selId = selId === id ? null : id; openForm = null; render(); if (selId) document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
+  if (act.startsWith("form-")) { openForm = {id, kind: act.slice(5)}; selId = selId || id; render(); if (act === "form-editar") { document.getElementById("x-fecha").addEventListener("change", sugerencia); sugerencia(); } return; }
+  if (!r) return;
+  const d = derive(r);
+  if (act === "enviada") {
+    const f = document.getElementById("f-env").value || iso(today());
+    save(id, {etapa:"cotizada", fecha_envio:f, ref:f, toques:0, etapa_desde:f}, "Cotización enviada · vence " + fmt(parse(r.vence)));
+  }
+  if (act === "toque") save(id, {toques: Number(r.toques||0) + 1}, (d.label || "Toque") + " enviado");
+  if (act === "escribio") {
+    const patch = {ultimo_cliente: iso(today()), toques: 0};
+    if (["cotizada","consulta"].includes(d.e)) patch.etapa = d.e === "consulta" ? "consulta" : "conversacion";
+    save(id, patch, "El cliente escribió · el reloj de En conversación arranca hoy; la vigencia no cambia");
+  }
+  if (act === "etapa") {
+    const et = document.getElementById("f-etapa").value, fv = document.getElementById("f-visita").value;
+    if (["ganada","perdida","pausa"].includes(et)) { openForm = {id, kind: et}; return render(); }
+    if (et === "visita" && !fv) { document.getElementById("status").textContent = "Pon la fecha de la visita para moverla a Visita o degustación."; return; }
+    const patch = {etapa: et, toques: 0}; if (fv) patch.fecha_visita = fv;
+    if (et === "conversacion" && !r.ultimo_cliente) patch.ultimo_cliente = iso(today());
+    save(id, patch, "Pasa a " + NOMBRE[et] + (fv && et === "visita" ? " · visita el " + fmt(parse(fv)) : ""));
+  }
+  if (act === "perdida") { const m = document.getElementById("f-motivo").value; save(id, {etapa:"perdida", motivo:m}, "Perdida · " + m); }
+  if (act === "ganada") { const f = document.getElementById("f-dep").value, m = Number(document.getElementById("f-mon").value) || null; save(id, {etapa:"ganada", deposito_fecha:f, deposito_q:m}, "Ganada · depósito " + f + (m ? " · " + money(m) : "")); }
+  if (act === "pausa") { const f = document.getElementById("f-pausa").value; save(id, {etapa:"pausa", pausa_hasta:f}, "En pausa hasta " + f); }
+  if (act === "realizada") marcarRealizada(r);
+  if (act === "volver-ganada") save(id, {etapa:"ganada", etapa_desde: r.ganada_fecha || r.deposito_fecha || iso(today())}, "Vuelve a Ganada");
+  if (act === "reabrir") save(id, {etapa:"conversacion", ultimo_cliente: iso(today()), toques: 0}, "Reabierta · pasa a En conversación");
+});
+
+// Realizado: solo desde Ganada. Guarda el día en que se ganó (ganada_fecha) porque etapa_desde
+// pasa a ser el día en que se marcó realizado, y El mes cuenta la ganada en el mes del depósito.
+function marcarRealizada(r){
+  if (etapaDe(r) !== "ganada") { document.getElementById("status").textContent = "Solo una ganada pasa a Realizado: primero márcala Ganada con su depósito."; return; }
+  const ev = parse(r.fecha_evento);
+  save(r.id, {etapa:"realizada", ganada_fecha: r.deposito_fecha || r.etapa_desde || null}, "Evento realizado" + (ev ? " el " + fmt(ev) : ""));
+}
+// Mover tarjetas: arrastrar entre columnas (computadora) o "Mover a…" (celular).
+// Ganada, Perdida y En pausa abren su formulario; Visita pide la fecha. Lo demás se guarda directo.
+function moverA(id, et){
+  const r = ROWS.find(x => x.id === id); if (!r) return;
+  const actual = etapaDe(r);
+  if (et === actual || (et === "cotizada" && actual === "porenviar")) return;
+  selId = id;
+  if (et === "realizada") return marcarRealizada(r);
+  if (actual === "realizada") { render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }  // se saca con "Volver a Ganada"
+  if (["ganada","perdida","pausa"].includes(et)) { openForm = {id, kind: et}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
+  if (et === "visita") { openForm = {id, kind: "etapa", pre: "visita"}; render(); document.getElementById("detail").scrollIntoView({block:"nearest"}); return; }
+  const patch = {etapa: et, toques: 0};
+  if (et === "conversacion" && !r.ultimo_cliente) patch.ultimo_cliente = iso(today());
+  save(id, patch, "Movida a " + NOMBRE[et] + " a mano (desde " + (NOMBRE[actual] || actual) + ")");
+}
+let arrastrando = null;
+document.addEventListener("dragstart", e => {
+  const c = e.target.closest && e.target.closest(".card[draggable]"); if (!c) return;
+  arrastrando = c.dataset.id; c.classList.add("dragging");
+  try { e.dataTransfer.setData("text/plain", arrastrando); e.dataTransfer.effectAllowed = "move"; } catch(_) {}
+});
+document.addEventListener("dragend", e => {
+  arrastrando = null;
+  document.querySelectorAll(".dragging,.drop-over").forEach(n => n.classList.remove("dragging","drop-over"));
+});
+document.addEventListener("dragover", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (!z || !arrastrando) return;
+  e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch(_) {}
+  document.querySelectorAll(".drop-over").forEach(n => { if (n !== z) n.classList.remove("drop-over"); });
+  z.classList.add("drop-over");
+});
+document.addEventListener("dragleave", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("drop-over");
+});
+document.addEventListener("drop", e => {
+  const z = e.target.closest && e.target.closest("[data-drop]"); if (!z) return;
+  e.preventDefault();
+  let id = arrastrando; try { id = e.dataTransfer.getData("text/plain") || id; } catch(_) {}
+  z.classList.remove("drop-over");
+  if (id) moverA(id, z.dataset.drop);
+});
+
+document.addEventListener("submit", e => {
+  if (e.target.id === "form-editar") {
+    e.preventDefault();
+    const r = ROWS.find(x => x.id === openForm?.id); if (!r) return;
+    const {err, data} = leerForm(r);
+    if (err.length) { document.getElementById("e-hint").innerHTML = `<span class="err">Falta ${esc(err.join(", "))}.</span>`; return; }
+    const cambioVence = data.vence !== (r.vence || null);
+    save(r.id, data, "Datos editados" + (cambioVence ? " · vence " + fmt(parse(data.vence)) + " (versión nueva del PDF)" : ""));
+  }
+  if (e.target.id === "form-nueva") { e.preventDefault(); crear(); }
+});
+
+function toggleNueva(){
+  const f = document.getElementById("form-nueva");
+  if (!f.hidden) { f.hidden = true; return; }
+  f.innerHTML = formFields(null) + `<div class="full"><button type="submit" class="primary">Agregar al pipeline</button><button type="button" data-act="nueva">Cancelar</button><span class="hint" id="n-hint"></span></div>`;
+  f.hidden = false;
+  document.getElementById("x-fecha").addEventListener("change", () => { const s = sugerencia(); const v = document.getElementById("x-vence"); if (s && !v.value) v.value = iso(s); });
+  sugerencia();
+  document.getElementById("x-cliente").focus();
+}
+async function crear(){
+  const {err, data, etapa} = leerForm(null);
+  if (err.length) { document.getElementById("n-hint").innerHTML = `<span class="err">Falta ${esc(err.join(", "))}.</span>`; return; }
+  const hoy = iso(today());
+  const slug = (data.cliente + "-" + (data.fecha_evento || hoy)).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+  const id = ROWS.some(r => r.id === slug) ? slug + "-" + Date.now().toString(36) : slug;
+  const doc = {...data, etapa, etapa_max: etapa === "porenviar" ? "cotizada" : etapa, etapa_desde: hoy, toques: 0,
+    estado: etapa === "porenviar" ? "porenviar" : "abierta",
+    historial: [{fecha: hoy, texto: {consulta:"Entra como consulta", porenviar:"Cotización generada", cotizada:"Cotización enviada"}[etapa]}]};
+  if (etapa === "cotizada") { doc.fecha_envio = hoy; doc.ref = hoy; }
+  try { await escribir([{op:"set", id, data: doc}]); document.getElementById("form-nueva").hidden = true; render(); }
+  catch(e){ document.getElementById("n-hint").textContent = "No se pudo guardar: " + (e && e.message || e); }
+}
+
+render();
+/* Desde el 15-oct-2026 los datos viven en Rosanta Marketing OS › cotizaciones (antes, en
+   un artifact de claude.ai). Se leen y escriben por el servidor de la intranet
+   (EventosDatos.gs), con la misma regla de versión: si alguien cambió la fila, no se pisa. */
+const AUTH = "<?= authToken ?>";
+revCol = true;
+function aplicar(d){
+  ROWS = (d && d.filas) || [];
+  const rv = ((d && d.revisiones) || []).map(x => ({...x, id: x.fecha})).sort((a,b) => b.id.localeCompare(a.id));
+  REV = rv[0] || null;
+  document.getElementById("status").textContent = "Actualizado " + new Date().toLocaleString("es-GT", {dateStyle:"medium", timeStyle:"short"}) + " · fuente: Marketing OS › cotizaciones";
+  render();
+}
+function cargar(){
+  google.script.run
+    .withSuccessHandler(aplicar)
+    .withFailureHandler(err => { document.getElementById("status").textContent = "No se pudo leer la hoja: " + (err && err.message || err); })
+    .getEventos(AUTH);
+}
+function escribir(writes){
+  return new Promise((ok, mal) => {
+    document.getElementById("status").textContent = "Guardando…";
+    google.script.run
+      .withSuccessHandler(d => { if (d && d.ok === false) { mal(new Error(d.error + (d.id ? " (" + d.id + ")" : ""))); cargar(); } else { aplicar(d); ok(d); } })
+      .withFailureHandler(err => mal(err))
+      .guardarEventos(AUTH, writes);
+  });
+}
+// El mes (16-oct-2026): lo arma el servidor (EventosMes.gs, evmCalc_), el mismo motor del correo del día 3.
+const MESES_L = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+(function(){
+  const sel = document.getElementById("mes-sel"), t = today();
+  for (let i = 0; i < 12; i++) { const d = new Date(t.getFullYear(), t.getMonth() - i, 1); if (d < new Date(2026, 4, 1)) break;
+    sel.insertAdjacentHTML("beforeend", `<option value="${d.getFullYear()}-${d.getMonth()+1}">${MESES_L[d.getMonth()]} ${d.getFullYear()}</option>`); }
+  sel.addEventListener("change", cargarMes);
+})();
+function cargarMes(){
+  const [a, m] = document.getElementById("mes-sel").value.split("-").map(Number);
+  document.getElementById("mes-status").textContent = "Cargando el informe…";
+  google.script.run
+    .withSuccessHandler(pintarMes)
+    .withFailureHandler(err => { document.getElementById("mes-status").textContent = "No se pudo armar el informe: " + (err && err.message || err); })
+    .getInformeEventos(AUTH, a, m);
+}
+function pintarMes(inf){
+  const a = inf.actual, p = inf.previo, ant = inf.anterior.split(" ")[0];
+  const pct = x => x === null || x === undefined ? "–" : Math.round(x * 100) + "%";
+  const stat = (b, s) => `<div class="stat"><b class="num">${esc(b)}</b><span>${esc(s)}</span></div>`;
+  document.getElementById("mes-stats").innerHTML =
+    stat(a.nuevas.n, `nuevas · ${moneyK(a.nuevas.q)} · ${ant}: ${p.nuevas.n}`) +
+    stat(a.ganadas.n, `ganadas · ${moneyK(a.ganadas.q)} · ${ant}: ${p.ganadas.n}`) +
+    stat(a.perdidas.n, `perdidas · ${moneyK(a.perdidas.q)} · ${ant}: ${p.perdidas.n}`) +
+    stat(pct(a.tasa.n), `cierre por cantidad · por Q ${pct(a.tasa.q)} · ${ant}: ${pct(p.tasa.n)}`) +
+    stat(inf.vencen.n, `vencen en ${inf.siguiente.split(" ")[0]} · ${moneyK(inf.vencen.q)}`);
+  const lista = (arr, fn) => arr.length ? arr.map(fn).join(" · ") : "Ninguna.";
+  const bloque = (t, cuerpo) => `<div><h3>${esc(t)}</h3><div class="mes-lista">${cuerpo}</div></div>`;
+  const r = a.respuesta, k = a.claves;
+  document.getElementById("mes-det").innerHTML =
+    bloque("Ganadas y perdidas", "Ganadas: " + lista(a.ganadas.filas, x => esc(x.cliente) + " " + moneyK(x.q)) + "<br>Perdidas: " + lista(a.perdidas.filas, x => esc(x.cliente) + " " + moneyK(x.q) + " (" + esc(x.motivo || "sin motivo") + ")")) +
+    bloque("Dónde se pierden", lista(a.perdidas_etapa, x => esc(x.nombre) + " " + x.n) + "<br>Motivos: " + lista(a.motivos, x => esc(x.nombre) + " " + x.n + " · " + moneyK(x.q))) +
+    bloque("Por canal", "Cierre: " + lista(a.canal, x => esc(x.nombre) + " " + x.ganadas + " de " + x.cerradas) + "<br>Nuevas: " + lista(a.nuevas.por_canal, x => esc(x.nombre) + " " + x.n)) +
+    bloque("Tiempo de respuesta", r.con_dato ? `Mediana ${Math.round(r.mediana_h)} h · ${r.en_24h} de ${r.con_dato} en menos de 24 h` + (r.sin_dato ? ` · ${r.sin_dato} sin dato` : "") + (p.respuesta.con_dato ? `<br>${ant}: mediana ${Math.round(p.respuesta.mediana_h)} h` : "") : "Sin datos de consulta en el mes.") +
+    bloque("Planners y cuentas clave", `${k.nuevas} nuevas · ${k.ganadas} ganadas (${moneyK(k.q_ganada)}) · ${k.perdidas} perdidas (${moneyK(k.q_perdida)})<br>Abiertas hoy: ${k.abiertas} · ${moneyK(k.q_abierta)}`) +
+    bloque("Vence en " + inf.siguiente.split(" ")[0], lista(inf.vencen.filas, x => esc(x.cliente) + " " + moneyK(x.q) + " · " + fmtShort(parse(x.vence))));
+  const f = inf.falta, av = [];
+  if (f.cierre.length) av.push("sin fecha de cierre: " + f.cierre.join(", "));
+  if (f.consulta.length) av.push("sin fecha de consulta: " + f.consulta.join(", "));
+  if (f.canal.length) av.push("sin canal: " + f.canal.join(", "));
+  const fa = document.getElementById("mes-falta"); fa.hidden = !av.length; fa.textContent = "Datos que faltan · " + av.join(" · ");
+  const re = document.getElementById("mes-reco"); re.hidden = false;
+  re.innerHTML = `<h3>Para ${esc(inf.siguiente.split(" ")[0])}</h3>${esc(inf.recomendacion.texto)}`;
+  document.getElementById("mes-status").textContent = inf.en_curso ? "Mes en curso: los números siguen moviéndose." : "";
+}
+cargarMes();
+cargar();
+setInterval(() => { if (!openForm && document.visibilityState === "visible") cargar(); }, 120000);
+</script>
+
+</body>
+</html>
