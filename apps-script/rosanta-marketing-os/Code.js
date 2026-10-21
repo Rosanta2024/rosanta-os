@@ -188,16 +188,30 @@ function cargarCalendario311() {
  * ================================================================ */
 
 /** Crea las pestañas con encabezados. ⚠️ BORRA TODO. Solo instalación inicial. */
+/**
+ * Instalación: crea las pestañas del SCHEMA que FALTEN, con su encabezado. No vacía ninguna.
+ * TRABA (20-oct-2026, pedido de Juanma): antes hacía sh.clear() en TODAS las pestañas, y correrla por error
+ * borraba calendario, cotizaciones, reservas y todo lo demás. Ahora, si alguna pestaña del SCHEMA ya tiene
+ * filas además del encabezado, se niega sin tocar nada. Una pestaña que ya existe (aunque esté vacía) no se toca.
+ */
 function setup() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
+  var conDatos = Object.keys(SCHEMA).filter(function(tab){
+    var sh = ss.getSheetByName(tab);
+    return sh && sh.getLastRow() > 1;
+  });
+  if (conDatos.length) {
+    throw new Error('setup() se niega a correr: estas pestañas ya tienen datos y no se tocan: ' + conDatos.join(', ') +
+                    '. setup() solo sirve para una hoja nueva. Para agregar una pestaña que falte, creala a mano con su encabezado.');
+  }
   Object.keys(SCHEMA).forEach(function(tab){
-    var sh = ss.getSheetByName(tab) || ss.insertSheet(tab);
-    sh.clear();
+    if (ss.getSheetByName(tab)) return;   // ya existe: no se vacía ni se reescribe
+    var sh = ss.insertSheet(tab);
     sh.getRange(1,1,1,SCHEMA[tab].length).setValues([SCHEMA[tab]]).setFontWeight('bold');
     sh.setFrozenRows(1);
   });
   var def = ss.getSheetByName('Sheet1') || ss.getSheetByName('Hoja 1');
-  if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
+  if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);   // solo la hoja por defecto VACÍA
 }
 
 /** GET ?token=...&tab=calendario  -> filas como JSON */
@@ -245,8 +259,8 @@ function doPost(e) {
 
 // --- Hook desconocido: no morir en silencio ---
     if (e.parameter.hook) {
-      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook +
-                 ' · body: ' + JSON.stringify(body).slice(0,300));
+      // Sin el cuerpo: puede traer llaves (20-oct-2026 se coló el COTIZ_TOKEN en Cloud Logging).
+      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook + ' · campos: ' + Object.keys(body || {}).join(', '));
       return json({error:'hook desconocido', hook:e.parameter.hook});
     }
 
