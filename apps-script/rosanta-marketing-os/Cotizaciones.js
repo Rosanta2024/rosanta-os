@@ -189,9 +189,9 @@ function cotGuardarRevision_(r) {
 
 /** El hook del web app. body = {token, accion:'list'|'get'|'batch'|'revision'|'revisiones', ...} */
 function cotHook_(body) {
-  var tok = String(PropertiesService.getScriptProperties().getProperty('COTIZ_TOKEN') || '');
-  if (tok.length < 24 || body.token !== tok) return { ok: false, error: 'unauthorized' };
+  if (!cotTokenOk_(body.token)) return { ok: false, error: 'unauthorized' };
   var a = body.accion;
+  if (a === 'rotar') return cotRotar_(body.nuevo);   // de una sola vez (21-oct-2026); se retira en la version siguiente
   if (a === 'list') return { ok: true, filas: cotLeer_() };
   if (a === 'get') {
     var f = cotLeer_().filter(function (d) { return d.id === body.id; })[0];
@@ -201,4 +201,30 @@ function cotHook_(body) {
   if (a === 'revision') return cotGuardarRevision_(body.revision || {});
   if (a === 'revisiones') return { ok: true, revisiones: cotRevisiones_() };
   return { ok: false, error: 'acción desconocida' };
+}
+
+/**
+ * Token de cotizaciones (rotacion del 21-oct-2026, decision de Juanma). COTIZ_TOKEN es el vigente; el
+ * anterior (COTIZ_TOKEN_VIEJO) sigue sirviendo hasta COTIZ_TOKEN_VIEJO_HASTA (AAAA-MM-DD) para que la
+ * revision diaria no se corte si corre en medio del cambio. Ningun valor vive en el codigo ni en logs.
+ */
+function cotTokenOk_(t) {
+  t = String(t || '');
+  var P = PropertiesService.getScriptProperties();
+  var tok = String(P.getProperty('COTIZ_TOKEN') || '');
+  if (tok.length >= 24 && t === tok) return true;
+  var viejo = String(P.getProperty('COTIZ_TOKEN_VIEJO') || ''), hasta = String(P.getProperty('COTIZ_TOKEN_VIEJO_HASTA') || '');
+  var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  return viejo.length >= 24 && !!hasta && hoy <= hasta && t === viejo;
+}
+
+/** De una sola vez: el token actual pasa a VIEJO (24 h) y `nuevo` queda vigente. No devuelve valores. */
+function cotRotar_(nuevo) {
+  nuevo = String(nuevo || '');
+  if (nuevo.length < 24) return { ok: false, error: 'llave nueva muy corta' };
+  var P = PropertiesService.getScriptProperties();
+  if (P.getProperty('COTIZ_TOKEN_VIEJO')) return { ok: false, error: 'ya se roto: falta retirar el viejo' };
+  var manana = Utilities.formatDate(new Date(Date.now() + 864e5), 'America/Guatemala', 'yyyy-MM-dd');
+  P.setProperties({ COTIZ_TOKEN_VIEJO: String(P.getProperty('COTIZ_TOKEN') || ''), COTIZ_TOKEN_VIEJO_HASTA: manana, COTIZ_TOKEN: nuevo });
+  return { ok: true, viejo_hasta: manana };
 }
