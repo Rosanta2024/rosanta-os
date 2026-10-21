@@ -153,7 +153,8 @@ function crearAdventures(deps) {
     const fila = await al.insertar('leads_adventures', lead);
     // Ganchos (despues de guardar: si alguno falla, el lead no se pierde)
     const ganchos = {};
-    const resumen = { id: fila.id, tipo: 'adventure', experiencia: exp.slug, titulo: exp.titulo_es, operador: op.nombre, codigo_referido: op.codigo_referido,
+    const resumen = { id: Number(fila.id), tipo: 'adventure',   // Number: pg devuelve el bigserial como texto y rosanta-clientes exige un entero
+      experiencia: exp.slug, titulo: exp.titulo_es, operador: op.nombre, codigo_referido: op.codigo_referido,
       nombre: lead.nombre, email: lead.email, telefono: lead.telefono, idioma: lead.idioma, fecha: lead.fecha_deseada, personas: lead.personas, mensaje: lead.mensaje,
       cena: lead.combinar_cena ? { fecha: lead.cena_fecha, hora: lead.cena_hora, personas: lead.cena_personas } : null, origen: lead.origen_trafico };
     ganchos.pipeline = await llamar('pipeline', resumen);
