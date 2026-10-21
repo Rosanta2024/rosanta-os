@@ -111,7 +111,8 @@ async function prepararCorreo(pool, kb, vivo) {
  * PUENTE con "sombra viva" (20-oct-2026, aprobado por Juanma): MODO_BOT=puente. Meta le manda los mensajes a la nube, la
  * nube se los reenvía tal cual al bot de Apps Script (que contesta) y, además, los piensa sin mandar nada. Este modo NO
  * recibe las claves de Meta: aunque algo fallara, el servicio no puede escribirle a ningún cliente.
- * Claves: BOT_APPS_SCRIPT_URL (la /exec del bot con ?token=), BOT_VERIFY_TOKEN, BOT_WEBHOOK_SECRET; para pensar,
+ * Claves: BOT_APPS_SCRIPT_URL (la /exec del bot) y BOT_APPS_SCRIPT_TOKEN (su WEBHOOK_SECRET), BOT_VERIFY_TOKEN y
+ * BOT_WEBHOOK_SECRET (los de la nube, para Meta); para pensar,
  * ANTHROPIC_SOMBRA (la clave de "Sombra nube") y BOT_WIX_SECRETO (solo la consulta de reservas va de verdad).
  */
 async function prepararPuente(pool, kb) {
@@ -123,7 +124,9 @@ async function prepararPuente(pool, kb) {
   if (['BOT_WHATSAPP_TOKEN', 'BOT_IG_TOKEN', 'BOT_MESSENGER_TOKEN'].some((k) => process.env[k])) {
     throw new Error('MODO_BOT=puente no debe tener claves de Meta (es la garantía de que no le escribe a nadie).');
   }
-  const appsScript = process.env.BOT_APPS_SCRIPT_URL;
+  // La /exec del bot de siempre; su token (WEBHOOK_SECRET de las Propiedades) llega aparte, por Secret Manager.
+  const appsScript = process.env.BOT_APPS_SCRIPT_URL + (process.env.BOT_APPS_SCRIPT_TOKEN
+    ? (process.env.BOT_APPS_SCRIPT_URL.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(process.env.BOT_APPS_SCRIPT_TOKEN) : '');
   const wixOrigen = 'https://www.rosanta.rest';
   const sombraViva = (process.env.ANTHROPIC_SOMBRA && process.env.BOT_WIX_SECRETO) ? crearSombraViva({ pool, kb, wixOrigen, leadsId: LEADS_ID,
     claves: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_SOMBRA, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO } }) : null;
