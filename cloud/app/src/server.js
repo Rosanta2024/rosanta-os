@@ -60,6 +60,8 @@ async function main() {
     pagos: { llamar: pagos.llamar, estado: pagos.estado, guardarCierre: pagos.guardarCierre, copia: pagos.copia, refrescar: () => pagos.refrescar(clienteSheets()) },
     // procesos de fondo (20-oct): la cuenta de restaurante@ (Gmail/Drive) y el permiso de escribir la Config
     cuentaGoogle: cuentaGoogle,
+    procMaestro: cuentaGoogle() && { sheetsLectura: require('./proc-pauta').sheetsDeCuenta(cuentaGoogle()), drive: require('./proc-pauta').crearDrive(cuentaGoogle()),
+      sheetsEscritura: sheets(Object.assign({ version: 'v4', auth: new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/spreadsheets'] }) }, ESCRITURA_CON_REINTENTOS)) },
     resenas: { sheets: clienteSheets, gbp: require('./resenas-nube').gbpDelEntorno(process.env),
       // el modo en vivo de reseñas SOLO con RESENAS_VIVO=si (hoy, solo en el servicio de ENSAYO); publica en Google solo con RESENAS_PUBLICAR=si
       vivo: process.env.RESENAS_VIVO === 'si' ? require('./resenas-vivo').crearResenasVivo({ pool, gbp: require('./resenas-nube').gbpDelEntorno(process.env),
