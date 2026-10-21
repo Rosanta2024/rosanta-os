@@ -118,9 +118,18 @@ async function esperarModo(modo, maxMs) {
   const tEnc = await esperarModo('vivo', 60000);
   anota(tEnc !== null, '1. interruptor en base → modo en vivo en ' + tEnc + ' ms');
 
-  // (2) guardar
+  // (2) guardar. Antes, el DUEÑO anula los pagos ENSAYO de corridas anteriores (21-oct-2026): cada corrida paga
+  // facturas de la copia y, sin esto, el ensayo se queda sin facturas de cocina pendientes.
+  {
+    const D = (await llamar(T.dueno, 'getPagosProveedores')).j.resultado;
+    const viejos = D.facturas.flatMap((f) => f.pagos || []).filter((m) => m.id && /^ENSAYO/.test(m.detalle || '') && !/^ANULADO/.test(m.estatus || ''));
+    let n = 0;
+    for (const m of viejos) { const x = await llamar(T.dueno, 'anularMovimientoPago', [m.id]); if (x.status === 200) n++; }
+    console.log('   (limpieza: el dueño anuló ' + n + ' de ' + viejos.length + ' pagos ENSAYO viejos)');
+  }
   const P = (await llamar(T.chef, 'getPagosProveedores')).j.resultado;
-  const pend = P.facturas.filter((f) => f.estado === 'Pendiente' && f.saldo > 20);
+  // pendientes o abonadas con saldo (21-oct: casi todo esta pagado y quedan pocas pendientes de cocina)
+  const pend = P.facturas.filter((f) => (f.estado === 'Pendiente' || f.estado === 'Abonada') && f.saldo > 20);
   const porNit = {}; pend.forEach((f) => { (porNit[f.nit] = porNit[f.nit] || []).push(f); });
   const dos = Object.values(porNit).find((l) => l.length >= 2);
   const una = pend.find((f) => !dos || dos.indexOf(f) === -1);

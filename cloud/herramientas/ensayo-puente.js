@@ -103,6 +103,9 @@ async function intranet(P, gmail) {
   X.Utilities.newBlob = (b, mime, nombre) => ({ bytes: b, mime, nombre });
   X._ciePdfTexto_ = () => { llamadas.drive++; return fs.readFileSync(FIXTURE, 'utf8'); };
   X._cieComensalesReserva_ = () => 0;
+  // getCajaChica relee el correo si falta el cierre de un dia pasado (_cchLeerSiFaltan_, una vez cada 20 min en
+  // produccion). La copia de ensayo no tiene los cierres de despues del 18-oct: sin esto, cuenta dos envios del mismo cierre.
+  X._cchLeerSiFaltan_ = () => null;
   X._cpeGuardarArchivo_ = () => { llamadas.drive++; return 'https://drive.google.com/ensayo-foto'; };
   X.claudeLlamar_ = () => { llamadas.claude++; return { stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({ compras: [{ proveedor: 'Mercado', detalle: 'ENSAYO tomate', total: 45, nit: '', factura: '' }] }) }] }; };
   return { M, llamadas };
