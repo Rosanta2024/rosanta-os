@@ -24,6 +24,7 @@ function getEventos(auth) {
 
 /** writes = [{op:'set'|'update', id, data, if_version}]. Devuelve la lista fresca. */
 function guardarEventos(auth, writes) {
+  _evSoloConsulta_();   // con motor_eventos = base, guarda el servidor nuevo (NubeClientes.js)
   var u = requiereEventos_(auth);
   var dueno = rolSinAcento_(u.rol) === 'dueno';
   if (!u.puedeEditar && !dueno) throw new Error('Tu usuario es de solo lectura.');

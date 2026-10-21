@@ -115,6 +115,7 @@ function calEnsureCols_(sh) {
 /* Guarda un respaldo nombrado del plan del mes antes de regenerar. Cada fila del
    snapshot lleva el nombre de versión y el timestamp; nada se borra. */
 function calGuardarVersion(nombre, rows, auth) {
+  var _nube = _mktDesvio_('calGuardarVersion', [nombre, rows], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   requiereEdicionMarketing_('calendario', auth);
   var sh = mktSheet_('calendario_versiones');
   var head = SCHEMA.calendario_versiones;
@@ -153,6 +154,7 @@ function mktRead(tab, auth) {
 }
 
 function mktUpsert(tab, row, auth) {
+  var _nube = _mktDesvio_('mktUpsert', [tab, row], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   requiereEdicionMarketing_(tab, auth);
   var head = SCHEMA[tab];
   if (!head) throw new Error('Pestaña desconocida: ' + tab);
@@ -205,6 +207,7 @@ var TABS_SIN_REPLACE = { calendario: 1, aprendizajes: 1, carritos: 1, piezas: 1,
 var MKT_PAPELERA_ = 'papelera';
 
 function mktDelete(tab, id, auth) {
+  var _nube = _mktDesvio_('mktDelete', [tab, id], auth); if (_nube) return _nube.resultado;   // motor_marketing = base (NubeClientes.js)
   var u = requiereEdicionMarketing_(tab, auth);
   if (!SCHEMA[tab]) throw new Error('Pestaña desconocida: ' + tab);
   var lock = LockService.getScriptLock();

@@ -64,7 +64,7 @@
   var URLS = {
     os:      <?!= JSON.stringify(urlBase + '?page=marketing-os' + (authToken ? '&u=' + authToken : '')) ?>,
     crm:     <?!= JSON.stringify(urlBase + '?page=crm' + (authToken ? '&u=' + authToken : '')) ?>,
-    eventos: <?!= JSON.stringify(urlBase + '?page=eventos' + (authToken ? '&u=' + authToken : '')) ?>,
+    eventos: <?!= JSON.stringify(eventosUrl_(urlBase, authToken, usuario)) ?>,   // con motor_eventos = base, la pantalla nueva (NubeClientes.js)
     resenas: <?!= JSON.stringify(resenasUrl || '') ?>,
     consola: <?!= JSON.stringify(consolaUrl || '') ?>
   };

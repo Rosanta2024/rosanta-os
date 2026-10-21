@@ -1,1 +1,1 @@
-1bdf2b4 2026-10-21 Rol contador (SIN PUBLICAR hasta después del 26-oct): ve Finanzas y el reporte, no escribe
+db7b9ca 2026-10-21 Junta main (intranet @215: anularPagoAutomatico) y la clasifica como guardado de Pagos en el servidor
