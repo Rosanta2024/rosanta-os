@@ -75,11 +75,14 @@ test('Códigos: si el azar repite, se busca otro; el UNIQUE es la última guardi
   await assert.rejects(almacen.insertar('gift_cards', { codigo: a.codigo, monto: 1, saldo: 1, vence: '2027-01-01', comprador_nombre: 'x', destinatario_nombre: 'y', origen: 'intranet', creada_por: 'p' }), (e) => e.code === '23505');
 });
 
-test('Montos: Q300 y Q500 fijos, libre desde Q200, referencia en US$ redondeada hacia arriba', () => {
+test('Montos: Q300 y Q500 fijos, libre desde Q200; en US$ los fijos de Juanma (45 y 55) y el libre redondeado hacia arriba', () => {
   const a = G.AJUSTES_DEFECTO;
   assert.deepStrictEqual(G.cotizar(300, 'GTQ', a, 7.7), { valor_q: 300, moneda: 'GTQ', monto_cobro: 300, tipo_cambio: null });
-  assert.strictEqual(G.cotizar(300, 'USD', a, 7.7).monto_cobro, 39);   // 38.96 → 39
-  assert.strictEqual(G.cotizar(500, 'USD', a, 7.7).monto_cobro, 65);
+  assert.strictEqual(G.cotizar(300, 'USD', a, 7.7).monto_cobro, 45);   // fijo (Juanma, 20-oct)
+  assert.strictEqual(G.cotizar(500, 'USD', a, 7.7).monto_cobro, 55);   // fijo
+  const sinFijos = Object.assign({}, a, { usd_fijos: {} });
+  assert.strictEqual(G.cotizar(300, 'USD', sinFijos, 7.7).monto_cobro, 39);   // 38.96 → 39
+  assert.strictEqual(G.cotizar(250, 'USD', a, 7.7).monto_cobro, 33);   // libre: 32.47 → 33
   assert.strictEqual(G.cotizar(250, 'GTQ', a, 7.7).monto_cobro, 250);
   assert.throws(() => G.cotizar(150, 'GTQ', a, 7.7), status(400));
   assert.throws(() => G.cotizar(250.5, 'GTQ', a, 7.7), status(400));
@@ -189,11 +192,11 @@ test('Compra: el pedido abre el checkout de Recurrente con el monto en centavos 
   const p = await pedir(S, { moneda: 'USD', origen: { utm_source: 'instagram' } });
   assert.match(p.checkout_url, /^https:\/\/app\.recurrente\.com\//);
   const ch = recurrente.checkouts[0];
-  assert.deepStrictEqual([ch.items[0].currency, ch.items[0].amount_in_cents, ch.items[0].quantity], ['USD', 3900, 1]);
+  assert.deepStrictEqual([ch.items[0].currency, ch.items[0].amount_in_cents, ch.items[0].quantity], ['USD', 4500, 1]);
   assert.deepStrictEqual(Object.keys(ch.metadata).sort(), ['concepto', 'referencia']);
   assert.ok(!JSON.stringify(ch).includes('@'), 'el checkout no lleva correos');
   const ped = (await almacen.lista('gift_cards_pedidos'))[0];
-  assert.deepStrictEqual([ped.estado, ped.proveedor, ped.cobro_id, ped.valor_q, ped.monto_cobro, ped.tipo_cambio], ['pendiente', 'recurrente', ch.id, 300, 39, 7.7]);
+  assert.deepStrictEqual([ped.estado, ped.proveedor, ped.cobro_id, ped.valor_q, ped.monto_cobro, ped.tipo_cambio], ['pendiente', 'recurrente', ch.id, 300, 45, 7.7]);
   await assert.rejects(pedir(S, { comprador: { nombre: 'x', email: 'no-es-correo' } }), status(400));
   await assert.rejects(pedir(S, { destinatario: { nombre: '' } }), status(400));
   await assert.rejects(pedir(S, { valor_q: 100 }), status(400));
@@ -292,10 +295,10 @@ test('Webhook: monto distinto no crea tarjeta; pago fallido; evento ajeno; error
 test('Webhook en US$: guarda tipo de cambio y bruto en quetzales; la tarjeta vale en Q', async () => {
   const { S, recurrente, almacen } = armar();
   await pedir(S, { valor_q: 500, moneda: 'USD' });
-  const w = firmado(eventoPago(recurrente.checkouts[0], 6500, 'USD'), { id: 'mu' });
+  const w = firmado(eventoPago(recurrente.checkouts[0], 5500, 'USD'), { id: 'mu' });
   await S.procesarWebhook(w.cuerpo, w.cab);
   const p = (await almacen.lista('pagos_en_linea'))[0], t = (await almacen.lista('gift_cards'))[0];
-  assert.deepStrictEqual([p.moneda, p.bruto, p.tipo_cambio, p.bruto_q], ['USD', 65, 7.7, 500.5]);
+  assert.deepStrictEqual([p.moneda, p.bruto, p.tipo_cambio, p.bruto_q], ['USD', 55, 7.7, 423.5]);
   assert.deepStrictEqual([t.moneda, t.monto], ['GTQ', 500]);
 });
 
@@ -380,7 +383,7 @@ test('Rutas: webhook con cuerpo crudo (json global con verify, o raw), canje con
   const b = 'http://127.0.0.1:' + srv.address().port, b2 = 'http://127.0.0.1:' + srv2.address().port;
   try {
     let r = await fetch(b + '/api/giftcards/precios');
-    assert.deepStrictEqual((await r.json()).montos, [{ q: 300, usd: 39 }, { q: 500, usd: 65 }]);
+    assert.deepStrictEqual((await r.json()).montos, [{ q: 300, usd: 45 }, { q: 500, usd: 55 }]);
     r = await fetch(b + '/api/giftcards/pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor_q: 300, moneda: 'GTQ', comprador: { nombre: 'A', email: 'a@prueba.test' }, destinatario: { nombre: 'B' } }) });
     assert.strictEqual(r.status, 200);
     const ev = eventoPago(x.recurrente.checkouts[0], 30000);

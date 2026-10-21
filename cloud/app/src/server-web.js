@@ -116,7 +116,7 @@ function crearAppWeb(deps) {
   const pasarela = deps.pasarela || crearPasarela(env, { fetch: deps.fetch });   // PASARELA=ninguna: cobros en pausa
   const giftcards = crearGiftcards({ almacen, matriz, pasarela, avisos: AW.avisosSinCorreo(), fel: AW.felSinIntegrar(),
     urls: { exito: 'https://www.rosanta.rest/gift-card?ok=1', cancelar: 'https://www.rosanta.rest/gift-card' },
-    contacto: { correo: env.CONTACTO_CORREO || 'restaurante@rosanta.rest', whatsapp: env.CONTACTO_WHATSAPP || '' } });
+    contacto: { correo: env.CONTACTO_CORREO || 'restaurante@rosanta.rest', whatsapp: env.CONTACTO_WHATSAPP || '+502 3082 6935' } });   // Juanma, 20-oct
   const adventures = crearAdventures({ almacen, matriz, contenido, ganchos: {
     pipeline: ganchoInterno(env, '/interno/web/pipeline-adventure', deps.fetch),
     avisarJuanma: avisoJuanma(canales),

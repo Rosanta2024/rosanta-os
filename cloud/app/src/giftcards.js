@@ -22,7 +22,8 @@ const ZONA = 'America/Guatemala';
 const ALFABETO = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const RE_CODIGO = /^RSNT-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/;
 
-const AJUSTES_DEFECTO = { montos_q: [300, 500], minimo_q: 200, maximo_q: 5000, vigencia_meses: 12, usd_fijos: {} };
+// usd_fijos: decision de Juanma (20-oct): Q300 = US$45 y Q500 = US$55, fijos. El monto libre usa el tipo de cambio.
+const AJUSTES_DEFECTO = { montos_q: [300, 500], minimo_q: 200, maximo_q: 5000, vigencia_meses: 12, usd_fijos: { 300: 45, 500: 55 } };
 const TIPO_CAMBIO_DEFECTO = 7.7;   // solo si nadie cargo web_ajustes.tipo_cambio_usd (el dueño lo ajusta)
 
 function error(status, msg) { const e = new Error(msg); e.status = status; return e; }
