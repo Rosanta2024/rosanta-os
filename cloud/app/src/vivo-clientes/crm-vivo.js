@@ -35,6 +35,7 @@ async function matriz(q, pestana, encabezado) {
 
 /**
  * opciones: { leerMkt(pestanas) y leerCrm() → matrices (la API o, en las pruebas, una hoja en memoria);
+ *   leerMotorCrm() → 'base'|'sheets' (PARAMETROS › motor_crm);
  *   copiar(pestana, filas) → copia a la hoja; capi(evento) → Meta (opcional); ahora() }
  */
 function crearCrmVivo(pool, opciones) {
@@ -92,6 +93,38 @@ function crearCrmVivo(pool, opciones) {
       });
       const ok = r.resultado && !r.resultado.error;
       return { estado: ok ? 200 : 400, json: r.resultado };
+    });
+  }
+
+  /**
+   * El CRMSync de cada importacion (21-oct-2026). Con PARAMETROS › motor_crm = base, Apps Script ya no sincroniza
+   * (cerradura de CRMSync.js, Marketing OS @28), y lo que entra a reservas o carritos POR OTRO LADO (el formulario
+   * viejo que sigue mandando al /exec, CerrarMesasNoShow, la gente en la hoja) no pasaria al CRM hasta el proximo
+   * aviso. Por eso, despues de importar, aca se corre el mismo sincronizarCRM sobre la base. Con sheets no hace nada.
+   */
+  function sincronizar() {
+    return enCola(async () => {
+      const m = o.leerMotorCrm ? await o.leerMotorCrm() : 'sheets';
+      if (m !== 'base') return { omitido: 'motor_crm = ' + m };
+      const c = await pool.connect();
+      let n = 0, resumen = '';
+      try {
+        await c.query('BEGIN');
+        await c.query('SELECT pg_advisory_xact_lock(' + CANDADO + ')');
+        const mc = MC.crearMotorCrm(await datosDesdeBase(c));
+        resumen = String(mc.correr('sincronizarCRM', []) || '');
+        for (const x of mc.cambios().crm) {
+          if (!x.llave) continue;
+          await c.query(`INSERT INTO filas_clientes (pestana, llave, celdas, origen, orden, actualizado, copiado_a_hoja)
+            VALUES ('crm',$1,$2,'servidor',$3,now(),NULL)
+            ON CONFLICT (pestana, llave) DO UPDATE SET celdas = EXCLUDED.celdas, origen = 'servidor', actualizado = now(), copiado_a_hoja = NULL, borrada = NULL`,
+          [x.llave, JSON.stringify(C.codificar([x.fila])[0]), x.pos]);
+          n++;
+        }
+        await c.query('COMMIT');
+      } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
+      if (n) await copiarPendientes();
+      return { crm_cambiadas: n, resumen: resumen.split('\n').filter(Boolean) };
     });
   }
 
@@ -207,7 +240,7 @@ function crearCrmVivo(pool, opciones) {
     return { ok: !difs.length, recibidos: rec.rows.length, diferencias: difs, avisos, crm_sync: String(sync || '').split('\n').filter(Boolean) };
   }
 
-  return { atender, importar, copiarPendientes, comparar, estado: () => ({ ultima_importacion: ultimaImportacion }) };
+  return { atender, sincronizar, importar, copiarPendientes, comparar, estado: () => ({ ultima_importacion: ultimaImportacion }) };
 }
 
 module.exports = { crearCrmVivo, CRM_COLS, MKT_COLS };

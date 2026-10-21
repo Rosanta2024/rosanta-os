@@ -99,12 +99,14 @@ function armar() {
     return plan;
   };
   const copias = [];
+  const motor = { crm: 'sheets' };
   const v = CV.crearCrmVivo(base, {
+    leerMotorCrm: async () => motor.crm,
     leerMkt: async () => ({ reservas: JSON.parse(JSON.stringify(h.reservas), rev), carritos: JSON.parse(JSON.stringify(h.carritos), rev) }),
     leerCrm: async () => JSON.parse(JSON.stringify(h.crm), rev),
     copiar: async (p, filas) => { copias.push({ p, n: filas.length }); aplicar(p, filas); }
   });
-  return { h, base, v, copias };
+  return { h, base, v, copias, motor };
 }
 // JSON con fechas: vuelve a Date lo que tiene forma de fecha ISO
 function rev(k, x) { return typeof x === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x) ? new Date(x) : x; }
@@ -274,4 +276,19 @@ test('Una reserva que sale de la hoja (limpieza a papelera) queda borrada en la 
   assert.strictEqual(r.borradas, 1); assert.deepStrictEqual(r.problemas, []);
   assert.ok(base.t.get('reservas|r1').borrada);
   assert.deepStrictEqual((await v.importar()).find((x) => x.pestana === 'reservas').borradas, 0, 'una sola vez');
+});
+
+
+test('motor_crm = base: un carrito que entra por la hoja (el /exec viejo) llega al CRM en la importacion; con sheets, nada', async () => {
+  const { h, v, motor } = armar();
+  await v.importar();
+  h.carritos.splice(1, 0, ['c9', d('2026-10-21'), 'Zoe Ruiz', 'Email', 518, 'Pendiente', 'SI', 'zoe@gmail.com']);   // lo escribio Apps Script
+  await v.importar();
+  assert.deepStrictEqual(await v.sincronizar(), { omitido: 'motor_crm = sheets' });
+  assert.ok(!h.crm.some((f) => f[2] === 'zoe@gmail.com'), 'con sheets lo hace Apps Script, no la nube');
+  motor.crm = 'base';
+  const r = await v.sincronizar();
+  assert.ok(r.crm_cambiadas >= 1, JSON.stringify(r));
+  assert.ok(h.crm.some((f) => f[2] === 'zoe@gmail.com' && f[5] === 'Carrito abandonado'), 'Zoe entro al CRM de la hoja');
+  assert.strictEqual((await v.sincronizar()).crm_cambiadas, 0, 'otra corrida no cambia nada (CRMSync es idempotente)');
 });

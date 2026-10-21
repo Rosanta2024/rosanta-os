@@ -52,7 +52,8 @@ async function main() {
       leerMkt: (pestanas) => C.leerLibro(clienteSheets(), MKT, pestanas),
       leerCrm: async () => { const p = await CC.pestanaCrm(clienteSheets(), CRM_LIBRO); return (await C.leerLibro(clienteSheets(), CRM_LIBRO, [p.title]))[p.title]; },
       copiar: (pestana, filas) => CC.copiar(clienteSheetsEscritura(), pestana === 'crm' ? CRM_LIBRO : MKT, filas, { pestana, llave: 'id' }),
-      capi: crearCapi({ token: process.env.META_CAPI_TOKEN || '' })
+      capi: crearCapi({ token: process.env.META_CAPI_TOKEN || '' }),
+      leerMotorCrm: async () => { const L = await C.leerLibro(clienteSheets(), LIBRO_INT, ['PARAMETROS']); return interruptor(L.PARAMETROS, 'motor_crm'); }
     });
   }
   // Marketing (contenido y pauta), con MARKETING_VIVO=si: interruptor PARAMETROS › motor_marketing (30 s de cache)

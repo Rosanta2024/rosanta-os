@@ -77,7 +77,8 @@ function crearAppVivo(deps) {
       try {
         const pestanas = await deps.crm.importar();
         if (deps.marketing) pestanas.push(...await deps.marketing.importar());
-        res.json({ ok: true, pestanas });
+        const crm = deps.crm.sincronizar ? await deps.crm.sincronizar() : null;   // con motor_crm = base, el CRMSync de la nube
+        res.json({ ok: true, pestanas, crm });
       } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
     });
     /** La sombra de cada noche: 409 si hay diferencias (el reloj falla y llega la alerta de siempre). */
