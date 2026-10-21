@@ -169,7 +169,20 @@ function crearBotVivo(deps) {
       const modo = deps.soloPuente ? 'puente' : await interruptor(deps.pool);
       let resultado, envios = 0, err = null;
       if (modo !== 'vivo') {
-        await deps.reenviar(cuerpo);
+        // Si el reenvío falla, el cliente se queda sin respuesta: se reintenta y, si igual falla, queda anotado con la
+        // marca PUENTE_REENVIO_FALLO, que dispara la alerta por correo (Cloud Monitoring).
+        let intento = 0;
+        for (;;) {
+          try { await deps.reenviar(cuerpo); break; } catch (e) {
+            if (++intento >= 3) {
+              console.error('PUENTE_REENVIO_FALLO ' + (objeto || '') + ': ' + String(e.message || e).slice(0, 200));
+              await deps.pool.query('INSERT INTO bot_eventos (objeto, modo, resultado, error) VALUES ($1, $2, $3, $4)',
+                [objeto || '', modo, 'reenvio_fallido', String(e.message || e).slice(0, 500)]);
+              return { modo, resultado: 'reenvio_fallido', envios: 0, error: String(e.message || e) };
+            }
+            await new Promise((r) => setTimeout(r, deps.esperaReintento === undefined ? 1500 : deps.esperaReintento));
+          }
+        }
         resultado = 'reenviado';
         if (deps.sombraViva) deps.sombraViva.pensar(cuerpo, query);   // en su propia fila: no demora el próximo reenvío
       } else {

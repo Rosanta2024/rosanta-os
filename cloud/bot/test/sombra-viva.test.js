@@ -136,3 +136,23 @@ test('Comparación de la noche: igual, grave (uno contesta y el otro no), leve s
   assert.strictEqual(r.graves, 1);
   assert.strictEqual(r.sinDato, 1);
 });
+
+test('Puente: si el reenvío al bot de siempre falla, reintenta 3 veces y deja la marca PUENTE_REENVIO_FALLO (alerta)', async () => {
+  const p = pool();
+  let n = 0;
+  const bot = crearBotVivo({ pool: p, soloPuente: true, esperaReintento: 0, espejo: { libro: {}, aplicar: async () => 0 }, leadsId: 'leads', kb: async () => '', claves: {}, wixOrigen: WIX,
+    correo: async () => false, reenviar: async () => { n++; throw new Error('El bot de Apps Script contesto 503'); } });
+  const errores = [];
+  const orig = console.error; console.error = (m) => errores.push(String(m));
+  try {
+    const r = await bot.recibir(wa('hola'), { token: '$WEBHOOK_SECRET' });
+    assert.strictEqual(r.resultado, 'reenvio_fallido');
+  } finally { console.error = orig; }
+  assert.strictEqual(n, 3);
+  assert.ok(errores.some((m) => /^PUENTE_REENVIO_FALLO/.test(m)));
+  assert.strictEqual(p.eventos[0][2], 'reenvio_fallido');
+  let k = 0;
+  const bot2 = crearBotVivo({ pool: p, soloPuente: true, esperaReintento: 0, espejo: { libro: {}, aplicar: async () => 0 }, leadsId: 'leads', kb: async () => '', claves: {}, wixOrigen: WIX,
+    correo: async () => false, reenviar: async () => { if (++k < 2) throw new Error('una vez'); } });
+  assert.strictEqual((await bot2.recibir(wa('hola'), { token: '$WEBHOOK_SECRET' })).resultado, 'reenviado', 'un fallo pasajero se recupera');
+});
