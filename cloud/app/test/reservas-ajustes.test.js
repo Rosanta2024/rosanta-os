@@ -68,3 +68,14 @@ test('la cena combinada de Adventures crea la reserva en el motor (contrato del 
   assert.deepStrictEqual(await cenaAdventures(motor, { fecha: 'mal', hora: 'x' }), { id: null, motivo: 'fecha_invalida' });
   assert.deepStrictEqual(await cenaAdventures(motor, { fecha: '2026-11-04', hora: '7pm' }), { id: null, motivo: 'fecha_invalida' });
 });
+
+test('zonas reales (Juanma, 20-oct): jardín, pérgola, cava, salón; "adentro" = techadas; la zona es preferencia, no quita mesas', async () => {
+  assert.deepStrictEqual(['Pergola3', 'Jardín 2', 'CAVA 1', 'Salón', 'Indoor', 'Garden', 'Barra'].map(C.zonaCanonica), ['pergola', 'jardin', 'cava', 'salon', 'adentro', 'jardin', '']);
+  assert.deepStrictEqual(C.zonasDe('Adentro'), ['pergola', 'cava', 'salon']);
+  const { motor } = await preparar();
+  const nombre = async (id) => { const r = await motor.porId(id); const cfg = (await motor.dia('2026-11-04')).mesas; return cfg.find((m) => m.id === r.mesa_ids[0]).nombre; };
+  const hacer = async (n, sentarse) => (await motor.crear(Object.assign(cliente(n), { inicio: C.instante('2026-11-04', '19:00'), personas: 2, sentarse }), { canal: 'web' })).reserva.id;
+  assert.strictEqual(await nombre(await hacer(1, '')), 'Interior1');          // sin preferencia: la mesa mas chica que alcanza
+  assert.match(await nombre(await hacer(2, 'Pergola')), /^Pergola/);          // pidio pérgola
+  assert.match(await nombre(await hacer(3, 'Adentro')), /^Pergola/);          // adentro = techada (en el fixture, la pérgola)
+});

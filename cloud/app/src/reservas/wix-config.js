@@ -20,7 +20,10 @@ function idDe(x) { return String((x && (x.id || x._id)) || ''); }
 
 /** "Pergola3" → "pergola"; "Jardín 2" → "jardin"; "Barra" → "barra". */
 function zonaDeNombre(nombre) {
-  const s = String(nombre || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]+/g, ' ').trim();
+  // Zonas reales (Juanma, 20-oct): jardin, pergola, cava, salon. Si el nombre no dice ninguna, la primera palabra (se ve en el panel).
+  const z = C.zonaCanonica(nombre);
+  if (z && z !== 'adentro') return z;
+  const s = String(nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]+/g, ' ').trim();
   return s.split(/\s+/)[0] || '';
 }
 

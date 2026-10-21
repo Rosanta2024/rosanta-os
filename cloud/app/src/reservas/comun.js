@@ -107,7 +107,26 @@ function origenDeCanal(canal) {
   return 'bot';
 }
 
+/**
+ * Zonas reales de mesas (Juanma, 20-oct-2026): JARDIN, PERGOLA (techada), CAVA y SALON. Para la lluvia, "adentro" =
+ * pergola, cava o salon. zonaCanonica entiende los nombres de Wix ("Pergola3") y lo que elige el cliente en el formulario.
+ */
+const ZONAS = ['jardin', 'pergola', 'cava', 'salon'];
+const TECHADAS = ['pergola', 'cava', 'salon'];
+function zonaCanonica(texto) {
+  const s = String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (/jardin|garden/.test(s)) return 'jardin';
+  if (/pergol/.test(s)) return 'pergola';
+  if (/cava|cellar|wine/.test(s)) return 'cava';
+  if (/salon|hall|dining room/.test(s)) return 'salon';
+  if (/adentro|dentro|indoor|interior|inside|techad|covered/.test(s)) return 'adentro';
+  return '';
+}
+/** Zonas que cumplen una preferencia ('adentro' = todas las techadas). */
+function zonasDe(preferencia) { const z = zonaCanonica(preferencia); return z === 'adentro' ? TECHADAS.slice() : (z ? [z] : []); }
+
 module.exports = {
+  ZONAS, TECHADAS, zonaCanonica, zonasDe,
   ZONA, DESFASE_MS, RE_FECHA, RE_HORA, diaGt, horaGt, instante, diaSemana, sumarDias, minutosDe, horaDeMinutos, fechaValida,
   telE164, tel8, tel4, correoClave, nombreClave, llaveCrm,
   ESTADOS, OCUPAN, VIGENTES, estadoWix, estadoDeWix, origenDeCanal

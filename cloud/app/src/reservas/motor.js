@@ -184,7 +184,8 @@ function crearMotor(deps) {
       }
       const cfg = await config(c);
       const ocupadas = D.ocupacion(cfg, reservas);
-      const franja = D.evaluar({ config: cfg, inicio, personas: d.personas, canal, reservas, ocupadas, ahora, mesasPreferidas: d.mesa_ids && d.mesa_ids.length ? d.mesa_ids : null });
+      const franja = D.evaluar({ config: cfg, inicio, personas: d.personas, canal, reservas, ocupadas, ahora, mesasPreferidas: d.mesa_ids && d.mesa_ids.length ? d.mesa_ids : null,
+        zonas: C.zonasDe(d.sentarse) });
       if (franja.estado !== 'AVAILABLE' && !o.forzar) {
         const libres = D.franjasBot({ config: cfg, inicio, personas: d.personas, reservas, ahora }).filter((s) => s.estado === 'AVAILABLE');
         return { ok: false, motivo: 'sin_disponibilidad', franja, libres };

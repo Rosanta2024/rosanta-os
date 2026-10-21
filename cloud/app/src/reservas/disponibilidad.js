@@ -76,16 +76,18 @@ function mesaLibre(ocupadas, mesaId, ini, fin) {
  * La mesa (o combinacion) mas chica que alcanza y esta libre en [ini, fin). Primero las mesas sueltas.
  * preferidas: ids de mesa que el equipo pidio (si estan libres y alcanzan, se usan).
  */
-function buscarMesa(config, ocupadas, personas, ini, fin, preferidas) {
+function buscarMesa(config, ocupadas, personas, ini, fin, preferidas, zonas) {
   const activas = new Set((config.mesas || []).map((m) => m.id));
   if (preferidas && preferidas.length) {
     const cap = preferidas.reduce((s, id) => { const m = config.mesas.find((x) => x.id === id); return s + (m ? m.capacidad_max : 0); }, 0);
     if (preferidas.every((id) => activas.has(id) && mesaLibre(ocupadas, id, ini, fin)) && cap >= personas) return preferidas.slice();
     return null;
   }
+  // La zona que pidio el cliente es una PREFERENCIA: primero sus mesas, y si no hay, cualquier otra (no quita disponibilidad).
+  const enZona = (m) => (zonas && zonas.length && zonas.indexOf(m.zona) !== -1 ? 0 : 1);
   const sueltas = (config.mesas || [])
     .filter((m) => m.capacidad_min <= personas && m.capacidad_max >= personas)
-    .sort((a, b) => a.capacidad_max - b.capacidad_max || a.orden - b.orden || (a.nombre < b.nombre ? -1 : 1));
+    .sort((a, b) => enZona(a) - enZona(b) || a.capacidad_max - b.capacidad_max || a.orden - b.orden || (a.nombre < b.nombre ? -1 : 1));
   for (const m of sueltas) if (mesaLibre(ocupadas, m.id, ini, fin)) return [m.id];
   const combos = (config.combinaciones || [])
     .filter((c) => c.capacidad_min <= personas && c.capacidad_max >= personas && c.mesa_ids.every((id) => activas.has(id)))
@@ -158,7 +160,7 @@ function evaluar(o) {
   // 5. mesa
   let mesas = [];
   if (reglas.usar_mesas && (config.mesas || []).length) {
-    mesas = buscarMesa(config, ocupadas, personas, ini, ini + duracion * MIN, o.mesasPreferidas);
+    mesas = buscarMesa(config, ocupadas, personas, ini, ini + duracion * MIN, o.mesasPreferidas, o.zonas);
     if (!mesas) return sale('UNAVAILABLE', { motivo: 'sin_mesa', duracion_min: duracion });
   }
 
