@@ -3,18 +3,18 @@
  * Importa el historial de reservas de Wix a rosanta-db (tablas wix_*, migracion 050). SOLO LEE Wix.
  *
  * Donde corre (recomendado por el Estudio): como Cloud Run Job "importar-wix-reservas" con la cuenta
- * rosanta-nube@, con los secretos montados como variables:
+ * rosanta-web@, con los secretos montados como variables:
  *   WIX_API_KEY = wix-api-key:latest   DB_CLAVE = db-app:latest
  *
  * Crear el job (lo hace el Estudio, una vez; misma imagen que rosanta-nube, sin sello aparte porque no sirve trafico):
  *   gcloud run jobs deploy importar-wix-reservas --source cloud/app --region northamerica-south1 \
- *     --service-account rosanta-nube@rosanta-apps-script.iam.gserviceaccount.com \
+ *     --service-account rosanta-web@rosanta-apps-script.iam.gserviceaccount.com \
  *     --command node --args src/importar-wix-reservas.js \
  *     --set-secrets WIX_API_KEY=wix-api-key:latest,DB_CLAVE=db-app:latest \
  *     --set-env-vars DB_BASE=rosanta_ensayo,WIX_SECO=1 --max-retries 0 --task-timeout 15m
  *   gcloud run jobs execute importar-wix-reservas --region northamerica-south1 --wait
  *   (despues: WIX_SECO=0 en ensayo; y DB_BASE=rosanta con el si del Estudio)
- * La cuenta rosanta-nube@ necesita "Secret Manager Secret Accessor" SOLO sobre wix-api-key (db-app ya lo tiene).
+ * Cuenta: rosanta-web@ (acordado con el Estudio el 20-oct; el le da lectura de wix-api-key al crearla).
  *
  * Tambien corre en la Mac (cloud/herramientas/importar-wix-reservas.js), con el gcloud de Juanma.
  *
