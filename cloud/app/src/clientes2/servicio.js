@@ -17,7 +17,7 @@ const LEADS_ID = '1CxXcoLP9Fo523QJVLvNDuf_zqiLxWmrUDHLCzVoujrc';
 const MKT_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
 
 const FUNCIONES = {
-  consola: { lectura: ['getThreads', 'getMensajes', 'getFicha', 'botSombra', 'botSombraTurnos'],
+  consola: { lectura: ['getThreads', 'getMensajes', 'getFicha', 'botSombra', 'botSombraTurnos', 'botSombraViva'],
     escritura: ['enviarMensaje', 'devolverAlBot', 'enviarImagen'],
     aviso: 'Prueba en sombra: desde aquí no se manda nada. Contesta desde la consola de siempre.' },
   resenas: { lectura: ['getDatosDashboard', 'encuesta'],
@@ -104,6 +104,7 @@ function crearServicioClientes2(deps) {
     if (!F.lectura.includes(nombre)) throw error(404, 'Esa función no está disponible en el servidor nuevo.');
     if (nombre === 'botSombra') return botSombra();
     if (nombre === 'botSombraTurnos') return botSombraTurnos(Number(a[0]) || 0);
+    if (nombre === 'botSombraViva') return botSombraViva();
     if (nombre === 'getDatosDashboard') { const desdeBase = await dashboardDesdeBase(); if (desdeBase) return desdeBase; }
     const m = motores();
     if (parte === 'consola') {
@@ -166,6 +167,24 @@ function crearServicioClientes2(deps) {
     return r.rows.map((x) => { const s = x.resumen || {}; return { id: Number(x.id), cuando: x.cuando, modo: x.modo, desde: x.desde, hasta: x.hasta,
       version: x.version_bot, costo: Number(x.costo_usd || 0), chats: s.chats, turnos: s.turnos, iguales: s.iguales, contesto: s.contesto,
       accion: s.accion, juanma: s.juanma, reservas: s.reservas, errores: s.errores, diferencias: (s.diferencias || []).length, modeloFallas: s.modeloFallas || 0 }; });
+  }
+
+  /**
+   * La "sombra viva" (20-oct-2026): con Meta apuntando a la nube en puente, lo que habría contestado la nube a cada
+   * mensaje real y lo que dijo la comparación de la noche (tabla bot_sombra_viva). Por día y las diferencias recientes.
+   * El contacto va recortado a sus últimos 4 caracteres.
+   */
+  async function botSombraViva() {
+    const d = await deps.pool.query(`SELECT to_char(recibido AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD') AS dia,
+      count(*) FILTER (WHERE estado = 'pensado')::int AS pensados, count(*) FILTER (WHERE estado = 'omitido_tope')::int AS omitidos,
+      count(*) FILTER (WHERE estado = 'error')::int AS errores, count(comparado)::int AS comparados,
+      count(*) FILTER (WHERE comparado = 'igual')::int AS iguales, count(*) FILTER (WHERE grave)::int AS graves,
+      count(*) FILTER (WHERE comparado LIKE 'distinto%' AND grave IS NOT TRUE)::int AS leves
+      FROM bot_sombra_viva WHERE recibido > now() - interval '14 days' GROUP BY 1 ORDER BY 1 DESC`);
+    const x = await deps.pool.query(`SELECT to_char(recibido AT TIME ZONE 'America/Guatemala', 'YYYY-MM-DD HH24:MI') AS cuando, canal,
+      right(contacto, 4) AS contacto, left(cliente, 300) AS cliente, left(respuesta, 600) AS respuesta, comparado, grave
+      FROM bot_sombra_viva WHERE comparado LIKE 'distinto%' ORDER BY id DESC LIMIT 30`);
+    return { dias: d.rows, distintas: x.rows };
   }
 
   async function botSombraTurnos(corrida) {
