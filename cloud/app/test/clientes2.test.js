@@ -146,3 +146,18 @@ test('Clientes2: con la base llena, reseñas (todas las de Google + borradores) 
   assert.strictEqual(e.total, 2);
   assert.strictEqual(e.respuestas[0].comentario, 'Música');
 });
+
+test('Clientes2: la sombra viva del bot (por día y diferencias; contacto recortado) es de lectura y solo del dueño', async () => {
+  const q = [];
+  const p = { query: async (sql) => { q.push(sql); return { rows: /GROUP BY 1/.test(sql) ? [{ dia: '2026-10-28', pensados: 3, comparados: 3, iguales: 2, graves: 1, leves: 0, omitidos: 0, errores: 0 }]
+    : [{ cuando: '2026-10-28 10:10', canal: 'whatsapp', contacto: '1111', cliente: 'hola', respuesta: 'Hola', comparado: 'distinto: sombra contesta, real se calla', grave: true }] }; } };
+  const s = crearServicioClientes2({ pool: p, copia: copiaDeMentira, puede: () => true });
+  const r = await s.llamar({}, 'consola', 'botSombraViva', []);
+  assert.strictEqual(r.dias[0].graves, 1);
+  assert.strictEqual(r.distintas[0].contacto, '1111');
+  assert.ok(q.some((x) => /right\(contacto, 4\)/.test(x)), 'el contacto va recortado');
+  assert.ok(FUNCIONES.consola.lectura.includes('botSombraViva'));
+  const sin = crearServicioClientes2({ pool: p, copia: copiaDeMentira, puede: (u, parte) => parte !== 'consola' });
+  await assert.rejects(sin.llamar({}, 'consola', 'botSombraViva', []), (e) => e.status === 403);
+  assert.match(pant.armarBotSombra(), /Sombra viva/);
+});
