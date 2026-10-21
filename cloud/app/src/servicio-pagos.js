@@ -32,7 +32,7 @@ const PERM = require('./permisos');
 // Pagos: lo que la pantalla llama.
 const LECTURA = ['getPagosProveedores', 'getBalanceProveedores', 'getFacturasParaDevolver'];
 const ESCRITURA = ['registrarPagoFacturas', 'programarPagoFactura', 'registrarSaldoFavor', 'registrarCompraMercado',
-  'anularMovimientoPago', 'traerFacturaAnterior', 'confirmarPosiblePago', 'descartarPosiblePago',
+  'anularMovimientoPago', 'anularPagoAutomatico', 'traerFacturaAnterior', 'confirmarPosiblePago', 'descartarPosiblePago',
   'marcarFacturaParaIva', 'devolverFacturaParaIva', 'registrarDevolucionEquipo', 'agregarFacturaDeSuBolsa', 'agregarCompraDeSuBolsa'];
 // Caja chica y Compras (inventario de la Fase 2, seccion 1.3).
 const LECTURA_CAJA = ['getCajaChica', 'getFacturasParaCaja', 'getComprasEfectivo'];
