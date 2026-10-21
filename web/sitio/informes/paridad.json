@@ -1,7 +1,7 @@
 {
-  "identicas": 20,
+  "identicas": 18,
   "esperadas": 11,
-  "revisar": 0,
+  "revisar": 2,
   "filas": [
     {
       "ruta": "/",
@@ -63,11 +63,15 @@
     },
     {
       "ruta": "/es/events-1",
-      "esperadas": [],
-      "revisar": [],
+      "esperadas": [
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [
+        "texto: faltan 0 palabras [] · sobran 3 [cotiza evento tu]"
+      ],
       "caracteres": {
         "wix": 473,
-        "copia": 473
+        "copia": 490
       }
     },
     {
@@ -190,11 +194,15 @@
     },
     {
       "ruta": "/events-1",
-      "esperadas": [],
-      "revisar": [],
+      "esperadas": [
+        "1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)"
+      ],
+      "revisar": [
+        "texto: faltan 0 palabras [] · sobran 3 [request quote a]"
+      ],
       "caracteres": {
         "wix": 410,
-        "copia": 410
+        "copia": 426
       }
     },
     {

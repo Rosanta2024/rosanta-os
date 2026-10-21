@@ -1,11 +1,11 @@
-# Paridad Wix ↔ copia · 2026-10-20 23:34
+# Paridad Wix ↔ copia · 2026-10-21 00:06
 
 Copia: dist/ (construcción local) · Wix: https://www.rosanta.rest (caché)
 
 - **31 páginas** comparadas
-- **20 idénticas** en todo lo que se compara
+- **18 idénticas** en todo lo que se compara
 - **11 con diferencias esperadas** (mejoras documentadas)
-- **0 a revisar**
+- **2 a revisar**
 
 ## / · esperadas
 Texto visible: Wix 3394 caracteres · copia 3394
@@ -29,8 +29,10 @@ Texto visible: Wix 153 caracteres · copia 153
 ## /es/events · idéntica
 Texto visible: Wix 247 caracteres · copia 247
 
-## /es/events-1 · idéntica
-Texto visible: Wix 473 caracteres · copia 473
+## /es/events-1 · A REVISAR
+Texto visible: Wix 473 caracteres · copia 490
+- ❗ texto: faltan 0 palabras [] · sobran 3 [cotiza evento tu]
+- ✓ 1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)
 
 ## /es/experience-details · idéntica
 Texto visible: Wix 190 caracteres · copia 190
@@ -74,8 +76,10 @@ Texto visible: Wix 2504 caracteres · copia 2504
 ## /events · idéntica
 Texto visible: Wix 212 caracteres · copia 212
 
-## /events-1 · idéntica
-Texto visible: Wix 410 caracteres · copia 410
+## /events-1 · A REVISAR
+Texto visible: Wix 410 caracteres · copia 426
+- ❗ texto: faltan 0 palabras [] · sobran 3 [request quote a]
+- ✓ 1 bloque(s) que en Wix viven en un iframe ahora son HTML visible (no cuentan en la comparación de texto)
 
 ## /experience-details · idéntica
 Texto visible: Wix 169 caracteres · copia 169
