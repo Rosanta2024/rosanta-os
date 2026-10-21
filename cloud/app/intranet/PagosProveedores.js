@@ -64,6 +64,12 @@ var PAG_CONF_BANCO_ = 'Confirmado con banco';
 // Un cargo del banco que el dueño marco "No pertenece" en Posibles pagos (14-oct-2026). Lleva "Banco"
 // en el nombre a proposito: el Balance del año ignora esos estatus. DETALLE termina en "pago: <llave>".
 var PAG_DESCARTADO_ = 'Banco: no pertenece';
+// "Anular" un pago que nadie anoto a mano (20-oct-2026, Juanma: corregir las ultimas 3 facturas pagadas
+// de cada proveedor en el Cuadre). El cargo que el banco caso solo deja de casarse con ESA factura (puede
+// ir a otra o a Posibles pagos). Lleva "Banco" en el nombre: el Balance del año lo ignora. NIT y DTE son
+// los de la factura; DETALLE termina en "pago: <llave>". Se deshace anulando la fila.
+var PAG_DESLIGADO_ = 'Banco: no es de esta factura';
+var PAG_ULTIMAS_EDITABLES_ = 3;
 // Un pago casado con una transferencia que el BI aviso por correo y que el estado de cuenta todavia
 // no trae (16-oct-2026, BancoCorreo.js). Pasa solo a "Banco confirmado" cuando entra el del lunes.
 var PAG_BANCO_CORREO_ = 'Banco por correo';
@@ -394,7 +400,8 @@ function _pagCasarBanco_(facturas, pagos) {
     var d = p.dia - f.dia; return d >= -FIN_FM_DIAS_DESPUES && d <= FIN_FM_DIAS_ANTES;
   };
   pagos.slice().sort(function (a, b) { return a.dia - b.dia; }).forEach(function (p) {
-    var cand = libres().filter(function (f) { return enVentana(f, p); });
+    // noEs: los cargos que el dueño desligo de esa factura (anularPagoAutomatico)
+    var cand = libres().filter(function (f) { return enVentana(f, p) && !(f.noEs && f.noEs[_pagLlavePago_(p)]); });
     // 1. el numero de DTE en la glosa
     var nums = String(p.glosa || '').match(/\d{6,}/g) || [];
     var porDte = cand.filter(function (f) { return f.dte && nums.indexOf(f.dte) !== -1; });
@@ -682,6 +689,15 @@ function pagEstado_() {
   // lo confirmado sobre el aviso del correo vale para su cargo cuando entra el estado de cuenta
   Object.keys(BC.alias).forEach(function (k) { if (yaConfirmados[k]) yaConfirmados[BC.alias[k]] = 1; });
   banco = banco.filter(function (p) { return !yaConfirmados[_pagLlavePago_(p)]; });
+  // los cargos que el dueño desligo de una factura: { llave factura: { llave pago: 1 } }
+  var noEs = {};
+  movs.forEach(function (m) {
+    var k = m.estatus === PAG_DESLIGADO_ && /pago: (.+)$/.exec(m.detalle);
+    if (!k) return;
+    var x = (noEs[m.nit + '|' + m.dte] = noEs[m.nit + '|' + m.dte] || {});
+    x[k[1]] = 1;
+    Object.keys(BC.alias).forEach(function (a) { if (a === k[1]) x[BC.alias[a]] = 1; });
+  });
   var porLlave = {};
   facturas.forEach(function (f) {
     f.pagado = 0; f.favor_usado = 0; f.pagos = []; f.fecha_pagar = ''; f.marca_banco = null;
@@ -692,6 +708,11 @@ function pagEstado_() {
     if (m.dte === PAG_SIN_FACTURA_) { mercado.push(m); return; }
     if (m.estatus === 'Saldo a favor') { favor[m.nit] = (favor[m.nit] || 0) + m.q; favores.push(m); return; }
     if (m.estatus === PAG_IVA_MARCA_ || m.estatus === PAG_IVA_DEVUELTA_) return;   // bitacora, no es pago
+    if (m.estatus === PAG_DESLIGADO_) {   // no es pago: queda en la factura para poder deshacerlo desde el historial
+      var fd = porLlave[m.nit + '|' + m.dte];
+      if (fd) (fd.desligados = fd.desligados || []).push({ id: m.id, detalle: m.detalle.replace(/\s*·\s*pago: .*$/, '') });
+      return;
+    }
     if (PAG_EQUIPO_.some(function (e) { return e.devuelto === m.estatus; })) return;   // devolucion al equipo, no es pago a proveedor
     var f = porLlave[m.nit + '|' + m.dte];
     if (!f) return;
@@ -760,7 +781,7 @@ function pagEstado_() {
   // 2. El banco confirma lo que falta pagar (lo que ya tiene marcas, por su saldo)
   var abiertas = facturas.filter(function (f) { return f.total - f.pagado - f.favor_usado > 0.01; }).map(function (f) {
     return { llave: f.llave, nit: f.nit, dte: f.dte, dia: f.dia, saldo: _finR_(f.total - f.pagado - f.favor_usado),
-             palabras: _pagPalabras_(f.proveedor + ' ' + f.razon), marcaBanco: null };
+             palabras: _pagPalabras_(f.proveedor + ' ' + f.razon), marcaBanco: null, noEs: noEs[f.llave] || null };
   });
   var cb = _pagCasarBanco_(abiertas, banco), pagoPorLlave = {};
   banco.forEach(function (p) { pagoPorLlave[p.llave] = p; });
@@ -770,7 +791,8 @@ function pagEstado_() {
       var p = pagoPorLlave[pl], s = _finR_(f.total - f.pagado - f.favor_usado);
       f.pagado += s;
       // por: el medio (Banco BI, Tarjeta débito BI, Tarjeta crédito BI / BAC, Banco BAC)
-      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: /^Tarjeta/.test(p.banco) ? 'Tarjeta confirmada' : p.correo ? PAG_BANCO_CORREO_ : 'Banco confirmado', por: p.banco, detalle: p.glosa });
+      // llave_pago: para poder desligarlo (anularPagoAutomatico)
+      f.pagos.push({ id: '', fecha: p.fecha, q: s, estatus: /^Tarjeta/.test(p.banco) ? 'Tarjeta confirmada' : p.correo ? PAG_BANCO_CORREO_ : 'Banco confirmado', por: p.banco, detalle: p.glosa, llave_pago: _pagLlavePago_(p) });
     }
     f.saldo = _finR_(f.total - f.pagado - f.favor_usado);
     f.pagado = _finR_(f.pagado);
@@ -789,7 +811,10 @@ function pagEstado_() {
   return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
            posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; }),
-                                   (function () { var d = {}; facturas.forEach(function (f) { d[f.dte] = d[f.dte] || f.saldo > 0.01; }); return d; })()),
+                                   (function () { var d = {}; facturas.forEach(function (f) { d[f.dte] = d[f.dte] || f.saldo > 0.01; }); return d; })())
+             // un cargo desligado de una factura no se vuelve a ofrecer para esa factura
+             .map(function (x) { x.opciones = x.opciones.filter(function (o) { return !o.llaves.some(function (k) { return noEs[k] && noEs[k][x.pago.llave]; }); }); return x; })
+             .filter(function (x) { return x.opciones.length; }),
            banco_ult: bancoUlt,
            banco_correo: { pendientes: BC.pagos.map(function (p) { return { fecha: p.fecha, hora: p.hora, q: p.q, glosa: p.glosa, categoria: p.categoria }; }),
                            faltantes: BC.faltantes, error: BC.error || '' } };
@@ -1332,6 +1357,51 @@ function registrarCompraMercado(auth, fecha, proveedor, detalle, monto, area, es
                      DETALLE: detalle.slice(0, 600), 'ESCRITO POR': Q.nombre }]);
     // sin factura no cambia ninguna factura: no se lee el maestro
     return _pagCambios_(Q, null, [], 'Compra guardada: ' + _pagQ_(monto) + ' en ' + prov);
+  });
+}
+
+/**
+ * Las ultimas facturas pagadas de un proveedor (las de fecha mas reciente con algun pago), las que se
+ * pueden corregir aunque el pago no lo haya anotado nadie. La pantalla usa la misma regla.
+ */
+function _pagUltimasPagadas_(facturas, nit) {
+  return facturas.filter(function (f) {
+    return f.nit === nit && (f.pagos || []).some(function (p) { return p.q > 0.001; });
+  }).sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; })
+    .slice(0, PAG_ULTIMAS_EDITABLES_).map(function (f) { return f.llave; });
+}
+
+/**
+ * Anula un pago que nadie anoto a mano (20-oct-2026, Juanma: "poder modificar las ultimas 3 facturas").
+ * Solo el dueño y solo en las ultimas 3 facturas pagadas del proveedor. No borra nada: deja una fila
+ * que se deshace anulandola.
+ *  - llavePago (un cargo que el banco caso solo): PAG_DESLIGADO_; la factura vuelve a Por pagar y el
+ *    cargo queda libre para otra factura o para Posibles pagos.
+ *  - sin llavePago (lo que COMPRAS_2026 daba por pagado): Pendiente anterior por el total; la factura
+ *    vuelve a deberse entera.
+ */
+function anularPagoAutomatico(auth, llave, llavePago) {
+  var Q = pagQuien_(auth);
+  _pagSoloConsulta_();   // con motor_pagos = base, Pagos guarda en el servidor nuevo (NubePagos.js)
+  if (Q.rol !== 'dueno') throw new Error('Anular un pago que no anotó nadie (banco o COMPRAS_2026) lo hace el dueño.');
+  return _pagMedir_('anular', auth, function () {
+    var E = pagEstado_();
+    var f = E.facturas.filter(function (x) { return x.llave === llave; })[0];
+    if (!f) throw new Error('No encontré esa factura. Tocá Actualizar.');
+    if (_pagUltimasPagadas_(E.facturas, f.nit).indexOf(f.llave) === -1)
+      throw new Error('Solo se pueden corregir las últimas ' + PAG_ULTIMAS_EDITABLES_ + ' facturas pagadas del proveedor.');
+    var p = f.pagos.filter(function (x) { return !x.id && x.q > 0.001 && (llavePago ? x.llave_pago === llavePago : /antes/i.test(x.estatus)); })[0];
+    if (!p) throw new Error('Ese pago ya no está. Tocá Actualizar.');
+    var fila = { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'ESCRITO POR': Q.nombre };
+    if (llavePago) {
+      fila['FECHA PAGADO'] = p.fecha; fila['CANTIDAD PAGADA'] = 0; fila['ESTATUS DE PAGO'] = PAG_DESLIGADO_;
+      fila.DETALLE = (p.por + ' · Q' + p.q + ' · ' + p.detalle).slice(0, 250) + ' · pago: ' + llavePago;
+    } else {
+      fila['CANTIDAD PAGADA'] = f.total; fila['ESTATUS DE PAGO'] = PAG_ANTERIOR_;
+      fila.DETALLE = ('Anulado el pago de COMPRAS_2026 (' + p.por + ' · ' + p.detalle + ')').slice(0, 300);
+    }
+    _pagEscribir_([fila]);
+    return getPagosProveedores(auth);
   });
 }
 
