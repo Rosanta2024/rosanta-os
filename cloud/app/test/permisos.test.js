@@ -15,7 +15,7 @@ const ok = (r) => r.ok;
 const MATRIZ = {
   pagos: 'T I I -', caja: 'T - I -', retiros: 'T I I -', cierres: 'T - I -', recetario: 'T T T -', inventario: 'T I I -',
   finanzas: 'T - - -', reporte_semanal: 'T V V -',
-  eventos: 'T - I -', crm: 'T - V V', reservas: 'T V I V', carritos: 'T - - V',
+  eventos: 'T - I -', crm: 'T - V V', reservas: 'T V T V', carritos: 'T - - V',
   resenas: 'T - - -', consola: 'T - - -',
   pauta: 'T - - I',
   tecnico: 'T - - -'
@@ -107,4 +107,12 @@ test('Cocina no entra a Caja chica pero si a retiros (Juanma, 19-oct)', () => {
 test('Meses cerrados: solo el dueño corrige (Juanma, 19-oct: bloqueo para el equipo)', () => {
   for (const u of [jeffry, maco, vanessa]) assert.ok(!ok(P.puede(M, u, 'pagos', 'corregir_dia_cerrado')));
   assert.ok(ok(P.puede(M, juanma, 'pagos', 'corregir_dia_cerrado')));
+});
+
+test('Sala maneja cualquier reserva; cocina solo ve (Juanma, 20-oct)', () => {
+  assert.ok(ok(P.puede(M, maco, 'reservas', 'corregir', { escrito_por: 'Juanma' })), 'sala corrige una reserva ajena');
+  assert.ok(ok(P.puede(M, maco, 'reservas', 'corregir', { escrito_por: 'web' })), 'y las que entran por la web');
+  assert.ok(!ok(P.puede(M, jeffry, 'reservas', 'ingresar')), 'cocina no toca reservas');
+  assert.ok(!ok(P.puede(M, maco, 'pagos', 'corregir', { area: 'barra', escrito_por: 'Juanma' })), 'la excepcion es SOLO de reservas');
+  assert.ok(!ok(P.puede(M, maco, 'reservas', 'corregir_dia_cerrado')), 'dia cerrado sigue siendo del dueño');
 });
