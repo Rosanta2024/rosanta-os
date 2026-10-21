@@ -5,6 +5,8 @@
  *   node cloud/herramientas/migrar.js            → muestra cuales faltan, sin aplicar
  *   node cloud/herramientas/migrar.js --aplicar  → las aplica, cada una en su transaccion
  *   --base <nombre>   otra base de la misma instancia (por defecto rosanta), p. ej. rosanta_ensayo
+ *   --solo <archivo,…> aplica SOLO esas (20-oct-2026: la 050 se aplico de mas porque estaba pendiente en la rama);
+ *                     las demas pendientes se listan y se dejan. En produccion, usar siempre --solo.
  *
  * Entra como postgres con la clave de Secret Manager (db-postgres-root) y el token de gcloud de
  * quien la corre (restaurante@rosanta.rest). La primera vez crea la base "rosanta" y el usuario
@@ -26,6 +28,9 @@ const PROYECTO = 'rosanta-apps-script';
 const DIR = path.join(__dirname, '..', 'db', 'migraciones');
 const iBase = process.argv.indexOf('--base');
 const BASE = iBase > -1 ? process.argv[iBase + 1] : 'rosanta';
+const iSolo = process.argv.indexOf('--solo');
+const SOLO = iSolo > -1 ? new Set(String(process.argv[iSolo + 1] || '').split(',').map((x) => x.trim()).filter(Boolean)) : null;
+if (SOLO && !SOLO.size) throw new Error('--solo sin archivos.');
 if (!/^rosanta(_[a-z0-9]+)?$/.test(BASE)) throw new Error('Nombre de base invalido: ' + BASE);
 
 function gcloud(args, entrada) {
@@ -76,6 +81,7 @@ async function main() {
       }
     }
     const archivos = fs.readdirSync(DIR).filter((f) => /^\d{3}_.*\.sql$/.test(f)).sort();
+    if (SOLO) for (const f of SOLO) if (archivos.indexOf(f) === -1) throw new Error('--solo: no existe ' + f + ' en cloud/db/migraciones.');
     for (const f of archivos) {
       const sql = fs.readFileSync(path.join(DIR, f), 'utf8');
       const h = crypto.createHash('sha256').update(sql).digest('hex');
@@ -84,6 +90,7 @@ async function main() {
         continue;
       }
       if (!aplicar) { console.log('Pendiente: ' + f); continue; }
+      if (SOLO && !SOLO.has(f)) { console.log('Pendiente, NO se aplica (no esta en --solo): ' + f); continue; }
       const c = await pool.connect();
       try {
         await c.query('BEGIN');

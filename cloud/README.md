@@ -26,6 +26,8 @@ El Python 3.9 del sistema no sirve. Cuenta: restaurante@rosanta.rest (`gcloud au
 
 ## Cambiar las tablas
 
+- **En producción, siempre `--solo <archivo>`** (20-oct-2026): `node cloud/herramientas/migrar.js --aplicar --base rosanta --solo 024_x.sql`. Sin `--solo` se aplica TODO lo pendiente de la rama, y así se aplicó la 050 antes de tiempo. Antes, correr sin `--aplicar` para ver la lista.
+
 1. Archivo nuevo en `db/migraciones/` (`004_...sql`). **Una migración aplicada no se edita.** Números reservados: **001–009 Pagos y base** (esta rama); **010–019 Fase 2 (Caja) y Marketing OS** (rama `claude/nube-fase2-mkt`). **020–029 accesos y roles** (sesión C, rama `claude/nube-accesos`; 020 permisos y 021 bitácora aplicadas el 18-oct con respaldo previo). **020–029 accesos y roles** (rama `claude/nube-accesos`: la matriz de permisos, `020_permisos.sql`, que lee `app/src/permisos.js`). Ninguna migración de un rango altera tablas del otro.
 2. `node cloud/herramientas/migrar.js` (muestra lo pendiente) y `--aplicar`.
 
