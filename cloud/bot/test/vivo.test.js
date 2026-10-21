@@ -321,3 +321,35 @@ test('Ensayo: solo el número de prueba; el real, Instagram y Messenger se ignor
   const r2 = await bot.recibir(JSON.parse(json), { token: '$WEBHOOK_SECRET' });
   assert.notStrictEqual(r2.resultado, 'ignorado_otro_numero', 'el número de prueba sí se atiende');
 });
+
+test('Vivo (en lugar del ensayo): la consola manda un texto libre desde Salientes y "Devolver al bot" retoma con un seguimiento', async () => {
+  const pool = poolDeMentira(Object.assign({ INTERRUPTOR_BOT: 'vivo' }, PROPS_BOT, {
+    hum_50255501111: JSON.stringify({ estado: 'atendiendo', canal: 'whatsapp', desde: Date.now() - 600000, ultimoHumano: Date.now() - 300000 }) }));
+  const x = armar(pool);
+  const ahora = new Date();
+  x.espejo.libro.Conversaciones.push([new Date(ahora.getTime() - 400000), 'whatsapp', '50255501111', 'Ana', 'in', 'cliente', 'Quiero saber si hay mesa el sábado']);
+  x.espejo.libro.Salientes.push([ahora, 'whatsapp', '50255501111', 'Hola Ana, te escribe Rosanta (prueba)', 'libre', '']);
+  const r1 = await x.bot.minuto();
+  assert.ok(!r1.error, JSON.stringify(r1));
+  const meta1 = x.llamadas.filter((l) => /graph\.facebook\.com\/.*\/messages/.test(l.url));
+  assert.ok(meta1.some((l) => /te escribe Rosanta \(prueba\)/.test(String(l.op.payload))), 'le llega el texto de la consola');
+  assert.ok(x.espejo.aplicadas.some((op) => op.hoja === 'Salientes'), 'la fila de Salientes queda marcada como enviada');
+  assert.ok(x.espejo.aplicadas.some((op) => op.hoja === 'Conversaciones' && JSON.stringify(op).indexOf('humano') >= 0), 'queda en Conversaciones como humano');
+  // "Devolver al bot" cuando lo último lo escribió el restaurante: el chat vuelve al bot, pero el bot NO escribe (regla del 17-oct).
+  let n = x.llamadas.length;
+  x.espejo.libro.Salientes.push([new Date(), 'whatsapp', '50255501111', '', 'devolver', '']);
+  const r2 = await x.bot.minuto();
+  assert.ok(!r2.error, JSON.stringify(r2));
+  assert.ok(!x.llamadas.slice(n).some((l) => /graph\.facebook\.com\/.*\/messages/.test(l.url)), 'no le escribe encima a la persona del equipo');
+  assert.ok(!pool.estado.get('hum_50255501111') || pool.estado.get('hum_50255501111').valor === null, 'el chat vuelve al bot');
+  // Otro chat: lo último lo escribió el cliente y lo devuelven: el bot retoma escribiendo un seguimiento.
+  pool.estado.set('hum_50255502222', { clave: 'hum_50255502222', tipo: 'prop', valor: JSON.stringify({ estado: 'esperando', canal: 'whatsapp', desde: Date.now() - 600000, ultimoHumano: 0 }), vence: null });
+  x.espejo.libro.Conversaciones.push([new Date(Date.now() - 200000), 'whatsapp', '50255502222', 'Leo', 'in', 'cliente', '¿Me ayudan con una mesa para 4 el sábado?']);
+  x.espejo.libro.Salientes.push([new Date(), 'whatsapp', '50255502222', '', 'devolver', '']);
+  n = x.llamadas.length;
+  const r3 = await x.bot.minuto();
+  assert.ok(!r3.error, JSON.stringify(r3));
+  const nuevas = x.llamadas.slice(n);
+  assert.ok(nuevas.some((l) => /api\.anthropic\.com/.test(l.url)), 'el bot piensa el seguimiento');
+  assert.ok(nuevas.some((l) => /graph\.facebook\.com\/.*\/messages/.test(l.url) && /50255502222/.test(String(l.op.payload))), 'y le escribe al cliente');
+});
