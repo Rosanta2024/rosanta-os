@@ -70,6 +70,13 @@ var PAG_DESCARTADO_ = 'Banco: no pertenece';
 // los de la factura; DETALLE termina en "pago: <llave>". Se deshace anulando la fila.
 var PAG_DESLIGADO_ = 'Banco: no es de esta factura';
 var PAG_ULTIMAS_EDITABLES_ = 3;
+// Los tres de mercado que se pagan en efectivo el mismo dia (Doña Mina, El Tiburoncito, Carniceria Santa Rosa).
+// Juanma, 21-oct-2026: "cierra todo antes del 14 de octubre". Lo emitido antes de PAG_CONTADO_HASTA_ sin
+// ningun pago cuenta como pagado con efectivo del cajero (el cuadre del 14-oct ya cerro ese efectivo). Desde
+// el 14-oct cierra la compra que Jeffry anota en Compras. Se deshace con "Anular" (vuelve como Pendiente anterior).
+var PAG_CONTADO_NITS_ = ['52496325', '47687916', '7616325'];
+var PAG_CONTADO_HASTA_ = '2026-10-14';
+var PAG_CONTADO_ESTATUS_ = 'Pagado antes del 14-oct (efectivo)';
 // Un pago casado con una transferencia que el BI aviso por correo y que el estado de cuenta todavia
 // no trae (16-oct-2026, BancoCorreo.js). Pasa solo a "Banco confirmado" cuando entra el del lunes.
 var PAG_BANCO_CORREO_ = 'Banco por correo';
@@ -748,6 +755,13 @@ function pagEstado_() {
     if (!c) return;
     f.pagado = f.total;
     f.pagos.push({ id: '', fecha: c.fecha, q: f.total, estatus: 'Pagado antes (COMPRAS_2026)', por: c.hoja, detalle: c.estatus });
+  });
+  // Los tres de mercado pagados en efectivo antes del 14-oct (PAG_CONTADO_HASTA_): sin pago anotado, se dan por pagados
+  facturas.forEach(function (f) {
+    if (f.anterior || f.pagado > 0.01 || f.marca_banco != null || f.fecha >= PAG_CONTADO_HASTA_) return;
+    if (PAG_CONTADO_NITS_.indexOf(f.nit) === -1) return;
+    f.pagado = f.total;
+    f.pagos.push({ id: '', fecha: f.fecha, q: f.total, estatus: PAG_CONTADO_ESTATUS_, por: 'Cuadre del 14-oct', detalle: 'Efectivo del cajero el mismo día' });
   });
   // 1. Los pagos marcados "Banco": cada marca se confirma con un pago del banco de SU monto, y
   //    las marcas de un mismo proveedor que no se confirmaron solas, con un pago que las sume.
