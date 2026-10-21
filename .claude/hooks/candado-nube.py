@@ -66,6 +66,17 @@ def main():
     except ValueError:
         return 0
     cmd = (datos.get('tool_input') or {}).get('command') or ''
+    # Migraciones en PRODUCCION solo con --solo (20-oct-2026): sin eso se aplica todo lo pendiente de la rama,
+    # y asi entro la 050 antes de tiempo. La base de ensayo (--base rosanta_ensayo u otra) no se toca.
+    for m in re.finditer(r'migrar\.js([^;&|\n]*)', cmd):
+        args = m.group(1)
+        if '--aplicar' not in args:
+            continue
+        b = re.search(r'--base[= ]+(\S+)', args)
+        base = b.group(1).strip('"\'') if b else 'rosanta'
+        if base == 'rosanta' and not re.search(r'--solo[= ]+\S+', args):
+            bloquear('Bloqueado: migrar.js --aplicar en PRODUCCION sin --solo. Primero correrlo sin --aplicar para ver la lista y '
+                     'despues aplicar SOLO lo de hoy: migrar.js --aplicar --base rosanta --solo <archivo,…>.')
     if 'gcloud' not in cmd:
         return 0
     cwd = datos.get('cwd') or os.getcwd()

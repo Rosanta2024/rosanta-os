@@ -57,6 +57,13 @@ try:
         shutil.rmtree(home2, ignore_errors=True)
     casos.append(('Leer la base no se toca', correr('gcloud sql instances describe rosanta-db', home), 'pasa'))
     casos.append(('Un comando sin gcloud no se toca', correr('npm test', home), 'pasa'))
+    # Migraciones en produccion solo con --solo (20-oct-2026)
+    casos.append(('migrar --aplicar en produccion sin --solo: bloqueado', correr('node cloud/herramientas/migrar.js --aplicar', home), 'deny'))
+    casos.append(('migrar --aplicar --base rosanta sin --solo: bloqueado', correr('node cloud/herramientas/migrar.js --aplicar --base rosanta', home), 'deny'))
+    casos.append(('migrar --aplicar --base rosanta --solo X: pasa', correr('node cloud/herramientas/migrar.js --aplicar --base rosanta --solo 024_x.sql', home), 'pasa'))
+    casos.append(('migrar --aplicar en el ENSAYO sin --solo: pasa', correr('node cloud/herramientas/migrar.js --aplicar --base rosanta_ensayo', home), 'pasa'))
+    casos.append(('migrar sin --aplicar (solo mirar): pasa', correr('node cloud/herramientas/migrar.js --base rosanta', home), 'pasa'))
+    casos.append(('dos comandos: el ensayo no salva al de produccion', correr('node cloud/herramientas/migrar.js --aplicar --base rosanta_ensayo && node cloud/herramientas/migrar.js --aplicar --base rosanta', home), 'deny'))
 finally:
     shutil.rmtree(home, ignore_errors=True)
 
