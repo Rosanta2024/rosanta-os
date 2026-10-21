@@ -23,7 +23,8 @@ function armarEventosVivo(o) {
   const aviso = o.vivo
     ? '<b>Servidor nuevo · Clientes › Eventos.</b> Lo que guardás acá queda en la base y se copia a la hoja.'
     : '<b>Servidor nuevo · Clientes › Eventos.</b> Por ahora el pipeline se guarda en la intranet de siempre: acá solo se ve.';
-  return h.replace('<body>', () => '<body>' + F.NAV('eventos') + '<script>' + P.TRADUCTOR + '</script>' +
+  // dentro de la intranet (pestaña Eventos, ?dentro=1): sin la barra de Clientes, que la intranet ya tiene la suya
+  return h.replace('<body>', () => '<body>' + (o.dentro ? '' : F.NAV('eventos')) + '<script>' + P.TRADUCTOR + '</script>' +
     '<style>.nb-aviso{background:var(--rosanta-lila-tint);border-radius:12px;padding:10px 14px;margin:12px auto;max-width:1100px;font-size:.9rem}</style>' +
     '<div class="nb-aviso">' + aviso + '</div>');
 }

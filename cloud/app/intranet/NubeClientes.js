@@ -17,6 +17,28 @@ var NUBE_EVENTOS_URL_ = NUBE_CLIENTES_URL_ + '/clientes/eventos';
 /** Eventos: PARAMETROS › motor_eventos (usa _nubeInterruptor_ de NubePagos.js, 1 minuto de cache). */
 function eventosMotor_() { return _nubeInterruptor_('motor_eventos', 'ev_motor_v1'); }
 
+/**
+ * La direccion de la pestaña Eventos (SistemaMarketing.html, 21-oct-2026). Con motor_eventos = base, la pantalla nueva
+ * del servidor (rosanta-clientes) DENTRO de la intranet, con el enlace de esa persona (el mismo de siempre); si no, la
+ * de siempre. Quien entra con la sesion de rosanta.rest (sin ?u=) usa su enlace de USUARIOS, como getPagosDestino.
+ * Si no hay enlace, la de siempre (que con base solo deja consultar).
+ */
+function eventosUrl_(urlBase, authToken, usuario) {
+  var deSiempre = urlBase + '?page=eventos' + (authToken ? '&u=' + authToken : '');
+  if (eventosMotor_() !== 'base') return deSiempre;
+  var token = String(authToken || '').trim();
+  if (!token && usuario && usuario.email) {
+    try {
+      var filas = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS').getDataRange().getValues();
+      for (var i = 1; i < filas.length; i++) {
+        if (String(filas[i][0] || '').toLowerCase().trim() === String(usuario.email).toLowerCase()) { token = String(filas[i][5] || '').trim(); break; }
+      }
+    } catch (e) { token = ''; }
+  }
+  if (!token) return deSiempre;
+  return NUBE_EVENTOS_URL_ + '?u=' + encodeURIComponent(token) + '&dentro=1';
+}
+
 /** La cerradura de guardarEventos: con base, se niega. */
 function _evSoloConsulta_() {
   if (typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_) return;

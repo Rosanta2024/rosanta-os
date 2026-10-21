@@ -39,7 +39,7 @@ function crearAppVivo(deps) {
       const u = await quien(req);
       if (!u) return res.status(401).type('html').send('<p style="font-family:sans-serif;padding:16px">No pude identificarte.</p>');
       if (!deps.vivo.puede(u, 'eventos')) return res.status(403).type('html').send('<p style="font-family:sans-serif;padding:16px">Tu cuenta no tiene el pipeline.</p>');
-      res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaEventos({ usuario: u, authToken: String(req.query.u || ''), vivo: deps.vivo.modo() === 'base' }));
+      res.set('Cache-Control', 'no-store').type('html').send(deps.pantallaEventos({ usuario: u, authToken: String(req.query.u || ''), vivo: deps.vivo.modo() === 'base', dentro: req.query.dentro === '1' }));
     } catch (e) { next(e); }
   });
 
