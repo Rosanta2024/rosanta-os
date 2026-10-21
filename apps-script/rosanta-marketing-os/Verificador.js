@@ -179,7 +179,7 @@ function vcRevisarEndpoint(props) {
 
   var cuerpo;
   try {
-    cuerpo = UrlFetchApp.fetch(VC_EXEC_URL + '?token=' + encodeURIComponent(TOKEN) +
+    cuerpo = UrlFetchApp.fetch(VC_EXEC_URL + '?token=' + encodeURIComponent(mktLlave_('MKT_TOKEN_API')) +
                                '&tab=reservas', { muteHttpExceptions: true })
                         .getContentText();
   } catch (err) {
