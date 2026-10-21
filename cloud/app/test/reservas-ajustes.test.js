@@ -70,12 +70,22 @@ test('la cena combinada de Adventures crea la reserva en el motor (contrato del 
 });
 
 test('zonas reales (Juanma, 20-oct): jardín, pérgola, cava, salón; "adentro" = techadas; la zona es preferencia, no quita mesas', async () => {
-  assert.deepStrictEqual(['Pergola3', 'Jardín 2', 'CAVA 1', 'Salón', 'Indoor', 'Garden', 'Barra'].map(C.zonaCanonica), ['pergola', 'jardin', 'cava', 'salon', 'adentro', 'jardin', '']);
-  assert.deepStrictEqual(C.zonasDe('Adentro'), ['pergola', 'cava', 'salon']);
+  assert.deepStrictEqual(['Pergola3', 'Jardín 2', 'CAVA 1', 'Salón', 'Indoor', 'Garden', 'Barra'].map(C.zonaCanonica), ['pergola', 'jardin', 'cava', 'salon', 'adentro', 'jardin', 'bar']);
   const { motor } = await preparar();
   const nombre = async (id) => { const r = await motor.porId(id); const cfg = (await motor.dia('2026-11-04')).mesas; return cfg.find((m) => m.id === r.mesa_ids[0]).nombre; };
   const hacer = async (n, sentarse) => (await motor.crear(Object.assign(cliente(n), { inicio: C.instante('2026-11-04', '19:00'), personas: 2, sentarse }), { canal: 'web' })).reserva.id;
   assert.strictEqual(await nombre(await hacer(1, '')), 'Interior1');          // sin preferencia: la mesa mas chica que alcanza
   assert.match(await nombre(await hacer(2, 'Pergola')), /^Pergola/);          // pidio pérgola
-  assert.match(await nombre(await hacer(3, 'Adentro')), /^Pergola/);          // adentro = techada (en el fixture, la pérgola)
+  assert.match(await nombre(await hacer(3, 'Adentro')), /^(Pergola|Barra)/);  // adentro = techada (en el fixture: pérgola o barra), nunca jardín ni interior suelto
+});
+
+test('zonas bar y lounge (Juanma, 21-oct): Bar1-3 y Barra = bar (adentro); Lounge1-2 = lounge (afuera)', () => {
+  assert.deepStrictEqual(['Bar1', 'Bar3', 'Barra', 'Lounge1', 'Lounge2', 'barra alta'].map(C.zonaCanonica), ['bar', 'bar', 'bar', 'lounge', 'lounge', 'bar']);
+  assert.deepStrictEqual(C.zonasDe('Adentro'), ['pergola', 'cava', 'salon', 'bar']);
+  assert.ok(C.zonasDe('Adentro').indexOf('lounge') === -1 && C.zonasDe('Adentro').indexOf('jardin') === -1);
+  assert.deepStrictEqual(C.zonasDe('Lounge'), ['lounge']);
+  // las 25 mesas reales de Wix (21-oct) quedan todas con zona
+  const reales = ['Bar1', 'Bar2', 'Bar3', 'Barra', 'Cava', 'Jardín1', 'Jardín2', 'Jardín3', 'Jardín4', 'Jardín5', 'Jardín6', 'Jardín7', 'Lounge1', 'Lounge2',
+    'Pergola1', 'Pergola2', 'Pergola3', 'Pergola4', 'Pergola5', 'Pergola6', 'Pergola7', 'Salon1', 'Salon2', 'Salon3', 'Salon4'];
+  assert.deepStrictEqual(reales.filter((n) => C.ZONAS.indexOf(C.zonaCanonica(n)) === -1), []);
 });

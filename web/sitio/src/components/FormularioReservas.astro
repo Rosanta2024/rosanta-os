@@ -85,11 +85,13 @@ const API = API_BASE.replace(/\/$/, '');
             <label id="l-se" for="se">{T.se}</label>
             <select id="se" name="sentarse">
               <option value="">{T.nopref}</option>
-              {/* Zonas reales (Juanma, 20-oct): jardín, pérgola (techada), cava y salón; "adentro" = cualquiera techada si llueve */}
+              {/* Zonas reales (Juanma, 20 y 21-oct): jardín, pérgola (techada), cava, salón, bar y lounge; "adentro" = techada (pérgola, cava, salón o bar) si llueve */}
               <option value="Jardin">{idioma === 'es' ? 'Jardín' : 'Garden'}</option>
               <option value="Pergola">{idioma === 'es' ? 'Pérgola (techada)' : 'Pergola (covered)'}</option>
               <option value="Cava">Cava</option>
               <option value="Salon">{idioma === 'es' ? 'Salón' : 'Dining room'}</option>
+              <option value="Bar">{idioma === 'es' ? 'Barra' : 'Bar'}</option>
+              <option value="Lounge">Lounge</option>
               <option value="Adentro">{idioma === 'es' ? 'Adentro (techado)' : 'Indoors (covered)'}</option>
             </select>
           </div>
