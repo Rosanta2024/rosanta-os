@@ -1,1 +1,1 @@
-cf2c541 2026-10-20 Marketing: modo sombra (motor_marketing = sombra): la intranet guarda y avisa; la nube anota lo que haria (marketing_sombra, migracion 016) y la comparacion de la noche lo cruza con la hoja
+4f9eae5 2026-10-21 Pipeline dentro de la intranet: con motor_eventos = base la pestaña Eventos abre rosanta-clientes (eventosUrl_ en NubeClientes.js, SistemaMarketing.html); la pantalla con ?dentro=1 va sin la barra
