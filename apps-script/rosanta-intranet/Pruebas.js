@@ -658,6 +658,14 @@ function prCimientos_(res) {
               malas.length ? malas.length + ' con problema' : 'las 2 bien',
               'CONSOLA_URL y RESENAS_URL sin /a/ y terminadas en /exec');
   });
+  /* 22-oct-2026: la pestaña Reseñas abre el panel del servidor nuevo cuando manda la nube (NubeResenas.js). */
+  prCorrer_(g, 'La pestaña Reseñas abre un panel valido', function () {
+    var u = resenasDestino_(getUsuarioActual(), '', '');
+    var ok = u === CONFIG.RESENAS_URL || /^https:\/\/rosanta-nube-[0-9]+\.northamerica-south1\.run\.app\/clientes\/resenas\?u=[^&]+&dentro=1$/.test(u);
+    prAnotar_(g, 'La pestaña Reseñas abre un panel valido', ok ? 'OK' : 'FALLA',
+              (resenasModoNube_() === 'base' ? 'servidor nuevo (interruptor en base)' : 'panel de siempre (interruptor en puente)'),
+              ok ? 'bien' : u.slice(0, 80), 'RESENAS_URL o /clientes/resenas del servidor nuevo');
+  });
 }
 
 // ---------------------------------------------------------------- 2. recetario
