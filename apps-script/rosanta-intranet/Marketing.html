@@ -243,6 +243,10 @@ a{color:var(--verde)}
     </div>
     <div class="row">
       <div class="fld"><label>Supuesto que pone a prueba (opcional)</label><select id="psSup"></select></div>
+      <div class="fld"><label>Duración (cuenta desde que se arranca)</label><select id="psSemanas"><option value="1">1 semana</option><option value="2">2 semanas</option><option value="3">3 semanas</option><option value="4">4 semanas</option></select></div>
+    </div>
+    <div class="row">
+      <div></div>
       <div class="fld" style="display:flex;align-items:flex-end"><button class="btn sm" onclick="psProponer()">Registrar prueba</button></div>
     </div>
     <div id="psPruebas"></div>
@@ -1656,7 +1660,7 @@ function psPrellenar(){
 async function psProponer(){
   const conj=$('psConj');
   const row={hipotesis:$('psHip').value.trim(),cambio:$('psCambio').value.trim(),conjunto_id:conj.value,
-    conjunto:conj.value?conj.options[conj.selectedIndex].text:'Toda la cuenta',metrica_juez:$('psMetrica').value,supuesto_id:$('psSup').value};
+    conjunto:conj.value?conj.options[conj.selectedIndex].text:'Toda la cuenta',metrica_juez:$('psMetrica').value,supuesto_id:$('psSup').value,semanas:Number($('psSemanas').value)};
   if(!row.hipotesis||!row.cambio){alert('Falta la hipótesis o el cambio.');return}
   try{await srv('psGuardarPrueba',row);$('psHip').value='';$('psCambio').value='';await psCargar()}catch(e){alert(e.message)}
 }
@@ -1681,7 +1685,7 @@ function psPintarPruebas(){
       return '<tr><td><span class="chip '+(p.estado==='en_curso'?'on':p.estado==='leida'?'on':'off')+'">'+psEsc(p.estado)+'</span></td>'+
         '<td><b>'+psEsc(p.hipotesis)+'</b><div class="muted">'+psEsc(p.cambio)+' · '+psEsc(p.conjunto)+'</div></td>'+
         '<td>'+psEsc(t.metricas_juez[p.metrica_juez]||p.metrica_juez)+'</td><td>'+psNum(p.linea_base)+' → '+psNum(p.resultado)+'</td>'+
-        '<td>'+psEsc(p.fecha_lectura||'—')+'</td><td>'+psEsc(p.veredicto)+(p.aprendizaje?'<div class="muted">'+psEsc(p.aprendizaje)+'</div>':'')+'</td><td>'+acc+'</td></tr>'}).join('')+'</tbody></table></div>';
+        '<td>'+psEsc(p.fecha_lectura||(p.semanas?p.semanas+' sem. al arrancar':'—'))+'</td><td>'+psEsc(p.veredicto)+(p.aprendizaje?'<div class="muted">'+psEsc(p.aprendizaje)+'</div>':'')+'</td><td>'+acc+'</td></tr>'}).join('')+'</tbody></table></div>';
 }
 function psPintarSupuestos(){
   const t=PS,hoy=t.hoy;
