@@ -53,6 +53,10 @@ function getHoyProfit(auth) {
     // el dueño: cargos del banco o de la tarjeta que parecen el pago de una factura (13-oct-2026)
     if (esDueno && E.posibles && E.posibles.length) add({ urgente: false, texto: E.posibles.length + (E.posibles.length === 1 ? ' posible pago del banco' : ' posibles pagos del banco') + ' para confirmar',
       detalle: 'Cargos con el monto exacto de una factura pendiente. Si es el pago, la factura sale de Por pagar.', vista: 'pagos', sub: 'posibles', boton: 'Revisar' });
+    // el dueño: compras de Compras que se casaron solas con una factura de otro monto (21-oct-2026)
+    var difs = (E.diferencias || []).filter(function (d) { return misAreas.indexOf(d.area) !== -1; });
+    if (esDueno && difs.length) add({ urgente: false, texto: difs.length + (difs.length === 1 ? ' compra con diferencia' : ' compras con diferencia') + ' contra su factura',
+      detalle: difs.slice(0, 3).map(function (d) { return d.proveedor + ' ' + Q(Math.abs(d.diferencia)); }).join(' · ') + (difs.length > 3 ? '…' : ''), vista: 'pagos', sub: 'pagadas', boton: 'Revisar' });
     var resto = abiertas.filter(function (f) { return hoyToca.indexOf(f) === -1; });
     if (resto.length) {
       var vieja = resto.reduce(function (a, f) { return !a || f.fecha < a.fecha ? f : a; }, null);
