@@ -282,22 +282,27 @@ function btEntradaWhatsApp_(msg) {
 var BT_FOTO_NOTA = '[Nota del sistema: el cliente mandó una foto junto con este mensaje. No puedes verla: contesta el texto y no digas qué hay en la foto.]';
 var BT_FOTO_MIN = 10;   // una ráfaga de fotos sin texto: una sola respuesta y un solo aviso cada 10 minutos
 
-/** Foto sin texto por WhatsApp: respuesta corta al cliente (si el chat no está en manos de Juanma), registro y aviso. */
-function btFotoSinTexto_(pid, from, nombre, pausado) {
+/**
+ * Foto sin texto (WhatsApp desde la @65; Instagram y Messenger desde la @66): respuesta corta al cliente (si el chat no
+ * está en manos de Juanma), registro y aviso. canal: 'whatsapp' | 'instagram' | 'messenger'; pid: el número de WhatsApp.
+ */
+function btFotoSinTexto_(canal, pid, from, nombre, pausado) {
   var cache = CacheService.getScriptCache(), clave = 'foto_' + from;
+  var etiqueta = { whatsapp: 'WhatsApp', instagram: 'Instagram', messenger: 'Messenger' }[canal] || canal;
+  pid = pid || PROPS.getProperty('WA_PHONE_NUMBER_ID');
   if (cache.get(clave)) return;
   cache.put(clave, '1', BT_FOTO_MIN * 60);
   var l = btIdiomaHistoria_(from), t = BT_TXT[l];
   if (!pausado) {
-    btEnviar_('whatsapp', from, t.fotoRecibida, null, pid);
-    logMensaje('whatsapp', from, nombre, 'out', 'bot', t.fotoRecibida);
+    btEnviar_(canal, from, t.fotoRecibida, null, pid);
+    logMensaje(canal, from, nombre, 'out', 'bot', t.fotoRecibida);
   }
-  logLead({ canal: 'whatsapp', idioma: l, nombre: nombre || '', telefono: from, tipo: 'consulta', urgencia: 'tibio',
+  logLead({ canal: canal, idioma: l, nombre: nombre || '', telefono: canal === 'whatsapp' ? from : '', tipo: 'consulta', urgencia: 'tibio',
     resumen: 'Mandó una foto sin texto', accion: 'escalar_humano', requiere_humano: true }, '📷 [Foto sin texto]', from, pausado ? '' : t.fotoRecibida);
   var consola = PROPS.getProperty('CONSOLE_URL') || ('https://docs.google.com/spreadsheets/d/' + CONFIG.SHEET_ID + '/edit');
-  var texto = '📷 Foto de cliente (WhatsApp)\n' + (nombre || 'Cliente') + ' · ' + from + '\n' +
+  var texto = '📷 Foto de cliente (' + etiqueta + ')\n' + (nombre || 'Cliente') + ' · ' + from + '\n' +
     (pausado ? 'El chat ya está en tus manos: al cliente no se le contestó.' : 'Al cliente se le dijo que la revisamos.') + '\n👉 ' + consola;
-  try { MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: '📷 Foto de cliente (WhatsApp) — ' + (nombre || from), body: texto }); }
+  try { MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: '📷 Foto de cliente (' + etiqueta + ') — ' + (nombre || from), body: texto }); }
   catch (e) { Logger.log('btFotoSinTexto_ correo: ' + e); }
   try {
     var owner = PROPS.getProperty('OWNER_WA');
@@ -312,7 +317,11 @@ function btEntradaMeta_(message) {
     var b = btLeerBoton_(message.quick_reply.payload, message.text);
     if (b) return { texto: b.texto, log: '🔘 ' + b.titulo, boton: b };
   }
+  // @66 (20-oct-2026, Juanma): fotos en Instagram y Messenger, igual que en WhatsApp (@65).
+  var foto = (message.attachments || []).some(function (a) { return a && a.type === 'image'; });
+  if (message.text && foto) return { texto: message.text + '\n\n' + BT_FOTO_NOTA, log: '📷 [Foto] ' + message.text, boton: null, foto: true };
   if (message.text) return { texto: message.text, log: message.text, boton: null };
+  if (foto) return { texto: '', log: '📷 [Foto sin texto]', boton: null, foto: true, sinTexto: true };
   return null;
 }
 

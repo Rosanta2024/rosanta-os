@@ -74,7 +74,9 @@ function montarVivo(app, deps, tarea) {
       deps.pool.query("INSERT INTO bot_eventos (objeto, modo, resultado) VALUES ($1, 'sin_token', 'ignorado')", [cuerpo.object]).catch(() => {});
       return;
     }
-    deps.vivo.recibir(cuerpo, { token: req.query.token }).catch((e) => console.error('webhook:', e.message));
+    // El token real ya se validó aquí: al código del bot se le pasa el marcador, que es lo que tiene en sus Propiedades
+    // (las claves nunca entran al motor). Sin token (Messenger) va vacío, como hoy.
+    deps.vivo.recibir(cuerpo, { token: conToken ? '$WEBHOOK_SECRET' : '' }).catch((e) => console.error('webhook:', e.message));
   });
   // Cada minuto: Salientes de la consola, "devolver al bot", chats que vuelven al bot y correos pendientes.
   app.post('/tareas/bot-minuto', tarea(async (req, res) => {
@@ -113,6 +115,11 @@ function montarVivo(app, deps, tarea) {
   app.post('/tareas/refrescar-token-ig', tarea(async (req, res) => {
     const r = await deps.refrescarIg();
     res.status(r.ok ? 200 : 500).json(r);
+  }));
+  // Cada noche (reloj) en puente: la sombra viva contra lo que contestó el bot de siempre. 409 = se apartó (llega la alerta).
+  app.post('/tareas/comparar-viva-noche', tarea(async (req, res) => {
+    const r = await require('./viva-comparar').compararVivaNoche({ pool: deps.pool });
+    res.status(r.ok ? 200 : 409).json(Object.assign({}, r, { distintas: r.distintas.slice(0, 50) }));
   }));
   // Para vigilar el paso: los ultimos mensajes y que paso con cada uno.
   app.get('/tareas/bot-eventos', tarea(async (req, res) => {

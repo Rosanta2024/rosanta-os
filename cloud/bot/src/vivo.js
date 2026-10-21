@@ -128,7 +128,7 @@ async function modoModulo(pool, modulo, seguro, validos) {
 function interruptor(pool) { return modoModulo(pool, 'bot', 'puente', ['puente', 'vivo']); }
 
 /**
- * crearBotVivo({ pool, espejo, leadsId, kb, claves, wixOrigen, correo, reenviar })
+ * crearBotVivo({ pool, espejo, leadsId, kb, claves, wixOrigen, correo, reenviar, soloPuente, sombraViva })
  *   espejo: hojas-vivo (Rosanta Leads en memoria + copia a la hoja); kb(): texto de la base de conocimiento;
  *   correo(m): manda o encola el correo; reenviar(cuerpo): POST al bot de Apps Script (async).
  */
@@ -165,11 +165,13 @@ function crearBotVivo(deps) {
           [objeto || '', 'ensayo', 'ignorado_otro_numero', 'no es el numero de prueba']);
         return { modo: 'ensayo', resultado: 'ignorado_otro_numero', envios: 0, error: null };
       }
-      const modo = await interruptor(deps.pool);
+      // soloPuente: el servicio arrancó sin las claves de Meta (MODO_BOT=puente): nunca atiende, aunque la tabla diga 'vivo'.
+      const modo = deps.soloPuente ? 'puente' : await interruptor(deps.pool);
       let resultado, envios = 0, err = null;
       if (modo !== 'vivo') {
         await deps.reenviar(cuerpo);
         resultado = 'reenviado';
+        if (deps.sombraViva) deps.sombraViva.pensar(cuerpo, query);   // en su propia fila: no demora el próximo reenvío
       } else {
         try {
           const r = await correr((m) => {
@@ -200,7 +202,7 @@ function crearBotVivo(deps) {
   /** Cada minuto (reloj, solo en vivo): lo que manda la consola, "devolver al bot" y los chats que vuelven al bot. */
   function minuto() {
     return enFila(async () => {
-      if (await interruptor(deps.pool) !== 'vivo') return { omitido: 'puente' };
+      if (deps.soloPuente || await interruptor(deps.pool) !== 'vivo') return { omitido: 'puente' };
       await deps.espejo.cargar(['Salientes', 'Leads']);   // la consola escribe en Salientes; el bot marca Enviado en Leads
       const r = await correr((m) => m.ctx.enviarRespuestasPendientes());
       return { envios: r.motor.envios.length, cambiosHoja: r.ops.length, error: r.error ? String(r.error.message) : null };
@@ -210,7 +212,7 @@ function crearBotVivo(deps) {
   /** Cada noche (reloj, solo en vivo): el resumen de lo que hizo el bot (ResumenDiario.js tal cual). */
   function resumen() {
     return enFila(async () => {
-      if (await interruptor(deps.pool) !== 'vivo') return { omitido: 'puente' };
+      if (deps.soloPuente || await interruptor(deps.pool) !== 'vivo') return { omitido: 'puente' };
       await deps.espejo.cargar(['Leads']);
       const r = await correr((m) => m.ctx.resumenDiarioBot());
       return { correos: r.motor.correos.length, error: r.error ? String(r.error.message) : null };

@@ -107,6 +107,36 @@ async function prepararCorreo(pool, kb, vivo) {
   return { canalCorreo, pool };
 }
 
+/**
+ * PUENTE con "sombra viva" (20-oct-2026, aprobado por Juanma): MODO_BOT=puente. Meta le manda los mensajes a la nube, la
+ * nube se los reenvía tal cual al bot de Apps Script (que contesta) y, además, los piensa sin mandar nada. Este modo NO
+ * recibe las claves de Meta: aunque algo fallara, el servicio no puede escribirle a ningún cliente.
+ * Claves: BOT_APPS_SCRIPT_URL (la /exec del bot con ?token=), BOT_VERIFY_TOKEN, BOT_WEBHOOK_SECRET; para pensar,
+ * ANTHROPIC_SOMBRA (la clave de "Sombra nube") y BOT_WIX_SECRETO (solo la consulta de reservas va de verdad).
+ */
+async function prepararPuente(pool, kb) {
+  const { crearBotVivo } = require('./vivo');
+  const { crearSombraViva } = require('./sombra-viva');
+  const { LEADS_ID } = require('./servicio-bot');
+  const falta = ['BOT_APPS_SCRIPT_URL', 'BOT_VERIFY_TOKEN', 'BOT_WEBHOOK_SECRET'].filter((k) => !process.env[k]);
+  if (falta.length) throw new Error('MODO_BOT=puente sin estas claves: ' + falta.join(', '));
+  if (['BOT_WHATSAPP_TOKEN', 'BOT_IG_TOKEN', 'BOT_MESSENGER_TOKEN'].some((k) => process.env[k])) {
+    throw new Error('MODO_BOT=puente no debe tener claves de Meta (es la garantía de que no le escribe a nadie).');
+  }
+  const appsScript = process.env.BOT_APPS_SCRIPT_URL;
+  const wixOrigen = 'https://www.rosanta.rest';
+  const sombraViva = (process.env.ANTHROPIC_SOMBRA && process.env.BOT_WIX_SECRETO) ? crearSombraViva({ pool, kb, wixOrigen, leadsId: LEADS_ID,
+    claves: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_SOMBRA, WIX_RESERVAS_SECRETO: process.env.BOT_WIX_SECRETO } }) : null;
+  const vivo = crearBotVivo({ pool, soloPuente: true, sombraViva, espejo: { libro: {}, aplicar: async () => 0 }, leadsId: LEADS_ID, kb, claves: {}, wixOrigen,
+    correo: async () => false,
+    reenviar: async (cuerpo) => {
+      const r = await fetch(appsScript, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo), redirect: 'follow' });
+      if (r.status >= 400) throw new Error('El bot de Apps Script contesto ' + r.status);
+    } });
+  console.log('rosanta-bot-sombra: PUENTE preparado (sombra viva: ' + (sombraViva ? 'sí' : 'no') + ')');
+  return { vivo, pool, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET };
+}
+
 async function main() {
   if (process.env.TZ !== 'America/Guatemala') throw new Error('El servidor tiene que correr con TZ=America/Guatemala.');
   const pool = await crearPool();
@@ -115,6 +145,7 @@ async function main() {
   const servicio = crearServicioBot({ pool, kb, claveModelo });
   const deps = { servicio, kb, claveTareas: process.env.CLAVE_TAREAS, version: process.env.K_REVISION || 'local', modeloEncendido: !!claveModelo };
   if (process.env.MODO_BOT === 'vivo') Object.assign(deps, await prepararVivo(pool));   // APAGADO: solo con el sí de Juanma
+  else if (process.env.MODO_BOT === 'puente') Object.assign(deps, await prepararPuente(pool, kb));
   if (process.env.MODO_CORREO === 'si') Object.assign(deps, await prepararCorreo(pool, kb, deps.vivo ? deps : null));
   const app = crearAppBot(deps);
   const port = Number(process.env.PORT || 8080);

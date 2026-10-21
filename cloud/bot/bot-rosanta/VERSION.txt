@@ -1,4 +1,4 @@
-@65 · 2026-10-20T08:05:00-06:00 · a40311d
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 65, "las fotos de WhatsApp ya no se
-pierden"), verificada el 20-oct-2026 bajando la versión 65 aparte (12 de 12 archivos iguales). La hora es la de la
-publicación; la comparación de la sombra vale para los mensajes desde esa hora.
+@67 · 2026-10-20T18:14:00-06:00 · 3c26efc
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 67, "Te esperamos en Rosanta"; @66 =
+fotos en Instagram y Messenger), verificada el 20-oct-2026 bajando la versión 67 aparte (12 de 12 archivos iguales). La hora
+es la de la publicación; la comparación de la sombra vale para los mensajes desde esa hora.
