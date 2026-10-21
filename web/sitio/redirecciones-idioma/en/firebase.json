@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "site": "rosanta-en",
+    "public": "public",
+    "redirects": [
+      { "source": "/:ruta*", "destination": "https://www.rosanta.rest/:ruta", "type": 301 }
+    ]
+  }
+}
