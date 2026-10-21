@@ -239,4 +239,10 @@ prueba('Code.js manda ?accion=reserva a Manual.js antes que la guardia de Meta',
   assert.ok(i > 0 && i < j);
 });
 
+prueba('@67: el correo de confirmación cierra con "Te esperamos en Rosanta." (la mesa puede ser jardín, pérgola, cava o salón)', () => {
+  const c = fs.readFileSync(path.join(DIR, 'Cancelar.js'), 'utf8');
+  assert.ok(c.indexOf("Te esperamos en Rosanta.\\n\\nPara cambiarla") > 0 && c.indexOf('See you at Rosanta.') > 0);
+  assert.ok(!/Te esperamos en el jard|See you in the garden/.test(c));
+});
+
 console.log('\n' + n + '/' + n + ' pruebas OK');

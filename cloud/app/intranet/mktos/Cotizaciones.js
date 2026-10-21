@@ -189,8 +189,7 @@ function cotGuardarRevision_(r) {
 
 /** El hook del web app. body = {token, accion:'list'|'get'|'batch'|'revision'|'revisiones', ...} */
 function cotHook_(body) {
-  var tok = String(PropertiesService.getScriptProperties().getProperty('COTIZ_TOKEN') || '');
-  if (tok.length < 24 || body.token !== tok) return { ok: false, error: 'unauthorized' };
+  if (!cotTokenOk_(body.token)) return { ok: false, error: 'unauthorized' };
   var a = body.accion;
   // Con PARAMETROS › motor_eventos = base, el pipeline se guarda en el servidor nuevo: aca solo se lee
   // (19-oct-2026). cot.sh ya apunta alla; si algo llega aca igual, se niega en vez de escribir por dos lados.
@@ -222,3 +221,24 @@ function cotMotor_() {
   try { cache.put('cot_motor_v1', m, 60); } catch (e) { /* sin cache */ }
   return m;
 }
+
+/**
+ * Token de cotizaciones (rotacion del 21-oct-2026, decision de Juanma). COTIZ_TOKEN es el vigente; el
+ * anterior (COTIZ_TOKEN_VIEJO) sigue sirviendo hasta COTIZ_TOKEN_VIEJO_HASTA (AAAA-MM-DD) para que la
+ * revision diaria no se corte si corre en medio del cambio; vencido, se borra solo. La rotacion se hizo
+ * con una accion de una sola vez ya retirada. Ningun valor vive en el codigo ni en logs.
+ */
+function cotTokenOk_(t) {
+  t = String(t || '');
+  var P = PropertiesService.getScriptProperties();
+  var tok = String(P.getProperty('COTIZ_TOKEN') || '');
+  if (tok.length >= 24 && t === tok) return true;
+  var viejo = String(P.getProperty('COTIZ_TOKEN_VIEJO') || ''), hasta = String(P.getProperty('COTIZ_TOKEN_VIEJO_HASTA') || '');
+  var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  if (hasta && hoy > hasta) {   // vencido: se borra solo (no queda el valor viejo guardado)
+    P.deleteProperty('COTIZ_TOKEN_VIEJO'); P.deleteProperty('COTIZ_TOKEN_VIEJO_HASTA');
+    return false;
+  }
+  return viejo.length >= 24 && !!hasta && hoy <= hasta && t === viejo;
+}
+

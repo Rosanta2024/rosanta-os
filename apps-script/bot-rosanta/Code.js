@@ -104,7 +104,7 @@ function handleWhatsApp(body) {
         // si no, la consola se queda ciega mientras un humano atiende.
         logMensaje('whatsapp', from, name, 'in', 'cliente', entrada.log);
         const pausado = botEnPausa(from);                // un humano está atendiendo este chat
-        if (entrada.sinTexto) { btFotoSinTexto_(phoneNumberId, from, name, pausado); return; }   // @65: foto sin texto
+        if (entrada.sinTexto) { btFotoSinTexto_('whatsapp', phoneNumberId, from, name, pausado); return; }   // @65: foto sin texto
         if (pausado && !humPuedeReservar_(from)) return; // salvo reservas mientras espera a Juanma (Humano.js)
         if (!dentroDeLimite(from)) {
           logLead({ canal: 'whatsapp', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, from);
@@ -171,6 +171,7 @@ function handleInstagram(body) {
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
       logMensaje('instagram', senderId, nombreIG, 'in', 'cliente', entrada.log);
       const pausado = botEnPausa(senderId);
+      if (entrada.sinTexto) { btFotoSinTexto_('instagram', null, senderId, nombreIG, pausado); return; }   // @66: foto sin texto
       if (pausado && !humPuedeReservar_(senderId)) return;   // salvo reservas mientras espera a Juanma
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'instagram', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
@@ -254,6 +255,7 @@ function handleMessenger(body) {
       // Se registra SIEMPRE (ver nota en handleWhatsApp).
       logMensaje('messenger', senderId, '', 'in', 'cliente', entrada.log);
       const pausado = botEnPausa(senderId);
+      if (entrada.sinTexto) { btFotoSinTexto_('messenger', null, senderId, '', pausado); return; }   // @66: foto sin texto
       if (pausado && !humPuedeReservar_(senderId)) return;   // salvo reservas mientras espera a Juanma
       if (!dentroDeLimite(senderId)) {
         logLead({ canal: 'messenger', tipo: 'otro', urgencia: 'frio', resumen: 'Muchos mensajes seguidos — posible loop/spam', accion: 'escalar_humano', requiere_humano: true }, text, senderId);
