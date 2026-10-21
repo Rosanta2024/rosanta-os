@@ -67,6 +67,8 @@ var SHEET_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
  * ~/.rosanta-secretos/mkt-api-token, wix-hook-reserva y wix-hook-carrito (los dos ultimos, tambien
  * en Secret Manager para la nube).
  */
+var CERRADO_TOKEN_VIEJO_ = true;
+
 function mktLlave_(nombre) { return String(PropertiesService.getScriptProperties().getProperty(nombre) || ''); }
 
 function tokenOk_(t, cual) {
@@ -75,6 +77,9 @@ function tokenOk_(t, cual) {
   var nueva = mktLlave_({ api: 'MKT_TOKEN_API', reserva: 'MKT_TOKEN_RESERVA', carrito: 'MKT_TOKEN_CARRITO' }[cual]);
   if (nueva && t === nueva) return true;
   if (cual === 'api') return false;
+  // 31-oct-2026: el token viejo quedó CERRADO (Wix usa las llaves nuevas desde el 27). Para volver
+  // atrás: update-deployment a la versión anterior (las propiedades del viejo se borran el 7-nov).
+  if (CERRADO_TOKEN_VIEJO_) { return false; }
   var viejo = mktLlave_('MKT_TOKEN_VIEJO'), hasta = mktLlave_('MKT_TOKEN_VIEJO_HASTA');
   var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
   var ok = !!viejo && !!hasta && hoy <= hasta && t === viejo;
