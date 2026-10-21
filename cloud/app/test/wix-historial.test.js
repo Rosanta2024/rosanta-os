@@ -108,8 +108,10 @@ test('lee todo con cursores, junta ventanas y pasada completa sin duplicar, y no
     if (o.method === 'GET') return ok({ reservationLocations: [UB], pagingMetadata: { hasNext: false } });
     const q = JSON.parse(o.body).query;
     let lista = todas;
-    const st = q.filter && q.filter['details.startDate'];
-    if (st) lista = todas.filter((r) => r.details.startDate && r.details.startDate >= st.$gte && r.details.startDate < st.$lt);
+    // Como Wix: un solo operador por campo; el rango viene con $and
+    if (q.filter && q.filter['details.startDate']) throw new Error('Wix rechaza dos operadores en el mismo campo');
+    const y = q.filter && q.filter.$and;
+    if (y) { const ge = y[0]['details.startDate'].$gte, lt = y[1]['details.startDate'].$lt; lista = todas.filter((r) => r.details.startDate && r.details.startDate >= ge && r.details.startDate < lt); }
     const desde = q.cursorPaging.cursor ? Number(q.cursorPaging.cursor.split(':')[1]) : 0;
     const clave = q.cursorPaging.cursor ? q.cursorPaging.cursor.split(':')[0] : JSON.stringify(q.filter || {});
     if (q.cursorPaging.cursor) lista = global.__cache[clave];

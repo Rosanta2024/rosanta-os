@@ -256,7 +256,8 @@ async function leerConsulta(cred, filtro) {
 async function leerReservas(cred, desde, hasta) {
   const porId = new Map();
   for (const [a, b] of ventanas(desde, hasta)) {
-    const lote = await leerConsulta(cred, { 'details.startDate': { '$gte': a, '$lt': b } });
+    // Wix no acepta dos operadores en el mismo campo ({ $gte, $lt }): van con $and, como en WixReservasPauta.js.
+    const lote = await leerConsulta(cred, { '$and': [{ 'details.startDate': { '$gte': a } }, { 'details.startDate': { '$lt': b } }] });
     lote.forEach((x) => porId.set(String(x.id || x._id), x));
   }
   const enVentanas = porId.size;
