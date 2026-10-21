@@ -74,3 +74,12 @@ test('07_Caja_Chica: un ID de solo numeros que Sheets volvio numero (sin el cero
   assert.deepStrictEqual(B.comparar07(esp, [['2026-10-16', 'Extra Yhonathan', 100, '', 'NOMINA', 'No', 'Caja chica', 8230445]], '2026-10-19'), []);
   assert.strictEqual(B.comparar07(esp, [['2026-10-16', 'Extra Yhonathan', 100, '', 'NOMINA', 'No', 'Caja chica', 8230446]], '2026-10-19').length, 2);
 });
+
+test('FEL_CORREO y BANCO_CORREO se comparan solo cuando ya estan en la base (antes de "nube" no hay filas)', async () => {
+  const H = [['MENSAJE_ID', 'X'], ['m1', 'a']];
+  const pool = (filas) => ({ query: async (sql, p) => ({ rows: p[0] === 'FEL_CORREO' ? filas : [] }) });
+  const fresco = { [C.LIBROS.config.id]: { FEL_CORREO: H } };
+  assert.deepStrictEqual(await B.compararVivas(pool([]), fresco), [], 'sin filas en la base: no se compara');
+  const d = await B.compararVivas(pool([{ id: 'm9', celdas: [{ $t: 'm9' }, 'z'] }]), fresco);
+  assert.ok(d.some((x) => /FEL_CORREO/.test(x)), 'con filas: si se compara (' + d.join(' | ') + ')');
+});

@@ -12,7 +12,10 @@ const C = require('./copia-hojas');
 const IMP = require('./importar-pagos');
 const { crearMotor } = require('./motor-pagos');
 
-const VIVAS = { CAJA_CHICA: 'ID', RETIROS_SOLICITUDES: 'ID', CIERRES_DIARIOS: 'FECHA' };
+const VIVAS = { CAJA_CHICA: 'ID', RETIROS_SOLICITUDES: 'ID', CIERRES_DIARIOS: 'FECHA', FEL_CORREO: 'MENSAJE_ID', BANCO_CORREO: 'MENSAJE_ID' };
+// FEL y banco por correo (21-oct): pasan a la base recien cuando su proceso entra en "nube"; antes, la base no
+// tiene filas y compararlas daria "faltan" todas las noches. Se comparan solo si la base ya tiene alguna.
+const SOLO_SI_HAY = { FEL_CORREO: 1, BANCO_CORREO: 1 };
 const HOJA_07 = '07_Caja_Chica';
 const MAX = 20;   // diferencias por tema: mas que eso no se lee
 
@@ -60,6 +63,7 @@ async function compararVivas(pool, fresco) {
     const ids = hoja.slice(1).map((f) => IMP.llave(f[iK])).filter(Boolean);
     ids.filter((x, i) => ids.indexOf(x) !== i).slice(0, MAX).forEach((x) => out.push(p + ': ' + x + ' está repetido en la hoja'));
     const base = (await pool.query('SELECT llave AS id, celdas FROM filas_vivas WHERE pestana = $1', [p])).rows.map((x) => ({ id: x.id, celdas: x.celdas, origen: 'hoja' }));
+    if (SOLO_SI_HAY[p] && !base.length) continue;
     const plan = IMP.planificar(hoja, base, { llave: k });
     plan.nuevas.slice(0, MAX).forEach((x) => out.push(p + ': falta en la base ' + x.id));
     plan.actualizadas.slice(0, MAX).forEach((x) => out.push(p + ': ' + x.id + ' es distinto en la base y en la hoja'));
