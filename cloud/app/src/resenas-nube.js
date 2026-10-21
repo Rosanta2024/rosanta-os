@@ -10,6 +10,7 @@
  *   POST /tareas/resenas/procesar      EN VIVO (resenas-vivo.js, deps.vivo): solo con el interruptor 'resenas' en 'base'.
  *   POST /tareas/resenas/ensayo-procesar  SOLO en el ensayo (RESENAS_ENSAYO=si): procesar con reseñas falsas 'ENSAYO-...'.
  *   POST /tareas/resenas/ensayo-aprobar   SOLO en el ensayo: el "Aprobar y publicar" del panel para una reseña ENSAYO-....
+ *   GET  /clientes/resenas?u=…    el panel EN VIVO (resenas-panel.js), y POST /api/resenas/<funcion>.
  *   GET  /resenas/modo                  'puente' | 'base' (interruptor 'resenas'); lo pregunta Apps Script en cada activador.
  *   POST /tareas/resenas/borradores-sombra?cuantas=5   borradores con Claude (clave ANTHROPIC_SOMBRA = anthropic-sombra)
  *                                       con las reglas reales; compara la decision con la de Apps Script. No publica.
@@ -339,6 +340,8 @@ function montarResenas(app, deps) {
     }
     res.set('Cache-Control', 'no-store').json({ modo: cacheModo.v });
   });
+  // El panel EN VIVO (resenas-panel.js): GET /clientes/resenas y POST /api/resenas/<funcion>, solo quien la matriz deja.
+  require('./resenas-panel').montarPanel(app, { pool: deps.pool, vivo: deps.vivo, matriz: deps.matriz });
   app.post('/tareas/resenas/copiar-hojas', exigirTarea, responder(copiarHojas, false));
   app.post('/tareas/resenas/leer-google', exigirTarea, responder(leerGoogle, true));
   // En vivo (resenas-vivo.js): solo hace algo con el interruptor 'resenas' en 'base'.
