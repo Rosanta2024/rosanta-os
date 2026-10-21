@@ -1,1 +1,1 @@
-b667e73 2026-10-19 Merge remote-tracking branch 'origin/claude/intranet-movil' into claude/infallible-roentgen-5185e3
+1bdf2b4 2026-10-21 Rol contador (SIN PUBLICAR hasta después del 26-oct): ve Finanzas y el reporte, no escribe

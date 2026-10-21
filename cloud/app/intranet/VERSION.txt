@@ -1,1 +1,1 @@
-80e19a3 2026-10-20 Intranet: proc_fel/proc_banco/proc_cierres = nube hacen a un lado la lectura del correo (un solo escritor); Leer cierres le pide al servidor (sin publicar)
+1bdf2b4 2026-10-21 Rol contador (SIN PUBLICAR hasta después del 26-oct): ve Finanzas y el reporte, no escribe

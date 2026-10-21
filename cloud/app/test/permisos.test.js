@@ -28,6 +28,7 @@ test('Las migraciones 020+022 traen exactamente la matriz de Juanma (cocina sin 
   for (const [parte, letras] of Object.entries(MATRIZ)) {
     letras.split(' ').forEach((l, i) => { if (l !== '-') esperado.push(roles[i] + '|' + parte + '|' + NIVEL[l]); });
   }
+  esperado.push('contador|finanzas|ver', 'contador|reporte_semanal|ver');   // 023 (desde el 27-oct)
   const real = [...M.permisos.values()].map((f) => f.rol + '|' + f.parte + '|' + f.nivel);
   assert.deepStrictEqual(real.sort(), esperado.sort());
 });
@@ -75,7 +76,10 @@ test('Ver no deja escribir, y sin fila no se ve', () => {
   assert.ok(!ok(P.puede(M, jeffry, 'finanzas', 'ver')));
   assert.ok(!ok(P.puede(M, vanessa, 'eventos', 'ver')), 'pauta no ve el pipeline');
   assert.ok(ok(P.puede(M, maco, 'eventos', 'ingresar')), 'sala ingresa eventos');
-  assert.ok(!ok(P.puede(M, { email: 'x', rol: 'contador' }, 'finanzas', 'ver')), 'contador sin filas todavia');
+  const contador = { email: 'tesoreria@x', rol: 'contador', nombre: 'Tesoreria' };
+  assert.ok(ok(P.puede(M, contador, 'finanzas', 'ver')), 'contador ve Finanzas (023)');
+  assert.ok(!ok(P.puede(M, contador, 'finanzas', 'ingresar')), 'contador no escribe');
+  assert.ok(!ok(P.puede(M, contador, 'pagos', 'ver')), 'contador no ve Pagos');
   assert.ok(!ok(P.puede(M, null, 'pagos', 'ver')));
 });
 
