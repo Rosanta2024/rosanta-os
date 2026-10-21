@@ -84,6 +84,13 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - Interruptores (tabla `interruptores`, sin fila = `apps`): `pauta_wix`, `pauta_pos`, `pauta_clientes`, `pauta_ads_import`; modos `apps` | `sombra` (calcula y compara con la hoja: 409 si difiere) | `nube` (tabla `pauta_semanal` de la migración 007 + solo sus celdas en la hoja; apagar antes el activador de Apps Script de ese escritor). Cada corrida queda en `pauta_corridas`.
 - Ensayo: `node cloud/herramientas/ensayo-pauta.js` (lunes de octubre en sombra, no escribe; el xlsx del POS se convierte y se borra como hace PosPauta).
 
+## Cargador del maestro (proceso, construido el 21-oct, SIN montar ni publicar)
+
+- `app/src/proc-maestro.js`, `POST /tareas/procesos/maestro`: corre el **`cargador.js` real** (`cargarUltimasSemanas`; copia en `app/maestro/`, `herramientas/traer-maestro.sh`; la prueba "El proceso del maestro usa el mismo cargador que Apps Script" falla si se separan) con la precarga por rondas de `proc-pauta.js` (Drive y conversión de xlsx con la cuenta de restaurante@). El maestro se queda en Sheets.
+- Interruptor `maestro_cargador` en la tabla `interruptores` (sin fila = `apps`). `sombra`: no escribe nada; compara contra lo que cargó Apps Script (`filas_que_agregaria`, `iguales`, `distintas` con valor y tipo de celda, `faltan`; 409 si algo no es cero). `nube`: escribe solo las filas nuevas con `rosanta-nube@` (tiene que ser **Editor** del maestro; antes, **apagar el activador** `cargarUltimasSemanas` de Apps Script), revisa que las filas destino sigan vacías, relee lo escrito y anota los procesados en `maestro_archivos_procesados` (migración 009). Cada corrida en `maestro_corridas`.
+- Ensayo: `node cloud/herramientas/ensayo-maestro.js` (lunes de octubre en sombra; no escribe; convierte y borra los xlsx como el cargador).
+- El espejo xlsx (`generarEspejo`, lunes 10:30) sigue en Apps Script.
+
 ## Tareas
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.
