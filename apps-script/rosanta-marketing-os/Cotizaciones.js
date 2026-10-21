@@ -191,7 +191,6 @@ function cotGuardarRevision_(r) {
 function cotHook_(body) {
   if (!cotTokenOk_(body.token)) return { ok: false, error: 'unauthorized' };
   var a = body.accion;
-  if (a === 'rotar') return cotRotar_(body.nuevo);   // de una sola vez (21-oct-2026); se retira en la version siguiente
   if (a === 'list') return { ok: true, filas: cotLeer_() };
   if (a === 'get') {
     var f = cotLeer_().filter(function (d) { return d.id === body.id; })[0];
@@ -206,7 +205,8 @@ function cotHook_(body) {
 /**
  * Token de cotizaciones (rotacion del 21-oct-2026, decision de Juanma). COTIZ_TOKEN es el vigente; el
  * anterior (COTIZ_TOKEN_VIEJO) sigue sirviendo hasta COTIZ_TOKEN_VIEJO_HASTA (AAAA-MM-DD) para que la
- * revision diaria no se corte si corre en medio del cambio. Ningun valor vive en el codigo ni en logs.
+ * revision diaria no se corte si corre en medio del cambio; vencido, se borra solo. La rotacion se hizo
+ * con una accion de una sola vez ya retirada. Ningun valor vive en el codigo ni en logs.
  */
 function cotTokenOk_(t) {
   t = String(t || '');
@@ -215,16 +215,10 @@ function cotTokenOk_(t) {
   if (tok.length >= 24 && t === tok) return true;
   var viejo = String(P.getProperty('COTIZ_TOKEN_VIEJO') || ''), hasta = String(P.getProperty('COTIZ_TOKEN_VIEJO_HASTA') || '');
   var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  if (hasta && hoy > hasta) {   // vencido: se borra solo (no queda el valor viejo guardado)
+    P.deleteProperty('COTIZ_TOKEN_VIEJO'); P.deleteProperty('COTIZ_TOKEN_VIEJO_HASTA');
+    return false;
+  }
   return viejo.length >= 24 && !!hasta && hoy <= hasta && t === viejo;
 }
 
-/** De una sola vez: el token actual pasa a VIEJO (24 h) y `nuevo` queda vigente. No devuelve valores. */
-function cotRotar_(nuevo) {
-  nuevo = String(nuevo || '');
-  if (nuevo.length < 24) return { ok: false, error: 'llave nueva muy corta' };
-  var P = PropertiesService.getScriptProperties();
-  if (P.getProperty('COTIZ_TOKEN_VIEJO')) return { ok: false, error: 'ya se roto: falta retirar el viejo' };
-  var manana = Utilities.formatDate(new Date(Date.now() + 864e5), 'America/Guatemala', 'yyyy-MM-dd');
-  P.setProperties({ COTIZ_TOKEN_VIEJO: String(P.getProperty('COTIZ_TOKEN') || ''), COTIZ_TOKEN_VIEJO_HASTA: manana, COTIZ_TOKEN: nuevo });
-  return { ok: true, viejo_hasta: manana };
-}
