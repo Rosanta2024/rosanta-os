@@ -78,6 +78,29 @@ function montarVivo(app, deps, tarea) {
     // (las claves nunca entran al motor). Sin token (Messenger) va vacío, como hoy.
     deps.vivo.recibir(cuerpo, { token: conToken ? '$WEBHOOK_SECRET' : '' }).catch((e) => console.error('webhook:', e.message));
   });
+  // @68: el bot de Apps Script lo pregunta cada minuto. 'vivo' = sus relojes se hacen a un lado. Sin clave a propósito
+  // (solo dice el modo). En puente (sin claves de Meta) siempre 'puente'.
+  app.get('/bot/quien', async (req, res) => {
+    try { res.json({ modo: await deps.vivo.interruptor() }); } catch (e) { res.status(500).json({ error: 'sin base' }); }
+  });
+  // El día único (~9:15), después de que Juanma corre exportarEstadoNube en el editor: las Propiedades del bot SIN claves
+  // (pestaña EstadoBot de Rosanta Leads) pasan a la base. Nunca copia claves ni interruptores.
+  app.post('/tareas/importar-estado-hoja', tarea(async (req, res) => {
+    if (!deps.espejo) return res.status(409).json({ error: 'Solo con el bot en vivo (necesita Rosanta Leads).' });
+    await deps.espejo.cargar(['EstadoBot']);
+    const filas = (deps.espejo.libro.EstadoBot || []).slice(1);
+    const SECRETAS = require('./vivo').SECRETAS;
+    let n = 0, omitidas = 0;
+    for (const f of filas) {
+      const k = String(f[0] || '').trim();
+      if (!k) continue;
+      if (SECRETAS.includes(k) || /^INTERRUPTOR_/.test(k) || /TOKEN|KEY|SECRET|CLAVE/i.test(k)) { omitidas++; continue; }
+      await deps.pool.query(`INSERT INTO bot_estado (clave, tipo, valor) VALUES ($1, 'prop', $2)
+        ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, tipo = 'prop', actualizado = now()`, [k, String(f[1] === undefined ? '' : f[1])]);
+      n++;
+    }
+    res.json({ ok: true, guardadas: n, clavesOmitidas: omitidas });
+  }));
   // Cada minuto: Salientes de la consola, "devolver al bot", chats que vuelven al bot y correos pendientes.
   app.post('/tareas/bot-minuto', tarea(async (req, res) => {
     const r = await deps.vivo.minuto();

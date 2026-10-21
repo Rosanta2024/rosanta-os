@@ -25,6 +25,7 @@ function pool(inicial) {
       if (/INSERT INTO bot_sombra_viva/.test(sql)) { sv.push({ canal: p[0], contacto: p[1], mensaje: p[2], cliente: p[3], respuesta: p[4], botones: JSON.parse(p[5]), acciones: JSON.parse(p[6]), estado: p[7], error: p[8] }); return { rows: [] }; }
       if (/INSERT INTO bot_estado \(clave, tipo, valor, vence/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: p[1], valor: p[2], vence: p[3] }); return { rows: [] }; }
       if (/INSERT INTO bot_eventos/.test(sql)) { eventos.push(p); return { rows: [] }; }
+      if (/INSERT INTO bot_estado \(clave, tipo, valor\) VALUES \(\$1, 'prop'/.test(sql)) { estado.set(p[0], { clave: p[0], tipo: 'prop', valor: p[1] }); return { rows: [] }; }
       throw new Error('consulta no prevista: ' + sql.slice(0, 80));
     }
   };
@@ -155,4 +156,25 @@ test('Puente: si el reenvío al bot de siempre falla, reintenta 3 veces y deja l
   const bot2 = crearBotVivo({ pool: p, soloPuente: true, esperaReintento: 0, espejo: { libro: {}, aplicar: async () => 0 }, leadsId: 'leads', kb: async () => '', claves: {}, wixOrigen: WIX,
     correo: async () => false, reenviar: async () => { if (++k < 2) throw new Error('una vez'); } });
   assert.strictEqual((await bot2.recibir(wa('hola'), { token: '$WEBHOOK_SECRET' })).resultado, 'reenviado', 'un fallo pasajero se recupera');
+});
+
+test('@68 en la nube: /bot/quien dice el modo (puente si el servicio es solo puente) e importar-estado-hoja nunca copia claves', async () => {
+  const p = pool({ INTERRUPTOR_BOT: 'vivo' });
+  const x = armar(p);
+  const espejo = { libro: { EstadoBot: [['clave', 'valor', 'copiado'], ['hum_502555', '{"estado":"esperando"}', ''], ['BOTONES_MODO', 'todos', ''], ['WHATSAPP_TOKEN', 'no', ''], ['INTERRUPTOR_BOT', 'vivo', ''], ['CORREO_DESDE', '1', '']] },
+    cargar: async () => {}, aplicar: async () => 0 };
+  const app = crearAppBot({ servicio: {}, claveTareas: 'k', version: 't', vivo: x.bot, correo: null, pool: p, espejo, verifyToken: 'vt', webhookSecret: TOKEN });
+  const srv = app.listen(0);
+  const base = 'http://127.0.0.1:' + srv.address().port;
+  try {
+    assert.deepStrictEqual(await (await fetch(base + '/bot/quien')).json(), { modo: 'puente' }, 'solo puente: aunque la tabla diga vivo');
+    const r = await (await fetch(base + '/tareas/importar-estado-hoja', { method: 'POST', headers: { 'x-rosanta-tarea': 'k' } })).json();
+    assert.deepStrictEqual(r, { ok: true, guardadas: 3, clavesOmitidas: 2 });
+    assert.strictEqual(p.estado.get('hum_502555').valor, '{"estado":"esperando"}');
+    assert.strictEqual(p.estado.get('WHATSAPP_TOKEN'), undefined);
+    assert.strictEqual(p.estado.get('INTERRUPTOR_BOT').valor, 'vivo', 'el interruptor no lo pisa la importación');
+    assert.strictEqual((await fetch(base + '/tareas/importar-estado-hoja', { method: 'POST' })).status, 403);
+  } finally { srv.close(); }
+  const bot2 = crearBotVivo({ pool: p, espejo, leadsId: 'leads', kb: async () => '', claves: {}, wixOrigen: WIX, correo: async () => {}, reenviar: async () => {} });
+  assert.strictEqual(await bot2.interruptor(), 'vivo', 'en vivo dice lo que dice la tabla');
 });

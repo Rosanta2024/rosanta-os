@@ -22,7 +22,7 @@ const { execFileSync } = require('child_process');
 const DIR = path.join(__dirname, '..', 'bot-rosanta');
 const ZONA = 'America/Guatemala';
 // PruebaEscaladas.js es una herramienta del editor: se copia (para que la copia sea exacta) pero no se carga.
-const ARCHIVOS = ['Code.js', 'Botones.js', 'Humano.js', 'Reservas.js', 'Cancelar.js', 'Cambiar.js', 'Consultar.js', 'Correo.js', 'ResumenDiario.js', 'Manual.js'];
+const ARCHIVOS = ['Code.js', 'Botones.js', 'Humano.js', 'Reservas.js', 'Cancelar.js', 'Cambiar.js', 'Consultar.js', 'Correo.js', 'ResumenDiario.js', 'Manual.js', 'Nube.js'];
 const WIX_URL = 'https://wix.simulado/_functions/reservarBot';
 const SECRETO_WEBHOOK = 'sombra';
 
@@ -153,6 +153,8 @@ function crearMotor(op) {
     const opt = opciones || {};
     // @64: el bot pregunta quién atiende el correo. Dentro de la nube el código ES quien atiende: siempre sigue.
     if (/\/correo\/quien$/.test(u)) return respuesta(200, { modo: 'apps' });
+    // @68: los relojes del bot preguntan si atiende la nube. Dentro de la nube el código ES la nube: siempre sigue.
+    if (/\/bot\/quien$/.test(u)) return respuesta(200, { modo: 'puente' });
     if (u.indexOf('https://api.anthropic.com/') === 0) {
       const cuerpo = JSON.parse(opt.payload);
       claudePedidos.push({ cuando: actual(), cuerpo });
@@ -245,7 +247,8 @@ function crearMotor(op) {
     JSON, Math, Number, String, Object, Array, RegExp, Error, isNaN, parseFloat, parseInt, Intl, encodeURIComponent, decodeURIComponent
   };
   vm.createContext(ctx);
-  ARCHIVOS.forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'bot-rosanta/' + f }));
+  // Un archivo que todavía no está en la versión copiada (p. ej. Nube.js antes de la @68) simplemente no se carga.
+  ARCHIVOS.filter((f) => fs.existsSync(path.join(DIR, f))).forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'bot-rosanta/' + f }));
   // Code.js declara PROPS y CONFIG con const: quedan en el ambito del script, no en ctx. Se leen asi:
   const CONFIG = vm.runInContext('CONFIG', ctx);
 

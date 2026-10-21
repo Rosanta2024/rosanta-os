@@ -75,7 +75,7 @@ async function prepararVivo(pool) {
   console.log('rosanta-bot-sombra: MODO EN VIVO preparado (interruptor en la base: ' + await vivo.interruptor() + ')');
   const refrescarIg = () => require('./vivo').refrescarTokenIg({ claves, guardarSecreto });
   return { vivo, correo, pool, refrescarIg, verifyToken: process.env.BOT_VERIFY_TOKEN, webhookSecret: process.env.BOT_WEBHOOK_SECRET, secretoReservas: process.env.BOT_WIX_SECRETO,
-    _paraCorreo: { espejo, leadsId, claves, wixOrigen: new URL(w.rows[0].valor).origin, correo } };
+    espejo, _paraCorreo: { espejo, leadsId, claves, wixOrigen: new URL(w.rows[0].valor).origin, correo } };
 }
 
 /**

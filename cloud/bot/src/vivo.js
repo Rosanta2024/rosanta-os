@@ -245,7 +245,7 @@ function crearBotVivo(deps) {
     });
   }
 
-  return { recibir, minuto, resumen, reserva, interruptor: () => interruptor(deps.pool) };
+  return { recibir, minuto, resumen, reserva, interruptor: () => (deps.soloPuente ? Promise.resolve('puente') : interruptor(deps.pool)) };
 }
 
 /**
