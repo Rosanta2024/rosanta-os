@@ -622,6 +622,7 @@ function masterPrompt_() { return [
 //  RESPUESTA HUMANA — envía lo que escribas en la columna "Respuesta"
 // ============================================================
 function enviarRespuestasPendientes() {
+  if (nubeAtiendeBot_()) return;   // @68: con el bot de la nube atendiendo, la consola la manda la nube (Nube.js)
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
 
   // 1) Respuestas escritas en la hoja Leads (columna Respuesta) — compatibilidad

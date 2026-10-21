@@ -245,4 +245,40 @@ prueba('@67: el correo de confirmación cierra con "Te esperamos en Rosanta." (l
   assert.ok(!/Te esperamos en el jard|See you in the garden/.test(c));
 });
 
+
+// ---------------- @68: convivencia con el bot de la nube ----------------
+function mundoNube(quien, cache) {
+  const props = { SHEET_ID: 'leads', WHATSAPP_TOKEN: 'secreto-wa', ANTHROPIC_API_KEY: 'sk-x', WEBHOOK_SECRET: 'w', WIX_RESERVAS_SECRETO: 'z', OWNER_WA: '502', hum_502555: '{"estado":"esperando"}', BOTONES_MODO: 'todos' };
+  const mem = Object.assign({}, cache || {});
+  const hoja = { filas: null };
+  const ctx = { console: { log: () => {} }, JSON, Object, String, Date, Logger: { log: () => {} },
+    PROPS: { getProperties: () => Object.assign({}, props), getProperty: (k) => props[k] || null },
+    CONFIG: { SHEET_ID: 'leads' },
+    CacheService: { getScriptCache: () => ({ get: (k) => (k in mem ? mem[k] : null), put: (k, v) => { mem[k] = v; } }) },
+    UrlFetchApp: { fetch: (u) => { if (quien === 'caida') throw new Error('sin red'); return { getResponseCode: () => (quien ? 200 : 404), getContentText: () => JSON.stringify({ modo: quien }) }; } },
+    SpreadsheetApp: { openById: () => ({ getSheetByName: () => null, insertSheet: () => ({ clearContents: () => {}, getRange: () => ({ setValues: (v) => { hoja.filas = v; } }) }) }) } };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(DIR, 'Nube.js'), 'utf8'), ctx);
+  return { ctx, hoja };
+}
+prueba('@68: los relojes se hacen a un lado SOLO si la nube dice "vivo"; caída sin respuesta previa = atiende este bot', () => {
+  assert.strictEqual(mundoNube('vivo').ctx.nubeAtiendeBot_(), true);
+  assert.strictEqual(mundoNube('puente').ctx.nubeAtiendeBot_(), false);
+  assert.strictEqual(mundoNube(undefined).ctx.nubeAtiendeBot_(), false, '404: la nube sin bot en vivo');
+  assert.strictEqual(mundoNube('caida').ctx.nubeAtiendeBot_(), false);
+  assert.strictEqual(mundoNube('caida', { bot_quien: 'vivo' }).ctx.nubeAtiendeBot_(), true, 'caída: la última respuesta');
+  const code = fs.readFileSync(path.join(DIR, 'Code.js'), 'utf8'), res = fs.readFileSync(path.join(DIR, 'ResumenDiario.js'), 'utf8');
+  assert.ok(/function enviarRespuestasPendientes\(\) \{\n  if \(nubeAtiendeBot_\(\)\) return;/.test(code), 'la consola, primera línea');
+  assert.ok(/function resumenDiarioBot\(\) \{\n  if \(nubeAtiendeBot_\(\)\) return;/.test(res), 'el resumen, primera línea');
+  assert.ok(!/function doPost[\s\S]{0,400}nubeAtiendeBot_/.test(code), 'doPost NO se hace a un lado: es la red de seguridad');
+});
+prueba('@68: exportarEstadoNube copia la configuración y las esperas, nunca una clave', () => {
+  const m = mundoNube('puente');
+  const r = m.ctx.exportarEstadoNube();
+  const claves = Array.from(m.hoja.filas.slice(1), (f) => String(f[0]));
+  assert.deepStrictEqual(claves.sort(), ['BOTONES_MODO', 'OWNER_WA', 'SHEET_ID', 'hum_502555']);
+  assert.strictEqual(r.omitidas, 4);
+  assert.ok(!JSON.stringify(m.hoja.filas).includes('secreto-wa') && !JSON.stringify(m.hoja.filas).includes('sk-x'));
+});
+
 console.log('\n' + n + '/' + n + ' pruebas OK');
