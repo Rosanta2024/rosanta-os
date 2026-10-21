@@ -106,3 +106,34 @@ test('CAPI de la web: el mismo hash que capi.js de Wix (correo en minusculas, te
   assert.deepStrictEqual(ev.user_data.fn, [sha('ana')]); assert.deepStrictEqual(ev.user_data.external_id, [sha('c-9')]);
   assert.ok(!('fuente_trafico' in ev) && !('origen' in ev), 'la fuente del trafico no va a Meta');
 });
+
+const COT = { id: '3f2b6c1e-9a4d-4e2b-8c1f-0a9b8c7d6e5f', tipo: 'evento', tipo_evento: 'boda', nombre: 'Laura Pérez', email: 'laura@gmail.com',
+  telefono: '+1 555 0100', idioma: 'es', fecha: '2027-02-14', personas: 60, menu: 'degustacion', presupuesto: 'Q40,000', mensaje: 'Jardín, de noche', origen: { utm_source: 'google' } };
+
+test('pipeline-cotizacion ("Request a quote"): sombra 202 con id provisional; base crea la fila con presupuesto y menú en sus columnas', async () => {
+  await servir({}, async (post, a) => {
+    const r = await post('pipeline-cotizacion', COT);
+    assert.strictEqual(r.status, 202);
+    assert.deepStrictEqual(await r.json(), { sombra: true, id: 'sombra-cotizacion-web-' + COT.id });
+    assert.strictEqual(a.llamadas.length, 0);
+  });
+  await servir({ web_cotizaciones: 'base' }, async (post, a) => {
+    const r = await post('pipeline-cotizacion', COT);
+    assert.strictEqual(r.status, 200); assert.deepStrictEqual(await r.json(), { id: 'cotizacion-web-' + COT.id });
+    const w = a.llamadas[0][1].writes[0];
+    assert.strictEqual(w.data.evento, 'Cotización web: boda'); assert.strictEqual(w.data.canal_detalle, 'cotizacion');
+    assert.strictEqual(w.data.presupuesto, 'Q40,000'); assert.strictEqual(w.data.formato_menu, 'degustacion'); assert.strictEqual(w.data.pax, 60);
+    assert.strictEqual(w.data.fecha_evento, '2027-02-14'); assert.strictEqual(w.data.notas, 'Jardín, de noche');
+    assert.deepStrictEqual(JSON.parse(w.data.extra_json), { tipo: 'evento', tipo_evento: 'boda', menu: 'degustacion', presupuesto: 'Q40,000', origen: { utm_source: 'google' }, web_id: COT.id });
+  });
+  await servir({ web_cotizaciones: 'apagado' }, async (post, a) => {
+    assert.strictEqual((await post('pipeline-cotizacion', COT)).status, 409);
+    for (const malo of [Object.assign({ extra: 1 }, COT), Object.assign({}, COT, { id: COT.id.toUpperCase() }), Object.assign({}, COT, { tipo_evento: 'fiesta' }),
+      Object.assign({}, COT, { menu: 'pizza' }), Object.assign({}, COT, { email: 'Laura@gmail.com' }), Object.assign({}, COT, { fecha: ['2027-02-14'] })]) {
+      assert.strictEqual((await post('pipeline-cotizacion', malo)).status, 400, JSON.stringify(malo).slice(0, 60));
+    }
+    const sin = Object.assign({}, COT); delete sin.presupuesto;
+    assert.strictEqual((await post('pipeline-cotizacion', sin)).status, 400, 'van las 13 llaves');
+    assert.strictEqual(a.llamadas.length, 0);
+  });
+});

@@ -5,8 +5,9 @@
  *   POST /interno/web/crm-reserva       el mismo cuerpo que crmReservas.js de Wix → intakeReserva + CRMSync reales
  *   POST /interno/web/capi              NewReservation a Meta (el hash lo hace este servidor), sin pruebas internas
  *   POST /interno/web/pipeline-adventure  un lead de Rosanta Adventures → fila del pipeline (Cotizaciones.js real)
+ *   POST /interno/web/pipeline-cotizacion "Request a quote" de /events-1 → fila del pipeline (decision de Juanma, 20-oct)
  *
- * Interruptor por ruta en la tabla `interruptores` (web_reservas, web_capi, web_adventures):
+ * Interruptor por ruta en la tabla `interruptores` (web_reservas, web_capi, web_adventures, web_cotizaciones):
  *   sombra (por defecto, tambien sin fila) → NO escribe ni manda nada: lo anota en hooks_wix_recibidos y contesta
  *       202 { sombra: true }. Asi, mientras Wix siga vivo, nada se duplica.
  *   base → lo hace de verdad (200). apagado → 409.
@@ -17,7 +18,7 @@ const HW = require('../hooks-wix');
 const CAPI = require('./capi');
 
 const MODOS = ['sombra', 'base', 'apagado'];
-const RUTAS = { 'crm-reserva': 'web_reservas', capi: 'web_capi', 'pipeline-adventure': 'web_adventures' };
+const RUTAS = { 'crm-reserva': 'web_reservas', capi: 'web_capi', 'pipeline-adventure': 'web_adventures', 'pipeline-cotizacion': 'web_cotizaciones' };
 const ESTADOS = ['RESERVED', 'CANCELED', 'FINISHED', 'NO_SHOW', 'SEATED', 'REQUESTED', 'DECLINED', 'HELD'];
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -73,9 +74,44 @@ function limpiarAdventure(b) {
   if (b.fecha !== null && !(typeof b.fecha === 'string' && FECHA.test(b.fecha))) return { error: 'fecha invalida' };
   if (b.personas !== null && !(Number.isInteger(b.personas) && b.personas > 0 && b.personas <= 200)) return { error: 'personas invalido' };
   if (b.cena !== null && !(soloLlaves(b.cena, ['fecha', 'hora', 'personas']) && typeof b.cena.fecha === 'string' && FECHA.test(b.cena.fecha) && typeof b.cena.hora === 'string' && /^\d{2}:\d{2}$/.test(b.cena.hora) && Number.isInteger(b.cena.personas))) return { error: 'cena invalida' };
-  if (!b.origen || typeof b.origen !== 'object' || Array.isArray(b.origen) || Object.keys(b.origen).length > 12 ||
-      !Object.entries(b.origen).every(([k, v]) => /^[A-Za-z0-9_.-]{1,40}$/.test(k) && typeof v === 'string' && v.length <= 300)) return { error: 'origen invalido' };
+  if (!origenValido(b.origen)) return { error: 'origen invalido' };
   return { cuerpo: Object.assign(c, { id: b.id, experiencia: b.experiencia, idioma: b.idioma, fecha: b.fecha, personas: b.personas, cena: b.cena, origen: b.origen }) };
+}
+
+/** "Request a quote" de /events-1 (decision de Juanma del 20-oct): 13 llaves fijas. */
+function limpiarCotizacion(b) {
+  const L = ['id', 'tipo', 'tipo_evento', 'nombre', 'email', 'telefono', 'idioma', 'fecha', 'personas', 'menu', 'presupuesto', 'mensaje', 'origen'];
+  if (!soloLlaves(b, L) || Object.keys(b).length !== L.length) return { error: 'cuerpo con otra forma (van las 13 llaves)' };
+  if (typeof b.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(b.id)) return { error: 'id invalido (uuid en minusculas)' };
+  if (b.tipo !== 'evento') return { error: 'tipo invalido' };
+  if (['privado', 'boda', 'empresa', 'cumpleanos', 'otro'].indexOf(b.tipo_evento) === -1) return { error: 'tipo_evento invalido' };
+  if (['degustacion', 'especiales', 'boquitas', 'no_se'].indexOf(b.menu) === -1) return { error: 'menu invalido' };
+  const c = {};
+  for (const [k, max, opc] of [['nombre', 120], ['email', 160], ['telefono', 40, true], ['presupuesto', 200], ['mensaje', 2000]]) {
+    const v = txt(b[k], max, opc); if (v === null) return { error: k + ' invalido' }; c[k] = v;
+  }
+  if (!c.nombre || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) || c.email !== c.email.toLowerCase()) return { error: 'falta nombre o correo valido' };
+  if (['es', 'en'].indexOf(b.idioma) === -1) return { error: 'idioma invalido' };
+  if (b.fecha !== null && !(typeof b.fecha === 'string' && FECHA.test(b.fecha))) return { error: 'fecha invalida' };
+  if (b.personas !== null && !(Number.isInteger(b.personas) && b.personas > 0 && b.personas <= 1000)) return { error: 'personas invalido' };
+  if (!origenValido(b.origen)) return { error: 'origen invalido' };
+  return { cuerpo: Object.assign(c, { id: b.id, tipo_evento: b.tipo_evento, idioma: b.idioma, fecha: b.fecha, personas: b.personas, menu: b.menu, origen: b.origen }) };
+}
+
+const origenValido = (o) => !!o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length <= 12 &&
+  Object.entries(o).every(([k, v]) => /^[A-Za-z0-9_.-]{1,40}$/.test(k) && typeof v === 'string' && v.length <= 300);
+
+function filaCotizacion(c, hoy) {
+  return {
+    id: 'cotizacion-web-' + c.id,
+    data: {
+      cliente: c.nombre, contacto: c.email, email: c.email, telefono: c.telefono || '',
+      canal: 'web', canal_detalle: 'cotizacion', idioma: c.idioma, evento: 'Cotización web: ' + c.tipo_evento,
+      fecha_consulta: hoy, fecha_evento: c.fecha || '', pax: c.personas || '', presupuesto: c.presupuesto, formato_menu: c.menu,
+      etapa: 'consulta', estado: 'consulta', notas: c.mensaje,
+      extra_json: JSON.stringify({ tipo: 'evento', tipo_evento: c.tipo_evento, menu: c.menu, presupuesto: c.presupuesto, origen: c.origen, web_id: c.id })
+    }
+  };
 }
 
 /** La fila del pipeline (Cotizaciones.js › cotEscribir_). La hoja no tiene "tipo": va en extra_json. */
@@ -106,7 +142,8 @@ function montarWeb(app, exigirTarea, deps) {
     await deps.pool.query('INSERT INTO hooks_wix_recibidos (hook, cuerpo, modo, estado, ms, respuesta) VALUES ($1,$2,$3,$4,$5,$6)',
       ['web-' + ruta, JSON.stringify(cuerpo), m, estado, 0, String(respuesta || '').slice(0, 500)]).catch((e) => console.error('web: no se anoto', e.message));
   }
-  const LIMPIAR = { 'crm-reserva': limpiarReserva, capi: limpiarCapi, 'pipeline-adventure': limpiarAdventure };
+  const LIMPIAR = { 'crm-reserva': limpiarReserva, capi: limpiarCapi, 'pipeline-adventure': limpiarAdventure, 'pipeline-cotizacion': limpiarCotizacion };
+  const FILA = { 'pipeline-adventure': filaAdventure, 'pipeline-cotizacion': filaCotizacion };
 
   app.post('/interno/web/:ruta', exigirTarea, async (req, res) => {
     const ruta = req.params.ruta;
@@ -118,7 +155,7 @@ function montarWeb(app, exigirTarea, deps) {
     try {
       if (m === 'sombra') {
         const out = { sombra: true };
-        if (ruta === 'pipeline-adventure') out.id = 'sombra-' + filaAdventure(l.cuerpo, '').id;
+        if (FILA[ruta]) out.id = 'sombra-' + FILA[ruta](l.cuerpo, '').id;
         if (ruta === 'capi') out.prueba = esPrueba(l.cuerpo.user);
         await anotar(ruta, l.cuerpo, 'sombra', 202, JSON.stringify(out));
         return res.status(202).json(out);
@@ -131,7 +168,7 @@ function montarWeb(app, exigirTarea, deps) {
         if (esPrueba(l.cuerpo.user)) json = { ok: true, omitido: 'reserva de prueba' };
         else json = { ok: true, capi: await deps.capiReserva(l.cuerpo) };
       } else {
-        const f = filaAdventure(l.cuerpo, deps.hoy ? deps.hoy() : new Date().toISOString().slice(0, 10));
+        const f = FILA[ruta](l.cuerpo, deps.hoy ? deps.hoy() : new Date().toISOString().slice(0, 10));
         const r = await deps.vivo.hook({ accion: 'batch', writes: [{ op: 'set', id: f.id, data: f.data }] });
         // un reintento de la web encuentra la fila ya creada (cotEscribir_ pide if_version): es el mismo lead
         if (r && (r.ok || /if_version/.test(String(r.error || '')))) json = { id: f.id };
@@ -168,4 +205,4 @@ function crearCapiReserva(o) {
   };
 }
 
-module.exports = { montarWeb, limpiarReserva, limpiarCapi, limpiarAdventure, filaAdventure, eventoReserva, crearCapiReserva, esPrueba, RUTAS };
+module.exports = { montarWeb, limpiarReserva, limpiarCapi, limpiarAdventure, limpiarCotizacion, filaAdventure, filaCotizacion, eventoReserva, crearCapiReserva, esPrueba, RUTAS };
