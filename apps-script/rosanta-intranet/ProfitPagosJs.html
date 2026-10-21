@@ -406,7 +406,8 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       (B.pendientes.length ? '<div class="pg-scroll"><table class="pg-t">' + cab + B.pendientes.map(fila).join('') + '</table></div>'
                            : '<div class="pg-vacio">Ninguna: todo lo que avisó el BI ya está en el estado de cuenta. ✓</div>');
   }
-  function pagoTxt(p) {
+  // f y editable: la factura del historial y si esta entre las ultimas 3 pagadas del proveedor (ver abajo)
+  function pagoTxt(p, f, editable) {
     // un "Confirmado con banco" de Posibles pagos guarda en por a quien lo confirmo; la cuenta va en el detalle
     var manual = p.estatus === 'Confirmado con banco', cta = manual && /^(Banco \S+|Tarjeta \S+ \S+)/.exec(p.detalle || '');
     var med = /^\[([^\]]+)\]/.exec(p.detalle || ''), forma = manual ? (cta ? cta[1] : 'Banco') : /confirmad|por correo/i.test(p.estatus) && p.por ? p.por : med ? med[1] : p.estatus;
@@ -416,7 +417,16 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       (manual && p.por ? ' <span class="pg-nota">(confirmó ' + esc(p.por) + ')</span>' : '') +
       // anular desde el historial (16-oct-2026, Juanma: el abono de Q414 a Doorways no se podia corregir desde aca).
       // Lo que entro de COMPRAS_2026 no es un pago; un pago confirmado con el banco lo anula el dueño.
-      (p.id && !/antes/i.test(p.estatus) && (!manual || D.rol === 'dueno') ? ' <button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '');
+      (p.id && !/antes/i.test(p.estatus) && (!manual || D.rol === 'dueno') ? ' <button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') +
+      // 20-oct-2026, Juanma: "modificar las ultimas 3 facturas". Lo que caso solo el banco o venia de
+      // COMPRAS_2026 no tiene fila propia: el dueño lo anula en las ultimas 3 pagadas (anularPagoAutomatico).
+      (editable && !p.id && D.rol === 'dueno' && (p.llave_pago || /antes/i.test(p.estatus))
+        ? ' <button type="button" class="pg-x" data-anularauto="' + esc(f.llave) + '" data-pagollave="' + esc(p.llave_pago || '') + '">anular</button>' : '');
+  }
+  /* Las ultimas 3 facturas pagadas del proveedor (la misma regla que _pagUltimasPagadas_ del servidor). */
+  function ultimasPagadas(fs) {
+    return fs.filter(function (f) { return (f.pagos || []).some(function (p) { return p.q > 0.001; }); })
+      .slice(0, 3).map(function (f) { return f.llave; });
   }
   function historial(nit) {
     var fs = D.facturas.filter(function (f) { return f.nit === nit; }).slice().sort(function (a, b) { return a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0; });
@@ -425,11 +435,16 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     // volver a la tarjeta del proveedor en Por pagar sin subir con el scroll (16-oct-2026, Juanma)
     var volver = '<button type="button" class="pg-b" style="margin-bottom:0.5rem" data-volver="' + esc(nit) + '">← Volver a Pagos</button>';
     if (!fs.length) return volver + '<div class="pg-nota">Sin facturas desde el ' + esc(ddmm(D.desde)) + '.</div>';
+    var ult = ultimasPagadas(fs);   // fs ya viene de la mas nueva a la mas vieja
     return volver + '<table><tr><th>Fecha factura</th><th>Factura</th><th class="n">Total</th><th>Pagos (fecha · forma · cantidad)</th><th class="n">Saldo</th><th>Estatus</th></tr>' +
       fs.map(function (f) {
-        var ps = (f.pagos || []).filter(function (p) { return p.q > 0.001; });
+        var ps = (f.pagos || []).filter(function (p) { return p.q > 0.001; }), ed = ult.indexOf(f.llave) !== -1;
+        // un pago de COMPRAS_2026 anulado deja la fila "Traida de antes" en Q0: se puede deshacer
+        var trd = D.rol === 'dueno' && (f.pagos || []).filter(function (p) { return p.id && p.estatus === 'Traida de antes'; })[0];
         return '<tr><td>' + esc(ddmm(f.fecha)) + '</td><td>' + esc(f.dte) + (f.por_correo ? ' <span class="pg-est abon">por correo</span>' : '') + '</td><td class="n">' + q(f.total) + '</td>' +
-          '<td>' + (ps.length ? ps.map(pagoTxt).join('<br>') : '<span class="pg-nota">sin pagos</span>') + (f.favor_usado > 0.01 ? '<br>' + q(f.favor_usado) + ' de saldo a favor' : '') + '</td>' +
+          '<td>' + (ps.length ? ps.map(function (p) { return pagoTxt(p, f, ed); }).join('<br>') : '<span class="pg-nota">sin pagos</span>') +
+            (D.rol === 'dueno' ? (f.desligados || []).map(function (x) { return '<br><span class="pg-nota">anulado: ' + esc(x.detalle) + '</span> <button type="button" class="pg-x" style="color:var(--vb)" data-anular="' + esc(x.id) + '">deshacer</button>'; }).join('') : '') +
+            (trd ? ' <button type="button" class="pg-x" style="color:var(--vb)" data-anular="' + esc(trd.id) + '" title="' + esc(trd.detalle || '') + '">devolver como pagada</button>' : '') + (f.favor_usado > 0.01 ? '<br>' + q(f.favor_usado) + ' de saldo a favor' : '') + '</td>' +
           '<td class="n">' + (f.saldo > 0.01 ? '<b>' + q(f.saldo) + '</b>' : '') + '</td><td>' + estado(f.estado) + '</td></tr>';
       }).join('') +
       '<tr><th>' + fs.length + ' facturas</th><th></th><th class="n">' + q(sum('total')) + '</th><th>pagado ' + q(sum('pagado') + sum('favor_usado')) + '</th><th class="n">' + q(fs.reduce(function (a, f) { return a + Math.max(f.saldo, 0); }, 0)) + '</th><th></th></tr></table>' +
@@ -779,6 +794,12 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       if (!confirm('¿Devolver esta factura a su categoría de siempre? Vuelve a Pagos y al DRE.')) return;
       var kDev = b.dataset.ivadev;
       llamar(function (r) { r.devolverFacturaParaIva(AUTH, kDev); }, null, 'Devolviendo la factura…'); return;
+    }
+    if (b.dataset.anularauto) {
+      var plA = b.dataset.pagollave, kA = b.dataset.anularauto;
+      if (!confirm(plA ? '¿Anular este pago? El cargo del banco deja de contarse para esta factura, que vuelve a Por pagar. Se deshace desde este mismo historial.'
+                      : '¿Anular este pago de COMPRAS_2026? La factura vuelve a deberse entera.')) return;
+      llamar(function (r) { r.anularPagoAutomatico(AUTH, kA, plA); }, null, 'Anulando…'); return;
     }
     if (b.dataset.anular) { if (confirm('¿Anular este movimiento? Queda en la hoja marcado ANULADO.')) { var id = b.dataset.anular; llamar(function (r) { r.anularMovimientoPago(AUTH, id); }, null, 'Anulando…'); } return; }
     if (b.dataset.favor) {

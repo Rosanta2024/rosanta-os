@@ -343,6 +343,48 @@ def verificar_push(inv):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def _scopes(ruta):
+    """Lista ordenada de oauthScopes del appsscript.json de una carpeta, o None si no los declara."""
+    m = leer_json(os.path.join(ruta, "appsscript.json"))
+    if not m or "oauthScopes" not in m:
+        return None
+    return sorted(set(m.get("oauthScopes") or []))
+
+
+def verificar_scopes(inv):
+    """(ok, motivo). Compara los permisos (oauthScopes) de lo que se va a subir contra el HEAD del
+    servidor. Si cambian, Google pide volver a autorizar y los activadores fallan hasta que Juanma lo
+    haga (20-oct-2026, Marketing OS). Cualquier proyecto de apps-script, no solo la intranet."""
+    raiz, _ = destino_pull(inv)
+    cfg = buscar_clasp_json(inv["proyecto"], inv["dir"])
+    if not raiz or not cfg or not os.path.isfile(os.path.join(raiz, "appsscript.json")):
+        return True, ""
+    tmp = tempfile.mkdtemp(prefix="candado-scopes-")
+    try:
+        datos = leer_json(cfg) or {}
+        datos["rootDir"] = ""
+        with open(os.path.join(tmp, ".clasp.json"), "w") as f:
+            json.dump(datos, f)
+        try:
+            subprocess.run(["clasp", "pull"], cwd=tmp, capture_output=True, text=True, timeout=150)
+        except Exception as e:
+            return False, "no pude bajar el HEAD para comparar los permisos (" + str(e)[:120] + ")"
+        if not os.path.isfile(os.path.join(tmp, "appsscript.json")):
+            return False, "no pude bajar el appsscript.json del servidor para comparar los permisos"
+        antes, ahora = _scopes(tmp), _scopes(raiz)
+        if antes == ahora:
+            return True, ""
+        if antes is None or ahora is None:
+            return False, ("uno de los dos manifiestos (el del servidor o el de esta carpeta) no declara "
+                           "oauthScopes y el otro sí: Google recalcularía los permisos")
+        mas = [s for s in ahora if s not in antes]
+        menos = [s for s in antes if s not in ahora]
+        return False, ("cambian los permisos del proyecto: agrega %s; quita %s" %
+                       (", ".join(mas) or "nada", ", ".join(menos) or "nada"))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def denegar(motivo):
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
@@ -399,8 +441,17 @@ def main():
                     "(3) con ese conteo real, `python3 .claude/hooks/sellar-bateria.py --ok N "
                     "--fallas N --avisos N --saltadas N --fuente \"...\"`. Nunca crear el sello "
                     "sin un resultado real. Con fallas no se publica.")
-        elif sub == "push" and es_intranet(inv):
-            pisar = inv.get("entorno", {}).get("ROSANTA_PUSH_PISAR") or os.environ.get("ROSANTA_PUSH_PISAR")
+        if sub == "push" and not (inv.get("entorno", {}).get("ROSANTA_SCOPES_OK") or os.environ.get("ROSANTA_SCOPES_OK")):
+            ok, porque = verificar_scopes(inv)
+            if not ok:
+                denegar(
+                    "Bloqueado: `clasp push` " + porque + ". Si se publica, Google pide volver a "
+                    "autorizar y los activadores y el /exec fallan hasta que Juanma lo haga (pasó el "
+                    "20-oct en Marketing OS). Qué hacer: (1) avisar ANTES a la Central (\"Mentor · "
+                    "Central Rosanta\") qué permiso cambia y por qué, y acordar cuándo Juanma reautoriza; "
+                    "(2) con su sí: ROSANTA_SCOPES_OK=\"motivo\" clasp push.")
+        if sub == "push" and es_intranet(inv):
+            pisar =inv.get("entorno", {}).get("ROSANTA_PUSH_PISAR") or os.environ.get("ROSANTA_PUSH_PISAR")
             if not pisar:
                 ok, porque = verificar_push(inv)
                 if not ok:

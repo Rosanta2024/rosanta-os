@@ -209,9 +209,9 @@ function rvCorreoCliente(d, caso) {
       cuerpo = (en ? 'Hi ' : 'Hola ') + (nombre || (en ? 'there' : '')) + ',\n\n' +
         (en
           ? 'Your table is confirmed:\n\nDate: ' + fecha + '\nTime: ' + d.hora + '\nGuests: ' + d.personas +
-            '\n\nSee you in the garden.\n\nTo change or cancel it, just reply to this email.'
+            '\n\nSee you at Rosanta.\n\nTo change or cancel it, just reply to this email.'
           : 'Tu mesa queda confirmada:\n\nFecha: ' + fecha + '\nHora: ' + d.hora + '\nPersonas: ' + d.personas +
-            '\n\nTe esperamos en el jardín.\n\nPara cambiarla o cancelarla, responde a este correo.');
+            '\n\nTe esperamos en Rosanta.\n\nPara cambiarla o cancelarla, responde a este correo.');
     }
   }
 

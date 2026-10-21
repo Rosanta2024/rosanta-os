@@ -47,15 +47,38 @@
  * ⚠️ JAMÁS ejecutar setup(): borra el contenido de TODAS las pestañas
  *    (incluye carritos y reservas). Solo era para la instalación inicial.
  *
- * WEBHOOK DE CARRITOS (WIX):     <URL /exec>?token=rosanta2026xy&hook=carrito
- * WEBHOOK DE RESERVAS (Wix Velo): <URL /exec>?token=rosanta2026xy&hook=reserva
+ * WEBHOOK DE CARRITOS (WIX):     <URL /exec>?token=<llave carrito>&hook=carrito
+ * WEBHOOK DE RESERVAS (Wix Velo): <URL /exec>?token=<llave reserva>&hook=reserva
  *    Lo llama backend/crmReservas.js del sitio de Wix. Entra por intakeReserva(),
  *    que vive en CRMSync.gs, mismo proyecto.
  * META CAPI: Script Property META_CAPI_TOKEN (igual que v1).
  */
 
 var SHEET_ID = '1wxsMm1Vx7tUci3ErQGa4SiGftZ21vTrxYqAObiEooyc';
-var TOKEN    = 'rosanta2026xy';
+/**
+ * Llaves (rotacion del 20-oct-2026, decision de Juanma). NINGUNA vive en el codigo: estan en
+ * Propiedades del script.
+ *   MKT_TOKEN_API      API general (doGet/doPost con body.token). Secreta.
+ *   MKT_TOKEN_RESERVA  hook=reserva (backend de Wix; desde el 3-nov tambien la nube). Secreta.
+ *   MKT_TOKEN_CARRITO  hook=carrito (snippet del Editor de Wix: es PUBLICA, solo anota carritos).
+ *   MKT_TOKEN_VIEJO    el token de antes: SOLO carrito y reserva, y solo hasta MKT_TOKEN_VIEJO_HASTA
+ *                      (AAAA-MM-DD, 2026-11-04). La API general ya no lo acepta.
+ * Se cargaron una vez el 20-oct-2026 (hook de carga unica, ya retirado). Copia local, fuera del repo:
+ * ~/.rosanta-secretos/mkt-api-token, wix-hook-reserva y wix-hook-carrito (los dos ultimos, tambien
+ * en Secret Manager para la nube).
+ */
+function mktLlave_(nombre) { return String(PropertiesService.getScriptProperties().getProperty(nombre) || ''); }
+
+function tokenOk_(t, cual) {
+  t = String(t || '');
+  if (!t) return false;
+  var nueva = mktLlave_({ api: 'MKT_TOKEN_API', reserva: 'MKT_TOKEN_RESERVA', carrito: 'MKT_TOKEN_CARRITO' }[cual]);
+  if (nueva && t === nueva) return true;
+  if (cual === 'api') return false;
+  var viejo = mktLlave_('MKT_TOKEN_VIEJO'), hasta = mktLlave_('MKT_TOKEN_VIEJO_HASTA');
+  var hoy = Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd');
+  return !!viejo && !!hasta && hoy <= hasta && t === viejo;
+}
 var META_DATASET_ID = '1107259034759950'; // Rosanta Reservas
 
 var SCHEMA = {
@@ -165,22 +188,36 @@ function cargarCalendario311() {
  * ================================================================ */
 
 /** Crea las pestañas con encabezados. ⚠️ BORRA TODO. Solo instalación inicial. */
+/**
+ * Instalación: crea las pestañas del SCHEMA que FALTEN, con su encabezado. No vacía ninguna.
+ * TRABA (20-oct-2026, pedido de Juanma): antes hacía sh.clear() en TODAS las pestañas, y correrla por error
+ * borraba calendario, cotizaciones, reservas y todo lo demás. Ahora, si alguna pestaña del SCHEMA ya tiene
+ * filas además del encabezado, se niega sin tocar nada. Una pestaña que ya existe (aunque esté vacía) no se toca.
+ */
 function setup() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
+  var conDatos = Object.keys(SCHEMA).filter(function(tab){
+    var sh = ss.getSheetByName(tab);
+    return sh && sh.getLastRow() > 1;
+  });
+  if (conDatos.length) {
+    throw new Error('setup() se niega a correr: estas pestañas ya tienen datos y no se tocan: ' + conDatos.join(', ') +
+                    '. setup() solo sirve para una hoja nueva. Para agregar una pestaña que falte, creala a mano con su encabezado.');
+  }
   Object.keys(SCHEMA).forEach(function(tab){
-    var sh = ss.getSheetByName(tab) || ss.insertSheet(tab);
-    sh.clear();
+    if (ss.getSheetByName(tab)) return;   // ya existe: no se vacía ni se reescribe
+    var sh = ss.insertSheet(tab);
     sh.getRange(1,1,1,SCHEMA[tab].length).setValues([SCHEMA[tab]]).setFontWeight('bold');
     sh.setFrozenRows(1);
   });
   var def = ss.getSheetByName('Sheet1') || ss.getSheetByName('Hoja 1');
-  if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
+  if (def && def.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(def);   // solo la hoja por defecto VACÍA
 }
 
 /** GET ?token=...&tab=calendario  -> filas como JSON */
 function doGet(e) {
   try {
-    if (e.parameter.token !== TOKEN) return json({error:'unauthorized'});
+    if (!tokenOk_(e.parameter.token, 'api')) return json({error:'unauthorized'});
     var tab = e.parameter.tab;
     if (!SCHEMA[tab]) return json({error:'tab desconocida'});
     return json({tab:tab, rows:readTab(tab)});
@@ -202,7 +239,7 @@ function doPost(e) {
     // --- Webhook de carritos ---
     // Lo llama el snippet del formulario de WIX (Carritos_WIX_Snippet.html).
     if (e.parameter.hook === 'carrito' || e.parameter.hook === 'sontickets') {
-      if (qToken !== TOKEN) return json({error:'unauthorized'});
+      if (!tokenOk_(qToken, 'carrito')) return json({error:'unauthorized'});
       return json(intakeCarrito(body));
     }
 
@@ -210,7 +247,7 @@ function doPost(e) {
     // Lo llama backend/crmReservas.js del sitio de Wix. intakeReserva() vive
     // en CRMSync.gs, mismo proyecto.
     if (e.parameter.hook === 'reserva') {
-      if (qToken !== TOKEN) return json({error:'unauthorized'});
+      if (!tokenOk_(qToken, 'reserva')) return json({error:'unauthorized'});
       return json(intakeReserva(body));
     }
     // --- Pipeline de Eventos (15-oct-2026) ---
@@ -222,14 +259,14 @@ function doPost(e) {
 
 // --- Hook desconocido: no morir en silencio ---
     if (e.parameter.hook) {
-      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook +
-                 ' · body: ' + JSON.stringify(body).slice(0,300));
+      // Sin el cuerpo: puede traer llaves (20-oct-2026 se coló el COTIZ_TOKEN en Cloud Logging).
+      Logger.log('HOOK DESCONOCIDO: ' + e.parameter.hook + ' · campos: ' + Object.keys(body || {}).join(', '));
       return json({error:'hook desconocido', hook:e.parameter.hook});
     }
 
     
     // --- API del sistema ---
-    if (body.token !== TOKEN) return json({error:'unauthorized'});
+    if (!tokenOk_(body.token, 'api')) return json({error:'unauthorized'});
     var tab = body.tab;
     if (!SCHEMA[tab]) return json({error:'tab desconocida'});
     var lock = LockService.getScriptLock(); lock.waitLock(20000);

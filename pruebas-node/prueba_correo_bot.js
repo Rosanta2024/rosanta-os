@@ -11,6 +11,7 @@ const DIR = process.env.BOT_DIR || path.join(__dirname, '..', 'apps-script', 'bo
 
 function mundo(opciones) {
   opciones = opciones || {};
+  const cacheMem = Object.assign({}, opciones.cache || {});
   const props = {}, avisos = { mail: [], wa: [], wix: [], leads: [], conv: [], borradores: [], respuestas: [], humano: [] };
   const fmt = (d, tz, f) => {
     const g = new Date(d.getTime() - 6 * 3600000);   // Guatemala, UTC-6 sin horario de verano
@@ -28,11 +29,16 @@ function mundo(opciones) {
     GmailApp: { search: () => opciones.hilos || [], sendEmail: (to, a, b) => avisos.respuestas.push({ to, b }), createDraft: (to, a, b) => avisos.borradores.push({ to, b }) },
     ContentService: { createTextOutput: (t) => ({ t, setMimeType() { return this; } }), MimeType: { JSON: 'json' } },
     UrlFetchApp: { fetch: (url, o) => {
+      if (/\/correo\/quien$/.test(url)) {   // @64: la nube dice quién atiende el correo
+        avisos.quien = (avisos.quien || 0) + 1;
+        if (opciones.quien === 'caida') throw new Error('sin red');
+        return { getResponseCode: () => (opciones.quien ? 200 : 404), getContentText: () => JSON.stringify({ modo: opciones.quien }) };
+      }
       const datos = JSON.parse(o.payload); const fn = url.split('/').pop(); avisos.wix.push({ fn, datos });
       const r = (opciones.wix && opciones.wix[fn]) ? opciones.wix[fn](datos) : { ok: false, motivo: 'NO_ENCONTRADA' };
       return { getResponseCode: () => 200, getContentText: () => JSON.stringify(r) };
     } },
-    CacheService: { getScriptCache: () => ({ get: () => null, put: () => {} }) },
+    CacheService: { getScriptCache: () => ({ get: (k) => (cacheMem[k] === undefined ? null : cacheMem[k]), put: (k, v) => { cacheMem[k] = v; } }) },
     sendWhatsApp: (pid, to, t) => { if (opciones.waRoto) throw new Error('meta'); avisos.wa.push(t); },
     logMensaje: (...a) => avisos.conv.push(a),
     logLead: (lead) => avisos.leads.push(lead),
@@ -147,6 +153,23 @@ prueba('Evento que pide persona: sale el aviso con el bloque del pipeline (notif
   assert.strictEqual(w.avisos.wa.length, 0);
 });
 
+// ---------------- @64: quién atiende el correo (día único del paso a la nube) ----------------
+prueba('@64: si la nube dice "nube", el bot de Apps Script no lee ni contesta; "sombra", sin respuesta o caída: atiende', () => {
+  const correr = (quien, cache) => {
+    const w = mundo({ quien, cache });
+    let leyo = false;
+    w.ctx.GmailApp.search = () => { leyo = true; return []; };
+    w.ctx.revisarCorreosClientes();
+    return { leyo, w };
+  };
+  assert.strictEqual(correr('nube').leyo, false);
+  assert.strictEqual(correr('sombra').leyo, true);
+  assert.strictEqual(correr('apps').leyo, true);
+  assert.strictEqual(correr(undefined).leyo, true, '404: la nube todavía no tiene el canal');
+  assert.strictEqual(correr('caida').leyo, true, 'caída y sin respuesta anterior: atiende (mejor dos que ninguno)');
+  assert.strictEqual(correr('caida', { correo_quien: 'nube' }).leyo, false, 'caída: usa la última respuesta');
+});
+
 // ---------------- Punto 2: red de seguridad cada hora, de 8 a 21 ----------------
 prueba('Red: correo de cliente sin respuesta hace más de 2 h → WhatsApp a Juanma, una sola vez por correo', () => {
   const w = mundo();
@@ -214,6 +237,12 @@ prueba('Code.js manda ?accion=reserva a Manual.js antes que la guardia de Meta',
   const code = fs.readFileSync(path.join(DIR, 'Code.js'), 'utf8');
   const i = code.indexOf("e.parameter.accion === 'reserva'"), j = code.indexOf('Guardia del webhook');
   assert.ok(i > 0 && i < j);
+});
+
+prueba('@67: el correo de confirmación cierra con "Te esperamos en Rosanta." (la mesa puede ser jardín, pérgola, cava o salón)', () => {
+  const c = fs.readFileSync(path.join(DIR, 'Cancelar.js'), 'utf8');
+  assert.ok(c.indexOf("Te esperamos en Rosanta.\\n\\nPara cambiarla") > 0 && c.indexOf('See you at Rosanta.') > 0);
+  assert.ok(!/Te esperamos en el jard|See you in the garden/.test(c));
 });
 
 console.log('\n' + n + '/' + n + ' pruebas OK');
