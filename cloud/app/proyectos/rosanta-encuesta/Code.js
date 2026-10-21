@@ -91,6 +91,13 @@ function mandarALaNube_(rating, feedback) {
   }
 }
 
+// SOLO LECTURA. Para autorizar el permiso de conexiones externas (UrlFetch) una vez desde el editor: no escribe
+// en la hoja ni guarda nada en la nube; solo pregunta si la nube contesta y lo anota en el registro.
+function probarConexionNube() {
+  var r = UrlFetchApp.fetch(NUBE_ENCUESTA_URL.replace('/encuesta/respuesta', '/salud'), { muteHttpExceptions: true, followRedirects: false });
+  Logger.log('La nube contestó ' + r.getResponseCode() + (r.getResponseCode() === 200 ? ': conexión OK.' : ': revisar.'));
+}
+
 function prop_(key) {
   return PropertiesService.getScriptProperties().getProperty(key);
 }
