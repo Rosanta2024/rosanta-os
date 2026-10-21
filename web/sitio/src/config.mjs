@@ -30,6 +30,9 @@ export const GOOGLE_PLACE_ID = 'ChIJD7ZplPAPiYURYy8eOkRI_q8';
 /** Compra de gift cards: en Wix es Wix Gift Cards. Hasta que esté Recurrente, va a WhatsApp. */
 export const GIFTCARD_URL = env.PUBLIC_GIFTCARD_URL || '';
 
+/** Formulario de cotización de /events-1 (Juanma, 20-oct): rosanta-web → pipeline de eventos. Firebase desvía /api/** a rosanta-web. */
+export const COTIZACION_URL = env.PUBLIC_COTIZACION_URL || '/api/eventos/cotizacion';
+
 // Medición (identificadores públicos que hoy carga Wix)
 export const GTM_ID = 'GTM-M78RL4HH';
 export const GA4_ID = env.PUBLIC_GA4_ID ?? 'G-C3VYE93J0F';

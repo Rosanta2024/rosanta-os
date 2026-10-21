@@ -1,0 +1,72 @@
+---
+// Formulario de cotización de eventos (decisión de Juanma, 20-oct-2026): el botón "Request a quote" / "Cotiza tu evento"
+// de /events-1 (que en Wix no llevaba a ningún lado) baja a este formulario. Lo recibe rosanta-web
+// (POST {COTIZACION_URL}, JSON) y lo pasa al pipeline de eventos y a Juanma. Funciona como formulario HTML normal y
+// mejora con JavaScript (envío sin recargar). Sin llaves en el código.
+import { COTIZACION_URL } from '../config.mjs';
+
+const { idioma = 'en' } = Astro.props;
+const es = idioma === 'es';
+const T = es ? {
+  titulo: 'Cotiza tu evento', sub: 'Cuéntanos qué tienes en mente y te escribimos con una propuesta.',
+  nombre: 'Nombre', email: 'Correo', tel: 'Teléfono / WhatsApp (opcional)', tipo: 'Tipo de evento', fecha: 'Fecha (opcional)',
+  personas: 'Personas', menu: 'Menú de interés', presupuesto: 'Presupuesto aproximado (opcional)', mensaje: 'Cuéntanos más',
+  tipos: [['privado', 'Evento privado'], ['boda', 'Boda'], ['empresa', 'Empresa'], ['cumpleanos', 'Cumpleaños'], ['otro', 'Otro']],
+  menus: [['degustacion', 'Menú Degustación'], ['especiales', 'Menú Eventos Especiales'], ['boquitas', 'Boquitas & Barra Libre'], ['no_se', 'Aún no sé']],
+  enviar: 'Enviar', ok: '¡Gracias! Te escribimos pronto con tu propuesta.', error: 'No pudimos enviarla. Escríbenos a restaurante@rosanta.rest o por WhatsApp al +502 3082 6935.'
+} : {
+  titulo: 'Request a quote', sub: "Tell us what you have in mind and we'll write back with a proposal.",
+  nombre: 'Name', email: 'Email', tel: 'Phone / WhatsApp (optional)', tipo: 'Type of event', fecha: 'Date (optional)',
+  personas: 'Guests', menu: 'Menu of interest', presupuesto: 'Approximate budget (optional)', mensaje: 'Tell us more',
+  tipos: [['privado', 'Private event'], ['boda', 'Wedding'], ['empresa', 'Corporate'], ['cumpleanos', 'Birthday'], ['otro', 'Other']],
+  menus: [['degustacion', 'Tasting Menu'], ['especiales', 'Special Events Menu'], ['boquitas', 'Bites & Open Bar'], ['no_se', 'Not sure yet']],
+  enviar: 'Send', ok: "Thank you! We'll write back soon with your proposal.", error: 'We could not send it. Please write to restaurante@rosanta.rest or WhatsApp +502 3082 6935.'
+};
+---
+<section id="cotizar" class="cotizar" data-paridad="mejora">
+  <h2>{T.titulo}</h2>
+  <p>{T.sub}</p>
+  <form class="cotizar-form" method="post" action={COTIZACION_URL} data-ok={T.ok} data-error={T.error}>
+    <input type="hidden" name="idioma" value={es ? 'es' : 'en'} />
+    <label class="trampa" aria-hidden="true">Web <input name="sitio_web" tabindex="-1" autocomplete="off" /></label>
+    <label>{T.nombre}<input name="nombre" required maxlength="120" autocomplete="name" /></label>
+    <label>{T.email}<input name="email" type="email" required maxlength="160" autocomplete="email" /></label>
+    <label>{T.tel}<input name="telefono" maxlength="40" autocomplete="tel" /></label>
+    <label>{T.tipo}<select name="tipo_evento">{T.tipos.map(([v, t]) => <option value={v}>{t}</option>)}</select></label>
+    <label>{T.fecha}<input name="fecha" type="date" /></label>
+    <label>{T.personas}<input name="personas" type="number" min="1" max="500" inputmode="numeric" /></label>
+    <label>{T.menu}<select name="menu">{T.menus.map(([v, t]) => <option value={v}>{t}</option>)}</select></label>
+    <label>{T.presupuesto}<input name="presupuesto" maxlength="120" /></label>
+    <label class="ancho">{T.mensaje}<textarea name="mensaje" rows="4" maxlength="2000"></textarea></label>
+    <p class="ancho"><button type="submit" class="boton">{T.enviar}</button></p>
+    <p class="ancho cotizar-msg" role="status" aria-live="polite"></p>
+  </form>
+</section>
+<style>
+  .cotizar { max-width: 720px; margin: 3rem auto; padding: 0 16px; }
+  .cotizar-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .cotizar-form label { display: flex; flex-direction: column; gap: 4px; font-size: .95rem; }
+  .cotizar-form .ancho { grid-column: 1 / -1; }
+  .cotizar-form input, .cotizar-form select, .cotizar-form textarea { font: inherit; padding: 10px; border: 1px solid #c9c4b8; border-radius: 6px; background: #fff; }
+  .cotizar-form .trampa { position: absolute; left: -9999px; }
+  @media (max-width: 600px) { .cotizar-form { grid-template-columns: 1fr; } }
+</style>
+<script is:inline>
+  (function () {
+    var f = document.querySelector('.cotizar-form'); if (!f || !window.fetch) return;
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var msg = f.querySelector('.cotizar-msg'), b = f.querySelector('button[type=submit]');
+      var d = {}; new FormData(f).forEach(function (v, k) { d[k] = v; });
+      if (d.personas === '') delete d.personas; else d.personas = Number(d.personas);
+      if (!d.fecha) delete d.fecha;
+      try { var src = JSON.parse(localStorage.getItem('trafficSource') || 'null'); if (src && typeof src === 'object') d.origen = src; } catch (e) {}
+      b.disabled = true;
+      fetch(f.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+        .then(function (x) { msg.textContent = x.ok ? f.dataset.ok : ((x.j && x.j.error) || f.dataset.error); if (x.ok) f.reset(); })
+        .catch(function () { msg.textContent = f.dataset.error; })
+        .finally(function () { b.disabled = false; });
+    });
+  })();
+</script>

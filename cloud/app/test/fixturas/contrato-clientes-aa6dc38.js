@@ -1,6 +1,6 @@
-// COPIA FIJA del contrato de rosanta-clientes (Fase 2), rama claude/nube-clientes-vivo, commit d7733d8:
-// cloud/app/src/vivo-clientes/web.js (limpiarReserva, limpiarCapi, limpiarAdventure) y hooks-wix.js (limpiarReserva, texto, numero).
-// NO se edita a mano: si Fase 2 cambia el contrato, se vuelve a copiar de su commit y se corre la prueba de contrato.
+// COPIA FIJA del contrato de rosanta-clientes (Fase 2), rama claude/nube-clientes-vivo, commit aa6dc38:
+// cloud/app/src/vivo-clientes/web.js (validadores) y hooks-wix.js (limpiarReserva, texto, numero). NO se edita a mano:
+// si Fase 2 cambia el contrato, se vuelve a copiar de su commit y se corre test/contrato-clientes.test.js.
 'use strict';
 function texto(v, max) {
   if (v === undefined || v === null) return '';
@@ -84,9 +84,31 @@ function limpiarAdventure(b) {
   if (b.fecha !== null && !(typeof b.fecha === 'string' && FECHA.test(b.fecha))) return { error: 'fecha invalida' };
   if (b.personas !== null && !(Number.isInteger(b.personas) && b.personas > 0 && b.personas <= 200)) return { error: 'personas invalido' };
   if (b.cena !== null && !(soloLlaves(b.cena, ['fecha', 'hora', 'personas']) && typeof b.cena.fecha === 'string' && FECHA.test(b.cena.fecha) && typeof b.cena.hora === 'string' && /^\d{2}:\d{2}$/.test(b.cena.hora) && Number.isInteger(b.cena.personas))) return { error: 'cena invalida' };
-  if (!b.origen || typeof b.origen !== 'object' || Array.isArray(b.origen) || Object.keys(b.origen).length > 12 ||
-      !Object.entries(b.origen).every(([k, v]) => /^[A-Za-z0-9_.-]{1,40}$/.test(k) && typeof v === 'string' && v.length <= 300)) return { error: 'origen invalido' };
+  if (!origenValido(b.origen)) return { error: 'origen invalido' };
   return { cuerpo: Object.assign(c, { id: b.id, experiencia: b.experiencia, idioma: b.idioma, fecha: b.fecha, personas: b.personas, cena: b.cena, origen: b.origen }) };
 }
 
-module.exports = { limpiarReserva, limpiarCapi, limpiarAdventure, esPrueba, COMMIT: 'd7733d8' };
+/** "Request a quote" de /events-1 (decision de Juanma del 20-oct): 13 llaves fijas. */
+function limpiarCotizacion(b) {
+  const L = ['id', 'tipo', 'tipo_evento', 'nombre', 'email', 'telefono', 'idioma', 'fecha', 'personas', 'menu', 'presupuesto', 'mensaje', 'origen'];
+  if (!soloLlaves(b, L) || Object.keys(b).length !== L.length) return { error: 'cuerpo con otra forma (van las 13 llaves)' };
+  if (typeof b.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(b.id)) return { error: 'id invalido (uuid en minusculas)' };
+  if (b.tipo !== 'evento') return { error: 'tipo invalido' };
+  if (['privado', 'boda', 'empresa', 'cumpleanos', 'otro'].indexOf(b.tipo_evento) === -1) return { error: 'tipo_evento invalido' };
+  if (['degustacion', 'especiales', 'boquitas', 'no_se'].indexOf(b.menu) === -1) return { error: 'menu invalido' };
+  const c = {};
+  for (const [k, max, opc] of [['nombre', 120], ['email', 160], ['telefono', 40, true], ['presupuesto', 200], ['mensaje', 2000]]) {
+    const v = txt(b[k], max, opc); if (v === null) return { error: k + ' invalido' }; c[k] = v;
+  }
+  if (!c.nombre || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) || c.email !== c.email.toLowerCase()) return { error: 'falta nombre o correo valido' };
+  if (['es', 'en'].indexOf(b.idioma) === -1) return { error: 'idioma invalido' };
+  if (b.fecha !== null && !(typeof b.fecha === 'string' && FECHA.test(b.fecha))) return { error: 'fecha invalida' };
+  if (b.personas !== null && !(Number.isInteger(b.personas) && b.personas > 0 && b.personas <= 1000)) return { error: 'personas invalido' };
+  if (!origenValido(b.origen)) return { error: 'origen invalido' };
+  return { cuerpo: Object.assign(c, { id: b.id, tipo_evento: b.tipo_evento, idioma: b.idioma, fecha: b.fecha, personas: b.personas, menu: b.menu, origen: b.origen }) };
+}
+
+const origenValido = (o) => !!o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length <= 12 &&
+  Object.entries(o).every(([k, v]) => /^[A-Za-z0-9_.-]{1,40}$/.test(k) && typeof v === 'string' && v.length <= 300);
+
+module.exports = { limpiarReserva, limpiarCapi, limpiarAdventure, limpiarCotizacion, esPrueba, COMMIT: 'aa6dc38' };

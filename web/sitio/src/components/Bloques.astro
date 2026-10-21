@@ -7,6 +7,7 @@
 import Bloques from './Bloques.astro';
 import Imagen from './Imagen.astro';
 import FormularioReservas from './FormularioReservas.astro';
+import FormularioCotizacion from './FormularioCotizacion.astro';
 import ResenasGoogle from './ResenasGoogle.astro';
 import Faq from './Faq.astro';
 import Privacidad from './Privacidad.astro';
@@ -85,7 +86,12 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       return <div id={b.id} class:list={['rico', conPos(b)]} style={pos(b)} set:html={htmlResponsivo(imagenesLocales(b.html))} />;
     case 'boton': {
       const href = b.ancla ? hrefMenu({ ancla: b.ancla, href: b.href }, idioma) : b.href;
-      // Sin enlace en Wix (p. ej. "Request a quote" en /events-1): se copia igual, como botón.
+      // "Request a quote" / "Cotiza tu evento" (/events-1): en Wix no llevaba a ningún lado. Decisión de Juanma (20-oct):
+      // baja al formulario de cotización, que va justo debajo del botón.
+      if (!href && /request a quote|cotiza tu evento/i.test(String(b.texto || ''))) {
+        return <><p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href="#cotizar">{b.texto}</a></p><FormularioCotizacion idioma={idioma} /></>;
+      }
+      // Sin enlace en Wix: se copia igual, como botón.
       if (!href) return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><button id={b.id} type="button" class="boton">{b.texto}</button></p>;
       return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href={href} {...(b.nueva ? { target: '_blank', rel: 'noopener' } : {})}>{b.texto}</a></p>;
     }

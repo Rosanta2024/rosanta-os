@@ -1,9 +1,9 @@
 // Prueba de CONTRATO rosanta-web → rosanta-clientes (Fase 2). Lo que mandan nuestros ganchos REALES (motor y Adventures)
-// tiene que pasar los validadores de Fase 2 copiados tal cual de su commit (test/fixturas/contrato-clientes-d7733d8.js).
+// tiene que pasar los validadores de Fase 2 copiados tal cual de su commit (test/fixturas/contrato-clientes-aa6dc38.js).
 // Si Fase 2 cambia su contrato: volver a copiar sus validadores y correr esto. Sin red.
 const test = require('node:test');
 const assert = require('node:assert');
-const F2 = require('./fixturas/contrato-clientes-d7733d8');
+const F2 = require('./fixturas/contrato-clientes-aa6dc38');
 const { baseLista } = require('./reservas-base');
 const { crearMotor } = require('../src/reservas/motor');
 const C = require('../src/reservas/comun');
@@ -63,4 +63,21 @@ test('pipeline-adventure: la consulta real (con cena) pasa el validador de Fase 
     assert.deepStrictEqual(l.error, undefined, JSON.stringify(x));
   }
   assert.strictEqual(typeof enviados[0].id, 'number');
+});
+
+test('pipeline-cotizacion: lo que arma el formulario de cotización pasa el validador de Fase 2 (completo y mínimo)', () => {
+  const Q = require('../src/cotizacion-web');
+  const ahora = Date.parse('2026-11-10T16:00:00Z');
+  const casos = [
+    { nombre: 'Ana', email: 'Ana@Ejemplo.Test', telefono: '+502 5555 1234', idioma: 'en', tipo_evento: 'boda', fecha: '2026-12-12', personas: 80, menu: 'especiales',
+      presupuesto: 'Q40,000', mensaje: 'Jardín', origen: { source: 'chatgpt.com', utm_source: 'chatgpt.com', timestamp: 1792533894 } },
+    { nombre: 'Beto', email: 'beto@ejemplo.test', idioma: 'es' },
+    { nombre: 'Caro', email: 'c@ejemplo.test', tipo_evento: 'inventado', menu: 'otro', personas: '12' }
+  ];
+  for (const x of casos) {
+    const a = Q.armarCotizacion(x, ahora, () => require('crypto').randomUUID());
+    assert.strictEqual(a.error, undefined);
+    assert.deepStrictEqual(F2.limpiarCotizacion(a.cuerpo).error, undefined, JSON.stringify(a.cuerpo));
+    assert.strictEqual(a.cuerpo.id, a.cuerpo.id.toLowerCase());
+  }
 });

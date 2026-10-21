@@ -125,6 +125,9 @@ function crearAppWeb(deps) {
   app.use(W.crearRutasGiftcards({ giftcards, pasarela, pool, matriz, almacen, claveTareas: env.CLAVE_TAREAS }));
   app.use(W.crearRutasContenidoWeb({ contenido, pool }));
   app.use(W.crearRutasAdventures({ adventures, pool, claveTareas: env.CLAVE_TAREAS }));
+  // Cotización de eventos ("Request a quote" de /events-1): al pipeline de rosanta-clientes y aviso a Juanma
+  app.use(require('./cotizacion-web').crearRutasCotizacion({ pipeline: ganchoInterno(env, '/interno/web/pipeline-cotizacion', deps.fetch),
+    avisarJuanma: avisoJuanma(canales) }));
 
   // ---- El json global va al FINAL (guardando el cuerpo crudo por si algun router lo necesita)
   app.use(express.json({ limit: '200kb', verify: W.guardarCuerpoCrudo }));
