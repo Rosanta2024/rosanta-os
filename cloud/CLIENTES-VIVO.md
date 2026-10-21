@@ -59,3 +59,6 @@ Los avisos de Wix los recibe rosanta-nube (`/hooks/carrito`, `/hooks/reserva`). 
 
 ## Migraciones en producción (aviso del Estudio, 20-oct-2026)
 En `rosanta`, SIEMPRE con `--solo`: `node cloud/herramientas/migrar.js --base rosanta --solo 017_x.sql` (sin `--aplicar` primero, para ver la lista) y después `--aplicar`. Sin `--solo` se aplicarían también las migraciones de otras ramas que esperan su día (así se adelantó la 050 el 20-oct). Antes, el respaldo: `gcloud sql backups create --instance rosanta-db --description "antes de …"`.
+
+## COTIZ_TOKEN rotado (21-oct-2026, sesión C)
+C rotó la llave de la revisión diaria de cotizaciones (Marketing OS › cotHook_ acepta COTIZ_TOKEN, y la vieja hasta el 22-oct). rosanta-clientes en producción todavía NO tiene esa llave (`/hooks/cotizaciones` contesta unauthorized). **El día único (5-nov), con el sí de Juanma, se carga en Secret Manager la llave NUEVA** (el valor de `~/.rosanta-secretos/cotizaciones-token` después de la rotación) y se conecta como `COTIZ_TOKEN_VIVO`. Antes, traer main a esta rama para que la copia de `Cotizaciones.js` tenga `cotTokenOk_`.
