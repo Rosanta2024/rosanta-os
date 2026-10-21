@@ -4024,6 +4024,133 @@
      ]
     }
    ]
+  },
+  {
+   "origen": "armado a mano 2026-10-21 (en lugar del ensayo)",
+   "estado": null,
+   "canal": "whatsapp",
+   "id": "BOT-01",
+   "grupo": "menu_precios",
+   "perfil": "Lucía Prueba",
+   "titulo": "Ensayo 1: \"Hola\" → saluda y muestra los 4 botones",
+   "eventos": [
+    {
+     "t": "2026-11-14T13:00:00-06:00",
+     "de": "cliente",
+     "texto": "Hola",
+     "grabado": {
+      "respuesta": "¡Hola Lucía! ¿En qué te ayudo?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo",
+      "email": "",
+      "nombre": "Lucía Prueba",
+      "lead": {
+       "mostrar_menu": true
+      }
+     },
+     "reglas": [
+      "contesta",
+      "tiene_boton:Reservar mesa",
+      "tiene_boton:Ver menú",
+      "tiene_boton:Evento privado",
+      "tiene_boton:Hablar con alguien",
+      "no_nombra_a_juanma"
+     ]
+    }
+   ]
+  },
+  {
+   "origen": "armado a mano 2026-10-21 (en lugar del ensayo)",
+   "estado": null,
+   "canal": "whatsapp",
+   "id": "BOT-02",
+   "grupo": "menu_precios",
+   "perfil": "Lucía Prueba",
+   "titulo": "Ensayo 2: toca el botón \"Ver menú\" → manda el enlace del menú sin pasar por el modelo",
+   "eventos": [
+    {
+     "t": "2026-11-14T13:00:00-06:00",
+     "de": "cliente",
+     "texto": "Hola",
+     "grabado": {
+      "respuesta": "¡Hola Lucía! ¿En qué te ayudo?",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "es",
+      "resumen": "Saludo",
+      "email": "",
+      "nombre": "Lucía Prueba",
+      "lead": {
+       "mostrar_menu": true
+      }
+     }
+    },
+    {
+     "t": "2026-11-14T13:00:05-06:00",
+     "de": "bot",
+     "texto": "¡Hola Lucía! ¿En qué te ayudo?"
+    },
+    {
+     "t": "2026-11-14T13:00:30-06:00",
+     "de": "cliente",
+     "texto": "🔘 Ver menú",
+     "reglas": [
+      "contesta",
+      "contiene:rosanta.rest/men",
+      "no_pasa_a_juanma"
+     ]
+    }
+   ]
+  },
+  {
+   "origen": "armado a mano 2026-10-21 (en lugar del ensayo)",
+   "estado": null,
+   "canal": "whatsapp",
+   "id": "EVE-08",
+   "grupo": "eventos",
+   "perfil": "Juan Prueba",
+   "titulo": "Ensayo 11: cotizar una cena de 30 el 12 de diciembre → pide el presupuesto con botones",
+   "eventos": [
+    {
+     "t": "2026-11-14T15:00:00-06:00",
+     "de": "cliente",
+     "texto": "Quiero cotizar una cena para 30 personas el 12 de diciembre, me llamo Juan, mi correo es juan@ejemplo.test",
+     "grabado": {
+      "respuesta": "¡Qué buen plan, Juan! ¿Cuánto tienes en mente por persona, con bebidas incluidas? Así te propongo el menú que mejor te calce.",
+      "categoria": "evento",
+      "humano": true,
+      "idioma": "es",
+      "resumen": "Cena de 30 el 12 de diciembre",
+      "email": "juan@ejemplo.test",
+      "nombre": "Juan Prueba",
+      "lead": {
+       "tipo": "evento",
+       "accion": "recolectar_evento",
+       "tipo_evento": "cena",
+       "fecha": "2026-12-12",
+       "personas": "30",
+       "email": "juan@ejemplo.test",
+       "nombre": "Juan Prueba",
+       "opciones": [
+        "Hasta Q400",
+        "Q400 a Q550",
+        "Más de Q550",
+        "Aún no lo sé"
+       ],
+       "requiere_humano": true
+      }
+     },
+     "reglas": [
+      "contesta",
+      "tiene_boton:Hasta Q400",
+      "tiene_boton:Aún no lo sé",
+      "aviso_con_datos_evento",
+      "no_inventa_precios"
+     ]
+    }
+   ]
   }
  ]
 }

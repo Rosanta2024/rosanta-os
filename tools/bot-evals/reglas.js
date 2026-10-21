@@ -83,6 +83,11 @@ const REGLAS = {
   // 19-oct-2026 (Louise): un correo que el bot no resolvió nunca queda sin aviso a Juanma.
   avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: t.avisoJuanma, detalle: t.avisoJuanma ? '' : 'no le llegó a Juanma el aviso "Lead para atender"' }) },
   // @65 (20-oct-2026): una foto sin texto por WhatsApp siempre le llega a Juanma ("📷 Foto de cliente").
+  // 21-oct-2026 (en lugar del ensayo): que la respuesta traiga un botón con ese título.
+  tiene_boton: { clase: 'flujo', f: (t, arg) => {
+    const ok = (t.botones || []).some((b) => String(b).toLowerCase() === String(arg).toLowerCase());
+    return { ok, detalle: ok ? '' : 'sin el botón "' + arg + '" (botones: ' + ((t.botones || []).join(' · ') || 'ninguno') + ')' };
+  } },
   avisa_foto: { clase: 'flujo', f: (t) => ({ ok: t.avisoFoto, detalle: t.avisoFoto ? '' : 'no le llegó a Juanma el aviso "Foto de cliente"' }) },
   no_avisa_a_juanma: { clase: 'flujo', f: (t) => ({ ok: !t.avisoJuanma, detalle: t.avisoJuanma ? 'le avisó a Juanma sin necesidad' : '' }) },
   aviso_con_datos_evento: { clase: 'flujo', f: (t) => ({ ok: t.pipeline, detalle: t.pipeline ? '' : 'el aviso a Juanma no trae el bloque del evento' }) },
