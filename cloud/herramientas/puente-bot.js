@@ -37,8 +37,9 @@ function preparar() {
   for (const s of ['bot-verify-token-nube', 'bot-webhook-nube']) {
     if (!existe(s)) { gcloud(['secrets', 'create', s, '--replication-policy=automatic', '--data-file=-'], crypto.randomBytes(24).toString('hex')); console.log('Creado ' + s); }
   }
-  for (const s of ['bot-verify-token-nube', 'bot-webhook-nube', 'bot-webhook-apps']) {
-    if (!existe(s)) { console.log('FALTA el secreto ' + s + ' (lo crea Juanma: el WEBHOOK_SECRET de las Propiedades del bot).'); continue; }
+  // Los del modo vivo (los crea Juanma en la consola, copiándolos de las Propiedades del bot) también reciben lectura.
+  for (const s of ['bot-verify-token-nube', 'bot-webhook-nube', 'bot-webhook-apps', 'bot-wa-token', 'bot-ig-token', 'bot-messenger-token', 'bot-anthropic']) {
+    if (!existe(s)) { console.log('FALTA el secreto ' + s + ' (lo crea Juanma copiándolo de las Propiedades del bot).'); continue; }
     gcloud(['secrets', 'add-iam-policy-binding', s, '--member=serviceAccount:' + CUENTA, '--role=roles/secretmanager.secretAccessor', '--format=none']);
     console.log('Lectura para el bot: ' + s);
   }
