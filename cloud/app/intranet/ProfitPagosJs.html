@@ -240,7 +240,17 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       var esPago = function (p) { return !/antes/i.test(p.estatus); };
       var pag = D.facturas.filter(function (f) { return f.pagos.some(esPago); }).slice().reverse();
       if (!pag.length) return '<div class="pg-vacio">Todavía no hay pagos anotados.</div>';
-      return '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>Factura</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
+      // las compras de Compras que se casaron solas con su factura y no dan el mismo monto (21-oct-2026)
+      var DF = D.diferencias || [];
+      var difs = DF.length ? '<section class="pg-prov"><h3>Compras con diferencia contra su factura (' + DF.length + ')</h3>' +
+        '<p class="pg-nota">La compra anotada en Compras se casó sola con la factura que llegó. Revisá si el monto pagado es el correcto.</p>' +
+        '<div class="pg-scroll"><table class="pg-t"><tr><th>Proveedor</th><th>Factura</th><th class="n">Factura</th><th>Compra</th><th class="n">Pagado</th><th class="n">Diferencia</th></tr>' +
+        DF.map(function (d) {
+          return '<tr><td>' + esc(d.proveedor) + '</td><td>' + esc(d.dtes.join(', ')) + '<div class="pg-nota">' + esc(ddmm(d.fecha_factura)) + '</div></td><td class="n">' + q(d.total) + '</td>' +
+            '<td>' + esc(ddmm(d.fecha_compra)) + '<div class="pg-nota">' + esc(d.por) + '</div></td><td class="n">' + q(d.compra_q) + '</td>' +
+            '<td class="n"><b>' + q(Math.abs(d.diferencia)) + '</b><div class="pg-nota">' + (d.diferencia > 0 ? 'la factura es mayor' : 'se pagó más') + '</div></td></tr>';
+        }).join('') + '</table></div></section>' : '';
+      return difs + '<div class="pg-scroll"><table class="pg-t"><tr><th>Área</th><th>Proveedor</th><th>Factura</th><th>Fecha pagado</th><th class="n">Cantidad pagada</th><th>Estatus de pago</th><th></th></tr>' +
         pag.map(function (f) {
           return f.pagos.filter(esPago).map(function (p) {
             return '<tr><td>' + esc(f.grupo) + '</td><td>' + esc(f.proveedor) + '</td><td>' + esc(f.dte) + '</td><td>' + esc(ddmm(p.fecha)) + '</td>' +
@@ -415,6 +425,9 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       (/confirmad/i.test(p.estatus) ? ' <span class="pg-est ok">banco</span>' : p.estatus === 'Banco por correo' ? ' <span class="pg-est abon" title="El BI avisó la transferencia por correo. Se confirma con el estado de cuenta del lunes.">aviso del banco</span>' : p.estatus === 'Banco' ? ' <span class="pg-est banco">por confirmar</span>' : '') +
       (p.fecha_marca && p.fecha_marca !== p.fecha ? ' <span class="pg-nota">(marcado el ' + esc(ddmm(p.fecha_marca)) + ')</span>' : '') +
       (manual && p.por ? ' <span class="pg-nota">(confirmó ' + esc(p.por) + ')</span>' : '') +
+      // casada sola con la compra de Compras (21-oct-2026): lo que se pago y la diferencia con la factura
+      (p.compra ? ' <span class="pg-est ' + (Math.abs(p.diferencia) > 0.01 ? 'pend' : 'ok') + '" title="' + esc(p.detalle || '') + '">' +
+        (Math.abs(p.diferencia) > 0.01 ? 'diferencia ' + q(Math.abs(p.diferencia)) : 'mismo monto que la compra') + '</span>' : '') +
       // anular desde el historial (16-oct-2026, Juanma: el abono de Q414 a Doorways no se podia corregir desde aca).
       // Lo que entro de COMPRAS_2026 no es un pago; un pago confirmado con el banco lo anula el dueño.
       (p.id && !/antes/i.test(p.estatus) && (!manual || D.rol === 'dueno') ? ' <button type="button" class="pg-x" data-anular="' + esc(p.id) + '">anular</button>' : '') +

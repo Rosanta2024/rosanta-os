@@ -1,1 +1,1 @@
-68ede3b 2026-10-21 Intranet del jueves 22: los 5 archivos de la Fase 2 (52334e6: Marketing en sombra/base, Eventos, eventosUrl_) y la lista de Clientes con NubeClientes.js
+357372c 2026-10-21 Merge remote-tracking branch 'origin/main' into claude/infallible-roentgen-5185e3
