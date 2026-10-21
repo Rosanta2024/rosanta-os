@@ -261,6 +261,18 @@ function prCimientos_(res) {
       malos.length, 0);
   });
 
+  // 21-oct-2026: la clave que la intranet usa para hablarle al servidor nuevo (NubePagos.js: el cierre del dia y
+  // "Leer cierres" en la nube). Se prueba contra /tareas/eco, que no hace nada: solo contesta si la clave es la buena.
+  prCorrer_(g, 'La clave de la nube (NUBE_CLAVE_TAREAS) abre el servidor nuevo', function () {
+    var nombre = 'La clave de la nube (NUBE_CLAVE_TAREAS) abre el servidor nuevo';
+    var clave = PropertiesService.getScriptProperties().getProperty('NUBE_CLAVE_TAREAS');
+    if (!clave) { prAnotar_(g, nombre, 'FALLA', 'Falta NUBE_CLAVE_TAREAS en las Propiedades del script', 1, 0); return; }
+    var r = UrlFetchApp.fetch(NUBE_PAGOS_URL_.replace(/\/pagos$/, '/tareas/eco'), { method: 'post', headers: { 'x-rosanta-tarea': clave }, muteHttpExceptions: true });
+    var c = r.getResponseCode();
+    prAnotar_(g, nombre, c === 200 ? 'OK' : 'FALLA', c === 200 ? 'el servidor nuevo acepta la clave'
+      : 'respondio ' + c + (c === 403 ? ': la clave no coincide con el secreto clave-tareas' : ''), c === 200 ? 0 : 1, 0);
+  });
+
   prCorrer_(g, 'Los carriles cubren cada grupo una vez', function () {
     var nombre = 'Los carriles cubren cada grupo una vez';
     var vistos = {}, dobles = [];

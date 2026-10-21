@@ -56,6 +56,10 @@ function crearApp(deps) {
     res.json({ nombre: u.nombre, rol: u.rol, modulos: u.modulos });
   });
 
+  /** Eco (21-oct-2026): no hace nada; solo dice si la clave de tareas es la buena. La batería de la intranet lo usa
+   *  para probar NUBE_CLAVE_TAREAS sin leer ni escribir nada. */
+  app.post('/tareas/eco', exigirTarea, (req, res) => res.json({ ok: true }));
+
   /** Copia la hoja USUARIOS a la base. La llama una tarea (o Claude a mano) con la clave. */
   app.post('/tareas/sincronizar-usuarios', exigirTarea, async (req, res, next) => {
     try {

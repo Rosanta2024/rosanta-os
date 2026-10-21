@@ -86,3 +86,14 @@ test('Una hoja vacia no borra los usuarios que ya estan en la base', async () =>
     assert.strictEqual(pool.db.usuarios.length, 1);
   });
 });
+
+test('/tareas/eco: con la clave 200, sin ella 403 (la bateria de la intranet prueba NUBE_CLAVE_TAREAS)', async () => {
+  const { crearApp } = require('../src/app');
+  const srv = crearApp({ pool: { query: async () => ({ rows: [] }) }, claveTareas: 'k' }).listen(0);
+  const b = 'http://127.0.0.1:' + srv.address().port;
+  try {
+    assert.strictEqual((await fetch(b + '/tareas/eco', { method: 'POST', headers: { 'x-rosanta-tarea': 'k' } })).status, 200);
+    assert.strictEqual((await fetch(b + '/tareas/eco', { method: 'POST', headers: { 'x-rosanta-tarea': 'otra' } })).status, 403);
+    assert.strictEqual((await fetch(b + '/tareas/eco', { method: 'POST' })).status, 403);
+  } finally { srv.close(); }
+});
