@@ -140,7 +140,8 @@ function doGet(e) {
     if (sub === 'eventos' && !puedeEventos_(usuario)) sub = 'os';
     return render_('SistemaMarketing', {
       usuario: usuario, urlBase: urlBase, sub: sub, authToken: authToken,
-      resenasUrl: CONFIG.RESENAS_URL, consolaUrl: CONFIG.CONSOLA_URL
+      // Reseñas: el panel en vivo del servidor nuevo cuando manda la nube; si no, el de siempre (NubeResenas.js).
+      resenasUrl: resenasDestino_(usuario, authToken, (e && e.parameter && e.parameter.nube) === 'ensayo' ? 'ensayo' : ''), consolaUrl: CONFIG.CONSOLA_URL
     });
   }
 
