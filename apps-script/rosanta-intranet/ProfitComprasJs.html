@@ -162,7 +162,12 @@ window.PF_COMPRAS = function (HOST, AUTH) {
     var filas = D.registradas.map(function (m) {
       var url = /recibo: (https:\/\/(?:drive|docs)\.google\.com\/\S+)/i.exec(m.detalle), det = m.detalle.replace(/\s*·?\s*recibo: \S+/, '');
       var puede = D.rol === 'dueno' || m.por === D.nombre;
+      var cs = m.casada, dif = cs && Math.abs(cs.diferencia) > 0.01;
       var fac = m.factura ? esc(ddmm(m.fecha_factura)) + '<div class="pg-nota">' + esc(m.factura) + '</div>'
+        // llego la factura y se caso sola (21-oct-2026): la compra queda como el pago de esa factura
+        : cs ? esc(ddmm(cs.fecha)) + '<div class="pg-nota">' + esc(cs.dtes.join(', ')) + (cs.dtes.length > 1 ? ' · ' + q(cs.total) : '') + '</div>' +
+          (dif ? '<span class="pg-est pend" title="La factura es de ' + esc(q(cs.total)) + '">diferencia ' + q(Math.abs(cs.diferencia)) + (cs.diferencia > 0 ? ' (factura mayor)' : ' (se pagó más)') + '</span>'
+               : '<span class="pg-est ok">mismo monto</span>')
         : m.pendiente ? '<span class="pg-est pend">Pendiente de emitir</span>' + (puede ? ' <button type="button" class="pg-x" style="color:var(--vb)" data-asignar="' + esc(m.id) + '">asignar factura</button>' : '')
         : '<span class="pg-nota">no dan factura</span>';
       var asig = ASIGNAR === m.id ? '<tr><td colspan="5"><div class="pg-panel" data-asig="' + esc(m.id) + '"><b>¿Qué factura es?</b> ' +

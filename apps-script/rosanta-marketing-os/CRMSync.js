@@ -79,6 +79,12 @@ var RANGO_SEGMENTO = {
 //  FUNCIÓN PRINCIPAL
 // =================================================================
 function sincronizarCRM() {
+  // Un solo escritor del CRM (21-oct-2026): con PARAMETROS › motor_crm = base, el CRM lo sincroniza el servidor
+  // nuevo (rosanta-clientes, con este mismo codigo). Aca no se hace nada; volver atras = motor_crm = sheets.
+  // En el servidor nuevo NUBE_SERVIDOR_ es true y la cerradura no aplica.
+  if (!(typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_) && crmMotor_() === 'base') {
+    return 'CRM en el servidor nuevo (motor_crm = base): aquí no se sincroniza.';
+  }
   var candado = LockService.getScriptLock();
   if (!candado.tryLock(30000)) return 'Otra corrida está en curso, esta se salta.';
 
@@ -203,6 +209,20 @@ function sincronizarCRM() {
   } finally {
     candado.releaseLock();
   }
+}
+
+/** PARAMETROS › motor_crm de Rosanta_Intranet_Config ('base' o 'sheets'; 1 minuto de cache). Como cotMotor_. */
+function crmMotor_() {
+  var cache = CacheService.getScriptCache(), g = null;
+  try { g = cache.get('crm_motor_v1'); } catch (e) { g = null; }
+  if (g === 'base' || g === 'sheets') return g;
+  var m = 'sheets';
+  try {
+    var v = SpreadsheetApp.openById(COT_CONFIG_ID).getSheetByName('PARAMETROS').getDataRange().getValues();
+    for (var i = 1; i < v.length; i++) if (String(v[i][0] || '').trim().toLowerCase() === 'motor_crm') { m = String(v[i][1] || '').trim().toLowerCase() === 'base' ? 'base' : 'sheets'; break; }
+  } catch (e) { m = 'sheets'; }
+  try { cache.put('crm_motor_v1', m, 60); } catch (e) { /* sin cache */ }
+  return m;
 }
 
 /** Se dispara sola apenas cambia el Marketing OS. */

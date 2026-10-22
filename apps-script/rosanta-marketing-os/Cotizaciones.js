@@ -191,6 +191,11 @@ function cotGuardarRevision_(r) {
 function cotHook_(body) {
   if (!cotTokenOk_(body.token)) return { ok: false, error: 'unauthorized' };
   var a = body.accion;
+  // Con PARAMETROS › motor_eventos = base, el pipeline se guarda en el servidor nuevo: aca solo se lee
+  // (19-oct-2026). cot.sh ya apunta alla; si algo llega aca igual, se niega en vez de escribir por dos lados.
+  if ((a === 'batch' || a === 'revision') && cotMotor_() === 'base') {
+    return { ok: false, error: 'El pipeline se mudó al servidor nuevo: la revision diaria tiene que usar la direccion nueva (cot.sh).' };
+  }
   if (a === 'list') return { ok: true, filas: cotLeer_() };
   if (a === 'get') {
     var f = cotLeer_().filter(function (d) { return d.id === body.id; })[0];
@@ -200,6 +205,21 @@ function cotHook_(body) {
   if (a === 'revision') return cotGuardarRevision_(body.revision || {});
   if (a === 'revisiones') return { ok: true, revisiones: cotRevisiones_() };
   return { ok: false, error: 'acción desconocida' };
+}
+
+/** PARAMETROS › motor_eventos de Rosanta_Intranet_Config ('base' o 'sheets'; 1 minuto de cache). */
+var COT_CONFIG_ID = '1OMFJUuW9TEp4cMaVculJgegDF1PqrsRJOQCT3VQX2Rw';
+function cotMotor_() {
+  var cache = CacheService.getScriptCache(), g = null;
+  try { g = cache.get('cot_motor_v1'); } catch (e) { g = null; }
+  if (g === 'base' || g === 'sheets') return g;
+  var m = 'sheets';
+  try {
+    var v = SpreadsheetApp.openById(COT_CONFIG_ID).getSheetByName('PARAMETROS').getDataRange().getValues();
+    for (var i = 1; i < v.length; i++) if (String(v[i][0] || '').trim().toLowerCase() === 'motor_eventos') { m = String(v[i][1] || '').trim().toLowerCase() === 'base' ? 'base' : 'sheets'; break; }
+  } catch (e) { m = 'sheets'; }
+  try { cache.put('cot_motor_v1', m, 60); } catch (e) { /* sin cache */ }
+  return m;
 }
 
 /**

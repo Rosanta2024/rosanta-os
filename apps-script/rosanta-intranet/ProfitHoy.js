@@ -53,6 +53,10 @@ function getHoyProfit(auth) {
     // el dueño: cargos del banco o de la tarjeta que parecen el pago de una factura (13-oct-2026)
     if (esDueno && E.posibles && E.posibles.length) add({ urgente: false, texto: E.posibles.length + (E.posibles.length === 1 ? ' posible pago del banco' : ' posibles pagos del banco') + ' para confirmar',
       detalle: 'Cargos con el monto exacto de una factura pendiente. Si es el pago, la factura sale de Por pagar.', vista: 'pagos', sub: 'posibles', boton: 'Revisar' });
+    // el dueño: compras de Compras que se casaron solas con una factura de otro monto (21-oct-2026)
+    var difs = (E.diferencias || []).filter(function (d) { return misAreas.indexOf(d.area) !== -1; });
+    if (esDueno && difs.length) add({ urgente: false, texto: difs.length + (difs.length === 1 ? ' compra con diferencia' : ' compras con diferencia') + ' contra su factura',
+      detalle: difs.slice(0, 3).map(function (d) { return d.proveedor + ' ' + Q(Math.abs(d.diferencia)); }).join(' · ') + (difs.length > 3 ? '…' : ''), vista: 'pagos', sub: 'pagadas', boton: 'Revisar' });
     var resto = abiertas.filter(function (f) { return hoyToca.indexOf(f) === -1; });
     if (resto.length) {
       var vieja = resto.reduce(function (a, f) { return !a || f.fecha < a.fecha ? f : a; }, null);
@@ -89,7 +93,21 @@ function getHoyProfit(auth) {
   // 4. Compras en efectivo y con debito (14-oct-2026, ComprasEfectivo.js): el efectivo retirado
   //    que nadie registro y los cargos de la tarjeta de debito sin compra ni factura
   if (puedePagos && (esDueno || rol === 'chef' || rol === 'sala')) intentar('Compras', function () {
-    var C = cpeCuadre_(SpreadsheetApp.openById(FIN_MAESTRO_ID), pagEstado_());
+    var E = pagEstado_(), C = cpeCuadre_(SpreadsheetApp.openById(FIN_MAESTRO_ID), E);
+    // Jeffry (y el dueño): llego la factura de uno de los tres de mercado y no hay compra anotada con que
+    // casarla (21-oct-2026, Juanma). Al anotarla en Compras como factura pendiente, se casa sola.
+    if (esDueno || rol === 'chef') {
+      var sinCompra = E.facturas.filter(function (f) { return PAG_CONTADO_NITS_.indexOf(f.nit) !== -1 && f.saldo > 0.01 && f.fecha >= PAG_CONTADO_HASTA_; })
+        .sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
+      if (sinCompra.length) {
+        var provs = []; sinCompra.forEach(function (f) { var n = f.proveedor.replace(/^DISTRIBUIDORA DE FRUTAS Y VERDURAS\s*/i, ''); if (provs.indexOf(n) === -1) provs.push(n); });
+        add({ urgente: _cpeDias_(sinCompra[0].fecha, hoyIso) >= 2,
+          texto: 'Anotar en Compras lo que pagaste a ' + provs.join(', '),
+          detalle: sinCompra.length + (sinCompra.length === 1 ? ' factura llegó' : ' facturas llegaron') + ' sin compra anotada (' + Q(sinCompra.reduce(function (a, f) { return a + f.saldo; }, 0)) + ', la primera del ' +
+            sinCompra[0].fecha.slice(8, 10) + '/' + sinCompra[0].fecha.slice(5, 7) + '). Anotá el retiro y lo que pagaste: la factura se cierra sola.',
+          vista: 'compras', boton: 'Anotar' });
+      }
+    }
     var R = C.resumen, sinJ = C.retiros.filter(function (r) { return !r.ok && _cpeDias_(r.fecha, hoyIso) >= 1; });
     if (R.por_justificar > 0.01 && sinJ.length) add({ urgente: sinJ.length >= 2,
       texto: 'Registrar las compras de ' + Q(R.por_justificar) + ' en efectivo',

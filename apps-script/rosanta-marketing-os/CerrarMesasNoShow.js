@@ -12,8 +12,9 @@
  * cuenta RESERVED como mesa abierta.
  *
  * Lee directo de Wix (no de la pestana `reservas`), asi que usa el `revision` vigente.
- * Al cambiar el estado, el webhook de Wix actualiza solo la pestana `reservas` y el CRM
- * (la reserva queda como "Reserva historica", sin evidencia de visita).
+ * Al cambiar el estado, la pestana `reservas` se marca AQUI (21-oct-2026): un cambio hecho por la API NO dispara el
+ * aviso de Wix, asi que la hoja no se enteraba sola. El CRM se pone al dia en la siguiente sincronizacion (la reserva
+ * queda como "Reserva historica", sin evidencia de visita).
  *
  * COMO SE CORRE (editor del proyecto Rosanta Marketing OS)
  *   1. revisarMesasNoShow()  no escribe. Lista las reservas que cambiaria.
@@ -62,6 +63,7 @@ function _mnsPendientes_() {
   var vistos = {};
   out.forEach(function (r) { vistos[r.id || r._id] = true; });
   var deQuery = out.length, deHoja = 0;
+  var desfasadas = [];   // en la hoja siguen RESERVED pero Wix ya las cerro (21-oct-2026: 11 de agosto)
   _mnsIdsDeHoja_(corte).forEach(function (id) {
     if (vistos[id]) return;
     vistos[id] = true;
@@ -74,13 +76,37 @@ function _mnsPendientes_() {
       var r = JSON.parse(res.getContentText()).reservation;
       var inicio = new Date((r && r.details && r.details.startDate) || 0);
       if (r && r.status === 'RESERVED' && inicio < corte && !r.archived) { out.push(r); deHoja++; }
+      else if (r && r.status && r.status !== 'RESERVED') desfasadas.push({ id: id, estado: r.status });
     } catch (e) {
       console.log('No pude leer en Wix la reserva ' + id + ' de la pestana: ' + e.message);
     }
   });
 
   out.sort(function (a, b) { return String(a.details.startDate).localeCompare(String(b.details.startDate)); });
-  return { lista: out, cred: cred, corte: corte, deQuery: deQuery, deHoja: deHoja };
+  return { lista: out, cred: cred, corte: corte, deQuery: deQuery, deHoja: deHoja, desfasadas: desfasadas };
+}
+
+/**
+ * Pone el estado en la pestana `reservas` por id (21-oct-2026). Antes se confiaba en el aviso de Wix
+ * (onReservationUpdated → crmReservas.js → intakeReserva), pero un cambio hecho por la API NO dispara ese aviso:
+ * el cierre del 5-oct dejo 11 reservas de agosto en NO_SHOW en Wix y en RESERVED aca. Solo toca la celda del
+ * estado; el CRM se pone al dia en la proxima sincronizacion. cambios: [{ id, estado }]. Devuelve cuantas cambio.
+ */
+function _mnsMarcarEnHoja_(cambios) {
+  if (!cambios || !cambios.length) return 0;
+  var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName('reservas');
+  if (!sh) return 0;
+  var v = sh.getDataRange().getValues(), H = v[0];
+  var iId = H.indexOf('id'), iE = H.indexOf('estado');
+  if (iId < 0 || iE < 0) return 0;
+  var porId = {};
+  cambios.forEach(function (c) { porId[String(c.id)] = String(c.estado); });
+  var n = 0;
+  for (var i = 1; i < v.length; i++) {
+    var nuevo = porId[String(v[i][iId] || '').trim()];
+    if (nuevo && String(v[i][iE] || '').trim().toUpperCase() !== nuevo) { sh.getRange(i + 1, iE + 1).setValue(nuevo); n++; }
+  }
+  return n;
 }
 
 /** Ids de la pestana `reservas` que siguen en RESERVED con fecha anterior al corte. */
@@ -114,6 +140,7 @@ function revisarMesasNoShow() {
   p.lista.forEach(function (r) { console.log('  ' + _mnsLinea_(r)); });
   console.log('Encontradas: ' + p.deQuery + ' por la busqueda de Wix y ' + p.deHoja + ' mas desde la pestana reservas.');
   console.log('Pasarian a NO_SHOW: ' + p.lista.length + (p.lista.length > MNS_TOPE ? '  >> SOBRE EL TOPE, no se cargaria' : ''));
+  if (p.desfasadas.length) console.log('Ademas, ' + p.desfasadas.length + ' de la pestana reservas quedarian con el estado de Wix (alla ya no estan en RESERVED).');
 }
 
 function cerrarMesasNoShow() {
@@ -122,7 +149,7 @@ function cerrarMesasNoShow() {
     console.log('NO se escribio nada: ' + p.lista.length + ' reservas superan el tope de ' + MNS_TOPE + '. Revisar primero.');
     return;
   }
-  var ok = 0, fallas = [];
+  var ok = 0, fallas = [], cerradas = [];
   p.lista.forEach(function (r) {
     var id = r.id || r._id;
     try {
@@ -135,7 +162,7 @@ function cerrarMesasNoShow() {
       });
       var code = res.getResponseCode();
       var nuevo = code === 200 ? ((JSON.parse(res.getContentText()).reservation || {}).status) : '';
-      if (code === 200 && nuevo === 'NO_SHOW') ok++;
+      if (code === 200 && nuevo === 'NO_SHOW') { ok++; cerradas.push({ id: id, estado: 'NO_SHOW' }); }
       else fallas.push(_mnsLinea_(r) + ' · HTTP ' + code + ' ' + (nuevo || res.getContentText().slice(0, 160)));
     } catch (e) {
       fallas.push(_mnsLinea_(r) + ' · ' + e.message);
@@ -143,6 +170,9 @@ function cerrarMesasNoShow() {
     Utilities.sleep(250);
   });
   console.log('Pasadas a NO_SHOW: ' + ok + ' de ' + p.lista.length + '.');
+  // la hoja no se entera sola de un cambio hecho por la API: se marca aca (y se ponen al dia las desfasadas)
+  var enHoja = _mnsMarcarEnHoja_(cerradas.concat(p.desfasadas));
+  console.log('Pestana reservas al dia: ' + enHoja + ' filas cambiadas.');
   if (fallas.length) { console.log('FALLARON ' + fallas.length + ':'); fallas.forEach(function (f) { console.log('  ' + f); }); }
 
   // releer: lo que quede en RESERVED vencido es lo que no se cerro

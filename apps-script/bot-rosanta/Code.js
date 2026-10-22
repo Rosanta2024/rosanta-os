@@ -622,6 +622,7 @@ function masterPrompt_() { return [
 //  RESPUESTA HUMANA — envía lo que escribas en la columna "Respuesta"
 // ============================================================
 function enviarRespuestasPendientes() {
+  if (nubeAtiendeBot_()) return;   // @68: con el bot de la nube atendiendo, la consola la manda la nube (Nube.js)
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
 
   // 1) Respuestas escritas en la hoja Leads (columna Respuesta) — compatibilidad
@@ -658,15 +659,23 @@ function enviarRespuestasPendientes() {
       const tipo = String(d[i][4] || '');        // 'libre' o 'imagen:<ID de Drive>'
       const enviado = d[i][5];
       const esImagen = tipo.indexOf('imagen:') === 0;
+      const esArchivo = tipo.indexOf('archivo:') === 0;   // PDF desde la consola (22-oct-2026): 'archivo:<ID de Drive>|<nombre>'
       const esDevolver = tipo === 'devolver';       // botón "Devolver al bot" de la consola
-      if ((texto || esImagen || esDevolver) && contactoId && !enviado) {
+      if ((texto || esImagen || esArchivo || esDevolver) && contactoId && !enviado) {
         try {
           if (esDevolver) {
             cola.getRange(i + 1, 6).setValue(new Date());
             humRetomar_(canal, contactoId, 'boton');
             continue;
           }
-          if (esImagen) {
+          if (esArchivo) {
+            const partes = tipo.substring(8).split('|');
+            const nombreArchivo = partes.slice(1).join('|') || 'Rosanta.pdf';
+            enviarArchivoPorCanal(canal, contactoId, partes[0], nombreArchivo, texto);
+            cola.getRange(i + 1, 6).setValue(new Date());
+            logMensaje(canal, contactoId, '', 'out', 'humano',
+              '📄 ' + nombreArchivo + (texto ? ': ' + texto : '') + '\nhttps://drive.google.com/file/d/' + partes[0] + '/view');
+          } else if (esImagen) {
             const fileId = tipo.substring(7);
             enviarImagenPorCanal(canal, contactoId, fileId, texto);
             cola.getRange(i + 1, 6).setValue(new Date());
@@ -803,9 +812,62 @@ function enviarImagenPorCanal(canal, idDestino, fileId, caption) {
   revisarEnvio_(resp);
 }
 
-function revisarEnvio_(resp) {
+/**
+ * PDF desde la consola (22-oct-2026, Juanma). WhatsApp: se sube a Meta y va como "document" con su nombre y pie.
+ * Instagram y Messenger: attachment "file" con el enlace de Drive (los dos admiten PDF hasta 25 MB); el pie va aparte.
+ * Las fotos siguen por enviarImagenPorCanal, sin cambios.
+ */
+var ARCHIVO_MAX_MB = 25;
+function enviarArchivoPorCanal(canal, idDestino, fileId, nombre, caption) {
+  canal = String(canal || '').toLowerCase();
+  const urlDrive = 'https://drive.google.com/uc?export=download&id=' + fileId;
+  let resp;
+  if (canal === 'instagram' || canal === 'messenger') {
+    const ig = canal === 'instagram';
+    const url = ig ? 'https://graph.instagram.com/' + CONFIG.GRAPH_VERSION + '/me/messages'
+                   : 'https://graph.facebook.com/' + (CONFIG.GRAPH_VERSION || 'v21.0') + '/me/messages';
+    resp = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + (ig ? CONFIG.IG_TOKEN : CONFIG.MESSENGER_TOKEN) },
+      payload: JSON.stringify({ recipient: { id: idDestino },
+        message: { attachment: { type: 'file', payload: { url: urlDrive } } } }),
+      muteHttpExceptions: true
+    });
+    revisarEnvio_(resp, 'el PDF');
+    if (caption) enviarPorCanal(canal, idDestino, caption);
+    return;
+  }
+  const arch = UrlFetchApp.fetch(urlDrive, { muteHttpExceptions: true });
+  const blob = arch.getBlob();
+  const mime = String(blob.getContentType() || '');
+  if (arch.getResponseCode() !== 200 || mime.indexOf('application/pdf') !== 0) {
+    throw new Error('No se pudo bajar el PDF de Drive (' + arch.getResponseCode() + ' ' + mime + '). ¿Está compartido con enlace?');
+  }
+  if (blob.getBytes().length > ARCHIVO_MAX_MB * 1024 * 1024) throw new Error('El PDF pesa más de ' + ARCHIVO_MAX_MB + ' MB.');
+  const base = 'https://graph.facebook.com/' + CONFIG.GRAPH_VERSION + '/' + PROPS.getProperty('WA_PHONE_NUMBER_ID');
+  const H = { Authorization: 'Bearer ' + CONFIG.WHATSAPP_TOKEN };
+  const up = UrlFetchApp.fetch(base + '/media', {
+    method: 'post', headers: H, muteHttpExceptions: true,
+    payload: { messaging_product: 'whatsapp', type: 'application/pdf', file: blob }
+  });
+  let mediaId = '';
+  try { mediaId = JSON.parse(up.getContentText()).id || ''; } catch (e) {}
+  if (!mediaId) throw new Error('Meta no aceptó el PDF: ' + up.getContentText().substring(0, 200));
+  const documento = { id: mediaId, filename: String(nombre || 'Rosanta.pdf') };
+  if (caption) documento.caption = caption;
+  resp = UrlFetchApp.fetch(base + '/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: H,
+    payload: JSON.stringify({ messaging_product: 'whatsapp', to: idDestino, type: 'document', document: documento }),
+    muteHttpExceptions: true
+  });
+  revisarEnvio_(resp, 'el PDF');
+}
+function revisarEnvio_(resp, que) {
   if (resp.getResponseCode() >= 300) {
-    throw new Error('Meta rechazó la foto (' + resp.getResponseCode() + '): ' + resp.getContentText().substring(0, 200));
+    throw new Error('Meta rechazó ' + (que || 'la foto') + ' (' + resp.getResponseCode() + '): ' + resp.getContentText().substring(0, 200));
   }
 }
 

@@ -6,6 +6,7 @@
  * Si en el día no hubo movimientos, no manda nada.
  */
 function resumenDiarioBot() {
+  if (nubeAtiendeBot_()) return;   // @68: con el bot de la nube atendiendo, el resumen lo manda la nube (Nube.js)
   var tz = 'America/Guatemala';
   var hoy = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var filas = SpreadsheetApp.openById(CONFIG.SHEET_ID).getSheetByName('Leads').getDataRange().getValues().slice(1);

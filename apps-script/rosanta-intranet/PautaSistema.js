@@ -46,7 +46,7 @@ var PS_SCHEMA = {
   reglas:        ['id', 'valor', 'descripcion', 'editado_por', 'editado_el'],
   bitacora_pruebas: ['id', 'fecha', 'autor', 'hipotesis', 'cambio', 'conjunto_id', 'conjunto',
                      'metrica_juez', 'linea_base', 'fecha_inicio', 'fecha_lectura', 'resultado',
-                     'veredicto', 'aprendizaje', 'supuesto_id', 'supuesto_queda', 'estado']
+                     'veredicto', 'aprendizaje', 'supuesto_id', 'supuesto_queda', 'estado', 'semanas']
 };
 
 /* Estados de la bitácora. Solo el dueño mueve una prueba fuera de "propuesta". */
@@ -83,7 +83,8 @@ var PS_REGLAS_BASE = [
   ['tope_cambio_pct', 20, 'Cambio máximo de presupuesto por decisión (%).'],
   ['dias_apagar', 14, 'Ventana para apagar un conjunto de conversión sin reservas.'],
   ['gasto_min_apagar', 150, 'Gasto mínimo (Q) en esa ventana antes de apagar por falta de reservas.'],
-  ['home_max_pct', 80, 'Si más de este % de un evento intermedio dispara en la home, no mide intención.'],
+  /* home_max_pct se retiró el 21-oct-2026: la agregación por URL del pixel en Meta
+     devuelve solo el dominio, así que "dispara en la home" salía siempre verdadero. */
   ['ratio_intermedio_max', 0.5, 'Si un evento intermedio supera esta fracción de los PageView, está contaminado.'],
   ['desfase_pixel_max', 50, 'Diferencia máxima (%) entre reservas del pixel y reservas de Wix antes de desconfiar del pixel.'],
   ['semanas_base', 4, 'Semanas previas que forman la línea base del negocio.']
@@ -142,6 +143,10 @@ function psSheet_(tab) {
     if (tab === 'supuestos') psSembrar_(sh, PS_SUPUESTOS_BASE.map(function (r) {
       return r.concat(['', 'sistema']);
     }));
+  } else if (sh.getLastColumn() < head.length) {
+    // Columna nueva al final del esquema (p. ej. bitacora_pruebas.semanas, 21-oct-2026):
+    // solo se reescribe la fila 1; los datos no se mueven.
+    sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
   }
   return sh;
 }
@@ -383,8 +388,46 @@ function psGraphTodo_(ruta, params) {
   return out;
 }
 
-/** Pixel de la semana: conteo por evento y URL donde más dispara cada uno. */
-function psCapturarPixel_(sem, cfg) {
+/**
+ * La conversión personalizada que cuenta las vistas de la página de reservas: regla
+ * PageView con URL que contiene cfg.url_reservas. Si hay varias, gana la que usa
+ * exactamente ese fragmento ("reserv" y no "Reservas", que la repetiría).
+ */
+function psElegirCcVistas_(ccPorId, cfg) {
+  var frag = String(cfg.url_reservas || '').toLowerCase(), exacta = '', parecida = '';
+  Object.keys(ccPorId || {}).forEach(function (id) {
+    var regla = ccPorId[id].rule;
+    if (psEventoDeRegla_(regla) !== 'PageView') return;
+    var txt = typeof regla === 'string' ? regla : JSON.stringify(regla || {});
+    var m = /"i?_?contains"\s*:\s*"([^"]*)"/i.exec(txt);
+    var valor = m ? m[1].toLowerCase() : '';
+    if (valor === frag && !exacta) exacta = id;
+    else if (valor.indexOf(frag) !== -1 && !parecida) parecida = id;
+  });
+  return exacta || parecida;
+}
+
+/** Suma un /stats de Graph venga en filas por hora ({data:[{count}]}) o planas ({count}). */
+function psSumarStats_(datos) {
+  var total = 0, alguna = false;
+  (datos || []).forEach(function (h) {
+    if (h && h.data && h.data.length) {
+      h.data.forEach(function (x) { if (x && x.count !== undefined) { total += Number(x.count) || 0; alguna = true; } });
+    } else if (h && h.count !== undefined) { total += Number(h.count) || 0; alguna = true; }
+  });
+  return alguna ? total : 0;
+}
+
+/**
+ * Pixel de la semana: conteo por evento, más las vistas de la página de reservas.
+ *
+ * Hasta el 21-oct-2026 las vistas salían de /stats con aggregation=url filtrando la
+ * URL por "reserv". Daban 0 todas las semanas: Meta devuelve en esa agregación solo
+ * el dominio (https://www.rosanta.rest/), nunca la ruta. Ahora salen del /stats de la
+ * conversión personalizada que ya cuenta esas vistas (Vista_Reservas). Si esa llamada
+ * falla, la fila no se escribe: el tablero muestra "—" y no un 0 falso.
+ */
+function psCapturarPixel_(sem, cfg, ccPorId) {
   var ini = Math.floor(new Date(sem.desde + 'T00:00:00-06:00').getTime() / 1000);
   var fin = Math.floor(new Date(sem.hasta + 'T23:59:59-06:00').getTime() / 1000);
   var base = { start_time: String(ini), end_time: String(fin) };
@@ -393,32 +436,23 @@ function psCapturarPixel_(sem, cfg) {
   (graph_(PS_PIXEL_ID + '/stats', Object.assign({ aggregation: 'event' }, base)).data || []).forEach(function (h) {
     (h.data || []).forEach(function (x) { porEvento[x.value] = (porEvento[x.value] || 0) + Number(x.count || 0); });
   });
-
-  var filas = [];
-  Object.keys(porEvento).forEach(function (ev) {
-    var fila = { evento: ev, conteo: porEvento[ev], url_top: '', pct_url_top: '' };
-    try {
-      var porUrl = {};
-      (graph_(PS_PIXEL_ID + '/stats', Object.assign({ aggregation: 'url', event: ev }, base)).data || []).forEach(function (h) {
-        (h.data || []).forEach(function (x) {
-          var u = String(x.value || '').replace(/[?#].*$/, '');
-          porUrl[u] = (porUrl[u] || 0) + Number(x.count || 0);
-        });
-      });
-      var top = Object.keys(porUrl).sort(function (a, b) { return porUrl[b] - porUrl[a]; })[0];
-      var tot = Object.keys(porUrl).reduce(function (s, k) { return s + porUrl[k]; }, 0);
-      if (top) { fila.url_top = top; fila.pct_url_top = psRedondear_(porUrl[top] / tot * 100, 1); }
-      if (ev === 'PageView') {
-        var vistas = 0;
-        Object.keys(porUrl).forEach(function (u) {
-          if (u.toLowerCase().indexOf(String(cfg.url_reservas).toLowerCase()) !== -1) vistas += porUrl[u];
-        });
-        filas.push({ evento: 'PageView·reservas', conteo: vistas, url_top: '', pct_url_top: '' });
-      }
-    } catch (e) { fila.url_top = 'no disponible: ' + String(e.message || e).slice(0, 80); }
-    filas.push(fila);
+  var filas = Object.keys(porEvento).map(function (ev) {
+    return { evento: ev, conteo: porEvento[ev], url_top: '', pct_url_top: '' };
   });
-  return filas;
+
+  var aviso = '';
+  var ccId = psElegirCcVistas_(ccPorId, cfg);
+  if (!ccId) {
+    aviso = 'No hay conversión personalizada PageView con URL "' + cfg.url_reservas + '": sin vistas de la página de reservas.';
+  } else {
+    try {
+      var r = graph_(ccId + '/stats', Object.assign({ aggregation: 'count' }, base));
+      filas.push({ evento: 'PageView·reservas', conteo: psSumarStats_(r.data), url_top: 'conversión ' + ccId, pct_url_top: '' });
+    } catch (e) {
+      aviso = 'Vistas de la página de reservas no disponibles (conversión ' + ccId + '): ' + String(e.message || e).slice(0, 120);
+    }
+  }
+  return { filas: filas, aviso: aviso };
 }
 
 /**
@@ -508,7 +542,11 @@ function psCapturar_(sem) {
   });
 
   var pixel = [], pixelError = '';
-  try { pixel = psCapturarPixel_(sem, cfg); } catch (e) { pixelError = String(e.message || e); }
+  try {
+    var px = psCapturarPixel_(sem, cfg, cc);
+    pixel = px.filas;
+    pixelError = px.aviso;
+  } catch (e) { pixelError = String(e.message || e); }
 
   var ctx = { pixel: psIndicePixel_(pixel), cfg: cfg };
   hechos.forEach(function (h) {
@@ -544,10 +582,9 @@ function psIndicePixel_(filas) {
 function psEventoContaminado_(ev, pixel, cfg) {
   var p = pixel[ev], pv = pixel.PageView;
   if (!p || ev === 'PageView' || ev === cfg.evento_conversion) return '';
-  var home = /^https?:\/\/[^\/]+\/?$/.test(String(p.url_top || ''));
-  if (home && Number(p.pct_url_top) >= cfg.home_max_pct) {
-    return ev + ' dispara ' + p.pct_url_top + '% en la home (' + p.url_top + '): no mide intención.';
-  }
+  if (ev === 'PageView·reservas') return '';
+  // Solo por proporción contra PageView. La señal "dispara en la home" se retiró el
+  // 21-oct-2026: la agregación por URL de Meta devuelve solo el dominio.
   if (pv && Number(pv.conteo) > 0 && Number(p.conteo) / Number(pv.conteo) > cfg.ratio_intermedio_max) {
     return ev + ' equivale al ' + Math.round(Number(p.conteo) / Number(pv.conteo) * 100) +
            '% de los PageView: dispara casi con cualquier visita.';
@@ -1015,6 +1052,14 @@ function psReglasPrueba_(row, previa, todas, esDueno, puedeEditar, lectura, lect
   return estado;
 }
 
+/** Semanas de una prueba: entero de 1 a 8; vacío = 1. */
+function psSemanasPrueba_(v) {
+  if (v === undefined || v === null || v === '') return 1;
+  var n = Number(v);
+  if (!(n >= 1 && n <= 8) || Math.round(n) !== n) throw new Error('La duración de una prueba va de 1 a 8 semanas.');
+  return n;
+}
+
 function psGuardarPrueba(row, auth) {
   var u = requiereSoloMarketing_(auth);
   row = row || {};
@@ -1024,6 +1069,7 @@ function psGuardarPrueba(row, auth) {
   var lectura = arranca ? psMetasSemana_(psSemanaCerrada_()).lectura : null;
   var estado = psReglasPrueba_(row, previa, todas, psEsDueno_(u), !!u.puedeEditar, lectura, psReglas_().lectura_min_juez);
 
+  if (row.semanas !== undefined && row.semanas !== '') row.semanas = psSemanasPrueba_(row.semanas);
   if (!previa) {
     row.id = 'p' + Date.now();
     row.fecha = psHoy_();
@@ -1034,8 +1080,11 @@ function psGuardarPrueba(row, auth) {
     var cfg = psReglas_();
     row.fecha_inicio = row.fecha_inicio || psHoy_();
     if (!row.fecha_lectura) {
+      // Duración en semanas (1 a 8) desde que se arranca, no desde que se propuso.
+      var semanas = psSemanasPrueba_(row.semanas !== undefined ? row.semanas : (previa && previa.semanas));
+      row.semanas = semanas;
       var f = new Date(row.fecha_inicio + 'T12:00:00');
-      f.setDate(f.getDate() + Math.max(7, cfg.dias_minimos));
+      f.setDate(f.getDate() + Math.max(7 * semanas, cfg.dias_minimos));
       row.fecha_lectura = psIso_(f);
     }
     var m = row.metrica_juez || (previa && previa.metrica_juez);
