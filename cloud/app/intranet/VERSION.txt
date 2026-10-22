@@ -1,1 +1,1 @@
-c3296d8 2026-10-22 DRE: categoria INTERESES_BANCARIOS en Gastos Financieros ("Intereses de tarjeta y préstamos"), aparte de las comisiones; Pagos no la toma como pago a proveedor; regla documentada en el maestro
+e008bb4 2026-10-22 Merge remote-tracking branch 'origin/claude/iva-automatico' into claude/infallible-roentgen-5185e3
