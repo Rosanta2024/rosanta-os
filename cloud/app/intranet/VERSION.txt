@@ -1,1 +1,1 @@
-9881fa1 2026-10-22 Pagos: marcar varias facturas para reducir IVA de un toque, e IVA automatico por proveedor (lista vacia hasta que Juanma la apruebe)
+47a9cb8 2026-10-22 Pagos: _pagEscribir_ con appendRow (no pisa la copia de la nube) y verifica cada ID; IVA automatico solo con facturas nuevas o una vez por hora

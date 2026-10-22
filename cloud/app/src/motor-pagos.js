@@ -57,6 +57,13 @@ function hoja(nombre, R, anotar) {
     getLastColumn: () => ancho(),
     getDataRange: () => ({ getValues: () => R.map((r) => { const x = r.slice(); while (x.length < ancho()) x.push(''); return x; }) }),
     getRange: (a, c, nf, nc) => (typeof a === 'string' ? rango(1, 1, 1, 1) : rango(a, c, nf, nc)),
+    // appendRow (22-oct-2026, _pagEscribir_): la fila va al final. Como en Sheets, el apostrofo inicial solo fuerza
+    // texto y no queda guardado: "'2026-10-22" se guarda "2026-10-22" (igual que lo que escribe el servidor).
+    appendRow: (fila) => {
+      const n = R.length + 1;
+      fila.forEach((x, j) => escribir(n, j + 1, typeof x === 'string' && x.charAt(0) === "'" ? x.slice(1) : x));
+      return self;
+    },
     setFrozenRows: () => self
   };
   return self;
