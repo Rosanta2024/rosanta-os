@@ -1291,6 +1291,24 @@ function prFinanzas_(res) {
       malos, 0);
   });
 
+  // Las facturas del correo entran al FEL del maestro el mismo dia (22-oct-2026, FelCorreo.js, fecAlMaestro_).
+  // Lo de hoy puede estar esperando la vuelta de calentarCaches (5 min): AVISO. Lo de 2 dias o mas que no
+  // esta es que el paso al maestro dejo de correr: FALLA.
+  prCorrer_(g, 'Las facturas del correo están en el FEL del maestro', function () {
+    var nombre = 'Las facturas del correo están en el FEL del maestro';
+    var correo = fecFacturas_();
+    if (!correo.length) { prAnotar_(g, nombre, 'SALTADA', 'FEL_CORREO sin avisos'); return; }
+    var sh = SpreadsheetApp.openById(FIN_MAESTRO_ID).getSheetByName('01_FEL_Maestro'), u = sh.getLastRow();
+    var ex = u >= FEC_FEL_PRIMERA_ ? sh.getRange(FEC_FEL_PRIMERA_, 3, u - FEC_FEL_PRIMERA_ + 1, 8).getValues().map(function (r) { return [r[0], r[1], r[2], r[7]]; }) : [];
+    var hoy = new Date(), lim = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+    var faltan = fecFilasParaMaestro_(correo, ex), viejas = faltan.filter(function (x) { return x.fila[0] < lim; });
+    var txt = function (l) { return l.slice(0, 5).map(function (x) { return x.serie + ' ' + x.numero; }).join(', '); };
+    prAnotar_(g, nombre, viejas.length ? 'FALLA' : faltan.length ? 'AVISO' : 'OK',
+      viejas.length ? viejas.length + ' de hace 2 días o más no están: ' + txt(viejas)
+        : faltan.length ? faltan.length + ' recientes esperando la próxima vuelta (cada 5 min): ' + txt(faltan)
+        : correo.length + ' avisos del correo, todos en el maestro', viejas.length, 0);
+  });
+
   // El camino rapido (15-oct-2026): despues de guardar, Pagos devuelve solo los proveedores
   // tocados (_pagCambios_) en vez de la pantalla entera. Tiene que dar EXACTAMENTE lo mismo que la
   // pantalla completa para esos proveedores: saldo, estado (abonada, por confirmar), cuadre, saldo

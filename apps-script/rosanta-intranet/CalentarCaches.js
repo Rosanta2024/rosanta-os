@@ -103,6 +103,15 @@ function calentarCaches() {
     fallo.push('FEL por correo: ' + String(e && e.message || e));
     procMarcar_('fel', e);
   }
+  // y de ahi al FEL del maestro el mismo dia (22-oct-2026): lee la hoja FEL_CORREO, la llene quien la llene
+  try {
+    var alM = fecAlMaestro_();
+    if (alM.nuevas) correo = (correo ? correo + ' · ' : '') + 'al maestro: ' + alM.nuevas;
+    var errM = alM.errores.filter(function (x) { return !/en curso/.test(x); });
+    if (errM.length) fallo.push('FEL del correo al maestro: ' + errM.slice(0, 2).join(' · '));
+  } catch (e) {
+    fallo.push('FEL del correo al maestro: ' + String(e && e.message || e));
+  }
 
   // Las transferencias que el BI avisa por correo (BancoCorreo.js, 16-oct-2026): Pagos las une a
   // su factura sin esperar el estado de cuenta del lunes. Lo leido se salta: casi siempre no-op.

@@ -924,6 +924,8 @@ function getPagosProveedores(auth) {
   // las facturas que SAT aviso por correo (FelCorreo.js). Despues de guardar no se lee Gmail:
   // es lo mas lento y la pantalla se refresca al abrirla o con Actualizar (14-oct-2026)
   var fec = _PAG_LEIDO_.escribio ? null : fecLeerSiToca_();
+  // lo nuevo del correo entra al maestro antes de armar la pantalla (22-oct-2026): asi no queda "por correo"
+  if (fec && fec.nuevos) fecAlMaestro_();
   // y las transferencias que avisa el BI (BancoCorreo.js, 16-oct-2026), con el mismo respiro
   if (!_PAG_LEIDO_.escribio) bcoLeerSiToca_();
   return _pagPantalla_(Q, pagEstado_(), fec);
@@ -1249,7 +1251,7 @@ function marcarFacturaParaIva(auth, llave, nota) {
   if (!f) throw new Error('No encontre esa factura en Pagos.');
   // Maco y Jeffry marcan las de su area (13-oct-2026); el dueño, cualquiera
   if (Q.rol !== 'dueno' && Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + ': la marca quien lleva esa área o el dueño.');
-  if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y todavia no esta en el FEL del maestro. Se puede marcar despues de la carga del lunes.');
+  if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y esta entrando al FEL del maestro. Toca Actualizar en unos minutos y marcala.');
   var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
   if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
     '). Si es para reducir IVA, anulá primero esos pagos.');

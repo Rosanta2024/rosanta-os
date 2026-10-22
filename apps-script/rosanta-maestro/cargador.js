@@ -515,24 +515,40 @@ function _cargarFEL(ss, datos, emitidas) {
   // de jul-ago quedaron 3 veces (Q5,819 de venta de mas). La segunda llave
   // no depende de la serie. Y desde ahora Serie y Numero se escriben como
   // texto (ver mas abajo) para que la serie no se vuelva a danar.
-  var ultima = sh.getLastRow(), previos = {}, porTotal = {};
-  var colSerie = emitidas ? 2 : 3, colTotal = emitidas ? 8 : 10;
+  //
+  // ANULADAS (22-oct-2026, Juanma): desde que las facturas del correo entran al maestro el mismo dia
+  // (FelCorreo.js de la intranet, fecAlMaestro_), una factura puede estar Vigente aca y llegar Anulada
+  // en el export del lunes. La carga no la vuelve a agregar: le cambia el Estado (previos guarda la fila).
+  var ultima = sh.getLastRow(), previos = {}, porTotal = {}, estados = [];
+  var colSerie = emitidas ? 2 : 3, colTotal = emitidas ? 8 : 10, colEstado = emitidas ? 6 : 8;
   if (ultima >= primera) {
     var pares = sh.getRange(primera, colSerie, ultima - primera + 1, 2).getValues();
     var totales = sh.getRange(primera, colTotal, ultima - primera + 1, 1).getValues();
+    estados = sh.getRange(primera, colEstado, ultima - primera + 1, 1).getValues();
     for (var i = 0; i < pares.length; i++) {
       var s = _norm(pares[i][0]), n = _norm(pares[i][1]).replace(/\.0$/, '');
-      if (s) previos[s + '|' + n] = true;
-      if (n) porTotal[n + '|' + _numero(totales[i][0]).toFixed(2)] = true;
+      if (s) previos[s + '|' + n] = i + 1;   // la posicion + 1 (0 seria "no esta")
+      if (n) porTotal[n + '|' + _numero(totales[i][0]).toFixed(2)] = i + 1;
     }
   }
-  var filas = [], saltadas = 0, nuevosProv = {};
+  var filas = [], saltadas = 0, nuevosProv = {}, anuladas = [];
   for (var f = 1; f < datos.length; f++) {
     var serie = _norm(datos[f][c.serie]);
     var num = _norm(datos[f][c.num]).replace(/\.0$/, '');
     if (!serie) continue;
     var llaveTotal = num + '|' + _numero(datos[f][c.total]).toFixed(2);
-    if (previos[serie + '|' + num] || (num && porTotal[llaveTotal])) { saltadas++; continue; }
+    var ya = previos[serie + '|' + num] || (num && porTotal[llaveTotal]);
+    if (ya) {
+      saltadas++;
+      // ya estaba Vigente y el export la trae Anulada: se corrige el Estado (las filas nuevas de esta
+      // misma carga tienen previos = true y no entran aca)
+      if (ya !== true && /^anulad/i.test(_norm(datos[f][c.estado])) && !/^anulad/i.test(_norm(estados[ya - 1][0]))) {
+        sh.getRange(primera + ya - 1, colEstado).setValue('Anulado');
+        estados[ya - 1][0] = 'Anulado';
+        anuladas.push(serie + ' ' + num);
+      }
+      continue;
+    }
     previos[serie + '|' + num] = true;
     if (num) porTotal[llaveTotal] = true;
     var fecha = _fechaCarga(datos[f][c.fecha]);
@@ -550,7 +566,8 @@ function _cargarFEL(ss, datos, emitidas) {
                   _numero(datos[f][c.iva])]);
     }
   }
-  if (!filas.length) return { nuevas: 0, saltadas: saltadas, avisos: [] };
+  var avisoAnul = anuladas.length ? ['Facturas que ya estaban y el FEL trae anuladas, pasadas a Anulado (' + anuladas.length + '): ' + anuladas.join(' | ')] : [];
+  if (!filas.length) return { nuevas: 0, saltadas: saltadas, avisos: avisoAnul };
 
   var inicio = ultima + 1, ancho = emitidas ? 9 : 11;
   sh.getRange(inicio, colSerie, filas.length, 2).setNumberFormat('@');   // Serie y Numero como texto
@@ -575,7 +592,7 @@ function _cargarFEL(ss, datos, emitidas) {
   sh.getRange(inicio, 1, filas.length, 1).setNumberFormat('yyyy-mm-dd');
 
   // proveedores que no estan en el catalogo
-  var avisos = [];
+  var avisos = avisoAnul.slice();
   if (!emitidas) {
     var cat = {}, prov = ss.getSheetByName('00_Proveedores');
     var lista = prov.getRange(1, 1, prov.getLastRow(), 1).getValues();
