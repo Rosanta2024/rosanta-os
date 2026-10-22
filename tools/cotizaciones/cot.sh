@@ -6,9 +6,19 @@
 #   cot.sh batch <archivo.json>     → el archivo es una lista [{op,id,data,if_version}]
 #   cot.sh revision <archivo.json>  → el archivo es {fecha,hora,resumen,contestaron,borradores}
 #   cot.sh revisiones               → {"ok":true,"revisiones":[...]}
+#   cot.sh borrador <thread_id|nuevo> <pdf> <cuerpo.txt> [--cc x] [--para x] [--asunto x]
+#                   [--actualizar DRAFT_ID] [--ensayo]
+#                                   → borrador de Gmail CON el PDF adjunto, leído del disco
+#                                     (22-oct-2026). Solo borradores: nunca envía.
+#                                     Detalle en borrador_gmail.py.
 # El token vive en ~/.rosanta-secretos/cotizaciones-token (fuera de Drive y del repo).
 # Apps Script contesta un POST con un 302: se lee la respuesta con un GET a esa dirección.
 set -euo pipefail
+if [ "${1:-}" = borrador ]; then
+  shift
+  # /usr/bin/python3: el python3 de python.org en esta Mac no tiene los certificados SSL.
+  exec /usr/bin/python3 "$(dirname "$0")/borrador_gmail.py" "$@"
+fi
 URL="https://script.google.com/macros/s/AKfycbzEv9C1gZ6-bODUyI2a5TPCtLVQGt5T-7gQs60TP8OYmDgymZTHQuv3hR-232cng7K3/exec?hook=cotizaciones"
 TOKEN=$(tr -d '\n' < "$HOME/.rosanta-secretos/cotizaciones-token")
 acc="${1:-}"
@@ -17,7 +27,7 @@ case "$acc" in
   get) BODY=$(python3 -c 'import json,sys;print(json.dumps({"token":sys.argv[1],"accion":"get","id":sys.argv[2]}))' "$TOKEN" "${2:?falta el id}") ;;
   batch) BODY=$(python3 -c 'import json,sys;print(json.dumps({"token":sys.argv[1],"accion":"batch","writes":json.load(open(sys.argv[2]))}))' "$TOKEN" "${2:?falta el archivo}") ;;
   revision) BODY=$(python3 -c 'import json,sys;print(json.dumps({"token":sys.argv[1],"accion":"revision","revision":json.load(open(sys.argv[2]))}))' "$TOKEN" "${2:?falta el archivo}") ;;
-  *) echo 'uso: cot.sh list|get <id>|batch <archivo>|revision <archivo>|revisiones' >&2; exit 2 ;;
+  *) echo 'uso: cot.sh list|get <id>|batch <archivo>|revision <archivo>|revisiones|borrador <hilo> <pdf> <cuerpo>' >&2; exit 2 ;;
 esac
 DEST=$(curl -sS -o /dev/null -w '%{redirect_url}' -X POST -H 'Content-Type: application/json' --data-binary "$BODY" "$URL")
 [ -n "$DEST" ] || { echo '{"ok":false,"error":"el web app no respondió con la redirección esperada"}'; exit 1; }

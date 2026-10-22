@@ -26,8 +26,12 @@ function correr(filas) {
   const red = (url, op) => {
     llamadas.push({ url, op });
     if (/drive\.google\.com\/uc\?export=download/.test(url)) {
-      const pdf = /id=pdf/.test(url);
-      return respuesta(200, '', { getContentType: () => (pdf ? 'application/pdf' : 'image/jpeg'), getBytes: () => [1, 2, 3], getName: () => 'x', _b64: 'AQID' });
+      // Como Drive de verdad (22-oct-2026): el PDF llega como application/octet-stream; lo que manda es el contenido "%PDF".
+      const pdf = /id=pdf/.test(url), foto = /id=foto/.test(url);
+      let tipo = pdf ? 'application/octet-stream' : foto ? 'image/jpeg' : 'application/octet-stream';
+      const bytes = pdf ? [37, 80, 68, 70, 45, 49] : [1, 2, 3];
+      const blob = { getContentType: () => tipo, setContentType: (t) => { tipo = t; return blob; }, getBytes: () => bytes, getName: () => 'x', _b64: 'AQID' };
+      return respuesta(200, '', blob);
     }
     if (/\/media$/.test(url)) return respuesta(200, '{"id":"media-1"}');
     return respuesta(200, '{"messages":[{"id":"x"}],"message_id":"m"}');
@@ -48,6 +52,7 @@ prueba('WhatsApp: el PDF se sube a Meta y va como "document" con su nombre y su 
   const up = r.llamadas.find((l) => /\/media$/.test(l.url));
   assert.ok(up, 'subió el archivo a /media');
   assert.strictEqual(up.op.payload.type, 'application/pdf');
+  assert.strictEqual(up.op.payload.file.getContentType(), 'application/pdf', 'el archivo va marcado como PDF aunque Drive dijera octet-stream');
   const msg = r.llamadas.find((l) => /\/messages$/.test(l.url));
   const p = JSON.parse(msg.op.payload);
   assert.strictEqual(p.type, 'document');

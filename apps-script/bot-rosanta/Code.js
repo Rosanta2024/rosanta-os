@@ -841,10 +841,14 @@ function enviarArchivoPorCanal(canal, idDestino, fileId, nombre, caption) {
   const arch = UrlFetchApp.fetch(urlDrive, { muteHttpExceptions: true });
   const blob = arch.getBlob();
   const mime = String(blob.getContentType() || '');
-  if (arch.getResponseCode() !== 200 || mime.indexOf('application/pdf') !== 0) {
+  // @69 (22-oct-2026): Drive entrega los PDF como application/octet-stream. Lo que manda es el contenido: "%PDF".
+  const b = arch.getResponseCode() === 200 ? blob.getBytes() : [];
+  const esPdf = b.length > 4 && b[0] === 37 && b[1] === 80 && b[2] === 68 && b[3] === 70;
+  if (!esPdf) {
     throw new Error('No se pudo bajar el PDF de Drive (' + arch.getResponseCode() + ' ' + mime + '). ¿Está compartido con enlace?');
   }
-  if (blob.getBytes().length > ARCHIVO_MAX_MB * 1024 * 1024) throw new Error('El PDF pesa más de ' + ARCHIVO_MAX_MB + ' MB.');
+  if (blob.setContentType) blob.setContentType('application/pdf');
+  if (b.length > ARCHIVO_MAX_MB * 1024 * 1024) throw new Error('El PDF pesa más de ' + ARCHIVO_MAX_MB + ' MB.');
   const base = 'https://graph.facebook.com/' + CONFIG.GRAPH_VERSION + '/' + PROPS.getProperty('WA_PHONE_NUMBER_ID');
   const H = { Authorization: 'Bearer ' + CONFIG.WHATSAPP_TOKEN };
   const up = UrlFetchApp.fetch(base + '/media', {
