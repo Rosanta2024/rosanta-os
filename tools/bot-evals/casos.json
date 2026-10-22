@@ -4151,6 +4151,73 @@
      ]
     }
    ]
+  },
+  {
+   "id": "EVE-09",
+   "grupo": "eventos",
+   "origen": "chat real 2026-10-21 (Ashley), anonimizado",
+   "estado": null,
+   "canal": "whatsapp",
+   "perfil": "Ash Prueba",
+   "titulo": "Evento ganado: pregunta cómo van las mesas. El bot promete contacto SIN marcar ¿Humano? → igual avisa a Juanma; y vuelve a avisar en el segundo pedido",
+   "eventos": [
+    {
+     "t": "2026-11-02T05:59:17-06:00",
+     "de": "cliente",
+     "texto": "Hi there! For our dinner, wondering how the tables will be set up in case I want to make some assigned seating. Will it be two long tables on the patio?",
+     "grabado": {
+      "respuesta": "So happy to hear you love Rosanta! I don't have the table layout for your dinner, so I don't want to guess and mess up your seating plan. Someone from the restaurant will get in touch with you as soon as possible.",
+      "categoria": "responder_info",
+      "humano": false,
+      "idioma": "en",
+      "resumen": "Asks about table layout for an upcoming group dinner",
+      "email": "",
+      "nombre": "Ash Prueba",
+      "lead": {
+       "tipo": "evento",
+       "accion": "responder_info",
+       "requiere_humano": false,
+       "idioma": "en"
+      }
+     },
+     "reglas": [
+      "contesta",
+      "avisa_a_juanma",
+      "no_nombra_a_juanma",
+      "idioma:en"
+     ]
+    },
+    {
+     "t": "2026-11-02T05:59:24-06:00",
+     "de": "bot",
+     "texto": "So happy to hear you love Rosanta! I don't have the table layout for your dinner, so I don't want to guess and mess up your seating plan. Someone from the restaurant will get in touch with you as soon as possible."
+    },
+    {
+     "t": "2026-11-02T06:03:54-06:00",
+     "de": "cliente",
+     "texto": "They already sent me a proposal I just want to know about the seating.",
+     "grabado": {
+      "respuesta": "Got it, thanks for clarifying! I don't have the details of how the tables will be set up, and I don't want to guess. Someone from the restaurant will get in touch with you as soon as possible to confirm.",
+      "categoria": "escalar_humano",
+      "humano": true,
+      "idioma": "en",
+      "resumen": "Already has a proposal; only wants the table layout",
+      "email": "",
+      "nombre": "Ash Prueba",
+      "lead": {
+       "tipo": "evento",
+       "accion": "escalar_humano",
+       "requiere_humano": true,
+       "idioma": "en"
+      }
+     },
+     "reglas": [
+      "contesta",
+      "avisa_a_juanma",
+      "idioma:en"
+     ]
+    }
+   ]
   }
  ]
 }
