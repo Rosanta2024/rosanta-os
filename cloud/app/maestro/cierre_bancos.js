@@ -87,6 +87,7 @@ var CB_REGLAS = [
   { donde: 'cuenta', codigo: '59', cat: 'COMISIONES_BANCARIAS' },
   { donde: 'cuenta', re: /^(COMISION|CARGO POR SALDO)/i, cat: 'COMISIONES_BANCARIAS' },
   { donde: 'cuenta', re: /^Pago SAT/i, cat: 'IMPUESTOS' },
+  { donde: 'cuenta', re: /^COBRO EMISI/i, cat: 'COMISIONES_BANCARIAS' },   // COBRO EMISION ESTADO DE CUENTA (Juanma, 22-oct-2026)
   { donde: 'tarjeta', re: /^(SU PAGO RECIBIDO|PAGO TARJETA|PAGO AGENC)/i, cat: 'PAGO_TARJETA' },
   { donde: 'tarjeta', re: /^(INTERES|INTER\/|CARGOS POR SERVICIO|COBRO ADMTVO|COMISION|COBRO POR SOBREGIRO|IVA\/COBRO)/i, cat: 'COMISIONES_BANCARIAS' },
   { donde: 'tarjeta', re: /^(FACEBK|GOOGLE\*ADS)/i, cat: 'MARKETING_DIGITAL' },
@@ -318,9 +319,11 @@ function _cbCategoria(m, donde, P) {
 
 /**
  * Valida un normalizado contra el maestro y, con escribir, agrega sus filas nuevas.
+ * filtro (opcional, function(mov) -> bool): el estado se valida ENTERO, pero solo se cargan los movimientos que
+ * pasan el filtro (lo usa cargos_sin_fecha_tc_bac.js).
  * Devuelve { nuevas, avisos, frenado }.
  */
-function _cbCargarNormalizado(ss, n, mes, nombre, escribir) {
+function _cbCargarNormalizado(ss, n, mes, nombre, escribir, filtro) {
   var esCuenta = n.formato === 'CUENTA';
   var conf = esCuenta ? CB_CUENTAS[n.cuenta] : CB_TARJETAS[n.tarjeta];
   var quien = nombre + (esCuenta ? ' (cuenta ' + n.cuenta + ')' : ' (tarjeta ' + n.tarjeta + ')');
@@ -353,7 +356,8 @@ function _cbCargarNormalizado(ss, n, mes, nombre, escribir) {
 
   // las nuevas (contando repetidos) y su categoria
   var cuenta = {}, fuentes = { csv: 0, regla: 0, historia: 0, sin: 0 }, nuevas = [];
-  n.movs.forEach(function (m) {
+  var movs = filtro ? n.movs.filter(filtro) : n.movs;
+  movs.forEach(function (m) {
     var k = esCuenta ? _cbClaveCuenta(m.fecha, m.ref, m.deb, m.cred) : _cbClaveTarjeta(m.fecha, m.desc, m.q, m.d);
     cuenta[k] = (cuenta[k] || 0) + 1;
     if (cuenta[k] <= (P.ya[k] || 0)) return;
@@ -361,8 +365,8 @@ function _cbCargarNormalizado(ss, n, mes, nombre, escribir) {
     fuentes[cat[1]]++;
     nuevas.push({ m: m, cat: cat[0] });
   });
-  if (nuevas.length && nuevas.length !== n.movs.length) {
-    avisos.push(quien + ': ' + (n.movs.length - nuevas.length) + ' de ' + n.movs.length + ' movimientos ya estaban en ' + conf.hoja + ' y se saltan.');
+  if (nuevas.length && nuevas.length !== movs.length) {
+    avisos.push(quien + ': ' + (movs.length - nuevas.length) + ' de ' + movs.length + ' movimientos ya estaban en ' + conf.hoja + ' y se saltan.');
   } else if (!nuevas.length && P.delMes) {
     Logger.log('  ' + quien + ': ya estaba todo en ' + conf.hoja + '.');
   }

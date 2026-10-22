@@ -97,6 +97,7 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - `app/src/banco-normalizar.js`: el .xls del BAC (Drive NO lo convierte: queda vacio) y el CSV de la tarjeta → CSV normalizado, con SheetJS oficial (`xlsx` desde cdn.sheetjs.com 0.20.3). La cuenta sale del numero del archivo, el mes de las fechas.
 - Octubre (Apps Script): `node cloud/herramientas/xls-a-csv-banco.js "<mes>/_sistema"` en la Mac deja `BAC Q 2026-10.csv`, `BAC $ 2026-10.csv`, `TC BAC 2026-10.csv` en `_sistema`. Nube: `POST /tareas/procesos/maestro` con `{ "cierre_bancos": "2026-10" }`; la precarga convierte el .xls con el mismo normalizador (`ROSANTA_NUBE.bancoANormalizado`). Sombra = el maestro sin las filas de ese mes, y compara por clase (valor, descripcion, categoria, tipo, desc_corta).
 - Ensayo de solo lectura: `node cloud/herramientas/ensayo-cierre-bancos.js [2026-01 ...] [--archivos ...] [--detalle]`.
+- Carga aparte de meses cerrados (22-oct, Juanma): `apps-script/rosanta-maestro/cargos_sin_fecha_tc_bac.js` (`revisarCargosSinFechaTcBac` / `cargarCargosSinFechaTcBac`): los cargos sin fecha de la tarjeta BAC de ene-abr (INTERES COM, CARGOS POR SERVICIO MES ANTERIOR) desde los CSV de `BAC_TC 2026`, y Netflix/Spotify/Apple de ene-abr de PERSONAL a CUOTAS_Y_SUSCRIPCIONES (solo si siguen siendo las 7 revisadas). Ensayo: `node cloud/herramientas/ensayo-cargos-sin-fecha-tc.js`. No esta en LISTA.txt (no es de la nube).
 
 ## Tareas
 

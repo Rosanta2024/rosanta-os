@@ -139,7 +139,8 @@ test('Nube: el cierre de octubre escribe las tres pestañas con los tipos de App
   assert.deepStrictEqual(valores(B[7], 9), [d(2026, 10, 1), 111111111, 'L1', 'AFI00000000 LIQ11111111111', 0, 1000, 1100.5, 'INGRESO_TARJETA', 'No']);
   assert.strictEqual(B[7][0].fmt, 'DATE');
   assert.deepStrictEqual(valores(B[9], 9).slice(3), ['TEF A : 123456789', 50, 0, 550.5, 'PERSONAL', 'Si'], 'categoria por historia; Es_Personal como lo escribe la pestaña');
-  assert.deepStrictEqual(valores(B[10], 9).slice(3, 8), ['COBRO EMISI?N ESTADO DE CUENTA', 10, 0, 540.5, 'TRANSFERENCIA'], 'el maestro tenia la descripcion cortada del PDF');
+  assert.deepStrictEqual(valores(B[10], 9).slice(3, 9), ['COBRO EMISI?N ESTADO DE CUENTA', 10, 0, 540.5, 'COMISIONES_BANCARIAS', 'No'],
+    'COBRO EMISION es comision (Juanma, 22-oct): la regla gana a la historia, que decia TRANSFERENCIA');
   assert.deepStrictEqual(valores(B[11], 9).slice(7), ['INGRESO_TRANSFERENCIA', 'No']);
   assert.deepStrictEqual([B[12][7].v, B[13][7].v, B[14][7].v], ['IMPUESTOS', 'COMISIONES_BANCARIAS', 'POR_CLASIFICAR']);
   assert.deepStrictEqual([B[7][9].f, B[14][11].f], ['=YEAR(A8)', '=WEEKNUM(A15,21)'], 'Año/Mes/Semana copiadas de la ultima fila con datos');
@@ -320,4 +321,150 @@ test('Herramienta de la Mac: convierte _sistema con nombres fijos; se detiene co
 
 test('La ruta: cierre_bancos mal escrito → 400', async () => {
   await assert.rejects(M.correrMaestro({ modo: 'sombra', cierreBancos: '2026-13' }, {}), (e) => e.status === 400);
+});
+
+// ---- decisiones de Juanma del 22-oct-2026 ------------------------------------------------------------------------
+
+const vm = require('vm');
+const DIR_AS = path.join(__dirname, '..', '..', '..', 'apps-script', 'rosanta-maestro');
+
+/** Un motor con el maestro dado (pestañas como matrices, formulas { f: A1 }) y la precarga dada. */
+function motor(tabs, estado) {
+  const maestro = { id: M.MAESTRO, zona: 'America/Guatemala', titulos: Object.keys(tabs), props: {}, pestanas: {} };
+  Object.keys(tabs).forEach((n) => { maestro.pestanas[n] = { valores: tabs[n].map((r) => r.map((x) => (x && x.f ? '' : x))), formulas: new Map(), ultima: tabs[n].length }; });
+  Object.keys(tabs).forEach((n) => tabs[n].forEach((r, i) => r.forEach((x, j) => {
+    if (x && x.f) { const Fo = maestro.pestanas[n].formulas; if (!Fo.has(i + 1)) Fo.set(i + 1, {}); Fo.get(i + 1)[j + 1] = x.f; }
+  })));
+  return { maestro, m: M.crearMotorMaestro(maestro, Object.assign({ libros: {}, carpetas: {}, respuestas: {} }, estado || {}), {}) };
+}
+
+test('Reglas: COBRO EMISION → COMISIONES_BANCARIAS; Netflix, Spotify y Apple → CUOTAS_Y_SUSCRIPCIONES con Es_Personal No, aunque la historia diga PERSONAL', async () => {
+  const { m } = motor(maestroInicial());
+  const P = { porDesc: { 'NETFLIX.COM 844-0000000': 'PERSONAL', 'SPOTIFY P1234 STOCKHOLM': 'PERSONAL', 'COBRO EMISI?N ESTA': 'TRANSFERENCIA' }, porRaiz: {} };
+  const cat = (desc, donde, cod) => m.ctx._cbCategoria({ desc: m.ctx._cbDesc(desc), cod: cod || '', cat: '' }, donde, P)[0];
+  assert.strictEqual(cat('COBRO EMISI\u0099N ESTADO DE CUENTA', 'cuenta', 'TF'), 'COMISIONES_BANCARIAS');
+  assert.strictEqual(cat('NETFLIX.COM              844-0000000', 'tarjeta'), 'CUOTAS_Y_SUSCRIPCIONES');
+  assert.strictEqual(cat('Spotify P1234            Stockholm', 'tarjeta'), 'CUOTAS_Y_SUSCRIPCIONES');
+  assert.strictEqual(cat('APPLE.COM/BILL           866-000-000', 'tarjeta'), 'CUOTAS_Y_SUSCRIPCIONES');
+  // y en la carga: la tarjeta con historia PERSONAL para Netflix entra como CUOTAS / No
+  const tabs = maestroInicial();
+  tabs['05_Tarjeta_Credito_BAC'].splice(5, 0, [new Date(2026, 8, 12), 'NETFLIX.COM              866-000-000', 0, 6.99, 'PERSONAL', 'Sí', f('=YEAR(A6)'), f('=MONTH(A6)'), f('=WEEKNUM(A6,21)')]);
+  const { g, deps } = armar({ maestro: tabs });
+  const r = await M.correrMaestro({ cierreBancos: '2026-10' }, deps);
+  assert.strictEqual(r.status, 200, JSON.stringify(r.cuerpo.avisos));
+  const net = H(g, '05_Tarjeta_Credito_BAC').map((x) => valores(x, 6)).find((x) => x[0] === d(2026, 10, 12));
+  assert.deepStrictEqual(net.slice(4), ['CUOTAS_Y_SUSCRIPCIONES', 'No']);
+});
+
+test('crearPestanaBacUsd: crea 04b_Banco_BAC_USD despues de 04_Banco_BAC con su cabecera; si ya existe no hace nada', () => {
+  const llamadas = [];
+  function hoja(nombre, indice) {
+    return { getName: () => nombre, getIndex: () => indice, getFrozenRows: () => 4, setFrozenRows: (n) => llamadas.push(['congelar', nombre, n]),
+      getColumnWidth: (c) => 100 + c, setColumnWidth: (c, w) => llamadas.push(['ancho', nombre, c, w]),
+      getRange: (fi, c, nf, nc) => ({
+        copyTo: (destino) => llamadas.push(['copiar', nombre, fi, c, nf, nc, destino.hoja, destino.fi, destino.c, destino.nf, destino.nc]),
+        setValue: (v) => llamadas.push(['valor', nombre, fi, c, v]), hoja: nombre, fi, c, nf, nc }) };
+  }
+  const libro = (existe) => {
+    const hojas = { '04_Banco_BAC': hoja('04_Banco_BAC', 7) };
+    if (existe) hojas['04b_Banco_BAC_USD'] = hoja('04b_Banco_BAC_USD', 8);
+    return { getSheetByName: (n) => hojas[n] || null,
+      insertSheet: (n, i) => { llamadas.push(['insertar', n, i]); hojas[n] = hoja(n, i + 1); return hojas[n]; } };
+  };
+  let actual = null;
+  const ctx = { SpreadsheetApp: { openById: (id) => { llamadas.push(['abrir', id]); return actual; } } };
+  vm.createContext(ctx);
+  ['cargador.js', 'cierre_bancos.js'].forEach((x) => vm.runInContext(fs.readFileSync(path.join(DIR_AS, x), 'utf8'), ctx));
+
+  actual = libro(true);
+  assert.strictEqual(ctx.crearPestanaBacUsd(), 'Ya existe 04b_Banco_BAC_USD: no se toco nada.');
+  assert.deepStrictEqual(llamadas, [['abrir', M.MAESTRO]]);
+
+  llamadas.length = 0; actual = libro(false);
+  assert.strictEqual(ctx.crearPestanaBacUsd(), 'Creada 04b_Banco_BAC_USD.');
+  assert.deepStrictEqual(llamadas.slice(0, 3), [['abrir', M.MAESTRO], ['insertar', '04b_Banco_BAC_USD', 7],
+    ['copiar', '04_Banco_BAC', 1, 1, 4, 12, '04b_Banco_BAC_USD', 1, 1, 4, 12]]);
+  assert.strictEqual(llamadas.filter((x) => x[0] === 'ancho').length, 12);
+  assert.deepStrictEqual(llamadas.find((x) => x[0] === 'ancho' && x[2] === 4), ['ancho', '04b_Banco_BAC_USD', 4, 104]);
+  assert.ok(llamadas.some((x) => x[0] === 'congelar' && x[2] === 4));
+  assert.ok(llamadas.some((x) => x[0] === 'valor' && x[2] === 1 && /DÓLARES 905757274/.test(x[4])));
+  assert.ok(!llamadas.some((x) => x[0] === 'valor' && x[1] === '04_Banco_BAC'), 'no toca la pestaña de quetzales');
+});
+
+// La carga aparte de enero a abril: cargos sin fecha de la tarjeta BAC + reclasificacion de Netflix/Spotify/Apple.
+const TC_ENE = { producto: '4966-64**-****-2794', corte: '31/01/2026', previo: [500, 20], contadoMal: 0,
+  tarjetas: { '4966-64**-****-1638': [['02/01/2026', 'NETFLIX.COM              844-0000000', 0, 5.5], ['10/01/2026', 'TIENDA INVENTADA', 80, 0]] },
+  sinFecha: [['CARGOS POR SERVICIO MES ANTERIOR', 0, 3.25], ['INTERES COM', 44.4, 0]] };
+const TC_FEB = Object.assign({}, TC_ENE, { corte: '28/02/2026', previo: [624.4, 28.75],
+  tarjetas: { '4966-64**-****-1638': [['05/02/2026', 'Spotify P9999            Stockholm', 0, 7.7]] }, sinFecha: [['INTERES COM', 41.1, 0]] });
+function maestroCsf() {
+  const fTc = (r) => [f('=YEAR(A' + r + ')'), f('=MONTH(A' + r + ')'), f('=WEEKNUM(A' + r + ',21)')];
+  return {
+    '00_Proveedores': [['x']],
+    '05_Tarjeta_Credito_BAC': [['TARJETA BAC'], [''], [''], ENC_TC,
+      [new Date(2026, 0, 2), 'NETFLIX.COM              844-0000000', 0, 5.5, 'PERSONAL', 'Sí'].concat(fTc(5)),
+      [new Date(2026, 0, 10), 'TIENDA INVENTADA', 80, 0, 'ALIMENTOS', 'No'].concat(fTc(6)),
+      [new Date(2026, 1, 5), 'Spotify P9999            Stockholm', 0, 7.7, 'PERSONAL', 'Sí'].concat(fTc(7)),
+      [new Date(2026, 4, 2), 'NETFLIX.COM 866-000-000', 0, 6.6, 'PERSONAL', 'Sí'].concat(fTc(8)),   // mayo: fuera de ene-abr
+      [new Date(2026, 4, 31), 'INTERES COM', 50, 0, 'COMISIONES_BANCARIAS', 'No'].concat(fTc(9))]
+  };
+}
+const CSF_ID = '1DY3-hLOs4h5AX-nKPtgw-n5z6GOvwpY_';
+function motorCsf(tabs, archivos) {
+  const carpeta = { nombre: 'BAC_TC 2026', carpetas: [], archivos: [] }, textos = {};
+  archivos.forEach((a, i) => { carpeta.archivos.push({ id: 'T' + i, nombre: a[0], mime: 'text/csv', modificado: '2026-05-08T22:00:00.000Z' }); textos['T' + i] = a[1].toString('latin1'); });
+  const x = motor(tabs, { carpetas: { [CSF_ID]: carpeta }, textos });
+  vm.runInContext(fs.readFileSync(path.join(DIR_AS, 'cargos_sin_fecha_tc_bac.js'), 'utf8'), x.m.ctx);
+  vm.runInContext('CSF_RECLAS_ESPERADAS = 2;', x.m.ctx);   // en la fixtura son 2 (las de verdad, 7)
+  return x;
+}
+const ARCH_CSF = () => [['BAC - TC 2026-01.csv', F.csvTarjeta(TC_ENE)], ['BAC - TC 2026-02.csv', F.csvTarjeta(TC_FEB)], ['BAC - TC 2026-05.txt', Buffer.from('otra cosa')]];
+
+test('Cargos sin fecha ene-abr: revisar no escribe; cargar agrega SOLO INTERES COM y CARGOS POR SERVICIO al corte y reclasifica Netflix/Spotify', () => {
+  const a = motorCsf(maestroCsf(), ARCH_CSF());
+  const r0 = a.m.correr('revisarCargosSinFechaTcBac');
+  assert.strictEqual(r0.error, null, r0.logs.join('\n'));
+  assert.deepStrictEqual(r0.ops, []);
+  const l0 = r0.logs.join('\n');
+  assert.match(l0, /Filas que agregaria: 3/);
+  assert.match(l0, /Filas que reclasificaria: 2/);
+  assert.match(l0, /2026-03: no encontre el CSV de la tarjeta/);
+
+  const b = motorCsf(maestroCsf(), ARCH_CSF());
+  const r = b.m.correr('cargarCargosSinFechaTcBac');
+  assert.strictEqual(r.error, null, r.logs.join('\n'));
+  const vals = r.ops.filter((x) => x.tipo === 'valores');
+  const nuevas = JSON.parse(JSON.stringify(vals.filter((x) => x.col === 1).map((x) => [x.fila, x.valores])));
+  assert.deepStrictEqual(nuevas, [
+    [10, [['2026-01-31', 'CARGOS POR SERVICIO MES ANTERIOR', 0, 3.25, 'COMISIONES_BANCARIAS', 'No'], ['2026-01-31', 'INTERES COM', 44.4, 0, 'COMISIONES_BANCARIAS', 'No']]],
+    [12, [['2026-02-28', 'INTERES COM', 41.1, 0, 'COMISIONES_BANCARIAS', 'No']]]]);
+  assert.ok(!JSON.stringify(nuevas).includes('TIENDA') && !JSON.stringify(nuevas).includes('NETFLIX'), 'las compras con fecha no se tocan');
+  const reclas = JSON.parse(JSON.stringify(vals.filter((x) => x.col === 5).map((x) => [x.fila, x.valores])));
+  assert.deepStrictEqual(reclas, [[5, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]], [7, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]]], 'mayo no se toca');
+  assert.ok(r.ops.some((x) => x.tipo === 'formulasR1C1' && x.fila === 10));
+
+  // otra vez sobre lo que quedo: no agrega ni reclasifica nada
+  const T = r.trabajo['05_Tarjeta_Credito_BAC'];
+  const tabs2 = maestroCsf();
+  tabs2['05_Tarjeta_Credito_BAC'] = T.M.map((row, i) => row.map((x, j) => { const fo = T.formulas.get(i + 1); return fo && fo[j + 1] ? { f: fo[j + 1] } : x; }));
+  const c = motorCsf(tabs2, ARCH_CSF());
+  const r2 = c.m.correr('cargarCargosSinFechaTcBac');
+  assert.strictEqual(r2.error, null, r2.logs.join('\n'));
+  assert.deepStrictEqual(r2.ops, []);
+  assert.match(r2.logs.join('\n'), /Filas nuevas en total: 0/);
+  assert.match(r2.logs.join('\n'), /No queda ninguna fila de Netflix, Spotify o Apple en PERSONAL/);
+});
+
+test('Cargos sin fecha: si las filas a reclasificar no son las que se revisaron, no cambia ninguna; un estado que no cuadra no se toca', () => {
+  const tabs = maestroCsf();
+  tabs['05_Tarjeta_Credito_BAC'][6][4] = 'CUOTAS_Y_SUSCRIPCIONES';   // alguien ya cambio la de Spotify: queda 1 y se esperaban 2
+  const a = motorCsf(tabs, ARCH_CSF());
+  const r = a.m.correr('cargarCargosSinFechaTcBac');
+  assert.ok(!r.ops.some((x) => x.tipo === 'valores' && x.col === 5), 'ninguna reclasificada');
+  assert.match(r.logs.join('\n'), /hay 1 filas y la revision encontro 2\. Alguien las toco: no se cambia ninguna/);
+
+  const b = motorCsf(maestroCsf(), [['BAC - TC 2026-01.csv', F.csvTarjeta(Object.assign({}, TC_ENE, { contadoMal: 9 }))]]);
+  const r2 = b.m.correr('cargarCargosSinFechaTcBac');
+  assert.ok(!r2.ops.some((x) => x.tipo === 'valores' && x.col === 1), 'el estado de enero no cuadra: no se agrega nada');
+  assert.match(r2.logs.join('\n'), /BAC - TC 2026-01\.csv .*NO CUADRA/);
 });
