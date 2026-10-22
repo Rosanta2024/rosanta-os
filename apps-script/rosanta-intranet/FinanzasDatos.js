@@ -539,6 +539,9 @@ var FIN_MAP = {
   'TRIBUTO': [FIN_B.IMP, 'V', 'Impuestos pagados (SAT y municipales)', 'Impuestos'],
   'COMISIONES_BANCARIAS': [FIN_B.FIN, 'V', 'Comisiones e intereses bancarios', 'Comisiones'],
   'COMISION TARJETA DE CREDITO': [FIN_B.FIN, 'V', 'Comisiones de tarjeta', 'Comisiones'],
+  // Intereses aparte de las comisiones (22-oct-2026, Juanma: "gastos financieros"): el INTERES COM de la tarjeta
+  // BAC y los de prestamos. Mismo bloque y mismo grupo de la regla 15 que las comisiones: no mueve ningun total.
+  'INTERESES_BANCARIOS': [FIN_B.FIN, 'V', 'Intereses de tarjeta y préstamos', 'Comisiones'],
   // Honorarios de marketing (15-sep-2026): MISMO bloque que la pauta, categoria
   // aparte, para que el CAC excluya honorarios por categoria.
   'MARKETING_DIGITAL': [FIN_B.MKT, 'S', 'Ads digital (Google · Meta)', 'Marketing'],

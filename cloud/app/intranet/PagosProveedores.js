@@ -514,7 +514,7 @@ function _pagPosibles_(abiertas, pagos, dtes) {
     // pauta, comisiones (S41 Corsaga BAC, PAGO TARJETA X616..., COBRO ADMTVO.)
     var cat = p.categoria || '';
     if (cat !== 'PAGO_FACTURA_FEL' && cat !== 'POR_CLASIFICAR' && _finEn_(FIN_FUERA, cat)) return;
-    if (/^(NOMINA|IGSS|PROPINA|MARKETING|COMISION)/.test(cat)) return;
+    if (/^(NOMINA|IGSS|PROPINA|MARKETING|COMISION|INTERESES_BANCARIOS)/.test(cat)) return;
     if (/CORSAGA|PAGO TARJETA|PAG\.A TAR|COBRO ADM|MARKETING/i.test(p.glosa || '')) return;
     var cand = dteG ? abiertas.filter(function (f) { return f.dte === dteG; })
                     : abiertas.filter(function (f) { return _pagEnVentanaPosible_(p, f) && _pagCatCompatible_(cat, f.categoria); });
@@ -1731,7 +1731,7 @@ function _pagBalance_(anio) {
       var fi = pagIso_(d); if (!bancoHasta[b[0]] || fi > bancoHasta[b[0]]) bancoHasta[b[0]] = fi;
       var q = _finR_(_finNum_(w[r][iQ])); if (!(q > 0) || String(w[r][iP] || '').trim() === 'Sí') continue;
       // lo que no es pago a un proveedor no se busca: planilla, propinas, impuestos, personal, retiros
-      if (/^(NOMINA|PROPINA|IGSS|PERSONAL|DEVOLUCION|IMPUESTO|ISR|IVA|INGRESO|TRANSFERENCIA|COMISION)/.test(String(w[r][iC] || '').trim())) continue;
+      if (/^(NOMINA|PROPINA|IGSS|PERSONAL|DEVOLUCION|IMPUESTO|ISR|IVA|INGRESO|TRANSFERENCIA|COMISION|INTERESES_BANCARIOS)/.test(String(w[r][iC] || '').trim())) continue;
       // los retiros de cajero no nombran a nadie; los pagos "S31 Mariscos" o "Mercado Verduras"
       // van como ALIMENTOS_EFECTIVO pero son transferencias con nombre y si cuentan
       if (/^(ATM|RETIRO|A-|F-)/i.test(String(w[r][iD] || '').trim())) continue;

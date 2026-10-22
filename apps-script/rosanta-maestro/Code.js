@@ -181,6 +181,8 @@ function regenerarInstrucciones() {
     ['texto', '59 y 3F', 'COMISIONES_BANCARIAS'],
     ['', '', ''],
     ['texto', 'Tarjeta de credito', ''],
+    ['texto', 'INTERES COM (intereses de la tarjeta)', 'INTERESES_BANCARIOS (bloque Gastos Financieros, aparte de las comisiones; 22-oct-2026)'],
+    ['texto', 'CARGOS POR SERVICIO, COBRO EMISION ESTADO DE CUENTA', 'COMISIONES_BANCARIAS'],
     ['texto', 'GOOGLE*ADS, FACEBK', 'MARKETING_DIGITAL'],
     ['texto', 'GOOGLE*WORKSPACE, HIGHLEVEL, ANTHROPIC', 'CUOTAS_Y_SUSCRIPCIONES'],
     ['texto', 'TIGO, CLARO', 'TELEFONOS_Y_CELULARES'],
