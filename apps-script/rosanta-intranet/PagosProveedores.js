@@ -63,9 +63,12 @@ var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
 // la bitacora, con ESCRITO POR = PAG_IVA_AUTO_POR_. Se ve "automática" en la lista y el dueño la devuelve como
 // cualquiera; una devuelta no se vuelve a marcar. Solo las emitidas desde PAG_IVA_AUTO_DESDE_ y sin pagos.
 // estab vacio = todas las del NIT; con estab, solo ese establecimiento (El Panorama: el NIT tiene un super).
-// LA LISTA LA APRUEBA JUANMA antes de llenarla (propuesta del 22-oct a la Central).
-var PAG_IVA_AUTO_ = [];
-var PAG_IVA_AUTO_DESDE_ = '2026-10-27';
+// Lista aprobada por Juanma (por la Central, 22-oct-2026). PriceSmart queda manual (mezcla IVA y alimentos).
+// DESDE el 16-oct: asi entra la de Rotondas de ese dia (Q300, sin marcar); todo lo anterior de estos tres ya estaba marcado.
+var PAG_IVA_AUTO_ = [{ nit: '119952548', estab: '', nombre: 'ROTONDAS' },
+                     { nit: '76431754', estab: 'ESTACION DE SERVICIO EL PANORAMA', nombre: 'ESTACION DE SERVICIO EL PANORAMA' },
+                     { nit: '81481950', estab: '', nombre: 'INVERSCOPE' }];
+var PAG_IVA_AUTO_DESDE_ = '2026-10-16';
 var PAG_IVA_AUTO_POR_ = 'automática';
 // Posibles pagos (13-oct-2026): un cargo del banco o de una tarjeta con el monto exacto de una
 // factura (o de varias del mismo proveedor) que el cruce automatico no se atrevio a casar. El
