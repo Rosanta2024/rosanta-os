@@ -1,4 +1,4 @@
-@68 · 2026-10-22T07:07:00-06:00 · eeb7c38
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 68, "PDF desde la consola + convivencia
+@69 · 2026-10-22T07:44:00-06:00 · 2ef480f
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 69 = @68 + PDF aunque Drive diga octet-stream; @68 "PDF desde la consola + convivencia
 con la nube"), verificada el 22-oct-2026 bajando la versión 68 aparte (13 de 13 archivos iguales). La hora es la de la
 publicación; la comparación de la sombra vale para los mensajes desde esa hora.

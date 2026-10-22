@@ -55,7 +55,9 @@ function pedidoConClaves(url, opciones, claves) {
 
 /** Un blob como el de Apps Script, con los bytes en base64 (para volver a mandarlo). */
 function blob(b64, mime, nombre) {
-  return { _b64: b64, getContentType: () => mime, getBytes: () => Array.from(Buffer.from(b64, 'base64')), getName: () => nombre || 'foto', setName() { return this; } };
+  let tipo = mime;
+  const b = { _b64: b64, getContentType: () => tipo, setContentType: (t) => { tipo = t; return b; }, getBytes: () => Array.from(Buffer.from(b64, 'base64')), getName: () => nombre || 'foto', setName() { return this; } };
+  return b;
 }
 
 function respuesta(code, t, b) {
