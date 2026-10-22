@@ -227,6 +227,9 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
           (elegidas.length > 1 ? '<div class="pg-varias">' + (abiertaSel ? panelPago(elegidas)
             : '<span><b>' + elegidas.length + ' facturas elegidas</b> · ' + q(elegidas.reduce(function (a, f) { return a + f.saldo; }, 0)) + '</span>' +
               '<span><button type="button" class="pg-b pri" data-abrir="sel:' + esc(f0.nit) + '">Pagar las ' + elegidas.length + ' juntas</button> ' +
+              // marcar varias para reducir IVA de un toque (22-oct-2026): solo si ninguna tiene pagos ni esta entrando del correo
+              (elegidas.every(function (f) { return !f.por_correo && !f.pagos.some(function (p) { return !/antes/i.test(p.estatus); }); })
+                ? '<button type="button" class="pg-b" data-ivavarias="' + esc(f0.nit) + '">Para reducir IVA (' + elegidas.length + ')</button> ' : '') +
               '<button type="button" class="pg-b" data-quitarsel="' + esc(f0.nit) + '">Quitar selección</button></span>') + '</div>'
             : pagables.length > 1 ? '<p class="pg-nota" style="margin:0.4rem 0 0">Para pagar varias juntas, marcá sus casillas o <button type="button" class="pg-x" style="color:var(--vb)" data-todasprov="' + esc(f0.nit) + '">elegí todas</button>.</p>' : '') +
           '</section>';
@@ -382,7 +385,7 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
             // cada quien identifica las suyas: la devuelve quien la marcó, o el dueño
             var puede = D.rol === 'dueno' || (x.marco && x.marco === D.mi_nombre);
             return '<tr><td>' + esc(ddmm(x.fecha)) + '</td><td>' + esc(x.proveedor) + '</td><td>' + esc(x.dte) + '</td><td class="n">' + q(x.total) + '</td><td class="n">' + q(x.iva) + '</td>' +
-              '<td>' + esc(x.marco || '—') + '</td><td>' + (puede ? '<button type="button" class="pg-x" data-ivadev="' + esc(x.llave) + '">devolver</button>' : '') + '</td></tr>';
+              '<td>' + (x.auto ? '<span class="pg-est abon" title="El proveedor está en la lista de IVA automático: se marcó sola al llegar. Si no era, devolvela.">automática</span>' : esc(x.marco || '—')) + '</td><td>' + (puede ? '<button type="button" class="pg-x" data-ivadev="' + esc(x.llave) + '">devolver</button>' : '') + '</td></tr>';
           }).join('') + '</table></div>' : '<div class="pg-vacio">Todavía no hay facturas para reducir IVA este año.</div>');
     }
     if (TAB === 'banco') {
@@ -560,10 +563,10 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     });
     var provs = []; L.forEach(function (f) { if (provs.indexOf(f.proveedor) === -1) provs.push(f.proveedor); });
     provs.sort();
-    var h = '<div class="pg-panel" data-panel="ivaagr"><b>¿Qué factura es para reducir IVA?</b><div class="pg-mas">' +
+    var h = '<div class="pg-panel" data-panel="ivaagr"><b>¿Qué facturas son para reducir IVA?</b> <span class="pg-nota">Podés elegir varias.</span><div class="pg-mas">' +
       '<label>Proveedor <select data-f="iprov"><option value="">elegí</option>' + provs.map(function (p) { return '<option' + (p === IVAAGR.prov ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('') + '</select></label>';
     if (IVAAGR.prov) h += '<div style="width:100%">' + L.filter(function (f) { return f.proveedor === IVAAGR.prov; }).map(function (f) {
-        return '<label style="display:block;padding:0.2rem 0"><input type="radio" name="ivaf" data-ivallave="' + esc(f.llave) + '"> Factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.total) + '</label>';
+        return '<label style="display:block;padding:0.2rem 0"><input type="checkbox" data-ivallave="' + esc(f.llave) + '"> Factura ' + esc(f.dte) + ' · ' + esc(ddmm(f.fecha)) + ' · ' + q(f.total) + '</label>';
       }).join('') + '</div><label>Nota <input type="text" data-f="inota" placeholder="ej. compra personal a nombre de CORSAGA"></label>';
     if (!provs.length) h += '<span class="pg-nota">No hay facturas por pagar sin pagos en tu área.</span>';
     return h + '<button type="button" class="pg-b pri" data-ivamarcar="1">Marcar para reducir IVA</button> <button type="button" class="pg-b" data-ivacerrar="1">Cancelar</button></div><div class="pg-err" data-err></div></div>';
@@ -730,11 +733,11 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
     if (b.dataset.ivaagr) { IVAAGR = {}; repintarCuerpo(); return; }
     if (b.dataset.ivacerrar) { IVAAGR = null; repintarCuerpo(); return; }
     if (b.dataset.ivamarcar && panel) {
-      var rI = panel.querySelector('[data-ivallave]:checked');
-      if (!rI) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
-      var kI = rI.dataset.ivallave, nI = valor(panel, 'inota');
-      if (!confirm('¿Esta factura es ajena a la operación y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE. Se puede devolver desde esta misma lista.')) return;
-      llamar(function (r) { r.marcarFacturaParaIva(AUTH, kI, nI); }, panel, 'Marcando la factura…');
+      var kI = []; panel.querySelectorAll('[data-ivallave]').forEach(function (c) { if (c.checked) kI.push(c.dataset.ivallave); });
+      if (!kI.length) { panel.querySelector('[data-err]').textContent = 'Elegí la factura.'; return; }
+      var nI = valor(panel, 'inota');
+      if (!confirm((kI.length === 1 ? '¿Esta factura es ajena' : '¿Estas ' + kI.length + ' facturas son ajenas') + ' a la operación y solo sirve' + (kI.length === 1 ? '' : 'n') + ' para reducir el IVA?\n\nSale' + (kI.length === 1 ? '' : 'n') + ' de Pagos y del DRE. Se puede' + (kI.length === 1 ? '' : 'n') + ' devolver desde esta misma lista.')) return;
+      llamar(function (r) { r.marcarFacturasParaIva(AUTH, kI, nI); }, panel, kI.length === 1 ? 'Marcando la factura…' : 'Marcando ' + kI.length + ' facturas…');
       return;
     }
     if (b.dataset.agrfact && panel) {
@@ -791,6 +794,13 @@ window.PF_PAGOS = function (HOST, AUTH, MODO) {
       if (!valor(panel, 'fpagar')) { panel.querySelector('[data-err]').textContent = 'Elegí la fecha de pagar.'; return; }
       var llave = b.dataset.programar, fp = valor(panel, 'fpagar');
       llamar(function (r) { r.programarPagoFactura(AUTH, llave, fp); }, panel, 'Guardando la fecha de pago…'); return;
+    }
+    if (b.dataset.ivavarias) {
+      var kV = D.facturas.filter(function (f) { return f.nit === b.dataset.ivavarias && f.saldo > 0.01 && SEL[f.llave]; }).map(function (f) { return f.llave; });
+      if (!kV.length) return;
+      if (!confirm('¿Estas ' + kV.length + ' facturas son ajenas al giro y solo sirven para reducir el IVA?\n\nSalen de Pagos y del DRE, y en el maestro pasan a FACTURA_AJENA. Se pueden devolver desde la pestaña Para reducir IVA.')) return;
+      kV.forEach(function (k) { delete SEL[k]; });
+      llamar(function (r) { r.marcarFacturasParaIva(AUTH, kV, ''); }, b.closest('.pg-prov') || HOST, 'Marcando ' + kV.length + ' facturas…'); return;
     }
     if (b.dataset.iva && panel) {
       if (!confirm('¿La factura ' + b.dataset.iva.split('|')[1] + ' es ajena al giro y solo sirve para reducir el IVA?\n\nSale de Pagos y del DRE, y en el maestro pasa a FACTURA_AJENA. Se puede devolver desde la pestaña Para reducir IVA.')) return;

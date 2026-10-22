@@ -112,6 +112,14 @@ function calentarCaches() {
   } catch (e) {
     fallo.push('FEL del correo al maestro: ' + String(e && e.message || e));
   }
+  // y las de los proveedores de IVA automatico se marcan solas (22-oct-2026, PagosProveedores.js)
+  try {
+    var ivaA = pagIvaAutomatico_();
+    if (ivaA.marcadas) correo = (correo ? correo + ' · ' : '') + 'IVA automático: ' + ivaA.marcadas;
+    if (ivaA.errores.length) fallo.push('IVA automático: ' + ivaA.errores.slice(0, 2).join(' · '));
+  } catch (e) {
+    fallo.push('IVA automático: ' + String(e && e.message || e));
+  }
 
   // Las transferencias que el BI avisa por correo (BancoCorreo.js, 16-oct-2026): Pagos las une a
   // su factura sin esperar el estado de cuenta del lunes. Lo leido se salta: casi siempre no-op.
