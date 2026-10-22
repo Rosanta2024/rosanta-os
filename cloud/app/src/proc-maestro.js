@@ -149,7 +149,7 @@ function archivosMaestro() {
  */
 function crearMotorMaestro(maestro, estado, opciones) {
   const o = opciones || {};
-  const faltas = [], vistas = new Set(), logs = [], ops = [], abiertos = [];
+  const faltas = [], vistas = new Set(), logs = [], ops = [], abiertos = [], marcas = [];
   let progresoNuevo = null, actual = null, ultimoR1C1 = null;
   const anotar = (f) => { const k = JSON.stringify(f); if (!vistas.has(k)) { vistas.add(k); faltas.push(f); } };
   const falta = (f) => { anotar(f); throw new FaltaPrecarga(f); };
@@ -196,6 +196,18 @@ function crearMotorMaestro(maestro, estado, opciones) {
           return out;
         },
         getValue: () => g.getValues()[0][0],
+        // setValue de una celda que YA tiene datos: el cargador corrige el Estado de una factura que el export trae
+        // Anulada (22-oct-2026). Se marca `actualiza`: no es una fila nueva (ni cuenta en filasArmadas ni pide
+        // destino vacio).
+        setValue: (x) => {
+          if (nf !== 1 || nc !== 1) throw new Error('setValue en un rango de mas de una celda en ' + n + '.');
+          reg('valores', { valores: [[copiaValor(x)]], actualiza: true });
+          while (T.M.length < fila) T.M.push([]);
+          const row = T.M[fila - 1];
+          while (row.length < col) row.push('');
+          row[col - 1] = copiaValor(x);
+          return g;
+        },
         // Apps Script devuelve R1C1; el cargador solo mira si hay formula y la vuelve a poner con setFormulasR1C1.
         // Se devuelve el texto A1 de esa fila y se recuerda de donde salio: en la nube se COPIA esa fila (copyPaste).
         getFormulasR1C1: () => {
@@ -231,6 +243,11 @@ function crearMotorMaestro(maestro, estado, opciones) {
       return g;
     };
     return { getName: () => n, getLastRow: lastRow, getRange: (a, c, nf, nc) => {
+      // la marca de carga del FEL (cargador.js, CARGA_MARCA_CELDA_): en la nube la pone correrNube de verdad
+      // ANTES de leer el maestro y la quita al final, asi que aca se anota y no se escribe
+      if (typeof a === 'string' && n === '01_FEL_Maestro' && a === ctx.CARGA_MARCA_CELDA_) {
+        return { setValue: (x) => { marcas.push(String(x)); }, getValue: () => '' };
+      }
       if (typeof a === 'string') throw new Error('El cargador en la nube no imita rangos A1 (' + a + ').');
       return rango(a, c, nf, nc);
     } };
@@ -332,7 +349,7 @@ function crearMotorMaestro(maestro, estado, opciones) {
     if (typeof ctx[nombre] !== 'function') throw new Error('El cargador no tiene la funcion ' + nombre + '.');
     let err = null;
     try { ctx[nombre](); } catch (e) { if (!(e instanceof FaltaPrecarga)) err = String(e && e.message || e); }
-    return { faltas, error: err, ops, logs, progreso: progresoNuevo, abiertos, ctx, trabajo };
+    return { faltas, error: err, ops, logs, progreso: progresoNuevo, abiertos, ctx, trabajo, marcas };
   }
   return { correr, ctx };
 }
@@ -493,7 +510,7 @@ function compararConMaestro(armadas, maestro, ctx) {
     indice[n] = m;
   });
   const enc = (n, c) => { const p = maestro.pestanas[n]; const h = p && p.valores[ESCRIBE[n].desde - 2]; return h ? String(h[c - 1] || '') : ''; };
-  let iguales = 0;
+  let iguales = 0, delCorreo = 0;
   const distintas = [], faltan = [];
   armadas.forEach((a) => {
     const ks = llaves(a.pestana, a.valores);
@@ -501,6 +518,17 @@ function compararConMaestro(armadas, maestro, ctx) {
     for (const k of ks) { if (k && indice[a.pestana].has(k)) { i = indice[a.pestana].get(k); break; } }
     if (i === undefined) { faltan.push({ pestana: a.pestana, llave: ks.filter(Boolean)[0] || '', fila: a.valores.map(norm) }); return; }
     const h = maestro.pestanas[a.pestana].valores[i];
+    // FILA DEL CORREO (22-oct-2026): la escribio la intranet (FelCorreo.js, fecAlMaestro_) con lo que trae el aviso
+    // de SAT, no el export. El nombre, el establecimiento o el IVA pueden venir distintos y es lo esperado: solo se
+    // exige lo que identifica la factura y su monto (Serie, Numero, NIT, Gran_Total). El Estado lo corrige el cargador.
+    const correo = a.pestana === '01_FEL_Maestro' && ES_CORREO.test(String(h[COL_NOTA_FEL - 1] || ''));
+    if (correo) {
+      const cols = [3, 4, 5, 10].filter((c) => !igual(h[c - 1] === undefined ? '' : h[c - 1], a.valores[c - 1]))
+        .map((c) => ({ col: c, encabezado: enc(a.pestana, c), maestro: norm(h[c - 1]), nube: norm(a.valores[c - 1]), correo: true }));
+      if (cols.length) distintas.push({ pestana: a.pestana, llave: ks.filter(Boolean)[0] || '', fila_maestro: i + 1, columnas: cols });
+      else delCorreo++;
+      return;
+    }
     const cols = [];
     a.valores.forEach((v, j) => {
       const enM = h[j] === undefined ? '' : h[j];
@@ -511,8 +539,12 @@ function compararConMaestro(armadas, maestro, ctx) {
     if (cols.length) distintas.push({ pestana: a.pestana, llave: ks.filter(Boolean)[0] || '', fila_maestro: i + 1, columnas: cols });
     else iguales++;
   });
-  return { iguales, distintas, faltan };
+  return { iguales, del_correo: delCorreo, distintas, faltan };
 }
+
+/** La nota que deja fecAlMaestro_ (intranet, FelCorreo.js) en la columna Q de 01_FEL_Maestro. */
+const COL_NOTA_FEL = 17;
+const ES_CORREO = /^Entró del correo de SAT/;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Escribir en el maestro (modo nube)
@@ -550,8 +582,10 @@ function planEscritura(ops, maestro) {
     if (!pr) throw new Error('El maestro no tiene la pestaña ' + op.pestana + '.');
     const sheetId = pr.properties ? pr.properties.sheetId : pr.sheetId;
     const fin = op.fila + op.nf - 1;
-    const R = rangos[op.pestana] = rangos[op.pestana] || { desde: op.fila, hasta: fin, ancho: 0 };
-    R.desde = Math.min(R.desde, op.fila); R.hasta = Math.max(R.hasta, fin); R.ancho = Math.max(R.ancho, op.col + op.nc - 1);
+    if (!op.actualiza) {   // una correccion de Estado cae en una fila que ya existe: no pide destino vacio
+      const R = rangos[op.pestana] = rangos[op.pestana] || { desde: op.fila, hasta: fin, ancho: 0 };
+      R.desde = Math.min(R.desde, op.fila); R.hasta = Math.max(R.hasta, fin); R.ancho = Math.max(R.ancho, op.col + op.nc - 1);
+    }
     const filas = ((pr.gridProperties || {}).rowCount) || 0;
     if (fin > filas) crecer[op.pestana] = { sheetId, faltan: Math.max((crecer[op.pestana] || {}).faltan || 0, fin - filas) };
     const rango = { sheetId, startRowIndex: op.fila - 1, endRowIndex: fin, startColumnIndex: op.col - 1, endColumnIndex: op.col - 1 + op.nc };
@@ -651,13 +685,15 @@ async function correrSombra(o, deps) {
   // (2) sobre el maestro sin llaves: como arma cada fila, para compararla con la que el maestro ya tiene
   const r2 = r1.error ? null : await correrConPrecarga(sinLlaves(maestro), estado, deps2, { ahora: o.ahora, progreso: {} });
   const agregaria = filasArmadas(r1.ops);
+  // correcciones de Estado que la carga de Apps Script de ese lunes no dejo hechas (tendria que ser 0)
+  const corregiria = r1.ops.filter((x) => x.actualiza).length;
   const cmp = r2 && !r2.error ? compararConMaestro(filasArmadas(r2.ops), maestro, r2.ctx) : { iguales: 0, distintas: [], faltan: [] };
   const err = r1.error || (r2 && r2.error) || '';
   const avisos = avisosDe(r1.logs);
-  const difiere = agregaria.length || cmp.distintas.length || cmp.faltan.length;
+  const difiere = agregaria.length || corregiria || cmp.distintas.length || cmp.faltan.length;
   return { status: err ? 500 : difiere ? 409 : 200, cuerpo: {
-    modo: 'sombra', archivos: resumirArchivos(r1, estado), filas_que_agregaria: agregaria.length,
-    iguales: cmp.iguales, distintas: cmp.distintas.length, faltan: cmp.faltan.length, avisos, error: err, rondas: r1.rondas,
+    modo: 'sombra', archivos: resumirArchivos(r1, estado), filas_que_agregaria: agregaria.length, estados_que_corregiria: corregiria,
+    iguales: cmp.iguales, del_correo: cmp.del_correo || 0, distintas: cmp.distintas.length, faltan: cmp.faltan.length, avisos, error: err, rondas: r1.rondas,
     detalle: { agregaria: agregaria.slice(0, 50).map((a) => ({ pestana: a.pestana, fila: a.fila, valores: a.valores.map(norm) })),
       distintas: cmp.distintas.slice(0, 100), faltan: cmp.faltan.slice(0, 100) } } };
 }
@@ -668,6 +704,23 @@ async function correrNube(o, deps) {
   if (!deps.pool) throw error('Modo nube sin base.', 500);
   if (!deps.sheetsEscritura) throw error('Modo nube sin permiso de escribir el maestro (sheetsEscritura).', 503);
   const antes = await registro(deps.pool);
+  const sheets = sheetsDe(deps.sheetsEscritura);
+  // LA MARCA DE CARGA (como _cargarFEL de Apps Script): mientras dura, la intranet no escribe facturas del correo en
+  // 01_FEL_Maestro. Se pone ANTES de leer el maestro y se quita al final, pase lo que pase.
+  await ponerMarca(sheets, 'cargando hasta ' + new Date(Date.now() + MARCA_MIN * 60000).toISOString());
+  try {
+    return await correrNubeConMarca(o, deps, antes, sheets);
+  } finally {
+    await ponerMarca(sheets, '').catch(() => {});
+  }
+}
+
+const MARCA_CELDA = "'01_FEL_Maestro'!T1", MARCA_MIN = 10;
+async function ponerMarca(sheets, texto) {
+  await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: MAESTRO, requestBody: { valueInputOption: 'RAW', data: [{ range: MARCA_CELDA, values: [[texto]] }] } });
+}
+
+async function correrNubeConMarca(o, deps, antes, sheets) {
   const maestro = await leerMaestro(deps.sheetsLectura, MAESTRO);
   revisarZona(maestro);
   const estado = { libros: {}, carpetas: {}, respuestas: {} };
@@ -677,7 +730,6 @@ async function correrNube(o, deps) {
   const avisos = avisosDe(r.logs);
   if (r.error) return { status: 500, cuerpo: { modo: 'nube', archivos, escritas: 0, avisos, error: 'El cargador fallo y no se escribio nada: ' + r.error } };
 
-  const sheets = sheetsDe(deps.sheetsEscritura);
   const plan = planEscritura(r.ops, maestro);
   let relectura = [];
   if (r.ops.length) {

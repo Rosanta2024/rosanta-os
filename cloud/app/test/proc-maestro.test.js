@@ -118,6 +118,11 @@ function google(opciones) {
           return { data: { values: out } };
         },
         async batchUpdate(p) {
+          // la marca de carga del FEL (T1, texto tal cual): no es una escritura de datos
+          if (p.requestBody.valueInputOption === 'RAW' && p.requestBody.data.length === 1 && /!T1$/.test(p.requestBody.data[0].range)) {
+            llamadas.push(['marca', p.spreadsheetId, p.requestBody.data[0].values[0][0]]);
+            return { data: {} };
+          }
           llamadas.push(['values.batchUpdate', p.spreadsheetId, p.requestBody]);
           assert.strictEqual(p.requestBody.valueInputOption, 'USER_ENTERED');
           p.requestBody.data.forEach((d) => {
@@ -300,6 +305,12 @@ test('Nube sobre un maestro sin la S43: escribe solo las filas nuevas, con los t
     'XFEL43:' + Date.parse('2026-10-26T15:01:00.000Z'), 'XPOS43:' + Date.parse('2026-10-26T15:00:00.000Z')]);
   assert.ok(deps.pool.consultas.some((q) => /INSERT INTO maestro_corridas/.test(q.sql)));
   assert.deepStrictEqual(c.relectura, []);
+  // la marca de carga: puesta ANTES de leer el maestro y quitada al final (la intranet no escribe facturas del correo mientras tanto)
+  const marcas = g.llamadas.filter((x) => x[0] === 'marca').map((x) => x[2]);
+  assert.strictEqual(marcas.length, 2);
+  assert.match(marcas[0], /^cargando hasta \d{4}-\d\d-\d\dT/);
+  assert.strictEqual(marcas[1], '');
+  assert.ok(g.llamadas.findIndex((x) => x[0] === 'marca') < g.llamadas.findIndex((x) => x[0] !== 'marca'), 'la marca va primero');
 
   // segunda corrida: el registro hace que no abra nada (y aunque lo abriera, la deduplicacion no repetiria)
   const n = escrituras(g).length;
@@ -423,4 +434,54 @@ test('La ruta: clave de tareas, apps no hace nada, ahora mal escrito 400 y una s
       assert.deepStrictEqual(await r2.json(), { modo: 'apps' });
     } finally { srv2.close(); }
   } finally { srv.close(); }
+});
+
+// ---- las facturas del correo (22-oct-2026: la intranet las escribe en 01_FEL_Maestro el mismo dia) ----------------
+function conFilaDelCorreo() {
+  const m = maestroInicial();
+  // ABCD1234 111 ya entro por el correo: otro nombre del emisor y el IVA calculado 12/112, con la nota en Q
+  m['01_FEL_Maestro'].push([new Date(2026, 9, 21), 'FACT', 'ABCD1234', '111', '7654321', 'Proveedor Dos, S.A.', 'Proveedor Dos, S.A.', 'Vigente', 'GTQ', 80, 8.57143,
+    '', '', '', '', '', 'Entró del correo de SAT el 21/10/2026 09:14']);
+  return m;
+}
+
+test('Facturas del correo: la nube no las duplica y la sombra las cuenta aparte (sin diferencias falsas)', async () => {
+  const { g, deps } = armar({ modo: 'nube', maestro: conFilaDelCorreo() });
+  const r = await M.correrMaestro({}, deps);
+  assert.strictEqual(r.status, 200, JSON.stringify(r.cuerpo));
+  assert.strictEqual(r.cuerpo.escritas, 6, 'la del correo no se vuelve a escribir');
+  const F = filasDe(g, '01_FEL_Maestro');
+  assert.strictEqual(F.filter((x) => x[2] && x[2].v === 'ABCD1234').length, 1);
+  const s = await M.correrMaestro({ modo: 'sombra', ahora: LUNES_26 }, Object.assign({}, deps, { sheetsEscritura: null }));
+  assert.strictEqual(s.status, 200, JSON.stringify(s.cuerpo.detalle));
+  assert.deepStrictEqual([s.cuerpo.filas_que_agregaria, s.cuerpo.iguales, s.cuerpo.del_correo, s.cuerpo.distintas, s.cuerpo.faltan], [0, 6, 1, 0, 0]);
+
+  // pero si la del correo tiene OTRO monto, si es diferencia
+  F[5][9] = { v: 81 };
+  const s2 = await M.correrMaestro({ modo: 'sombra', ahora: LUNES_26 }, Object.assign({}, deps, { sheetsEscritura: null }));
+  assert.strictEqual(s2.status, 409);
+  assert.ok(s2.cuerpo.detalle.distintas.some((d) => d.columnas.some((c) => c.correo && c.col === 10)), JSON.stringify(s2.cuerpo.detalle.distintas));
+});
+
+test('Facturas del correo: si el export la trae Anulada, la nube le cambia el Estado en su fila (sin pedir destino vacio)', async () => {
+  const fila = FEL43[2], antes = fila[8];
+  fila[8] = 'Anulado';
+  try {
+    const { g, deps } = armar({ modo: 'nube', maestro: conFilaDelCorreo() });
+    const r = await M.correrMaestro({}, deps);
+    assert.strictEqual(r.status, 200, JSON.stringify(r.cuerpo));
+    assert.deepStrictEqual(r.cuerpo.relectura, []);
+    const F = filasDe(g, '01_FEL_Maestro');
+    assert.strictEqual(F[5][7].v, 'Anulado');
+    assert.strictEqual(F[5][16].v, 'Entró del correo de SAT el 21/10/2026 09:14', 'la nota no se toca');
+    assert.ok(r.cuerpo.avisos.some((a) => /pasadas a Anulado.*ABCD1234 111/.test(a)), r.cuerpo.avisos.join(' | '));
+    // ya corregida: la sombra no tiene nada que corregir
+    const s = await M.correrMaestro({ modo: 'sombra', ahora: LUNES_26 }, Object.assign({}, deps, { sheetsEscritura: null }));
+    assert.strictEqual(s.cuerpo.estados_que_corregiria, 0);
+    // y sobre un maestro donde Apps Script NO la corrigio, la sombra lo marca (409)
+    F[5][7] = { v: 'Vigente' };
+    const s2 = await M.correrMaestro({ modo: 'sombra', ahora: LUNES_26 }, Object.assign({}, deps, { sheetsEscritura: null }));
+    assert.strictEqual(s2.status, 409);
+    assert.strictEqual(s2.cuerpo.estados_que_corregiria, 1);
+  } finally { fila[8] = antes; }
 });

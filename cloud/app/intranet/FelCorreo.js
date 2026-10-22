@@ -9,12 +9,13 @@
  * El aviso trae tipo, serie, numero, NIT y nombre del emisor, establecimiento, fecha y
  * monto: todo lo que Pagos usa. NO trae categoria, ni si es personal, ni si despues se
  * anula. Por eso:
- *  - Se guarda en la pestaña FEL_CORREO del Sheet de config, NO en el maestro. El maestro
- *    sigue llenandose con el export del FEL, que es la fuente del DRE.
- *  - Pagos la muestra solo mientras el FEL del maestro no la trae (llave NIT|numero).
- *    Cuando entra el lunes, manda la del maestro y la del correo deja de verse sola.
- *  - La categoria sale de la historia del NIT en el FEL (la que mas usa). Un NIT nuevo
- *    queda en ADMIN, POR CLASIFICAR, hasta la carga del lunes.
+ *  - Se guarda en la pestaña FEL_CORREO del Sheet de config y, desde el 22-oct-2026, pasa sola al
+ *    FEL del maestro (fecAlMaestro_, al final de este archivo). El export del lunes no la duplica
+ *    y corrige las anuladas (cargador.js).
+ *  - Pagos la muestra con la etiqueta "por correo" solo los minutos que tarda en entrar al
+ *    maestro (llave NIT|numero). Desde ahi manda la del maestro.
+ *  - En el maestro la categoria sale de 00_Proveedores por Establecimiento, como en la carga
+ *    del lunes. Un establecimiento nuevo queda en POR_CLASIFICAR hasta que se agregue alli.
  *  - Una anulada se sigue viendo hasta el lunes: SAT no avisa anulaciones por correo
  *    (revisado el 13-oct-2026 sobre 201 avisos, todos de emision).
  *
@@ -198,3 +199,97 @@ function fecFacturas_() {
   });
 }
 
+
+/*
+ * AL MAESTRO EL MISMO DIA (22-oct-2026, Juanma: "una factura que llega al correo ya fue emitida por la SAT.
+ * No tiene sentido esperar al lunes para registrarla en el maestro. El lunes sirve por si un proveedor anula una
+ * factura"). Cada aviso de FEL_CORREO que el FEL del maestro no tiene entra a 01_FEL_Maestro como lo escribe el
+ * cargador (cargador.js, _cargarFEL): Serie y Numero como texto, Estado Vigente, IVA de 12/112 en los tipos que
+ * lo llevan, y las cinco formulas (Año, Semana, Categoría por 00_Proveedores, Es_Personal, Mes). La carga del
+ * lunes no la duplica (misma llave Serie|Numero o Numero|Gran_Total) y, si viene anulada, le cambia el Estado.
+ * Corre en calentarCaches (cada 5 min) y al abrir Pagos. Lee la hoja FEL_CORREO, no Gmail: funciona igual si
+ * la hoja la llena la intranet o el servidor nuevo (proc_fel = nube).
+ * Se escribe con appendRow (una fila atomica): el cargador corre en otro proyecto y no comparte el candado.
+ * Ademas (revision del Estudio, 22-oct): no escribe mientras el cargador deja "cargando hasta <ISO>" en
+ * FEC_MARCA_CARGA_ (cargador.js, CARGA_MARCA_CELDA_), y cada fila lleva en la columna Nota (Q) FEC_ORIGEN_, para
+ * distinguirla de las del export (la sombra del maestro las compara aparte).
+ */
+var FEC_MARCA_CARGA_ = 'T1';
+var FEC_ORIGEN_ = 'Entró del correo de SAT';
+var FEC_MAESTRO_DESDE_ = '2026-10-13';   // los avisos empezaron el 13-oct; lo anterior entro con el FEL
+var FEC_TIPOS_IVA_ = ['FACT', 'FCAM', 'NCRE', 'NDEB', 'FCAP'];   // FPEQ y los recibos no llevan credito fiscal
+var FEC_FEL_PRIMERA_ = 5;   // 01_FEL_Maestro: encabezado en la fila 4, datos desde la 5 (como el cargador)
+
+function _fecTxt_(v) { return String(v == null ? '' : v).trim().replace(/\.0$/, '').toUpperCase(); }
+
+/** Las filas que el FEL del maestro no tiene, listas para appendRow (sin las formulas). Puro: lo usa la prueba. */
+function fecFilasParaMaestro_(correo, existentes) {
+  var previos = {}, porTotal = {}, porNit = {}, desde = pagDia_(FEC_MAESTRO_DESDE_);
+  existentes.forEach(function (r) {   // [Serie, Numero, NIT, Gran_Total]
+    var s = _fecTxt_(r[0]), n = _fecTxt_(r[1]);
+    if (s) previos[s + '|' + n] = 1;
+    if (n) { porTotal[n + '|' + _finNum_(r[3]).toFixed(2)] = 1; porNit[pagNit_(r[2]) + '|' + n] = 1; }
+  });
+  var out = [];
+  correo.forEach(function (x) {
+    var s = _fecTxt_(x.serie), n = _fecTxt_(x.numero);
+    if (!s || !n || !x.nit || !x.fecha || x.fecha < desde || !(x.total > 0)) return;
+    if (previos[s + '|' + n] || porTotal[n + '|' + x.total.toFixed(2)] || porNit[x.nit + '|' + n]) return;
+    previos[s + '|' + n] = porTotal[n + '|' + x.total.toFixed(2)] = porNit[x.nit + '|' + n] = 1;
+    var iva = FEC_TIPOS_IVA_.indexOf(x.tipo) !== -1 ? Math.round(x.total / 1.12 * 0.12 * 100000) / 100000 : 0;
+    // L a P las llenan las formulas despues; Q (Nota) lleva el origen
+    out.push({ serie: s, numero: n, fila: [x.fecha, x.tipo, "'" + s, "'" + n, x.nit, x.nombre, x.establecimiento || x.nombre,
+                                            'Vigente', x.moneda || 'GTQ', x.total, iva, '', '', '', '', '',
+                                            FEC_ORIGEN_ + ' el ' + Utilities.formatDate(new Date(), 'America/Guatemala', 'dd/MM/yyyy HH:mm')] });
+  });
+  return out;
+}
+
+/** Pasa al maestro las facturas del correo que todavia no estan. Nunca rompe a quien la llama. */
+function fecAlMaestro_() {
+  if (typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_) return { nuevas: 0, errores: [] };
+  var rep = { nuevas: 0, errores: [] }, lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) { rep.errores.push('otra escritura en curso'); return rep; }
+  try {
+    var correo = fecFacturas_();
+    if (!correo.length) return rep;
+    var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), sh = ss.getSheetByName('01_FEL_Maestro');
+    if (!sh) throw new Error('No encontre 01_FEL_Maestro.');
+    var enc = sh.getRange(FEC_FEL_PRIMERA_ - 1, 1, 1, 14).getValues()[0].map(function (h) { return String(h || '').trim(); });
+    var esperado = ['Fecha', 'Tipo_DTE', 'Serie', 'Numero_DTE', 'NIT_Emisor', 'Nombre_Emisor', 'Establecimiento', 'Estado', 'Moneda', 'Gran_Total', 'IVA'];
+    if (esperado.some(function (h, i) { return enc[i] !== h; }))   // falla fuerte: escribir corrido daña el FEL
+      throw new Error('El encabezado de 01_FEL_Maestro cambio (' + enc.slice(0, 11).join(' | ') + '). No se escribio nada.');
+    // la carga del lunes esta escribiendo: se espera a la proxima vuelta
+    var marca = String(sh.getRange(FEC_MARCA_CARGA_).getValue() || ''), hasta = /^cargando hasta (\S+)/.exec(marca);
+    if (hasta && new Date(hasta[1]).getTime() > Date.now()) { rep.errores.push('carga del FEL en curso'); return rep; }
+    var ultima = sh.getLastRow(), ex = [];
+    if (ultima >= FEC_FEL_PRIMERA_) {
+      var v = sh.getRange(FEC_FEL_PRIMERA_, 3, ultima - FEC_FEL_PRIMERA_ + 1, 8).getValues();   // C:J
+      ex = v.map(function (r) { return [r[0], r[1], r[2], r[7]]; });
+    }
+    var nuevas = fecFilasParaMaestro_(correo, ex);
+    if (!nuevas.length) return rep;
+    nuevas.forEach(function (x) { sh.appendRow(x.fila); });
+    SpreadsheetApp.flush();
+    // las formulas van con la fila fija, como las del cargador: se busca donde quedo cada una
+    var fin = sh.getLastRow(), desde = Math.max(FEC_FEL_PRIMERA_, fin - nuevas.length - 50);
+    var cola = sh.getRange(desde, 3, fin - desde + 1, 2).getValues(), donde = {};
+    cola.forEach(function (r, i) { donde[_fecTxt_(r[0]) + '|' + _fecTxt_(r[1])] = desde + i; });
+    nuevas.forEach(function (x) {
+      var r = donde[x.serie + '|' + x.numero];
+      if (!r) { rep.errores.push('no encontre la fila de ' + x.serie + ' ' + x.numero + ' para sus formulas'); return; }
+      sh.getRange(r, 1).setNumberFormat('yyyy-mm-dd');
+      sh.getRange(r, 12, 1, 5).setFormulas([['=IF(A' + r + '="","",IFERROR(YEAR(A' + r + '),""))',
+        '=IF(A' + r + '="","",IFERROR(WEEKNUM(A' + r + ',21),""))',
+        '=IF(G' + r + '="","",IFERROR(VLOOKUP(G' + r + ",'00_Proveedores'!A:C,3,FALSE()),\"POR_CLASIFICAR\"))",
+        '=IF(G' + r + '="","",IFERROR(VLOOKUP(G' + r + ",'00_Proveedores'!A:D,4,FALSE()),\"No\"))",
+        '=IF(A' + r + '="","",IFERROR(MONTH(A' + r + '),""))']]);
+      rep.nuevas++;
+    });
+    if (typeof _pagOlvidar_ === 'function') _pagOlvidar_(true);   // quien siga en esta ejecucion relee el FEL
+    return rep;
+  } catch (e) {
+    rep.errores.push(String(e && e.message || e));
+    return rep;
+  } finally { lock.releaseLock(); }
+}

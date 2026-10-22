@@ -1,1 +1,1 @@
-357372c 2026-10-21 Merge remote-tracking branch 'origin/main' into claude/infallible-roentgen-5185e3
+09307d0 2026-10-22 FEL del correo: marca de carga contra la carrera con el cargador y origen en Nota (revision del Estudio)
