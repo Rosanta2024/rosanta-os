@@ -1,1 +1,1 @@
-a64a21b 2026-10-19 maestro: lote carniceria_atrasadas_s42 (7 FEL atrasadas a PERIODO_ANTERIOR, decision de Juanma 19-oct)
+4dcf564 2026-10-22 maestro: cierre de bancos BAC (cuenta Q, cuenta $, tarjeta BAC; tarjeta BI a mano) en Apps Script y en la nube
