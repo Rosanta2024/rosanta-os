@@ -24,7 +24,9 @@
 // celdas, y solo si la fila sigue diciendo lo que se leyo (fecha, descripcion, montos, PERSONAL)
 // y el total de filas es el que se reviso (CSF_RECLAS_ESPERADAS); si no, no cambia ninguna.
 //
-//   revisarCargosSinFechaTcBac()   no escribe: dice que filas cargaria y cuales reclasificaria
+// Y LOS INTERESES ya cargados (may-sep tarjeta BAC, sep tarjeta BI) de COMISIONES_BANCARIAS a CB_CAT_INTERES (ver abajo).
+//
+//   revisarCargosSinFechaTcBac()   no escribe: cuenta por separado cargos, reclasificaciones e intereses
 //   cargarCargosSinFechaTcBac()
 // Ensayo de solo lectura: node cloud/herramientas/ensayo-cargos-sin-fecha-tc.js
 // Cuando corra, se saca del proyecto a apps-script/_archivo/ como los demas lotes.
@@ -144,8 +146,59 @@ function _csfCorrer(escribir) {
   var rc = _csfReclasificar(ss, escribir);
   avisos = avisos.concat(rc.avisos);
   Logger.log((escribir ? 'Filas reclasificadas: ' : 'Filas que reclasificaria: ') + rc.cambiadas);
+  var ri = _csfIntereses(ss, escribir);
+  avisos = avisos.concat(ri.avisos);
+  Logger.log((escribir ? 'Intereses pasados a ' : 'Intereses que pasaria a ') + CB_CAT_INTERES + ': ' + ri.cambiadas);
   if (avisos.length) { Logger.log('--- REVISAR ---'); avisos.forEach(function (x) { Logger.log('  ' + x); }); }
-  return { cargos: total, reclasificadas: rc.cambiadas };
+  return { cargos: total, reclasificadas: rc.cambiadas, intereses: ri.cambiadas };
+}
+
+// ---- los intereses ya cargados como COMISIONES_BANCARIAS (Juanma lo aprobo el 22-oct-2026) ----
+// Los INTERES COM de mayo a septiembre de la tarjeta BAC y los dos intereses de septiembre de la tarjeta BI
+// (INTERES MORATORIO, INTER/DEVENGADO) pasan a CB_CAT_INTERES. Solo cambia la Categoria; solo si la fila sigue igual
+// a como se leyo; y si no son exactamente CSF_INTERESES_ESPERADOS, no cambia ninguno.
+var CSF_INTERESES_HOJAS = ['05_Tarjeta_Credito_BAC', '06_Tarjeta_Credito_BI'];
+var CSF_INTERESES_MESES = ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
+var CSF_INTERESES_ESPERADOS = 7;   // 5 de la tarjeta BAC (filas 248, 279, 325, 365, 390) y 2 de la tarjeta BI
+
+function _csfInteresesLeer(ss) {
+  var out = [];
+  CSF_INTERESES_HOJAS.forEach(function (n) {
+    var sh = ss.getSheetByName(n), ultima = sh ? sh.getLastRow() : 0;
+    if (ultima <= CB_FILA_ENC) return;
+    var v = sh.getRange(CB_FILA_ENC + 1, 1, ultima - CB_FILA_ENC, 6).getValues();
+    for (var i = 0; i < v.length; i++) {
+      var dia = _cbDia(v[i][0]);
+      if (CSF_INTERESES_MESES.indexOf(dia.slice(0, 7)) === -1) continue;
+      if (!/^(INTERES|INTER\/)/i.test(_cbDesc(v[i][1])) || _norm(v[i][4]) !== 'COMISIONES_BANCARIAS') continue;
+      out.push({ hoja: n, sh: sh, fila: CB_FILA_ENC + 1 + i, dia: dia, desc: _norm(v[i][1]), q: _numero(v[i][2]), d: _numero(v[i][3]) });
+    }
+  });
+  return out;
+}
+
+function _csfIntereses(ss, escribir) {
+  var filas = _csfInteresesLeer(ss), avisos = [];
+  filas.forEach(function (x) { Logger.log('  interes ' + x.hoja + ' fila ' + x.fila + ' · ' + x.dia + ' · ' + x.desc + ' · COMISIONES_BANCARIAS -> ' + CB_CAT_INTERES); });
+  if (filas.length !== CSF_INTERESES_ESPERADOS) {
+    if (filas.length) avisos.push('Intereses: hay ' + filas.length + ' filas y la revision encontro ' + CSF_INTERESES_ESPERADOS +
+                                  '. Alguien las toco: no se cambia ninguna. >> NO se escribio nada.');
+    else Logger.log('  No queda ningun interes de may-sep en COMISIONES_BANCARIAS.');
+    return { cambiadas: 0, avisos: avisos };
+  }
+  if (!escribir) return { cambiadas: filas.length, avisos: avisos };
+  var cambiadas = 0;
+  filas.forEach(function (x) {
+    var w = x.sh.getRange(x.fila, 1, 1, 6).getValues()[0];   // se relee justo antes de tocarla
+    var igual = _cbDia(w[0]) === x.dia && _norm(w[1]) === x.desc && _numero(w[2]) === x.q && _numero(w[3]) === x.d && _norm(w[4]) === 'COMISIONES_BANCARIAS';
+    if (!igual) { avisos.push(x.hoja + ' fila ' + x.fila + ': ya no coincide con lo que se leyo; no se toco.'); return; }
+    x.sh.getRange(x.fila, 5, 1, 1).setValues([[CB_CAT_INTERES]]);
+    cambiadas++;
+  });
+  SpreadsheetApp.flush();
+  var mal = filas.filter(function (x) { return _norm(x.sh.getRange(x.fila, 5, 1, 1).getValues()[0][0]) !== CB_CAT_INTERES; }).length;
+  if (mal) avisos.push('Intereses: ' + mal + ' fila(s) no se releyeron como ' + CB_CAT_INTERES + '.');
+  return { cambiadas: cambiadas, avisos: avisos };
 }
 
 function revisarCargosSinFechaTcBac() { return _csfCorrer(false); }

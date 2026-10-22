@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * ENSAYO DE SOLO LECTURA de apps-script/rosanta-maestro/cargos_sin_fecha_tc_bac.js (22-oct-2026): los cargos sin fecha
- * de la tarjeta BAC de enero a abril (INTERES COM, CARGOS POR SERVICIO MES ANTERIOR) y la reclasificacion de Netflix,
- * Spotify y Apple de PERSONAL a CUOTAS_Y_SUSCRIPCIONES.
+ * de la tarjeta BAC de enero a abril (INTERES COM, CARGOS POR SERVICIO MES ANTERIOR), la reclasificacion de Netflix,
+ * Spotify y Apple (ene-jul) de PERSONAL a CUOTAS_Y_SUSCRIPCIONES y los intereses ya cargados (may-sep) de
+ * COMISIONES_BANCARIAS a INTERESES_BANCARIOS. Esperado: 8 / 12 / 7 y despues 0 / 0 / 0.
  *
  *   node cloud/herramientas/ensayo-cargos-sin-fecha-tc.js [--montos]
  *
@@ -10,7 +11,7 @@
  *   1) revisarCargosSinFechaTcBac() sobre el maestro real;
  *   2) cargarCargosSinFechaTcBac() sobre una COPIA EN MEMORIA del maestro (no escribe en Google): muestra las filas
  *      exactas que escribiria y las celdas que cambiaria;
- *   3) otra vez cargarCargosSinFechaTcBac() sobre esa copia ya cargada: tiene que dar 0 y 0 (no duplica).
+ *   3) otra vez cargarCargosSinFechaTcBac() sobre esa copia ya cargada: tiene que dar 0, 0 y 0 (no duplica).
  * Los CSV se leen del disco (la carpeta de Drive BAC_TC 2026 sincronizada en la Mac). El maestro, con restaurante@.
  * Sin --montos, los montos salen enmascarados ("1,3xx.xx").
  */
@@ -74,8 +75,8 @@ async function main() {
   r2.ops.filter((x) => x.tipo === 'valores').forEach((x) => x.valores.forEach((v, i) => console.log('  ' + x.pestana + ' fila ' + (x.fila + i) + ' col ' + x.col + ': ' + mascara(v.map((y) => (typeof y === 'number' ? y.toFixed(2) : y)).join(' | ')))));
 
   const r3 = correr(maestroDespues(maestro, r2), 'cargarCargosSinFechaTcBac');
-  console.log('\n=== 3) otra vez sobre la copia ya cargada (tiene que dar 0 y 0) ===');
-  r3.logs.filter((l) => /Filas nuevas en total|Filas reclasificadas|NO se escribio|No queda/.test(l)).forEach((l) => console.log(mascara(l)));
+  console.log('\n=== 3) otra vez sobre la copia ya cargada (tiene que dar 0, 0 y 0) ===');
+  r3.logs.filter((l) => /Filas nuevas en total|Filas reclasificadas|Intereses pasados|NO se escribio|No queda/.test(l)).forEach((l) => console.log(mascara(l)));
   const ok = !r1.error && !r2.error && !r3.error && r3.ops.length === 0;
   console.log('\n' + (ok ? 'OK: ' : 'REVISAR: ') + 'no se escribio nada en el maestro.');
   return ok ? 0 : 1;
