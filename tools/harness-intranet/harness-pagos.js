@@ -317,6 +317,10 @@ t('El alias de la cuenta (902410067) cuenta como el nombre de Doorways', ctx._pa
 }
 // IVA automatico: lista vacia no hace nada; con lista, sin facturas nuevas corre a lo sumo una vez por hora
 {
+  const listaAprobada = vm.runInContext('PAG_IVA_AUTO_', ctx);
+  t('IVA automatico: la lista aprobada trae Rotondas, la estacion El Panorama (solo ella) e Inverscope', listaAprobada.length === 3 &&
+    listaAprobada.some(x => x.nit === '76431754' && x.estab === 'ESTACION DE SERVICIO EL PANORAMA'));
+  vm.runInContext('PAG_IVA_AUTO_ = []', ctx);
   t('IVA automatico con la lista vacia no hace nada', ctx.pagIvaAutomatico_(true).marcadas === 0);
   const cache = {}; const oc = ctx.CacheService;
   ctx.CacheService = { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) };
