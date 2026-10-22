@@ -57,6 +57,16 @@ var PAG_ANTERIOR_ = 'Pendiente anterior';
 var PAG_AJENA_ = 'FACTURA_AJENA';
 var PAG_HOJA_IVA_ = '01c_FEL_Para_IVA';
 var PAG_IVA_MARCA_ = 'Para IVA', PAG_IVA_DEVUELTA_ = 'Devuelta de Para IVA';
+// IVA automatico por proveedor (22-oct-2026, Juanma por la Central: "muchas facturas se pueden cerrar al momento,
+// porque son para reducir IVA"). La factura de un proveedor de esta lista se marca sola al entrar al maestro
+// (pagIvaAutomatico_, en calentarCaches), igual que con el boton: FACTURA_AJENA en el FEL y la fila 'Para IVA' en
+// la bitacora, con ESCRITO POR = PAG_IVA_AUTO_POR_. Se ve "automática" en la lista y el dueño la devuelve como
+// cualquiera; una devuelta no se vuelve a marcar. Solo las emitidas desde PAG_IVA_AUTO_DESDE_ y sin pagos.
+// estab vacio = todas las del NIT; con estab, solo ese establecimiento (El Panorama: el NIT tiene un super).
+// LA LISTA LA APRUEBA JUANMA antes de llenarla (propuesta del 22-oct a la Central).
+var PAG_IVA_AUTO_ = [];
+var PAG_IVA_AUTO_DESDE_ = '2026-10-27';
+var PAG_IVA_AUTO_POR_ = 'automática';
 // Posibles pagos (13-oct-2026): un cargo del banco o de una tarjeta con el monto exacto de una
 // factura (o de varias del mismo proveedor) que el cruce automatico no se atrevio a casar. El
 // dueño lo confirma con un toque; la fila guarda la llave del pago para no ofrecerlo de nuevo.
@@ -970,7 +980,7 @@ function _pagPantalla_(Q, E, fec) {
   var anio = String(new Date().getFullYear()), marco = {};
   pagMovimientos_().forEach(function (m) { if (m.estatus === PAG_IVA_MARCA_) marco[m.nit + '|' + m.dte] = m.por; });
   out.para_iva = E.ajenas.filter(function (a) { return a.fecha.slice(0, 4) === anio; })
-    .map(function (a) { a.marco = marco[a.llave] || ''; return a; })
+    .map(function (a) { a.marco = marco[a.llave] || ''; a.auto = a.marco === PAG_IVA_AUTO_POR_; return a; })
     .sort(function (a, b) { return a.fecha < b.fecha ? 1 : -1; });
   out.hoja_iva = PAG_HOJA_IVA_;
   out.mi_nombre = Q.nombre;
@@ -1246,29 +1256,76 @@ function _pagHojaIva_(ss) {
  * factura que Rosanta pago es de la operacion.
  */
 function marcarFacturaParaIva(auth, llave, nota) {
+  return marcarFacturasParaIva(auth, [llave], nota);
+}
+
+/**
+ * Varias facturas a la vez (22-oct-2026, Juanma por la Central: "marcar varias juntas"). Se valida TODO antes de
+ * escribir: si una no se puede, no se marca ninguna.
+ */
+function marcarFacturasParaIva(auth, llaves, nota) {
   var Q = pagQuien_(auth);
-  var f = pagEstado_().facturas.filter(function (x) { return x.llave === llave; })[0];
-  if (!f) throw new Error('No encontre esa factura en Pagos.');
-  // Maco y Jeffry marcan las de su area (13-oct-2026); el dueño, cualquiera
-  if (Q.rol !== 'dueno' && Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + ': la marca quien lleva esa área o el dueño.');
-  if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y esta entrando al FEL del maestro. Toca Actualizar en unos minutos y marcala.');
-  var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
-  if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
-    '). Si es para reducir IVA, anulá primero esos pagos.');
+  llaves = (llaves || []).map(String).filter(function (k, i, a) { return k && a.indexOf(k) === i; });
+  if (!llaves.length) throw new Error('Elegí al menos una factura.');
+  var porLlave = {}; pagEstado_().facturas.forEach(function (x) { porLlave[x.llave] = x; });
+  var fs = llaves.map(function (k) {
+    var f = porLlave[k];
+    if (!f) throw new Error('No encontre la factura ' + (k.split('|')[1] || k) + ' en Pagos. Tocá Actualizar.');
+    // Maco y Jeffry marcan las de su area (13-oct-2026); el dueño, cualquiera
+    if (Q.rol !== 'dueno' && Q.areas.indexOf(f.area) === -1) throw new Error('La factura ' + f.dte + ' es de ' + f.area + ': la marca quien lleva esa área o el dueño.');
+    if (f.por_correo) throw new Error('La factura ' + f.dte + ' llego por correo y esta entrando al FEL del maestro. Toca Actualizar en unos minutos y marcala.');
+    var pagos = f.pagos.filter(function (p) { return !/antes/i.test(p.estatus); });
+    if (pagos.length) throw new Error('La factura ' + f.dte + ' ya tiene pagos anotados (' + pagos.map(function (p) { return p.estatus; }).join(', ') +
+      '). Si es para reducir IVA, anulá primero esos pagos.');
+    return f;
+  });
+  _pagMarcarIva_(fs, Q.nombre, nota);
+  return getPagosProveedores(auth);
+}
+
+/** Escribe la marca: FACTURA_AJENA en la Categoria del FEL de cada una y su fila 'Para IVA' en la bitacora. */
+function _pagMarcarIva_(fs, por, nota) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     var ss = SpreadsheetApp.openById(FIN_MAESTRO_ID), C = _pagColCategoria_(ss);
-    _pagFilaEs_(C, f.fila, f.nit, f.dte);
-    C.hoja.getRange(f.fila, C.col).setValue(PAG_AJENA_);
+    fs.forEach(function (f) { _pagFilaEs_(C, f.fila, f.nit, f.dte); });   // todas antes de escribir ninguna
+    fs.forEach(function (f) { C.hoja.getRange(f.fila, C.col).setValue(PAG_AJENA_); });
     _pagHojaIva_(ss);
     SpreadsheetApp.flush();
     _pagOlvidar_(true);   // cambio la Categoria del FEL: el maestro se vuelve a leer
   } finally { lock.releaseLock(); }
-  _pagEscribir_([{ AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'CANTIDAD PAGADA': f.total, 'ESTATUS DE PAGO': PAG_IVA_MARCA_,
-                   DETALLE: ('Antes ' + f.categoria + '. ' + String(nota || '')).trim().slice(0, 300), 'ESCRITO POR': Q.nombre }]);
+  _pagEscribir_(fs.map(function (f) {
+    return { AREA: f.area, PROVEEDOR: f.proveedor, NIT: f.nit, DTE: f.dte, 'CANTIDAD PAGADA': f.total, 'ESTATUS DE PAGO': PAG_IVA_MARCA_,
+             DETALLE: ('Antes ' + f.categoria + '. ' + String(nota || '')).trim().slice(0, 300), 'ESCRITO POR': por };
+  }));
   try { CacheService.getScriptCache().remove(finCacheClave_()); } catch (e) { /* el DRE se pone al dia cuando venza su cache */ }
-  return getPagosProveedores(auth);
+}
+
+/** Las facturas que el IVA automatico marcaria ahora. Puro (la prueba lo usa): facturas y movimientos de pagEstado_. */
+function _pagIvaAutoCandidatas_(facturas, movs, lista, hoyIso) {
+  if (!lista || !lista.length) return [];
+  var devueltas = {};
+  movs.forEach(function (m) { if (m.estatus === PAG_IVA_DEVUELTA_) devueltas[m.nit + '|' + m.dte] = 1; });
+  return facturas.filter(function (f) {
+    if (f.por_correo || !f.fila || f.fecha < PAG_IVA_AUTO_DESDE_ || (hoyIso && f.fecha > hoyIso) || devueltas[f.llave]) return false;
+    if (f.pagos.some(function (p) { return !/antes/i.test(p.estatus); }) || f.pagado > 0.01) return false;
+    return lista.some(function (x) { return x.nit === f.nit && (!x.estab || normalizar_(x.estab) === normalizar_(f.proveedor)); });
+  });
+}
+
+/** Marca solas las facturas de los proveedores de PAG_IVA_AUTO_. Corre en calentarCaches. Nunca rompe a quien la llama. */
+function pagIvaAutomatico_() {
+  var rep = { marcadas: 0, errores: [] };
+  if (!PAG_IVA_AUTO_.length || (typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_)) return rep;
+  try {
+    _pagOlvidar_(true);
+    var E = pagEstado_(), fs = _pagIvaAutoCandidatas_(E.facturas, pagMovimientos_(), PAG_IVA_AUTO_, medFechaIso_(new Date()));
+    if (!fs.length) return rep;
+    _pagMarcarIva_(fs, PAG_IVA_AUTO_POR_, 'Proveedor de la lista de IVA automático.');
+    rep.marcadas = fs.length;
+  } catch (e) { rep.errores.push(String(e && e.message || e)); }
+  return rep;
 }
 
 /**

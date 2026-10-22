@@ -1,1 +1,1 @@
-09307d0 2026-10-22 FEL del correo: marca de carga contra la carrera con el cargador y origen en Nota (revision del Estudio)
+9881fa1 2026-10-22 Pagos: marcar varias facturas para reducir IVA de un toque, e IVA automatico por proveedor (lista vacia hasta que Juanma la apruebe)

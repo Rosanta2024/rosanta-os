@@ -33,13 +33,13 @@ const PERM = require('./permisos');
 const LECTURA = ['getPagosProveedores', 'getBalanceProveedores', 'getFacturasParaDevolver'];
 const ESCRITURA = ['registrarPagoFacturas', 'programarPagoFactura', 'registrarSaldoFavor', 'registrarCompraMercado',
   'anularMovimientoPago', 'anularPagoAutomatico', 'traerFacturaAnterior', 'confirmarPosiblePago', 'descartarPosiblePago',
-  'marcarFacturaParaIva', 'devolverFacturaParaIva', 'registrarDevolucionEquipo', 'agregarFacturaDeSuBolsa', 'agregarCompraDeSuBolsa'];
+  'marcarFacturaParaIva', 'marcarFacturasParaIva', 'devolverFacturaParaIva', 'registrarDevolucionEquipo', 'agregarFacturaDeSuBolsa', 'agregarCompraDeSuBolsa'];
 // Caja chica y Compras (inventario de la Fase 2, seccion 1.3).
 const LECTURA_CAJA = ['getCajaChica', 'getFacturasParaCaja', 'getComprasEfectivo'];
 const ESCRITURA_CAJA = ['registrarConteoCaja', 'registrarMovimientoCaja', 'pagarFacturaDeCaja', 'anularMovimientoCaja',
   'registrarRetiroYCompras', 'asignarFacturaACompra', 'anularCompraEfectivo', 'anularSolicitudRetiro'];
 // Siguen en la intranet aunque el interruptor diga base: tocan el maestro, Gmail, Drive o Claude.
-const SOLO_INTRANET = ['marcarFacturaParaIva', 'devolverFacturaParaIva', 'leerCierresCaja', 'leerComprobanteCompra'];
+const SOLO_INTRANET = ['marcarFacturaParaIva', 'marcarFacturasParaIva', 'devolverFacturaParaIva', 'leerCierresCaja', 'leerComprobanteCompra'];
 
 const PAG = 'PAGOS_PROVEEDORES';
 // Las pestañas de Caja en la base (filas_vivas, migracion 005) y su llave.
