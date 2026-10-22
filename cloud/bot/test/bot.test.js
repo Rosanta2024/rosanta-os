@@ -53,8 +53,7 @@ test('Las copias del bot son exactas a apps-script/bot-rosanta (la versión publ
   const archivos = fs.readdirSync(origen).filter((f) => f.endsWith('.js'));
   assert.ok(archivos.length >= 10);
   archivos.forEach((f) => assert.strictEqual(fs.readFileSync(path.join(DIR, f), 'utf8'), fs.readFileSync(path.join(origen, f), 'utf8'), f + ' se separó: correr herramientas/traer-bot.sh después de publicar el bot'));
-  // Nube.js llega con la @68 (se publica el 28-oct): hasta entonces puede faltar; el motor lo salta si no está.
-  ARCHIVOS.filter((f) => f !== 'Nube.js').forEach((f) => assert.ok(archivos.includes(f), f));
+  ARCHIVOS.forEach((f) => assert.ok(archivos.includes(f), f));
 });
 
 test('La versión copiada está anotada y es la @58 o posterior', () => {

@@ -1,4 +1,4 @@
-@67 · 2026-10-20T18:14:00-06:00 · 3c26efc
-Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 67, "Te esperamos en Rosanta"; @66 =
-fotos en Instagram y Messenger), verificada el 20-oct-2026 bajando la versión 67 aparte (12 de 12 archivos iguales). La hora
-es la de la publicación; la comparación de la sombra vale para los mensajes desde esa hora.
+@68 · 2026-10-22T07:07:00-06:00 · eeb7c38
+Copia exacta de apps-script/bot-rosanta tal como está publicada en el bot (versión 68, "PDF desde la consola + convivencia
+con la nube"), verificada el 22-oct-2026 bajando la versión 68 aparte (13 de 13 archivos iguales). La hora es la de la
+publicación; la comparación de la sombra vale para los mensajes desde esa hora.
