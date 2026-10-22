@@ -95,6 +95,7 @@ test('version de prueba (ENSAYO=si): noindex, la cotizacion no manda nada, el si
   const fs = require('fs'); const os = require('os');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sitio-'));
   fs.writeFileSync(path.join(dir, 'index.html'), '<h1>Rosanta prueba</h1>'); fs.writeFileSync(path.join(dir, 'events-1.html'), '<h1>Eventos</h1>');
+  fs.writeFileSync(path.join(dir, 'es.html'), '<h1>Rosanta ES</h1>'); fs.mkdirSync(path.join(dir, 'es')); fs.writeFileSync(path.join(dir, 'es', 'reservas.html'), '<h1>Reservas ES</h1>');
   const ORIGEN = 'https://rosanta-web-ensayo-512086396641.northamerica-south1.run.app';
   const s = await levantar({ ENSAYO: 'si', SITIO_DIR: dir, ORIGENES_EXTRA: ORIGEN });
   try {
@@ -102,6 +103,9 @@ test('version de prueba (ENSAYO=si): noindex, la cotizacion no manda nada, el si
     assert.strictEqual(r1.headers.get('x-robots-tag'), 'noindex, nofollow');
     assert.match(await r1.text(), /Rosanta prueba/);
     assert.match(await (await fetch(s.base + '/events-1')).text(), /Eventos/);
+    assert.match(await (await fetch(s.base + '/es')).text(), /Rosanta ES/);
+    assert.match(await (await fetch(s.base + '/es/reservas')).text(), /Reservas ES/);
+    assert.strictEqual((await fetch(s.base + '/..%2f..%2fetc/passwd')).status, 404);
     const r2 = await fetch(s.base + '/api/eventos/cotizacion', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGEN },
       body: JSON.stringify({ nombre: 'Prueba', email: 'p@ejemplo.test', idioma: 'es' }) });
     assert.deepStrictEqual(await r2.json(), { ok: true, prueba: true });

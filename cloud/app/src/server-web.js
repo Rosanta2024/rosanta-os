@@ -141,7 +141,19 @@ function crearAppWeb(deps) {
   // ---- El json global va al FINAL (guardando el cuerpo crudo por si algun router lo necesita)
   app.use(express.json({ limit: '200kb', verify: W.guardarCuerpoCrudo }));
   // El sitio construido (solo en la version de prueba; en produccion lo sirve Firebase Hosting)
-  if (env.SITIO_DIR) app.use(express.static(env.SITIO_DIR, { extensions: ['html'], redirect: false, index: 'index.html' }));
+  if (env.SITIO_DIR) {
+    const fs = require('fs'); const path = require('path');
+    const raiz = path.resolve(env.SITIO_DIR);
+    // /es y /es/ → es.html (Astro genera es.html Y la carpeta es/): primero el .html, como Firebase con cleanUrls
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' || /\.[a-z0-9]+$/i.test(req.path)) return next();
+      let rel; try { rel = decodeURIComponent(req.path).replace(/\/+$/, ''); } catch (e) { return next(); }
+      const f = path.join(raiz, rel + '.html');
+      if (rel && f.startsWith(raiz + path.sep) && fs.existsSync(f)) return res.sendFile(f);
+      next();
+    });
+    app.use(express.static(raiz, { extensions: ['html'], redirect: false, index: 'index.html' }));
+  }
   app.use((req, res) => res.status(404).json({ error: 'No existe.' }));
   return { app, avisos, rutasReservas, contenido, giftcards, adventures, pasarela };
 }
