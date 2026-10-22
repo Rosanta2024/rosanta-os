@@ -1,1 +1,1 @@
-47a9cb8 2026-10-22 Pagos: _pagEscribir_ con appendRow (no pisa la copia de la nube) y verifica cada ID; IVA automatico solo con facturas nuevas o una vez por hora
+c3296d8 2026-10-22 DRE: categoria INTERESES_BANCARIOS en Gastos Financieros ("Intereses de tarjeta y préstamos"), aparte de las comisiones; Pagos no la toma como pago a proveedor; regla documentada en el maestro
