@@ -65,12 +65,40 @@ function prPauta_(res) {
       al.some(function (a) { return a.codigo === 'clic_sin_intencion'; }), true);
   });
 
-  prCorrer_(g, 'Detecta AddToCart que dispara en la home', function () {
-    var pixel = { PageView: { conteo: 7157 }, AddToCart: { conteo: 5598, url_top: 'https://www.rosanta.rest/', pct_url_top: 99 } };
+  prCorrer_(g, 'Detecta AddToCart que dispara con casi cualquier visita', function () {
+    // S42: 936 AddToCart sobre 1,375 PageView. La URL no sirve de prueba: Meta solo da el dominio.
+    var pixel = { PageView: { conteo: 1375 }, AddToCart: { conteo: 936, url_top: 'https://www.rosanta.rest/', pct_url_top: 100 } };
     var h = Object.assign({}, base, { tipo_resultado: 'intermedio', evento: 'AddToCart', audiencia_tam: '' });
     var al = psValidar_(h, { cfg: cfg, pixel: pixel });
-    prIgual_(g, 'Detecta AddToCart que dispara en la home',
+    prIgual_(g, 'Detecta AddToCart que dispara con casi cualquier visita',
       al.some(function (a) { return a.codigo === 'contaminado'; }), true);
+  });
+
+  prCorrer_(g, 'Un evento sano en la home no se marca contaminado', function () {
+    // Antes del 21-oct-2026 esto daba "contaminado" solo porque la URL venía como el dominio.
+    var pixel = { PageView: { conteo: 1375 }, AddToCart: { conteo: 40, url_top: 'https://www.rosanta.rest/', pct_url_top: 100 } };
+    prIgual_(g, 'Un evento sano en la home no se marca contaminado',
+      psEventoContaminado_('AddToCart', pixel, cfg), '');
+  });
+
+  prCorrer_(g, 'Las vistas de reservas salen de Vista_Reservas, no de Reservas', function () {
+    var cc = {
+      '1219374182650701': { name: 'Reservas', rule: '{"and":[{"event":{"eq":"PageView"}},{"or":[{"URL":{"i_contains":"Reservas"}}]}]}' },
+      '2169262467156052': { name: 'Vista_Reservas', rule: '{"and":[{"event":{"eq":"PageView"}},{"or":[{"URL":{"i_contains":"reserv"}}]}]}' },
+      '999': { name: 'Otra', rule: '{"and":[{"event":{"eq":"NewReservation"}}]}' }
+    };
+    prIgual_(g, 'Las vistas de reservas salen de Vista_Reservas, no de Reservas', psElegirCcVistas_(cc, cfg), '2169262467156052');
+  });
+
+  prCorrer_(g, 'Suma los stats por hora y los planos', function () {
+    prIgual_(g, 'Suma los stats por hora y los planos',
+      psSumarStats_([{ data: [{ count: 3 }, { count: 2 }] }, { count: 4 }, {}]), 9);
+  });
+
+  prCorrer_(g, 'La duración de una prueba va de 1 a 8 semanas', function () {
+    var ok = psSemanasPrueba_('3') === 3 && psSemanasPrueba_('') === 1, tiro = false;
+    try { psSemanasPrueba_(12); } catch (e) { tiro = true; }
+    prIgual_(g, 'La duración de una prueba va de 1 a 8 semanas', ok && tiro, true);
   });
 
   prCorrer_(g, 'Un conjunto en rojo queda en CORREGIR', function () {

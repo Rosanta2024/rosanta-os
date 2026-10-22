@@ -245,6 +245,8 @@ function getComprasEfectivo(auth) {
       return { id: m.id, fecha: m.fecha_pagado, metodo: m.estatus === CPE_EFECTIVO_ ? 'Efectivo' : 'Débito',
                proveedor: m.proveedor, factura: m.dte === PAG_SIN_FACTURA_ ? '' : m.dte, fecha_factura: emision[m.nit + '|' + m.dte] || '', q: m.q, area: m.area,
                pendiente: m.dte === PAG_SIN_FACTURA_ && m.detalle.indexOf(CPE_PENDIENTE_) === 0,
+               // la factura que llego y se caso sola con esta compra (_pagCasarCompras_, 21-oct-2026)
+               casada: (E.compras_casadas || {})[m.id] || null,
                detalle: m.detalle.replace(/^\[[^\]]+\]\s*/, ''), por: m.por };
     });
   // las facturas que se pueden pagar desde aca: las abiertas de sus areas de los ultimos

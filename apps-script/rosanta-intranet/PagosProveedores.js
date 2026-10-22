@@ -70,6 +70,21 @@ var PAG_DESCARTADO_ = 'Banco: no pertenece';
 // los de la factura; DETALLE termina en "pago: <llave>". Se deshace anulando la fila.
 var PAG_DESLIGADO_ = 'Banco: no es de esta factura';
 var PAG_ULTIMAS_EDITABLES_ = 3;
+// Los tres de mercado que se pagan en efectivo el mismo dia (Doña Mina, El Tiburoncito, Carniceria Santa Rosa).
+// Juanma, 21-oct-2026: "cierra todo antes del 14 de octubre" y despues "cierra todas las del 15, solamente deja
+// abiertas las del 21". Lo emitido antes de PAG_CONTADO_HASTA_ sin ningun pago cuenta como pagado con efectivo
+// del cajero. Desde ahi cierra la compra que Jeffry anota en Compras (_pagCasarCompras_). Se deshace con
+// "Anular" (vuelve como Pendiente anterior). El estatus lleva "antes": asi lo trata la pantalla.
+var PAG_CONTADO_NITS_ = ['52496325', '47687916', '7616325'];
+var PAG_CONTADO_HASTA_ = '2026-10-21';
+var PAG_CONTADO_ESTATUS_ = 'Pagado antes del 21-oct (efectivo)';
+// Compras en efectivo con la factura pendiente (21-oct-2026, Juanma: "haz que case solo y muestre la
+// diferencia"). Jeffry anota en Compras su retiro y lo que pago a cada proveedor de mercado; cuando la factura
+// llega, se casa sola con esa compra y sale de Por pagar. Primero una factura del mismo monto (de 1 dia antes a
+// PAG_CASAR_DIAS_ despues de la compra), despues varias que sumen el monto exacto (el carnicero factura una compra
+// en varias), y si no, la mas cercana hasta PAG_CASAR_CERCA_ dias, con la diferencia a la vista del dueño.
+var PAG_CASAR_DIAS_ = 10, PAG_CASAR_CERCA_ = 3;
+var PAG_CASAR_ESTATUS_ = 'Efectivo (compra anotada)';
 // Un pago casado con una transferencia que el BI aviso por correo y que el estado de cuenta todavia
 // no trae (16-oct-2026, BancoCorreo.js). Pasa solo a "Banco confirmado" cuando entra el del lunes.
 var PAG_BANCO_CORREO_ = 'Banco por correo';
@@ -669,6 +684,59 @@ function _pagPagadasCompras_() {
 }
 
 /** Arma el estado de cada factura y el cuadre por proveedor. Sin filtrar por area. */
+/** La clave de un nombre de proveedor para compararlo: sin tildes, comillas ni espacios. */
+function _pagClaveProv_(s) { return normalizar_(s).replace(/[^a-z0-9]/g, ''); }
+
+/**
+ * Casa cada compra de Compras con la factura pendiente ([Factura pendiente]) con la factura de ese proveedor
+ * que llego despues (ver PAG_CASAR_DIAS_). No escribe nada: se recalcula cada vez, asi una factura que llega
+ * tarde completa la compra en la siguiente lectura. La compra sigue siendo el gasto del retiro en el cuadre;
+ * la factura queda pagada con el estatus PAG_CASAR_ESTATUS_. Devuelve { porCompra: {id: casada}, diferencias }.
+ */
+function _pagCasarCompras_(facturas, mercado) {
+  var nits = {};   // el nombre de la lista de Compras → sus NIT
+  if (typeof CPE_PROVEEDORES_ !== 'undefined') CPE_PROVEEDORES_.forEach(function (p) { if (p.nit) nits[_pagClaveProv_(p.n)] = p.nit.split('|'); });
+  var desde = typeof CPE_ARRANQUE_ !== 'undefined' ? CPE_ARRANQUE_ : PAG_ARRANQUE_;
+  var marca = typeof CPE_PENDIENTE_ !== 'undefined' ? CPE_PENDIENTE_ : '[Factura pendiente]';
+  var compras = mercado.filter(function (m) { return m.detalle.indexOf(marca) === 0 && m.fecha_pagado >= desde && m.q > 0.001; })
+    .sort(function (a, b) { return a.fecha_pagado < b.fecha_pagado ? -1 : a.fecha_pagado > b.fecha_pagado ? 1 : a.id < b.id ? -1 : 1; });
+  var porCompra = {}, diferencias = [], usada = {}, igual = function (a, b) { return Math.abs(a - b) < 0.011; };
+  compras.forEach(function (m) {
+    var k = _pagClaveProv_(m.proveedor), ns = m.nit ? [m.nit] : nits[k] || [], dia = pagNumDia_(pagDia_(m.fecha_pagado));
+    var cand = facturas.filter(function (f) {
+      if (usada[f.llave] || f.anterior || f.marca_banco != null || f.pagado > 0.01 || f.favor_usado > 0.01) return false;
+      if (ns.indexOf(f.nit) === -1 && _pagClaveProv_(f.proveedor) !== k) return false;
+      var d = f.dia - dia; return d >= -1 && d <= PAG_CASAR_DIAS_;
+    }).sort(function (a, b) { return Math.abs(a.dia - dia) - Math.abs(b.dia - dia) || (a.llave < b.llave ? -1 : 1); });
+    // 1. una del mismo monto; 2. varias (hasta 8 candidatas) que sumen el monto, las menos posibles;
+    // 3. la mas cercana, si esta a PAG_CASAR_CERCA_ dias o menos
+    var elegidas = cand.filter(function (f) { return igual(f.total, m.q); }).slice(0, 1);
+    if (!elegidas.length) {
+      var c8 = cand.slice(0, 8), mejor = null;
+      for (var b = 1; b < (1 << c8.length); b++) {
+        var sub = c8.filter(function (f, i) { return b & (1 << i); });
+        if (sub.length > 1 && igual(sub.reduce(function (a, f) { return a + f.total; }, 0), m.q) && (!mejor || sub.length < mejor.length)) mejor = sub;
+      }
+      if (mejor) elegidas = mejor;
+    }
+    if (!elegidas.length && cand.length && Math.abs(cand[0].dia - dia) <= PAG_CASAR_CERCA_) elegidas = [cand[0]];
+    if (!elegidas.length) return;
+    var total = _finR_(elegidas.reduce(function (a, f) { return a + f.total; }, 0)), dif = _finR_(total - m.q);
+    var det = 'Compra de ' + (m.por || 'Compras') + ' del ' + m.fecha_pagado.slice(8, 10) + '/' + m.fecha_pagado.slice(5, 7) + ' por ' + _pagQ_(m.q) +
+      (elegidas.length > 1 ? ' (' + elegidas.length + ' facturas, ' + _pagQ_(total) + ')' : '') +
+      (igual(dif, 0) ? ' · mismo monto' : ' · diferencia ' + _pagQ_(Math.abs(dif)) + (dif > 0 ? ' (la factura es mayor)' : ' (se pagó más)'));
+    elegidas.forEach(function (f) {
+      usada[f.llave] = 1;
+      f.pagado = f.total;
+      f.pagos.push({ id: '', fecha: m.fecha_pagado, q: f.total, estatus: PAG_CASAR_ESTATUS_, por: m.por, detalle: det, diferencia: dif, compra: m.id });
+    });
+    porCompra[m.id] = { dtes: elegidas.map(function (f) { return f.dte; }), fecha: elegidas[0].fecha, total: total, diferencia: dif };
+    if (!igual(dif, 0)) diferencias.push({ compra: m.id, proveedor: elegidas[0].proveedor, nit: elegidas[0].nit, area: elegidas[0].area,
+      dtes: porCompra[m.id].dtes, fecha_factura: elegidas[0].fecha, total: total, fecha_compra: m.fecha_pagado, compra_q: m.q, por: m.por, diferencia: dif });
+  });
+  return { porCompra: porCompra, diferencias: diferencias };
+}
+
 function pagEstado_() {
   var ss = _pagMaestro_();
   var movs = pagMovimientos_(), anteriores = {};
@@ -749,6 +817,15 @@ function pagEstado_() {
     f.pagado = f.total;
     f.pagos.push({ id: '', fecha: c.fecha, q: f.total, estatus: 'Pagado antes (COMPRAS_2026)', por: c.hoja, detalle: c.estatus });
   });
+  // La compra anotada en Compras con la factura pendiente paga la factura que llega
+  var casadas = _pagCasarCompras_(facturas, mercado);
+  // Los tres de mercado pagados en efectivo antes de PAG_CONTADO_HASTA_: sin pago anotado, se dan por pagados
+  facturas.forEach(function (f) {
+    if (f.anterior || f.pagado > 0.01 || f.marca_banco != null || f.fecha >= PAG_CONTADO_HASTA_) return;
+    if (PAG_CONTADO_NITS_.indexOf(f.nit) === -1) return;
+    f.pagado = f.total;
+    f.pagos.push({ id: '', fecha: f.fecha, q: f.total, estatus: PAG_CONTADO_ESTATUS_, por: 'Cierre del 21-oct', detalle: 'Efectivo del cajero el mismo día' });
+  });
   // 1. Los pagos marcados "Banco": cada marca se confirma con un pago del banco de SU monto, y
   //    las marcas de un mismo proveedor que no se confirmaron solas, con un pago que las sume.
   var usadoMarca = {}, conMarca = facturas.filter(function (f) { return f.marcas; });
@@ -809,6 +886,7 @@ function pagEstado_() {
              palabras: _pagPalabras_(f.proveedor + ' ' + f.razon).concat(PAG_ALIAS_BANCO_[f.nit] || []) };
   });
   return { facturas: facturas, mercado: mercado, favor: favor, favores: favores, ajenas: ajenas,
+           compras_casadas: casadas.porCompra, diferencias: casadas.diferencias,
            banco_dudosos: cb.dudosos, banco_sueltos: cb.sueltos.filter(function (p) { return PAG_AREA_CAT_[p.categoria]; }),
            posibles: _pagPosibles_(abiertasYa, banco.filter(function (p) { return !usados[p.llave]; }),
                                    (function () { var d = {}; facturas.forEach(function (f) { d[f.dte] = d[f.dte] || f.saldo > 0.01; }); return d; })())
@@ -875,6 +953,8 @@ function _pagPantalla_(Q, E, fec) {
     facturas: facturas, cuadre: _pagCuadre_(facturas, favor),
     mercado: E.mercado.filter(function (m) { return ve(m.area); }),
     proveedores_mercado: _pagProvMercado_(E.mercado), grupos: PAG_GRUPOS_ORDEN_,
+    // compras de Compras que se casaron solas con su factura y no dan el mismo monto (21-oct-2026)
+    diferencias: (E.diferencias || []).filter(function (d) { return ve(d.area); }),
     // cada saldo a favor anotado, con su id para poder anularlo si se escribio por error
     favores: E.favores.filter(function (m) { return favor[m.nit] !== undefined; }),
     banco_ult: E.banco_ult,
