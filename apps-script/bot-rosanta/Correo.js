@@ -199,14 +199,10 @@ function correoAvisar_(hilo, ultimo, c, lead, motivo) {
     });
     salio = true;
   } catch (e) { Logger.log('correoAvisar_ correo: ' + e); }
-  try {
-    var owner = PROPS.getProperty('OWNER_WA'), pid = PROPS.getProperty('WA_PHONE_NUMBER_ID');
-    if (owner && pid) {
-      sendWhatsApp(pid, owner, '🔔 Lead para atender (correo)\n' + motivo + '\n' + quien + '\n' + resumen +
-        '\nCliente: ' + texto.substring(0, 250) + '\n👉 ' + enlace);
-      salio = true;
-    }
-  } catch (e) { Logger.log('correoAvisar_ WhatsApp: ' + e); }
+  // @70: por la vía que llegue (plantilla o libre); el correo de arriba ya es el respaldo
+  var via = avisoJuanma_({ canal: 'correo', contacto: c.email || '', nombre: c.nombre || '', tema: (lead && lead.tipo) || 'correo', urgente: false,
+    texto: '🔔 Lead para atender (correo)\n' + motivo + '\n' + quien + '\n' + resumen + '\nCliente: ' + texto.substring(0, 250) + '\n👉 ' + enlace });
+  if (via === 'plantilla' || via === 'libre') salio = true;
   if (!salio) throw new Error('no salió el aviso de correo a Juanma');
   avisados.push(id);
   PROPS.setProperty('CORREO_AVISADOS', JSON.stringify(avisados.slice(-300)));
@@ -308,8 +304,8 @@ function correoRed_(ahora) {
   var texto = '⏰ Correos de clientes sin respuesta hace más de ' + CORREO_RED_HORAS + ' h (' + pendientes.length + ')\n' + lineas.join('\n');
   var salio = false;
   try {
-    var owner = PROPS.getProperty('OWNER_WA'), pid = PROPS.getProperty('WA_PHONE_NUMBER_ID');
-    if (owner && pid) { sendWhatsApp(pid, owner, texto.substring(0, 3500)); salio = true; }
+    var v = avisoJuanma_({ canal: 'correo', contacto: 'red', nombre: '', tema: pendientes.length + ' correos', urgente: false, texto: texto.substring(0, 3500) });
+    if (v === 'plantilla' || v === 'libre') salio = true;
   } catch (e) { Logger.log('correoRed_ WhatsApp: ' + e); }
   try {
     MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: '⏰ ' + pendientes.length + ' correo(s) de clientes sin respuesta', body: texto, name: 'Bot Rosanta' });

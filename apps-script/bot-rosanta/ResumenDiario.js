@@ -18,9 +18,20 @@ function resumenDiarioBot() {
     if (/^Reserva (creada|CAMBIADA|CANCELADA)/.test(resumen)) mov.push('• ' + quien + ': ' + resumen.replace(/ por el bot/, ''));
     else if (r[9] === 'Sí') pasaron.push('• ' + quien + ': ' + resumen);
   });
-  if (!mov.length && !pasaron.length) return;
-  var cuerpo = 'Lo que hizo el bot hoy, ' + hoy + '. Es solo un aviso: no hace falta hacer nada con las reservas.\n\n' +
+  // @70 (Ashley, 21-oct): arriba, los chats que siguen esperando a una persona, con su hora límite de WhatsApp.
+  var pend = [];
+  try { pend = avisoPendientes_(); } catch (eP) { Logger.log('resumen pendientes: ' + eP); }
+  if (!mov.length && !pasaron.length && !pend.length) return;
+  var ahoraMs = Date.now();
+  var lineasPend = pend.map(function (x) {
+    var lim = x.limite ? (x.limite > ahoraMs ? 'contestar antes de ' + avisoHora_(x.limite) : 'VENTANA CERRADA (' + avisoHora_(x.limite) + '): solo por plantilla o por correo') : 'sin límite (correo)';
+    return '• ' + (String(x.nombre || '').split(' ')[0] || 'Cliente') + ' (' + x.canal + ' …' + String(x.contacto).slice(-4) + ') · ' + x.tema + ' · ' + lim;
+  });
+  var cuerpo = (pend.length ? 'PENDIENTES SIN RESPONDER (' + pend.length + ')\n' + lineasPend.join('\n') + '\n👉 ' + avisoConsola_() + '\n\n' : '') +
+    'Lo que hizo el bot hoy, ' + hoy + '. Las reservas son solo un aviso: no hace falta hacer nada con ellas.\n\n' +
     'RESERVAS (' + mov.length + ')\n' + (mov.join('\n') || '• Ninguna') + '\n\n' +
     'CHATS QUE TE PASÓ (' + pasaron.length + ')\n' + (pasaron.join('\n') || '• Ninguno') + '\n';
-  MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: 'Rosanta · Lo que hizo el bot hoy (' + mov.length + ' reservas)', body: cuerpo, name: 'Bot Rosanta' });
+  var asunto = (pend.length ? '⚠️ ' + pend.length + (pend.length === 1 ? ' chat espera' : ' chats esperan') + ' respuesta · ' : '') +
+    'Rosanta · Lo que hizo el bot hoy (' + mov.length + ' reservas)';
+  MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: asunto, body: cuerpo, name: 'Bot Rosanta' });
 }

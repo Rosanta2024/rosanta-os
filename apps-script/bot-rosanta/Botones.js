@@ -304,10 +304,7 @@ function btFotoSinTexto_(canal, pid, from, nombre, pausado) {
     (pausado ? 'El chat ya está en tus manos: al cliente no se le contestó.' : 'Al cliente se le dijo que la revisamos.') + '\n👉 ' + consola;
   try { MailApp.sendEmail({ to: 'restaurante@rosanta.rest', subject: '📷 Foto de cliente (' + etiqueta + ') — ' + (nombre || from), body: texto }); }
   catch (e) { Logger.log('btFotoSinTexto_ correo: ' + e); }
-  try {
-    var owner = PROPS.getProperty('OWNER_WA');
-    if (owner && pid) sendWhatsApp(pid, owner, texto);
-  } catch (e) { Logger.log('btFotoSinTexto_ WhatsApp: ' + e); }
+  avisoJuanma_({ canal: canal, contacto: from, nombre: nombre, tema: 'foto', limite: Date.now() + AVISO_VENTANA_H * 3600000, texto: texto, urgente: false });
 }
 
 /** Instagram y Messenger: el quick reply trae su payload además del texto. */
@@ -343,6 +340,12 @@ function btAtender_(canal, contactoId, nombre, entrada) {
   }
   result.lead = result.lead || {};
   if (entrada.boton) result.lead.ultimo_boton = entrada.boton.id;
+  // @70 (Ashley, 21-oct): si la respuesta promete que una persona se pondrá en contacto, el aviso sale siempre,
+  // aunque el modelo no haya marcado requiere_humano. Lo decide el código, no el modelo.
+  if (!result.lead.requiere_humano && AVISO_PROMESA_RE.test(String(result.respuesta || ''))) {
+    result.lead.requiere_humano = true;
+    result.lead.promesa_sin_marca = true;
+  }
   return result;
 }
 

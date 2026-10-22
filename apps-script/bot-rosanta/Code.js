@@ -92,8 +92,10 @@ function handleWhatsApp(body) {
       const messages = value.messages || [];
       const contacts = value.contacts || [];
       const name = contacts[0] && contacts[0].profile ? contacts[0].profile.name : '';
+      if (value.statuses) avisoEstados_(value.statuses);   // @70: un aviso a Juanma que Meta no entregó → correo URGENTE
 
       messages.forEach(function (msg) {
+        if (String(msg.from) === String(PROPS.getProperty('OWNER_WA') || '')) avisoJuanmaEscribio_();   // @70: su ventana de 24 h
         const entrada = btEntradaWhatsApp_(msg);         // texto o botón tocado (Botones.js)
         if (!entrada) return;
         if (alreadyProcessed(msg.id)) return;            // evita duplicados
@@ -137,7 +139,7 @@ function sendWhatsApp(phoneNumberId, to, text) {
     type: 'text',
     text: { body: text, preview_url: true }   // los enlaces llegan con vista previa
   };
-  UrlFetchApp.fetch(url, {
+  return UrlFetchApp.fetch(url, {   // @70: devuelve la respuesta de Meta (Avisos.js mira si aceptó el aviso)
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: 'Bearer ' + CONFIG.WHATSAPP_TOKEN },
@@ -697,6 +699,8 @@ function enviarRespuestasPendientes() {
 
   // 3) Chats en los que Juanma ya terminó: vuelven al bot
   humRevisar_();
+  // 4) @70: recordatorio cuando a un chat pendiente le quedan ~4 h de ventana de WhatsApp (cada ~30 min)
+  try { avisoRecordatorios_(); } catch (eA) { Logger.log('avisoRecordatorios_: ' + eA); }
 }
 
 // ============================================================
@@ -919,10 +923,9 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
   // Fuera de eventos, el bot se calla en este chat hasta que Juanma conteste (Humano.js)
   var callado = humEscalar_(canal, idDestino, lead);
 
-  if (tipo === 'evento') {
-    if (cotizacionEnviada_(idDestino)) return;
-    marcarCotizacionEnviada_(idDestino);
-  }
+  // @70 (Ashley, 21-oct): el freno de 48 h es SOLO para el bloque de cotización; el aviso sale cada vez.
+  var yaCotizado = tipo === 'evento' && cotizacionEnviada_(idDestino);
+  if (tipo === 'evento' && !yaCotizado) marcarCotizacionEnviada_(idDestino);
 
   // Lo que se le prometió al cliente (Botones.js): Juanma ve hasta cuándo tiene.
   var prometido = 'Plazo sugerido para contestar (al cliente no se le dio hora): ' + btLimite_() + '\n' +
@@ -931,7 +934,7 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
   // Bloque listo para pegar en Presupuestos (solo para eventos)
   var bloqueCotizar = '';
   var bloquePipeline = '';
-  if (tipo === 'evento') {
+  if (tipo === 'evento' && !yaCotizado) {
     bloquePipeline = btBloquePipeline_(canal, lead, idDestino);
     fichaActualizar_(canal, idDestino, '', lead,
       { evento_avisado: Utilities.formatDate(new Date(), 'America/Guatemala', 'yyyy-MM-dd HH:mm') });
@@ -964,21 +967,16 @@ function notificarHumano(canal, lead, mensajeOriginal, idDestino) {
     });
   } catch (e) { Logger.log('Error correo: ' + e); }
 
-  // 2) WhatsApp a tu número
-  try {
-    var owner = PROPS.getProperty('OWNER_WA');
-    var pid   = PROPS.getProperty('WA_PHONE_NUMBER_ID');
-    if (owner && pid) {
-      sendWhatsApp(pid, owner,
-        '🔔 Lead para atender (' + canal + ')\n' +
-        prometido +
-        'Tipo: ' + tipo + ' · ' + urgencia + '\n' +
-        resumen + '\n' +
-        'Cliente: ' + (mensajeOriginal || '') +
-        bloqueCotizar +
-        (linkConsola ? '\n👉 Responder: ' + linkConsola : '\nEntrá a la hoja de Leads para responder.'));
-    }
-  } catch (e) { Logger.log('Error WhatsApp: ' + e); }
+  // 2) WhatsApp a tu número (@70: plantilla si está aprobada; si no llega, correo URGENTE y queda anotado)
+  avisoJuanma_({ canal: canal, contacto: idDestino, nombre: (lead && lead.nombre) || '', tema: tipo || 'otro',
+    limite: canal === 'correo' ? 0 : Date.now() + AVISO_VENTANA_H * 3600000, urgente: true,
+    texto: '🔔 Lead para atender (' + canal + ')' + (yaCotizado ? ' · el cliente del evento volvió a escribir' : '') + '\n' +
+      prometido +
+      'Tipo: ' + tipo + ' · ' + urgencia + '\n' +
+      resumen + '\n' +
+      'Cliente: ' + (mensajeOriginal || '') +
+      bloqueCotizar +
+      (linkConsola ? '\n👉 Responder: ' + linkConsola : '\nEntrá a la hoja de Leads para responder.') });
 }
 
 // ===== Refresca el token de Instagram (vive 60 días; lo renovamos antes) =====

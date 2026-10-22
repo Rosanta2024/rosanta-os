@@ -39,7 +39,9 @@ function mundo(opciones) {
       return { getResponseCode: () => 200, getContentText: () => JSON.stringify(r) };
     } },
     CacheService: { getScriptCache: () => ({ get: (k) => (cacheMem[k] === undefined ? null : cacheMem[k]), put: (k, v) => { cacheMem[k] = v; } }) },
-    sendWhatsApp: (pid, to, t) => { if (opciones.waRoto) throw new Error('meta'); avisos.wa.push(t); },
+    sendWhatsApp: (pid, to, t) => { if (opciones.waRoto) throw new Error('meta'); avisos.wa.push(t); return { getResponseCode: () => 200, getContentText: () => '{"messages":[{"id":"w' + avisos.wa.length + '"}]}' }; },
+    CONFIG: { SHEET_ID: 'leads', GRAPH_VERSION: 'v21.0', WHATSAPP_TOKEN: 'wa' },
+    SpreadsheetApp: { openById: () => ({ getSheetByName: () => null, insertSheet: () => ({ appendRow: () => {} }) }) },
     logMensaje: (...a) => avisos.conv.push(a),
     logLead: (lead) => avisos.leads.push(lead),
     fichaActualizar_: () => {},
@@ -54,10 +56,11 @@ function mundo(opciones) {
   ctx.PropertiesService = { getScriptProperties: () => ctx.PROPS };
   props.CORREO_DESDE = String(Date.parse('2026-10-15T00:00:00Z'));
   props.CORREO_RED_ULTIMA = '9000000000000000';   // la red se prueba aparte, con su propio reloj
+  props.OWNER_ULTIMO_MSG = String(Date.now());   // @70: Juanma le escribió al bot hoy (su ventana está abierta)
   props.OWNER_WA = '50200000000'; props.WA_PHONE_NUMBER_ID = '123';
   props.WIX_RESERVAS_URL = 'https://www.rosanta.rest/_functions/reservaBot'; props.WIX_RESERVAS_SECRETO = 'sec-prueba';
   vm.createContext(ctx);
-  ['Reservas.js', 'Cambiar.js', 'Cancelar.js', 'Correo.js', 'Manual.js'].forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
+  ['Reservas.js', 'Cambiar.js', 'Cancelar.js', 'Correo.js', 'Manual.js', 'Avisos.js'].forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
   // Lo que en producción vive en Code.js y no se carga aquí
   vm.runInContext('rvHistoria = function () {}; rvCorreoCliente = function (d, caso) { __correoCliente.push(caso); };', ctx);
   ctx.__correoCliente = avisos.correoCliente = [];
