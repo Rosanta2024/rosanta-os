@@ -237,3 +237,16 @@ test('Modo modelo: si Claude no contesta (clave mala), la noche lo marca como pr
   assert.ok(n.problemas.some((p) => /Claude no contesto/.test(p)), JSON.stringify(n.problemas));
   assert.ok(n.modelo.resumen.modeloFallas >= 1);
 });
+
+test('Grabado: el tipo real de Leads llega al pedido (un evento que pasa a una persona no deja callada a la sombra)', () => {
+  const { leadGrabado } = require('../src/reproductor');
+  assert.strictEqual(leadGrabado({ categoria: 'responder_info', humano: true, tipoLead: 'evento' }).tipo, 'evento');
+  assert.strictEqual(leadGrabado({ categoria: 'responder_info', humano: true }).tipo, 'consulta', 'sin dato, como antes');
+  assert.strictEqual(leadGrabado({ categoria: 'reserva_creada', tipoLead: 'evento', resumen: 'Reserva creada en Wix: 2026-12-05 20:00, 2 personas' }).tipo, 'reserva');
+  const { armarChats } = require('../src/conversaciones');
+  const d = (s) => new Date(s);
+  const chats = armarChats([['h'], [d('2026-12-01T10:00:00-06:00'), 'whatsapp', '501', 'Ana', 'in', 'cliente', 'mesas?'], [d('2026-12-01T10:00:05-06:00'), 'whatsapp', '501', 'Ana', 'out', 'bot', 'Alguien te contacta']],
+    [['h'], [d('2026-12-01T10:00:06-06:00'), 'whatsapp', 'en', 'Ana', '', 'evento', 'tibio', 'mesas', 'responder_info', 'Sí', 'mesas?', '501', '', '', '', 'Alguien te contacta']], 0, Date.now());
+  const ev = chats[0].eventos.find((e) => e.tipo === 'cliente');
+  assert.strictEqual(ev.real.tipoLead, 'evento');
+});

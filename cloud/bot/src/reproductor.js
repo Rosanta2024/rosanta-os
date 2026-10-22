@@ -25,7 +25,9 @@ function leadGrabado(real, nombreChat) {
   const r = real || {};
   const lead = { canal: '', idioma: r.idioma || 'es', nombre: r.nombreLead || nombreChat || '', telefono: '', email: r.email || '',
     fecha: '', fecha_actual: '', hora_actual: '', hora: '', personas: '', tipo_evento: '', formato_menu: '', presupuesto: '',
-    opciones: [], mostrar_menu: false, tipo: 'consulta', urgencia: 'tibio', resumen: r.resumen || '', accion: 'responder_info',
+    // El tipo real de Leads (22-oct-2026): sin él, un evento que pasa a una persona se trataba como consulta y la sombra
+    // se callaba en los mensajes siguientes (el bot real no se calla en eventos). Caso Ashley, 21-oct.
+    opciones: [], mostrar_menu: false, tipo: r.tipoLead || 'consulta', urgencia: 'tibio', resumen: r.resumen || '', accion: 'responder_info',
     requiere_humano: !!r.humano };
   const res = String(r.resumen || '');
   // El resumen de una reserva ("Reserva creada en Wix: ...") lo escribe el codigo cuando Wix confirma: el modelo no lo trae.

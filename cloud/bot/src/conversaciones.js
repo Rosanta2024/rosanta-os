@@ -113,7 +113,7 @@ function armarChats(conversaciones, leads, opciones) {
     const id = String(r[11] || '');
     if (!id) return;
     if (!leadsPor.has(id)) leadsPor.set(id, []);
-    leadsPor.get(id).push({ t: ms(r[0]), canal: String(r[1] || ''), idioma: String(r[2] || ''), accion: String(r[8] || ''),
+    leadsPor.get(id).push({ t: ms(r[0]), canal: String(r[1] || ''), idioma: String(r[2] || ''), accion: String(r[8] || ''), tipo: String(r[5] || ''),
       humano: String(r[9] || '') === 'Sí', original: String(r[10] || ''), resumen: String(r[7] || ''), nombre: String(r[3] || ''), email: String(r[14] || ''), respuesta: String(r[15] == null ? '' : r[15]), usado: false });
   });
 
@@ -143,7 +143,8 @@ function armarChats(conversaciones, leads, opciones) {
       }
       e.real = { contesto: !!bot, respuestaReal: bot ? bot.textoReal : '', categoria: lead ? categoria(lead.accion, lead.resumen) : '',
         humano: lead ? lead.humano : null, idioma: lead ? lead.idioma : '',
-        resumen: lead ? lead.resumen : '', email: lead ? lead.email : '', nombreLead: lead ? lead.nombre : '' };
+        resumen: lead ? lead.resumen : '', email: lead ? lead.email : '', nombreLead: lead ? lead.nombre : '',
+        tipoLead: lead ? lead.tipo : '' };   // 22-oct-2026: el tipo real (evento, queja…) decide si el bot se calla al pasar a una persona
     }
     const enRango = ev.some((e) => e.tipo === 'cliente' && e.t >= desde && e.t < hasta);
     if (!enRango) return;
