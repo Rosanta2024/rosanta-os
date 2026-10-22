@@ -1,1 +1,1 @@
-3998cb2 2026-10-22 maestro: decisiones de Juanma del 22-oct en el cierre de bancos y carga aparte de ene-abr de la tarjeta BAC
+7bfdf3f 2026-10-22 maestro: el interes va como INTERESES_BANCARIOS (una sola constante) y la reclasificacion cubre ene-jul
