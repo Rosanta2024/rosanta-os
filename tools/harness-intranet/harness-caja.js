@@ -32,6 +32,7 @@ function Sheet(name, R) {
     setFontWeight: () => g, setNumberFormat: () => g }; return g; };
   const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
     getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
+    appendRow: row => { R.push(row.map(v => typeof v === 'string' && v[0] === "'" ? v.slice(1) : v)); return self; },
     getRange: (a, c, nr, nc) => typeof a === 'string' ? rng(1, 1, 1, 1) : rng(a, c, nr, nc), setFrozenRows: () => self };
   return self;
 }
@@ -49,7 +50,7 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'CierresDiarios.js', 'CajaChica.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'ProfitHoy.js', 'Tiempos.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'Presupuesto.js', 'PagosProveedores.js', 'NubePagos.js', 'CierresDiarios.js', 'CajaChica.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'ProfitHoy.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // sin Gmail ni Drive: _pagPagadasCompras_ y el correo del FEL quedan vacios
 vm.runInContext("_pagPagadasCompras_ = function () { return {}; }; fecLeerSiToca_ = function () { return null; }; _pagHojaIva_ = function () {}; finCacheClave_ = function () { return 'x'; }; if (typeof fecFacturas_ !== 'function') fecFacturas_ = function () { return []; };", ctx);

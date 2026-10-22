@@ -114,7 +114,7 @@ function calentarCaches() {
   }
   // y las de los proveedores de IVA automatico se marcan solas (22-oct-2026, PagosProveedores.js)
   try {
-    var ivaA = pagIvaAutomatico_();
+    var ivaA = pagIvaAutomatico_(!!(alM && alM.nuevas));
     if (ivaA.marcadas) correo = (correo ? correo + ' · ' : '') + 'IVA automático: ' + ivaA.marcadas;
     if (ivaA.errores.length) fallo.push('IVA automático: ' + ivaA.errores.slice(0, 2).join(' · '));
   } catch (e) {

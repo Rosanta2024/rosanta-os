@@ -25,6 +25,7 @@ function Sheet(name, R) {
     setFontWeight: () => g, setNumberFormat: () => g }; return g; };
   const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
     getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
+    appendRow: row => { R.push(row.map(v => typeof v === 'string' && v[0] === "'" ? v.slice(1) : v)); return self; },
     getRange: (a, c, nr, nc) => typeof a === 'string' ? rng(1, 1, 1, 1) : rng(a, c, nr, nc), setFrozenRows: () => self };
   return self;
 }
@@ -46,7 +47,7 @@ let archivos = 0;
 ctx.DriveApp = { getFileById: () => ({ getParents: () => ({ next: () => ({ getFoldersByName: () => ({ hasNext: () => false }),
   createFolder: () => ({ createFile: () => ({ getUrl: () => 'https://drive.google.com/file/d/foto' + (++archivos) }) }) }) }) }) };
 ctx.Utilities.newBlob = () => ({}); ctx.Utilities.base64Decode = () => [];
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'NubePagos.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'ComprasEfectivo.js', 'Tiempos.js']
   .forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 // el espejo llega hasta el 11-oct: el cuadre se prueba desde septiembre
 vm.runInContext("PAG_DESDE_ = '2026-08-01'; CPE_ARRANQUE_ = '2026-09-01'; fecLeerSiToca_ = function () { return null; }; fecFacturas_ = function () { return []; };", ctx);
@@ -140,7 +141,7 @@ t('Con factura: la paga con Retiro de cajero', ctx.pagEstado_().facturas.filter(
 const pend = D.registradas.filter(x => x.proveedor === 'Doña Mina')[0];
 t('La pantalla la marca pendiente de emitir', pend && pend.pendiente && pend.detalle === '10 lb tomate');
 // llega la factura: se asigna
-let fy = ctx.pagEstado_().facturas.filter(x => x.saldo > 0.01 && x.area === 'COCINA')[0];
+let fy = ctx.pagEstado_().facturas.filter(x => x.saldo >= 300 && x.area === 'COCINA')[0];   // que alcance para la compra de Q300 (desde la @216 la primera abierta cambio)
 D = ctx.asignarFacturaACompra('tokchef', pend.id, fy.llave);
 const fy2 = ctx.pagEstado_().facturas.filter(x => x.llave === fy.llave)[0];
 t('Asignar la factura: queda pagada con la compra (misma fecha y monto)', fy2.pagos.some(p => p.estatus === 'Retiro de cajero' && p.fecha === '2026-09-10' && Math.abs(p.q - 300) < 0.01), fy.dte);
