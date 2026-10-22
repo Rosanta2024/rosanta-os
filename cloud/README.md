@@ -91,6 +91,14 @@ El candado (`.claude/hooks/candado-nube.py`) bloquea el paso 3 sin sello vigente
 - Ensayo: `node cloud/herramientas/ensayo-maestro.js` (lunes de octubre en sombra; no escribe; convierte y borra los xlsx como el cargador).
 - El espejo xlsx (`generarEspejo`, lunes 10:30) sigue en Apps Script.
 
+## Cierre de bancos del maestro (construido el 22-oct, SIN montar ni publicar)
+
+- `apps-script/rosanta-maestro/cierre_bancos.js` (`cargarCierreBancos('AAAA-MM')`, `revisarCierreBancos`): BAC Q 904802543 → `04_Banco_BAC`, BAC $ 905757274 → `04b_Banco_BAC_USD` (pestaña PROPUESTA, `crearPestanaBacUsd()`; mientras no exista, esa cuenta frena), tarjeta BAC → `05_Tarjeta_Credito_BAC`, tarjeta BI → `06_Tarjeta_Credito_BI` (solo a mano: `cargarTarjetaBIPegada(texto)`). Lee SIEMPRE un CSV normalizado de `Reportes Mensual/<mes>/_sistema/`; frena si no cuadra (cadena de saldos, totales del banco, saldo inicial = ultimo Balance del maestro, bajado antes de fin de mes, dos archivos distintos de la misma cuenta). Llave fecha|referencia|debito|credito (cuenta) y fecha|descripcion|Q|$ contando repetidos (tarjeta).
+- `app/src/banco-normalizar.js`: el .xls del BAC (Drive NO lo convierte: queda vacio) y el CSV de la tarjeta → CSV normalizado, con SheetJS oficial (`xlsx` desde cdn.sheetjs.com 0.20.3). La cuenta sale del numero del archivo, el mes de las fechas.
+- Octubre (Apps Script): `node cloud/herramientas/xls-a-csv-banco.js "<mes>/_sistema"` en la Mac deja `BAC Q 2026-10.csv`, `BAC $ 2026-10.csv`, `TC BAC 2026-10.csv` en `_sistema`. Nube: `POST /tareas/procesos/maestro` con `{ "cierre_bancos": "2026-10" }`; la precarga convierte el .xls con el mismo normalizador (`ROSANTA_NUBE.bancoANormalizado`). Sombra = el maestro sin las filas de ese mes, y compara por clase (valor, descripcion, categoria, tipo, desc_corta).
+- Ensayo de solo lectura: `node cloud/herramientas/ensayo-cierre-bancos.js [2026-01 ...] [--archivos ...] [--detalle]`.
+- Carga aparte de meses cerrados (22-oct, Juanma): `apps-script/rosanta-maestro/cargos_sin_fecha_tc_bac.js` (`revisarCargosSinFechaTcBac` / `cargarCargosSinFechaTcBac`): los cargos sin fecha de la tarjeta BAC de ene-abr (INTERES COM, CARGOS POR SERVICIO MES ANTERIOR) desde los CSV de `BAC_TC 2026`, y Netflix/Spotify/Apple de ene-jul de PERSONAL a CUOTAS_Y_SUSCRIPCIONES (solo si siguen siendo las 12 aprobadas), y los 7 intereses ya cargados (may-sep tarjeta BAC, sep tarjeta BI) de COMISIONES_BANCARIAS a INTERESES_BANCARIOS (solo si son exactamente 7). Esperado: 8 / 12 / 7. La categoria del interes vive en una sola constante, `CB_CAT_INTERES` de cierre_bancos.js. Ensayo: `node cloud/herramientas/ensayo-cargos-sin-fecha-tc.js`. No esta en LISTA.txt (no es de la nube).
+
 ## Tareas
 
 - Copiar USUARIOS a la base: `POST /tareas/sincronizar-usuarios` con la cabecera `x-rosanta-tarea` = secreto `clave-tareas`. La hoja `Rosanta_Intranet_Config` está compartida con `rosanta-nube@…` como Lector.

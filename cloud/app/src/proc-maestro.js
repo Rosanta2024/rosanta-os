@@ -46,6 +46,7 @@ const { formatDate } = require('./motor-pagos');
 const C = require('./copia-hojas');
 const P = require('./proc-pauta');
 const { serieDeFecha } = require('./escribir-hoja');
+const N = require('./banco-normalizar');
 
 const DIR = path.join(__dirname, '..', 'maestro');
 const MAESTRO = '1_ZiUlIUG3HIDkYmcpXbykgJ7hh3vlhsu21b6aUOzEmk';
@@ -65,9 +66,23 @@ const ESCRIBE = {
   '02_Ventas_Maestro': { desde: 5 },
   '01_FEL_Maestro': { desde: 5 },
   '01b_FEL_Emitidas': { desde: 4 },
-  '03_Banco_Industrial': { desde: 5 }
+  '03_Banco_Industrial': { desde: 5 },
+  // el cierre de bancos (cierre_bancos.js, 22-oct-2026). 04b_Banco_BAC_USD es la pestaña PROPUESTA de la cuenta en
+  // dolares: mientras no exista en el maestro, esa cuenta frena.
+  '04_Banco_BAC': { desde: 5 },
+  '04b_Banco_BAC_USD': { desde: 5 },
+  '05_Tarjeta_Credito_BAC': { desde: 5 },
+  '06_Tarjeta_Credito_BI': { desde: 5 }
 };
 const PESTANAS = Object.keys(ESCRIBE).concat(['00_Proveedores']);
+/** Las pestañas del cierre de bancos: ancho de los datos (sin Año/Mes/Semana) y columnas de descripcion y categoria. */
+const CIERRE = {
+  '04_Banco_BAC': { ancho: 9, desc: 4, cat: [8, 9], montos: [5, 6, 7], cuenta: true },
+  '04b_Banco_BAC_USD': { ancho: 9, desc: 4, cat: [8, 9], montos: [5, 6, 7], cuenta: true },
+  '05_Tarjeta_Credito_BAC': { ancho: 6, desc: 2, cat: [5, 6], montos: [3, 4], cuenta: false },
+  '06_Tarjeta_Credito_BI': { ancho: 6, desc: 2, cat: [5, 6], montos: [3, 4], cuenta: false }
+};
+const FUNCION_CIERRE = 'cargarCierreBancos';
 
 function error(msg, status) { const e = new Error(msg); e.status = status; return e; }
 
@@ -282,10 +297,23 @@ function crearMotorMaestro(maestro, estado, opciones) {
   }
   function archivoObj(f) {
     return { getId: () => f.id, getName: () => f.nombre, getMimeType: () => f.mime,
-      getLastUpdated: () => new Date(Date.parse(f.modificado || '1970-01-01T00:00:00Z')) };
+      getLastUpdated: () => new Date(Date.parse(f.modificado || '1970-01-01T00:00:00Z')),
+      // el texto de un CSV (cierre de bancos): se anota y la ronda sigue con '' (se pide junto con los demas)
+      getBlob: () => ({ getDataAsString: () => {
+        if (!Object.prototype.hasOwnProperty.call(estado.textos, f.id)) { anotar({ tipo: 'texto', id: f.id }); return ''; }
+        return estado.textos[f.id];
+      } }) };
   }
 
+  estado.textos = estado.textos || {};
+  estado.bancos = estado.bancos || {};
   const ctx = {
+    // Solo en la nube: el archivo del banco (.xls del BAC, CSV de la tarjeta) convertido al normalizado en la precarga
+    // con banco-normalizar.js. { texto } | { error } | null (no es del banco). En Apps Script no existe.
+    ROSANTA_NUBE: { bancoANormalizado: (id) => {
+      if (!Object.prototype.hasOwnProperty.call(estado.bancos, id)) { anotar({ tipo: 'banco', id }); return null; }
+      return estado.bancos[id];
+    } },
     SpreadsheetApp: {
       openById: (id) => {
         if (id === maestro.id) return libroMaestro;
@@ -345,10 +373,10 @@ function crearMotorMaestro(maestro, estado, opciones) {
   vm.createContext(ctx);
   archivosMaestro().forEach((f) => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: 'maestro/' + f }));
 
-  function correr(nombre) {
+  function correr(nombre, args) {
     if (typeof ctx[nombre] !== 'function') throw new Error('El cargador no tiene la funcion ' + nombre + '.');
     let err = null;
-    try { ctx[nombre](); } catch (e) { if (!(e instanceof FaltaPrecarga)) err = String(e && e.message || e); }
+    try { ctx[nombre].apply(null, args || []); } catch (e) { if (!(e instanceof FaltaPrecarga)) err = String(e && e.message || e); }
     return { faltas, error: err, ops, logs, progreso: progresoNuevo, abiertos, ctx, trabajo, marcas };
   }
   return { correr, ctx };
@@ -371,6 +399,17 @@ async function resolverFalta(f, estado, deps) {
     return;
   }
   if (f.tipo === 'libro') { await P.resolverFalta(f, estado, deps); return; }
+  if (f.tipo === 'texto' || f.tipo === 'banco') {
+    if (!deps.drive) throw error('El cierre de bancos necesita Drive (la cuenta de restaurante@) para leer el archivo ' + f.id + '.', 503);
+    const bytes = await deps.drive.bajar(f.id);
+    if (f.tipo === 'texto') { estado.textos[f.id] = Buffer.from(bytes).toString('utf8'); return; }
+    // el .xls del BAC o el CSV de la tarjeta → el CSV normalizado (el mismo normalizador que la herramienta de la Mac)
+    try {
+      const r = N.normalizar(bytes, archivoDe(estado, f.id).nombre);
+      estado.bancos[f.id] = r ? { texto: r.texto } : null;
+    } catch (e) { estado.bancos[f.id] = { error: e.message }; }
+    return;
+  }
   throw new Error('Falta desconocida: ' + JSON.stringify(f));
 }
 
@@ -380,14 +419,15 @@ async function resolverFaltas(faltas, estado, deps) {
   await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
 }
 
-/** Corre cargarUltimasSemanas hasta que no le falte nada. */
+/** Corre cargarUltimasSemanas (o opciones.funcion con opciones.args: el cierre de bancos) hasta que no le falte nada. */
 async function correrConPrecarga(maestro, estado, deps, opciones) {
+  const fn = (opciones && opciones.funcion) || FUNCION;
   for (let ronda = 1; ronda <= MAX_RONDAS; ronda++) {
-    const r = crearMotorMaestro(maestro, estado, opciones).correr(FUNCION);
+    const r = crearMotorMaestro(maestro, estado, opciones).correr(fn, opciones && opciones.args);
     if (!r.faltas.length) return Object.assign(r, { rondas: ronda });
     await resolverFaltas(r.faltas, estado, deps);
   }
-  throw new Error(FUNCION + ': despues de ' + MAX_RONDAS + ' rondas de precarga todavia le faltan datos.');
+  throw new Error(fn + ': despues de ' + MAX_RONDAS + ' rondas de precarga todavia le faltan datos.');
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -412,6 +452,16 @@ function resumirArchivos(r, estado) {
     const datos = L && L.datos[L.titulos[0]];
     const filas = r.ops.filter((x) => x.archivo === lid && x.tipo === 'valores' && x.col === 1).reduce((a, x) => a + x.nf, 0);
     return Object.assign(archivoDe(estado, lid), { tipo: datos ? r.ctx._identificar(datos) : '?', filas });
+  });
+}
+
+/** Los archivos que leyo el cierre de bancos (CSV y archivos del banco) y en que formato quedaron. */
+function resumirCierre(estado) {
+  const ids = new Set(Object.keys(estado.textos || {}).concat(Object.keys(estado.bancos || {})));
+  return [...ids].map((id) => {
+    const b = (estado.bancos || {})[id], t = (estado.textos || {})[id] || '';
+    const tipo = N.esCabeceraNormalizada(t) ? 'NORMALIZADO' : b && b.texto ? 'BANCO' : b && b.error ? 'BANCO_CON_ERROR' : '?';
+    return Object.assign(archivoDe(estado, id), { tipo });
   });
 }
 
@@ -584,7 +634,9 @@ function planEscritura(ops, maestro) {
     const fin = op.fila + op.nf - 1;
     if (!op.actualiza) {   // una correccion de Estado cae en una fila que ya existe: no pide destino vacio
       const R = rangos[op.pestana] = rangos[op.pestana] || { desde: op.fila, hasta: fin, ancho: 0 };
-      R.desde = Math.min(R.desde, op.fila); R.hasta = Math.max(R.hasta, fin); R.ancho = Math.max(R.ancho, op.col + op.nc - 1);
+      R.desde = Math.min(R.desde, op.fila); R.hasta = Math.max(R.hasta, fin);
+      // solo las columnas de VALORES: en 04/05 las filas vacias ya traen las formulas de Año/Mes/Semana puestas
+      if (op.tipo === 'valores') R.ancho = Math.max(R.ancho, op.col + op.nc - 1);
     }
     const filas = ((pr.gridProperties || {}).rowCount) || 0;
     if (fin > filas) crecer[op.pestana] = { sheetId, faltan: Math.max((crecer[op.pestana] || {}).faltan || 0, fin - filas) };
@@ -605,6 +657,7 @@ async function revisarDestinoVacio(sheets, id, rangos) {
   const ocupadas = [];
   for (const n of Object.keys(rangos)) {
     const R = rangos[n];
+    if (!R.ancho) continue;
     const v = await sheets.spreadsheets.values.get({ spreadsheetId: id, range: a1(n, R.desde, 1, R.hasta - R.desde + 1, R.ancho), valueRenderOption: 'FORMULA' });
     (v.data.values || []).forEach((r, i) => { if ((r || []).some((x) => x !== '' && x !== null && x !== undefined)) ocupadas.push(n + ' fila ' + (R.desde + i)); });
   }
@@ -725,8 +778,10 @@ async function correrNubeConMarca(o, deps, antes, sheets) {
   revisarZona(maestro);
   const estado = { libros: {}, carpetas: {}, respuestas: {} };
   // relojPruebas: solo las pruebas fijan la hora en modo nube (la ruta no lo acepta)
-  const r = await correrConPrecarga(maestro, estado, Object.assign({ conversiones: new Map() }, deps), { progreso: antes, ahora: deps.relojPruebas });
-  const archivos = resumirArchivos(r, estado);
+  const op = { progreso: antes, ahora: deps.relojPruebas };
+  if (o.cierreBancos) Object.assign(op, { funcion: FUNCION_CIERRE, args: [o.cierreBancos] });
+  const r = await correrConPrecarga(maestro, estado, Object.assign({ conversiones: new Map() }, deps), op);
+  const archivos = o.cierreBancos ? resumirCierre(estado) : resumirArchivos(r, estado);
   const avisos = avisosDe(r.logs);
   if (r.error) return { status: 500, cuerpo: { modo: 'nube', archivos, escritas: 0, avisos, error: 'El cargador fallo y no se escribio nada: ' + r.error } };
 
@@ -748,7 +803,129 @@ async function correrNubeConMarca(o, deps, antes, sheets) {
   }
   const escritas = filasArmadas(r.ops).length;
   const mal = frenados(avisos) || relectura.length;
-  return { status: mal ? 409 : 200, cuerpo: { modo: 'nube', archivos, escritas, procesados_nuevos: nuevas.length, avisos, relectura: relectura.slice(0, 50) } };
+  return { status: mal ? 409 : 200, cuerpo: { modo: 'nube', cierre_bancos: o.cierreBancos || undefined, archivos, escritas, procesados_nuevos: nuevas.length, avisos, relectura: relectura.slice(0, 50) } };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// El cierre de bancos (cierre_bancos.js: cargarCierreBancos(mes)), 22-oct-2026
+// ---------------------------------------------------------------------------------------------------------------
+
+const p2c = (n) => (n < 10 ? '0' : '') + n;
+function diaDe(v) {
+  if (v instanceof Date) return v.getFullYear() + '-' + p2c(v.getMonth() + 1) + '-' + p2c(v.getDate());
+  const s = String(v === null || v === undefined ? '' : v).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/) || s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!m) return '';
+  return m[1].length === 4 ? m[1] + '-' + m[2] + '-' + m[3] : m[3] + '-' + p2c(+m[2]) + '-' + p2c(+m[1]);
+}
+
+/**
+ * El maestro "como estaba antes del mes" en las pestañas del cierre: las filas de ese mes quedan en blanco (los datos;
+ * las formulas de Año/Mes/Semana no importan). Asi el cargador arma TODAS las filas del mes y se comparan con las que
+ * el maestro ya tiene. Lo de antes del mes (el ultimo Balance, la historia de categorias) queda igual.
+ */
+function sinMes(maestro, mes) {
+  const pestanas = {};
+  Object.keys(maestro.pestanas).forEach((n) => {
+    const p = maestro.pestanas[n];
+    if (!CIERRE[n]) { pestanas[n] = p; return; }
+    const valores = p.valores.map((r, i) => {
+      if (i < ESCRIBE[n].desde - 1 || diaDe(r[0]).slice(0, 7) !== mes) return r.slice();
+      const x = r.slice();
+      for (let c = 0; c < CIERRE[n].ancho && c < x.length; c++) x[c] = '';
+      return x;
+    });
+    pestanas[n] = { valores, formulas: p.formulas, ultima: p.ultima };
+  });
+  return Object.assign({}, maestro, { pestanas });
+}
+
+/**
+ * La comparacion del cierre. armadas: filasArmadas de la corrida sobre sinMes; maestro: el de verdad.
+ * Cada fila armada se busca en el maestro por su llave (contando repetidos) y se compara celda por celda. Lo que
+ * difiere se separa por clase, de la mas grave a la mas leve:
+ *   valor          fecha, referencia, codigo, montos o saldo distintos (o el tipo de celda de la fecha o un monto)
+ *   descripcion    otra descripcion
+ *   categoria      Categoría o Es_Personal (en el maestro se reclasifica a mano despues de cargar)
+ *   tipo           mismo valor, otro tipo de celda en Referencia o Codigo (texto en ene-ago, numero desde septiembre)
+ *   desc_corta     el maestro tiene la descripcion CORTADA del PDF y el .xls la trae entera
+ * faltan: armadas que el maestro no tiene. sobran: filas del mes en el maestro que el archivo no trae.
+ */
+function compararCierre(armadas, maestro, ctx, mes) {
+  const llave = (n, f) => (CIERRE[n].cuenta ? ctx._cbClaveCuenta(diaDe(f[0]), f[1], ctx._numero(f[4]), ctx._numero(f[5]))
+    : ctx._cbClaveTarjeta(diaDe(f[0]), f[1], ctx._numero(f[2]), ctx._numero(f[3])));
+  const indice = {}, usadas = {};
+  const tocadas = [...new Set(armadas.filter((a) => CIERRE[a.pestana]).map((a) => a.pestana))];
+  tocadas.forEach((n) => {
+    const p = maestro.pestanas[n], m = new Map();
+    if (p) for (let i = ESCRIBE[n].desde - 1; i < p.valores.length; i++) {
+      const f = p.valores[i];
+      if (!diaDe(f[0])) continue;
+      const k = llave(n, f);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(i);
+    }
+    indice[n] = m; usadas[n] = new Set();
+  });
+  const enc = (n, c) => { const h = maestro.pestanas[n].valores[ESCRIBE[n].desde - 2]; return h ? String(h[c - 1] || '') : ''; };
+  const orden = ['valor', 'descripcion', 'categoria', 'tipo', 'desc_corta'];
+  const cuenta = { iguales: 0, valor: 0, descripcion: 0, categoria: 0, tipo: 0, desc_corta: 0 };
+  const detalle = [], faltan = [];
+  armadas.filter((a) => CIERRE[a.pestana]).forEach((a) => {
+    const C = CIERRE[a.pestana], k = llave(a.pestana, a.valores);
+    const cand = (indice[a.pestana].get(k) || []).filter((i) => !usadas[a.pestana].has(i));
+    if (!cand.length) { faltan.push({ pestana: a.pestana, llave: k }); return; }
+    const i = cand[0]; usadas[a.pestana].add(i);
+    const h = maestro.pestanas[a.pestana].valores[i], cols = [];
+    for (let j = 0; j < C.ancho; j++) {
+      const v = a.valores[j], enM = h[j] === undefined ? '' : h[j], col = j + 1;
+      let clase = null;
+      if (col === C.desc) {
+        const x = ctx._cbDesc(enM).toUpperCase(), y = ctx._cbDesc(v).toUpperCase();
+        if (x !== y) clase = x && y.indexOf(x) === 0 ? 'desc_corta' : 'descripcion';
+      } else if (C.cat.indexOf(col) !== -1) {
+        if (!igual(enM, v)) clase = 'categoria';
+      } else if (!igual(enM, v)) clase = 'valor';
+      else if (tipoEsperado(v, a.pestana, col) !== tipoCelda(enM)) clase = col === 1 || C.montos.indexOf(col) !== -1 ? 'valor' : 'tipo';
+      if (clase) cols.push({ col, encabezado: enc(a.pestana, col), clase, maestro: norm(enM), nube: norm(v) });
+    }
+    if (!cols.length) { cuenta.iguales++; return; }
+    const peor = orden.find((o) => cols.some((c) => c.clase === o));
+    cuenta[peor]++;
+    detalle.push({ pestana: a.pestana, llave: k, fila_maestro: i + 1, clase: peor, columnas: cols });
+  });
+  const sobran = [];
+  tocadas.forEach((n) => {
+    const p = maestro.pestanas[n];
+    for (let i = ESCRIBE[n].desde - 1; i < p.valores.length; i++) {
+      if (diaDe(p.valores[i][0]).slice(0, 7) === mes && !usadas[n].has(i)) sobran.push({ pestana: n, fila: i + 1, llave: llave(n, p.valores[i]) });
+    }
+  });
+  return Object.assign(cuenta, { faltan, sobran, detalle });
+}
+
+/** SOMBRA del cierre: no escribe nada. Corre sobre el maestro tal cual (lo que agregaria hoy) y sobre sinMes. */
+async function correrCierreSombra(o, deps) {
+  precondiciones(deps);
+  const maestro = o.maestro || await leerMaestro(deps.sheetsLectura, MAESTRO);
+  revisarZona(maestro);
+  const estado = o.estado || { libros: {}, carpetas: {}, respuestas: {} };
+  const deps2 = Object.assign({ conversiones: new Map() }, deps);
+  const op = { ahora: o.ahora, progreso: {}, funcion: FUNCION_CIERRE, args: [o.cierreBancos] };
+  const r1 = await correrConPrecarga(maestro, estado, deps2, op);
+  const r2 = r1.error ? null : await correrConPrecarga(sinMes(maestro, o.cierreBancos), estado, deps2, op);
+  const agregaria = filasArmadas(r1.ops);
+  const vacio = { iguales: 0, valor: 0, descripcion: 0, categoria: 0, tipo: 0, desc_corta: 0, faltan: [], sobran: [], detalle: [] };
+  const cmp = r2 && !r2.error ? compararCierre(filasArmadas(r2.ops), maestro, r2.ctx, o.cierreBancos) : vacio;
+  const err = r1.error || (r2 && r2.error) || '';
+  const avisos = avisosDe(r1.logs);
+  const difiere = agregaria.length || cmp.valor || cmp.descripcion || cmp.faltan.length || cmp.sobran.length || frenados(avisos);
+  return { status: err ? 500 : difiere ? 409 : 200, cuerpo: {
+    modo: 'sombra', cierre_bancos: o.cierreBancos, archivos: resumirCierre(estado), filas_que_agregaria: agregaria.length,
+    iguales: cmp.iguales, solo_desc_corta: cmp.desc_corta, solo_tipo: cmp.tipo, categoria: cmp.categoria, descripcion: cmp.descripcion,
+    valor: cmp.valor, faltan: cmp.faltan.length, sobran: cmp.sobran.length, avisos, error: err, rondas: r1.rondas, registro: r1.logs,
+    detalle: { agregaria: agregaria.slice(0, 50).map((a) => ({ pestana: a.pestana, fila: a.fila, valores: a.valores.map(norm) })),
+      diferencias: cmp.detalle.slice(0, 1000), faltan: cmp.faltan.slice(0, 100), sobran: cmp.sobran.slice(0, 100) } } };
 }
 
 async function anotar(pool, modo, ahora, r, ms) {
@@ -772,7 +949,8 @@ async function correrMaestro(opciones, deps) {
   if (modo === 'apps') return { status: 200, cuerpo: { modo: 'apps' } };
   if (o.ahora && modo !== 'sombra') throw error('Con un reloj simulado solo se corre en sombra.', 400);
   const t0 = Date.now();
-  const r = modo === 'sombra' ? await correrSombra(o, deps) : await correrNube(o, deps);
+  if (o.cierreBancos !== undefined && !/^20\d\d-(0[1-9]|1[0-2])$/.test(String(o.cierreBancos))) throw error('cierre_bancos va como AAAA-MM.', 400);
+  const r = modo === 'sombra' ? await (o.cierreBancos ? correrCierreSombra(o, deps) : correrSombra(o, deps)) : await correrNube(o, deps);
   r.cuerpo.ok = r.status === 200;
   r.cuerpo.ms = Date.now() - t0;
   if (deps.guardarCorridas !== false) await anotar(deps.pool, modo, o.ahora, r, r.cuerpo.ms);
@@ -787,6 +965,8 @@ function claveIgual(a, b) {
 /**
  * POST /tareas/procesos/maestro (cabecera x-rosanta-tarea = clave-tareas). Cuerpo opcional:
  *   { ahora: '2026-10-26T12:00:00-06:00' }  reproduce ese lunes (solo en sombra)
+ *   { cierre_bancos: '2026-10' }              el CIERRE DE BANCOS de ese mes (cargarCierreBancos de cierre_bancos.js) en vez de
+ *                                             la carga de los lunes; lee <mes>/_sistema/ de Reportes Mensual
  * 200 bien · 409 la sombra difiere / un banco se freno / el maestro cambio / la relectura no coincide · 500 fallo.
  * deps: { pool, claveTareas, sheetsLectura, drive, sheetsEscritura }
  */
@@ -797,10 +977,11 @@ function montarMaestro(app, deps) {
     const b = req.body || {};
     let ahora = null;
     if (b.ahora !== undefined) { ahora = Date.parse(b.ahora); if (!Number.isFinite(ahora)) return res.status(400).json({ error: 'ahora va como fecha ISO.' }); }
+    if (b.cierre_bancos !== undefined && !/^20\d\d-(0[1-9]|1[0-2])$/.test(String(b.cierre_bancos))) return res.status(400).json({ error: 'cierre_bancos va como AAAA-MM.' });
     if (corriendo) return res.status(409).json({ error: 'Ya hay una carga del maestro en marcha.' });
     corriendo = true;
     try {
-      const r = await correrMaestro({ ahora }, Object.assign({ conversiones: deps.conversiones || new Map() }, deps));
+      const r = await correrMaestro({ ahora, cierreBancos: b.cierre_bancos }, Object.assign({ conversiones: deps.conversiones || new Map() }, deps));
       res.status(r.status).json(r.cuerpo);
     } catch (e) {
       if (e.status) return res.status(e.status).json({ error: e.message });
@@ -811,6 +992,7 @@ function montarMaestro(app, deps) {
 
 module.exports = {
   MAESTRO, REPORTES_2026, INTERRUPTOR, ESCRIBE, PESTANAS, ENTRADA,
+  CIERRE, sinMes, compararCierre, correrCierreSombra,
   archivosMaestro, armarPestana, leerMaestro, sinLlaves, crearMotorMaestro, correrConPrecarga, filasArmadas,
   compararConMaestro, tipoEsperado, planEscritura, leerModo, correrMaestro, montarMaestro
 };

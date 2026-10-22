@@ -21,7 +21,8 @@
 // Banco Industrial SI se carga aca desde el 8-oct-2026 (p233), pero no desde el
 // PDF: Claude lee el PDF, categoriza y deja en la carpeta SXX un Sheet NATIVO
 // (BANCO_BI_SXX) con los movimientos y los totales impresos del banco; el
-// cargador lo valida y lo agrega. BAC y tarjetas siguen fuera (vienen en PDF/zip).
+// cargador lo valida y lo agrega. BAC y tarjetas NO entran por aca: los carga el cierre de mes
+// (cierre_bancos.js, cargarCierreBancos('AAAA-MM'), desde el 22-oct-2026).
 // Antes del 8-oct el banco se cargaba con un script de un solo uso por semana. Los scripts de un solo uso que
 // los cargaban (cargar_banco_SXX) se sacaron del proyecto el 28-sep-2026:
 // estan en el repo, apps-script/_archivo/2026-09-28_scripts_banco_maestro.
@@ -797,7 +798,7 @@ function _barrido(escribir, ventana) {
     Logger.log('>> Me quede sin tiempo. Corre "Cargar lo que falte" otra vez ' +
                'para seguir donde quedo.');
   }
-  Logger.log('Banco Industrial entra solo desde un Sheet BANCO_BI_SXX; BAC y tarjetas no se cargan aca.');
+  Logger.log('Banco Industrial entra solo desde un Sheet BANCO_BI_SXX; BAC y tarjetas entran con el cierre de mes (cargarCierreBancos).');
 }
 
 function cargarPendientes()  { _barrido(true); }

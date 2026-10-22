@@ -2,6 +2,7 @@
 # Copia a cloud/app/maestro/ los archivos del maestro financiero (apps-script/rosanta-maestro) que corre el
 # proceso del maestro en la nube (proc-maestro.js, 21-oct-2026):
 #   LISTA.txt   cargador.js (cargarUltimasSemanas: POS, FEL emitidas/recibidas y BANCO_BI de "Reportes 2026").
+#               cierre_bancos.js (cargarCierreBancos(mes): BAC Q, BAC $ y tarjetas desde <mes>/_sistema/, 22-oct-2026).
 #               Su version va en VERSION.txt.
 # Code.js (generarEspejo, el xlsx espejo) NO se copia: el espejo sigue en Apps Script por ahora.
 # Son COPIAS EXACTAS: la prueba "El proceso del maestro usa el mismo cargador que Apps Script" falla si se

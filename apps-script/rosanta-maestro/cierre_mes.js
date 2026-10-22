@@ -19,6 +19,7 @@ var LIBROS_CIERRE = [
   // columnas de monto a sumar en el mes {nombre: columna}
   ['03_Banco_Industrial',    1, 7,  true,  { debitos: 4, creditos: 5 }],
   ['04_Banco_BAC',           1, 8,  true,  { debitos: 5, creditos: 6 }],
+  ['04b_Banco_BAC_USD',      1, 8,  false, { debitos: 5, creditos: 6 }],   // propuesta (22-oct-2026): mientras no exista dice 'no existe la hoja'
   ['02_Ventas_Maestro',      2, 0,  true,  null],
   ['01_FEL_Maestro',         1, 14, false, null],
   ['05_Tarjeta_Credito_BAC', 1, 5,  false, { quetzales: 3, dolares: 4 }],
