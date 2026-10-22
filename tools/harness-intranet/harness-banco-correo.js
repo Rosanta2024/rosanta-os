@@ -21,6 +21,7 @@ function Sheet(name, R) {
     setFontWeight: () => g, setNumberFormat: () => g }; return g; };
   const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
     getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
+    appendRow: row => { R.push(row.map(v => typeof v === 'string' && v[0] === "'" ? v.slice(1) : v)); return self; },
     getRange: (a, c, nr, nc) => typeof a === 'string' ? rng(1, 1, 1, 1) : rng(a, c, nr, nc), setFrozenRows: () => self };
   return self;
 }

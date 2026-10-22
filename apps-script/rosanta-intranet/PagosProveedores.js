@@ -1083,12 +1083,23 @@ function _pagEscribir_(filas) {
       o.ID = Utilities.getUuid().slice(0, 8); o.REGISTRADO = new Date();
       return H.map(function (h) { return o.hasOwnProperty(h) ? o[h] : ''; });
     });
-    var desde = sh.getLastRow() + 1, iId = H.indexOf('ID');
-    // El ID como texto: la hoja guardaba "630e50xx" como el numero 6.30E+50 (un pago a
-    // Tiburoncito del 2-oct-2026) y dos IDs asi podian quedar iguales.
-    if (iId > -1) sh.getRange(desde, iId + 1, datos.length, 1).setNumberFormat('@');
-    sh.getRange(desde, 1, datos.length, H.length).setValues(datos);
+    // UNA FILA ATOMICA POR VEZ (22-oct-2026, revision del Estudio): desde el 26-oct la nube copia sus pagos a esta
+    // hoja (appendCells) segundos despues de cada guardado. Con getLastRow() + setValues, una copia que entraba en el
+    // medio quedaba pisada. appendRow no calcula la fila: la pone Sheets al final.
+    // El ID, el DTE y las fechas van como texto con apostrofe (la hoja no los convierte): la hoja guardaba
+    // "630e50xx" como el numero 6.30E+50 (un pago a Tiburoncito del 2-oct-2026) y dos IDs asi podian quedar iguales.
+    var iId = H.indexOf('ID'), texto = ['ID', 'DTE', 'FECHA DE PAGAR', 'FECHA PAGADO'].map(function (h) { return H.indexOf(h); });
+    datos.forEach(function (fila) {
+      sh.appendRow(fila.map(function (v, i) { return texto.indexOf(i) !== -1 && typeof v === 'string' && v !== '' ? "'" + v : v; }));
+    });
     SpreadsheetApp.flush();
+    // y se comprueba que cada ID quedo escrito (en la cola: lo de la nube puede haber entrado despues)
+    if (iId > -1) {
+      var fin = sh.getLastRow(), desde = Math.max(2, fin - datos.length - 50);
+      var ids = {}; sh.getRange(desde, iId + 1, fin - desde + 1, 1).getValues().forEach(function (r) { ids[String(r[0]).replace(/^'/, '')] = 1; });
+      var faltan = datos.filter(function (f) { return !ids[f[iId]]; });
+      if (faltan.length) throw new Error('No quedaron escritos ' + faltan.length + ' de ' + datos.length + ' registros en ' + PAG_HOJA_ + '. Tocá Actualizar y revisá antes de volver a guardar.');
+    }
     _pagOlvidar_(false);
     _pagTramo_('escribir');
     return datos.length;
@@ -1314,10 +1325,17 @@ function _pagIvaAutoCandidatas_(facturas, movs, lista, hoyIso) {
   });
 }
 
-/** Marca solas las facturas de los proveedores de PAG_IVA_AUTO_. Corre en calentarCaches. Nunca rompe a quien la llama. */
-function pagIvaAutomatico_() {
+/**
+ * Marca solas las facturas de los proveedores de PAG_IVA_AUTO_. Corre en calentarCaches. Nunca rompe a quien la llama.
+ * Lee el FEL y los bancos enteros (pagEstado_): corre cuando hayNuevas (fecAlMaestro_ metio facturas en esa vuelta)
+ * o, si no, a lo sumo una vez por hora, para atrapar las que entran con el cargador del lunes (revision del Estudio).
+ */
+function pagIvaAutomatico_(hayNuevas) {
   var rep = { marcadas: 0, errores: [] };
   if (!PAG_IVA_AUTO_.length || (typeof NUBE_SERVIDOR_ !== 'undefined' && NUBE_SERVIDOR_)) return rep;
+  var cache = CacheService.getScriptCache();
+  if (!hayNuevas) { try { if (cache.get('iva_auto_ult')) return rep; } catch (e) { /* sin cache: corre */ } }
+  try { cache.put('iva_auto_ult', '1', 3600); } catch (e) { /* idem */ }
   try {
     _pagOlvidar_(true);
     var E = pagEstado_(), fs = _pagIvaAutoCandidatas_(E.facturas, pagMovimientos_(), PAG_IVA_AUTO_, medFechaIso_(new Date()));

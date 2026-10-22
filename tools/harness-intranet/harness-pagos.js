@@ -25,6 +25,7 @@ function Sheet(name, R) {
     setFontWeight: () => g, setNumberFormat: () => g }; return g; };
   const self = { getName: () => name, getLastRow: () => R.length, getLastColumn: () => w(),
     getDataRange: () => ({ getValues: () => R.map(r => { const x = r.slice(); while (x.length < w()) x.push(''); return x; }) }),
+    appendRow: row => { R.push(row.map(v => typeof v === 'string' && v[0] === "'" ? v.slice(1) : v)); return self; },
     getRange: (a, c, nr, nc) => typeof a === 'string' ? rng(1, 1, 1, 1) : rng(a, c, nr, nc), setFrozenRows: () => self };
   return self;
 }
@@ -42,7 +43,7 @@ const ctx = { SpreadsheetApp: { openById: Spreadsheet, flush: () => {} },
   LockService: { getScriptLock: () => ({ waitLock: () => true, tryLock: () => true, releaseLock: () => {} }) },
   Logger: { log: () => {} }, console, JSON, Math, Date, Number, String, Object, Array, RegExp, Error, isNaN };
 vm.createContext(ctx);
-['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'Tiempos.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
+['Config.js', 'ConfigCosteo.js', 'FinanzasDatos.js', 'MedicionDatos.js', 'PagosProveedores.js', 'NubePagos.js', 'CierresDiarios.js', 'FelCorreo.js', 'BancoCorreo.js', 'Tiempos.js'].forEach(f => vm.runInContext(fs.readFileSync(path.join(DIR, f), 'utf8'), ctx, { filename: f }));
 const desde = process.argv[2] || '2026-08-01';
 vm.runInContext("PAG_DESDE_ = '" + desde + "';", ctx);
 let ok = 0, mal = 0;
@@ -298,6 +299,33 @@ CONFIG.PAGOS_PROVEEDORES.forEach(r => console.log('  ' + r.slice(0, 9).map(x => 
 
 // alias del banco en Posibles pagos (14-oct-2026): "TEF A : 902410067" es Doorways
 t('El alias de la cuenta (902410067) cuenta como el nombre de Doorways', ctx._pagNombreEnGlosa_(['doorways'].concat(ctx.PAG_ALIAS_BANCO_['96569239']), 'TEF A : 902410067') && !ctx._pagNombreEnGlosa_(['doorways'], 'TEF A : 902410067'));
+// _pagEscribir_ con appendRow (22-oct-2026, revision del Estudio): una copia de la nube que entra en el medio no se pisa
+{
+  const ph = ctx.pagHoja_, sh = ph(true), antes = sh.getLastRow(), orig = sh.appendRow;
+  ctx.pagHoja_ = () => sh;   // la misma hoja para la prueba y para _pagEscribir_
+  let n = 0;
+  sh.appendRow = row => { if (n++ === 0) orig(['COCINA', 'NUBE', '999', '', '2026-10-27', 10, 'Banco', '1', '', 'nube', new Date(), 'nube0001']); return orig(row); };
+  ctx._pagEscribir_([{ AREA: 'COCINA', PROVEEDOR: 'A', DTE: '0123', 'FECHA PAGADO': '2026-10-27', 'CANTIDAD PAGADA': 1, 'ESTATUS DE PAGO': 'Tarjeta' },
+                     { AREA: 'COCINA', PROVEEDOR: 'B', DTE: '0456', 'FECHA PAGADO': '2026-10-27', 'CANTIDAD PAGADA': 2, 'ESTATUS DE PAGO': 'Tarjeta' }]);
+  sh.appendRow = orig;
+  const v = sh.getDataRange().getValues().slice(antes), H = sh.getDataRange().getValues()[0];
+  t('Escribir: la fila de la nube que entra en el medio queda (no se pisa)', v.some(r => r[1] === 'NUBE') && v.length === 3, v.map(r => r[1]).join());
+  t('Escribir: el DTE con cero adelante queda como texto', v.some(r => r[H.indexOf('DTE')] === '0123'));
+  sh.appendRow = () => {};
+  t('Escribir: si un registro no quedo, avisa', /No quedaron escritos/.test(tira(() => ctx._pagEscribir_([{ AREA: 'COCINA', PROVEEDOR: 'C', DTE: '1', 'ESTATUS DE PAGO': 'Tarjeta' }]))));
+  sh.appendRow = orig; ctx.pagHoja_ = ph;
+}
+// IVA automatico: lista vacia no hace nada; con lista, sin facturas nuevas corre a lo sumo una vez por hora
+{
+  t('IVA automatico con la lista vacia no hace nada', ctx.pagIvaAutomatico_(true).marcadas === 0);
+  const cache = {}; const oc = ctx.CacheService;
+  ctx.CacheService = { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) };
+  vm.runInContext("PAG_IVA_AUTO_ = [{ nit: 'nadie', estab: '' }]", ctx);
+  let lecturas = 0; const oe = ctx.pagEstado_; ctx.pagEstado_ = () => { lecturas++; return oe(); };
+  ctx.pagIvaAutomatico_(false); ctx.pagIvaAutomatico_(false); ctx.pagIvaAutomatico_(true);
+  t('IVA automatico: sin nuevas lee una vez por hora; con nuevas, siempre', lecturas === 2, lecturas + ' lecturas');
+  ctx.pagEstado_ = oe; ctx.CacheService = oc; vm.runInContext('PAG_IVA_AUTO_ = []', ctx);
+}
 console.log('\n' + ok + ' OK · ' + mal + ' fallas');
 function _r(n) { return Math.round(n * 100) / 100; }
 process.exit(mal ? 1 : 0);
