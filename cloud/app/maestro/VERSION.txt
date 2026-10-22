@@ -1,1 +1,1 @@
-4dcf564 2026-10-22 maestro: cierre de bancos BAC (cuenta Q, cuenta $, tarjeta BAC; tarjeta BI a mano) en Apps Script y en la nube
+3998cb2 2026-10-22 maestro: decisiones de Juanma del 22-oct en el cierre de bancos y carga aparte de ene-abr de la tarjeta BAC
