@@ -49,7 +49,7 @@ function pedidoConClaves(url, opciones, claves) {
     form = { campos, campo, b64: p[campo]._b64, mime: p[campo].getContentType(), nombre: p[campo].getName() };
   } else if (p !== undefined) payload = typeof p === 'string' ? p : JSON.stringify(p);
   const sal = execFileSync(process.execPath, ['-e', guion], { input: JSON.stringify({ u: url, m: (opciones.method || 'get').toUpperCase(), h: headers, b: payload, f: form }),
-    env, maxBuffer: 30 * 1024 * 1024, timeout: 60000 });
+    env, maxBuffer: 80 * 1024 * 1024, timeout: 120000 });
   return JSON.parse(String(sal));
 }
 
