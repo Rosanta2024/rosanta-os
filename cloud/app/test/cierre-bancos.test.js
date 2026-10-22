@@ -159,7 +159,7 @@ test('Nube: el cierre de octubre escribe las tres pestañas con los tipos de App
     [d(2026, 10, 9), 'TIENDA, CON COMA GUATEMALA', 10, 0, 'POR_CLASIFICAR', 'No'],
     [d(2026, 10, 12), 'NETFLIX.COM 866-000-000', 0, 6.99, 'CUOTAS_Y_SUSCRIPCIONES', 'No'],
     [d(2026, 10, 31), 'CARGOS POR SERVICIO MES ANTERIOR', 0, 2.5, 'COMISIONES_BANCARIAS', 'No'],
-    [d(2026, 10, 31), 'INTERES COM', 33.33, 0, 'COMISIONES_BANCARIAS', 'No']]);
+    [d(2026, 10, 31), 'INTERES COM', 33.33, 0, 'INTERESES_BANCARIOS', 'No']]);
   assert.strictEqual(T[7][6].f, '=YEAR(A8)');
   assert.deepStrictEqual(c.relectura, []);
   assert.deepStrictEqual([...deps.pool.reg].map((h) => h.split(':')[0]).sort(), ['TCC', 'XQ', 'XU']);
@@ -282,7 +282,7 @@ test('Tarjeta BI pegada a mano: cuadra saldo anterior + movimientos = saldo fina
   const v = r.ops.filter((x) => x.tipo === 'valores')[0];
   assert.deepStrictEqual([v.pestana, v.fila], ['06_Tarjeta_Credito_BI', 6]);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(v.valores)), [['2026-10-05', 'TIENDA INVENTADA GT', 50, 0, 'ALIMENTOS', 'No'],
-    ['2026-10-15', 'INTERES MORATORIO (BI)', 5.5, 0, 'COMISIONES_BANCARIAS', 'No'], ['2026-10-31', 'INTER/DEVENGADO (BI)', 0, 0, 'COMISIONES_BANCARIAS', 'No']]);
+    ['2026-10-15', 'INTERES MORATORIO (BI)', 5.5, 0, 'INTERESES_BANCARIOS', 'No'], ['2026-10-31', 'INTER/DEVENGADO (BI)', 0, 0, 'INTERESES_BANCARIOS', 'No']]);
   // no cuadra → no escribe
   const m2 = M.crearMotorMaestro(maestro, { libros: {}, carpetas: {}, respuestas: {} }, {});
   const r2 = m2.correr('cargarTarjetaBIPegada', [lista.replace('155.50', '150.00')]);
@@ -405,8 +405,9 @@ function maestroCsf() {
       [new Date(2026, 0, 2), 'NETFLIX.COM              844-0000000', 0, 5.5, 'PERSONAL', 'Sí'].concat(fTc(5)),
       [new Date(2026, 0, 10), 'TIENDA INVENTADA', 80, 0, 'ALIMENTOS', 'No'].concat(fTc(6)),
       [new Date(2026, 1, 5), 'Spotify P9999            Stockholm', 0, 7.7, 'PERSONAL', 'Sí'].concat(fTc(7)),
-      [new Date(2026, 4, 2), 'NETFLIX.COM 866-000-000', 0, 6.6, 'PERSONAL', 'Sí'].concat(fTc(8)),   // mayo: fuera de ene-abr
-      [new Date(2026, 4, 31), 'INTERES COM', 50, 0, 'COMISIONES_BANCARIAS', 'No'].concat(fTc(9))]
+      [new Date(2026, 7, 2), 'NETFLIX.COM 866-000-000', 0, 6.6, 'PERSONAL', 'Sí'].concat(fTc(8)),   // agosto: fuera de ene-jul
+      [new Date(2026, 4, 31), 'INTERES COM', 50, 0, 'COMISIONES_BANCARIAS', 'No'].concat(fTc(9)),
+      [new Date(2026, 6, 8), 'APPLE.COM/BILL 866-000-000', 0, 12.34, 'PERSONAL', 'Sí'].concat(fTc(10))]
   };
 }
 const CSF_ID = '1DY3-hLOs4h5AX-nKPtgw-n5z6GOvwpY_';
@@ -415,19 +416,19 @@ function motorCsf(tabs, archivos) {
   archivos.forEach((a, i) => { carpeta.archivos.push({ id: 'T' + i, nombre: a[0], mime: 'text/csv', modificado: '2026-05-08T22:00:00.000Z' }); textos['T' + i] = a[1].toString('latin1'); });
   const x = motor(tabs, { carpetas: { [CSF_ID]: carpeta }, textos });
   vm.runInContext(fs.readFileSync(path.join(DIR_AS, 'cargos_sin_fecha_tc_bac.js'), 'utf8'), x.m.ctx);
-  vm.runInContext('CSF_RECLAS_ESPERADAS = 2;', x.m.ctx);   // en la fixtura son 2 (las de verdad, 7)
+  vm.runInContext('CSF_RECLAS_ESPERADAS = 3;', x.m.ctx);   // en la fixtura son 3 (las de verdad, 12)
   return x;
 }
 const ARCH_CSF = () => [['BAC - TC 2026-01.csv', F.csvTarjeta(TC_ENE)], ['BAC - TC 2026-02.csv', F.csvTarjeta(TC_FEB)], ['BAC - TC 2026-05.txt', Buffer.from('otra cosa')]];
 
-test('Cargos sin fecha ene-abr: revisar no escribe; cargar agrega SOLO INTERES COM y CARGOS POR SERVICIO al corte y reclasifica Netflix/Spotify', () => {
+test('Cargos sin fecha ene-abr: revisar no escribe; cargar agrega SOLO INTERES COM y CARGOS POR SERVICIO al corte y reclasifica Netflix/Spotify/Apple de ene-jul', () => {
   const a = motorCsf(maestroCsf(), ARCH_CSF());
   const r0 = a.m.correr('revisarCargosSinFechaTcBac');
   assert.strictEqual(r0.error, null, r0.logs.join('\n'));
   assert.deepStrictEqual(r0.ops, []);
   const l0 = r0.logs.join('\n');
   assert.match(l0, /Filas que agregaria: 3/);
-  assert.match(l0, /Filas que reclasificaria: 2/);
+  assert.match(l0, /Filas que reclasificaria: 3/);
   assert.match(l0, /2026-03: no encontre el CSV de la tarjeta/);
 
   const b = motorCsf(maestroCsf(), ARCH_CSF());
@@ -436,12 +437,12 @@ test('Cargos sin fecha ene-abr: revisar no escribe; cargar agrega SOLO INTERES C
   const vals = r.ops.filter((x) => x.tipo === 'valores');
   const nuevas = JSON.parse(JSON.stringify(vals.filter((x) => x.col === 1).map((x) => [x.fila, x.valores])));
   assert.deepStrictEqual(nuevas, [
-    [10, [['2026-01-31', 'CARGOS POR SERVICIO MES ANTERIOR', 0, 3.25, 'COMISIONES_BANCARIAS', 'No'], ['2026-01-31', 'INTERES COM', 44.4, 0, 'COMISIONES_BANCARIAS', 'No']]],
-    [12, [['2026-02-28', 'INTERES COM', 41.1, 0, 'COMISIONES_BANCARIAS', 'No']]]]);
+    [11, [['2026-01-31', 'CARGOS POR SERVICIO MES ANTERIOR', 0, 3.25, 'COMISIONES_BANCARIAS', 'No'], ['2026-01-31', 'INTERES COM', 44.4, 0, 'INTERESES_BANCARIOS', 'No']]],
+    [13, [['2026-02-28', 'INTERES COM', 41.1, 0, 'INTERESES_BANCARIOS', 'No']]]]);
   assert.ok(!JSON.stringify(nuevas).includes('TIENDA') && !JSON.stringify(nuevas).includes('NETFLIX'), 'las compras con fecha no se tocan');
   const reclas = JSON.parse(JSON.stringify(vals.filter((x) => x.col === 5).map((x) => [x.fila, x.valores])));
-  assert.deepStrictEqual(reclas, [[5, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]], [7, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]]], 'mayo no se toca');
-  assert.ok(r.ops.some((x) => x.tipo === 'formulasR1C1' && x.fila === 10));
+  assert.deepStrictEqual(reclas, [[5, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]], [7, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]], [10, [['CUOTAS_Y_SUSCRIPCIONES', 'No']]]], 'agosto no se toca');
+  assert.ok(r.ops.some((x) => x.tipo === 'formulasR1C1' && x.fila === 11));
 
   // otra vez sobre lo que quedo: no agrega ni reclasifica nada
   const T = r.trabajo['05_Tarjeta_Credito_BAC'];
@@ -452,19 +453,36 @@ test('Cargos sin fecha ene-abr: revisar no escribe; cargar agrega SOLO INTERES C
   assert.strictEqual(r2.error, null, r2.logs.join('\n'));
   assert.deepStrictEqual(r2.ops, []);
   assert.match(r2.logs.join('\n'), /Filas nuevas en total: 0/);
-  assert.match(r2.logs.join('\n'), /No queda ninguna fila de Netflix, Spotify o Apple en PERSONAL/);
+  assert.match(r2.logs.join('\n'), /No queda ninguna fila de Netflix, Spotify o Apple en PERSONAL de ene-jul/);
 });
 
 test('Cargos sin fecha: si las filas a reclasificar no son las que se revisaron, no cambia ninguna; un estado que no cuadra no se toca', () => {
   const tabs = maestroCsf();
-  tabs['05_Tarjeta_Credito_BAC'][6][4] = 'CUOTAS_Y_SUSCRIPCIONES';   // alguien ya cambio la de Spotify: queda 1 y se esperaban 2
+  tabs['05_Tarjeta_Credito_BAC'][6][4] = 'CUOTAS_Y_SUSCRIPCIONES';   // alguien ya cambio la de Spotify: quedan 2 y se esperaban 3
   const a = motorCsf(tabs, ARCH_CSF());
   const r = a.m.correr('cargarCargosSinFechaTcBac');
   assert.ok(!r.ops.some((x) => x.tipo === 'valores' && x.col === 5), 'ninguna reclasificada');
-  assert.match(r.logs.join('\n'), /hay 1 filas y la revision encontro 2\. Alguien las toco: no se cambia ninguna/);
+  assert.match(r.logs.join('\n'), /hay 2 filas y la revision encontro 3\. Alguien las toco: no se cambia ninguna/);
 
   const b = motorCsf(maestroCsf(), [['BAC - TC 2026-01.csv', F.csvTarjeta(Object.assign({}, TC_ENE, { contadoMal: 9 }))]]);
   const r2 = b.m.correr('cargarCargosSinFechaTcBac');
   assert.ok(!r2.ops.some((x) => x.tipo === 'valores' && x.col === 1), 'el estado de enero no cuadra: no se agrega nada');
   assert.match(r2.logs.join('\n'), /BAC - TC 2026-01\.csv .*NO CUADRA/);
+});
+
+test('El interes vive en UNA constante (CB_CAT_INTERES = INTERESES_BANCARIOS): la usan la regla del cierre (cuenta y tarjeta) y la carga aparte; los cargos por servicio siguen en COMISIONES', () => {
+  const { m } = motor(maestroInicial());
+  assert.strictEqual(m.ctx.CB_CAT_INTERES, 'INTERESES_BANCARIOS');
+  const P = { porDesc: {}, porRaiz: {} };
+  const cat = (desc, donde) => m.ctx._cbCategoria({ desc, cod: '', cat: '' }, donde || 'tarjeta', P)[0];
+  assert.deepStrictEqual([cat('INTERES COM'), cat('INTERES MORATORIO (BI)'), cat('INTER/DEVENGADO (BI)'), cat('INTERESES SOBRE SALDO', 'cuenta'), cat('CARGOS POR SERVICIO MES ANTERIOR')],
+    ['INTERESES_BANCARIOS', 'INTERESES_BANCARIOS', 'INTERESES_BANCARIOS', 'INTERESES_BANCARIOS', 'COMISIONES_BANCARIAS']);
+  // se cambia en un solo lugar y cambian las dos cargas
+  vm.runInContext("CB_CAT_INTERES = 'OTRA_PRUEBA';", m.ctx);
+  assert.strictEqual(cat('INTERES COM'), 'OTRA_PRUEBA');
+  const b = motorCsf(maestroCsf(), ARCH_CSF());
+  vm.runInContext("CB_CAT_INTERES = 'OTRA_PRUEBA';", b.m.ctx);
+  const r = b.m.correr('cargarCargosSinFechaTcBac');
+  const filas = JSON.parse(JSON.stringify(r.ops.filter((x) => x.tipo === 'valores' && x.col === 1).map((x) => x.valores))).flat();
+  assert.deepStrictEqual(filas.map((x) => [x[1], x[4]]), [['CARGOS POR SERVICIO MES ANTERIOR', 'COMISIONES_BANCARIAS'], ['INTERES COM', 'OTRA_PRUEBA'], ['INTERES COM', 'OTRA_PRUEBA']]);
 });

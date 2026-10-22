@@ -14,11 +14,12 @@
 // Cada estado se valida ENTERO antes (saldo anterior + movimientos = pago de contado) con el
 // mismo codigo del cierre de mes (cierre_bancos.js); si no cuadra, ese mes no se toca.
 // Nunca duplica: llave fecha + descripcion + quetzales + dolares (la de la tarjeta en el cierre).
-// Categoria COMISIONES_BANCARIAS por las reglas de CB_REGLAS (las mismas de mayo a septiembre).
+// Categoria por las reglas de CB_REGLAS: el interes, CB_CAT_INTERES (cierre_bancos.js, una sola constante);
+// los cargos por servicio, COMISIONES_BANCARIAS.
 // Las filas van al final de la pestaña (despues de octubre), con su fecha de corte.
 //
 // Y RECLASIFICA (decision de Juanma, 22-oct-2026): Netflix, Spotify y Apple son gasto del
-// restaurante. Las filas de ENERO a ABRIL de 05_Tarjeta_Credito_BAC con esa descripcion que
+// restaurante. Las filas de ENERO a JULIO de 05_Tarjeta_Credito_BAC con esa descripcion que
 // quedaron en PERSONAL pasan a CUOTAS_Y_SUSCRIPCIONES con Es_Personal = No. Solo cambia esas dos
 // celdas, y solo si la fila sigue diciendo lo que se leyo (fecha, descripcion, montos, PERSONAL)
 // y el total de filas es el que se reviso (CSF_RECLAS_ESPERADAS); si no, no cambia ninguna.
@@ -34,16 +35,19 @@ var CSF_MESES = ['2026-01', '2026-02', '2026-03', '2026-04'];
 var CSF_CONCEPTOS = /^(INTERES COM|CARGOS POR SERVICIO MES ANTERIOR)$/;
 var CSF_HOJA_TC = '05_Tarjeta_Credito_BAC';
 var CSF_RECLAS = /^(NETFLIX|SPOTIFY|APPLE\.COM)/i;
-var CSF_RECLAS_ESPERADAS = 7;   // las que encontro la revision del 22-oct-2026 (4 de Netflix y 3 de Spotify)
+// De enero a julio (Juanma aprobo la lista el 22-oct-2026): Netflix y Spotify de ene-jun y Apple del 8-jul. Netflix y
+// Spotify de julio ya estaban en CUOTAS.
+var CSF_RECLAS_MESES = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07'];
+var CSF_RECLAS_ESPERADAS = 12;  // 6 de Netflix, 5 de Spotify y 1 de Apple: si no son exactamente estas, no se cambia ninguna
 
-/** Las filas a reclasificar: [{ fila, dia, desc, q, d }] (05_Tarjeta_Credito_BAC, ene-abr, PERSONAL). */
+/** Las filas a reclasificar: [{ fila, dia, desc, q, d }] (05_Tarjeta_Credito_BAC, ene-jul, PERSONAL). */
 function _csfReclasLeer(sh) {
   var ultima = sh.getLastRow(), out = [];
   if (ultima <= CB_FILA_ENC) return out;
   var v = sh.getRange(CB_FILA_ENC + 1, 1, ultima - CB_FILA_ENC, 6).getValues();
   for (var i = 0; i < v.length; i++) {
     var dia = _cbDia(v[i][0]);
-    if (CSF_MESES.indexOf(dia.slice(0, 7)) === -1) continue;
+    if (CSF_RECLAS_MESES.indexOf(dia.slice(0, 7)) === -1) continue;
     if (!CSF_RECLAS.test(_cbDesc(v[i][1])) || _norm(v[i][4]) !== 'PERSONAL') continue;
     out.push({ fila: CB_FILA_ENC + 1 + i, dia: dia, desc: _norm(v[i][1]), q: _numero(v[i][2]), d: _numero(v[i][3]) });
   }
@@ -58,7 +62,7 @@ function _csfReclasificar(ss, escribir) {
   if (filas.length !== CSF_RECLAS_ESPERADAS) {
     if (filas.length) avisos.push('Reclasificacion: hay ' + filas.length + ' filas y la revision encontro ' + CSF_RECLAS_ESPERADAS +
                                   '. Alguien las toco: no se cambia ninguna. >> NO se escribio nada.');
-    else Logger.log('  No queda ninguna fila de Netflix, Spotify o Apple en PERSONAL de ene-abr.');
+    else Logger.log('  No queda ninguna fila de Netflix, Spotify o Apple en PERSONAL de ene-jul.');
     return { cambiadas: 0, avisos: avisos };
   }
   if (!escribir) return { cambiadas: filas.length, avisos: avisos };
@@ -124,7 +128,7 @@ function _csfCorrer(escribir) {
     if (CSF_MESES.indexOf(mes) === -1) continue;
     (porMes[mes] = porMes[mes] || []).push({ nombre: f.getName(), n: n });
   }
-  Logger.log(escribir ? '=== Cargos sin fecha de la tarjeta BAC, ene-abr 2026 ===' : '=== Cargos sin fecha de la tarjeta BAC: revision, no se escribe ===');
+  Logger.log(escribir ? '=== Cargos sin fecha de la tarjeta BAC (ene-abr) y reclasificacion (ene-jul) ===' : '=== Cargos sin fecha de la tarjeta BAC: revision, no se escribe ===');
   CSF_MESES.forEach(function (mes) {
     var g = porMes[mes] || [];
     if (!g.length) { avisos.push(mes + ': no encontre el CSV de la tarjeta con corte en ese mes.'); return; }

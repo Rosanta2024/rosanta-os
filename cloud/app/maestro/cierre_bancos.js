@@ -79,6 +79,11 @@ var CB_TARJETAS = {
 // Encabezados de la fila 4 (A en adelante). Despues vienen Año, Mes y Semana (formulas).
 var CB_ENC_CUENTA = ['Fecha', 'Referencia', 'Codigo', 'Descripción', 'Débito', 'Crédito', 'Balance', 'Categoría', 'Es_Personal'];
 var CB_ENC_TARJETA = ['Fecha', 'Descripción', 'Quetzales', 'Dólares', 'Categoría', 'Es_Personal'];
+// LA categoria de los INTERESES (cuenta o tarjeta), en un solo lugar. Juanma decidio el 22-oct-2026 que van como
+// INTERESES_BANCARIOS (bloque "Gastos Financieros" del DRE, FinanzasDatos.js). La usan las reglas de abajo y
+// cargos_sin_fecha_tc_bac.js. Los CARGOS POR SERVICIO no son interes: siguen en COMISIONES_BANCARIAS.
+var CB_CAT_INTERES = 'INTERESES_BANCARIOS';
+
 // Reglas fijas (las decisiones de la carga de septiembre, 5-oct-2026). Lo demas sale de la
 // historia de la pestaña. donde: 'cuenta' | 'tarjeta'; codigo: el Codigo del BAC.
 var CB_REGLAS = [
@@ -87,9 +92,11 @@ var CB_REGLAS = [
   { donde: 'cuenta', codigo: '59', cat: 'COMISIONES_BANCARIAS' },
   { donde: 'cuenta', re: /^(COMISION|CARGO POR SALDO)/i, cat: 'COMISIONES_BANCARIAS' },
   { donde: 'cuenta', re: /^Pago SAT/i, cat: 'IMPUESTOS' },
+  { donde: 'cuenta', re: /^INTERES/i, interes: true },
   { donde: 'cuenta', re: /^COBRO EMISI/i, cat: 'COMISIONES_BANCARIAS' },   // COBRO EMISION ESTADO DE CUENTA (Juanma, 22-oct-2026)
   { donde: 'tarjeta', re: /^(SU PAGO RECIBIDO|PAGO TARJETA|PAGO AGENC)/i, cat: 'PAGO_TARJETA' },
-  { donde: 'tarjeta', re: /^(INTERES|INTER\/|CARGOS POR SERVICIO|COBRO ADMTVO|COMISION|COBRO POR SOBREGIRO|IVA\/COBRO)/i, cat: 'COMISIONES_BANCARIAS' },
+  { donde: 'tarjeta', re: /^(INTERES|INTER\/)/i, interes: true },   // INTERES COM, INTERES MORATORIO (BI), INTER/DEVENGADO (BI)
+  { donde: 'tarjeta', re: /^(CARGOS POR SERVICIO|COBRO ADMTVO|COMISION|COBRO POR SOBREGIRO|IVA\/COBRO)/i, cat: 'COMISIONES_BANCARIAS' },
   { donde: 'tarjeta', re: /^(FACEBK|GOOGLE\*ADS)/i, cat: 'MARKETING_DIGITAL' },
   { donde: 'tarjeta', re: /^UBER/i, cat: 'VIATICOS' },
   { donde: 'tarjeta', re: /^(APPLE\.COM|NETFLIX|SPOTIFY|WIX\.COM|GOOGLE\*(WORKSPACE|CLOUD|GOOGLE ONE))/i, cat: 'CUOTAS_Y_SUSCRIPCIONES' }
@@ -303,8 +310,9 @@ function _cbCategoria(m, donde, P) {
   for (var i = 0; i < CB_REGLAS.length; i++) {
     var r = CB_REGLAS[i];
     if (r.donde !== donde) continue;
-    if (r.codigo && r.codigo === m.cod) return [r.cat, 'regla'];
-    if (r.re && r.re.test(m.desc)) return [r.cat, 'regla'];
+    var cat = r.interes ? CB_CAT_INTERES : r.cat;
+    if (r.codigo && r.codigo === m.cod) return [cat, 'regla'];
+    if (r.re && r.re.test(m.desc)) return [cat, 'regla'];
   }
   var d = m.desc.toUpperCase();
   if (P.porDesc[d]) return [P.porDesc[d], 'historia'];
