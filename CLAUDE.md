@@ -92,7 +92,7 @@ sincroniza la carpeta**, nunca al revés. El respaldo de la v8 quedó en
   cookies de terceros. Se confirma en el Chrome de la persona.
 - **Permisos (20-oct-2026):** el candado frena cualquier `clasp push` (de CUALQUIER proyecto) cuyo
   `appsscript.json` cambie los `oauthScopes` frente al HEAD del servidor: Google pide reautorizar y los
-  activadores y el /exec fallan hasta que Juanma lo haga. Avisar ANTES a "Mentor · Central Rosanta" y,
+  activadores y el /exec fallan hasta que Juanma lo haga. Avisar ANTES a "Central de Comando · Rosanta" y,
   con su sí, `ROSANTA_SCOPES_OK="motivo" clasp push`. Simulador: `prueba-candado.py` (31/31).
 - **Candado (14-oct-2026, `.claude/hooks/candado-clasp.py`):** bloquea `clasp pull` que baje
   dentro del repo, y `create-version`/`update-deployment`/`deploy` de la intranet sin sello
