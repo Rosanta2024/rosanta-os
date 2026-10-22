@@ -193,8 +193,8 @@
       '<div class="msgs" id="msgs"></div><div class="compose">'+
       '<div class="warn" id="warn" style="display:none"></div>'+
       '<div class="fotos" id="fotos"></div>'+
-      '<div class="crow"><button class="clip" title="Adjuntar fotos" onclick="document.getElementById(\'fi\').click()">&#128206;</button>'+
-      '<input type="file" id="fi" accept="image/jpeg,image/png" multiple style="display:none" onchange="elegirFotos(this)">'+
+      '<div class="crow"><button class="clip" title="Adjuntar fotos o PDF" onclick="document.getElementById(\'fi\').click()">&#128206;</button>'+
+      '<input type="file" id="fi" accept="image/jpeg,image/png,application/pdf" multiple style="display:none" onchange="elegirFotos(this)">'+
       '<textarea id="ta" rows="1" placeholder="Escribe tu respuesta…" oninput="growTa(this)" onkeydown="taKey(event)"></textarea>'+
       '<button class="send" id="sendBtn" onclick="enviar()">&#10148;</button></div></div>';
   }
@@ -265,6 +265,12 @@
   function elegirFotos(inp){
     var files=[].slice.call(inp.files||[]);inp.value='';
     files.forEach(function(f){
+      // PDF (22-oct-2026): va tal cual, sin achicar; hasta 25 MB.
+      if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){
+        if(f.size>25*1024*1024){toast(f.name+' pesa más de 25 MB.');return;}
+        var lr=new FileReader();lr.onload=function(){FOTOS.push({pdf:true,data:lr.result,nombre:f.name});pintarFotos();};
+        lr.onerror=function(){toast('No pude leer '+f.name+'.');};lr.readAsDataURL(f);return;
+      }
       var img=new Image(),url=URL.createObjectURL(f);
       img.onload=function(){
         var k=Math.min(1,1600/Math.max(img.width,img.height));
@@ -273,27 +279,29 @@
         URL.revokeObjectURL(url);
         FOTOS.push(c.toDataURL('image/jpeg',0.85));pintarFotos();
       };
-      img.onerror=function(){URL.revokeObjectURL(url);toast('No pude leer '+f.name+'. Usa JPG o PNG.');};
+      img.onerror=function(){URL.revokeObjectURL(url);toast('No pude leer '+f.name+'. Usa JPG, PNG o PDF.');};
       img.src=url;
     });
   }
   function pintarFotos(){
     var box=document.getElementById('fotos');if(!box)return;
-    box.innerHTML=FOTOS.map(function(d,i){return '<div class="foto" style="background-image:url('+d+')"><button onclick="quitarFoto('+i+')">&#10005;</button></div>';}).join('');
+    box.innerHTML=FOTOS.map(function(d,i){return d.pdf?'<div class="foto" style="display:flex;align-items:center;justify-content:center;font-size:11px;text-align:center;padding:4px;background:#f3efe6" title="'+esc(d.nombre)+'">📄 '+esc(d.nombre.slice(0,18))+'<button onclick="quitarFoto('+i+')">&#10005;</button></div>':'<div class="foto" style="background-image:url('+d+')"><button onclick="quitarFoto('+i+')">&#10005;</button></div>';}).join('');
   }
   function quitarFoto(i){FOTOS.splice(i,1);pintarFotos();}
   function enviarFotos(txt){
     var lista=FOTOS.slice(),c=CUR,btn=document.getElementById('sendBtn'),box=document.getElementById('msgs'),ta=document.getElementById('ta');
     FOTOS=[];pintarFotos();ta.value='';growTa(ta);btn.disabled=true;
-    box.insertAdjacentHTML('beforeend','<div class="row out humano"><div><div class="bubble"><span class="tagh">Equipo</span>📷 '+lista.length+' foto'+(lista.length===1?'':'s')+(txt?': '+esc(txt):'')+'</div><div class="meta">subiendo…</div></div></div>');
+    box.insertAdjacentHTML('beforeend','<div class="row out humano"><div><div class="bubble"><span class="tagh">Equipo</span>📎 '+lista.length+' adjunto'+(lista.length===1?'':'s')+(txt?': '+esc(txt):'')+'</div><div class="meta">subiendo…</div></div></div>');
     box.scrollTop=box.scrollHeight;
     var i=0;
     (function sig(){
-      if(i>=lista.length){btn.disabled=false;toast('Fotos en camino. Llegan en <1 min.');setTimeout(function(){loadMsgs(true);loadThreads(false);},1500);return;}
-      var b64=lista[i].split(',')[1],cap=(i===0?txt:'');i++;
-      google.script.run.withSuccessHandler(function(r){
-        if(r&&r.ok)sig();else{btn.disabled=false;toast((r&&r.msg)||'No se pudo enviar la foto.');}
-      }).withFailureHandler(function(e){btn.disabled=false;toast('Error: '+e.message);}).enviarImagen(c.canal,c.id,b64,'image/jpeg',cap);
+      if(i>=lista.length){btn.disabled=false;toast('Adjuntos en camino. Llegan en <1 min.');setTimeout(function(){loadMsgs(true);loadThreads(false);},1500);return;}
+      var a=lista[i],cap=(i===0?txt:'');i++;
+      var corre=google.script.run.withSuccessHandler(function(r){
+        if(r&&r.ok)sig();else{btn.disabled=false;toast((r&&r.msg)||'No se pudo enviar el adjunto.');}
+      }).withFailureHandler(function(e){btn.disabled=false;toast('Error: '+e.message);});
+      if(a.pdf)corre.enviarArchivo(c.canal,c.id,a.data.split(',')[1],'application/pdf',a.nombre,cap);
+      else corre.enviarImagen(c.canal,c.id,a.split(',')[1],'image/jpeg',cap);
     })();
   }
   function enviar(){

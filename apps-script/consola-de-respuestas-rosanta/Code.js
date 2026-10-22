@@ -141,6 +141,28 @@ function enviarImagen(canal, contactoId, base64, mime, caption) {
   return { ok: true, msg: 'Foto en camino. El bot la enviará en menos de un minuto.' };
 }
 
+/**
+ * Encola un PDF (22-oct-2026, Juanma): igual que las fotos, queda en Drive compartido con enlace y va a "Salientes"
+ * con Tipo "archivo:<ID>|<nombre>". WhatsApp lo recibe como documento; Instagram y Messenger, como archivo. Hasta 25 MB.
+ */
+var ARCHIVO_MAX_MB = 25;
+function enviarArchivo(canal, contactoId, base64, mime, nombre, caption) {
+  canal = String(canal || '').toLowerCase();
+  contactoId = String(contactoId || '').trim();
+  caption = (caption || '').trim();
+  nombre = String(nombre || 'Rosanta.pdf').replace(/[|\r\n]/g, ' ').trim().slice(0, 120) || 'Rosanta.pdf';
+  if (!/\.pdf$/i.test(nombre)) nombre += '.pdf';
+  if (!contactoId) return { ok: false, msg: 'Falta el contacto.' };
+  if (!base64) return { ok: false, msg: 'No llegó el archivo.' };
+  if (mime !== 'application/pdf') return { ok: false, msg: 'Solo PDF (o fotos JPG y PNG).' };
+  var blob = Utilities.newBlob(Utilities.base64Decode(base64), mime, nombre);
+  if (blob.getBytes().length > ARCHIVO_MAX_MB * 1024 * 1024) return { ok: false, msg: 'El PDF pesa más de ' + ARCHIVO_MAX_MB + ' MB.' };
+  var file = carpetaFotos_().createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  hojaSalientes_().appendRow([new Date(), canal, contactoId, caption, 'archivo:' + file.getId() + '|' + nombre, '']);
+  return { ok: true, msg: 'PDF en camino. El bot lo enviará en menos de un minuto.' };
+}
+
 /** Carpeta de Drive donde quedan las fotos enviadas (se crea la primera vez). */
 function carpetaFotos_() {
   var props = PropertiesService.getScriptProperties();
