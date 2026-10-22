@@ -205,13 +205,17 @@
     if (r.estado === 'llego') { B('termino', 'Terminó', 'pri'); B('confirmada', 'Deshacer Llegó'); }
     if (r.estado === 'no_vino') { B('llego', 'Sí llegó'); }
     if (r.estado === 'termino') { B('llego', 'Deshacer Terminó'); }
-    if (r.estado !== 'cancelada' && r.estado !== 'rechazada') b.push('<button class="chico" data-editar="' + esc(r.id) + '">Nota, mesa y consumo</button>');
+    if (r.estado !== 'cancelada' && r.estado !== 'rechazada') b.push('<button class="chico" data-editar="' + esc(r.id) + '">Cambiar, nota, mesa y consumo</button>');
     return '<div class="acciones">' + b.join('') + '</div>';
   }
 
   function formEditar(r) {
     var mesas = datos.mesas || [];
     return '<div class="editar" data-form="' + esc(r.id) + '">' +
+      '<div class="fila"><span><label>Fecha</label><input type="date" data-c="fecha" value="' + esc(r.fecha) + '"></span>' +
+      '<span><label>Hora</label><input type="time" step="900" data-c="hora" value="' + esc(r.hora) + '"></span>' +
+      '<span><label>Personas</label><input type="number" min="1" max="60" inputmode="numeric" data-c="personas" value="' + esc(r.personas) + '"></span></div>' +
+      '<label>Alergias</label><input data-c="alergias" value="' + esc(r.alergias || '') + '">' +
       '<label>Mesa</label><div class="fila">' + mesas.map(function (m) {
         var on = r.mesa_ids.indexOf(String(m.id)) !== -1;
         return '<label style="display:flex;align-items:center;gap:4px;margin:0 8px 0 0;color:var(--texto)"><input type="checkbox" style="width:auto;min-height:0" value="' + esc(m.id) + '"' + (on ? ' checked' : '') + '>' + esc(m.nombre || m.id) + '</label>';
@@ -314,6 +318,12 @@
     var pasos = [];
     var cambio = {};
     if (nota !== (r.nota_equipo || '')) cambio.nota_equipo = nota;
+    var f = caja.querySelector('[data-c=fecha]').value, h = caja.querySelector('[data-c=hora]').value, p = Number(caja.querySelector('[data-c=personas]').value);
+    if (f && f !== r.fecha) cambio.fecha = f;
+    if (h && h !== r.hora) cambio.hora = h;
+    if (p && p !== r.personas) cambio.personas = p;
+    var al = caja.querySelector('[data-c=alergias]').value;
+    if (al !== (r.alergias || '')) cambio.alergias = al;
     if (mesas.join('|') !== r.mesa_ids.join('|')) cambio.mesa_ids = mesas;
     if (Object.keys(cambio).length) pasos.push(function () { return pedir('POST', API + '/reservas/' + encodeURIComponent(id) + '/cambiar', cambio); });
     if (consumo !== '' && Number(consumo.replace(/[^0-9.]/g, '')) !== r.consumo_q) pasos.push(function () { return pedir('POST', API + '/reservas/' + encodeURIComponent(id) + '/consumo', { consumo_q: consumo }); });
