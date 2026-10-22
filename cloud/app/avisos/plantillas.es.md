@@ -205,7 +205,7 @@ Categoria: Utility
 Parametros: nombre, fecha, hora, personas
 Boton: Mi reserva
 
-Hola {{1}}, tu mesa en Rosanta queda confirmada: {{2}} a las {{3}}, {{4}}. Guardamos la mesa 20 minutos después de la hora. Para cambiar o cancelar, usa el botón.
+Hola {{1}}, tu mesa en Rosanta queda confirmada: {{2}} a las {{3}}, para {{4}}. Te la guardamos hasta 20 minutos después de la hora. Para cambiar o cancelar, usa el botón Mi reserva con al menos 24 horas de anticipación.
 
 ## whatsapp.recordatorio
 Meta: rosanta_reserva_recordatorio
@@ -213,7 +213,7 @@ Categoria: Utility
 Parametros: nombre, fecha, hora, personas
 Boton: Mi reserva
 
-Hola {{1}}, te recordamos tu mesa en Rosanta: {{2}} a las {{3}}, {{4}}. Guardamos la mesa 20 minutos. Si algo cambió, cambia o cancela con el botón y se la damos a alguien más.
+Hola {{1}}, te recordamos tu mesa en Rosanta: {{2}} a las {{3}}, para {{4}}. Te la guardamos hasta 20 minutos después de la hora. Si tus planes cambiaron, cámbiala o cancélala con el botón Mi reserva y así otra persona puede ocupar la mesa.
 
 ## whatsapp.cambio
 Meta: rosanta_reserva_cambio
@@ -221,4 +221,4 @@ Categoria: Utility
 Parametros: nombre, ahora
 Boton: Mi reserva
 
-Hola {{1}}, tu reserva en Rosanta queda actualizada: {{2}}. Para otro cambio o para cancelar, usa el botón.
+Hola {{1}}, tu reserva en Rosanta quedó actualizada: {{2}}. Te guardamos la mesa hasta 20 minutos después de la hora. Para otro cambio o para cancelar, usa el botón Mi reserva con al menos 24 horas de anticipación.

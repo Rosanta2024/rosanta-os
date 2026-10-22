@@ -154,7 +154,7 @@ Categoria: Utility
 Parametros: nombre, fecha, hora, personas
 Boton: My booking
 
-Hi {{1}}, your table at Rosanta is confirmed: {{2}} at {{3}}, {{4}}. We hold the table for 20 minutes after your booking time. To change or cancel, use the button.
+Hi {{1}}, your table at Rosanta is confirmed: {{2}} at {{3}}, for {{4}}. We hold it for 20 minutes after your booking time. To change or cancel, use the My booking button at least 24 hours in advance.
 
 ## whatsapp.recordatorio
 Meta: rosanta_reserva_recordatorio
@@ -162,7 +162,7 @@ Categoria: Utility
 Parametros: nombre, fecha, hora, personas
 Boton: My booking
 
-Hi {{1}}, a reminder of your table at Rosanta: {{2}} at {{3}}, {{4}}. We hold the table for 20 minutes. If something changed, change or cancel with the button and we'll give the table to someone else.
+Hi {{1}}, a quick reminder about your table at Rosanta: {{2}} at {{3}}, for {{4}}. We hold it for 20 minutes after your booking time. If your plans changed, use the My booking button to change or cancel, so someone else can have the table.
 
 ## whatsapp.cambio
 Meta: rosanta_reserva_cambio
@@ -170,4 +170,4 @@ Categoria: Utility
 Parametros: nombre, ahora
 Boton: My booking
 
-Hi {{1}}, your booking at Rosanta is updated: {{2}}. For another change or to cancel, use the button.
+Hi {{1}}, your booking at Rosanta has been updated: {{2}}. We hold the table for 20 minutes after your booking time. To make another change or to cancel, use the My booking button at least 24 hours in advance.

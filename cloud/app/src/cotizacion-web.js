@@ -80,6 +80,7 @@ function crearRutasCotizacion(deps) {
     const a = armarCotizacion(req.body, reloj(), nuevoId);
     if (a.error) return res.status(400).json({ ok: false, error: a.error });
     const c = a.cuerpo;
+    if (d.prueba) return res.json({ ok: true, prueba: true });   // version de prueba: no entra al pipeline ni avisa a nadie
     let pipeline = null, aviso = null;
     try { pipeline = d.pipeline ? await d.pipeline(c) : null; } catch (e) { pipeline = { error: String(e.message || e).slice(0, 200) }; console.error('[web] cotización → pipeline: ' + pipeline.error); }
     try { aviso = d.avisarJuanma ? await d.avisarJuanma({ asunto: 'Cotización web: ' + c.tipo_evento + ' (' + c.nombre + ')', texto: textoAviso(c) + (pipeline && pipeline.error ? '\n\nOJO: no entró al pipeline (' + pipeline.error + '). Cargarla a mano.' : '') }) : null; } catch (e) { console.error('[web] cotización → aviso: ' + e.message); }

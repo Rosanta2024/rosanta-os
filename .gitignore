@@ -27,3 +27,4 @@ tools/preview-finanzas/salida/
 .claude/settings.local.json
 .claude/worktrees/
 __pycache__/
+cloud/app/sitio-prueba/

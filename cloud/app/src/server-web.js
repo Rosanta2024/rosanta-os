@@ -17,6 +17,10 @@
  *             rosanta-nube NO conoce la web (decision del Estudio, 21-oct).
  *   El aviso a Juanma (consultas de Adventures) sale de aca por Resend, a restaurante@rosanta.rest (AVISOS_MODO != apagado).
  *
+ * Version de PRUEBA (servicio rosanta-web-ensayo, base rosanta_ensayo): ENSAYO=si → noindex en todo, la cotizacion
+ * contesta "ok" sin mandar nada, y SITIO_DIR sirve el sitio construido con PUBLIC_PRUEBA=si (sin medicion).
+ * ORIGENES_EXTRA (separados por coma) suma origenes al CORS (p. ej. la direccion run.app de la prueba).
+ *
  * El orden importa: los routers que leen el cuerpo crudo o text/plain (motor, avisos con su webhook, gift cards con
  * el webhook de la pasarela) se montan ANTES del express.json global.
  */
@@ -94,14 +98,19 @@ function crearAppWeb(deps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', true);   // Cloud Run / Firebase: la IP real del cliente para los limites por IP
-  app.get('/salud', (req, res) => res.json({ ok: true, servicio: 'rosanta-web' }));
+  const ensayo = env.ENSAYO === 'si';
+  if (ensayo) app.use((req, res, next) => { res.set('X-Robots-Tag', 'noindex, nofollow'); next(); });
+  const extra = String(env.ORIGENES_EXTRA || '').split(',').map((x) => x.trim()).filter((x) => /^https:\/\/[a-z0-9.-]+$/.test(x));
+  const { ORIGENES } = require('./reservas/rutas');
+  const origenes = ORIGENES.concat(extra);
+  app.get('/salud', (req, res) => res.json({ ok: true, servicio: ensayo ? 'rosanta-web (prueba)' : 'rosanta-web' }));
 
   // ---- Reservas y avisos (ANTES del json global: el motor lee text/plain y el webhook de Resend el cuerpo crudo)
   const canales = deps.canales || canalesDesdeEntorno(env, deps.fetch);
   const avisos = crearAvisos({ pool, canales,
     secretoEnlace: env.RESERVAS_ENLACE_SECRETO, baseEnlace: env.MI_RESERVA_BASE || 'https://www.rosanta.rest/r/',
     basePanel: env.PANEL_BASE || 'https://www.rosanta.rest/reservas/panel' });
-  const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho,
+  const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho, origenes,
     crm: ganchoInterno(env, '/interno/web/crm-reserva', deps.fetch),
     capi: ganchoInterno(env, '/interno/web/capi', deps.fetch) });
   app.use('/api/reservas', rutasReservas);
@@ -127,10 +136,12 @@ function crearAppWeb(deps) {
   app.use(W.crearRutasAdventures({ adventures, pool, claveTareas: env.CLAVE_TAREAS }));
   // Cotización de eventos ("Request a quote" de /events-1): al pipeline de rosanta-clientes y aviso a Juanma
   app.use(require('./cotizacion-web').crearRutasCotizacion({ pipeline: ganchoInterno(env, '/interno/web/pipeline-cotizacion', deps.fetch),
-    avisarJuanma: avisoJuanma(canales) }));
+    avisarJuanma: avisoJuanma(canales), prueba: ensayo, origenes: ['https://www.rosanta.rest', 'https://rosanta.rest', 'https://nuevo.rosanta.rest'].concat(extra) }));
 
   // ---- El json global va al FINAL (guardando el cuerpo crudo por si algun router lo necesita)
   app.use(express.json({ limit: '200kb', verify: W.guardarCuerpoCrudo }));
+  // El sitio construido (solo en la version de prueba; en produccion lo sirve Firebase Hosting)
+  if (env.SITIO_DIR) app.use(express.static(env.SITIO_DIR, { extensions: ['html'], redirect: false, index: 'index.html' }));
   app.use((req, res) => res.status(404).json({ error: 'No existe.' }));
   return { app, avisos, rutasReservas, contenido, giftcards, adventures, pasarela };
 }

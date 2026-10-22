@@ -90,3 +90,23 @@ test('el aviso a Juanma arma el texto desde el lead de Adventures', async () => 
   assert.match(enviados[0].texto, /Acatenango \(operador: Aliado, código OP-01\)/);
   assert.match(enviados[0].texto, /Cena en Rosanta: 2026-12-02 19:00 para 2/);
 });
+
+test('version de prueba (ENSAYO=si): noindex, la cotizacion no manda nada, el sitio se sirve y su origen pasa el CORS', async () => {
+  const fs = require('fs'); const os = require('os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sitio-'));
+  fs.writeFileSync(path.join(dir, 'index.html'), '<h1>Rosanta prueba</h1>'); fs.writeFileSync(path.join(dir, 'events-1.html'), '<h1>Eventos</h1>');
+  const ORIGEN = 'https://rosanta-web-ensayo-512086396641.northamerica-south1.run.app';
+  const s = await levantar({ ENSAYO: 'si', SITIO_DIR: dir, ORIGENES_EXTRA: ORIGEN });
+  try {
+    const r1 = await fetch(s.base + '/');
+    assert.strictEqual(r1.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.match(await r1.text(), /Rosanta prueba/);
+    assert.match(await (await fetch(s.base + '/events-1')).text(), /Eventos/);
+    const r2 = await fetch(s.base + '/api/eventos/cotizacion', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGEN },
+      body: JSON.stringify({ nombre: 'Prueba', email: 'p@ejemplo.test', idioma: 'es' }) });
+    assert.deepStrictEqual(await r2.json(), { ok: true, prueba: true });
+    const r3 = await fetch(s.base + '/api/reservas/slots?date=2030-01-10&partySize=2', { headers: { Origin: ORIGEN } });
+    assert.strictEqual(r3.status, 200);
+  } finally { await s.cerrar(); }
+  assert.deepStrictEqual(s.red, []);
+});

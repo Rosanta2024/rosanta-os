@@ -6,7 +6,7 @@ import Encabezado from '../components/Encabezado.astro';
 import Pie from '../components/Pie.astro';
 import '../styles/sitio.css';
 import { descripcion, robots, schema, imagenLocal, datos } from '../lib/sitio.mjs';
-import { GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
+import { PRUEBA, GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
 
 const { pagina } = Astro.props;
 const desc = descripcion(pagina);
@@ -34,7 +34,7 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pagina.titulo}</title>
     {desc && <meta name="description" content={desc} />}
-    {rob && <meta name="robots" content={rob} />}
+    {PRUEBA ? <meta name="robots" content="noindex, nofollow" /> : (rob && <meta name="robots" content={rob} />)}
     {pagina.canonical && <link rel="canonical" href={pagina.canonical} />}
     {pagina.hreflang.map((h) => <link rel="alternate" href={h.href} hreflang={h.hreflang} />)}
     {Object.entries(og).map(([k, v]) => (k.startsWith('twitter:') ? <meta name={k} content={v} /> : <meta property={k} content={v} />))}
@@ -46,9 +46,11 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
     {ld.map((o) => <script type="application/ld+json" set:html={ldJson(o)} />)}
 
     <!-- Google Tag Manager (el mismo contenedor de hoy) -->
+    {GTM_ID && (
     <script is:inline define:vars={{ GTM_ID }}>
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',GTM_ID);
     </script>
+    )}
     <!-- Fuente del tráfico (antes masterPage.js): viaja con la reserva y el carrito -->
     <script is:inline src="/js/fuente.js"></script>
     {/* Etiquetas que hoy inyecta Wix fuera de GTM (el contenedor GTM-M78RL4HH está vacío). */}
@@ -71,7 +73,7 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
     )}
   </head>
   <body data-idioma={pagina.idioma}>
-    <noscript><iframe src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`} height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe></noscript>
+    {GTM_ID && <noscript><iframe src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`} height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe></noscript>}
     <a class="saltar" data-paridad="ignorar" href="#contenido">{pagina.idioma === 'es' ? 'Ir al contenido' : 'Skip to Main Content'}</a>
     <Encabezado pagina={pagina} />
     <main id="contenido">

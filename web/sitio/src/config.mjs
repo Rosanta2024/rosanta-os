@@ -33,13 +33,20 @@ export const GIFTCARD_URL = env.PUBLIC_GIFTCARD_URL || '';
 /** Formulario de cotización de /events-1 (Juanma, 20-oct): rosanta-web → pipeline de eventos. Firebase desvía /api/** a rosanta-web. */
 export const COTIZACION_URL = env.PUBLIC_COTIZACION_URL || '/api/eventos/cotizacion';
 
+/**
+ * Versión de PRUEBA (PUBLIC_PRUEBA=si): la que revisa Juanma antes del 30-oct. Sin medición (no ensucia Analytics,
+ * Meta ni Google Ads), sin chat ni pop-ups, y con noindex en todas las páginas.
+ */
+export const PRUEBA = env.PUBLIC_PRUEBA === 'si';
+const fuera = (v) => (PRUEBA ? '' : v);
+
 // Medición (identificadores públicos que hoy carga Wix)
-export const GTM_ID = 'GTM-M78RL4HH';
-export const GA4_ID = env.PUBLIC_GA4_ID ?? 'G-C3VYE93J0F';
-export const META_PIXEL_ID = env.PUBLIC_META_PIXEL_ID ?? '1107259034759950';
-export const GOOGLE_ADS_ID = env.PUBLIC_GOOGLE_ADS_ID ?? 'AW-11048575753';
-export const OPENWIDGET_ORG = env.PUBLIC_OPENWIDGET_ORG ?? 'e0f92881-04e9-448b-a033-e11e7ac23c68';
-export const POPTIN_ID = env.PUBLIC_POPTIN_ID ?? 'f8c6c5bcd2e35';
+export const GTM_ID = fuera('GTM-M78RL4HH');
+export const GA4_ID = fuera(env.PUBLIC_GA4_ID ?? 'G-C3VYE93J0F');
+export const META_PIXEL_ID = fuera(env.PUBLIC_META_PIXEL_ID ?? '1107259034759950');
+export const GOOGLE_ADS_ID = fuera(env.PUBLIC_GOOGLE_ADS_ID ?? 'AW-11048575753');
+export const OPENWIDGET_ORG = fuera(env.PUBLIC_OPENWIDGET_ORG ?? 'e0f92881-04e9-448b-a033-e11e7ac23c68');
+export const POPTIN_ID = fuera(env.PUBLIC_POPTIN_ID ?? 'f8c6c5bcd2e35');
 
 /** /encuesta: hoy es un iframe al Apps Script de encuestas (web app pública). */
 export const ENCUESTA_URL =
