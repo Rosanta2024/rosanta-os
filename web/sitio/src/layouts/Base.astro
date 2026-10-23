@@ -80,6 +80,20 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
       <slot />
     </main>
     <Pie pagina={pagina} />
+    <script is:inline>
+      // Galería: flechas para avanzar y retroceder (sin JavaScript se desliza con el dedo o el trackpad).
+      document.querySelectorAll('[data-galeria]').forEach(function(caja){
+        var g=caja.querySelector('.galeria'), ant=caja.querySelector('.galeria-ant'), sig=caja.querySelector('.galeria-sig');
+        if(!g||!ant||!sig) return;
+        function paso(){ var f=g.firstElementChild; return f ? f.getBoundingClientRect().width + 6 : g.clientWidth*0.8; }
+        function estado(){ ant.disabled = g.scrollLeft < 4; sig.disabled = g.scrollLeft + g.clientWidth >= g.scrollWidth - 4; }
+        ant.hidden=false; sig.hidden=false;
+        ant.addEventListener('click',function(){ g.scrollBy({left:-paso(),behavior:'smooth'}); });
+        sig.addEventListener('click',function(){ g.scrollBy({left:paso(),behavior:'smooth'}); });
+        g.addEventListener('keydown',function(e){ if(e.key==='ArrowRight'){e.preventDefault();sig.click();} if(e.key==='ArrowLeft'){e.preventDefault();ant.click();} });
+        g.addEventListener('scroll',estado,{passive:true}); window.addEventListener('resize',estado); estado();
+      });
+    </script>
     {OPENWIDGET_ORG && (
       <script is:inline define:vars={{ OPENWIDGET_ORG }}>
         window.__ow=window.__ow||{};window.__ow.organizationId=OPENWIDGET_ORG;window.__ow.integration_name='manual_settings';

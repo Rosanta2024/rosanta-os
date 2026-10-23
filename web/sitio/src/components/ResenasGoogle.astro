@@ -1,40 +1,47 @@
 ---
-// Estrellas y reseñas de Google (componente HTML de Wix). Se dibujan en el navegador con la
-// API de Places. La clave de Wix NO se copia: GOOGLE_MAPS_KEY (nueva, restringida por dominio).
-// Sin clave, queda solo el enlace a las reseñas en Google.
-import { GOOGLE_MAPS_KEY, GOOGLE_PLACE_ID } from '../config.mjs';
+// Reseñas de Google en la portada (Juanma, 23-oct): calificación general + 4 reseñas reales de 5 estrellas
+// + enlace a Google. Salen de data/resenas.json, que scripts/resenas.mjs arma desde la base de la nube
+// (las reseñas que rosanta-nube lee de Google Business). Se dibujan al construir: sin JavaScript y sin
+// widgets de terceros (la versión anterior pedía la API de Places desde el navegador y, sin clave, no mostraba nada).
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { GOOGLE_PLACE_ID } from '../config.mjs';
+
 const { idioma = 'en' } = Astro.props;
-const enlace = `https://www.google.com/maps/place/?q=place_id:${GOOGLE_PLACE_ID}`;
-const leer = idioma === 'es' ? 'Ver todas las reseñas en Google →' : 'Read all reviews on Google →';
+const es = idioma === 'es';
+const archivo = path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'resenas.json');
+const d = existsSync(archivo) ? JSON.parse(readFileSync(archivo, 'utf8')) : null;
+const lista = (d?.[idioma] || d?.en || []).slice(0, 4);
+const enlace = `https://search.google.com/local/reviews?placeid=${GOOGLE_PLACE_ID}`;
+const leer = es ? 'Ver todas las reseñas en Google' : 'Read all reviews on Google';
+const fmt = new Intl.DateTimeFormat(es ? 'es-GT' : 'en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const cuando = (f) => { const t = fmt.format(new Date(f + 'T12:00:00Z')); return t.charAt(0).toUpperCase() + t.slice(1); };
+const inicial = (n) => (String(n).trim().charAt(0) || 'G').toUpperCase();
+const promedio = d?.promedio ? d.promedio.toFixed(1) : null;
+const total = d?.total ? d.total.toLocaleString('en-US') : null;
 ---
-<div class="resenas" data-paridad="mejora" data-place={GOOGLE_PLACE_ID}>
-  <a class="badge" href={enlace} target="_blank" rel="noopener" hidden>
-    <span class="stars"><span class="base">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="fill">&#9733;&#9733;&#9733;&#9733;&#9733;</span></span>
-    <span class="rating"></span><span class="sep">&middot;</span><span class="count"></span>
-    <span>Google reviews</span>
-  </a>
-  <div class="grid"></div>
-  <p class="foot"><a href={enlace} target="_blank" rel="noopener">{leer}</a></p>
+<div class="resenas" data-paridad="mejora">
+  {promedio && (
+    <a class="badge" href={enlace} target="_blank" rel="noopener" aria-label={es ? `${promedio} de 5 en Google, ${total} reseñas` : `${promedio} out of 5 on Google, ${total} reviews`}>
+      <span class="stars" aria-hidden="true"><span class="base">★★★★★</span><span class="fill" style={`width:${(d.promedio / 5) * 100}%`}>★★★★★</span></span>
+      <span class="rating">{promedio}</span><span class="sep" aria-hidden="true">·</span><span class="count">{total}</span>
+      <span>{es ? 'reseñas en Google' : 'Google reviews'}</span>
+    </a>
+  )}
+  {lista.length > 0 && (
+    <ul class="grid">
+      {lista.map((r) => (
+        <li class="card">
+          <div class="crow">
+            <div class="av" aria-hidden="true">{inicial(r.nombre)}</div>
+            <div><p class="who">{r.nombre}</p><p class="when">{cuando(r.fecha)}</p></div>
+          </div>
+          <p class="cstars" aria-label={es ? '5 de 5 estrellas' : '5 out of 5 stars'}>★★★★★</p>
+          <p class="ctext">{r.texto}</p>
+          {r.traducida && <p class="trad">{es ? 'Traducida por Google' : 'Translated by Google'}</p>}
+        </li>
+      ))}
+    </ul>
+  )}
+  <p class="foot"><a href={enlace} target="_blank" rel="noopener">{leer} →</a></p>
 </div>
-{GOOGLE_MAPS_KEY && (
-  <script is:inline define:vars={{ GOOGLE_MAPS_KEY, GOOGLE_PLACE_ID }}>
-  (function(){
-    var CACHE_KEY='rosanta_resenas_v1',CACHE_MS=24*60*60*1000;
-    function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function starRow(r){r=Math.round(r||0);return '★★★★★'.slice(0,r)+'☆☆☆☆☆'.slice(0,5-r);}
-    function paint(d){
-      document.querySelectorAll('.resenas').forEach(function(box){
-        if(d.rating){var b=box.querySelector('.badge');box.querySelector('.fill').style.width=(d.rating/5*100)+'%';box.querySelector('.rating').textContent=Number(d.rating).toFixed(1);box.querySelector('.count').textContent=d.total?Number(d.total).toLocaleString('en-US'):'';if(d.url)b.href=d.url;b.hidden=false;}
-        var grid=box.querySelector('.grid');grid.innerHTML='';
-        (d.reviews||[]).slice(0,4).forEach(function(rv){var name=rv.name||'Guest',initial=(name.trim().charAt(0)||'G').toUpperCase();var av=rv.photo?'<div class="av" style="background-image:url('+esc(rv.photo)+')"></div>':'<div class="av">'+esc(initial)+'</div>';var c=document.createElement('div');c.className='card';c.innerHTML='<div class="crow">'+av+'<div><div class="who">'+esc(name)+'</div><div class="when">'+esc(rv.when||'')+'</div></div></div><div class="cstars">'+starRow(rv.rating)+'</div><div class="ctext">'+esc(rv.text||'')+'</div>';grid.appendChild(c);});
-      });
-    }
-    function getCache(){try{var c=JSON.parse(localStorage.getItem(CACHE_KEY));if(c&&Date.now()-c.t<CACHE_MS)return c.d;}catch(e){}return null;}
-    function setCache(d){try{localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),d:d}));}catch(e){}}
-    window.initResenas=async function(){try{var r=await google.maps.importLibrary('places');var place=new r.Place({id:GOOGLE_PLACE_ID});await place.fetchFields({fields:['rating','userRatingCount','googleMapsURI','reviews']});var d={rating:place.rating,total:place.userRatingCount,url:place.googleMapsURI,reviews:(place.reviews||[]).map(function(x){return{name:(x.authorAttribution&&x.authorAttribution.displayName)||'Guest',photo:(x.authorAttribution&&x.authorAttribution.photoURI)||'',rating:x.rating,when:x.relativePublishTimeDescription||'',text:(x.text&&x.text.text)||x.text||''};})};setCache(d);paint(d);}catch(e){}};
-    var c=getCache(); if(c){paint(c);return;}
-    if(window.__resenasCargando)return; window.__resenasCargando=true;
-    var s=document.createElement('script');s.async=true;s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GOOGLE_MAPS_KEY)+'&loading=async&libraries=places&callback=initResenas';document.head.appendChild(s);
-  })();
-  </script>
-)}

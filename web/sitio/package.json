@@ -18,6 +18,7 @@
     "test": "node --test test/*.test.mjs",
     "paridad": "node scripts/paridad.mjs",
     "probar-sv": "ROSANTA_DIST=dist-sv PUBLIC_SEGUNDA_VUELTA=si PUBLIC_LISTA_ESPERA=si npm run build && ROSANTA_DIST=dist-sv node --test test/sv/*.test.mjs",
+    "resenas": "node scripts/resenas.mjs",
     "probar-301": "node scripts/probar-301.mjs"
   },
   "dependencies": {

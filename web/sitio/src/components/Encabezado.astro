@@ -1,12 +1,18 @@
 ---
-// Encabezado de Wix: logo, selector EN | ES y el menú (con las mismas entradas y anclas).
-// En el teléfono el menú se abre con una casilla (CSS): funciona sin JavaScript.
-import { datos, hrefMenu, rutaOtroIdioma } from '../lib/sitio.mjs';
+// Encabezado: logo, selector EN | ES y el menú. Rediseño del 23-oct (Juanma): 5 pestañas + el botón de
+// Reservaciones a la vista (6 en total) y el resto en "Más" / "More" (lista en src/lib/navegacion.mjs).
+// En el teléfono el menú se abre con una casilla (CSS) y "Más" es un <details>: funciona sin JavaScript.
+import { datos, rutaOtroIdioma } from '../lib/sitio.mjs';
+import { NAVEGACION } from '../lib/navegacion.mjs';
 import { enlacesMenu } from '../lib/segunda-vuelta.mjs';
 
 const { pagina } = Astro.props;
 const idioma = pagina.idioma;
 const comun = datos().comun[idioma] || datos().comun.en;
+const nav = NAVEGACION[idioma] || NAVEGACION.en;
+// Segunda vuelta (solo con PUBLIC_SEGUNDA_VUELTA=si): Adventures y Blog entran al principio de "Más"; sin el interruptor no cambia nada.
+const nuevos = enlacesMenu(idioma).map((x) => ({ texto: x.texto === 'BLOG' ? 'Blog' : 'Adventures', href: x.href }));
+const mas = nuevos.length ? { texto: nav.mas.texto, items: nuevos.concat(nav.mas.items) } : nav.mas;
 const buscar = (bloques, t) => {
   for (const b of bloques) {
     if (b.t === t) return b;
@@ -16,25 +22,11 @@ const buscar = (bloques, t) => {
   return null;
 };
 const logo = buscar(comun.encabezado, 'svg');
-const menu = buscar(comun.encabezado, 'menu');
-// Entradas: las que no tienen id propio son el submenú de la anterior (MENU → full-menu).
-const items = [];
-for (const it of menu?.items || []) {
-  if (it.texto === 'More' && !it.href) continue;
-  const e = { texto: it.texto, href: hrefMenu(it, idioma), externo: /^https?:/.test(it.href || ''), sub: [] };
-  if (!it.idli && items.length) items[items.length - 1].sub.push(e);
-  else items.push(e);
-}
-// Segunda vuelta: ADVENTURES y BLOG después de GIFT IDEAS (sin el interruptor, la lista queda vacía).
-const nuevos = enlacesMenu(idioma);
-if (nuevos.length) {
-  const i = items.findIndex((x) => /\/gift-ideas$/.test(x.href || ''));
-  items.splice(i === -1 ? items.length : i + 1, 0, ...nuevos);
-}
 const inicio = idioma === 'es' ? '/es' : '/';
 const otra = rutaOtroIdioma(pagina);
 const enRuta = idioma === 'en' ? pagina.ruta : otra;
 const esRuta = idioma === 'es' ? pagina.ruta : otra;
+const actual = (href) => href === pagina.ruta;
 ---
 <header class="encabezado" style={comun.fondo_encabezado ? `background:${comun.fondo_encabezado}` : undefined}>
   <div class="encabezado-in">
@@ -43,21 +35,33 @@ const esRuta = idioma === 'es' ? pagina.ruta : otra;
       <a href={enRuta} hreflang="en" lang="en" class:list={[{ activo: idioma === 'en' }]}>EN</a>
       <a href={esRuta} hreflang="es" lang="es" class:list={[{ activo: idioma === 'es' }]}>ES</a>
     </nav>
+    <a class="reservar reservar-tel" href={nav.reservar.href}>{nav.reservar.corto}</a>
     <input type="checkbox" id="menu-abrir" class="menu-abrir" aria-hidden="true" tabindex="-1" />
     <label for="menu-abrir" class="menu-boton" aria-label={idioma === 'es' ? 'Menú' : 'Menu'}><span></span><span></span><span></span></label>
-    <nav class="menu" aria-label="Site">
-        <ul>
-          {items.map((it) => (
-            <li class:list={[{ 'con-sub': it.sub.length }]}>
-              <a href={it.href} {...(it.externo ? { target: '_blank', rel: 'noopener' } : {})}>{it.texto}</a>
-              {it.sub.length > 0 && (
-                <ul class="sub" data-paridad="ignorar">
-                  {it.sub.map((s) => <li><a href={s.href}>{s.texto}</a></li>)}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
+    <nav class="menu" aria-label={idioma === 'es' ? 'Principal' : 'Main'}>
+      <ul>
+        {nav.principales.map((it) => (
+          <li><a href={it.href} aria-current={actual(it.href) ? 'page' : undefined}>{it.texto}</a></li>
+        ))}
+        <li class="mas">
+          <details>
+            <summary>{mas.texto}</summary>
+            <ul class="sub">
+              {mas.items.map((s) => <li><a href={s.href} aria-current={actual(s.href) ? 'page' : undefined}>{s.texto}</a></li>)}
+            </ul>
+          </details>
+        </li>
+        <li class="li-reservar"><a class="reservar" href={nav.reservar.href} aria-current={actual(nav.reservar.href) ? 'page' : undefined}>{nav.reservar.texto}</a></li>
+      </ul>
     </nav>
   </div>
+  <script is:inline>
+    (function(){
+      var h=document.currentScript.parentNode, d=h.querySelector('.mas details'), c=h.querySelector('#menu-abrir');
+      // "Más" se cierra al hacer clic afuera o con Esc; el menú del teléfono se cierra al elegir una opción.
+      document.addEventListener('click',function(e){ if(d&&d.open&&!d.contains(e.target)) d.open=false; });
+      document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&d&&d.open){ d.open=false; d.querySelector('summary').focus(); } });
+      h.querySelectorAll('.menu a').forEach(function(a){ a.addEventListener('click',function(){ if(c) c.checked=false; if(d) d.open=false; }); });
+    })();
+  </script>
 </header>

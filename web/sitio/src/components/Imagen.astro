@@ -1,11 +1,13 @@
 ---
-// Imagen de Rosanta servida desde la copia (public/img), con el MISMO texto alternativo de Wix.
-import { imagenLocal } from '../lib/sitio.mjs';
-const { medio, alt = '', href = null, id = undefined, cargar = 'lazy' } = Astro.props;
+// Imagen de Rosanta servida desde la copia (public/img). Alt en el idioma de la página (data/alt.json);
+// si no hay, el de Wix.
+import { imagenLocal, altDe } from '../lib/sitio.mjs';
+const { medio, alt = '', idioma = 'en', href = null, id = undefined, cargar = 'lazy' } = Astro.props;
 const im = imagenLocal(medio);
+const texto = altDe(medio, idioma, alt);
 ---
 {im && (href ? (
-  <a id={id} class="imagen" href={href}><img src={im.archivo} alt={alt} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></a>
+  <a id={id} class="imagen" href={href}><img src={im.archivo} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></a>
 ) : (
-  <figure id={id} class="imagen"><img src={im.archivo} alt={alt} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></figure>
+  <figure id={id} class="imagen"><img src={im.archivo} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></figure>
 ))}
