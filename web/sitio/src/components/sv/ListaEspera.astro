@@ -1,0 +1,74 @@
+---
+// Lista de espera (solo con PUBLIC_LISTA_ESPERA=si). Cuando el formulario de reservas dice que no hay horarios
+// para ese día, ofrece "Avísame si se libera una mesa". Contrato:
+//   POST {API_BASE}/lista-espera  (text/plain, JSON, igual que /reservar)
+//   { fecha, desde: "HH:MM", hasta: "HH:MM", personas, nombre, email, telefono, idioma, fuente } → { ok }
+// No toca el script del formulario: mira la caja de horarios y aparece cuando sale el mensaje "sin horarios".
+import EstilosSV from './EstilosSV.astro';
+import { API_BASE } from '../../config.mjs';
+const { idioma = 'en', sinHorarios = '' } = Astro.props;
+const es = idioma === 'es';
+const API = API_BASE.replace(/\/$/, '');
+const horas = [];
+for (let h = 12; h <= 22; h++) for (const m of ['00', '30']) if (!(h === 22 && m === '30')) horas.push(`${String(h).padStart(2, '0')}:${m}`);
+const T = es
+  ? { boton: 'Avísame si se libera una mesa', titulo: 'Lista de espera', sub: 'Si alguien cancela entre estas horas, te avisamos por WhatsApp o correo. No es una reserva todavía.',
+      desde: 'Desde', hasta: 'Hasta', nombre: 'Nombre', email: 'Correo', tel: 'Teléfono o WhatsApp', enviar: 'Anotarme', enviando: 'Enviando…',
+      falta: 'Falta tu nombre y un correo o teléfono.', horas: 'La hora "hasta" tiene que ser después de "desde".', ok: 'Listo, quedaste en la lista de espera. Te avisamos si se libera una mesa.', error: 'No se pudo anotar. Escríbenos por WhatsApp al +502 3082 6935.' }
+  : { boton: 'Let me know if a table opens up', titulo: 'Waitlist', sub: 'If someone cancels between these times, we let you know by WhatsApp or email. This is not a booking yet.',
+      desde: 'From', hasta: 'Until', nombre: 'Name', email: 'Email', tel: 'Phone or WhatsApp', enviar: 'Add me', enviando: 'Sending…',
+      falta: 'Your name and an email or phone are required.', horas: 'The "until" time has to be after "from".', ok: 'Done, you are on the waitlist. We will let you know if a table opens up.', error: 'Could not add you. Message us on WhatsApp at +502 3082 6935.' };
+const cfg = { API, T, NONE: sinHorarios };
+---
+<EstilosSV />
+<div class="sv lista-espera" data-lista-espera hidden style="padding:0;margin:12px 0 0">
+  <p class="boton-fila" style="text-align:left;margin:8px 0"><button type="button" class="boton" data-le-abrir>{T.boton}</button></p>
+  <div class="formulario" data-le-form hidden style="margin:10px 0">
+    <h3 style="margin-top:0">{T.titulo}</h3>
+    <p class="nota">{T.sub}</p>
+    <div class="campos">
+      <div><label for="le-desde">{T.desde}</label><select id="le-desde">{horas.map((h) => <option selected={h === '18:00'}>{h}</option>)}</select></div>
+      <div><label for="le-hasta">{T.hasta}</label><select id="le-hasta">{horas.map((h) => <option selected={h === '21:00'}>{h}</option>)}</select></div>
+      <div><label for="le-nombre">{T.nombre}</label><input id="le-nombre" autocomplete="name" /></div>
+      <div><label for="le-email">{T.email}</label><input id="le-email" type="email" autocomplete="email" /></div>
+      <div><label for="le-tel">{T.tel}</label><input id="le-tel" type="tel" autocomplete="tel" /></div>
+    </div>
+    <p class="boton-fila" style="text-align:left"><button type="button" class="boton" data-le-enviar>{T.enviar}</button></p>
+    <p class="msj" data-le-msj role="status" hidden></p>
+  </div>
+</div>
+<script is:inline define:vars={{ C: cfg }}>
+(function(){
+  var rsv = document.querySelector('.rsv'), le = document.querySelector('[data-lista-espera]');
+  if (!rsv || !le) return;
+  var slots = rsv.querySelector('#slots'), form = le.querySelector('[data-le-form]'), msj = le.querySelector('[data-le-msj]');
+  var btn = le.querySelector('[data-le-enviar]');
+  // Va justo debajo de los horarios.
+  rsv.querySelector('#slotsWrap').after(le);
+  // Aparece solo cuando la caja de horarios muestra el mensaje "no hay mesas ese día" (TEXTOS.none del formulario).
+  new MutationObserver(function(){
+    var m = slots.querySelector('.slots-msg');
+    le.hidden = !(m && !slots.querySelector('.slot') && m.textContent === C.NONE);
+    if (le.hidden) { form.hidden = true; msj.hidden = true; btn.hidden = false; btn.disabled = false; btn.textContent = C.T.enviar; }
+  }).observe(slots, { childList: true, subtree: true, characterData: true });
+  le.querySelector('[data-le-abrir]').addEventListener('click', function(){ form.hidden = false; });
+  function decir(t, mal){ msj.textContent = t; msj.hidden = false; msj.classList.toggle('mal', !!mal); }
+  function fuente(){ try { return window.RosantaFuente ? window.RosantaFuente.obtener() : null; } catch(e){ return null; } }
+  btn.addEventListener('click', async function(){
+    var v = function(id){ return (le.querySelector('#' + id).value || '').trim(); };
+    var nombre = v('le-nombre'), email = v('le-email'), tel = v('le-tel');
+    if (!nombre || (!email && !tel)) return decir(C.T.falta, true);
+    if (v('le-hasta') <= v('le-desde')) return decir(C.T.horas, true);
+    var cuerpo = { fecha: rsv.querySelector('#date').value, desde: v('le-desde'), hasta: v('le-hasta'), personas: Number(rsv.querySelector('#party').value),
+      nombre: nombre, email: email, telefono: tel, idioma: document.documentElement.lang || '', fuente: fuente() };
+    btn.disabled = true; btn.textContent = C.T.enviando;
+    try {
+      var r = await fetch(C.API + '/lista-espera', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(cuerpo) });
+      var j = await r.json().catch(function(){ return {}; });
+      if (r.ok && j.ok) { decir(C.T.ok, false); btn.hidden = true; return; }
+      decir(j.error || C.T.error, true);
+    } catch (e) { decir(C.T.error, true); }
+    btn.disabled = false; btn.textContent = C.T.enviar;
+  });
+})();
+</script>

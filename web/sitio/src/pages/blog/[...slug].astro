@@ -1,0 +1,14 @@
+---
+// Segunda vuelta: /blog y /blog/<slug>. Sin PUBLIC_SEGUNDA_VUELTA=si (o sin contenido) no se genera nada.
+import PaginaNueva from '../../components/sv/PaginaNueva.astro';
+import { paginasNuevas } from '../../lib/segunda-vuelta.mjs';
+
+export function getStaticPaths() {
+  const base = '/blog';
+  return paginasNuevas()
+    .filter((p) => p.ruta === base || p.ruta.startsWith(base + '/'))
+    .map((p) => ({ params: { slug: p.ruta === base ? undefined : p.ruta.slice(base.length + 1) }, props: { pagina: p } }));
+}
+const { pagina } = Astro.props;
+---
+<PaginaNueva pagina={pagina} />

@@ -1,0 +1,33 @@
+---
+// /adventures y /es/adventures: las experiencias publicadas (solo vienen las de operadores con licencia y seguro vigentes).
+import EstilosSV from './EstilosSV.astro';
+import AvisoLegal from './AvisoLegal.astro';
+const { pagina } = Astro.props;
+const L = pagina.idioma === 'es' ? 'es' : 'en';
+const es = L === 'es';
+const base = es ? '/es/adventures' : '/adventures';
+const xs = pagina.datos.experiencias;
+const reservas = es ? '/es/reservas' : '/reservas';
+---
+<EstilosSV />
+<AvisoLegal banner idioma={L} />
+<div class="sv adventures">
+  <h1>Rosanta Adventures</h1>
+  <p class="bajada">{es
+    ? 'Volcanes, fincas de café y viajes por Guatemala, con operadores aliados que tienen licencia de INGUAT y seguro vigentes. Tú eliges la experiencia, nos escribes y te pasamos la propuesta del operador. Si quieres, el día termina con una cena en el jardín de Rosanta.'
+    : 'Volcano hikes, coffee farms and trips around Guatemala, with partner operators who hold a current INGUAT license and insurance. Pick an experience, write to us and we pass you the operator’s proposal. If you like, the day ends with dinner in the garden at Rosanta.'}</p>
+  <ul class="grilla">
+    {xs.map((x) => (
+      <li class="tarjeta">
+        {x.foto && <img src={x.foto.url_chica || x.foto.url} alt={x.foto.alt?.[L] || x.titulo[L]} width={x.foto.ancho} height={x.foto.alto} loading="lazy" decoding="async" />}
+        <h2><a href={`${base}/${x.slug}`}>{x.titulo[L]}</a></h2>
+        <p>{[x.duracion?.[L], x.dificultad_texto?.[L]].filter(Boolean).join(' · ')}</p>
+        {x.precio_ref_q != null && <p>{es ? 'Desde' : 'From'} Q{x.precio_ref_q}{x.precio_usd_ref ? ` (≈ US$${x.precio_usd_ref})` : ''}</p>}
+        <p>{es ? 'Opera:' : 'Run by:'} {x.operador.nombre}</p>
+        <a class="mas" href={`${base}/${x.slug}`}>{es ? 'Ver la experiencia' : 'See the experience'}</a>
+      </li>
+    ))}
+  </ul>
+  <AvisoLegal idioma={L} />
+  <p><a href={reservas}>{es ? 'Reservar una mesa en Rosanta' : 'Book a table at Rosanta'}</a></p>
+</div>

@@ -1,0 +1,139 @@
+---
+// Ficha de una experiencia de Rosanta Adventures (estudio 3.9). La opera un OPERADOR ALIADO, no Rosanta:
+// la ficha lo nombra, muestra el aviso legal (en la ficha y junto al formulario) y la consulta va sin cobro a
+// POST /api/adventures/consulta (contrato de cloud/app/src/adventures.js), con la opción de cenar en Rosanta.
+import EstilosSV from './EstilosSV.astro';
+import AvisoLegal from './AvisoLegal.astro';
+import { ADVENTURES_URL, contenido } from '../../lib/segunda-vuelta.mjs';
+
+const { pagina } = Astro.props;
+const L = pagina.idioma === 'es' ? 'es' : 'en';
+const es = L === 'es';
+const x = pagina.datos.x;
+const base = es ? '/es/adventures' : '/adventures';
+const nombresIdioma = contenido().adventures?.idiomas || {};
+const IDIOMAS = { es: { es: 'Español', en: 'Spanish' }, en: { es: 'Inglés', en: 'English' }, fr: { es: 'Francés', en: 'French' }, de: { es: 'Alemán', en: 'German' }, it: { es: 'Italiano', en: 'Italian' }, pt: { es: 'Portugués', en: 'Portuguese' } };
+const idiomas = (x.idiomas || []).map((i) => nombresIdioma[i]?.[L] || IDIOMAS[i]?.[L] || i).join(', ');
+const precio = x.precio_ref_q != null
+  ? (es ? `Desde Q${x.precio_ref_q} por persona` : `From Q${x.precio_ref_q} per person`) + (x.precio_usd_ref ? ` (≈ US$${x.precio_usd_ref})` : '')
+  : null;
+const incluye = String(x.incluye?.[L] || '').split('\n').map((s) => s.trim()).filter(Boolean);
+const datos = [
+  [es ? 'Duración' : 'Duration', x.duracion?.[L]],
+  [es ? 'Dificultad' : 'Difficulty', x.dificultad_texto?.[L]],
+  [es ? 'Punto de salida' : 'Starting point', x.punto_salida?.[L]],
+  [es ? 'Temporada' : 'Season', x.temporada?.[L]],
+  [es ? 'Idiomas' : 'Languages', idiomas],
+  [es ? 'Precio de referencia' : 'Reference price', precio],
+].filter((d) => d[1]);
+const horas = [];
+for (let h = 12; h <= 21; h++) for (const m of ['00', '30']) if (!(h === 21 && m === '30')) horas.push(`${String(h).padStart(2, '0')}:${m}`);
+const T = es
+  ? { migas: 'Rosanta Adventures', opera: 'Quién la opera', inguat: 'Registro de INGUAT', incluye: 'Qué incluye', faq: 'Preguntas frecuentes',
+      form: 'Consulta sin compromiso', formSub: 'Te respondemos con la propuesta del operador. No se cobra nada en esta página.',
+      nombre: 'Nombre', email: 'Correo', tel: 'Teléfono o WhatsApp', fecha: 'Fecha que te gustaría', personas: 'Personas', mensaje: 'Mensaje (opcional)',
+      cena: 'Quiero cerrar el día con una cena en Rosanta', cenaFecha: 'Fecha de la cena', cenaHora: 'Hora', cenaPersonas: 'Personas en la cena',
+      enviar: 'Enviar consulta', enviando: 'Enviando…', falta: 'Falta tu nombre o un correo válido.', faltaCena: 'Elige la fecha y la hora de la cena.', error: 'No se pudo enviar. Escríbenos por WhatsApp al +502 3082 6935.',
+      volver: 'Ver todas las experiencias' }
+  : { migas: 'Rosanta Adventures', opera: 'Who runs it', inguat: 'INGUAT registration', incluye: 'What is included', faq: 'Frequently asked questions',
+      form: 'Ask with no commitment', formSub: 'We reply with the operator’s proposal. Nothing is charged on this page.',
+      nombre: 'Name', email: 'Email', tel: 'Phone or WhatsApp', fecha: 'Preferred date', personas: 'People', mensaje: 'Message (optional)',
+      cena: 'I want to end the day with dinner at Rosanta', cenaFecha: 'Dinner date', cenaHora: 'Time', cenaPersonas: 'People at dinner',
+      enviar: 'Send', enviando: 'Sending…', falta: 'Your name and a valid email are required.', faltaCena: 'Please choose the dinner date and time.', error: 'Could not send. Message us on WhatsApp at +502 3082 6935.',
+      volver: 'See all experiences' };
+const cfg = { url: ADVENTURES_URL, slug: x.slug, idioma: L, T };
+---
+<EstilosSV />
+<AvisoLegal banner idioma={L} />
+<article class="sv experiencia" data-experiencia>
+  <p class="migas"><a href={base}>{T.migas}</a></p>
+  <h1>{x.titulo[L]}</h1>
+  {x.foto && (
+    <figure class="foto"><img src={x.foto.url} srcset={x.foto.url_chica ? `${x.foto.url_chica} 600w, ${x.foto.url} 1600w` : undefined} sizes="(max-width: 980px) 100vw, 980px"
+      alt={x.foto.alt?.[L] || x.titulo[L]} width={x.foto.ancho} height={x.foto.alto} loading="eager" decoding="async" /></figure>
+  )}
+  <p class="bajada">{x.descripcion[L]}</p>
+  {datos.length > 0 && (
+    <dl class="datos">{datos.map(([k, val]) => <div><dt>{k}</dt><dd>{val}</dd></div>)}</dl>
+  )}
+  {incluye.length > 0 && (<><h2>{T.incluye}</h2><ul>{incluye.map((i) => <li>{i}</li>)}</ul></>)}
+
+  <section class="operador" aria-labelledby="opera">
+    <h2 id="opera">{T.opera}</h2>
+    <p><strong>{x.operador.nombre}</strong></p>
+    {x.operador.licencia_inguat && <p>{T.inguat}: {x.operador.licencia_inguat}</p>}
+    <AvisoLegal idioma={L} texto={x.aviso_legal?.[L]} />
+  </section>
+
+  {(x.galeria || []).length > 0 && (
+    <div class="grilla">{x.galeria.map((f) => <img src={f.url_chica || f.url} alt={f.alt?.[L] || ''} width={f.ancho} height={f.alto} loading="lazy" decoding="async" />)}</div>
+  )}
+
+  {(x.faq || []).length > 0 && (
+    <section>
+      <h2>{T.faq}</h2>
+      {x.faq.map((q) => (<details><summary>{q.pregunta[L]}</summary><p>{q.respuesta[L]}</p></details>))}
+    </section>
+  )}
+
+  <section class="formulario" id="consulta" aria-labelledby="consulta-t">
+    <h2 id="consulta-t">{T.form}</h2>
+    <p>{T.formSub}</p>
+    <form data-consulta novalidate onsubmit="return false">
+      <div class="campos">
+        <div><label for="c-nombre">{T.nombre}</label><input id="c-nombre" name="nombre" autocomplete="name" required /></div>
+        <div><label for="c-email">{T.email}</label><input id="c-email" name="email" type="email" autocomplete="email" required /></div>
+        <div><label for="c-tel">{T.tel}</label><input id="c-tel" name="telefono" type="tel" autocomplete="tel" /></div>
+        <div><label for="c-fecha">{T.fecha}</label><input id="c-fecha" name="fecha" type="date" /></div>
+        <div><label for="c-personas">{T.personas}</label><input id="c-personas" name="personas" type="number" min="1" max="50" value="2" inputmode="numeric" /></div>
+      </div>
+      <div style="margin-top:14px"><label for="c-mensaje">{T.mensaje}</label><textarea id="c-mensaje" name="mensaje" maxlength="1000"></textarea></div>
+      <label class="casilla"><input type="checkbox" name="con_cena" data-con-cena /> <span>{T.cena}</span></label>
+      <div class="campos cena" data-cena hidden>
+        <div><label for="c-cfecha">{T.cenaFecha}</label><input id="c-cfecha" name="cena_fecha" type="date" /></div>
+        <div><label for="c-chora">{T.cenaHora}</label><select id="c-chora" name="cena_hora">{horas.map((h) => <option selected={h === '19:00'}>{h}</option>)}</select></div>
+        <div><label for="c-cpersonas">{T.cenaPersonas}</label><input id="c-cpersonas" name="cena_personas" type="number" min="1" max="50" value="2" inputmode="numeric" /></div>
+      </div>
+      <div class="trampa" aria-hidden="true"><label for="c-web">Web</label><input id="c-web" name="sitio_web" tabindex="-1" autocomplete="off" /></div>
+      <AvisoLegal idioma={L} texto={x.aviso_legal?.[L]} />
+      <p class="boton-fila" style="text-align:left"><button type="button" class="boton" data-enviar>{T.enviar}</button></p>
+      <p class="msj" data-msj role="status" hidden></p>
+    </form>
+    <noscript><p>{es ? 'Para enviar la consulta hace falta JavaScript. También puedes escribirnos por WhatsApp al +502 3082 6935.' : 'Sending this form needs JavaScript. You can also message us on WhatsApp at +502 3082 6935.'}</p></noscript>
+  </section>
+  <p><a href={base}>{T.volver}</a></p>
+</article>
+<script is:inline define:vars={{ C: cfg }}>
+(function(){
+  var r = document.querySelector('[data-experiencia]'); if (!r) return;
+  var f = r.querySelector('[data-consulta]'), msj = r.querySelector('[data-msj]'), btn = r.querySelector('[data-enviar]');
+  var conCena = f.querySelector('[data-con-cena]'), cena = f.querySelector('[data-cena]');
+  var hoy = new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 10);
+  f.querySelectorAll('input[type=date]').forEach(function(i){ i.min = hoy; });
+  conCena.addEventListener('change', function(){ cena.hidden = !conCena.checked; if (conCena.checked && !f.cena_fecha.value) f.cena_fecha.value = f.fecha.value; });
+  function decir(t, mal){ msj.textContent = t; msj.hidden = false; msj.classList.toggle('mal', !!mal); }
+  function fuente(){ try { return window.RosantaFuente ? window.RosantaFuente.obtener() : {}; } catch(e){ return {}; } }
+  btn.addEventListener('click', async function(){
+    var v = function(n){ return (f[n] && f[n].value || '').trim(); };
+    if (!v('nombre') || !/^[^\s@<>]+@[^\s@<>]+\.[A-Za-z]{2,}$/.test(v('email'))) return decir(C.T.falta, true);
+    if (conCena.checked && (!v('cena_fecha') || !v('cena_hora'))) return decir(C.T.faltaCena, true);
+    var cuerpo = {
+      experiencia: C.slug, nombre: v('nombre'), email: v('email'), telefono: v('telefono'), idioma: C.idioma,
+      fecha: v('fecha') || null, personas: v('personas') ? Number(v('personas')) : null, mensaje: v('mensaje'),
+      cena: conCena.checked ? { fecha: v('cena_fecha'), hora: v('cena_hora'), personas: Number(v('cena_personas') || v('personas') || 2) } : null,
+      origen: fuente() || {}, sitio_web: v('sitio_web')
+    };
+    btn.disabled = true; btn.textContent = C.T.enviando;
+    try {
+      var res = await fetch(C.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+      var j = await res.json().catch(function(){ return {}; });
+      if (res.ok && j.ok) {
+        decir(j.mensaje || '', false); f.querySelectorAll('input,textarea,select,button').forEach(function(e){ e.disabled = true; });
+        return;
+      }
+      decir(j.error || j.mensaje || C.T.error, true);
+    } catch (e) { decir(C.T.error, true); }
+    btn.disabled = false; btn.textContent = C.T.enviar;
+  });
+})();
+</script>
