@@ -1,0 +1,10 @@
+---
+// El wordmark de Rosanta (el mismo SVG del sitio), en el color del texto que lo rodea.
+import { datos } from '../../lib/sitio.mjs';
+const { clase = '' } = Astro.props;
+const buscar = (bs) => { for (const b of bs) { if (b.t === 'svg') return b; const h = b.hijos && buscar(b.hijos); if (h) return h; } return null; };
+const svg = (buscar(datos().comun.es.encabezado)?.svg || 'ROSANTA')
+  .replace(/role="presentation"/, 'role="img"').replace(/aria-hidden="true"/, '').replace(/aria-label=""/, 'aria-label="Rosanta"')
+  .replace(/fill="[^"]*"/g, 'fill="currentColor"');
+---
+<span class:list={['v3-logo', clase]} set:html={svg} />

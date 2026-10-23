@@ -1,0 +1,47 @@
+---
+// Pie v3 (Kaprica): crema, el nombre en grande, horarios, dirección y contacto.
+import Logo from './Logo.astro';
+import { textos, horarios, RUTAS } from '../../lib/v3.mjs';
+import { datos, rutaOtroIdioma } from '../../lib/sitio.mjs';
+import { WHATSAPP, WAZE } from '../../config.mjs';
+const { pagina } = Astro.props;
+const l = pagina.idioma === 'es' ? 'es' : 'en';
+const T = textos(l);
+const R = datos().restaurante;
+const otra = rutaOtroIdioma(pagina);
+const enRuta = l === 'en' ? pagina.ruta : otra;
+const esRuta = l === 'es' ? pagina.ruta : otra;
+const tel = R.telephone; // +50277688880
+const telTxt = tel.replace(/^\+502(\d{4})(\d{4})$/, '(502) $1 $2');
+const waTxt = '+' + WHATSAPP.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3');
+const maps = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala';
+---
+<footer class="v3-pie" id="v3-pie">
+  <div class="v3-pie-in">
+    <a class="v3-pie-logo" href={RUTAS[l].inicio} aria-label="Rosanta"><Logo /></a>
+    <p class="v3-etiqueta v3-pie-lema">{T.pie.lema} <span aria-hidden="true">·</span> {T.coord}</p>
+    <div class="v3-pie-cols">
+      <div>
+        <h2 class="v3-pie-h">{T.pie.direccion}</h2>
+        <p>{R.address.streetAddress}<br />{R.address.addressLocality}, {R.address.addressRegion}</p>
+        <p><a href={maps} target="_blank" rel="noopener">{T.pie.como}</a> · <a href={WAZE} target="_blank" rel="noopener">Waze</a></p>
+      </div>
+      <div>
+        <h2 class="v3-pie-h">{T.pie.horarios}</h2>
+        <dl class="v3-horas">{horarios(l).map((h) => <><dt>{h.dias}</dt><dd>{h.horas}</dd></>)}</dl>
+      </div>
+      <div>
+        <h2 class="v3-pie-h">{T.pie.contacto}</h2>
+        <p><a href={`tel:${tel}`}>{telTxt}</a><br />
+          <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">WhatsApp {waTxt}</a><br />
+          <a href={`mailto:${R.email}`}>{R.email}</a></p>
+        <p>{(R.sameAs || []).map((u, i) => <>{i > 0 && ' · '}<a href={u} target="_blank" rel="noopener">{/instagram/.test(u) ? 'Instagram' : 'Facebook'}</a></>)}</p>
+      </div>
+    </div>
+    <nav class="v3-pie-nav" id="v3-pie-nav" aria-label={l === 'es' ? 'Más enlaces' : 'More links'}>
+      {[...T.menu.principales, ...T.menu.secundarios, ...T.pie.legales].map((it) => <a href={it.href}>{it.texto}</a>)}
+      <span class="v3-pie-idioma"><a href={esRuta} hreflang="es" lang="es" data-v3idioma="es">ES</a> · <a href={enRuta} hreflang="en" lang="en" data-v3idioma="en">EN</a></span>
+    </nav>
+    <p class="v3-pie-copy">© 2026 Rosanta · Cocina con Carisma</p>
+  </div>
+</footer>

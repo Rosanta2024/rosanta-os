@@ -13,7 +13,8 @@ import Faq from './Faq.astro';
 import Privacidad from './Privacidad.astro';
 import Contacto from './Contacto.astro';
 import { htmlResponsivo, hrefMenu, imagenLocal, altDe } from '../lib/sitio.mjs';
-import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP } from '../config.mjs';
+import Video from './v3/Video.astro';
+import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP, V3 } from '../config.mjs';
 
 const { bloques = [], pagina, ref = 980 } = Astro.props;
 const idioma = pagina.idioma;
@@ -72,6 +73,10 @@ function fotoFondo(b) {
 }
 const conPos = (b) => (b.pos && b.pos.area ? 'pos' : null);
 const urlGift = GIFTCARD_URL || `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(idioma === 'es' ? 'Hola, quiero comprar una tarjeta de regalo de Rosanta.' : 'Hi, I would like to buy a Rosanta gift card.')}`;
+// Web v3: fotos de fondo que pasan a video (Juanma, 23-oct: la cena romántica en video en lugar de la foto).
+// Solo en español: el video trae texto en español y no hay versión en inglés.
+const V3_VIDEO_FONDO = { '3de38d_c28eb9b7a60d4ae4b4bb8facdc163a54~mv2.png': { es: { clip: 'romantica-es', alt: 'Video: "Momentos que enamoran". Una pareja llega a una mesa para dos con velas y pétalos.' } } };
+const videoFondo = (c) => (V3 && c.fondoImg ? V3_VIDEO_FONDO[c.fondoImg.medio]?.[idioma] : null);
 const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) || 980;
 ---
 {bloques.map((b) => {
@@ -90,9 +95,9 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       return (
         <div id={b.id} class:list={['columnas', conPos(b), { oscura: oscuro(b) }]} style={pos(b, fondo(b))}>
           {b.hijos.map((c) => (
-            <div id={c.id} class:list={['columna', 'malla', { 'con-fondo-img': c.fondoImg, oscura: oscuro(c) }]}
-              style={[...fondo(c), `--cw:${r4((c.pos?.w || total / b.hijos.length) / total)}`].join(';')}>
-              <Fragment set:html={fotoFondo(c)} />
+            <div id={c.id} class:list={['columna', 'malla', { 'con-fondo-img': c.fondoImg && !videoFondo(c), oscura: oscuro(c), 'v3-col-video': videoFondo(c) }]}
+              style={[...(videoFondo(c) ? [] : fondo(c)), `--cw:${r4((c.pos?.w || total / b.hijos.length) / total)}`].join(';')}>
+              {videoFondo(c) ? <Video clip={videoFondo(c).clip} alt={videoFondo(c).alt} clase="v3-video-relleno" /> : <Fragment set:html={fotoFondo(c)} />}
               <Bloques bloques={c.hijos || []} pagina={pagina} ref={c.pos?.w || 980} />
             </div>
           ))}

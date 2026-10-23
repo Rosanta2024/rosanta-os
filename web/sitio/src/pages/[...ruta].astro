@@ -3,6 +3,10 @@
 // llevan acento). El contenido sale de data/paginas/*.json (capturado de Wix).
 import Base from '../layouts/Base.astro';
 import Bloques from '../components/Bloques.astro';
+import PortadaV3 from '../components/v3/Portada.astro';
+import CartaV3 from '../components/v3/Carta.astro';
+import Video from '../components/v3/Video.astro';
+import { V3 } from '../config.mjs';
 import { paginasDelSitio, datos, promoverH1 } from '../lib/sitio.mjs';
 
 export function getStaticPaths() {
@@ -30,6 +34,22 @@ if ((datos().mejoras.promover_h1?.rutas || []).includes(pagina.ruta) && !pagina.
   recorrer(bloques);
 }
 ---
-<Base pagina={pagina}>
-  <Bloques bloques={bloques} pagina={pagina} />
-</Base>
+{V3 && (pagina.ruta === '/' || pagina.ruta === '/es') ? (
+  <Base pagina={pagina} sobreVideo><PortadaV3 pagina={pagina} /></Base>
+) : V3 && /\/full-menu$/.test(pagina.ruta) ? (
+  <Base pagina={pagina}><CartaV3 pagina={pagina} /></Base>
+) : V3 && /\/reservas$/.test(pagina.ruta) ? (
+  <Base pagina={pagina}>
+    <div class="v3-con-video">
+      <div class="v3-con-video-main"><Bloques bloques={bloques} pagina={pagina} /></div>
+      <aside class="v3-con-video-lado">
+        <Video clip={pagina.idioma === 'es' ? 'reserva-es' : 'portada'} clase="v3-video-vertical"
+          alt={pagina.idioma === 'es' ? 'Video: "Reserva tu mesa". Mesas, platos y la esquina de la Alameda Santa Rosa.' : 'Video: the volcano over Antigua, the entrance, the grill lit and a candlelit table.'} />
+      </aside>
+    </div>
+  </Base>
+) : (
+  <Base pagina={pagina}>
+    <Bloques bloques={bloques} pagina={pagina} />
+  </Base>
+)}

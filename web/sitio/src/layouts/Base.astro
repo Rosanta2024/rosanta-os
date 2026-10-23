@@ -4,11 +4,15 @@
 // Wix) y el encabezado y pie del sitio.
 import Encabezado from '../components/Encabezado.astro';
 import Pie from '../components/Pie.astro';
+import EncabezadoV3 from '../components/v3/Encabezado.astro';
+import PieV3 from '../components/v3/Pie.astro';
+import BarraV3 from '../components/v3/Barra.astro';
 import '../styles/sitio.css';
+import cssV3 from '../styles/v3.css?url';
 import { descripcion, robots, schema, imagenLocal, datos } from '../lib/sitio.mjs';
-import { PRUEBA, GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
+import { V3, PRUEBA, GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
 
-const { pagina } = Astro.props;
+const { pagina, sobreVideo = false } = Astro.props;
 const desc = descripcion(pagina);
 const rob = robots(pagina);
 const ld = schema(pagina);
@@ -39,10 +43,21 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
     {pagina.hreflang.map((h) => <link rel="alternate" href={h.href} hreflang={h.hreflang} />)}
     {Object.entries(og).map(([k, v]) => (k.startsWith('twitter:') ? <meta name={k} content={v} /> : <meta property={k} content={v} />))}
     <link rel="icon" href="/favicon.png" type="image/png" />
-    <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+    {V3 ? (
+      <>
+        <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="/fonts/Lato-400.woff2" as="font" type="font/woff2" crossorigin />
+        <meta name="theme-color" content="#4E6D5A" />
+        <link rel="stylesheet" href={cssV3} />
+      </>
+    ) : (
+      <>
+        <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+      </>
+    )}
     {ld.map((o) => <script type="application/ld+json" set:html={ldJson(o)} />)}
 
     <!-- Google Tag Manager (el mismo contenedor de hoy) -->
@@ -72,14 +87,15 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
       </script>
     )}
   </head>
-  <body data-idioma={pagina.idioma}>
+  <body data-idioma={pagina.idioma} class:list={[{ v3: V3, 'v3-sobre-video': V3 && sobreVideo }]}>
     {GTM_ID && <noscript><iframe src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`} height="0" width="0" style="display:none;visibility:hidden" title="GTM"></iframe></noscript>}
     <a class="saltar" data-paridad="ignorar" href="#contenido">{pagina.idioma === 'es' ? 'Ir al contenido' : 'Skip to Main Content'}</a>
-    <Encabezado pagina={pagina} />
+    {V3 ? <EncabezadoV3 pagina={pagina} sobreVideo={sobreVideo} /> : <Encabezado pagina={pagina} />}
     <main id="contenido">
       <slot />
     </main>
-    <Pie pagina={pagina} />
+    {V3 ? <><PieV3 pagina={pagina} /><BarraV3 pagina={pagina} /></> : <Pie pagina={pagina} />}
+    {V3 && <script is:inline src="/js/v3.js" defer></script>}
     <script is:inline>
       // Galería: flechas para avanzar y retroceder (sin JavaScript se desliza con el dedo o el trackpad).
       document.querySelectorAll('[data-galeria]').forEach(function(caja){

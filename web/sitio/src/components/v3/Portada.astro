@@ -1,0 +1,198 @@
+---
+// Portada v3, pensada primero para el teléfono. Cada sección termina en reservar (o en cotizar un evento).
+//  1 Portada: video vertical a pantalla completa + reserva rápida (día y personas) + ★ reseñas
+//  2 Manifiesto (Honest Greens): "Todo comienza en la tierra" + palabras grandes + fila de videos
+//  3 Nuevo en la carta: fotos reales de los platos nuevos + el video del menú nuevo
+//  4 Tres bloques de color a pantalla dividida: jardín (verde), fuego (carbón), barra (crema)
+//  5 La carta por categorías (carrusel con fotos)
+//  6 Experiencias: cena romántica, eventos, regalos
+//  7 Reseñas de Google · 8 Reserva · 9 Cómo llegar
+import Video from './Video.astro';
+import ResenasGoogle from '../ResenasGoogle.astro';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { textos, carta, horarios, RUTAS } from '../../lib/v3.mjs';
+import { WHATSAPP, WAZE } from '../../config.mjs';
+
+const { pagina } = Astro.props;
+const l = pagina.idioma === 'es' ? 'es' : 'en';
+const T = textos(l);
+const R = RUTAS[l];
+const f = path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'resenas.json');
+const resenas = existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null;
+const nuevos = carta(l).flatMap((p) => p.grupos.flatMap((g) => g.platos.map((x) => ({ ...x, tab: p.id })))).filter((x) => x.nuevo && x.foto);
+const diasVal = ['hoy', 'manana', 'sabado', 'otra'];
+const waGrupo = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(l === 'es' ? 'Hola, quiero reservar para un grupo de más de 10 personas.' : 'Hi, I would like to book for a group of more than 10.')}`;
+const maps = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala';
+---
+<!-- 1 · PORTADA -->
+<section class="v3-hero" aria-labelledby="v3-hero-t">
+  <Video clip="portada" alt={T.portada.video} prioridad clase="v3-hero-video" poster="/video/portada.webp" />
+  <div class="v3-hero-velo" aria-hidden="true"></div>
+  <div class="v3-hero-in">
+    <p class="v3-etiqueta">{T.portada.etiqueta}</p>
+    <h1 id="v3-hero-t" class="v3-peskia v3-hero-t">{T.portada.titulo}</h1>
+    <p class="v3-hero-bajada">{T.portada.bajada}</p>
+    <form class="v3-rapida" action={R.reservar} method="get">
+      <fieldset>
+        <legend class="v3-etiqueta">{T.portada.cuando}</legend>
+        <div class="v3-chips">
+          {T.portada.dias.map((d, i) => (
+            <label class="v3-chip"><input type="radio" name="dia" value={diasVal[i]} checked={i === 0} /><span>{d}</span></label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="v3-etiqueta">{T.portada.cuantos}</legend>
+        <div class="v3-chips">
+          {T.portada.personas.map((p) => (
+            <label class="v3-chip v3-chip-n"><input type="radio" name="personas" value={p === '5+' ? '5' : p} checked={p === '2'} /><span>{p}</span></label>
+          ))}
+        </div>
+      </fieldset>
+      <button type="submit" class="v3-boton v3-boton-crema">{T.portada.boton}</button>
+    </form>
+    {resenas?.promedio && (
+      <a class="v3-prueba" href="#v3-resenas"><span class="v3-estrella" aria-hidden="true">★</span> <b>{resenas.promedio.toFixed(1)}</b> · {resenas.total} {T.portada.resenas}</a>
+    )}
+  </div>
+</section>
+
+<!-- 2 · MANIFIESTO -->
+<section class="v3-manifiesto" aria-labelledby="v3-man-t">
+  <div class="v3-ancho v3-dividida">
+    <div class="v3-dividida-texto">
+      <p class="v3-etiqueta v3-verde">{T.manifiesto.etiqueta}</p>
+      <h2 id="v3-man-t" class="v3-peskia v3-titulo v3-verde">{T.manifiesto.titulo}</h2>
+      <p class="v3-palabras" aria-label={T.manifiesto.lineas.join(' ')}>{T.manifiesto.lineas.map((x) => <span aria-hidden="true">{x}</span>)}</p>
+      <p class="v3-texto">{T.manifiesto.texto}</p>
+      <a class="v3-boton v3-boton-verde" href={R.reservar}>{T.manifiesto.boton}</a>
+    </div>
+    <Video clip={T.manifiesto.video} alt={T.manifiesto.alt} clase="v3-video-vertical" />
+  </div>
+  <div class="v3-fila" role="group" aria-label={T.manifiesto.filaAlt}>
+    {T.manifiesto.fila.map((c) => <Video clip={c} clase="v3-fila-video" />)}
+  </div>
+</section>
+
+<!-- 3 · NUEVO EN LA CARTA -->
+<section class="v3-nuevos" aria-labelledby="v3-nue-t">
+  <div class="v3-ancho">
+    <p class="v3-etiqueta v3-lila">{T.nuevos.etiqueta}</p>
+    <h2 id="v3-nue-t" class="v3-peskia v3-titulo">{T.nuevos.titulo}</h2>
+  </div>
+  <ul class="v3-carrusel" role="list">
+    <li class="v3-tarjeta v3-tarjeta-video"><Video clip={T.nuevos.video} alt={T.nuevos.alt} clase="v3-tarjeta-media" /></li>
+    {nuevos.map((x) => (
+      <li class="v3-tarjeta">
+        <a href={`${R.carta}#${x.tab}`}>
+          <img class="v3-tarjeta-media" src={`/v3/platos/${x.foto}.webp`} alt={x.nombre} width="720" height="900" loading="lazy" decoding="async" />
+          <span class="v3-plato-linea"><span class="v3-plato-nombre">{x.nombre}</span><span class="v3-puntos" aria-hidden="true"></span><span class="v3-plato-precio">{x.precio || x.variantes.split(' · ')[0]}</span></span>
+          {x.etiquetas[0] && <span class="v3-plato-etq">{x.etiquetas[0]}</span>}
+        </a>
+      </li>
+    ))}
+  </ul>
+  <div class="v3-ancho v3-acciones">
+    <a class="v3-boton v3-boton-crema" href={R.reservar}>{T.reservarMesa}</a>
+    <a class="v3-boton v3-boton-linea" href={R.carta}>{T.nuevos.completa}</a>
+  </div>
+</section>
+
+<!-- 4 · TRES BLOQUES DE COLOR -->
+{T.bloques.map((b) => (
+  <section id={b.id === 'del-jardin' ? 'del-jardin-inicio' : b.id === 'del-fuego' ? 'del-fuego-inicio' : 'la-barra-inicio'} class:list={['v3-bloque', `v3-fondo-${b.fondo}`, `v3-video-${b.lado}`]} aria-labelledby={`t-${b.id}`}>
+    <Video clip={b.video} alt={b.alt} clase="v3-bloque-video" />
+    <div class="v3-bloque-texto">
+      <p class="v3-etiqueta">{b.etiqueta}</p>
+      <h2 id={`t-${b.id}`} class="v3-peskia v3-titulo">{b.titulo}</h2>
+      <p class="v3-entrada">{b.entrada}</p>
+      <p class="v3-texto">{b.texto}</p>
+      <p class="v3-acciones">
+        <a class="v3-boton v3-boton-principal" href={R.reservar}>{T.reservarMesa}</a>
+        <a class="v3-enlace" href={b.enlace.href}>{b.enlace.texto}</a>
+      </p>
+    </div>
+  </section>
+))}
+
+<!-- 5 · LA CARTA POR CATEGORÍAS -->
+<section class="v3-categorias" aria-labelledby="v3-cat-t">
+  <div class="v3-ancho">
+    <p class="v3-etiqueta v3-verde">{T.carta.etiqueta}</p>
+    <h2 id="v3-cat-t" class="v3-peskia v3-titulo v3-verde">{T.carta.titulo}</h2>
+  </div>
+  <ul class="v3-carrusel" role="list">
+    {T.carta.tarjetas.map((c) => (
+      <li class="v3-tarjeta v3-tarjeta-cat">
+        <a href={`${R.carta}#${c.id}`}>
+          <img class="v3-tarjeta-media" src={c.img} alt={c.alt} width="720" height="900" loading="lazy" decoding="async" />
+          <span class="v3-cat-nombre">{c.texto} <span aria-hidden="true">→</span></span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<!-- 6 · EXPERIENCIAS -->
+<section class="v3-experiencias" aria-labelledby="v3-exp-t">
+  <div class="v3-ancho">
+    <p class="v3-etiqueta">{T.experiencias.etiqueta}</p>
+    <h2 id="v3-exp-t" class="v3-peskia v3-titulo">{T.experiencias.titulo}</h2>
+    <p class="v3-entrada">{T.experiencias.entrada}</p>
+  </div>
+  <ul class="v3-carrusel" role="list">
+    {T.experiencias.tarjetas.map((c) => (
+      <li class="v3-tarjeta v3-tarjeta-exp">
+        {c.video ? <Video clip={c.video} alt={c.alt} clase="v3-tarjeta-media" /> : <img class="v3-tarjeta-media" src={c.foto} alt={c.alt} width="900" height="1125" loading="lazy" decoding="async" />}
+        <h3 class="v3-exp-t">{c.titulo}</h3>
+        <p>{c.texto}</p>
+        <a class="v3-enlace" href={c.href}>{c.cta}</a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<!-- 7 · RESEÑAS -->
+<section class="v3-resenas" id="v3-resenas" aria-labelledby="v3-res-t">
+  <div class="v3-ancho">
+    <p class="v3-etiqueta v3-verde" id="v3-res-t">{T.resenas.etiqueta}</p>
+    <ResenasGoogle idioma={l} />
+  </div>
+</section>
+
+<!-- 8 · RESERVA -->
+<section class="v3-reserva v3-fondo-negro" aria-labelledby="v3-rsv-t">
+  <div class="v3-ancho v3-dividida">
+    <Video clip={T.reserva.video} alt={T.reserva.alt} clase="v3-video-vertical" />
+    <div class="v3-dividida-texto">
+      <p class="v3-etiqueta v3-lila">{T.reserva.etiqueta}</p>
+      <h2 id="v3-rsv-t" class="v3-peskia v3-titulo">{T.reserva.titulo}</h2>
+      <p class="v3-texto">{T.reserva.texto}</p>
+      <a class="v3-boton v3-boton-crema" href={R.reservar}>{T.reserva.boton}</a>
+      <a class="v3-boton v3-boton-linea" href={waGrupo} target="_blank" rel="noopener">{T.reserva.grupos}</a>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · CÓMO LLEGAR -->
+<section class="v3-llegar" id="como-llegar" aria-labelledby="v3-lle-t">
+  <div class="v3-ancho v3-dividida">
+    <div class="v3-dividida-texto">
+      <p class="v3-etiqueta v3-verde">{T.llegar.etiqueta}</p>
+      <h2 id="v3-lle-t" class="v3-peskia v3-titulo v3-verde">{T.llegar.titulo}</h2>
+      <p class="v3-texto">{T.llegar.texto}</p>
+      <h3 class="v3-pie-h">{T.llegar.horarios}</h3>
+      <dl class="v3-horas">{horarios(l).map((h) => <><dt>{h.dias}</dt><dd>{h.horas}</dd></>)}</dl>
+      <p class="v3-acciones">
+        <a class="v3-boton v3-boton-verde" href={maps} target="_blank" rel="noopener">{T.llegar.maps}</a>
+        <a class="v3-boton v3-boton-linea-verde" href={WAZE} target="_blank" rel="noopener">Waze</a>
+      </p>
+    </div>
+    <div class="v3-llegar-medios">
+      <Video clip={T.llegar.video} alt={T.llegar.alt} clase="v3-video-vertical" />
+      <iframe class="v3-mapa" title={T.llegar.mapa} loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        src="https://maps.google.com/maps?q=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala&z=16&output=embed"></iframe>
+    </div>
+  </div>
+</section>

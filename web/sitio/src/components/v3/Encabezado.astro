@@ -1,0 +1,58 @@
+---
+// Encabezado v3 (Kaprica): mínimo y fijo. "Menú" a la izquierda, el logo al centro, idioma y "Reservar" a la derecha.
+// En la portada va transparente sobre el video y se vuelve sólido al bajar. El menú es una pantalla completa con
+// pocas opciones en letra grande y una franja inclinada de fotos.
+import Logo from './Logo.astro';
+import { textos, RUTAS } from '../../lib/v3.mjs';
+import { rutaOtroIdioma } from '../../lib/sitio.mjs';
+
+const { pagina, sobreVideo = false } = Astro.props;
+const l = pagina.idioma === 'es' ? 'es' : 'en';
+const T = textos(l);
+const otra = rutaOtroIdioma(pagina);
+const enRuta = l === 'en' ? pagina.ruta : otra;
+const esRuta = l === 'es' ? pagina.ruta : otra;
+const otraEtq = l === 'es' ? 'EN' : 'ES';
+---
+<header class:list={['v3-enc', { 'v3-enc-video': sobreVideo }]} data-v3enc>
+  <div class="v3-enc-in">
+    <a class="v3-enc-menu" href="#v3-pie-nav" data-v3abrir aria-controls="v3-menu" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h18M3 16h18"/></svg>
+      <span>{T.menu.abrir}</span>
+    </a>
+    <a class="v3-enc-logo" href={RUTAS[l].inicio}><Logo /></a>
+    <div class="v3-enc-der">
+      <a class="v3-enc-idioma" href={l === 'es' ? enRuta : esRuta} hreflang={l === 'es' ? 'en' : 'es'} lang={l === 'es' ? 'en' : 'es'} data-v3idioma={l === 'es' ? 'en' : 'es'}
+        aria-label={l === 'es' ? 'English version' : 'Versión en español'}>{otraEtq}</a>
+      <a class="v3-pildora" href={RUTAS[l].reservar}>{T.menu.reservar}</a>
+    </div>
+  </div>
+</header>
+<div class="v3-menu" id="v3-menu" hidden role="dialog" aria-modal="true" aria-label={T.menu.abrir}>
+  <div class="v3-menu-cab">
+    <button type="button" class="v3-enc-menu" data-v3cerrar>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      <span>{T.menu.cerrar}</span>
+    </button>
+    <a class="v3-enc-logo" href={RUTAS[l].inicio}><Logo /></a>
+    <span class="v3-menu-hueco"></span>
+  </div>
+  <nav class="v3-menu-nav" aria-label={l === 'es' ? 'Principal' : 'Main'}>
+    <ul class="v3-menu-grande">
+      {T.menu.principales.map((it) => <li><a href={it.href}>{it.texto}</a></li>)}
+    </ul>
+    <div class="v3-menu-franja" aria-hidden="true">
+      <div class="v3-menu-franja-in">
+        {[...T.menu.fotos, ...T.menu.fotos].map((f) => <img src={f} alt="" loading="lazy" decoding="async" width="180" height="225" />)}
+      </div>
+    </div>
+    <ul class="v3-menu-chico">
+      {T.menu.secundarios.map((it) => <li><a href={it.href}>{it.texto}</a></li>)}
+      <li class="v3-menu-idioma">
+        <a href={esRuta} hreflang="es" lang="es" data-v3idioma="es" aria-current={l === 'es' ? 'true' : undefined}>ES</a>
+        <span aria-hidden="true">·</span>
+        <a href={enRuta} hreflang="en" lang="en" data-v3idioma="en" aria-current={l === 'en' ? 'true' : undefined}>EN</a>
+      </li>
+    </ul>
+  </nav>
+</div>

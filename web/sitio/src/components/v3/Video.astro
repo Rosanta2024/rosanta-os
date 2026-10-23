@@ -1,0 +1,14 @@
+---
+// Video corto de Rosanta (public/video/<clip>.mp4 + .webm + póster .jpg). Sin sonido, en bucle.
+// No se descarga hasta que está cerca de la pantalla (data-src), salvo el de la portada (prioridad).
+// El script de Base.astro (v3) lo reproduce solo si se ve, y nunca si el teléfono pide ahorrar datos o menos movimiento.
+const { clip, alt = '', clase = '', prioridad = false, poster = null } = Astro.props;
+const p = poster || `/video/${clip}.jpg`;
+---
+<div class:list={['v3-video', clase]}>
+  <video muted playsinline loop preload="none" poster={p} data-v3video aria-label={alt || undefined} aria-hidden={alt ? undefined : 'true'} tabindex="-1" {...(prioridad ? { 'data-prioridad': '' } : {})}>
+    {prioridad
+      ? <><source src={`/video/${clip}.webm`} type="video/webm" /><source src={`/video/${clip}.mp4`} type="video/mp4" /></>
+      : <><source data-src={`/video/${clip}.webm`} type="video/webm" /><source data-src={`/video/${clip}.mp4`} type="video/mp4" /></>}
+  </video>
+</div>

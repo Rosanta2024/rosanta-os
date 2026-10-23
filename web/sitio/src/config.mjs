@@ -55,3 +55,9 @@ export const ENCUESTA_URL =
 
 export const WHATSAPP = '50230826935';
 export const WAZE = 'http://waze.com/ul/h9fx6z6tn9';
+
+/**
+ * Web v3 (rediseño visual, 24-oct): PUBLIC_V3=si construye la portada, la carta, el encabezado y el pie nuevos.
+ * Solo se usa en la prueba rosanta-web-v3-ensayo. Sin la variable, el sitio queda exactamente como está.
+ */
+export const V3 = env.PUBLIC_V3 === 'si';
