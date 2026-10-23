@@ -102,6 +102,15 @@ function crearAppWeb(deps) {
   if (ensayo) app.use((req, res, next) => { res.set('X-Robots-Tag', 'noindex, nofollow'); next(); });
   const extra = String(env.ORIGENES_EXTRA || '').split(',').map((x) => x.trim()).filter((x) => /^https:\/\/[a-z0-9.-]+$/.test(x));
   const { ORIGENES } = require('./reservas/rutas');
+  // Usuarios de PRACTICA (solo existen en la base de ensayo; correo @practica.invalid): dejan de entrar en PRACTICA_VENCE.
+  const venceMs = env.PRACTICA_VENCE ? Date.parse(env.PRACTICA_VENCE) : NaN;
+  const quien = async (req) => {
+    const tok = req.get('x-rosanta-u') || req.query.u;
+    if (!tok) return null;
+    const u = await require('./usuarios').usuarioPorToken(pool, tok);
+    if (u && /@practica\.invalid$/i.test(u.email) && (!ensayo || !(Date.now() < venceMs))) return null;
+    return u;
+  };
   const origenes = ORIGENES.concat(extra);
   app.get('/salud', (req, res) => res.json({ ok: true, servicio: ensayo ? 'rosanta-web (prueba)' : 'rosanta-web' }));
 
@@ -110,11 +119,11 @@ function crearAppWeb(deps) {
   const avisos = crearAvisos({ pool, canales,
     secretoEnlace: env.RESERVAS_ENLACE_SECRETO, baseEnlace: env.MI_RESERVA_BASE || 'https://www.rosanta.rest/r/',
     basePanel: env.PANEL_BASE || 'https://www.rosanta.rest/reservas/panel' });
-  const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho, origenes,
+  const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho, origenes, quien,
     crm: ganchoInterno(env, '/interno/web/crm-reserva', deps.fetch),
     capi: ganchoInterno(env, '/interno/web/capi', deps.fetch) });
   app.use('/api/reservas', rutasReservas);
-  app.use(crearRutasAvisos({ pool, avisos, motor: rutasReservas.motor, claveTareas: env.CLAVE_TAREAS,
+  app.use(crearRutasAvisos({ pool, avisos, motor: rutasReservas.motor, quien, claveTareas: env.CLAVE_TAREAS,
     resendWebhookSecreto: env.RESEND_WEBHOOK_SECRETO }));
 
   // ---- Contenido, gift cards (webhook de la pasarela con cuerpo crudo) y Adventures
