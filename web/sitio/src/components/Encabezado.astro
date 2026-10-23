@@ -31,7 +31,7 @@ const actual = (href) => href === pagina.ruta;
     <a class="idioma-link" href={idioma === 'es' ? enRuta : esRuta} hreflang={idioma === 'es' ? 'en' : 'es'} lang={idioma === 'es' ? 'en' : 'es'}
       data-paridad="ignorar" aria-label={idioma === 'es' ? 'English version' : 'Versión en español'}>{idioma === 'es' ? 'EN' : 'ES'}</a>
     <input type="checkbox" id="menu-abrir" class="menu-abrir" aria-hidden="true" tabindex="-1" />
-    <label for="menu-abrir" class="menu-boton" aria-label={idioma === 'es' ? 'Menú' : 'Menu'}><span></span><span></span><span></span></label>
+    <label for="menu-abrir" class="menu-boton"><span class="visualmente-oculto">{idioma === 'es' ? 'Menú' : 'Menu'}</span><span></span><span></span><span></span></label>
     <nav class="menu" aria-label={idioma === 'es' ? 'Principal' : 'Main'}>
       <ul>
         {nav.principales.map((it) => (

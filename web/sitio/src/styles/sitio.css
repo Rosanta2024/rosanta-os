@@ -570,3 +570,8 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .p404-links a:not(.boton) { color: var(--verde); padding: 6px 0; }
 .p404-cta { border-radius: 30px; }
 @media (max-width: 640px) { .p404-cols { grid-template-columns: 1fr; gap: 36px; } }
+
+/* Contraste del bloque de contacto (Lighthouse) */
+.contacto-col h3 { color: #e6f3ec; }
+.contacto dt { color: rgba(255,255,255,.9); }
+.menu-boton .visualmente-oculto { height: 1px; }
