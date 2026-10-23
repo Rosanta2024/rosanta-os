@@ -154,13 +154,13 @@ Asunto: A table opened up · {fecha_corta} {hora}
 [si nombre] Hi {nombre},
 [no nombre] Hi,
 
-You were on our waitlist and a table just opened up:
+You joined the waitlist and a table just opened up:
 
 Date: {fecha}
 Time: {hora}
 Table for: {personas}
 
-We can't hold it for you: it goes to whoever books first. If it still works for you, book it here:
+This table is not being held for you: it goes to whoever books first. If it still works for you, book it here:
 
 [boton Book this table] {enlace_reservar}
 

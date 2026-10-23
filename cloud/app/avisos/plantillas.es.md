@@ -165,13 +165,13 @@ Asunto: Se liberó una mesa · {fecha_corta} {hora}
 [si nombre] Hola {nombre},
 [no nombre] Hola,
 
-Estabas en nuestra lista de espera y se liberó una mesa:
+Te anotaste en la lista de espera y se liberó una mesa:
 
 Fecha: {fecha}
 Hora: {hora}
 Mesa para: {personas}
 
-No te la podemos apartar: es de quien reserve primero. Si todavía te sirve, resérvala aquí:
+Esta mesa no queda apartada a tu nombre: es de quien reserve primero. Si todavía te sirve, resérvala aquí:
 
 [boton Reservar esta mesa] {enlace_reservar}
 
