@@ -445,6 +445,23 @@ function leerCorreosDelDia() {
 
 var VIG_REINTENTO_H_ = 3;
 
+/*
+ * UNA VEZ AL DIA, DESDE SU HORA (23-oct-2026). Las tareas de la mañana iban con "hora === 10": si la vuelta de esa
+ * hora no corria (el activador horario no garantiza una vuelta por hora de reloj) o se cortaba a los 6 min, la tarea
+ * se perdia hasta el dia siguiente y Procesos avisaba "no corre desde hace 37 h" (Latido de canales el 21-oct, cierres
+ * de PosFile el 22-oct). Ahora corre en la PRIMERA vuelta desde su hora que todavia no la hizo hoy, hasta
+ * VIG_REINTENTO_H_ horas tarde, y queda hecha (Propiedad VIG_DIARIO_<clave> = fecha) solo cuando termina.
+ */
+function _vigTocaDiario_(clave, horaDesde, hoy) {
+  var h = hoy.getHours();
+  if (h < horaDesde || h - horaDesde > VIG_REINTENTO_H_) return false;
+  try { return PropertiesService.getScriptProperties().getProperty('VIG_DIARIO_' + clave) !== Utilities.formatDate(hoy, VIG_TZ_, 'yyyy-MM-dd'); }
+  catch (e) { return h === horaDesde; }   // sin Propiedades: como antes
+}
+function _vigHechoDiario_(clave, hoy) {
+  try { PropertiesService.getScriptProperties().setProperty('VIG_DIARIO_' + clave, Utilities.formatDate(hoy, VIG_TZ_, 'yyyy-MM-dd')); } catch (e) { /* se repite la proxima vuelta */ }
+}
+
 function vigiaCadaHora() {
   soloDueno_();
   procMarcar_('vigia');   // Procesos.js: "el vigia corrio" (14-oct-2026)
@@ -464,18 +481,28 @@ function vigiaCadaHora() {
   var toca = destinos.filter(function (x) { return x.hora <= hora && hora - x.hora <= VIG_REINTENTO_H_ && _vigTocaHoy_(x.dias, dia) && !ya[x.nombre]; });
   // A las 10:00, los correos del dia (Juanma, 13-oct-2026): el cierre de PosFile de anoche y
   // las facturas del FEL que avisa SAT. Va colgado de este disparador, que ya corre cada hora.
-  if (hora === 10) { try { Logger.log(JSON.stringify(leerCorreosDelDia_())); } catch (eD) { Logger.log('Correos del dia: ' + eD); } }
+  if (_vigTocaDiario_('correos', 10, hoy)) { try { Logger.log(JSON.stringify(leerCorreosDelDia_())); _vigHechoDiario_('correos', hoy); } catch (eD) { Logger.log('Correos del dia: ' + eD); } }
   // Latido de reservas web (15-oct-2026): antes era una tarea de la Mac que dejo de correr 18 dias
-  if (hora === 8 || hora === 14) { try { Logger.log(rlatRevisar_()); } catch (eL) { Logger.log('Latido reservas: ' + eL); procMarcar_('reservasWeb', eL); } }
+  ['8', '14'].forEach(function (h) {
+    if (!_vigTocaDiario_('reservas' + h, +h, hoy) || (h === '8' && hora >= 14)) return;
+    try { Logger.log(rlatRevisar_()); _vigHechoDiario_('reservas' + h, hoy); } catch (eL) { Logger.log('Latido reservas: ' + eL); procMarcar_('reservasWeb', eL); }
+  });
   // Latido de canales del bot (16-oct-2026): Instagram calló 11 días (26-sep → 7-oct) sin que nadie lo notara
-  if (hora === 9) { try { Logger.log(clatRevisar_()); } catch (eK) { Logger.log('Latido canales: ' + eK); procMarcar_('canales', eK); } }
+  if (_vigTocaDiario_('canales', 9, hoy)) { try { Logger.log(clatRevisar_()); _vigHechoDiario_('canales', hoy); } catch (eK) { Logger.log('Latido canales: ' + eK); procMarcar_('canales', eK); } }
   // Caja en el servidor nuevo (motor_caja = base, 18-oct-2026): nadie abre la Caja chica de aca, y era abrirla lo
   // que reescribia 07_Caja_Chica del maestro (de ahi sale el DRE). Ahora la regenera el vigia cada hora,
   // desde CAJA_CHICA, que el servidor nuevo mantiene al dia.
   if (cajaMotor_() === 'base') { try { cchEstado_(true); procMarcar_('cajaMaestro'); } catch (eC) { Logger.log('07_Caja_Chica: ' + eC); procMarcar_('cajaMaestro', eC); } }
   // Informe mensual del embudo de eventos (16-oct-2026): el dia 3, de 9:00 a 12:00, una vez por mes
   if (hora >= 9 && hora <= 12) { try { Logger.log(evmCadaHora_(hoy)); } catch (eE) { Logger.log('Informe de eventos: ' + eE); procMarcar_('eventosMes', eE); } }
-  if (hora === 6 || hora === 7) { try { cieLeer_(7); } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ } }
+  // La lectura de las 6 y las 7 TAMBIEN deja la marca de Procesos (23-oct-2026): es la que trae el cierre de anoche
+  // casi siempre, y sin marca Procesos avisaba "no corre" cuando solo faltaba la vuelta de las 10.
+  if (hora === 6 || hora === 7) {
+    try {
+      var c67 = cieLeer_(7), e67 = ((c67 && c67.errores) || []).filter(function (x) { return !/en curso/.test(x); });
+      if (!e67.length) procMarcar_('cierres');
+    } catch (eC) { /* sin Gmail: sigue con la carga del lunes */ }
+  }
   if (!toca.length && hora !== 6) return 'Nadie le toca a las ' + hora + ':00.';
   var ctx = _vigContexto_(hoy), reglas = vigiaReglas_(ctx);
   if (hora === 6 || hora === 7) { _vigSugerir_(reglas.sugerencias); ctx.acciones = medAcciones_(null); }

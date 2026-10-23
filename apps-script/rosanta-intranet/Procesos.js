@@ -28,7 +28,7 @@ var PROCESOS = {
   puente:    { nombre: 'Puente del reporte semanal',             max_h: 0,  racha_h: 3 },
   correo:    { nombre: 'Reporte semanal por correo (martes)',    max_h: 0,  racha_h: 3 },
   ventas:    { nombre: 'Carga de ventas del POS',                max_h: 0,  racha_h: 3 },
-  cierres:   { nombre: 'Lectura de cierres de PosFile (10:00)',  max_h: 30, racha_h: 24 },
+  cierres:   { nombre: 'Lectura de cierres de PosFile (6:00 y 10:00)', max_h: 30, racha_h: 24 },
   fel:       { nombre: 'Avisos de factura de SAT por correo',    max_h: 0,  racha_h: 6 },
   reservasWeb: { nombre: 'Latido de reservas web (8:00 y 14:00)', max_h: 30, racha_h: 6 },
   canales:   { nombre: 'Latido de canales del bot (9:00)',       max_h: 30, racha_h: 24 },
