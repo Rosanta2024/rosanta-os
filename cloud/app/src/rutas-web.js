@@ -23,6 +23,17 @@ const P = require('./permisos');
 const { conciliarPagosLinea } = require('./conciliar-pagos-linea');
 const pantallas = require('./pantallas-web');
 
+/** Juanma (23-oct): las entradas del blog con fecha futura quedan ocultas hasta su fecha (hora de Guatemala).
+ *  La version guardada no cambia: se filtra al servirla; el sitio se reconstruye cada dia para que aparezcan. */
+function hoyGuatemala(ms) { return new Date((ms == null ? Date.now() : ms) - 6 * 3600000).toISOString().slice(0, 10); }
+function sinBlogFuturo(c, hoy) {
+  if (!c || !Array.isArray(c.blog)) return c;
+  const blog = c.blog.filter((b) => !b.fecha || String(b.fecha).slice(0, 10) <= hoy);
+  const out = Object.assign({}, c);
+  if (blog.length) out.blog = blog; else delete out.blog;
+  return out;
+}
+
 function guardarCuerpoCrudo(req, res, buf) { if (buf && buf.length) req.cuerpoCrudo = Buffer.from(buf); }
 
 function iguales(a, b) {
@@ -71,7 +82,7 @@ function crearRutasContenidoWeb(deps) {
     const c = await C.publicado(req.query.version);
     if (!c) { const e = new Error('Todavía no hay nada publicado.'); e.status = 404; throw e; }
     res.set('Cache-Control', 'public, max-age=60');
-    return c;
+    return sinBlogFuturo(c, hoyGuatemala());
   }));
 
   r.get('/api/web/borrador', exigirUsuario, responder((req) => C.borrador(req.usuario)));
@@ -212,4 +223,4 @@ function crearRutasAdventures(deps) {
   return r;
 }
 
-module.exports = { crearRutasContenidoWeb, crearRutasGiftcards, crearRutasAdventures, guardarCuerpoCrudo };
+module.exports = { sinBlogFuturo, hoyGuatemala, crearRutasContenidoWeb, crearRutasGiftcards, crearRutasAdventures, guardarCuerpoCrudo };

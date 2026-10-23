@@ -29,6 +29,7 @@ async function armar(contenido, matriz) {
   const C = W.crearContenidoWeb({ almacen, matriz: matriz || M, fotos: AD.fotosDoble(), reconstruir });
   return { almacen, C, reconstruir };
 }
+const RW = require('../src/rutas-web');
 const ENTRADA = { slug: 'que-comer-en-antigua', fecha: '2026-11-10', titulo_es: 'Qué comer en Antigua', titulo_en: 'What to eat in Antigua' };
 
 test('Blog: sin entradas la llave "blog" no existe y la huella es la de siempre; con una entrada activa, sale en el formato 1', async () => {
@@ -195,7 +196,9 @@ test('Editor solo para Juanma: cada ruta de edicion y publicacion rechaza a paut
     assert.strictEqual((await s.pedir('GET', '/api/web/contenido')).status, 404, 'nada publicado todavia');
     assert.strictEqual((await s.pedir('POST', '/api/web/publicar', 'tok-juanma', { nota: 'blog' })).body.version, 1);
     const pub = await s.pedir('GET', '/api/web/contenido');
-    assert.strictEqual(pub.body.blog[0].titulo.en, ENTRADA.titulo_en);
+    // la entrada tiene fecha futura (10-nov): publicada, pero oculta en lo publico hasta su fecha (Juanma, 23-oct)
+    if (ENTRADA.fecha > RW.hoyGuatemala()) assert.strictEqual(pub.body.blog, undefined);
+    else assert.strictEqual(pub.body.blog[0].titulo.en, ENTRADA.titulo_en);
     // las pantallas son HTML sin datos: los datos solo salen por la API con el enlace
     const pv = await s.pedir('GET', '/contenido-web/vista-previa?u=tok-vanessa');
     assert.strictEqual(pv.status, 200);
@@ -212,4 +215,13 @@ test('La vista previa trae el conversor de markdown y pinta el blog (JS valido)'
   assert.match(js, /PG==="blog"/);
   // el mismo codigo que se prueba arriba es el que corre en la pagina
   assert.ok(js.includes('var markdownAHtml=' + W.markdownAHtml.toString() + ';'));
+});
+
+test('blog: las entradas con fecha futura quedan ocultas hasta su fecha (Juanma, 23-oct)', () => {
+  const RW = require('../src/rutas-web');
+  const c = { formato: 1, blog: [{ slug: 'manana', fecha: '2026-11-10' }, { slug: 'hoy', fecha: '2026-11-03' }, { slug: 'ayer', fecha: '2026-11-02' }] };
+  assert.deepStrictEqual(RW.sinBlogFuturo(c, '2026-11-03').blog.map((b) => b.slug), ['hoy', 'ayer']);
+  assert.strictEqual(RW.sinBlogFuturo({ formato: 1, blog: [{ slug: 'x', fecha: '2027-01-01' }] }, '2026-11-03').blog, undefined);
+  assert.strictEqual(c.blog.length, 3, 'la version guardada no cambia');
+  assert.strictEqual(RW.hoyGuatemala(Date.parse('2026-11-04T05:00:00Z')), '2026-11-03');   // 23:00 del 3 en Guatemala
 });
