@@ -67,6 +67,13 @@ function cargarDeMigracion(archivo) {
           permisos.push(Object.fromEntries(cols.map((c, i) => [c, vals[i]])));
         });
       }
+      const insD = s2.match(/INSERT INTO acciones_solo_dueno \(([^)]*)\) VALUES([\s\S]*?\))\s*;/);
+      if (insD) {
+        [...insD[2].matchAll(/\(([^()]*)\)/g)].forEach((t) => {
+          const vals = [...t[1].matchAll(/'((?:[^']|'')*)'/g)].map((v) => v[1]);
+          soloDueno.push({ accion: vals[0], detalle: vals[1] });
+        });
+      }
       if (/\b(ALTER|DROP|TRUNCATE)\b/i.test(s2)) throw new Error(f + ' trae una sentencia que este lector no sabe aplicar.');
     });
   }

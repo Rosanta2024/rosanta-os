@@ -18,7 +18,8 @@ const MATRIZ = {
   eventos: 'T - I -', crm: 'T - V V', reservas: 'T V T V', carritos: 'T - - V',
   resenas: 'T - - -', consola: 'T - - -',
   pauta: 'T - - I',
-  tecnico: 'T - - -'
+  tecnico: 'T - - -',
+  web: 'T - - -', giftcards: 'T - I -'   // 025 (ensayo hasta el 31-oct)
 };
 const NIVEL = { T: 'todo', I: 'ingresar', V: 'ver' };
 
@@ -115,4 +116,17 @@ test('Sala maneja cualquier reserva; cocina solo ve (Juanma, 20-oct)', () => {
   assert.ok(!ok(P.puede(M, jeffry, 'reservas', 'ingresar')), 'cocina no toca reservas');
   assert.ok(!ok(P.puede(M, maco, 'pagos', 'corregir', { area: 'barra', escrito_por: 'Juanma' })), 'la excepcion es SOLO de reservas');
   assert.ok(!ok(P.puede(M, maco, 'reservas', 'corregir_dia_cerrado')), 'dia cerrado sigue siendo del dueño');
+});
+
+test('Web y gift cards (025): la web solo el dueño; sala canjea y deshace SU canje', () => {
+  assert.ok(ok(P.puede(M, juanma, 'web', 'corregir')));
+  for (const u of [jeffry, maco, vanessa]) assert.ok(!ok(P.puede(M, u, 'web', 'ver')), u.nombre + ' no ve la web');
+  assert.ok(ok(P.puede(M, maco, 'giftcards', 'ingresar')), 'sala canjea');
+  assert.ok(ok(P.puede(M, maco, 'giftcards', 'corregir', { escrito_por: 'Maco' })), 'deshace su canje');
+  assert.ok(!ok(P.puede(M, maco, 'giftcards', 'corregir', { escrito_por: 'Juanma' })), 'no deshace un canje ajeno');
+  for (const a of ['publicar_web', 'anular_giftcard']) {
+    assert.ok(ok(P.puede(M, juanma, 'web', a)), 'dueño ' + a);
+    assert.ok(!ok(P.puede(M, maco, 'giftcards', a)), 'sala no ' + a);
+  }
+  assert.ok(!ok(P.puede(M, jeffry, 'giftcards', 'ver')), 'cocina no ve gift cards');
 });
