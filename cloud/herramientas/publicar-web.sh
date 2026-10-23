@@ -27,7 +27,7 @@ case "$DESTINO" in
   *) echo "Uso: $0 prueba|sv|produccion"; exit 1 ;;
 esac
 cd "$SITIO"
-echo "1/5 reseñas"; npm run resenas
+echo "1/5 reseñas"; npm run resenas   # cambia data/resenas.json: hacer commit despues de publicar (si no, frena el merge de otras ramas)
 # Las pruebas del sitio van sobre la construccion normal (la de produccion: con medicion); la de prueba se construye despues.
 echo "2/5 pruebas del sitio (construccion normal)"; npm run build && npm test
 if [ "$DESTINO" = "sv" ]; then npm run probar-sv; fi
