@@ -38,7 +38,7 @@ const ALERGENOS = {
   altramuces: { es: 'Altramuces', en: 'Lupin' }, moluscos: { es: 'Moluscos', en: 'Molluscs' }
 };
 const ETIQUETAS = {
-  vegetariano: { es: 'Vegetariano', en: 'Vegetarian' }, vegano: { es: 'Vegano', en: 'Vegan' }, sin_gluten: { es: 'Sin gluten', en: 'Gluten free' },
+  vegetariano: { es: 'Vegetariano', en: 'Vegetarian' }, opcion_vegana: { es: 'Opción vegana', en: 'Vegan option' }, vegano: { es: 'Vegano', en: 'Vegan' }, sin_gluten: { es: 'Sin gluten', en: 'Gluten free' },
   picante: { es: 'Picante', en: 'Spicy' }, de_la_casa: { es: 'De la casa', en: 'House favorite' }
 };
 
