@@ -45,6 +45,11 @@ function oscuro(b) {
   if (!v) return false;
   return (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 < 0.45;
 }
+/** Proporción de las fotos de una galería (la más común): todas se ven completas y del mismo tamaño. */
+function proporcion(ims) {
+  const l = ims.map((i) => imagenLocal(i.medio)).filter(Boolean).map((i) => i.ancho / i.alto).sort((a, b) => a - b);
+  return l.length ? (Math.round(l[Math.floor(l.length / 2)] * 1000) / 1000) : 0.75;
+}
 const r4 = (n) => Math.round(n * 10000) / 10000;
 /** Variables CSS con la posición de Wix (las usa .malla > .pos en sitio.css):
  *  --base: ancho de la caja centrada de Wix (calc((100% - base) * 0.5)); --x: "left"; --w: ancho. */
@@ -125,7 +130,7 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
         : <div id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} aria-hidden="true" set:html={b.svg} />;
     case 'galeria':
       return (
-        <div class:list={['galeria-caja', conPos(b)]} style={pos(b)} data-galeria>
+        <div class:list={['galeria-caja', conPos(b)]} style={[pos(b), `--ar:${proporcion(b.imagenes)}`].filter(Boolean).join(';')} data-galeria>
           <div id={b.id} class="galeria" role="list" tabindex="0" aria-label={idioma === 'es' ? 'Galería de fotos' : 'Photo gallery'}>
             {b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} idioma={idioma} /></div>)}
           </div>

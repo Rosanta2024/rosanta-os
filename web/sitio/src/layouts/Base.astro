@@ -85,7 +85,7 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
       document.querySelectorAll('[data-galeria]').forEach(function(caja){
         var g=caja.querySelector('.galeria'), ant=caja.querySelector('.galeria-ant'), sig=caja.querySelector('.galeria-sig');
         if(!g||!ant||!sig) return;
-        function paso(){ var f=g.firstElementChild; return f ? f.getBoundingClientRect().width + 6 : g.clientWidth*0.8; }
+        function paso(){ var f=g.firstElementChild; return f ? f.getBoundingClientRect().width + (parseFloat(getComputedStyle(g).columnGap) || 0) : g.clientWidth*0.8; }
         function estado(){ ant.disabled = g.scrollLeft < 4; sig.disabled = g.scrollLeft + g.clientWidth >= g.scrollWidth - 4; }
         ant.hidden=false; sig.hidden=false;
         ant.addEventListener('click',function(){ g.scrollBy({left:-paso(),behavior:'smooth'}); });
