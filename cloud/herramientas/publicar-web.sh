@@ -28,9 +28,10 @@ case "$DESTINO" in
 esac
 cd "$SITIO"
 echo "1/5 reseñas"; npm run resenas
-echo "2/5 construir ($VARS)"; env $VARS npm run build
-echo "3/5 pruebas del sitio"
-if [ "$DESTINO" = "sv" ]; then npm run probar-sv; env $VARS npm run build; else npm test; fi
+# Las pruebas del sitio van sobre la construccion normal (la de produccion: con medicion); la de prueba se construye despues.
+echo "2/5 pruebas del sitio (construccion normal)"; npm run build && npm test
+if [ "$DESTINO" = "sv" ]; then npm run probar-sv; fi
+echo "3/5 construir para $DESTINO ($VARS)"; env $VARS npm run build
 if [ "$DESTINO" = "produccion" ]; then
   rm -rf "$APP/sitio-prueba"
   echo "4/5 produccion: el sitio (web/sitio/dist) se publica en Firebase Hosting aparte (guion del 30-oct)"
