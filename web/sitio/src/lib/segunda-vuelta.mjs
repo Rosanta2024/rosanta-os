@@ -40,7 +40,8 @@ export function contenido() {
   } else {
     c = JSON.parse(readFileSync(path.join(RAIZ, '..', 'contenido', 'ejemplo-contenido.json'), 'utf8'));
     const blog = path.join(RAIZ, 'data', 'blog-ejemplo.json');
-    if (existsSync(blog) && !c.blog) c.blog = JSON.parse(readFileSync(blog, 'utf8')).blog;
+    // Sin contenido publicado, el blog de prueba es el de data/blog-ejemplo.json (datos de verdad), no el del ejemplo de formato
+    if (existsSync(blog)) c.blog = JSON.parse(readFileSync(blog, 'utf8')).blog;
   }
   if (c.formato !== 1) throw new Error(`contenido: formato ${c.formato} desconocido (el sitio lee el formato 1)`);
   _contenido = c;
