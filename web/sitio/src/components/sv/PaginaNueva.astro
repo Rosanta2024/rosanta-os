@@ -1,0 +1,15 @@
+---
+// Las páginas nuevas de la segunda vuelta (Adventures y blog) con la plantilla de siempre (Base.astro).
+import Base from '../../layouts/Base.astro';
+import Adventures from './Adventures.astro';
+import Experiencia from './Experiencia.astro';
+import Blog from './Blog.astro';
+import Entrada from './Entrada.astro';
+const { pagina } = Astro.props;
+---
+<Base pagina={pagina}>
+  {pagina.tipo === 'adventures' && <Adventures pagina={pagina} />}
+  {pagina.tipo === 'experiencia' && <Experiencia pagina={pagina} />}
+  {pagina.tipo === 'blog' && <Blog pagina={pagina} />}
+  {pagina.tipo === 'entrada' && <Entrada pagina={pagina} />}
+</Base>

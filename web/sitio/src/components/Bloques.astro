@@ -11,6 +11,8 @@ import FormularioCotizacion from './FormularioCotizacion.astro';
 import ResenasGoogle from './ResenasGoogle.astro';
 import Faq from './Faq.astro';
 import Privacidad from './Privacidad.astro';
+import GiftCard from './sv/GiftCard.astro';
+import { SEGUNDA_VUELTA } from '../lib/segunda-vuelta.mjs';
 import { htmlResponsivo, hrefMenu, imagenLocal } from '../lib/sitio.mjs';
 import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP } from '../config.mjs';
 
@@ -129,6 +131,8 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       );
     case 'widget': {
       const esGift = /gift-card$/.test(pagina.ruta);
+      // Segunda vuelta: la gift card nueva en lugar del widget de Wix Gift Cards.
+      if (esGift && SEGUNDA_VUELTA) return <GiftCard pagina={pagina} />;
       return (
         <div id={b.id} class:list={['widget', { 'widget-gift': esGift, 'visualmente-oculto': b.oculto }, conPos(b)]} style={pos(b)}>
           <Fragment set:html={imagenesLocales(b.html)} />

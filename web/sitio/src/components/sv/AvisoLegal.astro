@@ -1,0 +1,27 @@
+---
+// Aviso legal de Rosanta Adventures ("la opera un tercero"). El texto base es del estudio 3.9 y lo arma la nube
+// (adventures.js → aviso_legal). Hasta que el abogado lo apruebe va marcado como PENDIENTE DE REVISIÓN DEL ABOGADO;
+// con PUBLIC_AVISO_ABOGADO_OK=si la marca desaparece.
+//   <AvisoLegal banner idioma />          → franja arriba de la página
+//   <AvisoLegal idioma texto />           → el aviso
+import { AVISO_ABOGADO_OK } from '../../lib/segunda-vuelta.mjs';
+const { idioma = 'en', texto = '', banner = false } = Astro.props;
+const es = idioma === 'es';
+const marca = 'PENDIENTE DE REVISIÓN DEL ABOGADO';
+---
+{banner ? (
+  !AVISO_ABOGADO_OK && (
+    <div class="sv-banner"><p class="banner-pendiente" data-aviso-pendiente role="note" style="margin:0">
+      {es ? 'Versión de prueba · El aviso legal de esta sección está ' : 'Test version · The legal notice in this section is '}{marca}{es ? '.' : ' (pending lawyer review).'}
+    </p></div>
+  )
+) : (
+  <div class="aviso-legal" data-aviso-legal>
+    <strong>{es ? 'Aviso legal' : 'Legal notice'}</strong>
+    {!AVISO_ABOGADO_OK && <> <span class="pendiente">{marca}</span></>}
+    {texto && <p>{texto}</p>}
+    {!texto && <p>{es
+      ? 'Cada experiencia la organiza y opera un operador independiente. Rosanta solo la recomienda y no es responsable de su ejecución, seguridad ni cobro.'
+      : 'Each experience is organized and operated by an independent operator. Rosanta only recommends it and is not responsible for its operation, safety or payment.'}</p>}
+  </div>
+)}

@@ -2,6 +2,7 @@
 // Encabezado de Wix: logo, selector EN | ES y el menú (con las mismas entradas y anclas).
 // En el teléfono el menú se abre con una casilla (CSS): funciona sin JavaScript.
 import { datos, hrefMenu, rutaOtroIdioma } from '../lib/sitio.mjs';
+import { enlacesMenu } from '../lib/segunda-vuelta.mjs';
 
 const { pagina } = Astro.props;
 const idioma = pagina.idioma;
@@ -23,6 +24,12 @@ for (const it of menu?.items || []) {
   const e = { texto: it.texto, href: hrefMenu(it, idioma), externo: /^https?:/.test(it.href || ''), sub: [] };
   if (!it.idli && items.length) items[items.length - 1].sub.push(e);
   else items.push(e);
+}
+// Segunda vuelta: ADVENTURES y BLOG después de GIFT IDEAS (sin el interruptor, la lista queda vacía).
+const nuevos = enlacesMenu(idioma);
+if (nuevos.length) {
+  const i = items.findIndex((x) => /\/gift-ideas$/.test(x.href || ''));
+  items.splice(i === -1 ? items.length : i + 1, 0, ...nuevos);
 }
 const inicio = idioma === 'es' ? '/es' : '/';
 const otra = rutaOtroIdioma(pagina);

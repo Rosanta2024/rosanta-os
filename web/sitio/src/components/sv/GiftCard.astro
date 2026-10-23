@@ -1,0 +1,101 @@
+---
+// /gift-card y /es/gift-card con la segunda vuelta (PUBLIC_SEGUNDA_VUELTA=si).
+// Montos Q300 y Q500 (con su referencia en US$) y uno libre desde Q200; vencen a los 12 meses.
+// Con los cobros en pausa (estudio 8.0) no hay pago en línea: "Escríbenos" por WhatsApp o correo,
+// con el mensaje ya escrito con el monto elegido. Sin JavaScript, los enlaces salen con el primer monto.
+import EstilosSV from './EstilosSV.astro';
+import { giftcards, mensajeGift, CORREO, WHATSAPP_TEXTO } from '../../lib/segunda-vuelta.mjs';
+import { imagenLocal } from '../../lib/sitio.mjs';
+import { WHATSAPP, GIFTCARD_URL } from '../../config.mjs';
+
+const { pagina } = Astro.props;
+const idioma = pagina.idioma;
+const es = idioma === 'es';
+const g = giftcards();
+const primero = g.montos[0];
+const wa = (q, usd) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensajeGift(idioma, q, usd))}`;
+const asunto = es ? 'Tarjeta de regalo de Rosanta' : 'Rosanta gift card';
+const mail = (q, usd) => `mailto:${CORREO}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(mensajeGift(idioma, q, usd))}`;
+const img = imagenLocal('e90a2a_c3de803545f340df9dd4aa88a72e0718~mv2.png');
+const T = es
+  ? { h1: 'Tarjeta de regalo', bajada: 'Regala una mesa en el jardín. Quien la recibe elige el día, la cocina de temporada y los cocteles.',
+      elegir: 'Elige el monto', otro: 'Otro monto', desde: `desde Q${g.minimo_q}`, ref: 'referencia',
+      como: 'Cómo se compra', pasos: ['Elige el monto.', 'Escríbenos por WhatsApp o por correo: el mensaje ya va escrito.', 'Te respondemos con la forma de pago y te mandamos la tarjeta.'],
+      pausa: 'Por ahora no cobramos en línea: la compra se cierra por WhatsApp o correo.',
+      vence: `La tarjeta vence ${g.vigencia_meses} meses después de emitida y se usa en el restaurante, 1a Calle Oriente 15, Antigua Guatemala.`,
+      btnWa: 'Escríbenos por WhatsApp', btnMail: 'Escríbenos por correo', minimo: `El monto mínimo es Q${g.minimo_q}.`, comprar: 'Comprar en línea' }
+  : { h1: 'Gift card', bajada: 'Give a table in the garden. Whoever gets it picks the day, the seasonal cooking and the cocktails.',
+      elegir: 'Choose the amount', otro: 'Another amount', desde: `from Q${g.minimo_q}`, ref: 'approx.',
+      como: 'How to buy it', pasos: ['Choose the amount.', 'Write to us on WhatsApp or by email: the message is already written.', 'We reply with how to pay and send you the gift card.'],
+      pausa: 'We are not taking online payments yet: the purchase is closed on WhatsApp or by email.',
+      vence: `The gift card is valid for ${g.vigencia_meses} months from the date it is issued and is used at the restaurant, 1a Calle Oriente 15, Antigua Guatemala.`,
+      btnWa: 'Write to us on WhatsApp', btnMail: 'Write to us by email', minimo: `The minimum amount is Q${g.minimo_q}.`, comprar: 'Buy online' };
+const datos = { idioma, numero: WHATSAPP, correo: CORREO, asunto, minimo: g.minimo_q, maximo: g.maximo_q, tc: g.tipo_cambio, textoMinimo: T.minimo };
+---
+<EstilosSV />
+<div class="sv gift" data-gift>
+  {img && <img class="gift-img" src={img.archivo} alt={es ? 'Tarjeta de regalo de Rosanta' : 'Rosanta gift card'} width={img.ancho} height={img.alto} loading="eager" decoding="async" />}
+  <h1>{T.h1}</h1>
+  <p class="bajada">{T.bajada}</p>
+
+  <form onsubmit="return false" novalidate>
+    <fieldset class="montos">
+      <legend><h2>{T.elegir}</h2></legend>
+      {g.montos.map((m, i) => (
+        <label class="monto">
+          <input type="radio" name="monto" value={m.q} data-usd={m.usd ?? ''} checked={i === 0} />
+          <span class="q">Q{m.q}</span>
+          {m.usd && <span class="usd">≈ US${m.usd}</span>}
+        </label>
+      ))}
+      <label class="monto">
+        <input type="radio" name="monto" value="otro" />
+        <span class="q">{T.otro}</span>
+        <span class="usd">{T.desde}</span>
+        <input type="number" name="otro" min={g.minimo_q} max={g.maximo_q ?? undefined} step="50" inputmode="numeric" placeholder={String(g.minimo_q)} aria-label={T.otro} />
+      </label>
+    </fieldset>
+    <p class="msj mal" data-error hidden></p>
+    <div class="acciones">
+      <a class="boton" data-wa href={wa(primero.q, primero.usd)} target="_blank" rel="noopener">{T.btnWa}</a>
+      <a class="boton" data-mail href={mail(primero.q, primero.usd)}>{T.btnMail}</a>
+      {GIFTCARD_URL && <a class="boton" href={GIFTCARD_URL}>{T.comprar}</a>}
+    </div>
+    <p class="nota">WhatsApp {WHATSAPP_TEXTO} · {CORREO}</p>
+  </form>
+
+  <h2>{T.como}</h2>
+  <ol>{T.pasos.map((p) => <li>{p}</li>)}</ol>
+  <p>{T.pausa}</p>
+  <p>{T.vence}</p>
+</div>
+<script is:inline define:vars={{ D: datos }}>
+(function(){
+  var r = document.querySelector('[data-gift]'); if (!r) return;
+  var wa = r.querySelector('[data-wa]'), mail = r.querySelector('[data-mail]'), err = r.querySelector('[data-error]');
+  var otro = r.querySelector('input[name=otro]');
+  function msg(q, usd){
+    var m = 'Q' + q + (usd ? ' (US$' + usd + ')' : '');
+    return D.idioma === 'es' ? 'Hola, quiero una gift card de Rosanta por ' + m + '. ¿Cómo la pago?' : 'Hi, I would like a Rosanta gift card for ' + m + '. How can I pay for it?';
+  }
+  function actualizar(){
+    var sel = r.querySelector('input[name=monto]:checked'); if (!sel) return;
+    var q, usd = '';
+    if (sel.value === 'otro') {
+      q = parseInt(otro.value, 10);
+      var malo = !(q >= D.minimo) || (D.maximo && q > D.maximo);
+      err.hidden = !malo || !otro.value; err.textContent = D.textoMinimo;
+      wa.toggleAttribute('aria-disabled', malo); mail.toggleAttribute('aria-disabled', malo);
+      if (malo) return;
+      usd = D.tc ? Math.round(q / D.tc) : '';
+    } else { err.hidden = true; q = sel.value; usd = sel.getAttribute('data-usd'); wa.removeAttribute('aria-disabled'); mail.removeAttribute('aria-disabled'); }
+    var t = msg(q, usd);
+    wa.href = 'https://wa.me/' + D.numero + '?text=' + encodeURIComponent(t);
+    mail.href = 'mailto:' + D.correo + '?subject=' + encodeURIComponent(D.asunto) + '&body=' + encodeURIComponent(t);
+  }
+  r.addEventListener('change', actualizar);
+  otro.addEventListener('input', function(){ r.querySelector('input[value=otro]').checked = true; actualizar(); });
+  otro.addEventListener('focus', function(){ r.querySelector('input[value=otro]').checked = true; actualizar(); });
+  [wa, mail].forEach(function(a){ a.addEventListener('click', function(e){ if (a.hasAttribute('aria-disabled')) { e.preventDefault(); err.hidden = false; otro.focus(); } }); });
+})();
+</script>

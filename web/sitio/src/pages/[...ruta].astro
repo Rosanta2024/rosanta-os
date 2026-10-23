@@ -3,7 +3,8 @@
 // llevan acento). El contenido sale de data/paginas/*.json (capturado de Wix).
 import Base from '../layouts/Base.astro';
 import Bloques from '../components/Bloques.astro';
-import { paginasDelSitio, datos, promoverH1 } from '../lib/sitio.mjs';
+import { paginasDelSitio, datos, promoverH1, imagenLocal, SITIO } from '../lib/sitio.mjs';
+import { SEGUNDA_VUELTA, paginaGiftcard } from '../lib/segunda-vuelta.mjs';
 
 export function getStaticPaths() {
   return paginasDelSitio().map((p) => ({
@@ -12,7 +13,12 @@ export function getStaticPaths() {
   }));
 }
 
-const { pagina } = Astro.props;
+const { pagina: original } = Astro.props;
+// Segunda vuelta (PUBLIC_SEGUNDA_VUELTA=si): la gift card nueva en las mismas direcciones (título, descripción y schema
+// aquí; el contenido lo cambia Bloques.astro en el widget de Wix). Sin el interruptor, nada cambia.
+const giftNueva = SEGUNDA_VUELTA && /\/gift-card$/.test(original.ruta);
+const imGift = giftNueva ? imagenLocal('e90a2a_c3de803545f340df9dd4aa88a72e0718~mv2.png') : null;
+const pagina = giftNueva ? paginaGiftcard(original, imGift ? SITIO + imGift.archivo : null) : original;
 // Mejora mínima (data/mejoras-seo.json): si Wix no tiene H1, el primer título pasa a H1.
 const omitir = datos().mejoras.omitir_bloques || {};
 const ocultar = datos().mejoras.ocultar_bloques || {};

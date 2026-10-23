@@ -9,6 +9,9 @@
 //  - el idioma lo da la página (/es → español), no el idioma del navegador.
 import { TEXTOS, PAISES } from '../lib/formulario-textos.mjs';
 import { API_BASE, CARRITO_URL, WHATSAPP } from '../config.mjs';
+// Lista de espera (segunda vuelta): solo con PUBLIC_LISTA_ESPERA=si; va pegada al final, sin cambiar nada sin el interruptor.
+import ListaEspera from './sv/ListaEspera.astro';
+import { LISTA_ESPERA } from '../lib/segunda-vuelta.mjs';
 
 const { idioma = 'en' } = Astro.props;
 const T = TEXTOS[idioma === 'es' ? 'es' : 'en'];
@@ -347,4 +350,4 @@ $('send').addEventListener('click', async function(){
   window.carritoReservaCompletada = function(){ completada = true; clearTimeout(timer); };
 })();
 })();
-</script>
+</script>{LISTA_ESPERA && <ListaEspera idioma={idioma} sinHorarios={T.none} />}

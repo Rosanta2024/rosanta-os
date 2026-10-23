@@ -1,0 +1,27 @@
+---
+// /blog y /es/blog: las entradas del contenido (más nuevas primero).
+import EstilosSV from './EstilosSV.astro';
+import { fechaLarga } from '../../lib/segunda-vuelta.mjs';
+const { pagina } = Astro.props;
+const L = pagina.idioma === 'es' ? 'es' : 'en';
+const es = L === 'es';
+const base = es ? '/es/blog' : '/blog';
+---
+<EstilosSV />
+<div class="sv blog">
+  <h1>{pagina.h1[0]}</h1>
+  <p class="bajada">{es
+    ? 'Historias del jardín, la cocina y la barra, desde el centro de Antigua Guatemala.'
+    : 'Stories from the garden, the kitchen and the bar, from the heart of Antigua Guatemala.'}</p>
+  <ul class="grilla">
+    {pagina.datos.entradas.map((e) => (
+      <li class="tarjeta">
+        {e.foto && <img src={e.foto.url_chica || e.foto.url} alt={e.foto.alt?.[L] || e.titulo[L]} width={e.foto.ancho} height={e.foto.alto} loading="lazy" decoding="async" />}
+        <p class="fecha"><time datetime={e.fecha}>{fechaLarga(e.fecha, L)}</time></p>
+        <h2><a href={`${base}/${e.slug}`}>{e.titulo[L]}</a></h2>
+        <p>{e.resumen?.[L]}</p>
+        <a class="mas" href={`${base}/${e.slug}`}>{es ? 'Leer' : 'Read'}</a>
+      </li>
+    ))}
+  </ul>
+</div>

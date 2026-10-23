@@ -6,8 +6,11 @@ import { RAIZ, DATA, normRuta } from './comun.mjs';
 
 process.env.ROSANTA_SITIO_RAIZ = RAIZ;
 const { datos, paginasDelSitio, descripcion, SITIO } = await import('../../src/lib/sitio.mjs');
+// Segunda vuelta: sin PUBLIC_SEGUNDA_VUELTA=si, paginasNuevas() devuelve [] y los mapas y el llms.txt quedan iguales.
+const SV = await import('../../src/lib/segunda-vuelta.mjs');
 
-const DIST = path.join(RAIZ, 'dist');
+// ROSANTA_DIST: carpeta de salida (por defecto dist; las pruebas de la segunda vuelta construyen en dist-sv).
+const DIST = path.join(RAIZ, process.env.ROSANTA_DIST || 'dist');
 const hoy = new Date().toISOString().slice(0, 10);
 const enc = (r) => SITIO + (r === '/' ? '' : encodeURI(r));
 const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -57,6 +60,7 @@ export function sitemaps() {
   const pags = paginasDelSitio();
   const sistema = new Set(['/reservation-details', '/es/reservation-details']); // Wix no las lista
   const listadas = pags.filter((p) => !sistema.has(p.ruta) && p.robots !== 'noindex');
+  listadas.push(...SV.paginasNuevas());
   const en = listadas.filter((p) => p.idioma === 'en');
   const es = listadas.filter((p) => p.idioma === 'es');
   const menu = (l) => l.filter((p) => /\/full-menu$/.test(p.ruta));
@@ -141,7 +145,36 @@ Todo el sitio es HTML estático: el menú con precios, las preguntas frecuentes,
 - El servicio es en el restaurante: la experiencia sucede en el jardín, la pérgola y la chimenea.
 - Las reservaciones se completan en la página de reservaciones del sitio (${SITIO}/reservas).
 - Solo está disponible la información pública accesible en el sitio.
+${llmsSegundaVuelta()}`;
+}
+
+/** Secciones del llms.txt de la segunda vuelta (vacío sin el interruptor). */
+function llmsSegundaVuelta() {
+  if (!SV.SEGUNDA_VUELTA) return '';
+  const g = SV.giftcards();
+  const montos = g.montos.map((m) => `Q${m.q}` + (m.usd ? ` (≈ US$${m.usd})` : '')).join(' y ');
+  let t = `
+## Tarjetas de regalo
+- [Tarjeta de regalo](${SITIO}/gift-card) · [en español](${SITIO}/es/gift-card): ${montos}, o el monto que quieras desde Q${g.minimo_q}. Vence ${g.vigencia_meses} meses después de emitida. Por ahora se compra escribiendo por WhatsApp (+502 3082 6935) o al correo ${SV.CORREO}.
 `;
+  const xs = SV.experiencias();
+  if (xs.length) {
+    t += `
+## Rosanta Adventures (actividades cerca de Antigua Guatemala)
+Las organizan y operan operadores aliados independientes, con licencia de INGUAT y seguro vigentes; Rosanta las recomienda y recibe la consulta (sin cobro). Se pueden combinar con una cena en Rosanta.
+- [Todas las experiencias](${SITIO}/adventures) · [en español](${SITIO}/es/adventures)
+${xs.map((x) => `- [${x.titulo.es}](${SITIO}/es/adventures/${x.slug}) · [${x.titulo.en}](${SITIO}/adventures/${x.slug}): opera ${x.operador.nombre}.`).join('\n')}
+`;
+  }
+  const es = SV.entradas();
+  if (es.length) {
+    t += `
+## Blog
+- [Blog en español](${SITIO}/es/blog) · [Journal in English](${SITIO}/blog)
+${es.map((e) => `- [${e.titulo.es}](${SITIO}/es/blog/${e.slug}) · [${e.titulo.en}](${SITIO}/blog/${e.slug})`).join('\n')}
+`;
+  }
+  return t;
 }
 
 export async function generarTodo() {

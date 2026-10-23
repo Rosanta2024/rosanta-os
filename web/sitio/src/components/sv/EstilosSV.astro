@@ -1,0 +1,62 @@
+---
+// Estilos de las piezas de la segunda vuelta. Van "is:inline" a propósito: así solo salen en las
+// páginas que dibujan estas piezas y el resto del sitio (la copia de Wix) queda byte a byte igual.
+// Paleta y letras de la guía de marca (Verde Bosque, Crema, Verde Medio, Lila de acento; Peskia y Lato).
+---
+<style is:inline>
+.sv { max-width: 980px; margin: 0 auto; padding: 32px 20px 56px; }
+.sv h1 { font: bold clamp(34px, 6vw, 58px)/1.08 var(--titulo); color: var(--verde); margin: 8px 0 14px; }
+.sv h2 { font: bold clamp(24px, 3.4vw, 32px)/1.2 var(--titulo); color: var(--verde); margin: 36px 0 10px; }
+.sv h3 { font: 700 18px/1.3 var(--cuerpo); color: var(--verde); margin: 24px 0 6px; }
+.sv p, .sv li { font-size: 17px; line-height: 1.7; }
+.sv a:not(.boton) { color: var(--verde); }
+.sv .entrada-txt { max-width: 680px; }
+.sv .migas { font-size: 13px; letter-spacing: .5px; color: var(--verde-claro); margin: 0; }
+.sv .migas a { text-decoration: none; }
+.sv .bajada { font-size: 19px; max-width: 680px; }
+.sv .fecha { font-size: 13px; color: var(--verde-claro); letter-spacing: .5px; text-transform: uppercase; }
+.sv .foto { margin: 18px 0 8px; }
+.sv .foto img { width: 100%; max-height: 520px; object-fit: cover; }
+.sv .grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; margin-top: 24px; padding: 0; list-style: none; }
+.sv .tarjeta { background: var(--crema); padding: 22px; display: flex; flex-direction: column; gap: 8px; }
+.sv .tarjeta h2 { font-size: 24px; margin: 0; }
+.sv .tarjeta h2 a { text-decoration: none; }
+.sv .tarjeta p { margin: 0; font-size: 16px; }
+.sv .tarjeta .mas { margin-top: auto; font-weight: 700; }
+.sv .datos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 22px; margin: 20px 0; padding: 0; }
+.sv .datos div { border-top: 1px solid var(--menta); padding-top: 8px; }
+.sv .datos dt { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--verde-claro); }
+.sv .datos dd { margin: 0; font-weight: 700; color: var(--tinta); }
+.sv .operador { border-left: 4px solid var(--verde); background: var(--crema); padding: 16px 20px; margin: 26px 0; }
+.sv .operador p { margin: 4px 0; }
+.sv .aviso-legal { border: 1px solid var(--lila); padding: 14px 18px; margin: 18px 0; font-size: 15px; }
+.sv .aviso-legal p { font-size: 15px; margin: 6px 0 0; }
+.sv .pendiente { display: inline-block; background: #fff4c2; color: #5a4300; border: 1px solid #e3c55a; font: 700 12px/1.4 var(--cuerpo); letter-spacing: .6px; padding: 3px 8px; }
+.banner-pendiente { background: #fff4c2; color: #5a4300; border-bottom: 1px solid #e3c55a; text-align: center; font: 700 13px/1.5 var(--cuerpo); padding: 8px 16px; }
+.sv details { border-top: 1px solid var(--menta); padding: 10px 0; }
+.sv summary { cursor: pointer; font-weight: 700; color: var(--verde); }
+.sv .formulario { background: var(--crema); padding: 24px; margin: 30px 0; }
+.sv .formulario h2 { margin-top: 0; }
+.sv .campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px 18px; }
+.sv label { display: block; font-size: 14px; font-weight: 700; color: var(--verde); margin-bottom: 4px; }
+.sv input, .sv select, .sv textarea { width: 100%; font: 16px var(--cuerpo); padding: 10px 12px; border: 1px solid var(--verde-claro); background: #fff; color: var(--tinta); border-radius: 2px; }
+.sv textarea { min-height: 96px; }
+.sv .casilla { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 8px; font-weight: 700; color: var(--verde); }
+.sv .casilla input { width: auto; margin-top: 5px; }
+.sv .cena[hidden] { display: none; }
+.sv .trampa { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.sv button.boton { cursor: pointer; border: 0; font-size: 15px; }
+.sv .msj { margin-top: 14px; font-weight: 700; }
+.sv .msj.mal { color: #9b2c2c; }
+.sv .montos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin: 18px 0; border: 0; padding: 0; }
+.sv .monto { position: relative; display: block; background: var(--crema); border: 2px solid transparent; padding: 18px; cursor: pointer; color: var(--tinta); }
+.sv .monto:has(input:checked) { border-color: var(--verde); }
+.sv .monto input[type=radio] { width: auto; margin-right: 8px; }
+.sv .monto .q { font: bold 30px/1.1 var(--titulo); color: var(--verde); }
+.sv .monto .usd { display: block; font-weight: 400; font-size: 15px; margin-top: 4px; }
+.sv .monto input[type=number] { margin-top: 10px; }
+.sv .acciones { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 6px; }
+.sv .nota { font-size: 14px; color: #5b625b; }
+.sv .gift-img { max-width: 260px; margin: 0 0 6px; }
+@media (max-width: 600px) { .sv { padding: 22px 16px 40px; } .sv .formulario { padding: 18px 14px; } }
+</style>

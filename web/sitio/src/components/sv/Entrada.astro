@@ -1,0 +1,25 @@
+---
+// Una entrada del blog. El cuerpo viene en markdown simple y se pasa a HTML escapado (sin HTML del contenido).
+import EstilosSV from './EstilosSV.astro';
+import { markdown, fechaLarga } from '../../lib/segunda-vuelta.mjs';
+const { pagina } = Astro.props;
+const L = pagina.idioma === 'es' ? 'es' : 'en';
+const es = L === 'es';
+const e = pagina.datos.e;
+const base = es ? '/es/blog' : '/blog';
+const reservas = es ? '/es/reservas' : '/reservas';
+---
+<EstilosSV />
+<article class="sv entrada">
+  <p class="migas"><a href={base}>Blog</a></p>
+  <h1>{e.titulo[L]}</h1>
+  <p class="fecha"><time datetime={e.fecha}>{fechaLarga(e.fecha, L)}</time> · Rosanta</p>
+  {e.foto && (
+    <figure class="foto"><img src={e.foto.url} srcset={e.foto.url_chica ? `${e.foto.url_chica} 600w, ${e.foto.url} 1600w` : undefined} sizes="(max-width: 980px) 100vw, 980px"
+      alt={e.foto.alt?.[L] || e.titulo[L]} width={e.foto.ancho} height={e.foto.alto} loading="eager" decoding="async" /></figure>
+  )}
+  {e.resumen?.[L] && <p class="bajada">{e.resumen[L]}</p>}
+  <div class="entrada-txt" set:html={markdown(e.cuerpo?.[L])} />
+  <p class="boton-fila" style="text-align:left"><a class="boton" href={reservas}>{es ? 'Reserva tu mesa' : 'Book your table'}</a></p>
+  <p><a href={base}>{es ? 'Más del blog' : 'More from the journal'}</a></p>
+</article>
