@@ -143,6 +143,9 @@ function crearAppWeb(deps) {
   app.use(W.crearRutasGiftcards({ giftcards, pasarela, pool, matriz, almacen, claveTareas: env.CLAVE_TAREAS }));
   app.use(W.crearRutasContenidoWeb({ contenido, pool }));
   app.use(W.crearRutasAdventures({ adventures, pool, claveTareas: env.CLAVE_TAREAS }));
+  // Vista de COCINA (solo cantidades, sin datos de clientes): /cocina?u=<enlace de la persona>
+  app.use(require('./cocina').crearRutasCocina({ pool, quien,
+    permisos: async (u, parte, accion) => require('./permisos').puede(typeof matriz === 'function' ? matriz() : matriz, u, parte, accion) }));
   // Cotización de eventos ("Request a quote" de /events-1): al pipeline de rosanta-clientes y aviso a Juanma
   app.use(require('./cotizacion-web').crearRutasCotizacion({ pipeline: ganchoInterno(env, '/interno/web/pipeline-cotizacion', deps.fetch),
     avisarJuanma: avisoJuanma(canales), prueba: ensayo, origenes: ['https://www.rosanta.rest', 'https://rosanta.rest', 'https://nuevo.rosanta.rest'].concat(extra) }));
