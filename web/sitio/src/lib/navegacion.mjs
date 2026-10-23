@@ -12,7 +12,7 @@ export const NAVEGACION = {
       { texto: 'IDEAS PARA REGALAR', href: '/es/gift-ideas' },
       { texto: 'CONTACTO', href: `/es#${SEC.contacto}` },
     ],
-    reservar: { texto: 'RESERVACIONES', corto: 'RESERVAR', href: '/es/reservas' },
+    reservar: { texto: 'RESERVA TU MESA', corto: 'RESERVAR', href: '/es/reservas' },
     mas: { texto: 'MÁS', items: [
       { texto: 'Cocina honesta', href: `/es#${SEC.cocina}` },
       { texto: 'Ubicación', href: `/es#mapa` },
@@ -28,7 +28,7 @@ export const NAVEGACION = {
       { texto: 'GIFT IDEAS', href: '/gift-ideas' },
       { texto: 'CONTACT', href: `/#${SEC.contacto}` },
     ],
-    reservar: { texto: 'RESERVATIONS', corto: 'BOOK', href: '/reservas' },
+    reservar: { texto: 'BOOK A TABLE', corto: 'BOOK', href: '/reservas' },
     mas: { texto: 'MORE', items: [
       { texto: 'Honest cooking', href: `/#${SEC.cocina}` },
       { texto: 'Location', href: `/#mapa` },

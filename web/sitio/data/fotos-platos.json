@@ -1,0 +1,221 @@
+{
+  "_nota": "Fotos de la carta (Juanma, 23-oct). 'fuente': ruta dentro de '05_Marketing_OS/Marketing - Dani' en Drive, o 'img:<medio>' para una foto que ya está en el sitio. scripts/fotos-platos.mjs genera public/img/platos/<clave>-<ancho>.webp. Solo fotos que son claramente de ese plato. 'recorte' = [x, y, ancho, alto] en proporción (0-1) de la foto original.",
+  "platos": {
+    "coliflor": {
+      "fuente": "Lifestyle/_MG_9317.jpg",
+      "es": "Coliflor a la Parrilla con Romesco",
+      "en": "Grilled Cauliflower with Romesco",
+      "alt": {
+        "es": "Coliflor a la parrilla sobre salsa romesco, con chiles y yogur, en plato negro",
+        "en": "Grilled cauliflower over romesco sauce with chiles and yogurt on a black plate"
+      }
+    },
+    "brocoli": {
+      "fuente": "Nuevo Menú /Para Web/_MG_0431.jpg",
+      "es": "Brócoli con Nduja",
+      "en": "Broccoli with Nduja",
+      "alt": {
+        "es": "Brócoli asado con nduja y queso rallado",
+        "en": "Roasted broccoli with nduja and grated cheese"
+      }
+    },
+    "queso": {
+      "fuente": "img:3de38d_b7d5733c03334c23b8b2ffcdbb4aa7d6~mv2.jpg",
+      "recorte": [
+        0,
+        0.1,
+        1,
+        0.55
+      ],
+      "es": "Queso Horneado",
+      "en": "Baked Cheese",
+      "alt": {
+        "es": "Queso horneado con costra de pepitoria y fresas maceradas, en sartén de hierro",
+        "en": "Baked cheese with a pepitoria crust and macerated strawberries in a cast-iron skillet"
+      }
+    },
+    "pulpo": {
+      "fuente": "Lifestyle/Plato del mes/Junio: Pulpo/Ros Jun-16.jpg",
+      "es": "Pulpo a la Parrilla",
+      "en": "Grilled Octopus",
+      "alt": {
+        "es": "Pulpo a la parrilla con papas al pimentón, naranja y mayonesa de hierbabuena",
+        "en": "Grilled octopus with paprika potatoes, orange and mint mayonnaise"
+      }
+    },
+    "tabla": {
+      "fuente": "Lifestyle/_MG_2415.jpg",
+      "es": "Tabla de Jamones y Quesos",
+      "en": "Charcuterie and Cheese Board",
+      "alt": {
+        "es": "Tabla de quesos y jamones curados con pan, encurtidos y fruta",
+        "en": "Board of cheeses and cured hams with bread, pickles and fruit"
+      }
+    },
+    "tartar": {
+      "fuente": "img:b75909_ca941d3db6ea47f7929633db70743606~mv2.jpg",
+      "es": "Tartar de Hongos",
+      "en": "Mushroom Tartare",
+      "alt": {
+        "es": "Tartar de hongos con tostadas y rábanos, junto a la chimenea",
+        "en": "Mushroom tartare with crisps and radishes, by the fireplace"
+      }
+    },
+    "bokchoy": {
+      "fuente": "Nuevo Menú /Para Web/_MG_8045.jpg",
+      "es": "Bok Choy a la Parrilla",
+      "en": "Grilled Bok Choy",
+      "alt": {
+        "es": "Bok choy a la parrilla sobre yogur de eneldo, con naranja y tomates rostizados",
+        "en": "Grilled bok choy over dill yogurt with orange and roasted tomatoes"
+      }
+    },
+    "fermentados": {
+      "fuente": "Nuevo Menú /Para Web/_MG_7980.jpg",
+      "es": "Vegetales Fermentados",
+      "en": "Fermented Vegetables",
+      "alt": {
+        "es": "Bol de vegetales fermentados con repollo morado, zanahoria, ajonjolí y salsa de maní",
+        "en": "Bowl of fermented vegetables with red cabbage, carrot, sesame and peanut sauce"
+      }
+    },
+    "arroz": {
+      "fuente": "Nuevo Menú /Para Web/_MG_8012.jpg",
+      "es": "Arroz Meloso",
+      "en": "Creamy Rice",
+      "alt": {
+        "es": "Arroz meloso negro con camarones",
+        "en": "Creamy black rice with shrimp"
+      }
+    },
+    "pollo": {
+      "fuente": "Lifestyle/_MG_2734.jpg",
+      "es": "Pollo en Salsa de Tamarindo",
+      "en": "Chicken in Tamarind Sauce",
+      "alt": {
+        "es": "Pollo en salsa de tamarindo sobre crema de zanahoria, con hongos",
+        "en": "Chicken in tamarind sauce over carrot cream, with mushrooms"
+      }
+    },
+    "costillas": {
+      "fuente": "img:b75909_ae50e7e6101d46a0988892560702b508~mv2.jpg",
+      "es": "Costillas de Cerdo en Café y Cardamomo",
+      "en": "Coffee and Cardamom Pork Ribs",
+      "alt": {
+        "es": "Costillas de cerdo con cebolla morada y puré, junto a un coctel",
+        "en": "Pork ribs with red onion and purée, next to a cocktail"
+      },
+      "recorte": [
+        0,
+        0.38,
+        0.75,
+        0.62
+      ]
+    },
+    "lomitorosanta": {
+      "fuente": "img:b75909_e549fb68cb0243ac9f86aecb49752a31~mv2.jpg",
+      "es": "Lomito Rosanta",
+      "en": "Rosanta Tenderloin",
+      "alt": {
+        "es": "Lomito a la parrilla con gratín de papa, tocino y zanahorias",
+        "en": "Grilled tenderloin with potato gratin, bacon and carrots"
+      }
+    },
+    "lomitocasa": {
+      "fuente": "Nuevo Menú /Para Web/_MG_8083.jpg",
+      "es": "Lomito de la Casa",
+      "en": "House Tenderloin",
+      "alt": {
+        "es": "Medallón de lomito sobre puré de espinaca, con zanahorias y salsa cremosa",
+        "en": "Tenderloin medallion over spinach purée with carrots and a creamy sauce"
+      }
+    },
+    "pescado": {
+      "fuente": "Lifestyle/_MG_0074.jpg",
+      "es": "Pescado del Día",
+      "en": "Catch of the Day",
+      "alt": {
+        "es": "Pescado del día sobre puré de camote con tomates cherry",
+        "en": "Catch of the day over sweet potato purée with cherry tomatoes"
+      }
+    },
+    "camarones": {
+      "fuente": "Lifestyle/Plato del mes/Agosto : Camarones al Horno/_MG_4737.jpg",
+      "es": "Camarones al Horno",
+      "en": "Oven-Baked Shrimp",
+      "alt": {
+        "es": "Camarones al horno con tomates cherry y hojas verdes",
+        "en": "Oven-baked shrimp with cherry tomatoes and greens"
+      }
+    }
+  },
+  "secciones": {
+    "0": {
+      "fuente": "Lifestyle/_MG_9312.jpg",
+      "alt": {
+        "es": "Coliflor a la parrilla servida en una mesa de madera con vela",
+        "en": "Grilled cauliflower served on a wooden table by candlelight"
+      }
+    },
+    "1": {
+      "fuente": "Nuevo Menú /Para Web/_MG_8045.jpg",
+      "alt": {
+        "es": "Bok choy a la parrilla sobre yogur de eneldo, con naranja y tomates rostizados",
+        "en": "Grilled bok choy over dill yogurt with orange and roasted tomatoes"
+      }
+    },
+    "3": {
+      "fuente": "Nuevo Menú /_MG_8115.jpg",
+      "alt": {
+        "es": "Mesa servida con lomito y bok choy, velas y flores secas",
+        "en": "Table set with tenderloin and bok choy, candles and dried flowers"
+      }
+    },
+    "12": {
+      "fuente": "Lifestyle/_MG_2358.jpg",
+      "alt": {
+        "es": "Coctel con hielo, naranja y romero sobre la barra",
+        "en": "Cocktail with ice, orange and rosemary on the bar"
+      }
+    }
+  },
+  "galeria_reservas": [
+    {
+      "fuente": "Nuevo Menú /_MG_8115.jpg",
+      "alt": {
+        "es": "Mesa servida en Rosanta con platos, velas y flores secas",
+        "en": "A table set at Rosanta with dishes, candles and dried flowers"
+      }
+    },
+    {
+      "fuente": "Lifestyle/_MG_9317.jpg",
+      "alt": {
+        "es": "Coliflor a la parrilla sobre salsa romesco",
+        "en": "Grilled cauliflower over romesco sauce"
+      }
+    },
+    {
+      "fuente": "Lifestyle/_MG_8262.jpg",
+      "alt": {
+        "es": "El jardín de Rosanta de noche, con luces colgantes y mesas llenas",
+        "en": "The Rosanta garden at night, with string lights and full tables"
+      }
+    },
+    {
+      "fuente": "Lifestyle/_MG_2358.jpg",
+      "alt": {
+        "es": "Coctel con naranja y romero sobre la barra de madera",
+        "en": "Cocktail with orange and rosemary on the wooden bar"
+      }
+    }
+  ],
+  "og": {
+    "fuente": "Nuevo Menú /_MG_8115.jpg",
+    "rutas": [
+      "/",
+      "/es",
+      "/reservas",
+      "/es/reservas"
+    ]
+  }
+}

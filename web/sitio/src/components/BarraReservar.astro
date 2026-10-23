@@ -1,0 +1,22 @@
+---
+// Teléfono (Juanma, 23-oct): barra fija abajo, siempre visible, con "Reserva tu mesa" y WhatsApp a un toque,
+// y la calificación de Google al lado (prueba social). No sale en /reservas (ahí el formulario ya está arriba).
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { WHATSAPP } from '../config.mjs';
+const { pagina } = Astro.props;
+const es = pagina.idioma === 'es';
+const f = path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'resenas.json');
+const r = existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null;
+const wa = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(es ? 'Hola, quiero reservar una mesa en Rosanta.' : "Hi, I'd like to book a table at Rosanta.")}`;
+const oculto = /\/reservas$/.test(pagina.ruta) || /reservation-details/.test(pagina.ruta);
+---
+{!oculto && (
+  <div class="barra-reservar" data-paridad="ignorar">
+    {r?.promedio && <span class="barra-nota" aria-label={es ? `${r.promedio.toFixed(1)} de 5 en Google` : `${r.promedio.toFixed(1)} out of 5 on Google`}><span aria-hidden="true">★</span> {r.promedio.toFixed(1)}<small>Google</small></span>}
+    <a class="barra-cta" href={es ? '/es/reservas' : '/reservas'}>{es ? 'Reserva tu mesa' : 'Book a table'}</a>
+    <a class="barra-wa" href={wa} target="_blank" rel="noopener" aria-label={es ? 'Escríbenos por WhatsApp' : 'Message us on WhatsApp'}>
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91A9.85 9.85 0 0 0 12.04 2Zm5.8 14.03c-.24.68-1.42 1.31-1.96 1.36-.5.05-.98.24-3.31-.69-2.8-1.1-4.58-3.97-4.72-4.15-.14-.18-1.12-1.49-1.12-2.85s.71-2.02.97-2.3c.25-.27.55-.34.73-.34h.53c.17 0 .4-.06.62.48.24.56.8 1.94.87 2.08.07.14.12.3.02.48-.09.18-.14.3-.28.46-.14.16-.29.36-.42.48-.14.14-.28.29-.12.57.16.27.72 1.19 1.55 1.93 1.07.95 1.97 1.25 2.25 1.39.28.14.44.12.6-.07.17-.18.7-.81.89-1.09.18-.28.37-.23.62-.14.25.09 1.6.76 1.87.9.28.14.46.21.53.32.07.12.07.66-.17 1.33Z"/></svg>
+    </a>
+  </div>
+)}

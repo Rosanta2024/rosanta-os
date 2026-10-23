@@ -1,0 +1,25 @@
+---
+// Portada, bloque del menú: 4 platos con foto que llevan a la carta (Juanma, 23-oct). Fotos de data/fotos-platos.json.
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+const { idioma = 'en' } = Astro.props;
+const es = idioma === 'es';
+const cfg = JSON.parse(readFileSync(path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'fotos-platos.json'), 'utf8'));
+const claves = ['pulpo', 'lomitorosanta', 'coliflor', 'camarones'];
+const carta = es ? '/es/full-menu' : '/full-menu';
+---
+<div class="destacados">
+  <ul class="destacados-lista">
+    {claves.map((k) => {
+      const p = cfg.platos[k];
+      return (
+        <li>
+          <a href={carta}>
+            <img src={`/img/platos/${k}-320.webp`} srcset={`/img/platos/${k}-160.webp 160w, /img/platos/${k}-320.webp 320w`} sizes="(max-width: 640px) 44vw, 220px" width="320" height="320" alt={p.alt[idioma] || p.alt.en} loading="lazy" decoding="async" />
+            <span>{p[idioma] || p.en}</span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</div>

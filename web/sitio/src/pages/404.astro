@@ -1,21 +1,43 @@
 ---
 // Página 404 (Firebase la sirve con código 404 para cualquier dirección que no exista).
+// Útil (Juanma, 23-oct): en los dos idiomas, con el camino directo a reservar, la carta y el contacto.
 import '../styles/sitio.css';
+import { WHATSAPP } from '../config.mjs';
 ---
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Page not found | Rosanta</title>
+    <title>Página no encontrada · Page not found | Rosanta</title>
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
-    <main class="seccion"><div class="seccion-in" style="text-align:center;padding:80px 20px">
-      <h1 class="font_0" style="font-size:clamp(40px,8vw,80px)">404</h1>
-      <p>This page isn't available. · Esta página no está disponible.</p>
-      <p class="boton-fila"><a class="boton" href="/">Rosanta</a> <a class="boton" href="/reservas">Reservations</a> <a class="boton" href="/es/reservas">Reservaciones</a></p>
-    </div></main>
+  <body class="p404">
+    <main class="p404-in">
+      <a class="p404-logo" href="/es">ROSANTA</a>
+      <h1>404</h1>
+      <div class="p404-cols">
+        <section lang="es">
+          <p class="p404-msg">Esta página ya no existe, pero tu mesa sí.</p>
+          <p class="p404-links">
+            <a class="boton p404-cta" href="/es/reservas">Reserva tu mesa</a>
+            <a href="/es/full-menu">Ver la carta</a>
+            <a href="/es#comp-lhjc19fq">Contacto y ubicación</a>
+            <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">WhatsApp +502 3082 6935</a>
+          </p>
+        </section>
+        <section lang="en">
+          <p class="p404-msg">This page is gone, but your table isn't.</p>
+          <p class="p404-links">
+            <a class="boton p404-cta" href="/reservas">Book a table</a>
+            <a href="/full-menu">See the menu</a>
+            <a href="/#comp-lhjc19fq">Contact and location</a>
+            <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">WhatsApp +502 3082 6935</a>
+          </p>
+        </section>
+      </div>
+    </main>
   </body>
 </html>

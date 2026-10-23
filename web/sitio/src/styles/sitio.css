@@ -474,3 +474,99 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .widget-gift img { margin-left: auto; margin-right: auto; max-width: 480px; }
 /* Teléfono: el botón de reservar de la portada, centrado como el texto. */
 @media (max-width: 999px) { #comp-lnbyxau0 .boton-fila { text-align: center !important; margin-left: 0 !important; width: 100% !important; } }
+
+/* ---------- fotos de fondo como <img> (23-oct, velocidad): cubren su bloque, detrás del contenido ---------- */
+.con-fondo-img { position: relative; }
+.fondo-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; z-index: 0; pointer-events: none; }
+.con-fondo-img > :not(.fondo-img) { position: relative; z-index: 1; }
+
+/* =====================================================================================================
+   Conversión (Juanma, 23-oct): idioma en texto chico, barra fija para reservar en el teléfono, platos con foto,
+   prueba social junto al formulario, 404 útil y contraste. Pensado primero para 390 px.
+   ===================================================================================================== */
+/* Idioma: "EN" / "ES" de texto chico (sin pastilla) en la computadora; "ES · EN" dentro del menú del teléfono. */
+.idioma-link { color: #fff; text-decoration: none; font: 700 12.5px/1 var(--cuerpo); letter-spacing: 1.5px; padding: 12px 6px; opacity: .85; border-bottom: 1.5px solid transparent; }
+.idioma-link:hover { opacity: 1; border-bottom-color: rgba(255,255,255,.7); }
+.idioma-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.menu .li-idioma { display: none; }
+@media (min-width: 1100px) { .idioma-link { order: 3; margin-left: 4px; } .menu { order: 2; } }
+@media (max-width: 1099px) {
+  .idioma-link { display: none; }
+  .menu-boton { margin-left: auto; }
+  .menu .li-idioma { display: flex; align-items: center; gap: 12px; padding: 14px 2px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .menu .li-idioma a { display: inline-block; padding: 6px 4px; font-size: 15px; border: 0; opacity: .7; }
+  .menu .li-idioma a[aria-current] { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
+  .menu .li-idioma span { opacity: .5; }
+}
+
+/* Barra fija para reservar (solo teléfono y tablet). */
+.barra-reservar { display: none; }
+@media (max-width: 1099px) {
+  .barra-reservar {
+    display: flex; align-items: center; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--crema-marca);
+    box-shadow: 0 -4px 18px rgba(0,0,0,.14); border-top: 1px solid rgba(78,109,90,.15);
+  }
+  body:has(.barra-reservar) { padding-bottom: 76px; }
+  .barra-nota { display: flex; flex-direction: column; align-items: center; font: 700 15px/1.1 var(--cuerpo); color: #2f342f; min-width: 52px; }
+  .barra-nota span { color: #E3A008; }
+  .barra-nota small { font: 400 11px/1.2 var(--cuerpo); color: #5b5f5b; }
+  .barra-cta {
+    flex: 1; text-align: center; background: var(--verde); color: #fff; text-decoration: none; border-radius: 30px;
+    font: 700 15px/1 var(--cuerpo); letter-spacing: .06em; padding: 16px 12px; text-transform: uppercase;
+  }
+  .barra-cta:active { background: #3f5a4a; }
+  .barra-wa { flex: 0 0 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #25D366; color: #0b3d1f; }
+  .barra-wa svg { width: 28px; height: 28px; }
+}
+
+/* Portada: platos destacados dentro del bloque del menú (llevan a la carta). */
+#comp-kybjx46n { flex-wrap: wrap !important; }
+.destacados { flex: 0 0 100%; padding: 8px 32px 40px; background: var(--verde); }
+.destacados-lista { list-style: none; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; max-width: 980px; }
+.destacados-lista a { display: block; text-decoration: none; color: #fff; }
+.destacados-lista img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+.destacados-lista span { display: block; margin-top: 8px; font: 400 15px/1.3 var(--cuerpo); letter-spacing: .03em; }
+.destacados-lista a:hover span { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 999px) {
+  #comp-kybjx46n .destacados { order: 9; }
+  .destacados { padding: 4px 16px 28px; }
+  .destacados-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+
+/* Carta: miniatura de cada plato con foto, cabecera de algunas categorías y línea entre platos. */
+.carta-cabecera { margin: 14px 0 6px; }
+.carta-cabecera img { width: 100%; aspect-ratio: 16 / 7; max-height: 320px; object-fit: cover; border-radius: 4px; }
+[data-hook="items.container"] > [data-hook="item.root"] { border-top: 1px solid #e4e0da; }
+.con-foto > [data-hook="item.container"] { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 18px; align-items: start; }
+.plato-foto { width: 112px; height: 112px; object-fit: cover; border-radius: 6px; }
+@media (max-width: 640px) {
+  .con-foto > [data-hook="item.container"] { grid-template-columns: 88px minmax(0, 1fr); gap: 14px; }
+  .plato-foto { width: 88px; height: 88px; }
+}
+
+/* Formulario de reservas: prueba social y fecha sugerida. */
+.rsv-nota { display: inline-flex; gap: 6px; align-items: center; justify-content: center; margin: 2px auto 14px; color: #3f5546; text-decoration: none; font-size: 14px; }
+.rsv .wrap #formview { text-align: center; }
+.rsv .wrap #formview .card { text-align: left; }
+.rsv-estrellas { color: #E3A008; letter-spacing: 1px; }
+.rsv-nota:hover { text-decoration: underline; }
+.sugerida { margin: 0 0 8px; font-size: 13px; color: #3f5546; background: #e7efe9; border-radius: 6px; padding: 8px 10px; }
+
+/* Contraste (Lighthouse/axe) y áreas táctiles de 44 px. */
+.resenas .when { color: #6b6b63; }
+#comp-lhi26c4o.boton, .oscura .boton { color: #2f4a3a; }
+.contacto-datos a, .contacto-links a { display: inline-block; padding: 6px 0; }
+.contacto dl { align-items: center; }
+
+/* 404 útil */
+.p404 { background: var(--crema-marca); }
+.p404-in { max-width: 860px; margin: 0 auto; padding: 48px 20px 64px; text-align: center; }
+.p404-logo { font: 700 22px/1 var(--cuerpo); letter-spacing: .3em; color: var(--verde); text-decoration: none; }
+.p404 h1 { font: 400 clamp(64px, 14vw, 120px)/1 var(--titulo); color: var(--verde); margin: 24px 0 8px; }
+.p404-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 12px; }
+.p404-msg { font-size: 18px; color: #2f342f; margin: 0 0 16px; }
+.p404-links { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 0; }
+.p404-links a:not(.boton) { color: var(--verde); padding: 6px 0; }
+.p404-cta { border-radius: 30px; }
+@media (max-width: 640px) { .p404-cols { grid-template-columns: 1fr; gap: 36px; } }

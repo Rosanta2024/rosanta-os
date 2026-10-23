@@ -8,7 +8,11 @@
 //  - la reserva y el carrito llevan el campo "fuente" (referido + utm + canal, ver /js/fuente.js);
 //  - el idioma lo da la página (/es → español), no el idioma del navegador.
 import { TEXTOS, PAISES } from '../lib/formulario-textos.mjs';
-import { API_BASE, CARRITO_URL, WHATSAPP } from '../config.mjs';
+import { API_BASE, CARRITO_URL, WHATSAPP, GOOGLE_PLACE_ID } from '../config.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+const fr = path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'resenas.json');
+const resenas = existsSync(fr) ? JSON.parse(readFileSync(fr, 'utf8')) : null;
 
 const { idioma = 'en' } = Astro.props;
 const T = TEXTOS[idioma === 'es' ? 'es' : 'en'];
@@ -19,6 +23,11 @@ const API = API_BASE.replace(/\/$/, '');
     <div id="formview">
       <div class="title" id="t-title">{T.title}</div>
       <div class="sub" id="t-sub">{T.sub}</div>
+      {resenas?.promedio && (
+        <a class="rsv-nota" href={`https://search.google.com/local/reviews?placeid=${GOOGLE_PLACE_ID}`} target="_blank" rel="noopener" data-paridad="mejora">
+          <span class="rsv-estrellas" aria-hidden="true">★★★★★</span> <b>{resenas.promedio.toFixed(1)}</b> · {resenas.total.toLocaleString('en-US')} {T.nota}
+        </a>
+      )}
       <form class="card" id="rsv-form" onsubmit="return false" novalidate>
         <div class="row">
           <div class="field">
@@ -46,6 +55,7 @@ const API = API_BASE.replace(/\/$/, '');
         </div>
         <div class="field">
           <label id="l-time">{T.time}</label>
+          <p class="sugerida" id="sugerida" hidden></p>
           <div class="slots-wrap" id="slotsWrap">
             <div class="slots" id="slots"><div class="slots-msg" id="slotsMsg">{T.pick}</div></div>
           </div>
@@ -208,6 +218,8 @@ var dateEl = $('date');
   document.addEventListener('click', function(){ if (!cal.hidden) cerrar(); });
   document.addEventListener('keydown', function(e){ if ((e.key === 'Escape' || e.key === 'Esc') && !cal.hidden) cerrar(); });
   pintarBoton(); render();
+  dateEl._pintar = function(){ pintarBoton(); render(); };
+  dateEl._isoHoy = ISO_HOY;
 })();
 
 // ---- código de país: adivina por el idioma del navegador (como en Wix) ----
@@ -256,6 +268,32 @@ async function loadSlots(){
 dateEl.addEventListener('change', loadSlots);
 $('party').addEventListener('change', loadSlots);
 
+// ---- fecha sugerida (Juanma, 23-oct): hoy, o la próxima fecha con mesas (mismo GET /slots, hasta 14 días) ----
+(function(){
+  var tocado = false;
+  $('dateBtn').addEventListener('click', function(){ tocado = true; });
+  function isoMas(n){ var p = dateEl._isoHoy.split('-'); var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + n);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  async function sugerir(){
+    for (var i = 0; i < 14; i++){
+      if (tocado || dateEl.value) return;
+      var iso = isoMas(i);
+      try {
+        var r = await fetch(API+'/slots?date='+iso+'&partySize='+encodeURIComponent($('party').value));
+        var j = await r.json().catch(function(){ return {}; });
+        if (!r.ok || !Array.isArray(j.slots)) return;   // la API no responde: se queda como estaba
+        if (j.slots.length){
+          if (tocado || dateEl.value) return;
+          dateEl.value = iso; dateEl._pintar(); dateEl.dispatchEvent(new Event('change'));
+          if (i > 0){ var n = $('sugerida'); n.textContent = T.sugerida; n.hidden = false; }
+          return;
+        }
+      } catch(e){ return; }
+    }
+  }
+  if (dateEl._isoHoy) sugerir();
+})();
+
 // ---- envío: el botón NUNCA se desactiva; valida al hacer clic y dice qué falta ----
 var REQ = ['fn','ph','em'];
 function limpiarMarcas(){ REQ.forEach(function(id){ $(id).classList.remove('bad'); }); $('slotsWrap').classList.remove('bad'); }
@@ -269,6 +307,9 @@ $('send').addEventListener('click', async function(){
   var primerFalta = null;
   REQ.forEach(function(id){ var el = $(id); if (!el.value.trim()){ el.classList.add('bad'); if (!primerFalta) primerFalta = el; } });
   if (primerFalta){ mostrarError(T.needFields, primerFalta); return; }
+  // Formato (Juanma, 23-oct): correo con @ y dominio; teléfono con al menos 6 dígitos.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('em').value.trim())){ $('em').classList.add('bad'); mostrarError(T.badEmail, $('em')); return; }
+  if ($('ph').value.replace(/\D/g, '').length < 6){ $('ph').classList.add('bad'); mostrarError(T.badPhone, $('ph')); return; }
   if (!selectedSlot){ var w = $('slotsWrap'); w.classList.add('bad'); mostrarError(T.needTime, w); return; }
   btn.disabled = true; btn.classList.add('busy'); btn.textContent = T.sending;
   var payload = {
