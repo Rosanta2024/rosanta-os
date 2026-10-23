@@ -252,7 +252,10 @@ function paginasAdventures() {
 
 export function entradas() {
   if (!SEGUNDA_VUELTA) return [];
-  return [...(contenido().blog || [])].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)) || (a.orden ?? 0) - (b.orden ?? 0));
+  // Juanma (23-oct): las entradas con fecha futura no salen hasta su fecha (hora de Guatemala). El sitio se reconstruye
+  // cada dia (reloj de reconstruccion) para que aparezcan el dia que toca.
+  const hoy = new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 10);
+  return [...(contenido().blog || [])].filter((b) => !b.fecha || String(b.fecha).slice(0, 10) <= hoy).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)) || (a.orden ?? 0) - (b.orden ?? 0));
 }
 
 function paginasBlog() {
