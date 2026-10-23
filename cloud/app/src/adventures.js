@@ -217,7 +217,7 @@ function crearAdventures(deps) {
     exigir(u, 'ver');
     const [ops, ls] = await Promise.all([al.lista('operadores_aliados'), al.lista('leads_adventures')]);
     return ops.map((o) => {
-      const mios = ls.filter((l) => l.operador_id === o.id);
+      const mios = ls.filter((l) => String(l.operador_id) === String(o.id));
       return { id: o.id, nombre: o.nombre, codigo_referido: o.codigo_referido, estado: o.estado, leads: mios.length,
         vendidos: mios.filter((l) => l.estado === 'vendido').length, comision_q: r2(mios.reduce((a, l) => a + (Number(l.comision_q) || 0), 0)),
         cenas: mios.filter((l) => l.cena_estado === 'reservada').length, publicable: operadorPublicable(o, hoyGT(ahora())) };
