@@ -31,9 +31,22 @@ test('Las migraciones 053, 054 y 055 existen, son solo aditivas y la app no pued
   assert.match(s53, /GRANT SELECT, INSERT ON web_versiones, web_bitacora TO app;/);
 });
 
-test('Ninguna otra migracion usa los numeros 053-055 ni los nombres de tabla nuevos', () => {
-  const otras = fs.readdirSync(DIR).filter((f) => !/^05[345]_/.test(f));
-  const nuevas = Object.keys(columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql')));
+test('La 056 (blog y lista de espera) es aditiva: una tabla nueva y columnas nuevas en lista_espera, sin DELETE', () => {
+  const s = sinComentarios(leer('056_blog.sql'));
+  assert.doesNotMatch(s, /\b(DROP|TRUNCATE|DELETE|UPDATE\s+\w+\s+SET|RENAME)\b/i);
+  const alter = [...s.matchAll(/ALTER TABLE (\w+) (\w+ \w+)/g)];
+  assert.ok(alter.length >= 5);
+  alter.forEach((m) => { assert.strictEqual(m[1], 'lista_espera'); assert.strictEqual(m[2], 'ADD COLUMN'); });
+  // columnas nuevas: nulas o con valor por defecto (la tabla puede tener filas)
+  for (const m of s.matchAll(/ADD COLUMN (\w+) ([^;]+);/g)) assert.ok(!/NOT NULL/.test(m[2]) || /DEFAULT/.test(m[2]), m[1]);
+  assert.match(s, /GRANT SELECT, INSERT, UPDATE ON web_blog TO app;/);
+  assert.match(s, /GRANT USAGE ON SEQUENCE web_blog_id_seq TO app;/);
+  assert.strictEqual(fs.readdirSync(DIR).filter((f) => /^056_/.test(f)).length, 1, 'un solo archivo con el numero 056');
+});
+
+test('Ninguna otra migracion usa los numeros 053-056 ni los nombres de tabla nuevos', () => {
+  const otras = fs.readdirSync(DIR).filter((f) => !/^05[3456]_/.test(f));
+  const nuevas = Object.keys(columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql') + leer('056_blog.sql')));
   for (const f of otras) {
     const s = sinComentarios(leer(f));
     nuevas.forEach((t) => assert.doesNotMatch(s, new RegExp('CREATE TABLE ' + t + '\\b'), f + ' ya crea ' + t));
@@ -42,7 +55,7 @@ test('Ninguna otra migracion usa los numeros 053-055 ni los nombres de tabla nue
 });
 
 test('El almacen usa exactamente las tablas y columnas de las migraciones', () => {
-  const cols = columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql'));
+  const cols = columnas(leer('053_contenido_web.sql') + leer('054_giftcards_pagos.sql') + leer('055_adventures.sql') + leer('056_blog.sql'));
   assert.deepStrictEqual(Object.keys(A.TABLAS).sort(), Object.keys(cols).sort());
   for (const t of Object.keys(A.TABLAS)) assert.deepStrictEqual(A.TABLAS[t].cols.slice().sort(), cols[t].slice().sort(), t);
 });

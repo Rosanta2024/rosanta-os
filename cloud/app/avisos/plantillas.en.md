@@ -148,6 +148,24 @@ Thanks for coming. If you had a good time, a review on {sitio_resena} helps more
 
 And if something wasn't right, just reply to this email. The team reads every one.
 
+## espera_mesa_libre
+Asunto: A table opened up · {fecha_corta} {hora}
+
+[si nombre] Hi {nombre},
+[no nombre] Hi,
+
+You were on our waitlist and a table just opened up:
+
+Date: {fecha}
+Time: {hora}
+Table for: {personas}
+
+We can't hold it for you: it goes to whoever books first. If it still works for you, book it here:
+
+[boton Book this table] {enlace_reservar}
+
+If you no longer need it, you don't have to do anything.
+
 ## whatsapp.confirmacion
 Meta: rosanta_reserva_confirmada
 Categoria: Utility

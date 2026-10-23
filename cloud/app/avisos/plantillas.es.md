@@ -159,6 +159,24 @@ Gracias por venir. Si la pasaste bien, una reseña en {sitio_resena} ayuda a que
 
 Y si algo no estuvo bien, responde a este correo. Lo lee el equipo.
 
+## espera_mesa_libre
+Asunto: Se liberó una mesa · {fecha_corta} {hora}
+
+[si nombre] Hola {nombre},
+[no nombre] Hola,
+
+Estabas en nuestra lista de espera y se liberó una mesa:
+
+Fecha: {fecha}
+Hora: {hora}
+Mesa para: {personas}
+
+No te la podemos apartar: es de quien reserve primero. Si todavía te sirve, resérvala aquí:
+
+[boton Reservar esta mesa] {enlace_reservar}
+
+Si ya no la necesitas, no tienes que hacer nada.
+
 ## equipo_nueva
 Asunto: Reserva nueva · {nombre_completo} · {fecha_corta} {hora} · {personas}
 

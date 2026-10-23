@@ -2,7 +2,7 @@
  * Pantallas de la web nueva (AYUDANTE 4, 20-oct-2026). HTML y JS sin librerias, como las de la nube, con la
  * paleta de la intranet (PaletaServidor.js, via pantalla-pagos.paleta()).
  *
- *   /contenido-web?u=…              (solo el dueño) textos EN/ES, fotos, menu, FAQ, eventos y Adventures (experiencias,
+ *   /contenido-web?u=…              (solo el dueño) textos EN/ES, fotos, menu, FAQ, eventos, blog y Adventures (experiencias,
  *                                   operadores aliados y consultas); vista previa; publicar
  *   /contenido-web/vista-previa?u=… como queda el borrador (por pagina, en ES o EN)
  *   /giftcards?u=…                  canje en sala y caja; emitir por deposito, anular y reporte (dueño)
@@ -11,6 +11,7 @@
  * Todo texto que viene de la base se escapa (esc) antes de ir al HTML.
  */
 const { paleta } = require('./pantalla-pagos');
+const { markdownAHtml } = require('./contenido-web');
 
 let PALETA = null;
 const pal = () => { if (PALETA === null) { try { PALETA = paleta(); } catch (e) { PALETA = ''; } } return PALETA; };
@@ -56,6 +57,8 @@ var F={
  faq:[["categoria","Categoría","texto"],["pregunta","Pregunta","par"],["respuesta","Respuesta","parlargo"],["orden","Orden","num"]],
  eventos:[["titulo","Título","par"],["descripcion","Descripción","parlargo"],["inicio","Empieza","fecha"],["fin","Termina","fecha"],["precio_q","Precio (Q)","precio"],["cupo","Cupo","num"],["enlace","Enlace para reservar","texto"],["foto_id","Foto","foto"],["orden","Orden","num"]],
  fotos:[["alt","Descripción de la foto (para Google y lectores)","par"]],
+ blog:[["fecha","Fecha de publicación","dia"],["titulo","Título","par"],["resumen","Resumen (1 o 2 frases: sale en la lista y en Google)","parlargo"],
+  ["cuerpo","Texto · párrafos separados por una línea en blanco, **negritas**, listas con \\"- \\" y [enlaces](https://…)","parlargo"],["foto_id","Foto","foto"],["orden","Orden (si dos tienen la misma fecha)","num"]],
  experiencias:[["operador_id","Operador aliado","operador"],["titulo","Título","par"],["descripcion","Descripción","parlargo"],["duracion","Duración","par"],["incluye","Qué incluye (una cosa por línea)","parlargo"],
   ["punto_salida","Punto de salida","par"],["temporada","Temporada","par"],["dificultad","Dificultad","dificultad"],["idiomas","Idiomas","idiomas"],["precio_ref_q","Precio de referencia por persona (Q)","precioref"],
   ["foto_id","Foto principal","foto"],["galeria","Galería (números de foto, separados por coma)","texto"],["faq","Preguntas (una por línea: Pregunta ES | Respuesta ES | Question EN | Answer EN)","faq"],["orden","Orden","num"]],
@@ -92,10 +95,11 @@ function fotoUrl(id){var f=B.fotos.filter(function(x){return x.id===id})[0];retu
 function leer(caja){var o={};caja.querySelectorAll("[data-c]").forEach(function(el){if(el.disabled)return;o[el.getAttribute("data-c")]=el.value});
  caja.querySelectorAll("[data-obj]").forEach(function(el){var c={};el.querySelectorAll("input").forEach(function(x){c[x.value]=x.checked});o[el.getAttribute("data-obj")]=c});
  caja.querySelectorAll("[data-lista]").forEach(function(el){var c=[];el.querySelectorAll("input:checked").forEach(function(x){c.push(x.value)});if(!el.querySelector("input:disabled"))o[el.getAttribute("data-lista")]=c});return o}
-function tarjeta(tipo,f,llave,activo,titulo,campos){var dis=!B.yo.puede_editar;var cs=(campos||F[tipo]).filter(function(c){return !(tipo==="bloques"&&((c[0]==="enlace"&&f.tipo!=="enlace")||(c[0]==="foto_id"&&f.tipo!=="foto")||(c[0]==="texto"&&f.tipo==="foto")))});
+function soloDueno(tipo){return tipo==="blog"&&!B.yo.puede_publicar}
+function tarjeta(tipo,f,llave,activo,titulo,campos){var dis=!B.yo.puede_editar||soloDueno(tipo);var cs=(campos||F[tipo]).filter(function(c){return !(tipo==="bloques"&&((c[0]==="enlace"&&f.tipo!=="enlace")||(c[0]==="foto_id"&&f.tipo!=="foto")||(c[0]==="texto"&&f.tipo==="foto")))});
  return "<div class=\\"tarjeta"+(activo?"":" retirado")+"\\" data-tipo="+tipo+" data-llave=\\""+esc(llave)+"\\"><div class=fila style=\\"margin:0\\"><b>"+esc(titulo)+"</b>"+(activo?"":" <span class=chip>retirado</span>")+"</div>"+
  cs.map(function(c){return control(c[2],c[0],c[1],f,dis)}).join("")+(dis?"":"<div class=fila><button class=pri data-acc=guardar>Guardar</button><button data-acc="+(activo?"retirar":"reactivar")+">"+(tipo==="operadores"?(activo?"Pausar":"Activar"):(activo?"Retirar":"Volver a mostrar"))+"</button></div>")+"</div>"}
-function nuevo(tipo,campos,titulo){if(!B.yo.puede_editar)return"";return "<details class=tarjeta><summary><b>+ "+esc(titulo)+"</b></summary><div data-nuevo="+tipo+">"+campos+"<div class=fila><button class=pri data-acc=crear>Agregar</button></div></div></details>"}
+function nuevo(tipo,campos,titulo){if(!B.yo.puede_editar||soloDueno(tipo))return"";return "<details class=tarjeta><summary><b>+ "+esc(titulo)+"</b></summary><div data-nuevo="+tipo+">"+campos+"<div class=fila><button class=pri data-acc=crear>Agregar</button></div></div></details>"}
 function pintar(){var a=document.getElementById("app");var y=B.yo;
  document.getElementById("estado").innerHTML=(B.ultima_version?"Publicado: versión "+B.ultima_version.id:"Nada publicado todavía")+(B.cambios_sin_publicar?" · <b>hay cambios sin publicar</b>":" · al día");
  document.getElementById("bPub").style.display=y.puede_publicar?"":"none";
@@ -114,6 +118,9 @@ function pintar(){var a=document.getElementById("app");var y=B.yo;
  if(TAB==="faq"){B.faq.forEach(function(q){h+=tarjeta("faq",q,q.id,q.activa,q.pregunta_es)});h+=nuevo("faq",control("par","pregunta","Pregunta",null)+control("parlargo","respuesta","Respuesta",null),"Agregar una pregunta")}
  if(TAB==="eventos"){B.eventos.forEach(function(e){h+=tarjeta("eventos",e,e.id,e.activo,e.titulo_es+" · "+fechaLocal(e.inicio).replace("T"," "))});
   h+=nuevo("eventos","<label>Dirección (p. ej. cena-maridaje-noviembre)</label><input data-c=slug>"+control("par","titulo","Título",null)+control("fecha","inicio","Empieza",null),"Agregar un evento")}
+ if(TAB==="blog"){h+="<div class=aviso>El blog lo escribe y lo publica solo Juanma. Un artículo sale en el sitio cuando se publica (botón Publicar); retirarlo lo saca en la publicación siguiente.</div>";
+  B.blog.forEach(function(b){h+=tarjeta("blog",b,b.id,b.activa,String(b.fecha).slice(0,10)+" · "+b.titulo_es)});
+  h+=nuevo("blog","<label>Dirección (p. ej. que-comer-en-antigua)</label><input data-c=slug>"+control("dia","fecha","Fecha de publicación",{fecha:new Date(Date.now()-6*3600000).toISOString().slice(0,10)})+control("par","titulo","Título",null),"Agregar un artículo")}
  if(TAB==="fotos"){if(y.puede_editar)h+="<div class=tarjeta><b>Subir fotos</b><p><small>Se achican solas antes de subir (1600 px y 600 px, WebP). Escribí la descripción después.</small></p><input type=file id=archivos accept=\\"image/*\\" multiple></div>";
   h+="<div class=fotos>"+B.fotos.map(function(f){return "<div>"+"<img loading=lazy src=\\""+esc(f.url_chica||f.url)+"\\" alt=\\""+esc(f.alt_es)+"\\"><small>#"+f.id+" · "+f.ancho+"×"+f.alto+"</small></div>"}).join("")+"</div><h3>Descripciones</h3>";
   B.fotos.forEach(function(f){h+=tarjeta("fotos",f,f.id,f.activa,"Foto #"+f.id)})}
@@ -168,13 +175,13 @@ cargar();`;
 function contenidoWeb() {
   return pagina('Contenido web',
     '<header class="top"><h1>Contenido web</h1><small id="estado">…</small><span class="esp"></span><button id="bVista">Vista previa</button><button id="bPub" class="pri" style="display:none">Publicar</button></header>' +
-    '<main><nav class="tabs"><button class="on" data-tab="textos">Textos</button><button data-tab="menu">Menú</button><button data-tab="faq">Preguntas</button><button data-tab="eventos">Eventos</button><button data-tab="fotos">Fotos</button><button data-tab="adventures">Adventures</button><button data-tab="operadores">Operadores</button><button data-tab="consultas">Consultas</button><button data-tab="versiones">Versiones</button></nav><div id="app">Leyendo…</div></main>',
+    '<main><nav class="tabs"><button class="on" data-tab="textos">Textos</button><button data-tab="menu">Menú</button><button data-tab="faq">Preguntas</button><button data-tab="eventos">Eventos</button><button data-tab="blog">Blog</button><button data-tab="fotos">Fotos</button><button data-tab="adventures">Adventures</button><button data-tab="operadores">Operadores</button><button data-tab="consultas">Consultas</button><button data-tab="versiones">Versiones</button></nav><div id="app">Leyendo…</div></main>',
     CONTENIDO_JS);
 }
 
 // ------------------------------------------------------------------------------------------------ Vista previa
 
-const PREVIA_JS = API_JS + `
+const PREVIA_JS = API_JS + 'var markdownAHtml=' + markdownAHtml.toString() + ';' + `
 var L=new URLSearchParams(location.search).get("lang")==="en"?"en":"es",C=null,PG=null;
 function t(x){return x?(x[L]||""):""}
 function q(n){return n==null?"":"Q"+Number(n).toLocaleString("es-GT")}
@@ -182,7 +189,7 @@ function img(f){return f?"<img src=\\""+esc(f.url_chica)+"\\" alt=\\""+esc(t(f.a
 function pintar(){var a=document.getElementById("app");var h="";
  if(C.faltan.length)h+="<div class=aviso><b>Antes de publicar falta:</b><ul>"+C.faltan.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ul></div>";
  if(C.fuera&&C.fuera.length)h+="<div class=aviso>"+C.fuera.map(esc).join("<br>")+"</div>";
- var c=C.contenido,ks=Object.keys(c.paginas);if(c.adventures&&c.adventures.experiencias.length&&ks.indexOf("adventures")<0)ks.push("adventures");if(!PG)PG=ks[0];
+ var c=C.contenido,ks=Object.keys(c.paginas);if(c.adventures&&c.adventures.experiencias.length&&ks.indexOf("adventures")<0)ks.push("adventures");if(c.blog&&c.blog.length&&ks.indexOf("blog")<0)ks.push("blog");if(!PG)PG=ks[0];
  h+="<div class=fila style=\\"margin:0 0 12px\\">"+ks.map(function(k){return "<button "+(k===PG?"class=on ":"")+"data-p=\\""+esc(k)+"\\">"+esc(k)+"</button>"}).join("")+"<span class=esp></span><button data-l=es"+(L==="es"?" class=pri":"")+">ES</button><button data-l=en"+(L==="en"?" class=pri":"")+">EN</button></div>";
  var p=c.paginas[PG]||null;
  if(p){h+="<div class=tarjeta><small>"+esc(p.ruta[L])+"</small><h1 style=\\"font-family:var(--rosanta-font-title)\\">"+esc(t(p.seo.titulo))+"</h1><p><small>"+esc(t(p.seo.descripcion))+"</small></p></div>";
@@ -190,6 +197,7 @@ function pintar(){var a=document.getElementById("app");var h="";
  if(PG==="menu"||/menu/.test(PG))c.menu.forEach(function(s){h+="<div class=tarjeta><h2>"+esc(t(s.nombre))+"</h2><p><small>"+esc(t(s.nota))+"</small></p>"+s.platos.map(function(x){return "<p><b>"+esc(t(x.nombre))+"</b> "+q(x.precio_q)+(x.precio_usd_ref?" <small>≈ US$"+x.precio_usd_ref+"</small>":"")+"<br><small>"+esc(t(x.descripcion))+(x.alergenos.length?" · "+x.alergenos.map(function(k){return esc(c.alergenos[k][L])}).join(", "):"")+"</small></p>"}).join("")+"</div>"});
  if(/faq|pregunta/.test(PG))c.faq.forEach(function(f){h+="<div class=tarjeta><b>"+esc(t(f.pregunta))+"</b><p style=\\"white-space:pre-wrap\\">"+esc(t(f.respuesta))+"</p></div>"});
  if(PG==="adventures")c.adventures.experiencias.forEach(function(x){h+="<div class=tarjeta><h3>"+esc(t(x.titulo))+"</h3><small>"+esc(t(x.duracion))+" · "+esc(t(x.dificultad_texto))+" · "+(x.precio_ref_q!=null?q(x.precio_ref_q):"")+" · "+esc(x.operador.nombre)+"</small>"+img(x.foto)+"<p style=\\"white-space:pre-wrap\\">"+esc(t(x.descripcion))+"</p><p><small><i>"+esc(t(x.aviso_legal))+"</i></small></p></div>"});
+ if(PG==="blog")(c.blog||[]).forEach(function(b){h+="<div class=tarjeta><small>"+esc(b.fecha)+" · /"+(L==="es"?"es/":"")+"blog/"+esc(b.slug)+"</small><h2 style=\\"font-family:var(--rosanta-font-title)\\">"+esc(t(b.titulo))+"</h2><p><i>"+esc(t(b.resumen))+"</i></p>"+img(b.foto)+markdownAHtml(t(b.cuerpo))+"</div>"});
  if(/event/.test(PG))c.eventos.forEach(function(e){h+="<div class=tarjeta><h3>"+esc(t(e.titulo))+"</h3><small>"+esc(new Date(e.inicio).toLocaleString(L==="en"?"en-US":"es-GT",{timeZone:"America/Guatemala"}))+" · "+q(e.precio_q)+"</small>"+img(e.foto)+"<p>"+esc(t(e.descripcion))+"</p></div>"});
  a.innerHTML=h}
 document.addEventListener("click",function(e){var p=e.target.getAttribute("data-p"),l=e.target.getAttribute("data-l");if(p){PG=p;pintar()}if(l){L=l;pintar()}});

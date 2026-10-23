@@ -1,7 +1,7 @@
 /**
  * Almacen de la web (contenido, gift cards y pagos en linea), 20-oct-2026, AYUDANTE 4.
  *
- * Una sola forma de leer y escribir las tablas de las migraciones 053, 054 y 055, con dos motores:
+ * Una sola forma de leer y escribir las tablas de las migraciones 053, 054, 055 y 056 (web_blog), con dos motores:
  *   - crearAlmacenPg(pool): la base de verdad (pg.Pool). SQL con parametros; los nombres de tabla y columna
  *     salen SOLO de TABLAS (abajo), nunca de lo que manda el navegador.
  *   - crearAlmacenMemoria(): lo mismo en memoria, para las pruebas. Repite las reglas que importan de la base
@@ -18,7 +18,8 @@
  */
 
 // Columnas que la app escribe o lee, por tabla. La prueba "almacen = migraciones" compara esto con los
-// CREATE TABLE de 053, 054 y 055: si alguien cambia una sin la otra, falla.
+// CREATE TABLE de 053, 054, 055 y 056: si alguien cambia una sin la otra, falla.
+// dias: columnas `date` (pg las devuelve como Date a medianoche local; aca vuelven a 'AAAA-MM-DD').
 const TABLAS = {
   web_ajustes: { llave: 'clave', cols: ['clave', 'valor', 'actualizado', 'actualizado_por'], json: ['valor'] },
   web_fotos: { llave: 'id', cols: ['id', 'ruta', 'url', 'url_chica', 'ancho', 'alto', 'bytes', 'tipo', 'huella', 'alt_es', 'alt_en', 'activa', 'subida', 'subida_por'], unicos: [['ruta'], ['huella']] },
@@ -30,6 +31,8 @@ const TABLAS = {
   web_eventos: { llave: 'id', cols: ['id', 'slug', 'titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'inicio', 'fin', 'precio_q', 'cupo', 'foto_id', 'enlace', 'orden', 'activo', 'actualizado', 'actualizado_por'], unicos: [['slug']], num: ['precio_q'] },
   web_versiones: { llave: 'id', cols: ['id', 'publicada', 'publicada_por', 'nota', 'formato', 'contenido', 'huella', 'restaurada_de', 'reconstruccion', 'reconstruccion_detalle'], json: ['contenido'], soloAgregar: ['reconstruccion', 'reconstruccion_detalle'] },
   web_bitacora: { llave: 'id', cols: ['id', 'cuando', 'quien', 'rol', 'accion', 'tabla', 'registro_id', 'antes', 'despues'], json: ['antes', 'despues'], soloAgregar: [] },
+  web_blog: { llave: 'id', cols: ['id', 'slug', 'orden', 'fecha', 'titulo_en', 'titulo_es', 'resumen_en', 'resumen_es', 'cuerpo_en', 'cuerpo_es', 'foto_id', 'activa', 'actualizado', 'actualizado_por'],
+    unicos: [['slug']], dias: ['fecha'] },
 
   pagos_liquidaciones: { llave: 'id', cols: ['id', 'proveedor', 'referencia', 'fecha', 'monto', 'moneda', 'banco', 'banco_referencia', 'estado', 'diferencia', 'conciliada', 'nota', 'creada'], unicos: [['proveedor', 'referencia']], num: ['monto', 'diferencia'] },
   pagos_en_linea: { llave: 'id', cols: ['id', 'proveedor', 'tipo', 'proveedor_id', 'cobro_id', 'pago_original_id', 'fecha', 'moneda', 'bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q', 'concepto', 'concepto_id', 'estado', 'fel_serie', 'fel_numero', 'fel_fecha', 'fel_url', 'fel_estado', 'liquidacion_id', 'crudo', 'creado', 'actualizado'], unicos: [['proveedor', 'tipo', 'proveedor_id']], json: ['crudo'], num: ['bruto', 'comision', 'otros_cargos', 'neto', 'tipo_cambio', 'bruto_q'] },
@@ -89,11 +92,15 @@ function soloColumnas(tabla, obj) {
   });
   return out;
 }
+// pg arma una columna date a medianoche LOCAL (TZ=America/Guatemala); si llega a medianoche UTC (pg-mem), se lee en UTC.
+const diaLocal = (d) => (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 ? d.toISOString().slice(0, 10)
+  : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
 /** pg devuelve numeric como texto: aca se pasa a numero (las cuentas de dinero se redondean a 2). */
 function normalizar(tabla, fila) {
   if (!fila) return fila;
   const s = spec(tabla);
   (s.num || []).forEach((c) => { if (fila[c] !== null && fila[c] !== undefined) fila[c] = Number(fila[c]); });
+  (s.dias || []).forEach((c) => { if (fila[c] instanceof Date) fila[c] = diaLocal(fila[c]); });
   if (fila.id !== undefined && fila.id !== null && s.llave === 'id') fila.id = Number(fila.id);
   return fila;
 }
@@ -176,6 +183,7 @@ const DEFECTOS = {
 const DEFECTOS_POR_TABLA = {
   web_bloques: { tipo: 'texto' },
   web_versiones: { reconstruccion: 'pendiente', nota: '' },
+  web_blog: { resumen_en: '', resumen_es: '', cuerpo_en: '', cuerpo_es: '' },
   gift_cards: { moneda: 'GTQ', estado: 'activa', aviso_estado: 'pendiente' },
   gift_cards_pedidos: { estado: 'pendiente' },
   pagos_en_linea: { tipo: 'cobro', fel_estado: 'pendiente' },
@@ -185,7 +193,7 @@ const DEFECTOS_POR_TABLA = {
   leads_adventures: { estado: 'nuevo', idioma: 'en', combinar_cena: false }
 };
 const FECHA_AHORA = { web_ajustes: 'actualizado', web_fotos: 'subida', web_paginas: 'actualizado', web_bloques: 'actualizado', web_menu_secciones: 'actualizado',
-  web_menu_platos: 'actualizado', web_faq: 'actualizado', web_eventos: 'actualizado', web_versiones: 'publicada', web_bitacora: 'cuando',
+  web_menu_platos: 'actualizado', web_faq: 'actualizado', web_eventos: 'actualizado', web_versiones: 'publicada', web_bitacora: 'cuando', web_blog: 'actualizado',
   pagos_liquidaciones: 'creada', pagos_en_linea: 'creado', pagos_webhooks: 'recibido', gift_cards_pedidos: 'creado', gift_cards: 'emitida', gift_cards_movimientos: 'cuando',
   operadores_aliados: 'actualizado', web_experiencias: 'actualizado', leads_adventures: 'creado' };
 
