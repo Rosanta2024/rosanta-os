@@ -45,6 +45,9 @@ test('la ruta: solo con enlace y permiso de ver; cuenta del motor sin nombres, s
     assert.deepStrictEqual([d.dias[0].personas, d.dias[0].almuerzo.personas, d.dias[0].cena.personas], [2, 2, 0]);   // la cancelada no cuenta
     assert.strictEqual(d.dias[1].personas, 3);
     assert.ok(!/Persona|Secreta|ejemplo\.test|5555/.test(txt), 'sin datos de clientes');
-    assert.match(await (await fetch(base + '/cocina')).text(), /Reservas de la semana/);
+    const html = await (await fetch(base + '/cocina')).text();
+    assert.match(html, /Reservas de la semana/);
+    assert.match(html, /history\.replaceState\(null, '', '\/cocina'\)/, 'el enlace se borra de la barra');
+    assert.match(html, /sessionStorage/, 'recargar sigue funcionando');
   } finally { await new Promise((ok) => s.close(ok)); }
 });

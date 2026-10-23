@@ -79,7 +79,11 @@ h1{font-size:1.4rem;margin:.2em 0}.sub{color:var(--suave);font-size:.9rem;margin
 <body><h1>Reservas de la semana</h1><div class="sub" id="sub">Cargando…</div><div id="dias"></div><div id="semana"></div>
 <script>
 (function(){
+  // El enlace personal no queda a la vista: se lee, se guarda en esta pestaña (sessionStorage, para que recargar funcione)
+  // y se borra enseguida de la barra de direcciones y del historial.
   var u = new URLSearchParams(location.search).get('u') || '';
+  try { if (u) sessionStorage.setItem('rosanta-u', u); else u = sessionStorage.getItem('rosanta-u') || ''; } catch (e) {}
+  if (location.search) history.replaceState(null, '', '/cocina');
   var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'], MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   function nombre(f){ var p = f.split('-'), d = new Date(Date.UTC(+p[0], +p[1]-1, +p[2])); return DIAS[d.getUTCDay()] + ' ' + (+p[2]) + ' ' + MESES[+p[1]-1]; }
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }

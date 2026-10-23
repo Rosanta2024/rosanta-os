@@ -225,3 +225,14 @@ test('blog: las entradas con fecha futura quedan ocultas hasta su fecha (Juanma,
   assert.strictEqual(c.blog.length, 3, 'la version guardada no cambia');
   assert.strictEqual(RW.hoyGuatemala(Date.parse('2026-11-04T05:00:00Z')), '2026-11-03');   // 23:00 del 3 en Guatemala
 });
+
+test('contenido: los platos salen aunque la base devuelva los ids como texto y los seccion_id como numero (pg)', async () => {
+  const W = require('../src/contenido-web');
+  const mem = require('../src/almacen-web').crearAlmacenMemoria();
+  const lista = mem.lista.bind(mem);
+  mem.lista = async (t, f) => (await lista(t, f)).map((x) => (t === 'web_menu_secciones' ? Object.assign({}, x, { id: String(x.id) }) : t === 'web_menu_platos' ? Object.assign({}, x, { seccion_id: Number(x.seccion_id) }) : x));
+  const sec = await mem.insertar('web_menu_secciones', { clave: 'entradas', orden: 0, nombre_es: 'Entradas', nombre_en: 'Starters', activa: true });
+  await mem.insertar('web_menu_platos', { seccion_id: sec.id, orden: 0, nombre_es: 'Pulpo', nombre_en: 'Octopus', activo: true });
+  const c = await W.armarContenido(mem);
+  assert.strictEqual(c.menu[0].platos.length, 1);
+});
