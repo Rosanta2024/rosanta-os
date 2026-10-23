@@ -6,7 +6,7 @@ const SEC = { cocina: 'comp-lgv2q4wf2', menu: 'comp-mszglxqs', galeria: 'comp-ms
 export const NAVEGACION = {
   es: {
     principales: [
-      { texto: 'ROSANTA', href: '/es' },
+      { texto: 'GALERÍA', href: `/es#${SEC.galeria}` },   // Juanma, 23-oct: en lugar de ROSANTA (el logo lleva al inicio)
       { texto: 'MENÚ', href: '/es/full-menu' },
       { texto: 'EVENTOS', href: '/es/events-1' },
       { texto: 'IDEAS PARA REGALAR', href: '/es/gift-ideas' },
@@ -15,7 +15,6 @@ export const NAVEGACION = {
     reservar: { texto: 'RESERVACIONES', corto: 'RESERVAR', href: '/es/reservas' },
     mas: { texto: 'MÁS', items: [
       { texto: 'Cocina honesta', href: `/es#${SEC.cocina}` },
-      { texto: 'Galería', href: `/es#${SEC.galeria}` },
       { texto: 'Ubicación', href: `/es#mapa` },
       { texto: 'Preguntas frecuentes', href: '/es/preguntas-frecuentes' },
       { texto: 'Política de privacidad', href: '/es/política-de-privacidad' },
@@ -23,7 +22,7 @@ export const NAVEGACION = {
   },
   en: {
     principales: [
-      { texto: 'ROSANTA', href: '/' },
+      { texto: 'GALLERY', href: `/#${SEC.galeria}` },
       { texto: 'MENU', href: '/full-menu' },
       { texto: 'EVENTS', href: '/events-1' },
       { texto: 'GIFT IDEAS', href: '/gift-ideas' },
@@ -32,7 +31,6 @@ export const NAVEGACION = {
     reservar: { texto: 'RESERVATIONS', corto: 'BOOK', href: '/reservas' },
     mas: { texto: 'MORE', items: [
       { texto: 'Honest cooking', href: `/#${SEC.cocina}` },
-      { texto: 'Gallery', href: `/#${SEC.galeria}` },
       { texto: 'Location', href: `/#mapa` },
       { texto: 'FAQ', href: '/preguntas-frecuentes' },
       { texto: 'Privacy policy', href: '/política-de-privacidad' },
@@ -44,4 +42,4 @@ export const NAVEGACION = {
  *  (para la prueba de "texto sin JavaScript"). */
 export const PALABRAS_MENU_WIX = ['honest', 'cooking', 'menu', 'gallery', 'reservaciones', 'reservations', 'eventos', 'events',
   'ideas', 'para', 'regalar', 'gift', 'preguntas', 'frecuentes', 'faq', 'política', 'de', 'privacidad', 'privacy', 'policy',
-  'contact', 'location', 'rosanta', 'open'];
+  'contact', 'location', 'rosanta', 'open', 'galería', 'galeria'];
