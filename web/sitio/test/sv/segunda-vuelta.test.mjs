@@ -217,11 +217,10 @@ test('gift card: Q300 (US$45), Q500 (US$55), libre desde Q200, vence a los 12 me
   }
 });
 
-test('menú: ADVENTURES y BLOG en el encabezado de todas las páginas, después de GIFT IDEAS', () => {
+test('menú (rediseño del 23-oct): Adventures y Blog al principio de "Más" en todas las páginas', () => {
   for (const [ruta, adv, bl] of [['/', '/adventures', '/blog'], ['/es', '/es/adventures', '/es/blog'], ['/full-menu', '/adventures', '/blog']]) {
-    const enlaces = parse(html(ruta)).querySelectorAll('nav.menu > ul > li > a').map((a) => a.getAttribute('href'));
-    const i = enlaces.findIndex((h) => /gift-ideas$/.test(h));
-    assert.deepEqual(enlaces.slice(i + 1, i + 3), [adv, bl], `${ruta}: ${enlaces.join(' ')}`);
+    const enlaces = parse(html(ruta)).querySelectorAll('nav.menu li.mas ul.sub a').map((a) => a.getAttribute('href'));
+    assert.deepEqual(enlaces.slice(0, 2), [adv, bl], `${ruta}: ${enlaces.join(' ')}`);
   }
 });
 
