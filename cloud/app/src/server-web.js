@@ -175,9 +175,16 @@ async function main() {
   const { crearPool } = require('./db');
   const P = require('./permisos');
   const pool = await crearPool();
-  let matriz = await P.cargarDeBase(pool);
-  setInterval(() => { P.cargarDeBase(pool).then((m) => { matriz = m; }).catch((e) => console.error('[web] matriz', e.message)); }, 5 * 60000).unref();
-  const { app } = crearAppWeb({ pool, matriz: () => matriz });
+  // La matriz de permisos se relee si tiene mas de 1 minuto, al llegar un pedido (en Cloud Run un reloj no corre con la
+  // instancia quieta): un permiso nuevo en la base vale en el pedido siguiente, sin volver a publicar.
+  let matriz = await P.cargarDeBase(pool), leida = Date.now(), leyendo = null;
+  const matrizAlDia = () => {
+    if (Date.now() - leida > 60000 && !leyendo) {
+      leyendo = P.cargarDeBase(pool).then((m) => { matriz = m; leida = Date.now(); }).catch((e) => console.error('[web] matriz', e.message)).finally(() => { leyendo = null; });
+    }
+    return matriz;
+  };
+  const { app } = crearAppWeb({ pool, matriz: matrizAlDia });
   const puerto = Number(process.env.PORT || 8080);
   app.listen(puerto, () => console.log('rosanta-web escuchando en ' + puerto));
 }
