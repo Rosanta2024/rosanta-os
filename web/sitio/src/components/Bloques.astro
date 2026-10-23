@@ -11,17 +11,20 @@ import FormularioCotizacion from './FormularioCotizacion.astro';
 import ResenasGoogle from './ResenasGoogle.astro';
 import Faq from './Faq.astro';
 import Privacidad from './Privacidad.astro';
-import { htmlResponsivo, hrefMenu, imagenLocal } from '../lib/sitio.mjs';
+import Contacto from './Contacto.astro';
+import { htmlResponsivo, hrefMenu, imagenLocal, altDe } from '../lib/sitio.mjs';
 import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP } from '../config.mjs';
 
 const { bloques = [], pagina, ref = 980 } = Astro.props;
 const idioma = pagina.idioma;
 
 function imagenesLocales(html) {
-  return html.replace(/<img data-medio="([^"]+)" alt="([^"]*)"(?: width="\d+")?(?: height="\d+")?>/g, (m, medio, alt) => {
-    const im = imagenLocal(medio.replace(/&amp;/g, '&'));
+  return html.replace(/<img data-medio="([^"]+)" alt="([^"]*)"(?: width="\d+")?(?: height="\d+")?>/g, (_, medio, alt) => {
+    const md = medio.replace(/&amp;/g, '&');
+    const im = imagenLocal(md);
     if (!im) return '';
-    return `<img src="${im.archivo}" alt="${alt}" width="${im.ancho}" height="${im.alto}" loading="lazy" decoding="async">`;
+    const a = altDe(md, idioma, alt.replace(/&amp;/g, '&')).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    return `<img src="${im.archivo}" alt="${a}" width="${im.ancho}" height="${im.alto}" loading="lazy" decoding="async">`;
   });
 }
 function fondo(b) {
@@ -32,6 +35,15 @@ function fondo(b) {
     if (im) st.push(`background-image:url('${im.archivo}')`);
   }
   return st;
+}
+/** Fondo oscuro (el verde de la marca): los botones de adentro van en menta para que se vean (23-oct). */
+function oscuro(b) {
+  const c = String(b.fondo || '');
+  let m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/), v;
+  if (m) v = [m[1], m[2], m[3]].map(Number);
+  else if ((m = c.match(/^#([0-9a-f]{6})$/i))) v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
+  if (!v) return false;
+  return (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 < 0.45;
 }
 const r4 = (n) => Math.round(n * 10000) / 10000;
 /** Variables CSS con la posición de Wix (las usa .malla > .pos en sitio.css):
@@ -52,6 +64,12 @@ function pos(b, extra = []) {
   }
   return st.length ? st.join(';') : undefined;
 }
+/** Foto de fondo con significado: un span role="img" con su descripción (no tapa el texto de la sección). */
+function fotoFondo(b) {
+  if (!b.fondoImg) return '';
+  const t = altDe(b.fondoImg.medio, idioma, '');
+  return t ? `<span class="visualmente-oculto" role="img" aria-label="${t.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></span>` : '';
+}
 const conPos = (b) => (b.pos && b.pos.area ? 'pos' : null);
 const urlGift = GIFTCARD_URL || `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(idioma === 'es' ? 'Hola, quiero comprar una tarjeta de regalo de Rosanta.' : 'Hi, I would like to buy a Rosanta gift card.')}`;
 const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) || 980;
@@ -59,18 +77,22 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
 {bloques.map((b) => {
   switch (b.t) {
     case 'seccion':
+      // Contacto y ubicación de la portada: componente propio (Juanma, 23-oct).
+      if (b.id === 'comp-lhjc19fq') return <Contacto bloques={b.hijos} pagina={pagina} />;
       return (
-        <section id={b.id} class:list={['seccion', { 'con-fondo-img': b.fondoImg }]} style={fondo(b).join(';') || undefined}>
+        <section id={b.id} class:list={['seccion', { 'con-fondo-img': b.fondoImg, oscura: oscuro(b) }]} style={fondo(b).join(';') || undefined}>
+          <Fragment set:html={fotoFondo(b)} />
           <div class="seccion-in malla"><Bloques bloques={b.hijos} pagina={pagina} ref={980} /></div>
         </section>
       );
     case 'columnas': {
       const total = anchoColumnas(b);
       return (
-        <div id={b.id} class:list={['columnas', conPos(b)]} style={pos(b, fondo(b))}>
+        <div id={b.id} class:list={['columnas', conPos(b), { oscura: oscuro(b) }]} style={pos(b, fondo(b))}>
           {b.hijos.map((c) => (
-            <div id={c.id} class:list={['columna', 'malla', { 'con-fondo-img': c.fondoImg }]}
+            <div id={c.id} class:list={['columna', 'malla', { 'con-fondo-img': c.fondoImg, oscura: oscuro(c) }]}
               style={[...fondo(c), `--cw:${r4((c.pos?.w || total / b.hijos.length) / total)}`].join(';')}>
+              <Fragment set:html={fotoFondo(c)} />
               <Bloques bloques={c.hijos || []} pagina={pagina} ref={c.pos?.w || 980} />
             </div>
           ))}
@@ -96,15 +118,19 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href={href} {...(b.nueva ? { target: '_blank', rel: 'noopener' } : {})}>{b.texto}</a></p>;
     }
     case 'imagen':
-      return <div class:list={['imagen-caja', conPos(b)]} style={pos(b)}><Imagen medio={b.medio} alt={b.alt} href={b.href} id={b.id} /></div>;
+      return <div class:list={['imagen-caja', conPos(b)]} style={pos(b)}><Imagen medio={b.medio} alt={b.alt} idioma={idioma} href={b.href} id={b.id} /></div>;
     case 'svg':
       return b.href
         ? <a id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} href={b.href} aria-label={b.etiqueta || undefined} set:html={b.svg} />
         : <div id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} aria-hidden="true" set:html={b.svg} />;
     case 'galeria':
       return (
-        <div id={b.id} class:list={['galeria', conPos(b)]} style={pos(b)} role="list">
-          {b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} /></div>)}
+        <div class:list={['galeria-caja', conPos(b)]} style={pos(b)} data-galeria>
+          <div id={b.id} class="galeria" role="list" tabindex="0" aria-label={idioma === 'es' ? 'Galería de fotos' : 'Photo gallery'}>
+            {b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} idioma={idioma} /></div>)}
+          </div>
+          <button type="button" class="galeria-flecha galeria-ant" aria-controls={b.id} aria-label={idioma === 'es' ? 'Foto anterior' : 'Previous photo'} hidden>‹</button>
+          <button type="button" class="galeria-flecha galeria-sig" aria-controls={b.id} aria-label={idioma === 'es' ? 'Foto siguiente' : 'Next photo'} hidden>›</button>
         </div>
       );
     case 'ancla':

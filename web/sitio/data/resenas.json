@@ -1,0 +1,74 @@
+{
+  "_nota": "Lo genera scripts/resenas.mjs desde rosanta-db (resenas_gbp_google y la última corrida leer-google). No editar a mano.",
+  "actualizado": "2026-10-23T21:29:18.363Z",
+  "promedio": 4.8,
+  "total": 453,
+  "es": [
+    {
+      "id": "AbFvOqlxdpwl-Lclf_TrpDAaHt1Zfr_D8Oclgen0nNhBwKHPluZAIg144Zz4ETQ3hr43Nu4HSql4",
+      "nombre": "Teresita Mora",
+      "estrellas": 5,
+      "fecha": "2026-10-02",
+      "texto": "Ambiente tranquilo. La comida deliciosa y excelente presentación. La atención muy especial. La calidad de la comida acorde al precio.",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqldly5dBY9a2FkQKbWsoRRINPeq9JsSx1Xec7YA8Qq96xwRM3OIZ-u3U8J15AUrwWYdAgh9",
+      "nombre": "Paola London",
+      "estrellas": 5,
+      "fecha": "2026-08-21",
+      "texto": "Celebré mi cumpleaños y no podría haber elegido un mejor lugar para celebrar mi día. El ambiente perfecto, la comida exquisita, y el servicio excepcional. ¡Gracias por todo!",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqlzTa_llmi_A5d166L7sIf7-9cyVlfW47wBs7MkEVvDAGvT-Ee0PeebDpxaG186AbLmtQop6g",
+      "nombre": "Goldin Gomez",
+      "estrellas": 5,
+      "fecha": "2026-07-30",
+      "texto": "Un ambiente hermoso, romantico, con servicio espectacular, pero mas importante, la comida fue deliciosa",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqnMzUF0oGxe9mGO-sLHgHBki_Pe8xDwSBjevlqgCINh5TnfgoJDhe8_TGP-7a_pJhNPVbM2BQ",
+      "nombre": "Angel Francisco Martinez Carrion",
+      "estrellas": 5,
+      "fecha": "2026-07-26",
+      "texto": "El pasado Mayo 2026 encontré este lugar buscando en Google lugares para cenar en Antigua. La comida muy rica ordené Lomito Rosanta termino medio y las papas, salsa estaban divinas. Tomé El Canche más otra bebida (no recuerdo cuál pero ahí está la foto) súper ricas. El lugar es muy bonito, su decoración y la música totalmente tranquila para conversar. El personal súper amable. Todo 10/10",
+      "traducida": false
+    }
+  ],
+  "en": [
+    {
+      "id": "AbFvOqmP1Rxv0JvYQv0yxKC5Qs-EIGBAony2H4Qu1psapbH-Y6RTZMn88_THxu_hRyEM-HwiiMupQg",
+      "nombre": "Ted Lindblom",
+      "estrellas": 5,
+      "fecha": "2026-10-09",
+      "texto": "Very impressed with this restaurant. I thoroughly enjoyed the grilled cauliflower, lomito, and chocolate mousse. Everything tasted very fresh and thoughtfully prepared.  The service was outstanding. The waiter was very knowledgeable and kind. Best dinner I’ve had in a long time.",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqmBxwvUQ1Hi2eZ6VGJ_h1CzMuoJXTFSEbOISHg5DRCU8_HfLHdtplAVxsg7ART9UQkAA98R",
+      "nombre": "Peter Sacco",
+      "estrellas": 5,
+      "fecha": "2026-10-08",
+      "texto": "Excellent food, service, and garden. Creative and healthy cooking. One of the few times in Guatemala that the medium rare lomito was actually.... medium rare. Highly recommend!",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqnlqi0pGRUgtbZcbpiK5sHW5D93fir74NGuEHxRmS2M1aWN_zzhqNlSys3KGweO8veP80Ad",
+      "nombre": "Arm Rodriguez",
+      "estrellas": 5,
+      "fecha": "2026-10-08",
+      "texto": "Absolutely delicious and flavorful! The sauces are unique. Beautiful place. Friendly service. Cannot say enough!\nI wonder if they deliver to South Florida? It’s that good!",
+      "traducida": false
+    },
+    {
+      "id": "AbFvOqnLeTnstCKZ6HDl9WUBsyvBtU95JWTLFpkqFO7EbLDhSjbbhoe_XXsF-QmrnnrnMQkBZXlKFQ",
+      "nombre": "Grace Landry",
+      "estrellas": 5,
+      "fecha": "2026-10-03",
+      "texto": "Great experience and great service. Food was delicious, the garden is beautiful and our server Jose was extremely nice and helpful",
+      "traducida": false
+    }
+  ]
+}

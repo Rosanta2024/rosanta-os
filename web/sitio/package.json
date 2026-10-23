@@ -17,6 +17,7 @@
     "preview": "astro preview",
     "test": "node --test test/*.test.mjs",
     "paridad": "node scripts/paridad.mjs",
+    "resenas": "node scripts/resenas.mjs",
     "probar-301": "node scripts/probar-301.mjs"
   },
   "dependencies": {

@@ -146,10 +146,12 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .imagen img { width: 100%; object-fit: cover; }
 .svg { display: block; max-width: 160px; }
 .svg svg { width: 100%; height: auto; }
+.galeria-caja { width: 100vw; position: relative; left: 50%; margin-left: -50vw !important; }
 .galeria {
   display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px;
-  width: 100vw; position: relative; left: 50%; margin-left: -50vw !important;
+  width: 100%; scroll-behavior: smooth; scrollbar-width: none;
 }
+.galeria::-webkit-scrollbar { display: none; }
 .galeria > div { flex: 0 0 min(78vw, 520px); scroll-snap-align: start; }
 .galeria .imagen { margin: 0; }
 .galeria img { height: min(70vh, 640px); width: 100%; object-fit: cover; }
@@ -211,23 +213,6 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .priv-r .sec { margin-top: 30px; }
 .priv-r .sec h2 { font-size: 27px; margin-bottom: 10px; }
 
-/* ---------- reseñas de Google ---------- */
-.resenas { text-align: center; color: #5a5f5a; padding: 8px 0 16px; }
-.resenas .badge { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: #456B50; }
-.resenas .badge[hidden] { display: none; }
-.resenas .stars { position: relative; display: inline-block; font-size: 19px; letter-spacing: 1px; line-height: 1; }
-.resenas .base { color: #d9d5cc; }
-.resenas .fill { position: absolute; left: 0; top: 0; overflow: hidden; white-space: nowrap; color: #FBBC04; }
-.resenas .grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 20px; }
-.resenas .card { background: #fff; border-radius: 12px; padding: 18px; width: 320px; max-width: 100%; text-align: left; box-shadow: 0 2px 14px rgba(60,63,58,.08); }
-.resenas .crow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.resenas .av { width: 34px; height: 34px; border-radius: 50%; background: #456B50 center/cover; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.resenas .who { font-weight: 700; font-size: 14px; color: #2f342f; }
-.resenas .when { font-size: 12px; color: #9a9a92; }
-.resenas .cstars { color: #FBBC04; font-size: 14px; }
-.resenas .ctext { font-size: 14px; line-height: 1.55; color: #555; }
-.resenas .foot a { color: #456B50; font-weight: 700; font-size: 14px; text-decoration: none; }
-
 /* ---------- pie ---------- */
 .pie { background: var(--verde); color: #fff; }
 .pie .seccion-in, .pie .columnas { padding-top: 10px; padding-bottom: 10px; }
@@ -238,3 +223,214 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
   .faq-r, .priv-r { padding: 0 16px; }
   .rsv .title { font-size: 44px; }
 }
+
+/* =====================================================================================================
+   Rediseño del 23-oct (comentarios de Juanma sobre la versión de prueba). Lo de arriba copia a Wix;
+   esto lo ordena: encabezado con 6 pestañas + "Más", reseñas reales, Cocina honesta, botón del menú,
+   flechas de la galería y Contacto + mapa en una pantalla. Paleta: guía de marca (Verde Bosque #4E6D5A,
+   Crema #F2EEEB, Verde Medio #57A77F, Lila solo acento). Peskia solo en títulos cortos en mayúscula.
+   ===================================================================================================== */
+:root { --verde-medio: #57A77F; --crema-marca: #F2EEEB; --menta-boton: #BEE2D0; }
+
+/* ---------- encabezado ---------- */
+.encabezado-in { gap: 16px; }
+.menu > ul { align-items: center; gap: 0 22px; flex-wrap: nowrap; }
+.menu a, .menu summary { font: 400 12.5px/1 var(--cuerpo); letter-spacing: 1.4px; color: #fff; text-decoration: none; }
+.menu > ul > li > a { padding: 10px 0; display: inline-block; border-bottom: 1.5px solid transparent; }
+.menu > ul > li > a:hover, .menu a[aria-current="page"] { border-bottom-color: rgba(255,255,255,.7); opacity: 1; }
+.menu .mas details { position: relative; }
+.menu .mas summary { list-style: none; cursor: pointer; padding: 10px 0; display: inline-flex; align-items: center; gap: 6px; }
+.menu .mas summary::-webkit-details-marker { display: none; }
+.menu .mas summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: translateY(-2px) rotate(45deg); transition: transform .15s; }
+.menu .mas details[open] summary::after { transform: translateY(1px) rotate(-135deg); }
+.menu .mas .sub {
+  display: block; position: absolute; right: -14px; left: auto; top: calc(100% + 10px); min-width: 230px;
+  background: var(--verde); padding: 8px 0; border-radius: 6px; box-shadow: 0 12px 28px rgba(0,0,0,.22); z-index: 60;
+}
+.menu .mas .sub a { display: block; padding: 11px 20px; font-size: 14px; letter-spacing: .4px; }
+.menu .mas .sub a:hover, .menu .mas .sub a:focus-visible { background: rgba(255,255,255,.1); }
+.reservar {
+  display: inline-block; background: var(--crema-marca); color: var(--verde) !important; border-radius: 30px;
+  padding: 11px 20px !important; font-weight: 700 !important; letter-spacing: 1.4px; text-decoration: none; white-space: nowrap;
+  border: 0 !important; transition: background .15s;
+}
+.reservar:hover { background: #fff; }
+.reservar-tel { display: none; font: 700 12px/1 var(--cuerpo); }
+.menu a:focus-visible, .menu summary:focus-visible, .reservar:focus-visible, .idioma a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+@media (min-width: 1100px) {
+  .menu-boton, .menu-abrir { display: none !important; }
+  .menu { display: block !important; }
+}
+@media (max-width: 1099px) {
+  .encabezado-in { flex-wrap: wrap; padding: 10px 14px; gap: 8px; min-height: 64px; }
+  .logo { width: 104px; }
+  .idioma a { padding: 6px 9px; font-size: 12.5px; }
+  .reservar-tel { display: inline-block; margin-left: auto; padding: 10px 13px !important; letter-spacing: 1px; }
+  .menu-boton { display: flex; flex-direction: column; justify-content: center; gap: 5px; margin-left: 0; width: 40px; height: 44px; cursor: pointer; }
+  .menu-boton span { display: block; height: 2px; background: #fff; border-radius: 2px; }
+  .menu { display: none; flex-basis: 100%; margin: 0; }
+  .menu-abrir:checked ~ .menu { display: block; }
+  .menu > ul { flex-direction: column; align-items: stretch; gap: 0; padding: 6px 0 16px; border-top: 1px solid rgba(255,255,255,.2); }
+  .menu > ul > li > a, .menu .mas summary { display: flex; padding: 14px 2px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .menu .mas summary { justify-content: space-between; width: 100%; }
+  .menu .mas .sub { position: static; box-shadow: none; padding: 0 0 6px 14px; min-width: 0; border-radius: 0; background: none; }
+  .menu .mas .sub a { padding: 12px 2px; font-size: 15px; }
+  .menu .li-reservar { padding-top: 16px; text-align: center; }
+  .menu .li-reservar .reservar { display: block; padding: 15px 20px !important; font-size: 14px; }
+}
+@media (max-width: 360px) { .logo { width: 88px; } .idioma a { padding: 5px 7px; } .reservar-tel { padding: 9px 9px !important; } }
+
+/* ---------- portada: título del hero en el teléfono (no se sale de la pantalla) ---------- */
+@media (max-width: 700px) {
+  #comp-mt07akbq, #comp-mt07bza3 { text-align: center; }
+  #comp-mt07akbq * { font-size: clamp(34px, 11.5vw, 60px) !important; line-height: 1.05 !important; }
+  #comp-mt07bza3 * { font-size: clamp(18px, 5.6vw, 30px) !important; line-height: 1.2 !important; }
+  #comp-msdmi62n .seccion-in { padding-top: 32px; }
+  #comp-lnbyxau0 .rico { text-align: center; }
+  #comp-lnbyxau0 .rico * { text-align: center !important; }
+}
+
+/* ---------- reseñas de Google (4 reales + calificación + enlace) ---------- */
+.resenas { text-align: center; color: #5a5f5a; padding: 12px 0 8px; }
+.resenas .badge { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 8px; text-decoration: none; color: var(--verde); font-size: 17px; }
+.resenas .stars { position: relative; display: inline-block; font-size: 21px; letter-spacing: 1px; line-height: 1; }
+.resenas .base { color: #d9d5cc; }
+.resenas .fill { position: absolute; left: 0; top: 0; overflow: hidden; white-space: nowrap; color: #FBBC04; }
+.resenas .rating { font-weight: 700; }
+.resenas .grid { list-style: none; margin: 22px auto 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 900px; }
+.resenas .card { background: #fff; border-radius: 12px; padding: 20px 22px; text-align: left; box-shadow: 0 2px 14px rgba(60,63,58,.08); margin: 0; }
+.resenas .card p { margin: 0; }
+.resenas .crow { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.resenas .av { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+.resenas .who { font-weight: 700; font-size: 15px; color: #2f342f; line-height: 1.3; }
+.resenas .when { font-size: 13px; color: #8a8a82; line-height: 1.3; }
+.resenas .cstars { color: #FBBC04; font-size: 16px; letter-spacing: 1px; margin-bottom: 8px !important; }
+.resenas .ctext { font-size: 15px; line-height: 1.6; color: #4a4f4a; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.resenas .trad { font-size: 12px; color: #9a9a92; margin-top: 6px !important; }
+.resenas .foot { margin: 20px 0 0; }
+.resenas .foot a { color: var(--verde); font-weight: 700; font-size: 15px; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+@media (max-width: 700px) { .resenas .grid { grid-template-columns: 1fr; gap: 14px; } .resenas .card { padding: 18px; } }
+@media (min-width: 1000px) { #comp-mrz9aoj0.pos { width: min(980px, 100%) !important; margin-left: auto !important; margin-right: auto; justify-self: center; } }
+
+/* ---------- Cocina honesta: título legible (no Peskia: es largo), aire y texto justificado ---------- */
+#comp-kybj3u7h { align-items: stretch; }
+#comp-kybj3z6w { padding: 40px 0 40px 64px; display: flex; flex-direction: column; justify-content: center; }
+#comp-kybj3z6w > .pos { margin: 0 !important; width: 100% !important; max-width: 560px; justify-self: center; }
+#comp-mszh0tv1 p, #comp-mszh0tv1 span {
+  font: 300 clamp(22px, 2vw, 28px)/1.35 var(--cuerpo) !important; letter-spacing: .07em !important; text-align: center !important; color: var(--verde) !important;
+}
+#comp-mszh0tv1 { margin-bottom: 14px !important; }
+#comp-mszh26e7 p, #comp-mszh26e7 span { font: 700 18px/1.5 var(--cuerpo) !important; text-align: center !important; color: var(--verde) !important; }
+#comp-mszh26e7 { margin-bottom: 22px !important; }
+#comp-mszh3qyb p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; margin: 0 0 .9em !important; }
+#comp-mszh3qyb p, #comp-mszh3qyb span { font-size: 17px !important; line-height: 1.7 !important; color: #3f5546 !important; }
+@media (min-width: 1000px) {
+  #comp-lgv2q4wf2 .seccion-in { padding-top: 56px; padding-bottom: 64px; }
+  #comp-kybj3u7h.pos { width: min(1180px, calc(100% - 96px)) !important; }
+  #comp-kybj3u84 { border-radius: 4px; }
+}
+@media (max-width: 999px) {
+  #comp-kybj3z6w { padding: 28px 4px 8px; }
+  #comp-kybj3z6w > .pos { max-width: 620px; margin: 0 auto !important; }
+  #comp-kybj3u84 { min-height: 460px; }
+}
+
+/* ---------- Menú: "MENÚ COMPLETO" como botón, y el orden en el teléfono ---------- */
+/* Botones sobre fondo verde: en menta, como "FULL MENU" en Wix (antes eran verde sobre verde y no se veían). */
+.oscura .boton { background: var(--menta-boton); color: var(--verde); letter-spacing: .18em; text-transform: uppercase; font-size: 14px; padding: 16px 38px; }
+.oscura .boton:hover { background: #fff; opacity: 1; }
+#comp-lhi26c4o.boton {
+  background: var(--menta-boton); color: var(--verde); font: 400 15px/1 var(--cuerpo); letter-spacing: .22em;
+  padding: 20px 44px; border-radius: 2px; white-space: nowrap; text-transform: uppercase;
+}
+#comp-lhi26c4o.boton:hover { background: #fff; opacity: 1; }
+@media (min-width: 1000px) { .boton-fila:has(#comp-lhi26c4o) { margin-bottom: 28px !important; } }
+#comp-msvx54vc p, #comp-msvx54vc span { font-family: var(--cuerpo) !important; font-weight: 300 !important; font-style: italic; font-size: 18px !important; line-height: 1.5 !important; }
+@media (max-width: 999px) {
+  #comp-kybjx47j { display: flex; flex-direction: column; padding: 32px 4px; }
+  #comp-lhi1yr33, #comp-lhi5zux6 { display: none; }
+  #comp-msvvq3g7 { order: 1; } #comp-msvvw9tf { order: 2; margin-top: 6px !important; } #comp-msvx54vc { order: 3; margin-top: 10px !important; }
+  #comp-msvvt1t1 { order: 4; margin-top: 16px !important; } #comp-lhi26c4o { order: 5; }
+  .boton-fila:has(#comp-lhi26c4o) { order: 5; text-align: center; margin-top: 24px !important; }
+  #comp-lhi1vcac, .imagen-caja:has(#comp-lhi1vcac) { order: 6; margin-top: 20px !important; }
+  #comp-lhm7wu7n { order: 7; text-align: center; } #comp-msvygwmb { order: 8; margin-top: 18px !important; }
+  #comp-kybjx47j .rico { margin-left: 0 !important; width: 100% !important; }
+}
+
+/* ---------- galería: flechas ---------- */
+.galeria-flecha {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 52px; height: 52px; border-radius: 50%;
+  border: 0; background: rgba(242,238,235,.92); color: var(--verde); font: 300 38px/1 var(--cuerpo); padding: 0 0 5px;
+  cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; transition: opacity .15s, background .15s;
+}
+.galeria-flecha:hover { background: #fff; }
+.galeria-flecha:disabled { opacity: 0; pointer-events: none; }
+.galeria-flecha:focus-visible { outline: 3px solid var(--verde-medio); outline-offset: 2px; }
+.galeria-ant { left: 20px; } .galeria-sig { right: 20px; }
+.galeria-flecha[hidden] { display: none; }
+@media (max-width: 700px) {
+  .galeria-flecha { width: 42px; height: 42px; font-size: 30px; }
+  .galeria-ant { left: 10px; } .galeria-sig { right: 10px; }
+  .galeria > div { flex-basis: 86vw; }
+  .galeria img { height: min(62vh, 520px); }
+}
+
+/* ---------- Contacto + mapa (una sola pantalla en la computadora) ---------- */
+.contacto { background: var(--verde); color: #fff; }
+.contacto-in { max-width: 1080px; margin: 0 auto; padding: 52px 32px 28px; }
+.contacto-titulo { font: 400 30px/1 var(--titulo); letter-spacing: .25em; text-align: center; color: var(--crema-marca); margin: 0 0 36px; }
+.contacto-cols { display: grid; grid-template-columns: 1fr 1.15fr 1.1fr; gap: 40px; }
+.contacto-col h3 { font: 700 12.5px/1.2 var(--cuerpo); letter-spacing: .22em; text-transform: uppercase; color: var(--menta-boton); margin: 0 0 16px; }
+.contacto-col p { margin: 0 0 10px; font-size: 16px; line-height: 1.55; }
+.contacto a { color: #fff; }
+.contacto-links a { text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.55); padding-bottom: 1px; }
+.contacto-links span { margin: 0 8px; opacity: .6; }
+.contacto dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 9px 18px; font-size: 16px; line-height: 1.45; }
+.contacto dt { color: rgba(255,255,255,.72); font-weight: 300; }
+.contacto dd { margin: 0; font-variant-numeric: tabular-nums; }
+.contacto-datos a { text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.35); }
+.contacto-datos a:hover, .contacto-links a:hover { border-bottom-color: #fff; }
+.contacto-pie { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 30px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.18); }
+.contacto-lema { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.78); max-width: 680px; }
+.contacto-redes { display: flex; gap: 18px; margin: 0; flex: 0 0 auto; }
+.contacto-redes a { display: block; width: 24px; height: 24px; color: #fff; opacity: .85; }
+.contacto-redes a:hover { opacity: 1; }
+.contacto-redes svg { width: 100%; height: 100%; }
+.contacto-redes svg path, .contacto-redes svg [fill] { fill: #fff !important; }
+.contacto-mapa iframe { display: block; width: 100%; height: 300px; border: 0; }
+@media (max-width: 860px) {
+  .contacto-in { padding: 40px 20px 22px; }
+  .contacto-titulo { font-size: 26px; margin-bottom: 26px; }
+  .contacto-cols { grid-template-columns: 1fr; gap: 26px; max-width: 420px; margin: 0 auto; }
+  .contacto-col h3 { margin-bottom: 10px; }
+  .contacto-pie { flex-direction: column; text-align: center; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .contacto-mapa iframe { height: 260px; }
+}
+
+/* ---------- márgenes generales ---------- */
+@media (max-width: 999px) {
+  .seccion-in { padding-left: 20px; padding-right: 20px; }
+  .rico p, .rico h1, .rico h2, .rico h3 { overflow-wrap: break-word; }
+}
+
+/* ---------- Ideas para regalar: como en Wix (título en Peskia sobre verde; el texto blanco no se veía sobre blanco) ---------- */
+#comp-moqfz4li { background-color: var(--verde); }
+#comp-moqg08v8 h1, #comp-moqg08v8 span { font-family: var(--titulo) !important; font-weight: 400 !important; }
+#comp-moqfz4li .seccion-in { padding-bottom: 48px; }
+/* Títulos largos fuera de Peskia (regla de marca): "Haz recuerdos que valga la pena guardar". */
+#comp-mszi0r6k h1, #comp-mszi0r6k h2, #comp-mszi0r6k h3, #comp-mszi0r6k p, #comp-mszi0r6k span {
+  font: 300 22px/1.4 var(--cuerpo) !important; letter-spacing: .12em !important; text-transform: uppercase;
+}
+/* Botones en una sola línea ("Cotiza tu evento" se partía en dos). */
+.boton { white-space: nowrap; }
+/* Menú completo: los títulos de sección son frases largas → Avenir/Lato, no Peskia. */
+.widget h2 { font: 700 clamp(18px, 2.4vw, 22px)/1.3 var(--cuerpo); letter-spacing: .1em; text-transform: uppercase; }
+/* Menú completo y demás widgets: columna centrada con márgenes (antes iban pegados al borde izquierdo). */
+.malla > .widget.pos, .widget { width: min(920px, calc(100% - 40px)) !important; margin-left: auto !important; margin-right: auto !important; justify-self: center !important; }
+.widget { padding-top: 36px; }
+.widget h1 { margin-bottom: 18px; }
+[data-hook="item.root"] { padding: 12px 0; }
+[data-hook="item.variant"] > div { max-width: 520px; }
+[data-hook="menu.description"] { margin-left: auto !important; margin-right: auto !important; }
+.widget-gift img { margin-left: auto; margin-right: auto; max-width: 480px; }

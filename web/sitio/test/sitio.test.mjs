@@ -10,6 +10,7 @@ import { RAIZ, DATA } from '../scripts/lib/comun.mjs';
 import { metadatos, tiposSchema } from '../scripts/lib/wix.mjs';
 import { resolver, seguir } from '../scripts/lib/firebase-local.mjs';
 import { probar } from '../scripts/probar-301.mjs';
+import { PALABRAS_MENU_WIX } from '../src/lib/navegacion.mjs';
 
 const DIST = path.join(RAIZ, 'dist');
 const leer = (f) => JSON.parse(readFileSync(path.join(DATA, f), 'utf8'));
@@ -81,7 +82,9 @@ test('el sitio se lee SIN JavaScript: texto en el HTML', () => {
     const c = metadatos(html(p.ruta));
     const w = p.texto_visible.replace(/top of page|bottom of page|Use tab to navigate through the menu items\.|LOCATION More/g, '');
     // El texto que Wix entrega sin JavaScript está también en la copia (mismas palabras).
-    const faltan = w.toLowerCase().split(/\s+/).filter((x) => x && x !== 'more' && !c.texto.toLowerCase().includes(x));
+    // Rediseño del 23-oct (Juanma): el menú de Wix (con etiquetas en inglés en /es) se rehízo en cada idioma, y en
+    // Contacto se quitaron los emojis. Se ignoran esas palabras del menú de Wix y los tokens que son solo emojis.
+    const faltan = w.toLowerCase().split(/\s+/).filter((x) => x && x !== 'more' && !PALABRAS_MENU_WIX.includes(x) && /[\p{L}\p{N}]/u.test(x) && !c.texto.toLowerCase().includes(x));
     assert.deepEqual(faltan, [], `${p.ruta}: palabras que faltan`);
   }
   // FAQ: las 18 preguntas en HTML (en Wix solo estaban en el schema y en un iframe)
@@ -229,5 +232,56 @@ test('imágenes: todas locales, con el alt de Wix, y el peso total dentro del pr
       assert.ok(!/wixstatic/.test(src), `${p.ruta}: imagen de Wix ${src}`);
       assert.ok(img.getAttribute('alt') != null, `${p.ruta}: img sin alt`);
     }
+  }
+});
+
+// ---- Rediseño del 23-oct (comentarios de Juanma) ----
+test('encabezado: 6 pestañas a la vista (5 + Reservaciones) y el resto en "Más", en EN y ES', () => {
+  for (const [ruta, mas] of [['/', 'MORE'], ['/es', 'MÁS']]) {
+    const d = parse(html(ruta));
+    const menu = d.querySelector('nav.menu');
+    const visibles = menu.querySelectorAll(':scope > ul > li > a');
+    assert.equal(visibles.length, 6, `${ruta}: 6 pestañas`);
+    assert.equal(menu.querySelector('.mas summary').text.trim(), mas);
+    assert.ok(menu.querySelectorAll('.mas .sub a').length >= 4, `${ruta}: el resto en "${mas}"`);
+  }
+});
+
+test('reseñas: calificación general, 4 reseñas reales con nombre, fecha y texto, y el enlace a Google (sin widgets de terceros)', () => {
+  const r = leer('resenas.json');
+  assert.ok(r.promedio >= 1 && r.total > 0);
+  for (const ruta of ['/', '/es', '/reservas', '/es/reservas']) {
+    const d = parse(html(ruta));
+    const caja = d.querySelector('.resenas');
+    assert.ok(caja, `${ruta}: sin reseñas`);
+    assert.match(caja.querySelector('.badge').text, /\d\.\d/);
+    const tarjetas = caja.querySelectorAll('.card');
+    assert.equal(tarjetas.length, 4, `${ruta}: 4 reseñas`);
+    for (const t of tarjetas) for (const c of ['.who', '.when', '.ctext']) assert.ok(t.querySelector(c)?.text.trim(), `${ruta}: tarjeta sin ${c}`);
+    assert.match(caja.querySelector('.foot a').getAttribute('href'), /google\.com/);
+  }
+  assert.ok(!/maps\.googleapis\.com\/maps\/api\/js/.test(html('/')), 'no debe cargar la API de Places en el navegador');
+});
+
+test('alt: toda imagen con texto alternativo en el idioma de la página; las fotos de fondo, descritas', () => {
+  const alt = leer('alt.json');
+  for (const p of servidas) {
+    const d = parse(html(p.ruta));
+    for (const img of d.querySelectorAll('main img')) {
+      const a = img.getAttribute('alt');
+      assert.ok(a && a.trim().length > 3, `${p.ruta}: ${img.getAttribute('src')} sin alt`);
+      const medio = Object.keys(alt).find((k) => k.startsWith(path.basename(img.getAttribute('src')).replace(/\.\w+$/, '')));
+      if (medio && alt[medio][p.idioma]) assert.equal(a, alt[medio][p.idioma], `${p.ruta}: alt en el otro idioma`);
+    }
+  }
+  assert.ok(parse(html('/es')).querySelectorAll('span[role="img"][aria-label]').length >= 4, 'fotos de fondo de la portada');
+});
+
+test('contacto: dirección, teléfono, WhatsApp, correo, horarios y el mapa en la misma sección', () => {
+  for (const ruta of ['/', '/es']) {
+    const s = parse(html(ruta)).querySelector('#comp-lhjc19fq');
+    assert.ok(s.querySelector('a[href^="tel:+502"]') && s.querySelector('a[href*="wa.me/50230826935"]') && s.querySelector('a[href^="mailto:"]'));
+    assert.equal(s.querySelectorAll('.contacto-horas dt').length, 5);
+    assert.ok(s.querySelector('#mapa iframe'));
   }
 });

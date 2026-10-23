@@ -25,6 +25,7 @@ export function datos() {
     inventario: leer('inventario.json'),
     faq: existsSync(path.join(DATA, 'componentes', 'faq.json')) ? leer('componentes/faq.json') : null,
     privacidad: existsSync(path.join(DATA, 'componentes', 'privacidad.json')) ? leer('componentes/privacidad.json') : null,
+    alt: existsSync(path.join(DATA, 'alt.json')) ? leer('alt.json') : {},
   };
   return _cache;
 }
@@ -39,6 +40,13 @@ export function paginasDelSitio() {
 export function imagenLocal(medio) {
   const i = datos().imagenes.get(medio);
   return i?.archivo ? i : null;
+}
+
+/** Texto alternativo en el idioma de la página (data/alt.json); si no está, el de Wix. */
+export function altDe(medio, idioma, altWix = '') {
+  const a = datos().alt[medio];
+  if (a?.decorativa) return '';
+  return (a && (a[idioma] || a.en)) || altWix || '';
 }
 
 export function descripcion(p) {

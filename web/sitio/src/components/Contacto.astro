@@ -1,0 +1,74 @@
+---
+// Contacto y ubicación de la portada (Juanma, 23-oct): dirección, contacto (teléfono, WhatsApp y correo) y
+// horarios en tres columnas alineadas, y el mapa más chico debajo: todo cabe en una pantalla de computadora.
+// Los textos salen de los mismos bloques capturados de Wix (por id), así que dicen lo mismo que hoy.
+import { WHATSAPP, WAZE } from '../config.mjs';
+
+const { bloques = [], pagina } = Astro.props;
+const es = pagina.idioma === 'es';
+const porId = new Map();
+const juntar = (l) => l.forEach((b) => { porId.set(b.id, b); if (b.hijos) juntar(b.hijos); });
+juntar(bloques);
+const texto = (id) => {
+  const h = porId.get(id)?.html || '';
+  return h.replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/\p{Extended_Pictographic}|️/gu, '').replace(/\s+/g, ' ').trim();
+};
+const titulo = texto('comp-lhjc19k8') || (es ? 'CONTACTO' : 'CONTACT INFO');
+const direccion = texto('comp-lhjc19km');
+const telefono = texto('comp-lhjc19kt');
+const correo = texto('comp-lhjc19kw');
+const lema = texto('comp-lmihpanw');
+const horarios = [
+  ['comp-lhjc19lr', 'comp-moq9ockp'], ['comp-lhjcmbpr', 'comp-lhjcmbpy'], ['comp-lidavzjr', 'comp-lidavzjv2'],
+  ['comp-lidawv8i', 'comp-lidawv8l'], ['comp-lidaydb8', 'comp-lidaydba2'],
+].map(([d, h]) => [texto(d), texto(h)]).filter(([d, h]) => d && h);
+const redes = ['comp-lhhvqeyo', 'comp-lhhvr03b', 'comp-lhjgexqy'].map((id) => porId.get(id)).filter((b) => b?.href);
+const nombreRed = (href) => (/instagram/.test(href) ? 'Instagram' : /facebook/.test(href) ? 'Facebook' : 'Waze');
+const telHref = 'tel:+' + telefono.replace(/\D/g, '');
+const waTexto = '+' + WHATSAPP.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3');
+const mapsHref = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala';
+---
+<section id="comp-lhjc19fq" class="contacto" aria-labelledby="contacto-titulo">
+  <div class="contacto-in">
+    <h2 id="contacto-titulo" class="contacto-titulo">{titulo}</h2>
+    <div class="contacto-cols">
+      <div class="contacto-col">
+        <h3>{texto('comp-lhjc19ki')}</h3>
+        <p>{direccion}</p>
+        <p class="contacto-links">
+          <a href={mapsHref} target="_blank" rel="noopener">{es ? 'Cómo llegar' : 'Directions'}</a>
+          <span aria-hidden="true">·</span>
+          <a href={WAZE} target="_blank" rel="noopener">Waze</a>
+        </p>
+      </div>
+      <div class="contacto-col">
+        <h3>{texto('comp-lhjc19kp')}</h3>
+        <dl class="contacto-datos">
+          <dt>{es ? 'Teléfono' : 'Phone'}</dt><dd><a href={telHref}>{telefono}</a></dd>
+          <dt>WhatsApp</dt><dd><a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener">{waTexto}</a></dd>
+          <dt>{es ? 'Correo' : 'Email'}</dt><dd><a href={`mailto:${correo}`}>{correo}</a></dd>
+        </dl>
+      </div>
+      <div class="contacto-col">
+        <h3>{es ? texto('comp-lhjc19lh') : 'HOURS'}</h3>
+        <dl class="contacto-horas">
+          {horarios.map(([d, h]) => <><dt>{d}</dt><dd>{h}</dd></>)}
+        </dl>
+      </div>
+    </div>
+    <div class="contacto-pie">
+      {lema && <p class="contacto-lema">{lema}</p>}
+      {redes.length > 0 && (
+        <p class="contacto-redes">
+          {redes.map((b) => <a href={b.href} target="_blank" rel="noopener" aria-label={nombreRed(b.href)} set:html={b.svg} />)}
+        </p>
+      )}
+    </div>
+  </div>
+  <div id="mapa" class="contacto-mapa">
+    <iframe title={es ? 'Mapa: Rosanta, 1a Calle Oriente 15, Antigua Guatemala' : 'Map: Rosanta, 1a Calle Oriente 15, Antigua Guatemala'}
+      loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      src="https://maps.google.com/maps?q=Rosanta%2C%201a%20Calle%20Oriente%2015%2C%20Antigua%20Guatemala&z=16&output=embed"></iframe>
+  </div>
+</section>
