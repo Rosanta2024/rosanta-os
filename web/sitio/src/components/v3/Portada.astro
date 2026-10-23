@@ -64,7 +64,7 @@ const maps = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a
     <div class="v3-dividida-texto">
       <p class="v3-etiqueta v3-verde">{T.manifiesto.etiqueta}</p>
       <h2 id="v3-man-t" class="v3-peskia v3-titulo v3-verde">{T.manifiesto.titulo}</h2>
-      <p class="v3-palabras" aria-label={T.manifiesto.lineas.join(' ')}>{T.manifiesto.lineas.map((x) => <span aria-hidden="true">{x}</span>)}</p>
+      <p class="v3-palabras">{T.manifiesto.lineas.map((x) => <span>{x} </span>)}</p>
       <p class="v3-texto">{T.manifiesto.texto}</p>
       <a class="v3-boton v3-boton-verde" href={R.reservar}>{T.manifiesto.boton}</a>
     </div>

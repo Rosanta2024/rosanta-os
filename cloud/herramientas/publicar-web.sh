@@ -3,6 +3,7 @@
 #
 #   cloud/herramientas/publicar-web.sh prueba   rosanta-web-ensayo     (base rosanta_ensayo; sitio servido por el servicio)
 #   cloud/herramientas/publicar-web.sh sv       rosanta-web-sv-ensayo  (prueba de la segunda vuelta; PUBLIC_SEGUNDA_VUELTA=si)
+#   cloud/herramientas/publicar-web.sh v3       rosanta-web-v3-ensayo  (rediseño visual v3; rama claude/web-v3; PUBLIC_V3=si)
 #   cloud/herramientas/publicar-web.sh produccion                     (rosanta-web; el sitio va aparte a Firebase Hosting)
 #
 # Pasos (siempre en este orden; si uno falla, se corta):
@@ -23,8 +24,9 @@ GCLOUD="${GCLOUD:-$HOME/google-cloud-sdk/bin/gcloud}"
 case "$DESTINO" in
   prueba)     SERVICIO=rosanta-web-ensayo;    VARS="PUBLIC_PRUEBA=si PUBLIC_API_BASE=/api/reservas" ;;
   sv)         SERVICIO=rosanta-web-sv-ensayo; VARS="PUBLIC_PRUEBA=si PUBLIC_API_BASE=/api/reservas PUBLIC_SEGUNDA_VUELTA=si PUBLIC_LISTA_ESPERA=si" ;;
+  v3)         SERVICIO=rosanta-web-v3-ensayo; VARS="PUBLIC_PRUEBA=si PUBLIC_API_BASE=/api/reservas PUBLIC_V3=si" ;;
   produccion) SERVICIO=rosanta-web;           VARS="" ;;
-  *) echo "Uso: $0 prueba|sv|produccion"; exit 1 ;;
+  *) echo "Uso: $0 prueba|sv|v3|produccion"; exit 1 ;;
 esac
 cd "$SITIO"
 echo "1/5 reseñas"; npm run resenas   # cambia data/resenas.json: hacer commit despues de publicar (si no, frena el merge de otras ramas)
@@ -32,6 +34,7 @@ echo "1/5 reseñas"; npm run resenas   # cambia data/resenas.json: hacer commit 
 echo "2/5 pruebas del sitio (construccion normal)"; npm run build && npm test
 if [ "$DESTINO" = "sv" ]; then npm run probar-sv; fi
 echo "3/5 construir para $DESTINO ($VARS)"; env $VARS npm run build
+if [ "$DESTINO" = "v3" ]; then npm run test:v3; fi
 if [ "$DESTINO" = "produccion" ]; then
   rm -rf "$APP/sitio-prueba"
   echo "4/5 produccion: el sitio (web/sitio/dist) se publica en Firebase Hosting aparte (guion del 30-oct)"

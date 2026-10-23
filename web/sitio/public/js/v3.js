@@ -70,12 +70,12 @@
     var pref = localStorage.getItem('rosanta-idioma');
     var ruta = location.pathname.replace(/\/$/, '') || '/';
     var interno = d.referrer && d.referrer.indexOf(location.origin) === 0;
-    if (!pref && !interno && (ruta === '/' || ruta === '/es') && !/[?&]idioma=/.test(location.search)) {
+    if (!pref && !interno && ruta === '/' && !/[?&]idioma=/.test(location.search)) {
       var nav = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
       var quiere = nav.indexOf('es') === 0 ? 'es' : 'en';
       guardar(quiere);
+      // Solo de la portada en inglés (la de siempre) a la de español; quien llega a /es se queda ahí.
       if (quiere === 'es' && ruta === '/') location.replace('/es' + location.hash);
-      else if (quiere === 'en' && ruta === '/es') location.replace('/' + location.hash);
     }
   } catch (e) {}
 
@@ -89,7 +89,7 @@
       tabs.forEach(function (t) {
         var si = t.getAttribute('aria-controls') === id;
         t.setAttribute('aria-selected', si ? 'true' : 'false'); t.tabIndex = si ? 0 : -1;
-        if (si) { if (foco) t.focus(); t.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+        if (si) { if (foco) t.focus(); lista.scrollLeft = t.offsetLeft - (lista.clientWidth - t.offsetWidth) / 2; }
       });
       paneles.forEach(function (p) { p.hidden = p.id !== id; });
     };

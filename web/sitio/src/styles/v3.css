@@ -150,9 +150,9 @@ body.v3 { padding-bottom: 76px; }
 /* ---------- 2 · manifiesto ---------- */
 .v3-manifiesto { padding: 64px 0 56px; background: var(--v3-crema); }
 .v3-dividida { display: grid; gap: 32px; align-items: center; }
-.v3-palabras { display: flex; flex-wrap: wrap; gap: 0 .35em; font-family: var(--v3-peskia); font-weight: 700; font-size: clamp(30px, 8vw, 56px); line-height: 1; color: var(--v3-medio); margin: 0 0 22px; }
-.v3-palabras span:nth-child(3n+2) { color: var(--v3-verde); }
-.v3-palabras span:nth-child(3n) { color: #8f8bc8; }
+.v3-palabras { display: flex; flex-wrap: wrap; gap: 0 .35em; font-family: var(--v3-peskia); font-weight: 700; font-size: clamp(30px, 8vw, 56px); line-height: 1; color: var(--v3-verde); margin: 0 0 22px; }
+.v3-palabras span:nth-child(3n+2) { color: #3f7d5d; }
+.v3-palabras span:nth-child(3n) { color: #6a64ad; }
 .v3-fila { display: flex; gap: 12px; overflow-x: auto; padding: 36px var(--v3-gutter) 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .v3-fila::-webkit-scrollbar { display: none; }
 .v3-fila-video { flex: 0 0 44vw; max-width: 260px; aspect-ratio: 9 / 16; border-radius: var(--v3-radio); scroll-snap-align: start; }
@@ -280,7 +280,7 @@ body.v3 { padding-bottom: 76px; }
 .v3-panel-t { position: absolute; left: 18px; bottom: 14px; z-index: 1; color: #fff; font-size: clamp(40px, 11vw, 72px); }
 @media (min-width: 900px) { .v3-panel-media, .v3-panel-cab .v3-video { height: 320px; } }
 .v3-grupo { margin: 0 0 36px; }
-.v3-grupo-cat { color: var(--v3-medio); margin-bottom: 4px; }
+.v3-grupo-cat { color: var(--v3-verde); margin-bottom: 4px; }
 .v3-grupo-t { font-size: 22px; color: var(--v3-verde); margin: 0 0 6px; }
 .v3-grupo-nota { color: var(--v3-gris); margin: 0 0 14px; max-width: 46em; font-size: 15px; }
 .v3-platos { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px 48px; }
@@ -305,10 +305,12 @@ body.v3 { padding-bottom: 76px; }
   .v3-abierta .v3-plato-foto { position: static; box-shadow: none; width: 100%; }
 }
 .v3-carta-nota { color: var(--v3-gris); font-size: 14px; }
-.v3-carta-fin { margin-top: 12px; }
+.v3-carta-fin { margin: 12px auto 0; }
+.v3-carta-nota { margin: 0 auto; }
 
 /* ---------- reservas con video al lado ---------- */
-.v3-con-video { display: grid; gap: 24px; }
+.v3-con-video { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.v3-con-video > * { min-width: 0; }
 .v3-con-video-lado { padding: 0 var(--v3-gutter) 40px; }
 .v3-con-video-lado .v3-video-vertical { max-width: 320px; margin: 0 auto; }
 @media (min-width: 1100px) {

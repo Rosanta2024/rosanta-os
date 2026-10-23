@@ -16,14 +16,14 @@ const otraEtq = l === 'es' ? 'EN' : 'ES';
 ---
 <header class:list={['v3-enc', { 'v3-enc-video': sobreVideo }]} data-v3enc>
   <div class="v3-enc-in">
-    <a class="v3-enc-menu" href="#v3-pie-nav" data-v3abrir aria-controls="v3-menu" aria-expanded="false">
+    <a class="v3-enc-menu" href="#v3-pie-nav" aria-label={T.menu.abrir} data-v3abrir aria-controls="v3-menu" aria-expanded="false">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h18M3 16h18"/></svg>
       <span>{T.menu.abrir}</span>
     </a>
-    <a class="v3-enc-logo" href={RUTAS[l].inicio}><Logo /></a>
+    <a class="v3-enc-logo" href={RUTAS[l].inicio} aria-label={l === 'es' ? 'Rosanta, inicio' : 'Rosanta, home'}><Logo /></a>
     <div class="v3-enc-der">
       <a class="v3-enc-idioma" href={l === 'es' ? enRuta : esRuta} hreflang={l === 'es' ? 'en' : 'es'} lang={l === 'es' ? 'en' : 'es'} data-v3idioma={l === 'es' ? 'en' : 'es'}
-        aria-label={l === 'es' ? 'English version' : 'Versión en español'}>{otraEtq}</a>
+        aria-label={l === 'es' ? 'EN, English version' : 'ES, versión en español'}>{otraEtq}</a>
       <a class="v3-pildora" href={RUTAS[l].reservar}>{T.menu.reservar}</a>
     </div>
   </div>
@@ -34,7 +34,7 @@ const otraEtq = l === 'es' ? 'EN' : 'ES';
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       <span>{T.menu.cerrar}</span>
     </button>
-    <a class="v3-enc-logo" href={RUTAS[l].inicio}><Logo /></a>
+    <a class="v3-enc-logo" href={RUTAS[l].inicio} aria-label={l === 'es' ? 'Rosanta, inicio' : 'Rosanta, home'}><Logo /></a>
     <span class="v3-menu-hueco"></span>
   </div>
   <nav class="v3-menu-nav" aria-label={l === 'es' ? 'Principal' : 'Main'}>

@@ -18,7 +18,8 @@
     "test": "node --test test/*.test.mjs",
     "paridad": "node scripts/paridad.mjs",
     "resenas": "node scripts/resenas.mjs",
-    "probar-301": "node scripts/probar-301.mjs"
+    "probar-301": "node scripts/probar-301.mjs",
+    "test:v3": "node --test test/v3/*.test.mjs"
   },
   "dependencies": {
     "astro": "7.3.8"
