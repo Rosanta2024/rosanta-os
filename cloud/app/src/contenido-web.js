@@ -56,7 +56,7 @@ const TIPOS = {
     crear: ['pregunta_en', 'pregunta_es', 'respuesta_en', 'respuesta_es'], campos: ['categoria', 'pregunta_en', 'pregunta_es', 'respuesta_en', 'respuesta_es', 'orden'] },
   eventos: { tabla: 'web_eventos', llave: 'id', activo: 'activo',
     crear: ['slug', 'titulo_en', 'titulo_es', 'inicio'], campos: ['titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'inicio', 'fin', 'precio_q', 'cupo', 'foto_id', 'enlace', 'orden'] },
-  fotos: { tabla: 'web_fotos', llave: 'id', activo: 'activa', sinCrear: true, campos: ['alt_es', 'alt_en'] },
+  fotos: { tabla: 'web_fotos', llave: 'id', activo: 'activa', sinCrear: true, campos: ['alt_es', 'alt_en'], ordenLista: ['id'] },   // web_fotos no tiene "orden"
   experiencias: { tabla: 'web_experiencias', llave: 'id', activo: 'activa',
     crear: ['slug', 'operador_id', 'titulo_es', 'titulo_en'], campos: ['operador_id', 'titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'duracion_en', 'duracion_es',
       'incluye_en', 'incluye_es', 'punto_salida_en', 'punto_salida_es', 'temporada_en', 'temporada_es', 'dificultad', 'idiomas', 'precio_ref_q', 'foto_id', 'galeria', 'faq', 'orden'] },
