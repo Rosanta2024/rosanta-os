@@ -30,7 +30,7 @@ const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').rep
     {nuevos.map((x) => (
       <li class="v3-tarjeta">
         <a href={`#plato-${slug(x.nombre)}`} data-v3tab={x.tab}>
-          <img class="v3-tarjeta-media" src={`/v3/platos/${x.foto}.webp`} alt={x.nombre} width="720" height="900" loading="lazy" decoding="async" />
+          <img class="v3-tarjeta-media" src={x.foto.grande} alt={x.foto.alt} width="720" height="900" loading="lazy" decoding="async" />
           <span class="v3-plato-linea"><span class="v3-plato-nombre">{x.nombre}</span><span class="v3-puntos" aria-hidden="true"></span><span class="v3-plato-precio">{x.precio || x.variantes.split(' · ')[0]}</span></span>
           {x.etiquetas[0] && <span class="v3-plato-etq">{x.etiquetas[0]}</span>}
         </a>
@@ -62,8 +62,8 @@ const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').rep
               {g.platos.map((x) => (
                 <li class:list={['v3-plato', { 'con-foto': x.foto }]} id={`plato-${slug(x.nombre)}`}>
                   {x.foto && (
-                    <button type="button" class="v3-plato-mini" aria-expanded="false" aria-label={`${C.foto}: ${x.nombre}`} data-v3foto={`/v3/platos/${x.foto}.webp`}>
-                      <img src={`/v3/platos/${x.foto}-mini.webp`} alt="" width="160" height="160" loading="lazy" decoding="async" />
+                    <button type="button" class="v3-plato-mini" aria-expanded="false" aria-label={`${C.foto}: ${x.nombre}`} >
+                      <img src={x.foto.mini} alt="" width="160" height="160" loading="lazy" decoding="async" />
                     </button>
                   )}
                   <div class="v3-plato-cuerpo">
@@ -80,7 +80,7 @@ const slug = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').rep
                         {[...(x.maridaje ? [`${C.maridaje}: ${x.maridaje}`] : []), ...x.etiquetas].join(' · ')}
                       </p>
                     )}
-                    {x.foto && <img class="v3-plato-foto" src={`/v3/platos/${x.foto}.webp`} alt={x.nombre} width="720" height="900" loading="lazy" decoding="async" hidden />}
+                    {x.foto && <img class="v3-plato-foto" src={x.foto.grande} alt={x.foto.alt} width="720" height="900" loading="lazy" decoding="async" hidden />}
                   </div>
                 </li>
               ))}

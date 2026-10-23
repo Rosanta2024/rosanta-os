@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { datos } from './sitio.mjs';
+import { fotoDePlato } from './carta.mjs';
 
 const RAIZ = process.env.ROSANTA_SITIO_RAIZ || process.cwd();
 let _cap;
@@ -35,7 +36,7 @@ export function textos(l) {
     coord,
     menu: {
       abrir: es ? 'Menú' : 'Menu',
-      cerrar: es ? 'Cerrar menú' : 'Close menu',
+      cerrar: es ? 'Cerrar' : 'Close',
       reservar: es ? 'Reservar' : 'Book',
       principales: [
         { texto: es ? 'Reservar' : 'Book', href: r.reservar },
@@ -90,7 +91,7 @@ export function textos(l) {
     },
     bloques: [
       {
-        id: 'del-jardin', fondo: 'verde', video: 'cocina', lado: 'izq',
+        id: 'del-jardin', fondo: 'verde', video: 'jardin', lado: 'izq',
         etiqueta: coord + '.',
         titulo: es ? 'DEL JARDÍN' : 'FROM THE GARDEN',   // nombre propio en lugar de "Honest Cooking"
         entrada: sitio('comp-mszh26e7', l), // (sitio)
@@ -98,7 +99,7 @@ export function textos(l) {
           ? 'Lo que el huerto no da lo traen productores de cerca, que siembran según la temporada.'
           : "What the garden doesn't grow comes from nearby producers who plant by the season.",
         enlace: { texto: es ? 'Ver platos del jardín →' : 'See garden dishes →', href: `${r.carta}#del-jardin` },
-        alt: es ? 'Video: manos terminando un plato con semillas y salsa.' : 'Video: hands finishing a dish with seeds and sauce.',
+        alt: es ? 'Video: brotes en la tierra, vegetales recién cosechados y coliflor sobre la parrilla.' : 'Video: sprouts in the soil, freshly picked vegetables and cauliflower on the grill.',
       },
       {
         id: 'del-fuego', fondo: 'carbon', video: 'fuego', lado: 'der',
@@ -265,6 +266,18 @@ function etiquetasPublicadas(l) {
 const variantes = (t) => t.replace(/(?:GTQ\s*)?(\d+)[.,]00(?:\s*GTQ)?/g, 'Q$1');
 const precio = (n) => (n == null ? '' : `Q${Math.round(n)}`);
 
+/** Foto de un plato: primero las de v3 (720 px, Nuevo Menú/Para Web y Lifestyle); si no, las del equipo de diseño
+ *  (data/fotos-platos.json, 320 px). Solo fotos que son claramente de ese plato. */
+function fotoPlato(x, l) {
+  const d = fotoDePlato(x.nombre.es.trim(), 'es');
+  const alt = d?.alt || x.nombre[l];
+  const altL = d ? (fotoDePlato(x.nombre[l].trim(), l)?.alt || alt) : x.nombre[l];
+  const k = FOTOS_PLATOS[x.nombre.es.trim()];
+  if (k) return { mini: `/v3/platos/${k}-mini.webp`, grande: `/v3/platos/${k}.webp`, alt: altL };
+  if (d) return { mini: `/img/platos/${d.clave}-160.webp`, grande: `/img/platos/${d.clave}-320.webp`, alt: altL };
+  return null;
+}
+
 export function carta(l) {
   const es = l === 'es';
   const menu = capturado().menu;
@@ -303,7 +316,7 @@ export function carta(l) {
             maridaje,
             etiquetas,
             nuevo: nuevo ? (es ? 'Nuevo' : 'New') : '',
-            foto: FOTOS_PLATOS[x.nombre.es.trim()] || '',
+            foto: fotoPlato(x, l),
           };
         }),
       };

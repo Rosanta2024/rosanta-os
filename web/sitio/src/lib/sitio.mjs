@@ -42,6 +42,13 @@ export function imagenLocal(medio) {
   return i?.archivo ? i : null;
 }
 
+/** srcset de una foto de public/img con sus tamaños chicos (scripts/variantes.mjs los genera en dist). */
+export function srcsetDe(im) {
+  if (!im?.archivo || !/\.webp$/.test(im.archivo)) return undefined;
+  const l = [480, 960, 1280].filter((w) => w < im.ancho).map((w) => `${im.archivo.replace(/\.webp$/, `-${w}.webp`)} ${w}w`);
+  return l.length ? [...l, `${im.archivo} ${im.ancho}w`].join(', ') : undefined;
+}
+
 /** Texto alternativo en el idioma de la página (data/alt.json); si no está, el de Wix. */
 export function altDe(medio, idioma, altWix = '') {
   const a = datos().alt[medio];

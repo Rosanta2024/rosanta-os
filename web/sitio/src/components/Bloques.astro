@@ -12,11 +12,21 @@ import ResenasGoogle from './ResenasGoogle.astro';
 import Faq from './Faq.astro';
 import Privacidad from './Privacidad.astro';
 import Contacto from './Contacto.astro';
-import { htmlResponsivo, hrefMenu, imagenLocal, altDe } from '../lib/sitio.mjs';
+import Destacados from './Destacados.astro';
+import { htmlResponsivo, hrefMenu, imagenLocal, altDe, srcsetDe } from '../lib/sitio.mjs';
+import { cartaConFotos } from '../lib/carta.mjs';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import Video from './v3/Video.astro';
 import { ENCUESTA_URL, GIFTCARD_URL, WHATSAPP, V3 } from '../config.mjs';
 
 const { bloques = [], pagina, ref = 980 } = Astro.props;
+const fotosPlatos = JSON.parse(readFileSync(path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'fotos-platos.json'), 'utf8'));
+const GALERIA_RESERVAS = 'comp-lujxv6ly';
+/** Botones con texto que invita a actuar (Juanma, 23-oct). */
+const TEXTO_BOTON = {
+  'comp-mszgtzji': { es: 'Reserva tu mesa', en: 'Book a table' },
+};
 const idioma = pagina.idioma;
 
 function imagenesLocales(html) {
@@ -25,16 +35,15 @@ function imagenesLocales(html) {
     const im = imagenLocal(md);
     if (!im) return '';
     const a = altDe(md, idioma, alt.replace(/&amp;/g, '&')).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    return `<img src="${im.archivo}" alt="${a}" width="${im.ancho}" height="${im.alto}" loading="lazy" decoding="async">`;
+    const ss = srcsetDe(im);
+    return `<img src="${im.archivo}"${ss ? ` srcset="${ss}" sizes="(max-width: 999px) 100vw, 980px"` : ''} alt="${a}" width="${im.ancho}" height="${im.alto}" loading="lazy" decoding="async">`;
   });
 }
 function fondo(b) {
   const st = [];
   if (b.fondo) st.push(`background-color:${b.fondo}`);
-  if (b.fondoImg) {
-    const im = imagenLocal(b.fondoImg.medio);
-    if (im) st.push(`background-image:url('${im.archivo}')`);
-  }
+  // La foto de fondo ya no va en CSS: es un <img class="fondo-img"> (fotoFondo) con srcset y carga diferida,
+  // para que el teléfono baje el tamaño chico y la primera foto (el LCP) se pida de inmediato (23-oct).
   return st;
 }
 /** Fondo oscuro (el verde de la marca): los botones de adentro van en menta para que se vean (23-oct). */
@@ -45,6 +54,11 @@ function oscuro(b) {
   else if ((m = c.match(/^#([0-9a-f]{6})$/i))) v = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
   if (!v) return false;
   return (0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) / 255 < 0.45;
+}
+/** Proporción de las fotos de una galería (la más común): todas se ven completas y del mismo tamaño. */
+function proporcion(ims) {
+  const l = ims.map((i) => imagenLocal(i.medio)).filter(Boolean).map((i) => i.ancho / i.alto).sort((a, b) => a - b);
+  return l.length ? (Math.round(l[Math.floor(l.length / 2)] * 1000) / 1000) : 0.75;
 }
 const r4 = (n) => Math.round(n * 10000) / 10000;
 /** Variables CSS con la posición de Wix (las usa .malla > .pos en sitio.css):
@@ -65,11 +79,16 @@ function pos(b, extra = []) {
   }
   return st.length ? st.join(';') : undefined;
 }
-/** Foto de fondo con significado: un span role="img" con su descripción (no tapa el texto de la sección). */
+/** Foto de fondo: <img> que cubre el bloque, con su alt (data/alt.json) y srcset. La del primer bloque de la
+ *  página (el hero) se pide primero; las demás, cuando se acercan a la pantalla. */
 function fotoFondo(b) {
   if (!b.fondoImg) return '';
-  const t = altDe(b.fondoImg.medio, idioma, '');
-  return t ? `<span class="visualmente-oculto" role="img" aria-label="${t.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></span>` : '';
+  const im = imagenLocal(b.fondoImg.medio);
+  if (!im) return '';
+  const t = altDe(b.fondoImg.medio, idioma, '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const primero = pagina.bloques?.[0]?.id === b.id;
+  const ss = srcsetDe(im);
+  return `<img class="fondo-img" src="${im.archivo}"${ss ? ` srcset="${ss}" sizes="${b.t === 'seccion' ? '100vw' : '(max-width: 999px) 100vw, 50vw'}"` : ''} width="${im.ancho}" height="${im.alto}" alt="${t}"${primero ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async">`;
 }
 const conPos = (b) => (b.pos && b.pos.area ? 'pos' : null);
 const urlGift = GIFTCARD_URL || `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(idioma === 'es' ? 'Hola, quiero comprar una tarjeta de regalo de Rosanta.' : 'Hi, I would like to buy a Rosanta gift card.')}`;
@@ -101,6 +120,7 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
               <Bloques bloques={c.hijos || []} pagina={pagina} ref={c.pos?.w || 980} />
             </div>
           ))}
+          {b.id === 'comp-kybjx46n' && <Destacados idioma={idioma} />}
         </div>
       );
     }
@@ -120,7 +140,7 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       }
       // Sin enlace en Wix: se copia igual, como botón.
       if (!href) return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><button id={b.id} type="button" class="boton">{b.texto}</button></p>;
-      return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href={href} {...(b.nueva ? { target: '_blank', rel: 'noopener' } : {})}>{b.texto}</a></p>;
+      return <p class:list={['boton-fila', conPos(b)]} style={pos(b)}><a id={b.id} class="boton" href={href} {...(b.nueva ? { target: '_blank', rel: 'noopener' } : {})}>{TEXTO_BOTON[b.id]?.[idioma] || b.texto}</a></p>;
     }
     case 'imagen':
       return <div class:list={['imagen-caja', conPos(b)]} style={pos(b)}><Imagen medio={b.medio} alt={b.alt} idioma={idioma} href={b.href} id={b.id} /></div>;
@@ -128,16 +148,21 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       return b.href
         ? <a id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} href={b.href} aria-label={b.etiqueta || undefined} set:html={b.svg} />
         : <div id={b.id} class:list={['svg', conPos(b)]} style={pos(b)} aria-hidden="true" set:html={b.svg} />;
-    case 'galeria':
+    case 'galeria': {
+      // /reservas: las 4 fotos de Wix tenían texto en inglés impreso; van fotos limpias (Juanma, 23-oct).
+      const limpias = b.id === GALERIA_RESERVAS ? fotosPlatos.galeria_reservas : null;
       return (
-        <div class:list={['galeria-caja', conPos(b)]} style={pos(b)} data-galeria>
+        <div class:list={['galeria-caja', conPos(b)]} style={[pos(b), `--ar:${limpias ? 0.8 : proporcion(b.imagenes)}`].filter(Boolean).join(';')} data-galeria>
           <div id={b.id} class="galeria" role="list" tabindex="0" aria-label={idioma === 'es' ? 'Galería de fotos' : 'Photo gallery'}>
-            {b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} idioma={idioma} /></div>)}
+            {limpias
+              ? limpias.map((g, i) => <div role="listitem"><figure class="imagen"><img src={`/img/platos/reservas-${i + 1}-400.webp`} srcset={`/img/platos/reservas-${i + 1}-400.webp 400w, /img/platos/reservas-${i + 1}-800.webp 800w`} sizes="(max-width: 640px) 90vw, (max-width: 999px) 45vw, 360px" width="800" height="1000" alt={g.alt[idioma] || g.alt.en} loading="lazy" decoding="async" /></figure></div>)
+              : b.imagenes.map((im) => <div role="listitem"><Imagen medio={im.medio} alt={im.alt} idioma={idioma} /></div>)}
           </div>
           <button type="button" class="galeria-flecha galeria-ant" aria-controls={b.id} aria-label={idioma === 'es' ? 'Foto anterior' : 'Previous photo'} hidden>‹</button>
           <button type="button" class="galeria-flecha galeria-sig" aria-controls={b.id} aria-label={idioma === 'es' ? 'Foto siguiente' : 'Next photo'} hidden>›</button>
         </div>
       );
+    }
     case 'ancla':
       return <div id={b.id} class="ancla" role="region" aria-label={b.etiqueta || undefined}>{b.etiqueta && <span>{b.etiqueta}</span>}</div>;
     case 'componente': {
@@ -162,7 +187,7 @@ const anchoColumnas = (b) => b.hijos.reduce((s, c) => s + (c.pos?.w || 0), 0) ||
       const esGift = /gift-card$/.test(pagina.ruta);
       return (
         <div id={b.id} class:list={['widget', { 'widget-gift': esGift, 'visualmente-oculto': b.oculto }, conPos(b)]} style={pos(b)}>
-          <Fragment set:html={imagenesLocales(b.html)} />
+          <Fragment set:html={/full-menu$/.test(pagina.ruta) ? cartaConFotos(imagenesLocales(b.html), idioma) : imagenesLocales(b.html)} />
           {esGift && (
             <p class="boton-fila" data-paridad="mejora"><a class="boton" href={urlGift} target="_blank" rel="noopener">{idioma === 'es' ? 'Comprar' : 'Buy Now'}</a></p>
           )}

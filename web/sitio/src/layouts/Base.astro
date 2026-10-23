@@ -7,8 +7,11 @@ import Pie from '../components/Pie.astro';
 import EncabezadoV3 from '../components/v3/Encabezado.astro';
 import PieV3 from '../components/v3/Pie.astro';
 import BarraV3 from '../components/v3/Barra.astro';
-import '../styles/sitio.css';
 import cssV3 from '../styles/v3.css?url';
+import BarraReservar from '../components/BarraReservar.astro';
+import '../styles/sitio.css';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { descripcion, robots, schema, imagenLocal, datos } from '../lib/sitio.mjs';
 import { V3, PRUEBA, GTM_ID, GA4_ID, META_PIXEL_ID, GOOGLE_ADS_ID, OPENWIDGET_ORG, POPTIN_ID } from '../config.mjs';
 
@@ -28,7 +31,16 @@ if (pagina.og_imagen_medio) {
   }
 }
 if (!og['og:description'] && desc) og['og:description'] = desc;
+// Foto para compartir de la portada y reservas (Juanma, 23-oct; los títulos y descripciones siguen siendo los de Wix).
+const ogNueva = JSON.parse(readFileSync(path.join(process.env.ROSANTA_SITIO_RAIZ || process.cwd(), 'data', 'fotos-platos.json'), 'utf8')).og;
+if (ogNueva?.rutas?.includes(pagina.ruta)) {
+  og['og:image'] = 'https://www.rosanta.rest/img/platos/og-rosanta.jpg';
+  og['og:image:width'] = '1200'; og['og:image:height'] = '630';
+  if (og['twitter:image']) og['twitter:image'] = og['og:image'];
+}
 const lang = pagina.lang || pagina.idioma;
+const conCormorant = /preguntas-frecuentes|pol[ií]tica-de-privacidad/.test(pagina.ruta);
+const FUENTES = `https://fonts.googleapis.com/css2?${conCormorant ? 'family=Cormorant+Garamond:wght@500;600&' : ''}family=Lato:wght@300;400;700&display=swap`;
 const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
 ---
 <!doctype html>
@@ -52,10 +64,13 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
       </>
     ) : (
       <>
-        <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/fonts/peskia-bold.woff2" as="font" type="font/woff2" crossorigin />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      {/* Fuentes de Google sin frenar la primera pintura (23-oct, velocidad): se piden como "preload" y se aplican al llegar.
+          Cormorant solo la usan FAQ y privacidad. */}
+      <link rel="preload" as="style" href={FUENTES} onload="this.onload=null;this.rel='stylesheet'" />
+      <noscript><link rel="stylesheet" href={FUENTES} /></noscript>
       </>
     )}
     {ld.map((o) => <script type="application/ld+json" set:html={ldJson(o)} />)}
@@ -94,14 +109,14 @@ const ldJson = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
     <main id="contenido">
       <slot />
     </main>
-    {V3 ? <><PieV3 pagina={pagina} /><BarraV3 pagina={pagina} /></> : <Pie pagina={pagina} />}
+    {V3 ? <><PieV3 pagina={pagina} /><BarraV3 pagina={pagina} /></> : <><Pie pagina={pagina} /><BarraReservar pagina={pagina} /></>}
     {V3 && <script is:inline src="/js/v3.js" defer></script>}
     <script is:inline>
       // Galería: flechas para avanzar y retroceder (sin JavaScript se desliza con el dedo o el trackpad).
       document.querySelectorAll('[data-galeria]').forEach(function(caja){
         var g=caja.querySelector('.galeria'), ant=caja.querySelector('.galeria-ant'), sig=caja.querySelector('.galeria-sig');
         if(!g||!ant||!sig) return;
-        function paso(){ var f=g.firstElementChild; return f ? f.getBoundingClientRect().width + 6 : g.clientWidth*0.8; }
+        function paso(){ var f=g.firstElementChild; return f ? f.getBoundingClientRect().width + (parseFloat(getComputedStyle(g).columnGap) || 0) : g.clientWidth*0.8; }
         function estado(){ ant.disabled = g.scrollLeft < 4; sig.disabled = g.scrollLeft + g.clientWidth >= g.scrollWidth - 4; }
         ant.hidden=false; sig.hidden=false;
         ant.addEventListener('click',function(){ g.scrollBy({left:-paso(),behavior:'smooth'}); });

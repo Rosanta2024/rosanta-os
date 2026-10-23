@@ -240,7 +240,7 @@ test('encabezado: 6 pestañas a la vista (5 + Reservaciones) y el resto en "Más
   for (const [ruta, mas] of [['/', 'MORE'], ['/es', 'MÁS']]) {
     const d = parse(html(ruta));
     const menu = d.querySelector('nav.menu');
-    const visibles = menu.querySelectorAll(':scope > ul > li > a');
+    const visibles = menu.querySelectorAll(':scope > ul > li:not(.li-idioma) > a');
     assert.equal(visibles.length, 6, `${ruta}: 6 pestañas`);
     assert.equal(menu.querySelector('.mas summary').text.trim(), mas);
     assert.ok(menu.querySelectorAll('.mas .sub a').length >= 4, `${ruta}: el resto en "${mas}"`);
@@ -269,12 +269,14 @@ test('alt: toda imagen con texto alternativo en el idioma de la página; las fot
     const d = parse(html(p.ruta));
     for (const img of d.querySelectorAll('main img')) {
       const a = img.getAttribute('alt');
-      assert.ok(a && a.trim().length > 3, `${p.ruta}: ${img.getAttribute('src')} sin alt`);
       const medio = Object.keys(alt).find((k) => k.startsWith(path.basename(img.getAttribute('src')).replace(/\.\w+$/, '')));
+      if (medio && alt[medio].decorativa) { assert.equal(a, '', `${p.ruta}: decorativa con alt vacío`); continue; }
+      assert.ok(a && a.trim().length > 3, `${p.ruta}: ${img.getAttribute('src')} sin alt`);
       if (medio && alt[medio][p.idioma]) assert.equal(a, alt[medio][p.idioma], `${p.ruta}: alt en el otro idioma`);
     }
   }
-  assert.ok(parse(html('/es')).querySelectorAll('span[role="img"][aria-label]').length >= 4, 'fotos de fondo de la portada');
+  const fondos = parse(html('/es')).querySelectorAll('img.fondo-img');
+  assert.ok(fondos.length >= 4 && fondos.every((i) => i.getAttribute('alt')?.length > 3), 'fotos de fondo de la portada, con alt');
 });
 
 test('contacto: dirección, teléfono, WhatsApp, correo, horarios y el mapa en la misma sección', () => {

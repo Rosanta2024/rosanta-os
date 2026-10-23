@@ -1,13 +1,14 @@
 ---
 // Imagen de Rosanta servida desde la copia (public/img). Alt en el idioma de la página (data/alt.json);
 // si no hay, el de Wix.
-import { imagenLocal, altDe } from '../lib/sitio.mjs';
-const { medio, alt = '', idioma = 'en', href = null, id = undefined, cargar = 'lazy' } = Astro.props;
+import { imagenLocal, altDe, srcsetDe } from '../lib/sitio.mjs';
+const { medio, alt = '', idioma = 'en', href = null, id = undefined, cargar = 'lazy', sizes = '(max-width: 640px) 100vw, (max-width: 999px) 50vw, 400px' } = Astro.props;
 const im = imagenLocal(medio);
 const texto = altDe(medio, idioma, alt);
+const srcset = srcsetDe(im);
 ---
 {im && (href ? (
-  <a id={id} class="imagen" href={href}><img src={im.archivo} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></a>
+  <a id={id} class="imagen" href={href}><img src={im.archivo} srcset={srcset} sizes={srcset ? sizes : undefined} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></a>
 ) : (
-  <figure id={id} class="imagen"><img src={im.archivo} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></figure>
+  <figure id={id} class="imagen"><img src={im.archivo} srcset={srcset} sizes={srcset ? sizes : undefined} alt={texto} width={im.ancho} height={im.alto} loading={cargar} decoding="async" /></figure>
 ))}

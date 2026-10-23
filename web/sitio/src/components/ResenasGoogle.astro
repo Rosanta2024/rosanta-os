@@ -22,7 +22,7 @@ const total = d?.total ? d.total.toLocaleString('en-US') : null;
 ---
 <div class="resenas" data-paridad="mejora">
   {promedio && (
-    <a class="badge" href={enlace} target="_blank" rel="noopener" aria-label={es ? `${promedio} de 5 en Google, ${total} reseñas` : `${promedio} out of 5 on Google, ${total} reviews`}>
+    <a class="badge" href={enlace} target="_blank" rel="noopener">
       <span class="stars" aria-hidden="true"><span class="base">★★★★★</span><span class="fill" style={`width:${(d.promedio / 5) * 100}%`}>★★★★★</span></span>
       <span class="rating">{promedio}</span><span class="sep" aria-hidden="true">·</span><span class="count">{total}</span>
       <span>{es ? 'reseñas en Google' : 'Google reviews'}</span>

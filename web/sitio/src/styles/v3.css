@@ -187,7 +187,7 @@ body.v3 { padding-bottom: 76px; }
 
 /* ---------- 4 · bloques de color a pantalla dividida ---------- */
 .v3-bloque { display: grid; }
-.v3-bloque-video { aspect-ratio: 4 / 5; width: 100%; }
+.v3-bloque-video { aspect-ratio: 1 / 1; width: 100%; }
 .v3-bloque-texto { padding: 44px var(--v3-gutter) 56px; }
 .v3-fondo-verde { background: var(--v3-verde); color: #fff; }
 .v3-fondo-verde .v3-etiqueta { color: var(--v3-crema); }
@@ -208,6 +208,7 @@ body.v3 { padding-bottom: 76px; }
 
 /* ---------- 5 · categorías ---------- */
 .v3-categorias { padding: 64px 0 56px; }
+@media (min-width: 900px) { .v3-categorias .v3-tarjeta { flex: 1 1 0; max-width: none; } }
 .v3-cat-nombre { font-family: var(--v3-peskia); font-weight: 700; text-transform: uppercase; font-size: 30px; line-height: 1; color: var(--v3-verde); }
 
 /* ---------- 6 · experiencias ---------- */

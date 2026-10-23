@@ -146,15 +146,12 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .imagen img { width: 100%; object-fit: cover; }
 .svg { display: block; max-width: 160px; }
 .svg svg { width: 100%; height: auto; }
-.galeria-caja { width: 100vw; position: relative; left: 50%; margin-left: -50vw !important; }
 .galeria {
   display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px;
   width: 100%; scroll-behavior: smooth; scrollbar-width: none;
 }
 .galeria::-webkit-scrollbar { display: none; }
-.galeria > div { flex: 0 0 min(78vw, 520px); scroll-snap-align: start; }
 .galeria .imagen { margin: 0; }
-.galeria img { height: min(70vh, 640px); width: 100%; object-fit: cover; }
 .redes { display: flex; gap: 16px; }
 .mapa, .encuesta { width: 100%; border: 0; display: block; }
 
@@ -298,20 +295,37 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 .resenas .base { color: #d9d5cc; }
 .resenas .fill { position: absolute; left: 0; top: 0; overflow: hidden; white-space: nowrap; color: #FBBC04; }
 .resenas .rating { font-weight: 700; }
-.resenas .grid { list-style: none; margin: 22px auto 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 900px; }
-.resenas .card { background: #fff; border-radius: 12px; padding: 20px 22px; text-align: left; box-shadow: 0 2px 14px rgba(60,63,58,.08); margin: 0; }
+.resenas .grid { list-style: none; margin: 18px auto 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 1180px; }
+.resenas .card { background: #fff; border-radius: 10px; padding: 16px 18px; text-align: left; box-shadow: 0 2px 12px rgba(60,63,58,.08); margin: 0; }
 .resenas .card p { margin: 0; }
-.resenas .crow { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.resenas .av { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
-.resenas .who { font-weight: 700; font-size: 15px; color: #2f342f; line-height: 1.3; }
-.resenas .when { font-size: 13px; color: #8a8a82; line-height: 1.3; }
-.resenas .cstars { color: #FBBC04; font-size: 16px; letter-spacing: 1px; margin-bottom: 8px !important; }
-.resenas .ctext { font-size: 15px; line-height: 1.6; color: #4a4f4a; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
-.resenas .trad { font-size: 12px; color: #9a9a92; margin-top: 6px !important; }
-.resenas .foot { margin: 20px 0 0; }
+.resenas .crow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.resenas .av { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; background: var(--verde); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.resenas .who { font-weight: 700; font-size: 14px; color: #2f342f; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resenas .crow > div:last-child { min-width: 0; }
+.resenas .when { font-size: 12px; color: #8a8a82; line-height: 1.3; }
+.resenas .cstars { color: #FBBC04; font-size: 14px; letter-spacing: 1px; margin-bottom: 6px !important; }
+.resenas .ctext { font-size: 14px; line-height: 1.55; color: #4a4f4a; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.resenas .trad { font-size: 11.5px; color: #9a9a92; margin-top: 4px !important; }
+.resenas .foot { margin: 16px 0 0; }
 .resenas .foot a { color: var(--verde); font-weight: 700; font-size: 15px; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
-@media (max-width: 700px) { .resenas .grid { grid-template-columns: 1fr; gap: 14px; } .resenas .card { padding: 18px; } }
-@media (min-width: 1000px) { #comp-mrz9aoj0.pos { width: min(980px, 100%) !important; margin-left: auto !important; margin-right: auto; justify-self: center; } }
+/* Tablet: 2 por fila. Teléfono: carrusel horizontal (1 tarjeta y se asoma la siguiente), para no empujar lo demás. */
+@media (max-width: 999px) { .resenas .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .resenas .grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; padding: 4px 2px 10px; margin-top: 14px; scrollbar-width: none; }
+  .resenas .grid::-webkit-scrollbar { display: none; }
+  .resenas .card { flex: 0 0 84%; scroll-snap-align: start; }
+}
+/* Reseñas a lo ancho y centradas (portada y reservas); en Wix eran una caja de 600-980 px. */
+@media (min-width: 1000px) {
+  #comp-mrz9aoj0.pos, #comp-mryckbkh.pos { width: min(1180px, calc(100% - 64px)) !important; margin-left: auto !important; margin-right: auto !important; justify-self: center; }
+}
+/* Reservas en el teléfono: el formulario PRIMERO, después las reseñas y las fotos (Juanma, 23-oct). */
+@media (max-width: 999px) {
+  #comp-lhhtgsuq .seccion-in { display: flex; flex-direction: column; }
+  #comp-lhhtgsuq #comp-ms6gyasr { order: 1; }
+  #comp-lhhtgsuq #comp-mryckbkh { order: 2; margin-top: 28px !important; }
+  #comp-lhhtgsuq .galeria-caja { order: 3; }
+}
 
 /* ---------- Cocina honesta: título legible (no Peskia: es largo), aire y texto justificado ---------- */
 #comp-kybj3u7h { align-items: stretch; }
@@ -358,22 +372,31 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
   #comp-kybjx47j .rico { margin-left: 0 !important; width: 100% !important; }
 }
 
-/* ---------- galería: flechas ---------- */
+/* ---------- galería (Juanma, 23-oct): centrada en su contenedor, fotos completas del mismo tamaño
+   (3 en computadora, 2 en tablet, 1 en teléfono) y flechas FUERA de las fotos ---------- */
+.galeria-caja, .malla > .galeria-caja.pos {
+  position: relative; width: min(1240px, 100%) !important; margin-left: auto !important; margin-right: auto !important;
+  justify-self: center !important; padding: 8px 68px 24px; --n: 3; --gap: 12px;
+}
+.galeria { gap: var(--gap); padding: 0; scroll-padding: 0; }
+.galeria > div { flex: 0 0 calc((100% - (var(--n) - 1) * var(--gap)) / var(--n)); scroll-snap-align: start; min-width: 0; }
+.galeria img { width: 100%; height: auto; aspect-ratio: var(--ar, .75); object-fit: cover; border-radius: 2px; }
 .galeria-flecha {
-  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 52px; height: 52px; border-radius: 50%;
-  border: 0; background: rgba(242,238,235,.92); color: var(--verde); font: 300 38px/1 var(--cuerpo); padding: 0 0 5px;
-  cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; transition: opacity .15s, background .15s;
+  position: absolute; top: calc(50% - 8px); transform: translateY(-50%); z-index: 2; width: 48px; height: 48px; border-radius: 50%;
+  border: 1.5px solid rgba(78,109,90,.35); background: var(--crema-marca); color: var(--verde); font: 300 34px/1 var(--cuerpo); padding: 0 0 4px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity .15s, background .15s;
 }
 .galeria-flecha:hover { background: #fff; }
-.galeria-flecha:disabled { opacity: 0; pointer-events: none; }
+.galeria-flecha:disabled { opacity: .3; cursor: default; }
 .galeria-flecha:focus-visible { outline: 3px solid var(--verde-medio); outline-offset: 2px; }
-.galeria-ant { left: 20px; } .galeria-sig { right: 20px; }
+.galeria-ant { left: 10px; } .galeria-sig { right: 10px; }
 .galeria-flecha[hidden] { display: none; }
-@media (max-width: 700px) {
-  .galeria-flecha { width: 42px; height: 42px; font-size: 30px; }
-  .galeria-ant { left: 10px; } .galeria-sig { right: 10px; }
-  .galeria > div { flex-basis: 86vw; }
-  .galeria img { height: min(62vh, 520px); }
+@media (max-width: 999px) { .galeria-caja, .malla > .galeria-caja.pos { --n: 2; padding: 8px 60px 20px; } }
+@media (max-width: 640px) {
+  /* Teléfono: una foto completa a la vez y las flechas debajo, centradas (no tapan la foto). */
+  .galeria-caja, .malla > .galeria-caja.pos { --n: 1; padding: 4px 16px 16px; text-align: center; }
+  .galeria-flecha { position: static; transform: none; display: inline-flex; margin: 14px 8px 0; width: 44px; height: 44px; font-size: 30px; }
+  .galeria-flecha[hidden] { display: none; }
 }
 
 /* ---------- Contacto + mapa (una sola pantalla en la computadora) ---------- */
@@ -449,3 +472,106 @@ button.boton { border: 0; font-family: inherit; cursor: default; }
 [data-hook="item.variant"] > div { max-width: 520px; }
 [data-hook="menu.description"] { margin-left: auto !important; margin-right: auto !important; }
 .widget-gift img { margin-left: auto; margin-right: auto; max-width: 480px; }
+/* Teléfono: el botón de reservar de la portada, centrado como el texto. */
+@media (max-width: 999px) { #comp-lnbyxau0 .boton-fila { text-align: center !important; margin-left: 0 !important; width: 100% !important; } }
+
+/* ---------- fotos de fondo como <img> (23-oct, velocidad): cubren su bloque, detrás del contenido ---------- */
+.con-fondo-img { position: relative; }
+.fondo-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; z-index: 0; pointer-events: none; }
+.con-fondo-img > :not(.fondo-img) { position: relative; z-index: 1; }
+
+/* =====================================================================================================
+   Conversión (Juanma, 23-oct): idioma en texto chico, barra fija para reservar en el teléfono, platos con foto,
+   prueba social junto al formulario, 404 útil y contraste. Pensado primero para 390 px.
+   ===================================================================================================== */
+/* Idioma: "EN" / "ES" de texto chico (sin pastilla) en la computadora; "ES · EN" dentro del menú del teléfono. */
+.idioma-link { color: #fff; text-decoration: none; font: 700 12.5px/1 var(--cuerpo); letter-spacing: 1.5px; padding: 12px 6px; opacity: .85; border-bottom: 1.5px solid transparent; }
+.idioma-link:hover { opacity: 1; border-bottom-color: rgba(255,255,255,.7); }
+.idioma-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.menu .li-idioma { display: none; }
+@media (min-width: 1100px) { .idioma-link { order: 3; margin-left: 4px; } .menu { order: 2; } }
+@media (max-width: 1099px) {
+  .idioma-link { display: none; }
+  .menu-boton { margin-left: auto; }
+  .menu .li-idioma { display: flex; align-items: center; gap: 12px; padding: 14px 2px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .menu .li-idioma a { display: inline-block; padding: 6px 4px; font-size: 15px; border: 0; opacity: .7; }
+  .menu .li-idioma a[aria-current] { opacity: 1; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
+  .menu .li-idioma span { opacity: .5; }
+}
+
+/* Barra fija para reservar (solo teléfono y tablet). */
+.barra-reservar { display: none; }
+@media (max-width: 1099px) {
+  .barra-reservar {
+    display: flex; align-items: center; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--crema-marca);
+    box-shadow: 0 -4px 18px rgba(0,0,0,.14); border-top: 1px solid rgba(78,109,90,.15);
+  }
+  body:has(.barra-reservar) { padding-bottom: 76px; }
+  .barra-nota { display: flex; flex-direction: column; align-items: center; font: 700 15px/1.1 var(--cuerpo); color: #2f342f; min-width: 52px; }
+  .barra-nota span { color: #E3A008; }
+  .barra-nota small { font: 400 11px/1.2 var(--cuerpo); color: #5b5f5b; }
+  .barra-cta {
+    flex: 1; text-align: center; background: var(--verde); color: #fff; text-decoration: none; border-radius: 30px;
+    font: 700 15px/1 var(--cuerpo); letter-spacing: .06em; padding: 16px 12px; text-transform: uppercase;
+  }
+  .barra-cta:active { background: #3f5a4a; }
+  .barra-wa { flex: 0 0 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #25D366; color: #0b3d1f; }
+  .barra-wa svg { width: 28px; height: 28px; }
+}
+
+/* Portada: platos destacados dentro del bloque del menú (llevan a la carta). */
+#comp-kybjx46n { flex-wrap: wrap !important; }
+.destacados { flex: 0 0 100%; padding: 8px 32px 40px; background: var(--verde); }
+.destacados-lista { list-style: none; margin: 0 auto; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; max-width: 980px; }
+.destacados-lista a { display: block; text-decoration: none; color: #fff; }
+.destacados-lista img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+.destacados-lista span { display: block; margin-top: 8px; font: 400 15px/1.3 var(--cuerpo); letter-spacing: .03em; }
+.destacados-lista a:hover span { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 999px) {
+  #comp-kybjx46n .destacados { order: 9; }
+  .destacados { padding: 4px 16px 28px; }
+  .destacados-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+
+/* Carta: miniatura de cada plato con foto, cabecera de algunas categorías y línea entre platos. */
+.carta-cabecera { margin: 14px 0 6px; }
+.carta-cabecera img { width: 100%; aspect-ratio: 16 / 7; max-height: 320px; object-fit: cover; border-radius: 4px; }
+[data-hook="items.container"] > [data-hook="item.root"] { border-top: 1px solid #e4e0da; }
+.con-foto > [data-hook="item.container"] { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 18px; align-items: start; }
+.plato-foto { width: 112px; height: 112px; object-fit: cover; border-radius: 6px; }
+@media (max-width: 640px) {
+  .con-foto > [data-hook="item.container"] { grid-template-columns: 88px minmax(0, 1fr); gap: 14px; }
+  .plato-foto { width: 88px; height: 88px; }
+}
+
+/* Formulario de reservas: prueba social y fecha sugerida. */
+.rsv-nota { display: inline-flex; gap: 6px; align-items: center; justify-content: center; margin: 2px auto 14px; color: #3f5546; text-decoration: none; font-size: 14px; }
+.rsv .wrap #formview { text-align: center; }
+.rsv .wrap #formview .card { text-align: left; }
+.rsv-estrellas { color: #E3A008; letter-spacing: 1px; }
+.rsv-nota:hover { text-decoration: underline; }
+.sugerida { margin: 0 0 8px; font-size: 13px; color: #3f5546; background: #e7efe9; border-radius: 6px; padding: 8px 10px; }
+
+/* Contraste (Lighthouse/axe) y áreas táctiles de 44 px. */
+.resenas .when { color: #6b6b63; }
+#comp-lhi26c4o.boton, .oscura .boton { color: #2f4a3a; }
+.contacto-datos a, .contacto-links a { display: inline-block; padding: 6px 0; }
+.contacto dl { align-items: center; }
+
+/* 404 útil */
+.p404 { background: var(--crema-marca); }
+.p404-in { max-width: 860px; margin: 0 auto; padding: 48px 20px 64px; text-align: center; }
+.p404-logo { font: 700 22px/1 var(--cuerpo); letter-spacing: .3em; color: var(--verde); text-decoration: none; }
+.p404 h1 { font: 400 clamp(64px, 14vw, 120px)/1 var(--titulo); color: var(--verde); margin: 24px 0 8px; }
+.p404-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 12px; }
+.p404-msg { font-size: 18px; color: #2f342f; margin: 0 0 16px; }
+.p404-links { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 0; }
+.p404-links a:not(.boton) { color: var(--verde); padding: 6px 0; }
+.p404-cta { border-radius: 30px; }
+@media (max-width: 640px) { .p404-cols { grid-template-columns: 1fr; gap: 36px; } }
+
+/* Contraste del bloque de contacto (Lighthouse) */
+.contacto-col h3 { color: #e6f3ec; }
+.contacto dt { color: rgba(255,255,255,.9); }
+.menu-boton .visualmente-oculto { height: 1px; }

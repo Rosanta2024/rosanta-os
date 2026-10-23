@@ -26,7 +26,8 @@
       { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Friday", "Saturday"], "opens": "12:00", "closes": "22:00" },
       { "@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "15:00", "closes": "20:00" }
     ],
-    "acceptsReservations": "True",
+    "acceptsReservations": "https://www.rosanta.rest/reservas",
+    "potentialAction": { "@type": "ReserveAction", "target": { "@type": "EntryPoint", "urlTemplate": "https://www.rosanta.rest/reservas", "inLanguage": ["en", "es"], "actionPlatform": ["https://schema.org/DesktopWebPlatform", "https://schema.org/MobileWebPlatform"] }, "result": { "@type": "FoodEstablishmentReservation", "name": "Rosanta" } },
     "hasMenu": "https://www.rosanta.rest/full-menu",
     "description": "Garden restaurant in Antigua Guatemala. Farm to table cuisine with seasonal, local ingredients. Creative cocktails and sustainable gastronomy.",
     "sameAs": ["https://www.facebook.com/rosanta.rest/", "https://www.instagram.com/rosanta.rest/"]

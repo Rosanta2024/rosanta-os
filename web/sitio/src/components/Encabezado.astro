@@ -27,13 +27,11 @@ const actual = (href) => href === pagina.ruta;
 <header class="encabezado" style={comun.fondo_encabezado ? `background:${comun.fondo_encabezado}` : undefined}>
   <div class="encabezado-in">
     <a class="logo" href={inicio} aria-label="Rosanta" set:html={logo?.svg || 'ROSANTA'} />
-    <nav class="idioma" data-paridad="ignorar" aria-label={idioma === 'es' ? 'Idioma' : 'Language'}>
-      <a href={enRuta} hreflang="en" lang="en" class:list={[{ activo: idioma === 'en' }]}>EN</a>
-      <a href={esRuta} hreflang="es" lang="es" class:list={[{ activo: idioma === 'es' }]}>ES</a>
-    </nav>
-    <a class="reservar reservar-tel" href={nav.reservar.href}>{nav.reservar.corto}</a>
+    {/* Idioma (Juanma, 23-oct): texto chico con el OTRO idioma, sin pastilla, banderas ni globo. */}
+    <a class="idioma-link" href={idioma === 'es' ? enRuta : esRuta} hreflang={idioma === 'es' ? 'en' : 'es'} lang={idioma === 'es' ? 'en' : 'es'}
+      data-paridad="ignorar" aria-label={idioma === 'es' ? 'English version' : 'Versión en español'}>{idioma === 'es' ? 'EN' : 'ES'}</a>
     <input type="checkbox" id="menu-abrir" class="menu-abrir" aria-hidden="true" tabindex="-1" />
-    <label for="menu-abrir" class="menu-boton" aria-label={idioma === 'es' ? 'Menú' : 'Menu'}><span></span><span></span><span></span></label>
+    <label for="menu-abrir" class="menu-boton"><span class="visualmente-oculto">{idioma === 'es' ? 'Menú' : 'Menu'}</span><span></span><span></span><span></span></label>
     <nav class="menu" aria-label={idioma === 'es' ? 'Principal' : 'Main'}>
       <ul>
         {nav.principales.map((it) => (
@@ -46,6 +44,11 @@ const actual = (href) => href === pagina.ruta;
               {nav.mas.items.map((s) => <li><a href={s.href} aria-current={actual(s.href) ? 'page' : undefined}>{s.texto}</a></li>)}
             </ul>
           </details>
+        </li>
+        <li class="li-idioma" data-paridad="ignorar">
+          <a href={esRuta} hreflang="es" lang="es" aria-current={idioma === 'es' ? 'true' : undefined}>ES</a>
+          <span aria-hidden="true">·</span>
+          <a href={enRuta} hreflang="en" lang="en" aria-current={idioma === 'en' ? 'true' : undefined}>EN</a>
         </li>
         <li class="li-reservar"><a class="reservar" href={nav.reservar.href} aria-current={actual(nav.reservar.href) ? 'page' : undefined}>{nav.reservar.texto}</a></li>
       </ul>

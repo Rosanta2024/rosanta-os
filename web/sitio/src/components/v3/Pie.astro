@@ -39,7 +39,7 @@ const maps = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a
       </div>
     </div>
     <nav class="v3-pie-nav" id="v3-pie-nav" aria-label={l === 'es' ? 'Más enlaces' : 'More links'}>
-      {[...T.menu.principales, ...T.menu.secundarios, ...T.pie.legales].map((it) => <a href={it.href}>{it.texto}</a>)}
+      {[...T.menu.principales, ...T.menu.secundarios.filter((x) => !T.pie.legales.some((y) => y.href === x.href)), ...T.pie.legales].map((it) => <a href={it.href}>{it.texto}</a>)}
       <span class="v3-pie-idioma"><a href={esRuta} hreflang="es" lang="es" data-v3idioma="es">ES</a> · <a href={enRuta} hreflang="en" lang="en" data-v3idioma="en">EN</a></span>
     </nav>
     <p class="v3-pie-copy">© 2026 Rosanta · Cocina con Carisma</p>

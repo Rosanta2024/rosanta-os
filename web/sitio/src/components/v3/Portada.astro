@@ -86,7 +86,7 @@ const maps = 'https://www.google.com/maps/dir/?api=1&destination=Rosanta%2C%201a
     {nuevos.map((x) => (
       <li class="v3-tarjeta">
         <a href={`${R.carta}#${x.tab}`}>
-          <img class="v3-tarjeta-media" src={`/v3/platos/${x.foto}.webp`} alt={x.nombre} width="720" height="900" loading="lazy" decoding="async" />
+          <img class="v3-tarjeta-media" src={x.foto.grande} alt={x.foto.alt} width="720" height="900" loading="lazy" decoding="async" />
           <span class="v3-plato-linea"><span class="v3-plato-nombre">{x.nombre}</span><span class="v3-puntos" aria-hidden="true"></span><span class="v3-plato-precio">{x.precio || x.variantes.split(' · ')[0]}</span></span>
           {x.etiquetas[0] && <span class="v3-plato-etq">{x.etiquetas[0]}</span>}
         </a>
