@@ -225,3 +225,13 @@ test('Rutas: la pantalla, la API con el enlace, las fotos en binario y el conten
     assert.strictEqual(r.status, 400);
   } finally { srv.close(); }
 });
+
+test('cada tipo del editor ordena por columnas que existen en la tabla real (la base de memoria no lo revisa; Postgres si)', () => {
+  const A = require('../src/almacen-web'); const W = require('../src/contenido-web');
+  for (const [k, t] of Object.entries(W.TIPOS)) {
+    const cols = (A.TABLAS[t.tabla] || {}).cols || [];
+    if (!cols.length) continue;   // tablas que llegan con una migracion posterior
+    const orden = t.ordenLista || (t.llave === 'clave' ? ['orden', 'clave'] : ['orden', 'id']);
+    for (const c of orden) assert.ok(cols.indexOf(c.replace(/ (DESC|ASC)$/, '')) !== -1, k + ': ' + c);
+  }
+});
