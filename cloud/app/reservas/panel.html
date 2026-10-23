@@ -81,6 +81,7 @@
     <button data-v="plano">Plano de mesas</button>
     <button data-v="semana">Semana</button>
     <button data-v="cierres">Fechas cerradas</button>
+    <button data-v="espera" id="tabEspera" hidden>Lista de espera</button>
   </nav>
 </header>
 <main id="main"><p class="suave">Cargando…</p></main>
@@ -157,6 +158,7 @@
     var p;
     if (vista === 'semana') p = pedir('GET', PANEL + '/semana?desde=' + f).then(function (j) { datos = Object.assign({ motor_reservas: datos && datos.motor_reservas }, j); });
     else if (vista === 'cierres') p = pedir('GET', API + '/cierres').then(function (j) { datos = Object.assign({ motor_reservas: datos && datos.motor_reservas }, j); });
+    else if (vista === 'espera') p = pedir('GET', API + '/lista-espera?fecha=' + f).then(function (j) { datos = Object.assign({ motor_reservas: datos && datos.motor_reservas }, j); });
     else p = Promise.all([pedir('GET', API + '/dia?fecha=' + f), pedir('GET', PANEL + '/avisos?fecha=' + f).catch(function () { return { avisos: [] }; })])
       .then(function (x) { datos = x[0]; avisos = x[1].avisos || []; });
     return p.then(pintar).catch(function (e) { $('main').innerHTML = '<div class="aviso mal">' + esc(e.message) + '</div>'; });
@@ -174,6 +176,7 @@
   function pintar() {
     if (vista === 'semana') return pintarSemana();
     if (vista === 'cierres') return pintarCierres();
+    if (vista === 'espera') return pintarEspera();
     var d = datos, h = '';
     var vivas = d.reservas.filter(function (r) { return r.estado !== 'cancelada' && r.estado !== 'rechazada'; });
     var alerg = vivas.filter(function (r) { return r.alergias; }).length;
@@ -299,6 +302,34 @@
     $('main').innerHTML = h;
   }
 
+  // ---------------------------------------------------------------- lista de espera (solo si LISTA_ESPERA=encendida)
+  var ESPERA_TXT = { esperando: 'Esperando', avisado: 'Avisado', reservo: 'Ya reservó', vencida: 'Vencida', cancelada: 'Quitada' };
+  function pintarEspera() {
+    var xs = datos.lista || [];
+    var h = cabecera() + '<p class="suave" style="margin:0 0 6px">' + esc(fechaBonita(datos.fecha)) + '</p>' +
+      '<div class="resumen"><span class="chip">' + xs.filter(function (x) { return x.estado === 'esperando'; }).length + ' esperando</span>' +
+      '<span class="chip">' + xs.filter(function (x) { return x.estado === 'avisado'; }).length + ' avisados</span></div>' +
+      '<div class="aviso lila">Cuando se cancela o se mueve una reserva, el sistema le escribe al primero de la lista que tenga lugar en su horario (si los avisos están encendidos). La mesa no queda apartada.</div>';
+    if (!xs.length) h += '<p class="suave">Nadie en la lista de espera este día.</p>';
+    h += xs.map(function (x) {
+      var apagada = ['reservo', 'vencida', 'cancelada'].indexOf(x.estado) !== -1;
+      var contacto = [x.telefono ? '<a href="tel:' + esc(String(x.telefono).replace(/[^0-9+]/g, '')) + '">' + esc(x.telefono) + '</a>' : '', x.email ? esc(x.email) : ''].filter(Boolean).join(' · ');
+      var b = [];
+      if (yo && yo.puede.ingresar) {
+        if (x.estado === 'esperando') b.push('<button class="chico" data-espera="' + esc(x.id) + '" data-espera-estado="avisado">Ya le avisamos</button>');
+        if (x.estado === 'esperando' || x.estado === 'avisado') b.push('<button class="chico pri" data-espera="' + esc(x.id) + '" data-espera-estado="reservo">Ya reservó</button>');
+      }
+      return '<article class="tarjeta' + (apagada ? ' apagada' : '') + '"><div class="cab"><span class="hora">' + esc(x.desde || '') + '–' + esc(x.hasta || '') + '</span>' +
+        '<span class="nombre">' + esc(x.nombre || '(sin nombre)') + '</span><span>' + esc(x.personas) + ' pers.</span>' +
+        '<span class="estado e-' + (x.estado === 'reservo' ? 'confirmada' : x.estado === 'avisado' ? 'pendiente' : 'termino') + '">' + esc(ESPERA_TXT[x.estado] || x.estado) + '</span></div>' +
+        '<div class="suave">' + esc(ORIGEN_TXT[x.origen] || x.origen || '') + ' · ' + (x.idioma === 'es' ? 'ES' : 'EN') + ' · anotado ' + esc(new Date(x.creada).toLocaleString('es-GT', { timeZone: 'America/Guatemala', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</div>' +
+        (contacto ? '<div class="suave">' + contacto + '</div>' : '') +
+        (x.avisado ? '<div class="suave">Avisado ' + (x.aviso_automatico ? 'por correo automático' + (x.aviso_hora ? ' (hora ofrecida ' + esc(x.aviso_hora) + ')' : '') : 'a mano') + '</div>' : '') +
+        (b.length ? '<div class="acciones">' + b.join('') + '</div>' : '') + '</article>';
+    }).join('');
+    $('main').innerHTML = h;
+  }
+
   // ---------------------------------------------------------------- acciones
   var PREGUNTA = { rechazada: '¿Rechazar esta solicitud? Al cliente le llega el aviso de que no hay mesa.', cancelada: '¿Cancelar esta reserva? Al cliente le llega el aviso de cancelación.', no_vino: '¿Marcar que no vino?' };
   function cambiarEstado(id, estado, boton) {
@@ -341,6 +372,11 @@
       vista = b.getAttribute('data-v'); marcarTab(vista);
       $('main').innerHTML = '<p class="suave">Cargando…</p>';
       return cargar();
+    }
+    if (b.hasAttribute('data-espera')) {
+      b.disabled = true;
+      return pedir('POST', API + '/lista-espera/' + encodeURIComponent(b.getAttribute('data-espera')) + '/estado', { estado: b.getAttribute('data-espera-estado') })
+        .then(function () { aviso('Listo'); return cargar(); }).catch(function (e) { b.disabled = false; aviso(e.message); });
     }
     if (b.hasAttribute('data-estado')) return cambiarEstado(b.getAttribute('data-id'), b.getAttribute('data-estado'), b);
     if (b.hasAttribute('data-editar')) { editando = b.getAttribute('data-editar') || null; return pintar(); }
@@ -424,6 +460,8 @@
   $('ant').onclick = function () { $('fecha').value = sumarDias($('fecha').value, vista === 'semana' ? -7 : -1); horaPlano = ''; cargar(); };
   $('sig').onclick = function () { $('fecha').value = sumarDias($('fecha').value, vista === 'semana' ? 7 : 1); horaPlano = ''; cargar(); };
   $('hoy').onclick = function () { $('fecha').value = hoyGT(); horaPlano = ''; cargar(); };
+  // La pestaña "Lista de espera" solo aparece si el servicio la tiene encendida (si no, la ruta no existe: 404)
+  pedir('GET', API + '/lista-espera?fecha=' + hoyGT()).then(function () { $('tabEspera').hidden = false; }).catch(function () {});
   pedir('GET', PANEL + '/yo').then(function (j) { yo = j; return cargar(); })
     .catch(function (e) { $('main').innerHTML = '<div class="aviso mal">' + esc(e.message) + '</div>'; });
   // cada minuto, si nadie está escribiendo

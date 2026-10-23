@@ -15,6 +15,12 @@
  *
  * Permisos (propuesta para la sesion C, ver permisos-web.js): parte 'web' (ver / ingresar = editar el
  * borrador) y la accion solo-dueño 'publicar_web'.
+ *
+ * Blog (23-oct-2026, AYUDANTE SV-NUBE; migracion 056): tabla web_blog, versionada como lo demas (entra en cada version
+ * y "volver atras" la restaura). Crear, editar y retirar una entrada exige al dueño (publicar_web) aunque alguien tenga
+ * "ingresar" en web. El cuerpo es markdown simple (revisarMarkdown); el sitio lo convierte (markdownAHtml es la
+ * referencia, la usa la vista previa). La llave "blog" del formato 1 solo aparece si hay entradas activas: sin blog,
+ * el contenido (y su huella) queda igual que antes.
  */
 const crypto = require('crypto');
 const P = require('./permisos');
@@ -54,6 +60,8 @@ const TIPOS = {
   experiencias: { tabla: 'web_experiencias', llave: 'id', activo: 'activa',
     crear: ['slug', 'operador_id', 'titulo_es', 'titulo_en'], campos: ['operador_id', 'titulo_en', 'titulo_es', 'descripcion_en', 'descripcion_es', 'duracion_en', 'duracion_es',
       'incluye_en', 'incluye_es', 'punto_salida_en', 'punto_salida_es', 'temporada_en', 'temporada_es', 'dificultad', 'idiomas', 'precio_ref_q', 'foto_id', 'galeria', 'faq', 'orden'] },
+  blog: { tabla: 'web_blog', llave: 'id', activo: 'activa', soloDueno: true, ordenLista: ['fecha DESC', 'orden', 'id'],
+    crear: ['slug', 'fecha', 'titulo_es', 'titulo_en'], campos: ['fecha', 'titulo_en', 'titulo_es', 'resumen_en', 'resumen_es', 'cuerpo_en', 'cuerpo_es', 'foto_id', 'orden'] },
   operadores: { tabla: 'operadores_aliados', llave: 'id', estado: true, ordenLista: ['nombre', 'id'],
     crear: ['nombre', 'codigo_referido'], campos: ['nombre', 'razon_social', 'contacto_nombre', 'contacto_telefono', 'contacto_email', 'contacto_emergencia', 'licencia_inguat',
       'licencia_vence', 'seguro_aseguradora', 'seguro_poliza', 'seguro_vence', 'comision_tipo', 'comision_valor', 'acuerdo', 'requisitos', 'codigo_referido', 'nota'] }
@@ -61,6 +69,16 @@ const TIPOS = {
 const CAMPOS_PRECIO = ['precio_q'];
 
 function error(status, msg) { const e = new Error(msg); e.status = status; return e; }
+
+/** web_blog llega con la 056: si el codigo sale antes que la migracion, el contenido sigue funcionando sin blog. */
+const TABLAS_NUEVAS = ['web_blog'];
+function listaSegura(al, tabla, filtro, o) {
+  return al.lista(tabla, filtro, o).catch((e) => { if (TABLAS_NUEVAS.indexOf(tabla) !== -1 && e && e.code === '42P01') return []; throw e; });
+}
+/** Fuera de una transaccion (en Postgres un error adentro la aborta entera). */
+function existeTabla(al, tabla) {
+  return al.lista(tabla, {}, { limite: 1 }).then(() => true, (e) => { if (e && e.code === '42P01') return false; throw e; });
+}
 
 // ------------------------------------------------------------------------------------------------ validar
 
@@ -85,7 +103,49 @@ function limpiarFaq(v) {
 const LARGO = { titulo_en: 120, titulo_es: 120, descripcion_en: 320, descripcion_es: 320, texto_en: 6000, texto_es: 6000, nota_en: 400, nota_es: 400,
   nombre_en: 120, nombre_es: 120, nombre: 120, razon_social: 160, contacto_nombre: 120, contacto_telefono: 30, contacto_emergencia: 200, licencia_inguat: 60,
   seguro_aseguradora: 120, seguro_poliza: 80, acuerdo: 3000, nota: 1000, duracion_en: 80, duracion_es: 80, incluye_en: 2000, incluye_es: 2000,
-  punto_salida_en: 300, punto_salida_es: 300, temporada_en: 200, temporada_es: 200, pregunta_en: 300, pregunta_es: 300, respuesta_en: 3000, respuesta_es: 3000, alt_en: 200, alt_es: 200, categoria: 40 };
+  punto_salida_en: 300, punto_salida_es: 300, temporada_en: 200, temporada_es: 200, pregunta_en: 300, pregunta_es: 300, respuesta_en: 3000, respuesta_es: 3000, alt_en: 200, alt_es: 200, categoria: 40,
+  resumen_en: 320, resumen_es: 320, cuerpo_en: 20000, cuerpo_es: 20000 };
+
+// ------------------------------------------------------------------------------------------------ markdown del blog
+
+const RE_ENLACE_MD = /\[([^\]\n]+)\]\(([^)\s]*)\)/g;
+const enlaceValido = (u) => /^(https:\/\/[^\s"'<>]+|\/(?!\/)[^\s"'<>]*|mailto:[^\s"'<>]+|tel:[+0-9 ()-]+)$/.test(String(u || ''));
+
+/**
+ * Revisa el markdown simple del blog: parrafos (linea en blanco), **negritas**, listas ("- " o "* " al principio) y
+ * enlaces [texto](https://… | /pagina | mailto:… | tel:…). Sin HTML ni otros esquemas (javascript:, data:…).
+ */
+function revisarMarkdown(s, campo) {
+  const t = String(s == null ? '' : s).replace(/\r\n/g, '\n');
+  if (/<[a-z!\/?]/i.test(t)) throw error(400, campo + ': sin HTML (usá **negritas**, listas con "- " y [enlaces](https://…)).');
+  for (const m of t.matchAll(RE_ENLACE_MD)) {
+    if (!enlaceValido(m[2])) throw error(400, campo + ': el enlace "' + m[2].slice(0, 80) + '" tiene que empezar con https://, con / (una página del sitio), mailto: o tel:.');
+  }
+  return t;
+}
+
+/**
+ * Markdown simple → HTML (la referencia del formato; la usa la vista previa). Escapa TODO primero. Autocontenida:
+ * pantallas-web.js la mete tal cual en la pagina con toString(), asi la vista previa y las pruebas usan el mismo codigo.
+ */
+function markdownAHtml(md) {
+  var esc = function (x) { return String(x).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); };
+  var ok = function (u) { return /^(https:\/\/[^\s"'<>]+|\/(?!\/)[^\s"'<>]*|mailto:[^\s"'<>]+|tel:[+0-9 ()-]+)$/.test(u); };
+  var enLinea = function (x) {
+    return x.replace(/\[([^\]\n]+)\]\(([^)\s]*)\)/g, function (todo, texto, url) {
+      return ok(url) ? '<a href="' + esc(url) + '"' + (/^https:/.test(url) ? ' rel="noopener"' : '') + '>' + esc(texto) + '</a>' : esc(texto);
+    }).split(/(<a [^>]*>[^<]*<\/a>)/).map(function (p, i) {
+      return i % 2 ? p : esc(p).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    }).join('');
+  };
+  return String(md == null ? '' : md).replace(/\r\n/g, '\n').split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean).map(function (b) {
+    var lineas = b.split('\n');
+    if (lineas.every(function (l) { return /^\s*[-*] /.test(l); })) {
+      return '<ul>' + lineas.map(function (l) { return '<li>' + enLinea(l.replace(/^\s*[-*] /, '')) + '</li>'; }).join('') + '</ul>';
+    }
+    return '<p>' + lineas.map(enLinea).join('<br>') + '</p>';
+  }).join('\n');
+}
 
 /** Un valor que manda la pantalla → el valor para la base (o error 400 en cristiano). */
 function limpiarCampo(campo, v) {
@@ -96,7 +156,13 @@ function limpiarCampo(campo, v) {
     return n;
   }
   if (campo === 'orden') { const n = Number(v); if (!Number.isInteger(n)) throw error(400, 'El orden es un número entero.'); return n; }
-  if (campo === 'licencia_vence' || campo === 'seguro_vence') {
+  if (campo === 'cuerpo_en' || campo === 'cuerpo_es') {
+    const s = revisarMarkdown(v, campo);
+    if (s.length > LARGO[campo]) throw error(400, campo + ': máximo ' + LARGO[campo] + ' caracteres.');
+    return s;
+  }
+  if (campo === 'licencia_vence' || campo === 'seguro_vence' || campo === 'fecha') {
+    if (campo === 'fecha' && (v === null || v === '')) throw error(400, 'Falta la fecha de publicación (AAAA-MM-DD).');
     if (v === null || v === '') return null;
     const s = String(v).slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(new Date(s + 'T12:00:00Z'))) throw error(400, 'Fecha inválida (AAAA-MM-DD): ' + v);
@@ -175,14 +241,17 @@ function limpiarCampo(campo, v) {
 const dosIdiomas = (f, base) => ({ es: f[base + '_es'] || '', en: f[base + '_en'] || '' });
 const porOrden = (a, b) => (a.orden - b.orden) || (String(a.id || a.clave) < String(b.id || b.clave) ? -1 : 1);
 const usd = (q, tc) => (q == null || !tc ? null : Math.round(q / tc));
+const diaTexto = (x) => (x instanceof Date ? (x.getUTCHours() === 0 && x.getUTCMinutes() === 0 ? x.toISOString().slice(0, 10)
+  : x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0')) : String(x || '').slice(0, 10));
 
 /** Lee el borrador y arma el contenido con el formato del sitio (FORMATO.md). Solo lo activo. hoy: AAAA-MM-DD (vigencias). */
 async function armarContenido(al, hoy) { return (await armar(al, hoy)).contenido; }
 
 async function armar(al, hoy) {
-  const [paginas, bloques, fotos, secciones, platos, faq, eventos, ajustes, experiencias, operadores] = await Promise.all([
+  const [paginas, bloques, fotos, secciones, platos, faq, eventos, ajustes, experiencias, operadores, blog] = await Promise.all([
     al.lista('web_paginas'), al.lista('web_bloques'), al.lista('web_fotos'), al.lista('web_menu_secciones'),
-    al.lista('web_menu_platos'), al.lista('web_faq'), al.lista('web_eventos'), al.lista('web_ajustes'), al.lista('web_experiencias'), al.lista('operadores_aliados')]);
+    al.lista('web_menu_platos'), al.lista('web_faq'), al.lista('web_eventos'), al.lista('web_ajustes'), al.lista('web_experiencias'), al.lista('operadores_aliados'),
+    listaSegura(al, 'web_blog')]);
   const aj = {}; ajustes.forEach((a) => { aj[a.clave] = a.valor; });
   const tc = Number(aj.tipo_cambio_usd && aj.tipo_cambio_usd.q_por_usd) || null;
   const fotoPorId = {}; fotos.forEach((f) => { fotoPorId[f.id] = f; });
@@ -217,6 +286,13 @@ async function armar(al, hoy) {
   const adv = AV.armarExperiencias(experiencias, operadores, foto, tc, hoy);
   out.adventures = { experiencias: adv.experiencias, dificultad: AV.DIFICULTAD, idiomas: AV.IDIOMAS };
   if (aj.giftcards) out.giftcards = aj.giftcards;
+  // Blog: solo si hay entradas activas (sin blog, el contenido y su huella quedan como antes). La mas nueva primero.
+  const entradas = blog.filter((b) => b.activa).map((b) => Object.assign({}, b, { fecha: diaTexto(b.fecha) }))
+    .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0) || porOrden(a, b));
+  if (entradas.length) {
+    out.blog = entradas.map((b) => ({ id: b.id, slug: b.slug, orden: b.orden, fecha: b.fecha, titulo: dosIdiomas(b, 'titulo'),
+      resumen: dosIdiomas(b, 'resumen'), cuerpo: dosIdiomas(b, 'cuerpo'), foto: foto(b.foto_id) }));
+  }
   return { contenido: out, fuera: adv.fuera };
 }
 
@@ -238,6 +314,7 @@ function faltantes(c) {
   c.faq.forEach((q) => { par(q.pregunta, 'Pregunta ' + q.id); par(q.respuesta, 'Pregunta ' + q.id + ' › respuesta'); });
   c.eventos.forEach((e) => par(e.titulo, 'Evento ' + e.slug));
   ((c.adventures && c.adventures.experiencias) || []).forEach((x) => { par(x.titulo, 'Adventures › ' + x.slug); par(x.descripcion, 'Adventures › ' + x.slug + ' › descripción'); });
+  (c.blog || []).forEach((b) => { par(b.titulo, 'Blog › ' + b.slug); par(b.cuerpo, 'Blog › ' + b.slug + ' › texto'); });
   return f;
 }
 
@@ -275,7 +352,7 @@ function crearContenidoWeb(deps) {
   async function borrador(u) {
     exigir(u, 'ver');
     const out = {};
-    for (const k of Object.keys(TIPOS)) out[k] = await al.lista(TIPOS[k].tabla, {}, { orden: TIPOS[k].ordenLista || (TIPOS[k].llave === 'clave' ? ['orden', 'clave'] : ['orden', 'id']) });
+    for (const k of Object.keys(TIPOS)) out[k] = await listaSegura(al, TIPOS[k].tabla, {}, { orden: TIPOS[k].ordenLista || (TIPOS[k].llave === 'clave' ? ['orden', 'clave'] : ['orden', 'id']) });
     out.operadores = out.operadores.map((o) => Object.assign(o, { publicable: AV.operadorPublicable(o, hoy()) }));
     out.requisitos = AV.REQUISITOS; out.idiomas = AV.IDIOMAS; out.dificultad = AV.DIFICULTAD;
     const aj = await al.lista('web_ajustes');
@@ -293,10 +370,11 @@ function crearContenidoWeb(deps) {
     const t = tipo(nombre);
     if (t.sinCrear) throw error(400, 'Las fotos se agregan subiéndolas.');
     exigir(u, 'ingresar');
-    if (t.crearSoloDueno) exigir(u, 'publicar_web');
+    if (t.crearSoloDueno || t.soloDueno) exigir(u, 'publicar_web');
     const fila = {};
     t.crear.concat(t.campos).forEach((c) => { const v = limpiarCampo(c, (datos || {})[c]); if (v !== undefined) fila[c] = v; });
     t.crear.forEach((c) => { if (fila[c] === undefined || fila[c] === null || fila[c] === '') throw error(400, 'Falta ' + c + '.'); });
+    if (t.tabla === 'web_blog' && !/^[a-z0-9][a-z0-9-]*$/.test(fila.slug)) throw error(400, 'La dirección del artículo va en minúsculas, números y guiones (p. ej. que-comer-en-antigua).');
     if (CAMPOS_PRECIO.some((c) => fila[c] !== undefined && fila[c] !== null)) exigir(u, 'precio_venta');
     fila.actualizado_por = quien(u);
     if (nombre === 'operadores') fila.estado = 'pausado';   // se activa a mano, con licencia y seguro vigentes
@@ -320,6 +398,7 @@ function crearContenidoWeb(deps) {
   async function editar(u, nombre, llave, datos) {
     const t = tipo(nombre);
     exigir(u, 'ingresar');
+    if (t.soloDueno) exigir(u, 'publicar_web');
     const cambios = {};
     t.campos.forEach((c) => { const v = limpiarCampo(c, (datos || {})[c]); if (v !== undefined) cambios[c] = v; });
     if (!Object.keys(cambios).length) throw error(400, 'No mandaste nada para cambiar.');
@@ -341,7 +420,7 @@ function crearContenidoWeb(deps) {
   async function activar(u, nombre, llave, activo) {
     const t = tipo(nombre);
     exigir(u, 'ingresar');
-    if (nombre === 'paginas' || nombre === 'operadores') exigir(u, 'publicar_web');
+    if (nombre === 'paginas' || nombre === 'operadores' || t.soloDueno) exigir(u, 'publicar_web');
     const id = t.llave === 'id' ? Number(llave) : String(llave);
     return al.transaccion(async (tx) => {
       const antes = await tx.uno(t.tabla, { [t.llave]: id }, { bloquear: true });
@@ -464,12 +543,13 @@ function crearContenidoWeb(deps) {
     exigir(u, 'publicar_web');
     const v = await al.uno('web_versiones', { id: Number(versionId) });
     if (!v) throw error(404, 'No existe la versión ' + versionId + '.');
-    await al.transaccion(async (tx) => { await restaurarBorrador(tx, u, v.contenido); });
+    const conBlog = await existeTabla(al, 'web_blog');
+    await al.transaccion(async (tx) => { await restaurarBorrador(tx, u, v.contenido, conBlog); });
     return guardarVersion(u, v.contenido, nota || ('Vuelta a la versión ' + v.id), v.id);
   }
 
   /** Deja las tablas del borrador como dice `c` (lo que no esta en c queda retirado). */
-  async function restaurarBorrador(tx, u, c) {
+  async function restaurarBorrador(tx, u, c, conBlog) {
     const actualizar = async (tabla, llave, id, cambios) => {
       const antes = await tx.uno(tabla, { [llave]: id }, { bloquear: true });
       if (!antes) return;   // (no pasa: nada se borra)
@@ -480,6 +560,7 @@ function crearContenidoWeb(deps) {
       await anotar(tx, u, 'volver_atras', tabla, id, r.antes, r.despues);
     };
     const norm = (x) => (x instanceof Date ? x.toISOString() : (typeof x === 'string' && /^\d{4}-\d\d-\d\dT/.test(x) ? new Date(x).toISOString() : x));
+    // (las columnas date ya llegan como 'AAAA-MM-DD' del almacen)
     const fid = (f) => (f ? f.id : null);
     // paginas y bloques
     for (const p of await tx.lista('web_paginas')) {
@@ -516,6 +597,13 @@ function crearContenidoWeb(deps) {
         descripcion_es: x.descripcion.es, descripcion_en: x.descripcion.en, duracion_es: x.duracion.es, duracion_en: x.duracion.en, incluye_es: x.incluye.es, incluye_en: x.incluye.en,
         punto_salida_es: x.punto_salida.es, punto_salida_en: x.punto_salida.en, temporada_es: x.temporada.es, temporada_en: x.temporada.en, dificultad: x.dificultad,
         idiomas: x.idiomas, precio_ref_q: x.precio_ref_q, foto_id: fid(x.foto), galeria: x.galeria.map(fid), faq: x.faq } : { activa: false });
+    }
+    // blog: una version sin la llave "blog" (o sin esa entrada) la deja retirada
+    const blogEn = {}; (c.blog || []).forEach((b) => { blogEn[b.id] = b; });
+    for (const b of conBlog ? await tx.lista('web_blog') : []) {
+      const x = blogEn[b.id];
+      await actualizar('web_blog', 'id', b.id, x ? { activa: true, orden: x.orden, fecha: x.fecha, titulo_es: x.titulo.es, titulo_en: x.titulo.en,
+        resumen_es: x.resumen.es, resumen_en: x.resumen.en, cuerpo_es: x.cuerpo.es, cuerpo_en: x.cuerpo.en, foto_id: fid(x.foto) } : { activa: false });
     }
     const evEn = {}; c.eventos.forEach((e) => { evEn[e.id] = e; });
     for (const e of await tx.lista('web_eventos')) {
@@ -557,7 +645,7 @@ async function sembrar(al, c, quien) {
   if ((await al.lista('web_paginas', {}, { limite: 1 })).length) return { sembrado: false, motivo: 'El borrador ya tiene páginas.' };
   const por = quien || 'semilla';
   return al.transaccion(async (tx) => {
-    const n = { paginas: 0, bloques: 0, fotos: 0, secciones: 0, platos: 0, faq: 0, eventos: 0 };
+    const n = { paginas: 0, bloques: 0, fotos: 0, secciones: 0, platos: 0, faq: 0, eventos: 0, blog: 0 };
     const fotos = {};
     const foto = async (f) => {
       if (!f || !f.url) return null;
@@ -610,6 +698,13 @@ async function sembrar(al, c, quien) {
         enlace: limpiarCampo('enlace', e.enlace), orden: e.orden != null ? e.orden : i++, actualizado_por: por });
       n.eventos++;
     }
+    i = 0;
+    for (const b of c.blog || []) {
+      await tx.insertar('web_blog', { slug: limpiarCampo('slug', b.slug), fecha: limpiarCampo('fecha', b.fecha), titulo_es: tx2(b.titulo).es, titulo_en: tx2(b.titulo).en,
+        resumen_es: tx2(b.resumen).es, resumen_en: tx2(b.resumen).en, cuerpo_es: limpiarCampo('cuerpo_es', tx2(b.cuerpo).es), cuerpo_en: limpiarCampo('cuerpo_en', tx2(b.cuerpo).en),
+        foto_id: await foto(b.foto), orden: b.orden != null ? b.orden : i++, actualizado_por: por });
+      n.blog++;
+    }
     if (c.ajustes && c.ajustes.tipo_cambio_usd) await tx.insertar('web_ajustes', { clave: 'tipo_cambio_usd', valor: { q_por_usd: Number(c.ajustes.tipo_cambio_usd) }, actualizado_por: por });
     await tx.insertar('web_bitacora', { quien: por, rol: 'sistema', accion: 'crear', tabla: 'web_paginas', registro_id: 'semilla', antes: null, despues: n });
     return Object.assign({ sembrado: true }, n);
@@ -650,4 +745,5 @@ function medidas(b, t) {
   return null;
 }
 
-module.exports = { crearContenidoWeb, armarContenido, sembrar, faltantes, huella, limpiarCampo, tipoDeImagen, medidas, TIPOS, ALERGENOS, ETIQUETAS, FORMATO };
+module.exports = { crearContenidoWeb, armarContenido, sembrar, faltantes, huella, limpiarCampo, tipoDeImagen, medidas, revisarMarkdown, markdownAHtml,
+  TIPOS, ALERGENOS, ETIQUETAS, FORMATO };

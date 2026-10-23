@@ -173,6 +173,56 @@
       "enlace": "/reservas"
     }
   ],
+  "blog": [
+    {
+      "id": 2,
+      "slug": "que-pedir-la-primera-vez",
+      "orden": 0,
+      "fecha": "2026-11-03",
+      "titulo": {
+        "es": "Qué pedir la primera vez (ejemplo)",
+        "en": "What to order the first time (sample)"
+      },
+      "resumen": {
+        "es": "Texto de ejemplo para la lista del blog.",
+        "en": "Sample text for the blog list."
+      },
+      "cuerpo": {
+        "es": "Primer párrafo de ejemplo con **negritas**.\n\n- Un punto\n- Otro punto\n\nMás en [el menú](/es/full-menu).",
+        "en": "Sample first paragraph with **bold**.\n\n- One point\n- Another point\n\nMore on [the menu](/full-menu)."
+      },
+      "foto": {
+        "id": 1,
+        "url": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo.webp",
+        "url_chica": "https://storage.googleapis.com/rosanta-web-fotos/web/fotos/2026/10/ejemplo-chica.webp",
+        "ancho": 1600,
+        "alto": 1067,
+        "alt": {
+          "es": "Mesa en la pérgola",
+          "en": "Table under the pergola"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "slug": "articulo-de-ejemplo",
+      "orden": 0,
+      "fecha": "2026-10-28",
+      "titulo": {
+        "es": "Artículo de ejemplo",
+        "en": "Sample article"
+      },
+      "resumen": {
+        "es": "Ejemplo.",
+        "en": "Sample."
+      },
+      "cuerpo": {
+        "es": "Un solo párrafo de ejemplo.",
+        "en": "A single sample paragraph."
+      },
+      "foto": null
+    }
+  ],
   "adventures": {
     "experiencias": [
       {

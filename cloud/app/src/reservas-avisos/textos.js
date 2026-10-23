@@ -20,7 +20,8 @@ const DIR = path.join(__dirname, '..', '..', 'avisos');
 const IDIOMAS = ['en', 'es'];
 
 /** Los avisos al cliente (EN y ES) y los del equipo (solo ES). */
-const DEL_CLIENTE = ['confirmacion', 'pendiente', 'aprobada', 'rechazada', 'cambio', 'cancelacion', 'recordatorio_24h', 'recordatorio_dia', 'resena'];
+const DEL_CLIENTE = ['confirmacion', 'pendiente', 'aprobada', 'rechazada', 'cambio', 'cancelacion', 'recordatorio_24h', 'recordatorio_dia', 'resena',
+  'espera_mesa_libre'];   // lista de espera (LISTA_ESPERA=encendida): se libero una mesa
 const DEL_EQUIPO = ['equipo_nueva', 'equipo_cancelada', 'equipo_grupo_grande'];
 /** Las 3 plantillas de WhatsApp (Meta) y que aviso usa cada una. */
 const DE_WHATSAPP = ['confirmacion', 'recordatorio', 'cambio'];

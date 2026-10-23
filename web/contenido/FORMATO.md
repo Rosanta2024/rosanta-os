@@ -1,6 +1,6 @@
 # Contenido del sitio: formato que lee Astro (formato 1)
 
-AYUDANTE 4 (contenido y gift cards) para el AYUDANTE 3 (sitio Astro), 20-oct-2026. Actualizado el 21-oct: Adventures y gift cards sin pasarela.
+AYUDANTE 4 (contenido y gift cards) para el AYUDANTE 3 (sitio Astro), 20-oct-2026. Actualizado el 21-oct: Adventures y gift cards sin pasarela. 23-oct (SV-NUBE): blog.
 Ejemplo completo: `ejemplo-contenido.json` (datos inventados).
 
 ## De dónde se lee
@@ -21,6 +21,7 @@ paginas        { <clave>: { orden, ruta:{en,es}, seo:{ titulo:{es,en}, descripci
 menu           [ { id, clave, orden, nombre:{es,en}, nota:{es,en}, platos:[ plato ] } ]
 faq            [ { id, orden, categoria, pregunta:{es,en}, respuesta:{es,en} } ]
 eventos        [ { id, orden, slug, titulo, descripcion, inicio, fin, precio_q, precio_usd_ref, cupo, foto, enlace } ]
+blog           [ { id, slug, orden, fecha, titulo:{es,en}, resumen:{es,en}, cuerpo:{es,en}, foto } ]   (solo si hay entradas publicadas)
 adventures     { experiencias: [ experiencia ], dificultad: { <clave>: {es,en} }, idiomas: { <clave>: {es,en} } }
 alergenos      { <clave>: {es,en} }  (los 14 de la norma europea)
 etiquetas      { <clave>: {es,en} }  (vegetariano, vegano, sin_gluten, picante, de_la_casa)
@@ -40,6 +41,32 @@ experiencia    { id, orden, slug, ruta:{en,es}, titulo, descripcion, duracion, i
 - `eventos.inicio` y `fin` vienen en ISO UTC. Se muestran en hora de Guatemala (UTC-6).
 - `precio_usd_ref` = `round(precio_q / tipo_cambio_usd)`. Se muestra como "≈ US$11".
 - Los enlaces empiezan con `/` (una página del sitio), `https://`, `mailto:` o `tel:`.
+
+## Blog (23-oct-2026)
+
+- **La llave `blog` solo viene si hay al menos una entrada publicada.** Si no viene, el sitio no arma `/blog` (ni el enlace en el menú). Formato sigue siendo 1: un sitio que no conoce `blog` la ignora.
+- Viene ya en orden: **la más nueva primero** (`fecha` de mayor a menor; `orden` desempata entre dos del mismo día).
+- `fecha`: `AAAA-MM-DD`, la fecha de publicación que se muestra (no lleva hora). Puede ser futura: la nube no filtra por fecha; si el sitio quiere esconder las futuras, que compare con la fecha de Guatemala al construir.
+- `slug`: minúsculas, números y guiones. Rutas propuestas: `/blog` y `/es/blog` (la lista) y `/blog/<slug>` y `/es/blog/<slug>` (cada artículo). Un mismo slug sirve para los dos idiomas.
+- `resumen`: 1 o 2 frases, texto plano. Sirve para la tarjeta de la lista y para la `meta description`.
+- `cuerpo`: **markdown simple**, el único campo del formato que no es texto plano:
+  - párrafos separados por una línea en blanco; un salto de línea simple dentro de un párrafo es `<br>`;
+  - `**negritas**`;
+  - listas: un bloque donde todas las líneas empiezan con `- ` (o `* `);
+  - enlaces `[texto](url)` con url que empieza con `https://`, `/` (una página del sitio), `mailto:` o `tel:`.
+  - No trae HTML ni otros enlaces: la nube rechaza `<…>` y esquemas como `javascript:` al guardar. Igual, el sitio **escapa todo** antes de convertir.
+  - La conversión de referencia es `markdownAHtml()` de `cloud/app/src/contenido-web.js` (la usa la vista previa). El sitio puede copiarla o usar su propia versión con las mismas reglas.
+- `foto`: igual que en el resto (`url` 1600 px, `url_chica` 600 px, `alt`), o `null`.
+- Solo Juanma escribe y publica el blog. Se publica con el mismo botón "Publicar" que el resto y vuelve atrás con las versiones.
+
+## Lista de espera (APAGADA hasta que Juanma diga; interruptor LISTA_ESPERA=encendida en rosanta-web)
+
+- Para cuando `/slots` no tiene horas: `POST /api/reservas/lista-espera` (mismo CORS que `/reservar`; acepta `application/json` o `text/plain`) con
+  `{ fecha: AAAA-MM-DD, desde: "HH:MM", hasta: "HH:MM", personas (1 a 10), nombre, email, telefono?, idioma: es|en, fuente? }`.
+  `fuente` es un texto corto (`"web"`) o el objeto de utm/gclid/fbclid. Responde `200 { ok: true, id }` (la misma persona el mismo día: el mismo `id`),
+  `400 { ok: false, motivo, error }` (el sitio muestra `error`) o `429`.
+- **Apagada responde 404**: el sitio tiene que mostrar el formulario solo si la nube lo acepta (o esconderlo si recibe 404).
+- Cuando se libera lugar en su horario, la nube le manda un correo al primero de la lista con el enlace a `/reservas` (la mesa no queda apartada).
 
 ## Rosanta Adventures (estudio §3.9)
 

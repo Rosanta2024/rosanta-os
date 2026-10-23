@@ -21,6 +21,11 @@
  * contesta "ok" sin mandar nada, y SITIO_DIR sirve el sitio construido con PUBLIC_PRUEBA=si (sin medicion).
  * ORIGENES_EXTRA (separados por coma) suma origenes al CORS (p. ej. la direccion run.app de la prueba).
  *
+ * Interruptores de la segunda vuelta (23-oct, SV-NUBE), APAGADOS por defecto (apagados = el servicio igual que antes):
+ *   LISTA_ESPERA=encendida  POST /api/reservas/lista-espera, la lista en el panel de Sala y el aviso "se libero una mesa"
+ *                           (reservas/lista-espera.js). Necesita la 056 aplicada.
+ *   El blog no tiene interruptor: la llave "blog" de /api/web/contenido solo sale si Juanma publico entradas.
+ *
  * El orden importa: los routers que leen el cuerpo crudo o text/plain (motor, avisos con su webhook, gift cards con
  * el webhook de la pasarela) se montan ANTES del express.json global.
  */
@@ -119,10 +124,20 @@ function crearAppWeb(deps) {
   const avisos = crearAvisos({ pool, canales,
     secretoEnlace: env.RESERVAS_ENLACE_SECRETO, baseEnlace: env.MI_RESERVA_BASE || 'https://www.rosanta.rest/r/',
     basePanel: env.PANEL_BASE || 'https://www.rosanta.rest/reservas/panel' });
-  const rutasReservas = crearRutasReservas({ pool, avisos: avisos.gancho, origenes, quien,
+  // Lista de espera (LISTA_ESPERA=encendida): el gancho de avisos del motor la suma DESPUES de los avisos de siempre.
+  // Apagada, el gancho es exactamente avisos.gancho, como antes.
+  const LE = require('./reservas/lista-espera');
+  const conEspera = LE.encendida(env);
+  let espera = null;
+  const ganchoAvisos = conEspera ? LE.conListaEspera(avisos.gancho, { alLiberar: (...a) => espera.alLiberar(...a) }) : avisos.gancho;
+  const rutasReservas = crearRutasReservas({ pool, avisos: ganchoAvisos, origenes, quien,
     crm: ganchoInterno(env, '/interno/web/crm-reserva', deps.fetch),
     capi: ganchoInterno(env, '/interno/web/capi', deps.fetch) });
   app.use('/api/reservas', rutasReservas);
+  if (conEspera) {
+    espera = LE.crearListaEspera({ pool, motor: rutasReservas.motor, avisos });
+    app.use('/api/reservas', LE.crearRutasListaEspera({ espera, pool, origenes, quien }));
+  }
   app.use(crearRutasAvisos({ pool, avisos, motor: rutasReservas.motor, quien, claveTareas: env.CLAVE_TAREAS,
     resendWebhookSecreto: env.RESEND_WEBHOOK_SECRETO }));
 
@@ -167,7 +182,7 @@ function crearAppWeb(deps) {
     app.use(express.static(raiz, { extensions: ['html'], redirect: false, index: 'index.html' }));
   }
   app.use((req, res) => res.status(404).json({ error: 'No existe.' }));
-  return { app, avisos, rutasReservas, contenido, giftcards, adventures, pasarela };
+  return { app, avisos, rutasReservas, contenido, giftcards, adventures, pasarela, espera };
 }
 
 async function main() {

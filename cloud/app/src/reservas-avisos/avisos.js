@@ -239,12 +239,20 @@ function crearAvisos(deps) {
     }
     if ((p === 'confirmacion' || p === 'aprobada') && r.estado !== 'confirmada') return 'la reserva ya no esta confirmada';
     if (p === 'pendiente' && r.estado !== 'pendiente') return 'la reserva ya no esta pendiente';
+    if (p === 'espera_mesa_libre' && ['esperando', 'avisado'].indexOf(r.estado) === -1) return 'ya no esta en la lista de espera';
     return '';
   }
 
   async function leerReserva(fila) {
     // el aviso de grupo grande no tiene reserva y la tabla no guarda sus datos de contacto: si fallo, no se reintenta
     if (String(fila.reserva_id).startsWith('grupo:')) return null;
+    // el aviso de la lista de espera (LISTA_ESPERA=encendida): la persona de la lista, a la hora que se le ofrecio
+    if (String(fila.reserva_id).startsWith('espera:')) {
+      const LE = require('../reservas/lista-espera');
+      const x = await pool.query('SELECT * FROM lista_espera WHERE id = $1', [Number(String(fila.reserva_id).slice(7))]);
+      const f = LE.deFila(x.rows[0]);
+      return f ? LE.comoReserva(f, (fila.contexto && fila.contexto.inicio) || C.instante(f.fecha, f.aviso_hora || f.desde || '19:00')) : null;
+    }
     return G.vista(await A.porId(pool, fila.reserva_id));
   }
 
