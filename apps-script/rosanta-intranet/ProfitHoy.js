@@ -153,6 +153,7 @@ function getHoyProfit(auth) {
 
   items.sort(function (a, b) { return (b.urgente ? 1 : 0) - (a.urgente ? 1 : 0); });
   return { nombre: nombre.split(' ')[0], rol: rol, fecha: hoyIso, items: items, fallas: fallas,
+           cocina: esDueno || rol === 'chef',
            gen: Utilities.formatDate(hoy, 'America/Guatemala', 'dd/MM/yyyy HH:mm') };
 }
 
@@ -178,4 +179,27 @@ function marcarAccionHoy(auth, fila, textoEsperado) {
     SpreadsheetApp.flush();
   } finally { lock.releaseLock(); }
   return getHoyProfit(auth);
+}
+
+/*
+ * RESERVAS DE LA SEMANA (23-oct-2026, pedido de la Central): la vista de cocina del sitio nuevo (rosanta-web, /cocina):
+ * personas por dia, almuerzo y cena, y el total de la semana. Solo cantidades, sin datos de clientes. La abre el chef
+ * (y el dueño) desde Hoy. El enlace lleva el codigo de la persona: lo arma el servidor y la pagina solo lo usa para
+ * abrir la pestaña (no queda escrito en la pantalla). rosanta-web vuelve a revisar el codigo y el permiso de ver
+ * reservas.
+ */
+var HOY_COCINA_URL_ = 'https://rosanta-web-512086396641.northamerica-south1.run.app/cocina';
+
+function getCocinaDestino(auth) {
+  var u = exigirModulo_(auth, 'recetario'), rol = normalizar_(u.rol);
+  if (rol !== 'dueno' && rol !== 'chef') throw new Error('Las reservas de la semana son para cocina.');
+  var token = String(auth || '').trim();
+  if (!token) {
+    var filas = SpreadsheetApp.openById(getSheetId_('CONFIG_SHEET_ID')).getSheetByName('USUARIOS').getDataRange().getValues();
+    for (var i = 1; i < filas.length; i++) {
+      if (String(filas[i][0] || '').toLowerCase().trim() === u.email) { token = String(filas[i][5] || '').trim(); break; }
+    }
+  }
+  if (!token) throw new Error('Tu cuenta no tiene enlace. Avisale a Juanma.');
+  return { url: HOY_COCINA_URL_ + '?u=' + encodeURIComponent(token) };
 }

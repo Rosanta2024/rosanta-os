@@ -60,6 +60,8 @@ window.PF_HOY = function (HOST, AUTH) {
         (x.vista ? '<button type="button" data-view="' + esc(x.vista) + '"' + (x.sub ? ' data-sub="' + esc(x.sub) + '"' : '') + '>' + esc(x.boton || 'Abrir') + '</button>' : '') +
         (x.accion ? '<button type="button" data-hylisto="' + esc(x.accion.fila) + '" data-hytexto="' + esc(x.accion.texto) + '">Listo</button>' : '') + '</div>';
     }).join('') : '<div class="hy-ok">Todo al día. ✓</div>';
+    if (D.cocina) h += '<div class="hy-it"><div class="tx"><b>Reservas de la semana</b><span>Personas por día, almuerzo y cena. Se abre en otra pestaña.</span></div>' +
+      '<button type="button" data-hy="cocina">Ver reservas</button></div>';
     if (D.fallas.length) h += '<p class="hy-falla">No pude revisar: ' + esc(D.fallas.join(' · ')) + '</p>';
     h += '<div class="hy-pie"><span>Actualizado ' + esc(D.gen) + '</span><button type="button" data-hy="recargar">Actualizar</button></div></div>';
     HOST.innerHTML = h;
@@ -68,6 +70,15 @@ window.PF_HOY = function (HOST, AUTH) {
     var b = ev.target.closest('button');
     if (!b) return;
     if (b.dataset.hy === 'recargar') { cargar(); return; }
+    // Reservas de la semana (23-oct-2026): la pestaña se abre YA (si no, el navegador la bloquea) y despues va al enlace
+    if (b.dataset.hy === 'cocina') {
+      var w = window.open('', '_blank');
+      if (w) { try { w.document.write('<p style="font:16px sans-serif;margin:2rem">Abriendo las reservas de la semana…</p>'); } catch (e0) { /* sigue */ } }
+      google.script.run.withSuccessHandler(function (r) {
+        if (w) { try { w.opener = null; } catch (e1) { /* sigue */ } w.location.replace(r.url); } else { window.open(r.url, '_blank', 'noopener'); }
+      }).withFailureHandler(function (e) { if (w) w.close(); alert(PF_ERROR(e)); }).getCocinaDestino(AUTH);
+      return;
+    }
     // el boton lleva a la pestaña (lo hace el click general, con data-view) y deja el punto exacto
     if (b.dataset.view) {
       window.PF_IR = { vista: b.dataset.view, sub: b.dataset.sub || '' };
