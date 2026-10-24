@@ -176,13 +176,7 @@
       }
     },
     "rabo": {
-      "fuente": "Nuevo Menú /_MG_8392.jpg",
-      "recorte": [
-        0.08,
-        0.3,
-        0.84,
-        0.66
-      ],
+      "fuente": "Nuevo Menú /Para Web/_MG_8379.jpg",
       "es": "Estofado de Rabo",
       "en": "Braised Oxtail",
       "alt": {
