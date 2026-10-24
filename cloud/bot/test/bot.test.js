@@ -250,3 +250,15 @@ test('Grabado: el tipo real de Leads llega al pedido (un evento que pasa a una p
   const ev = chats[0].eventos.find((e) => e.tipo === 'cliente');
   assert.strictEqual(ev.real.tipoLead, 'evento');
 });
+
+test('Repetición: las fotos guardadas se repiten como foto (no como texto)', () => {
+  const { webhook } = require('../src/reproductor');
+  const sin = webhook('whatsapp', '501', 'Ana', '📷 [Foto sin texto]', 1).entry[0].changes[0].value.messages[0];
+  assert.strictEqual(sin.type, 'image');
+  assert.strictEqual(sin.image.caption, undefined);
+  const con = webhook('whatsapp', '501', 'Ana', '📷 [Foto] ¿tienen este plato?', 2).entry[0].changes[0].value.messages[0];
+  assert.strictEqual(con.image.caption, '¿tienen este plato?');
+  const ig = webhook('instagram', '9', 'Leo', '📷 [Foto sin texto]', 3).entry[0].messaging[0].message;
+  assert.strictEqual(ig.attachments[0].type, 'image');
+  assert.strictEqual(webhook('whatsapp', '501', 'Ana', 'hola', 4).entry[0].changes[0].value.messages[0].type, 'text');
+});

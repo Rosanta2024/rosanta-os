@@ -91,6 +91,18 @@ function crearWix(fijar) {
 function webhook(canal, id, nombre, texto, n) {
   const mid = 'sombra-' + id + '-' + n;
   const boton = String(texto).indexOf('🔘 ') === 0 ? String(texto).slice(3) : null;
+  // 23-oct-2026: Conversaciones anota las fotos como "📷 [Foto] pie" o "📷 [Foto sin texto]". Se repiten como foto de verdad
+  // (si no, la sombra las veía como texto y contestaba otra cosa que el bot real).
+  const f = String(texto).match(/^📷 \[Foto(?: sin texto)?\]\s*(.*)$/);
+  if (f) {
+    const pie = (f[1] || '').trim();
+    if (canal === 'whatsapp') {
+      return { object: 'whatsapp_business_account', entry: [{ changes: [{ value: { metadata: { phone_number_id: 'wa-sombra' }, contacts: [{ profile: { name: nombre } }],
+        messages: [{ id: mid, from: id, type: 'image', image: Object.assign({ id: 'foto-' + n, mime_type: 'image/jpeg' }, pie ? { caption: pie } : {}) }] } }] }] };
+    }
+    return { object: canal === 'instagram' ? 'instagram' : 'page', entry: [{ messaging: [{ sender: { id }, recipient: { id: 'rosanta' },
+      message: Object.assign({ mid, attachments: [{ type: 'image', payload: { url: 'https://ejemplo.test/foto-' + n + '.jpg' } }] }, pie ? { text: pie } : {}) }] }] };
+  }
   if (canal === 'whatsapp') {
     const msg = boton
       ? { id: mid, from: id, type: 'interactive', interactive: { type: 'button_reply', button_reply: { id: 'OPT|es|' + boton, title: boton } } }
