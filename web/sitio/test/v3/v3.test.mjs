@@ -119,3 +119,15 @@ test('marca: sin rayas largas ni "En Rosanta" en los textos nuevos', () => {
     assert.ok(!/\bnuestr[oa]s?\b|\bour\b/i.test(t), `posesivo: ${t}`);
   }
 });
+
+test('idioma por navegador: nunca a robots ni previsualizaciones; canonical y hreflang sin cambio', () => {
+  const js = readFileSync(path.join(DIST, 'js', 'v3.js'), 'utf8');
+  const m = js.match(/var robot = \/(.+?)\/i\.test/);
+  assert.ok(m, 'falta el filtro de robots');
+  const re = new RegExp(m[1], 'i');
+  for (const ua of ['Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', 'Mozilla/5.0 (compatible; bingbot/2.0)', 'WhatsApp/2.23.20.0', 'facebookexternalhit/1.1', 'Twitterbot/1.0', 'Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36 Chrome-Lighthouse']) {
+    assert.ok(re.test(ua), `no filtra: ${ua}`);
+  }
+  assert.ok(!re.test('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'), 'filtra a una persona');
+  assert.ok(!/canonical|hreflang/.test(js.replace(/\/\/.*$/gm, '')), 'el script no debe tocar canonical ni hreflang');
+});

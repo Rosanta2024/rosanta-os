@@ -249,7 +249,7 @@ body.v3 { padding-bottom: 76px; }
 /* ---------- pie ---------- */
 .v3-pie { background: var(--v3-crema); color: var(--v3-verde); border-top: 1px solid #ddd6cf; padding: 56px 0 32px; }
 .v3-pie-in { max-width: 1240px; margin: 0 auto; padding: 0 var(--v3-gutter); }
-.v3-pie-logo { display: block; color: var(--v3-verde); margin-bottom: 14px; }
+.v3-pie-logo { display: block; color: var(--v3-verde); margin-bottom: 14px; width: 60%; max-width: 480px; }
 .v3-pie-lema { color: var(--v3-verde); }
 .v3-pie-cols { display: grid; gap: 28px; margin: 36px 0; color: var(--v3-tinta); }
 .v3-pie-cols p { margin: 0 0 10px; }

@@ -63,19 +63,24 @@
     });
   }
 
-  // ---- Idioma: el del navegador elige el inicial en la portada; después manda lo que la persona elija ----
+  // ---- Idioma ----
   var guardar = function (l) { try { localStorage.setItem('rosanta-idioma', l); } catch (e) {} };
   d.querySelectorAll('[data-v3idioma]').forEach(function (a) { a.addEventListener('click', function () { guardar(a.getAttribute('data-v3idioma')); }); });
+  // Juanma, 23-oct (opción B): en la PRIMERA visita, en cualquier página, si el idioma del navegador es el otro,
+  // se pasa a la misma página en ese idioma (el enlace ES/EN del encabezado). Solo en el navegador, nunca a robots
+  // ni a previsualizaciones (Google, Bing, WhatsApp, Facebook…). Si la persona elige ES/EN, se guarda y no se la mueve más.
+  // hreflang y canonical no cambian.
   try {
+    var robot = /bot|crawl|spider|slurp|facebookexternalhit|facebot|whatsapp|telegram|twitter|linkedin|embedly|preview|lighthouse|headless|google-inspectiontool|bingpreview/i.test(navigator.userAgent) || navigator.webdriver;
     var pref = localStorage.getItem('rosanta-idioma');
-    var ruta = location.pathname.replace(/\/$/, '') || '/';
+    var actual = (d.documentElement.lang || '').slice(0, 2).toLowerCase() === 'es' ? 'es' : 'en';
     var interno = d.referrer && d.referrer.indexOf(location.origin) === 0;
-    if (!pref && !interno && ruta === '/' && !/[?&]idioma=/.test(location.search)) {
+    if (!robot && !pref && !interno && !/[?&]idioma=/.test(location.search)) {
       var nav = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
       var quiere = nav.indexOf('es') === 0 ? 'es' : 'en';
       guardar(quiere);
-      // Solo de la portada en inglés (la de siempre) a la de español; quien llega a /es se queda ahí.
-      if (quiere === 'es' && ruta === '/') location.replace('/es' + location.hash);
+      var otro = d.querySelector('.v3-enc [data-v3idioma="' + quiere + '"]');
+      if (quiere !== actual && otro && otro.getAttribute('href')) location.replace(otro.getAttribute('href') + location.search + location.hash);
     }
   } catch (e) {}
 
