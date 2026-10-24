@@ -147,6 +147,24 @@
         "es": "Camarones al horno con tomates cherry y hojas verdes",
         "en": "Oven-baked shrimp with cherry tomatoes and greens"
       }
+    },
+    "pasta": {
+      "fuente": "Fotos/5 de Noviembre/_MG_7180.jpg",
+      "es": "Pasta de la Casa",
+      "en": "House Pasta",
+      "alt": {
+        "es": "Fettuccine hecho en casa con tomates confitados y una hoja de albahaca, en plato negro",
+        "en": "House-made fettuccine with confit tomatoes and a basil leaf on a black plate"
+      }
+    },
+    "brisket": {
+      "fuente": "Fotos/5 de Noviembre/_MG_7319.jpg",
+      "es": "Brisket en Salsa Bordelesa",
+      "en": "Brisket in Bordelaise Sauce",
+      "alt": {
+        "es": "Brisket en salsa bordelesa con puré de plátano, bok choy y lingote de yuca con uvas encima",
+        "en": "Brisket in Bordelaise sauce with plantain purée, bok choy and a yuca bar topped with grapes"
+      }
     }
   },
   "secciones": {
