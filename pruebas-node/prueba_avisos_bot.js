@@ -103,11 +103,18 @@ prueba('Resumen de la noche: PENDIENTES arriba con su hora límite y "⚠️ N c
   libro.Leads.push([hace(3), 'instagram', 'es', 'Leo', '', 'queja', 'tibio', 'cobro', 'escalar_humano', 'Sí', '', '999001', '', '', '', '']);
   libro.Conversaciones.push([hace(3), 'instagram', '999001', 'Leo', 'in', 'cliente', 'cobro doble']);
   libro.Conversaciones.push([hace(1), 'instagram', '999001', 'Leo', 'out', 'humano', 'Ya lo vemos']);
+  // de "ayer" (hace 20 h) y una de hace 30 h: la primera entra en las últimas 24 h, la segunda no
+  libro.Leads.push([hace(20), 'messenger', 'es', 'Mia', '', 'consulta', 'tibio', 'horario', 'escalar_humano', 'Sí', '', '777001', '', '', '', '']);
+  libro.Conversaciones.push([hace(19), 'messenger', '777001', 'Mia', 'out', 'humano', 'Abrimos a las 12']);
+  libro.Leads.push([hace(30), 'whatsapp', 'es', 'Viejo', '', 'consulta', 'tibio', 'viejo', 'escalar_humano', 'Sí', '', '50255500000', '', '', '', '']);
+  libro.Conversaciones.push([hace(29), 'whatsapp', '50255500000', 'Viejo', 'out', 'humano', 'ok']);
   m.motor.ctx.resumenDiarioBot();
   const c = m.motor.correos.pop();
-  assert.match(c.asunto, /^⚠️ 1 chat espera respuesta · Rosanta · Lo que hizo el bot hoy/);
+  assert.match(c.asunto, /^⚠️ 1 chat espera respuesta · Rosanta · Lo que hizo el bot \(últimas 24 h/);
   assert.match(c.cuerpo, /^PENDIENTES SIN RESPONDER \(1\)\n• Ashley \(whatsapp …6092\) · evento · contestar antes de /);
-  assert.ok(!/Leo/.test(c.cuerpo.split('Lo que hizo el bot hoy')[0]), 'Leo ya fue contestado');
+  assert.ok(!/Leo/.test(c.cuerpo.split('Lo que hizo el bot en')[0]), 'Leo ya fue contestado');
+  assert.match(c.cuerpo, /CHATS QUE TE PASÓ \(3\)/, 'cuenta las últimas 24 h (Mia de hace 20 h sí; la de hace 30 h no)');
+  assert.ok(!/Viejo/.test(c.cuerpo));
 });
 
 prueba('Recordatorio: a ~4 h del cierre de la ventana sale un aviso, una sola vez', () => {
