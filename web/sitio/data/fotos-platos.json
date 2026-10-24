@@ -89,12 +89,12 @@
       }
     },
     "pollo": {
-      "fuente": "Lifestyle/_MG_2734.jpg",
+      "fuente": "Fotos/5 de Noviembre/_MG_7240.jpg",
       "es": "Pollo en Salsa de Tamarindo",
       "en": "Chicken in Tamarind Sauce",
       "alt": {
-        "es": "Pollo en salsa de tamarindo sobre crema de zanahoria, con hongos",
-        "en": "Chicken in tamarind sauce over carrot cream, with mushrooms"
+        "es": "Pollo en salsa de tamarindo sobre crema de zanahoria, con remolacha y calabacín",
+        "en": "Chicken in tamarind sauce over carrot cream, with beetroot and zucchini"
       }
     },
     "costillas": {
@@ -164,6 +164,30 @@
       "alt": {
         "es": "Brisket en salsa bordelesa con puré de plátano, bok choy y lingote de yuca con uvas encima",
         "en": "Brisket in Bordelaise sauce with plantain purée, bok choy and a yuca bar topped with grapes"
+      }
+    },
+    "bol": {
+      "fuente": "Fotos/16 de Agosto/_MG_3504.jpg",
+      "es": "Bol Mediterráneo",
+      "en": "Mediterranean Bowl",
+      "alt": {
+        "es": "Bol mediterráneo con huevo, garbanzos, pepino, aceitunas y tomate",
+        "en": "Mediterranean bowl with egg, chickpeas, cucumber, olives and tomato"
+      }
+    },
+    "rabo": {
+      "fuente": "Nuevo Menú /_MG_8392.jpg",
+      "recorte": [
+        0.08,
+        0.3,
+        0.84,
+        0.66
+      ],
+      "es": "Estofado de Rabo",
+      "en": "Braised Oxtail",
+      "alt": {
+        "es": "Estofado de rabo con salsa demi-glace y rábanos macerados, sobre puré de coliflor",
+        "en": "Braised oxtail with demi-glace and pickled radishes over cauliflower purée"
       }
     }
   },
