@@ -76,10 +76,10 @@ export function textos(l) {
       titulo: es ? 'TODO COMIENZA EN LA TIERRA' : 'IT ALL STARTS IN THE SOIL',
       lineas: sitio('comp-mszgypvv', l).split('\n').map((x) => x.trim()).filter(Boolean), // (sitio) JARDÍN, COSECHA, MESA…
       texto: parrafos('comp-mszh3qyb', l)[0], // (sitio)
-      video: v('tierra-es', 'cocina'),
-      alt: v('Video: "Todo comienza en la tierra". Manos que siembran en el huerto.', 'Video: hands finishing a dish with seeds and sauce.'),
-      fila: v(['sostenible-es', 'compartir', 'fuego', 'barra'], ['compartir', 'fuego', 'cocina', 'barra']),
-      filaAlt: es ? 'Videos cortos: gastronomía sostenible en el huerto, queso horneado, platos de la parrilla y un coctel.' : 'Short videos: baked cheese, dishes from the grill, a dish finished at the table and a cocktail.',
+      video: v('tierra-es', 'jardin'),
+      alt: v('Video: "Todo comienza en la tierra". Manos que siembran en el huerto.', 'Video: sprouts in the soil, freshly picked vegetables and cauliflower on the grill.'),
+      fila: v(['sostenible-es', 'noche', 'brasas', 'barra'], ['noche', 'brasas', 'hierbas', 'barra']),
+      filaAlt: es ? 'Videos cortos: gastronomía sostenible en el huerto, el jardín de noche, la parrilla con brasas y un coctel.' : 'Short videos: the garden at night, the grill over embers, garden herbs and a cocktail.',
       boton: es ? 'Reservar mesa' : 'Book a table',
     },
     nuevos: {
@@ -91,7 +91,7 @@ export function textos(l) {
     },
     bloques: [
       {
-        id: 'del-jardin', fondo: 'verde', video: 'jardin', lado: 'izq',
+        id: 'del-jardin', fondo: 'verde', video: 'hierbas', lado: 'izq',
         etiqueta: coord + '.',
         titulo: es ? 'DEL JARDÍN' : 'FROM THE GARDEN',   // nombre propio en lugar de "Honest Cooking"
         entrada: sitio('comp-mszh26e7', l), // (sitio)
@@ -99,10 +99,10 @@ export function textos(l) {
           ? 'Lo que el huerto no da lo traen productores de cerca, que siembran según la temporada.'
           : "What the garden doesn't grow comes from nearby producers who plant by the season.",
         enlace: { texto: es ? 'Ver platos del jardín →' : 'See garden dishes →', href: `${r.carta}#del-jardin` },
-        alt: es ? 'Video: brotes en la tierra, vegetales recién cosechados y coliflor sobre la parrilla.' : 'Video: sprouts in the soil, freshly picked vegetables and cauliflower on the grill.',
+        alt: es ? 'Video: un brote en la mano, romero y lavanda del huerto, y una hoja de hierba que termina un coctel.' : 'Video: a seedling in hand, rosemary and lavender from the garden, and an herb leaf finishing a cocktail.',
       },
       {
-        id: 'del-fuego', fondo: 'carbon', video: 'fuego', lado: 'der',
+        id: 'del-fuego', fondo: 'carbon', video: 'brasas', lado: 'der',
         etiqueta: es ? 'DEL FUEGO.' : 'FROM THE FIRE.',
         titulo: es ? 'PARRILLA ABIERTA' : 'OPEN GRILL',
         entrada: es ? 'La parrilla está a la vista, y se nota.' : 'The grill is in plain sight, and you can taste it.',
@@ -110,7 +110,7 @@ export function textos(l) {
           ? 'Carne, pesca responsable y vegetales pasan por la parrilla y llegan a tu mesa con el humo todavía encima.'
           : 'Meat, responsibly caught fish and vegetables go over the grill and reach your table with the smoke still on them.',
         enlace: { texto: es ? 'Ver platos del fuego →' : 'Dishes from the fire →', href: `${r.carta}#del-fuego` },
-        alt: es ? 'Video: platos recién servidos con cocteles a la luz de las velas.' : 'Video: freshly plated dishes with cocktails by candlelight.',
+        alt: es ? 'Video: carne sobre las brasas y coliflor que se enciende en la parrilla.' : 'Video: meat over the embers and cauliflower flaring up on the grill.',
       },
       {
         id: 'la-barra', fondo: 'crema', video: 'barra', lado: 'izq',
@@ -152,8 +152,8 @@ export function textos(l) {
       texto: es ? 'No necesitas arreglarte para comer bien. Eliges día, hora y cuántos son, y listo.' : 'No need to dress up to eat well. Pick the day, the time and how many, and you are set.',
       boton: es ? 'Reservar mesa' : 'Book a table',
       grupos: es ? '¿Son más de 10? Escríbenos por WhatsApp' : 'More than 10? Message us on WhatsApp',
-      video: v('reserva-es', 'portada'),
-      alt: v('Video: "Reserva tu mesa". Mesas, platos y la esquina de la Alameda Santa Rosa.', 'Video: the volcano over Antigua, the entrance, the grill lit and a candlelit table.'),
+      video: v('reserva-es', 'noche'),
+      alt: v('Video: "Reserva tu mesa". Mesas, platos y la esquina de la Alameda Santa Rosa.', 'Video: the garden at night, string lights and candlelit tables.'),
     },
     llegar: {
       etiqueta: es ? 'CÓMO LLEGAR.' : 'FIND US.',
@@ -212,8 +212,8 @@ export const FOTOS_PLATOS = {
 /** Cabecera de cada pestaña de la carta: foto o video. */
 export const CABECERAS = {
   'para-compartir': { foto: '/v3/platos/tabla-jamones-quesos.webp' },
-  'del-fuego': { video: 'fuego' },
-  'del-jardin': { foto: '/v3/platos/cab-jardin.webp' },
+  'del-fuego': { video: 'brasas' },
+  'del-jardin': { video: 'jardin' },
   'la-barra': { video: 'barra' },
 };
 
